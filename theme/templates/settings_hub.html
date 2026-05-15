@@ -2,76 +2,76 @@
 {% block title %}Settings - CMS Aegis{% endblock %}
 
 {% block content %}
-<div style="max-width: 1100px; margin: 0 auto;">
-    <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px;">
+<div class="page-container">
+    <div class="page-header">
         <div>
-            <h1 style="font-size: 28px; font-weight: 800; color: var(--text-primary); margin-bottom: 6px;">Settings</h1>
-            <p style="font-size: 14px; color: var(--text-secondary);">Manage your account, team, and compliance configuration in one place.</p>
+            <h1 class="page-title">Settings</h1>
+            <p class="page-subtitle">Manage your account, team, and compliance configuration in one place.</p>
         </div>
     </div>
 
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px;">
-        <a href="{% url 'profile' %}" style="display: block; padding: 18px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); text-decoration: none; transition: all 0.2s ease;">
-            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-                <h2 style="font-size: 16px; font-weight: 700; color: var(--text-primary);">Profile</h2>
+    <div class="settings-grid">
+        <a href="{% url 'profile' %}" class="settings-card">
+            <div class="settings-card-head">
+                <h2 class="settings-card-title">Profile</h2>
             </div>
-            <p style="font-size: 13px; color: var(--text-secondary);">Update personal details and profile metadata.</p>
+            <p class="settings-card-desc">Update personal details and profile metadata.</p>
         </a>
 
-        <a href="{% url 'contracts:organization_team' %}" style="display: block; padding: 18px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); text-decoration: none; transition: all 0.2s ease;">
-            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-                <h2 style="font-size: 16px; font-weight: 700; color: var(--text-primary);">Organization Team</h2>
+        <a href="{% url 'contracts:organization_team' %}" class="settings-card">
+            <div class="settings-card-head">
+                <h2 class="settings-card-title">Organization Team</h2>
             </div>
-            <p style="font-size: 13px; color: var(--text-secondary);">Manage members, roles, and invitations.</p>
+            <p class="settings-card-desc">Manage members, roles, and invitations.</p>
         </a>
 
-        <a href="{% url 'contracts:organization_activity' %}" style="display: block; padding: 18px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); text-decoration: none; transition: all 0.2s ease;">
-            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-                <h2 style="font-size: 16px; font-weight: 700; color: var(--text-primary);">Team Activity</h2>
+        <a href="{% url 'contracts:organization_activity' %}" class="settings-card">
+            <div class="settings-card-head">
+                <h2 class="settings-card-title">Team Activity</h2>
             </div>
-            <p style="font-size: 13px; color: var(--text-secondary);">Review organization-level activity logs.</p>
+            <p class="settings-card-desc">Review organization-level activity logs.</p>
         </a>
 
-        <a href="{% url 'organization_security_settings' %}" style="display: block; padding: 18px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); text-decoration: none; transition: all 0.2s ease;">
-            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-                <h2 style="font-size: 16px; font-weight: 700; color: var(--text-primary);">Organization Security</h2>
+        <a href="{% url 'organization_security_settings' %}" class="settings-card">
+            <div class="settings-card-head">
+                <h2 class="settings-card-title">Organization Security</h2>
             </div>
-            <p style="font-size: 13px; color: var(--text-secondary);">Control MFA policy and revoke active sessions.</p>
+            <p class="settings-card-desc">Control MFA policy and revoke active sessions.</p>
         </a>
 
-        <a href="{% url 'organization_session_audit' %}" style="display: block; padding: 18px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); text-decoration: none; transition: all 0.2s ease;">
-            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-                <h2 style="font-size: 16px; font-weight: 700; color: var(--text-primary);">Session Audit</h2>
+        <a href="{% url 'organization_session_audit' %}" class="settings-card">
+            <div class="settings-card-head">
+                <h2 class="settings-card-title">Session Audit</h2>
             </div>
-            <p style="font-size: 13px; color: var(--text-secondary);">Review and revoke active sessions by device or browser session key.</p>
+            <p class="settings-card-desc">Review and revoke active sessions by device or browser session key.</p>
         </a>
 
-        <a href="{% url 'organization_identity_settings' %}" style="display: block; padding: 18px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); text-decoration: none; transition: all 0.2s ease;">
-            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-                <h2 style="font-size: 16px; font-weight: 700; color: var(--text-primary);">Identity Provider</h2>
+        <a href="{% url 'organization_identity_settings' %}" class="settings-card">
+            <div class="settings-card-head">
+                <h2 class="settings-card-title">Identity Provider</h2>
             </div>
-            <p style="font-size: 13px; color: var(--text-secondary);">Configure SAML metadata and SCIM provisioning.</p>
+            <p class="settings-card-desc">Configure SAML metadata and SCIM provisioning.</p>
         </a>
 
-        <a href="{% url 'contracts:identity_telemetry_dashboard' %}" style="display: block; padding: 18px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); text-decoration: none; transition: all 0.2s ease;">
-            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-                <h2 style="font-size: 16px; font-weight: 700; color: var(--text-primary);">Identity Telemetry</h2>
+        <a href="{% url 'contracts:identity_telemetry_dashboard' %}" class="settings-card">
+            <div class="settings-card-head">
+                <h2 class="settings-card-title">Identity Telemetry</h2>
             </div>
-            <p style="font-size: 13px; color: var(--text-secondary);">Track MFA, SAML, SCIM, and recovery-code activity.</p>
+            <p class="settings-card-desc">Track MFA, SAML, SCIM, and recovery-code activity.</p>
         </a>
 
-        <a href="{% url 'contracts:privacy_dashboard' %}" style="display: block; padding: 18px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); text-decoration: none; transition: all 0.2s ease;">
-            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-                <h2 style="font-size: 16px; font-weight: 700; color: var(--text-primary);">Privacy Center</h2>
+        <a href="{% url 'contracts:privacy_dashboard' %}" class="settings-card">
+            <div class="settings-card-head">
+                <h2 class="settings-card-title">Privacy Center</h2>
             </div>
-            <p style="font-size: 13px; color: var(--text-secondary);">Manage GDPR workflows, DSARs, and data inventories.</p>
+            <p class="settings-card-desc">Manage GDPR workflows, DSARs, and data inventories.</p>
         </a>
 
-        <a href="{% url 'operations_dashboard' %}" style="display: block; padding: 18px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); text-decoration: none; transition: all 0.2s ease;">
-            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-                <h2 style="font-size: 16px; font-weight: 700; color: var(--text-primary);">Operations</h2>
+        <a href="{% url 'operations_dashboard' %}" class="settings-card">
+            <div class="settings-card-head">
+                <h2 class="settings-card-title">Operations</h2>
             </div>
-            <p style="font-size: 13px; color: var(--text-secondary);">Monitor background jobs, request health, and drill readiness.</p>
+            <p class="settings-card-desc">Monitor background jobs, request health, and drill readiness.</p>
         </a>
     </div>
 </div>

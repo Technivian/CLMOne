@@ -97,7 +97,7 @@
         /* ── Auth pages (login / register) ─────────────────────────────────── */
         .login-panel-left  { background: var(--surface); }
         .login-panel-right { background: var(--bg); }
-        .login-divider     { background: linear-gradient(180deg, transparent, var(--border), transparent); }
+        .login-divider     { position: absolute; right: 0; top: 0; bottom: 0; width: 1px; background: linear-gradient(180deg, transparent, var(--border), transparent); }
         .login-title       { color: var(--text-primary); }
         .login-subtitle    { color: var(--text-muted); }
         .login-feature-text { color: var(--text-secondary); }
@@ -117,6 +117,23 @@
         .glow-btn { position: relative; overflow: hidden; }
         .glow-btn::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, transparent 50%); pointer-events: none; }
         .glow-btn:hover { transform: translateY(-1px); }
+        /* ── Login inline-style cleanup helpers ────────────────────────────── */
+        .bg-page             { background: var(--bg); }
+        .glow-blob-primary   { background: radial-gradient(circle, var(--primary-subtle) 0%, transparent 70%); }
+        .glow-blob-accent    { background: radial-gradient(circle, var(--accent-bg-light) 0%, transparent 70%); }
+        .icon-box-primary    { background: var(--primary-bg); border: 1px solid rgba(37,99,235,0.15); }
+        .icon-box-accent     { background: var(--accent-bg); border: 1px solid rgba(34,197,94,0.15); }
+        .icon-primary-filled { background: var(--primary); box-shadow: 0 2px 8px var(--primary-glow); }
+        .c-brand             { color: var(--primary); }
+        .c-brand-accent      { color: var(--accent); }
+        .c-muted             { color: var(--text-muted); }
+        .c-error             { color: var(--error); }
+        .msg-box             { background: var(--surface); border: 1px solid var(--border); }
+        .alert-error         { background: var(--error-bg); border: 1px solid var(--error-border); }
+        .checkbox-primary    { accent-color: var(--primary); }
+        .glow-btn-primary    { background: var(--primary); box-shadow: 0 8px 32px var(--primary-glow), 0 2px 4px rgba(0,0,0,0.2); }
+        .divider-line        { background: var(--border); }
+        .btn-outline-surface { border-color: var(--border); color: var(--text-primary); background: var(--surface); }
     </style>
 </head>
 <body style="background: var(--bg); color: var(--text-primary); font-family: 'Inter', system-ui, sans-serif;">
