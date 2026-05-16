@@ -1,0 +1,31 @@
+{
+  "signoff_at": "2026-05-16T11:57:44Z",
+  "commit": "c1b1772",
+  "commit_sha": "c1b1772cec9267b3b1e4ba85713cfd8a641adf6f",
+  "environment": {
+    "allowed_hosts": "localhost,127.0.0.1",
+    "org_slug": "demo-firm",
+    "org_name": "Demo Firm"
+  },
+  "gates": {
+    "postgres_cutover_ready": "True",
+    "sprint3_integration": "GO",
+    "esign_integration": "GO",
+    "release_gate": "GO",
+    "release_bundle": "GO",
+    "executive_analytics_captured_at": "2026-05-16T11:57:50.939112+00:00",
+    "retention_audit_captured_at": "2026-05-16T11:57:51.335831+00:00",
+    "backup_restore_drill": "PASS"
+  },
+  "drill": {
+    "start": "2026-05-16T11:57:53Z",
+    "end": "2026-05-16T11:57:56Z",
+    "elapsed": "3s",
+    "backup_file": "/Users/haroonwahed/Documents/Projects/CMS-Aegis/evidence/target-backup-20260516T135753.dump",
+    "backup_size_bytes": "406938",
+    "restore_db": "demo_firm_signoff_restore_20260516",
+    "outcome": "PASS"
+  },
+  "failures": [],
+  "final_decision": "GO"
+}
