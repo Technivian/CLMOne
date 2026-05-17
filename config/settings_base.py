@@ -147,6 +147,11 @@ def _database_config_from_env() -> dict:
             'NAME': os.getenv('SQLITE_PATH', str(BASE_DIR / 'db.sqlite3')),
         }
 
+    # Deployment providers and dashboards sometimes store pasted DSNs with
+    # wrapping quotes; strip one matching pair before parsing the URL.
+    if len(database_url) >= 2 and database_url[0] == database_url[-1] and database_url[0] in {'"', "'"}:
+        database_url = database_url[1:-1].strip()
+
     parsed = urlparse(database_url)
     scheme = (parsed.scheme or '').lower()
     query_options = dict(parse_qsl(parsed.query, keep_blank_values=True))
@@ -181,7 +186,8 @@ def _database_config_from_env() -> dict:
         }
 
     raise ImproperlyConfigured(
-        'Unsupported DATABASE_URL scheme. Use postgresql://... for production or sqlite:///... for local.'
+        'Unsupported DATABASE_URL scheme. Use postgresql://... or postgres://... for production, '
+        'sqlite:///... for local, and remove any surrounding quotes from DATABASE_URL.'
     )
 
 
