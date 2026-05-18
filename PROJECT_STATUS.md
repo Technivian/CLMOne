@@ -664,3 +664,47 @@ Already present from prior batch work: `page-wrap`, `page-header`, `page-title`,
 | Step 6 | search_results.html | ✅ |
 
 **All Batch 4 planned templates migrated.** Remaining tier-2/tier-3 templates continue in future batches.
+
+---
+
+## Batch 4 Post-Migration Audit ✅ COMPLETE (2026-05-18)
+
+**Verdict: Batch 4 audit-clean. 0 regressions. 1 accessibility fix applied.**
+
+### Fix Applied During Audit
+
+| File | Fix |
+|---|---|
+| `theme/templates/contracts/contract_list.html` | Added `aria-hidden="true"` to 4 sort-arrow SVGs in sortable column headers |
+
+### Summary
+
+| Check | Result |
+|---|---|
+| Template parse (5 templates) | ✅ All OK |
+| manage.py check | ✅ 0 issues |
+| Tests | ✅ 3/3 |
+| Inline styles | ✅ 0 across all 5 |
+| Inline event handlers | ✅ 0 across all 5 |
+| Retired classes | ✅ 0 across all 5 |
+| Archetype conformance | ✅ All 5 conformant |
+| Behavior preservation | ✅ All forms/routes/IDs/context vars intact |
+| ARIA SVG coverage | ✅ Post-fix: 100% |
+
+### Documented Exceptions (9 total, all reviewed)
+
+| Exception | Decision |
+|---|---|
+| Chart JS className raw colors (reports_dashboard) | Remain — JS exception, no build tooling |
+| Amber dot `bg-yellow-400` (contract_list) | Remain — no `status-dot` primitive yet |
+| `pre#ai-assistant-output` raw classes (contract_detail) | Remain — no `pre-output` primitive yet |
+| Negotiation notes vertical stack (contract_detail) | Remain — `list-row` is horizontal only |
+| Responsive `lg:grid-cols-*` (contract_detail) | Remain — `dash-grid` has no breakpoints |
+| Input shape classes on `input-base` elements | Remain — correct pattern, `input-base` is color-only |
+| `lg:grid-cols-[2fr_1fr]` asymmetric grid (search_results) | Remain — no asymmetric grid primitive |
+| Preset row inner border (search_results) | Remain — no `panel-item` primitive yet |
+| Chart container ARIA labels | Deferred to Batch 5 (requires chart redesign) |
+
+### See
+
+`BATCH4_POST_MIGRATION_AUDIT.md` for full audit report including Batch 5 recommendations.

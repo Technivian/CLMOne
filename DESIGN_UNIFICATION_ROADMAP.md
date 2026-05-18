@@ -923,3 +923,38 @@ Full raw Tailwind — zero canonical primitives. All panels used `bg-white round
 - All URLs/context variables/form params: unchanged
 
 ### Status: ✅ Complete — Batch 4 page migration wave complete
+
+---
+
+## Batch 4 Post-Migration Audit (2026-05-18)
+
+### Scope
+
+All 5 Batch 4 templates: reports_dashboard, identity_telemetry_dashboard, contract_list, contract_detail, search_results.
+
+### Findings
+
+| Finding | Template | Action |
+|---|---|---|
+| 4 sort-arrow SVGs missing `aria-hidden="true"` | contract_list.html | Fixed during audit |
+| Chart JS `className` strings use raw Tailwind colors | reports_dashboard.html | Documented as JS exception (cannot use CSS classes in JS strings without build tooling) |
+| `bg-yellow-400` amber dot indicator | contract_list.html | Documented exception — no `status-dot` primitive yet |
+| `pre#ai-assistant-output` raw classes | contract_detail.html | Re-confirmed documented exception |
+| Negotiation notes `divide-y` vertical stack | contract_detail.html | Re-confirmed documented exception |
+| Responsive `lg:grid-cols-*` in contract_detail | contract_detail.html | Re-confirmed documented exception |
+| Input shape classes (`rounded-xl px-4 py-3 border`) | search_results, contract_list | Re-confirmed correct pattern — `input-base` is color-only |
+| `lg:grid-cols-[2fr_1fr]` asymmetric grid | search_results.html | Re-confirmed documented exception |
+| Preset row inner border | search_results.html | Re-confirmed documented exception |
+
+### Verdict
+
+- ✅ 0 inline styles, 0 inline event handlers, 0 retired classes across all 5 templates
+- ✅ All 5 templates parse clean, 3/3 tests pass, 0 Django issues
+- ✅ All behavior-sensitive elements verified intact
+- ✅ All exceptions reviewed; 9 remain documented, 1 fixed (SVG aria-hidden)
+- ✅ Batch 4 complete and audit-clean
+
+### Docs
+
+- `BATCH4_POST_MIGRATION_AUDIT.md` — created
+- `contract_list.html` — 4 sort SVGs now have `aria-hidden="true"`
