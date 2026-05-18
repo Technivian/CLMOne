@@ -101,6 +101,14 @@ class CMSAegisRepository {
         if (bulkExportButton) {
             bulkExportButton.addEventListener('click', () => this.exportSelectedContracts());
         }
+
+        document.querySelectorAll('[data-action="save-view"]').forEach((btn) => {
+            btn.addEventListener('click', () => this.saveCurrentView());
+        });
+
+        document.querySelectorAll('[data-action="clear-selection"]').forEach((btn) => {
+            btn.addEventListener('click', () => this.clearSelection());
+        });
     }
     
     setupKeyboardShortcuts() {

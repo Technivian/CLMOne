@@ -893,3 +893,70 @@ Note: remove redundant `sr-only` span when visible label text already provides t
 |---|---|
 | `repository.html` | Not started — can begin now |
 | `legal_task_board.html` | Not started — requires `board-*` CSS added to base.html first |
+
+---
+
+## Slice 2 — Step 3 Complete: repository.html (2026-05-18)
+
+### Primitives Normalized
+
+| Before | After |
+|---|---|
+| `<div class="flex items-center justify-between mb-6">` | `page-header` |
+| `text-2xl font-bold c-primary` h1 | `page-title` |
+| `text-sm mt-1 c-muted` subtitle | `page-subtitle` |
+| Raw CTA div | `page-actions` |
+| Decorative SVG in Upload CTA | `aria-hidden="true"` added |
+| `grid grid-cols-4 gap-4 mb-6` KPI grid | `dash-grid dash-grid-4 mb-6` |
+| `rounded-xl p-5 border card-surface` KPI cards | `kpi-card` |
+| `text-xs font-semibold uppercase tracking-widest mb-2 c-muted` KPI labels | `kpi-label` |
+| `text-3xl font-bold c-primary/c-accent/c-primary-brand` KPI values | `kpi-value c-primary/c-accent/c-primary-brand` |
+| `rounded-xl border p-5 stat-card-amber` amber KPI | `kpi-card stat-card-amber` |
+| `rounded-xl border p-4 mb-4 card-surface` saved-views | `panel mb-4` + `panel-inner` |
+| `onclick="window.cmsAegisRepository.saveCurrentView()"` | Removed; `data-action="save-view"` bound via JS |
+| Decorative search SVG (no aria-hidden) | `aria-hidden="true"` added |
+| `rounded-xl border overflow-hidden card-surface` table wrapper | `panel overflow-hidden` |
+| `text-left px-5 py-3 [c-muted] font-semibold uppercase tracking-wide` th | `tbl-th px-5 py-3 text-left text-xs uppercase tracking-wide` |
+| `#select-all` checkbox — no accessible name | `aria-label="Select all"` added |
+| `#selected-count` — no ARIA live region | `aria-live="polite"` added |
+| `onclick="window.cmsAegisRepository.clearSelection()"` | Removed; `data-action="clear-selection"` bound via JS |
+
+### JS Changes (Scoped)
+
+File: `theme/static/js/cms-aegis-repository.js`
+
+Added to `setupEventListeners()`:
+```js
+document.querySelectorAll('[data-action="save-view"]').forEach((btn) => {
+    btn.addEventListener('click', () => this.saveCurrentView());
+});
+document.querySelectorAll('[data-action="clear-selection"]').forEach((btn) => {
+    btn.addEventListener('click', () => this.clearSelection());
+});
+```
+
+No other JS changes made.
+
+### Behavior Preserved
+
+- All `id` attributes consumed by JS controller preserved exactly
+- `data-status-filter` attributes on filter buttons preserved
+- `repo-mini-btn`, `repo-status-filter`, `repo-bulk-bar`, `repo-drawer` custom class names preserved
+- `btn-primary-grad`, `btn-ghost-secondary`, `input-base`, `select-base` preserved
+- `tbl-head` was already canonical — preserved
+- `{% static 'js/cms-aegis-repository.js' %}` script tag preserved
+- All filter/search/sort/pagination/drawer/saved-views/bulk-action/upload behaviors intact
+
+### Validation
+
+- Template parse: OK
+- `manage.py check`: 0 issues
+- `manage.py test contracts`: 3/3 passed
+- Inline handler/style scan: 0 violations
+- Retired/ad-hoc class scan: 0 remaining
+
+### Slice 2 Remaining Steps
+
+| Template | Status |
+|---|---|
+| `legal_task_board.html` | Not started — requires `board-*` CSS added to base.html first |

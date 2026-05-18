@@ -156,10 +156,26 @@ Batch 3 Slice 2 Step 2 outcomes:
 - Decorative SVG → `aria-hidden="true"`.
 - Django check: 0 issues. Template parse: OK. Test suite: 3/3 passed. 0 inline violations.
 
+Batch 3 Slice 2 Step 3 migration (2026-05-18):
+
+Files changed:
+- `theme/templates/contracts/repository.html` — WorkspacePage normalization; inline handler removal
+- `theme/static/js/cms-aegis-repository.js` — two new addEventListener bindings in setupEventListeners()
+
+Primitives applied: page-wrap, page-header, page-title, page-subtitle, page-actions, dash-grid dash-grid-4, kpi-card, kpi-card stat-card-amber, kpi-label, kpi-value, panel, panel-inner, tbl-th (normalized), aria-hidden on decorative SVGs, aria-label on select-all, aria-live="polite" on selected-count.
+
+Inline handlers removed: saveCurrentView onclick → data-action="save-view" (bound via JS); clearSelection onclick → data-action="clear-selection" (bound via JS).
+
+Batch 3 Slice 2 Step 3 outcomes:
+- Template parse: OK
+- manage.py check: 0 issues
+- manage.py test contracts: 3/3 passed
+- Inline handler/style scan: 0 violations
+- Retired/ad-hoc class scan: 0 remaining
+
 Batch 3 Slice 2 remaining templates:
 
-- `theme/templates/contracts/repository.html` (WorkspacePage — JS controller integration) — **can begin now**
-- `theme/templates/contracts/legal_task_board.html` (WorkspacePage/BoardView — Kanban AJAX, highest risk, requires board-* CSS first)
+- `theme/templates/contracts/legal_task_board.html` (WorkspacePage/BoardView — Kanban AJAX, highest risk, requires board-* CSS first) — **can begin now**
 
 Batch 3 targets (8 templates, 1,158 total lines):
 - WorkspacePage: dashboard.html, workflow_dashboard.html, repository.html, privacy_dashboard.html, legal_task_board.html
@@ -170,8 +186,8 @@ Batch 3 scope estimates:
 - Highest-risk page: theme/templates/contracts/legal_task_board.html
 - Safest page: theme/templates/contracts/notification_list.html
 - Recommended migration order: notification_list → deadline_list → privacy_dashboard → operations_dashboard → dashboard → workflow_dashboard → repository → legal_task_board
-- Templates requiring JS changes (scoped): repository.html (inline onclick → data-action), legal_task_board.html (inline onclick → addEventListener)
-- Pre-migration decisions required: dashboard.html (action-chip canonical status), legal_task_board.html (Kanban subvariant governance)
+- Templates requiring JS changes (scoped): legal_task_board.html (inline onclick → addEventListener)
+- Pre-migration decisions required: legal_task_board.html (Kanban subvariant governance, board-* CSS must be added to base.html first)
 
 Expected UX impact if Batch 3 succeeds:
 - Visual coherence across top 5 highest-traffic workspace surfaces.

@@ -344,6 +344,55 @@ Risk level:
 - Inline handler removal is the highest-risk change; mitigated by preserving the same `toggleFilters()` function and only moving binding to script block.
 - Stage badge color mapping visually equivalent to prior raw utility mapping.
 
+### 2026-05-18 - Batch 3 Slice 2 Step 3 (repository.html — WorkspacePage normalization + inline handler removal)
+
+Scope completed:
+
+- `theme/templates/contracts/repository.html` — 95-line JS-driven contract repository; highest controller coupling in Slice 2.
+- `theme/static/js/cms-aegis-repository.js` — two new `addEventListener` bindings added to `setupEventListeners()`.
+
+Changes applied:
+
+- Page wrapper: raw `flex items-center justify-between mb-6` header → `page-wrap`.
+- Header: `page-header` / `page-title` / `page-subtitle` / `page-actions`.
+- Primary CTA: already `btn-primary-grad` — preserved; decorative SVG gained `aria-hidden="true"`.
+- KPI grid: `grid grid-cols-4 gap-4 mb-6` → `dash-grid dash-grid-4 mb-6`.
+- KPI cards (×3): `rounded-xl p-5 border card-surface` → `kpi-card`.
+- KPI labels: raw utility text → `kpi-label`.
+- KPI values: raw utility text → `kpi-value c-[primary/accent/primary-brand]`.
+- Expiring card: `rounded-xl border p-5 stat-card-amber` → `kpi-card stat-card-amber`.
+- Saved-views panel: `rounded-xl border p-4 mb-4 card-surface` → `panel mb-4` + `panel-inner`.
+- Save-view button: `onclick="window.cmsAegisRepository.saveCurrentView()"` → removed; replaced with `data-action="save-view"`; bound via JS.
+- Search input: decorative SVG gained `aria-hidden="true"`.
+- Table wrapper: `rounded-xl border overflow-hidden card-surface` → `panel overflow-hidden`.
+- Table headers: raw utility string → `tbl-th px-5 py-3 text-left text-xs uppercase tracking-wide`.
+- Select-all checkbox: gained `aria-label="Select all"`.
+- Selected-count span: gained `aria-live="polite"`.
+- Clear button: `onclick="window.cmsAegisRepository.clearSelection()"` → removed; replaced with `data-action="clear-selection"`; bound via JS.
+
+What was NOT changed (preserved):
+
+- All `id` attributes consumed by JS controller (`search-input`, `sort-select`, `contracts-table`, `contracts-tbody`, `pagination-container`, `details-drawer`, `saved-views`, `filter-chips`, `bulk-action-bar`, `selected-count`, `select-all`, `repo-bulk-status`, `repo-bulk-assign`, `repo-bulk-export`).
+- `data-status-filter` attributes on filter buttons.
+- Custom JS class names: `repo-mini-btn`, `repo-status-filter`, `repo-bulk-bar`, `repo-drawer`.
+- Already-canonical classes: `btn-primary-grad`, `btn-ghost-secondary`, `input-base`, `select-base`, `tbl-head`.
+- `{% static 'js/cms-aegis-repository.js' %}` script tag.
+- No controller logic or API endpoints touched.
+
+Validation:
+
+- Template parse: OK.
+- `manage.py check`: 0 issues.
+- `manage.py test contracts`: 3/3 passed.
+- Inline handler/style scan: 0 violations.
+- Retired/ad-hoc class scan: 0 remaining.
+
+Risk level:
+
+- Medium — JS controller coupling; mitigated by preserving all IDs, data-attributes, and custom classes exactly; only two inline handlers removed (binding moved to `setupEventListeners()`).
+
+---
+
 ## Phase 1 - Foundation and Governance (Week 1)
 
 Task 1. Define design source-of-truth boundaries
