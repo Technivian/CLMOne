@@ -134,10 +134,31 @@ Batch 3 Slice 2 Step 1 outcomes:
 - Redundant sr-only span (duplicate of visible text) removed.
 - Django check: 0 issues. Template parse: OK. Test suite: 3/3 passed.
 
+Batch 3 Slice 2 Step 2 migration (2026-05-18):
+
+Migrated files:
+
+- `theme/templates/contracts/workflow_dashboard.html` (WorkspacePage — full primitive replacement)
+
+Batch 3 Slice 2 Step 2 outcomes:
+
+- Full WorkspacePage normalization: `page-wrap`, `page-header`, `page-title`, `page-subtitle`, `page-actions`.
+- `bg-teal-600` hardcoded primary CTA replaced with `btn-primary-grad`.
+- Raw secondary buttons/links replaced with `btn-ghost`.
+- Inline `onclick="toggleFilters()"` removed; replaced with `addEventListener` in script block; `aria-expanded`/`aria-controls` added.
+- Filter panel: raw bg/border → `panel` + `panel-inner`; labels → `form-label`.
+- Table: `panel overflow-hidden`, `tbl-head`, `tbl-th`, `tbl-row`, `tbl-td`.
+- Status dots: raw rounded divs → `status-dot [green/blue/yellow/gray]`.
+- Stage badges: raw utility string → `badge-sm badge-[yellow/blue/purple/green/gray]`.
+- Contract links → `c-link`; sub-text → `item-meta`; muted text → `c-muted`.
+- Progress bar: raw Tailwind → `progress-bar-bg` / `progress-bar-fill`; `data-width` JS preserved.
+- Pagination links → `btn-ghost`.
+- Decorative SVG → `aria-hidden="true"`.
+- Django check: 0 issues. Template parse: OK. Test suite: 3/3 passed. 0 inline violations.
+
 Batch 3 Slice 2 remaining templates:
 
-- `theme/templates/contracts/workflow_dashboard.html` (WorkspacePage — inline onclick removal required) — **can begin now**
-- `theme/templates/contracts/repository.html` (WorkspacePage — JS controller integration)
+- `theme/templates/contracts/repository.html` (WorkspacePage — JS controller integration) — **can begin now**
 - `theme/templates/contracts/legal_task_board.html` (WorkspacePage/BoardView — Kanban AJAX, highest risk, requires board-* CSS first)
 
 Batch 3 targets (8 templates, 1,158 total lines):

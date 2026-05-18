@@ -833,3 +833,63 @@ Note: remove redundant `sr-only` span when visible label text already provides t
 | `workflow_dashboard.html` | Not started — can begin now |
 | `repository.html` | Not started |
 | `legal_task_board.html` | Not started — requires `board-*` CSS added to base.html first |
+
+---
+
+## Slice 2 — Step 2 Complete: workflow_dashboard.html (2026-05-18)
+
+### Primitives Normalized
+
+| Before | After |
+|---|---|
+| `<div class="space-y-6">` | `<div class="page-wrap">` |
+| Raw flex header | `page-header` / `page-title` / `page-subtitle` |
+| Raw CTA flex div | `page-actions` |
+| `bg-teal-600 ...` primary CTA | `btn-primary-grad inline-flex` |
+| Raw gray secondary buttons | `btn-ghost` (Templates, Filters, pagination) |
+| `onclick="toggleFilters()"` inline handler | Removed; bound via `addEventListener` in script block |
+| `bg-white p-6 rounded-lg border hidden` filter panel | `panel hidden` + `panel-inner` |
+| `block text-sm font-medium text-gray-700 mb-1` labels | `form-label block mb-1` |
+| `bg-white rounded-lg border border-gray-200 overflow-hidden` | `panel overflow-hidden` |
+| `bg-gray-50` thead | `tbl-head` |
+| `text-xs font-medium text-gray-500 uppercase` th | `tbl-th text-xs uppercase` |
+| `hover:bg-gray-50` tr | `tbl-row hover:bg-gray-50` |
+| `w-3 h-3 rounded-full` status dot | `status-dot [green/blue/yellow/gray]` |
+| `text-blue-600 hover:text-blue-800` link | `c-link` |
+| `text-sm text-gray-500` sub-text | `item-meta` |
+| Raw `inline-flex ... px-2.5 py-0.5` stage badge | `badge-sm badge-[yellow/blue/purple/green/gray]` |
+| `text-sm text-gray-900` td cells | `tbl-td text-sm` |
+| `w-full bg-gray-200 rounded-full h-2` progress bg | `progress-bar-bg` |
+| `bg-blue-600 h-2 rounded-full` progress fill | `progress-bar-fill bg-blue-600` |
+| `text-sm text-gray-600` progress % | `text-sm c-muted` |
+| `text-gray-500` empty state | `c-muted` |
+| `text-blue-600 hover:text-blue-800` empty state link | `c-link` |
+| `text-sm text-gray-700` pagination count | `text-sm c-muted` |
+| Raw pagination button classes | `btn-ghost` |
+| No `aria-hidden` on decorative SVG | `aria-hidden="true"` added |
+| No `aria-expanded/controls` on filter toggle | `aria-expanded` + `aria-controls` added; JS toggles state |
+
+### Behavior Preserved
+
+- Filter GET parameters (`search`, `status`, `contract_type`) unchanged
+- All URL routes preserved (`workflow_create`, `workflow_template_list`, `workflow_detail pk`, `contract_list`)
+- `is_paginated`, `page_obj` pagination context unchanged
+- Progress bar `data-width` JS injection preserved
+- Workflow status and stage conditional logic preserved (class output only changed)
+- `toggleFilters()` function preserved; inline `onclick` replaced with `addEventListener`
+- `aria-hidden`/`aria-expanded` state toggled correctly in JS
+
+### Validation
+
+- Template parse: OK
+- `manage.py check`: 0 issues
+- `manage.py test contracts`: 3/3 passed
+- Inline handler scan: 0 violations
+- `action-chip` scan: 0 references
+
+### Slice 2 Remaining Steps
+
+| Template | Status |
+|---|---|
+| `repository.html` | Not started — can begin now |
+| `legal_task_board.html` | Not started — requires `board-*` CSS added to base.html first |

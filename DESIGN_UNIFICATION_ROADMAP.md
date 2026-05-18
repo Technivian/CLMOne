@@ -289,6 +289,61 @@ Risk level:
 - `action-chip` retirement is the highest-risk item; mitigated by surgical replacement with `btn-ghost` which provides equivalent visual weight and identical hover interaction model.
 - `audit-action` → `badge-sm` produces minor visual difference (uppercase removed, font-size 10px→11px); semantically equivalent.
 
+### 2026-05-18 - Batch 3 Slice 2 Step 2 (workflow_dashboard.html — full WorkspacePage normalization)
+
+Scope completed:
+
+- `theme/templates/contracts/workflow_dashboard.html` — 178-line operational dashboard; first full primitive replacement in Slice 2.
+
+Changes applied:
+
+- Page wrapper: `space-y-6` → `page-wrap`.
+- Header: raw flex div → `page-header` / `page-title` / `page-subtitle`.
+- CTA group: raw flex → `page-actions`.
+- Primary CTA: hardcoded `bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-md` → `btn-primary-grad inline-flex items-center gap-2`.
+- Secondary CTAs: raw gray buttons/links → `btn-ghost` (Templates, Filters, pagination links).
+- Inline handler removed: `onclick="toggleFilters()"` stripped from Filters button; binding moved to `addEventListener` in script block; `aria-expanded` + `aria-controls` added for ARIA disclosure.
+- Filter panel: `bg-white p-6 rounded-lg border border-gray-200` → `panel` + `panel-inner` wrapper.
+- Filter labels: raw `block text-sm font-medium text-gray-700 mb-1` → `form-label block mb-1`.
+- Table container: `bg-white rounded-lg border border-gray-200 overflow-hidden` → `panel overflow-hidden`.
+- Table head: `bg-gray-50` → `tbl-head`.
+- Table headers: raw gray utility string → `tbl-th px-6 py-3 text-left text-xs uppercase tracking-wider`.
+- Table rows: raw `hover:bg-gray-50` → `tbl-row hover:bg-gray-50`.
+- Status dots: `w-3 h-3 rounded-full bg-X-400` → `status-dot [green/blue/yellow/gray]`.
+- Contract title links: `text-blue-600 hover:text-blue-800` → `c-link`.
+- Counterparty sub-text: `text-sm text-gray-500` → `item-meta`.
+- Stage badges: raw `inline-flex ... px-2.5 py-0.5 rounded-full text-xs font-medium bg-X-100 text-X-800` → `badge-sm badge-[yellow/blue/purple/green/gray]`.
+- Table data cells: `text-sm text-gray-900` → `tbl-td text-sm`.
+- Progress bar: `w-full bg-gray-200 rounded-full h-2` → `progress-bar-bg`; `bg-blue-600 h-2 rounded-full` → `progress-bar-fill bg-blue-600`. `data-width` JS injection preserved.
+- Progress percentage text: `text-sm text-gray-600` → `text-sm c-muted`.
+- Empty state: `text-gray-500` → `c-muted`; link `text-blue-600 hover:text-blue-800` → `c-link`.
+- Pagination count: `text-sm text-gray-700` → `text-sm c-muted`.
+- `aria-hidden="true"` added to decorative SVG in primary CTA.
+- `toggleFilters()` JS updated to also toggle `aria-hidden` on panel and `aria-expanded` on button.
+
+What was NOT changed (preserved):
+
+- Filter GET parameters (`search`, `status`, `contract_type`) unchanged.
+- All URL routes (`workflow_create`, `workflow_template_list`, `workflow_detail pk`, `contract_list`) unchanged.
+- `is_paginated`, `page_obj` pagination context unchanged.
+- Progress bar `data-width` attribute and JS injection behavior unchanged.
+- Workflow status/stage conditional logic preserved; only class output changed.
+- `btn-primary` on filter form submit unchanged (defined in components.css; per-scope correct usage).
+
+Validation:
+
+- Template parse: OK.
+- `manage.py check`: 0 issues.
+- `manage.py test contracts`: 3/3 passed.
+- Inline handler/style scan: 0 violations.
+- `action-chip` / `bg-teal-600` scan: 0 remaining references.
+
+Risk level:
+
+- Low-Medium
+- Inline handler removal is the highest-risk change; mitigated by preserving the same `toggleFilters()` function and only moving binding to script block.
+- Stage badge color mapping visually equivalent to prior raw utility mapping.
+
 ## Phase 1 - Foundation and Governance (Week 1)
 
 Task 1. Define design source-of-truth boundaries
