@@ -768,3 +768,11 @@ Already present from prior batch work: `page-wrap`, `page-header`, `page-title`,
 - `grid grid-cols-1 md:grid-cols-2 gap-4` in invoice_form — responsive grid, `panel-2col` has no breakpoints
 
 ### Next: retention_policy wave (retention_policy_list.html, retention_policy_detail.html, retention_policy_form.html if it exists)
+
+---
+
+## Batch 5 Step 3 — c-success Token Cleanup ✅ COMPLETE (2026-05-18)
+
+Added `c-success` (`#16A34A`) to base.html. Replaced 2 `text-green-600` raw utility uses in invoice_list.html and invoice_detail.html. Documented in DESIGN_CONSTITUTION.md §12. All exceptions from Batch 5 Step 2 now resolved.
+
+**Next:** retention_policy page wave
