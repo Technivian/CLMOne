@@ -489,6 +489,20 @@
         .empty-state { padding: 32px 22px; text-align: center; color: var(--text-muted); font-size: 13px; }
         .empty-state svg { width: 32px; height: 32px; margin: 0 auto 10px; opacity: 0.3; }
 
+        /* Filter chips (canonical filter tab controls for QueuePage / ExceptionPage filter toolbars) */
+        .chip {
+            display: inline-flex; align-items: center;
+            padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 500;
+            text-decoration: none; transition: background 0.15s, color 0.15s; cursor: pointer;
+            border: 1px solid transparent;
+        }
+        .chip-active   { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .chip-inactive { background: var(--surface); color: var(--text-secondary); border-color: var(--border); }
+        .chip-inactive:hover { background: var(--sidebar-hover); color: var(--text-primary); }
+        [data-theme="light"] .chip-active   { background: var(--primary); color: #fff; }
+        [data-theme="light"] .chip-inactive { background: #F3F4F6; color: #374151; border-color: #E5E7EB; }
+        [data-theme="light"] .chip-inactive:hover { background: #E5E7EB; color: #111827; }
+
         /* Action chips (quick-action buttons in page headers) */
         .action-chip {
             display: inline-flex; align-items: center; gap: 6px;

@@ -10,6 +10,140 @@ CMS Aegis is a multi-tenant Django CLM / legal operations platform with contract
 
 The app is **demo-ready** and **internally MVP-ready** for a CLM pilot. The current checkout can be taken to a `GO` release-gate state by running the synthetic Sprint 3 evidence seed + release evidence bundle command. The remaining production gap is live integration proof and rollback / restore evidence, not basic code correctness.
 
+## UI Design Unification Status (Phase 2)
+
+Latest pass: 2026-05-18 (Classification-only mapping pass)
+
+Classification artifact:
+
+- `DESIGN_ARCHETYPE_MAP.md`
+
+Classification coverage:
+
+- Templates scanned: 123
+- UI routes classified: 190
+- Recommended archetype totals:
+  - QueuePage: 28
+  - WorkspacePage: 20
+  - CommandPage: 32
+  - NetworkPage: 16
+  - ExceptionPage: 19
+  - Unknown / Needs decision: 8
+
+Classification-only outcomes:
+
+- Complete template-level planning matrix now exists with: current archetype, recommended archetype, confidence, drift notes, migration priority/risk, and dependencies.
+- Major named UI routes now have recommended archetype mapping for migration planning.
+- Top migration candidates and recommended Batch 3 scope are explicitly documented.
+
+Classification pass risk level:
+
+- None (no runtime template changes were made)
+
+Previous migration batch: 2026-05-18 (Batch 1)
+
+Migrated files:
+
+- `theme/templates/contracts/contract_list.html`
+- `theme/templates/contracts/risk_log_list.html`
+- `theme/templates/contracts/budget_list.html`
+- `theme/templates/contracts/trademark_request_list.html`
+
+Batch outcomes:
+
+- Canonical page headers applied (`page-wrap`, `page-header`, `page-title`, `page-subtitle`).
+- Canonical form-field primitives maintained (`form-input`, `form-select`).
+- Canonical table surface + row patterns applied (`panel`, `tbl-*`, removal of inline row hover handlers).
+- Canonical status badge primitives applied (`badge-sm` + semantic badge variants).
+
+Remaining inconsistent areas:
+
+- Multiple list/detail templates still use ad-hoc status pills and non-canonical table wrappers.
+- Some pages still use custom header structures and mixed spacing rhythm.
+- `contracts/forms.py` still contains hardcoded utility class constants pending canonical form primitive migration.
+
+Visual-risk level (latest batch):
+
+- Low-to-medium
+- Rationale: no business logic changes, no new visual styles, and no architecture changes; only primitive consolidation.
+
+Pattern-first update (2026-05-18):
+
+- Canonical page archetypes defined in `DESIGN_ARCHETYPE_PATTERNS.md`.
+- Reusable wrappers/examples added in `theme/templates/patterns/archetype_wrappers_examples.html`.
+
+Batch 2 migrated files (QueuePage archetype):
+
+- `theme/templates/contracts/client_list.html`
+- `theme/templates/contracts/matter_list.html`
+- `theme/templates/contracts/document_list.html`
+
+Batch 2 outcomes:
+
+- Queue pages now follow canonical header, filter, table, badge, and spacing behavior.
+- Business logic, data behavior, and routes preserved.
+
+Batch 2 visual-risk level:
+
+- Low-to-medium
+- Rationale: strict archetype/pattern migration without introducing new visual systems or one-off designs.
+
+Batch 3 pre-migration planning (2026-05-18):
+
+- Strict execution checklist created before any template edits begin.
+- Full per-template analysis completed for all 8 Batch 3 candidates.
+- Artifact: `BATCH3_WORKSPACE_MIGRATION_PLAN.md`
+- Status: Planning only — no templates modified.
+
+Batch 3 Slice 1 migration (2026-05-18):
+
+Migrated files:
+
+- `theme/templates/contracts/notification_list.html` (ExceptionPage)
+- `theme/templates/contracts/deadline_list.html` (ExceptionPage)
+- `theme/templates/contracts/privacy_dashboard.html` (WorkspacePage)
+- `theme/templates/contracts/operations_dashboard.html` (ExceptionPage)
+
+Batch 3 Slice 1 outcomes:
+
+- `chip`, `chip-active`, `chip-inactive` filter control primitives added to `base.html` (token-backed, light/dark variant).
+- Canonical `page-wrap`, `page-header`, `page-title`, `page-subtitle` applied to all 4 templates.
+- Canonical `panel`, `panel-head`, `panel-title` applied to table/card surfaces.
+- Canonical `dash-grid dash-grid-4|3|2`, `kpi-card`, `stat-card-lg` applied to dashboard grid layouts.
+- Canonical `tbl-head`, `tbl-th`, `tbl-row`, `tbl-td` applied to all tables.
+- Canonical `badge-sm` + semantic badge variants applied to all status/priority indicators.
+- Canonical `btn-primary-grad`, `btn-ghost` applied to all action buttons.
+- `aria-label` added to form action buttons and icon-only indicators; `aria-hidden` on decorative SVGs; `role="region"` on drill command block.
+- `overflow-x-auto` table wrapper added for mobile safety.
+- Zero business logic changes. Zero inline event handlers introduced. Zero routing changes.
+- Django check: 0 issues. Template parse: 4/4 OK. Test suite: 3/3 passed.
+
+Batch 3 Slice 2 (remaining 4 templates) — not yet started:
+
+- `theme/templates/dashboard.html` (WorkspacePage — highest traffic, action-chip retirement)
+- `theme/templates/contracts/workflow_dashboard.html` (WorkspacePage — inline onclick removal required)
+- `theme/templates/contracts/repository.html` (WorkspacePage — JS controller integration)
+- `theme/templates/contracts/legal_task_board.html` (WorkspacePage/BoardView — Kanban AJAX, highest risk)
+
+Batch 3 targets (8 templates, 1,158 total lines):
+- WorkspacePage: dashboard.html, workflow_dashboard.html, repository.html, privacy_dashboard.html, legal_task_board.html
+- ExceptionPage: operations_dashboard.html, deadline_list.html, notification_list.html
+
+Batch 3 scope estimates:
+- Estimated migration difficulty: Medium overall; High for legal_task_board.html
+- Highest-risk page: theme/templates/contracts/legal_task_board.html
+- Safest page: theme/templates/contracts/notification_list.html
+- Recommended migration order: notification_list → deadline_list → privacy_dashboard → operations_dashboard → dashboard → workflow_dashboard → repository → legal_task_board
+- Templates requiring JS changes (scoped): repository.html (inline onclick → data-action), legal_task_board.html (inline onclick → addEventListener)
+- Pre-migration decisions required: dashboard.html (action-chip canonical status), legal_task_board.html (Kanban subvariant governance)
+
+Expected UX impact if Batch 3 succeeds:
+- Visual coherence across top 5 highest-traffic workspace surfaces.
+- 25% of all WorkspacePage templates (5 of 20) on canonical primitive system.
+- Inline event handler violations eliminated from 2 pages.
+- Accessibility baseline improved (ARIA roles, aria-label, aria-hidden on icons).
+- Token-backed primitives replacing hardcoded utility stacks on 4 fully-raw templates.
+
 ## What The App Is For
 
 ### Main user roles

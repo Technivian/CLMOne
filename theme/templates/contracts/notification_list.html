@@ -1,55 +1,66 @@
 {% extends "base.html" %}
 {% block title %}Notifications - CMS Aegis{% endblock %}
 {% block content %}
-<div class="flex items-center justify-between mb-6">
+<div class="page-wrap">
+  <div class="page-header">
     <div>
-        <h1 class="text-2xl font-bold text-gray-900">Notifications</h1>
-        <p class="text-sm text-gray-500">{{ unread_count }} unread</p>
+      <h1 class="page-title">Notifications</h1>
+      <p class="page-subtitle">{{ unread_count }} unread</p>
     </div>
     {% if unread_count > 0 %}
-    <form method="post" action="{% url 'contracts:mark_all_notifications_read' %}">
+    <div class="page-actions">
+      <form method="post" action="{% url 'contracts:mark_all_notifications_read' %}">
         {% csrf_token %}
-        <button type="submit" class="px-3 py-2 bg-gray-100 text-gray-700 text-sm rounded-lg hover:bg-gray-200">Mark all as read</button>
-    </form>
-    {% endif %}
-</div>
-<div class="flex flex-wrap gap-2 mb-4">
-    <a href="{% url 'contracts:notification_list' %}" class="px-3 py-2 rounded-full text-sm {% if not filter_state and not filter_type %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">All</a>
-    <a href="{% url 'contracts:notification_list' %}?state=unread" class="px-3 py-2 rounded-full text-sm {% if filter_state == 'unread' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">Unread</a>
-    <a href="{% url 'contracts:notification_list' %}?state=read" class="px-3 py-2 rounded-full text-sm {% if filter_state == 'read' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">Read</a>
-    <a href="{% url 'contracts:notification_list' %}?type=SYSTEM" class="px-3 py-2 rounded-full text-sm {% if filter_type == 'SYSTEM' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">System</a>
-    <a href="{% url 'contracts:notification_list' %}?type=APPROVAL" class="px-3 py-2 rounded-full text-sm {% if filter_type == 'APPROVAL' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">Approvals</a>
-    <a href="{% url 'contracts:notification_list' %}?type=TASK" class="px-3 py-2 rounded-full text-sm {% if filter_type == 'TASK' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">Tasks</a>
-    <a href="{% url 'contracts:notification_list' %}?type=DEADLINE" class="px-3 py-2 rounded-full text-sm {% if filter_type == 'DEADLINE' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">Deadlines</a>
-</div>
-<div class="bg-white rounded-xl border border-gray-200">
-    <div class="divide-y divide-gray-100">
-        {% for notification in notifications %}
-        <div class="flex items-start gap-4 px-5 py-4 {% if not notification.is_read %}bg-blue-50{% endif %}">
-            <div class="flex-shrink-0 mt-1">
-                {% if notification.notification_type == 'DEADLINE' %}
-                    <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center"><svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
-                {% elif notification.notification_type == 'TASK' %}
-                    <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center"><svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg></div>
-                {% else %}
-                    <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center"><svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg></div>
-                {% endif %}
-            </div>
-            <div class="flex-1">
-                <div class="text-sm font-medium text-gray-900">{{ notification.title }}</div>
-                <div class="text-sm text-gray-600 mt-0.5">{{ notification.message }}</div>
-                <div class="text-xs text-gray-400 mt-1">{{ notification.created_at|timesince }} ago</div>
-            </div>
-            {% if not notification.is_read %}
-            <form method="post" action="{% url 'contracts:mark_notification_read' notification.pk %}">
-                {% csrf_token %}
-                <button type="submit" class="text-xs text-blue-600 hover:text-blue-800">Mark read</button>
-            </form>
-            {% endif %}
-        </div>
-        {% empty %}
-        <div class="px-5 py-12 text-center text-gray-400">No notifications.</div>
-        {% endfor %}
+        <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border btn-ghost">Mark all as read</button>
+      </form>
     </div>
+    {% endif %}
+  </div>
+
+  <div class="flex flex-wrap gap-2 mb-6">
+    <a href="{% url 'contracts:notification_list' %}" class="chip {% if not filter_state and not filter_type %}chip-active{% else %}chip-inactive{% endif %}">All</a>
+    <a href="{% url 'contracts:notification_list' %}?state=unread" class="chip {% if filter_state == 'unread' %}chip-active{% else %}chip-inactive{% endif %}">Unread</a>
+    <a href="{% url 'contracts:notification_list' %}?state=read" class="chip {% if filter_state == 'read' %}chip-active{% else %}chip-inactive{% endif %}">Read</a>
+    <a href="{% url 'contracts:notification_list' %}?type=SYSTEM" class="chip {% if filter_type == 'SYSTEM' %}chip-active{% else %}chip-inactive{% endif %}">System</a>
+    <a href="{% url 'contracts:notification_list' %}?type=APPROVAL" class="chip {% if filter_type == 'APPROVAL' %}chip-active{% else %}chip-inactive{% endif %}">Approvals</a>
+    <a href="{% url 'contracts:notification_list' %}?type=TASK" class="chip {% if filter_type == 'TASK' %}chip-active{% else %}chip-inactive{% endif %}">Tasks</a>
+    <a href="{% url 'contracts:notification_list' %}?type=DEADLINE" class="chip {% if filter_type == 'DEADLINE' %}chip-active{% else %}chip-inactive{% endif %}">Deadlines</a>
+  </div>
+
+  <div class="panel">
+    {% for notification in notifications %}
+    {# Preserve unread background signal: bg-blue-50 is an unread-state indicator until a semantic token is available #}
+    <div class="list-row {% if not notification.is_read %}bg-blue-50{% endif %}">
+      <div class="flex-shrink-0 mt-0.5">
+        {% if notification.notification_type == 'DEADLINE' %}
+          <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center" aria-label="Deadline notification">
+            <svg class="w-4 h-4 text-red-600" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          </div>
+        {% elif notification.notification_type == 'TASK' %}
+          <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center" aria-label="Task notification">
+            <svg class="w-4 h-4 text-blue-600" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+          </div>
+        {% else %}
+          <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center" aria-label="System notification">
+            <svg class="w-4 h-4 text-gray-600" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+          </div>
+        {% endif %}
+      </div>
+      <div class="flex-1 min-w-0">
+        <div class="text-sm font-medium c-primary">{{ notification.title }}</div>
+        <div class="text-sm c-muted mt-0.5">{{ notification.message }}</div>
+        <div class="item-meta mt-1">{{ notification.created_at|timesince }} ago</div>
+      </div>
+      {% if not notification.is_read %}
+      <form method="post" action="{% url 'contracts:mark_notification_read' notification.pk %}">
+        {% csrf_token %}
+        <button type="submit" class="text-xs c-link hover:opacity-80" aria-label="Mark notification as read">Mark read</button>
+      </form>
+      {% endif %}
+    </div>
+    {% empty %}
+    <div class="empty-state">No notifications.</div>
+    {% endfor %}
+  </div>
 </div>
 {% endblock %}
