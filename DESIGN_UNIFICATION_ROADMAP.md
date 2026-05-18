@@ -1124,3 +1124,34 @@ Note: `status-dot` was already defined. `dot-{color}` family was already defined
 - Raw color exceptions: 2 `text-green-600` (intentional — no `c-success`)
 
 ### Status: ✅ Complete — retention_policy wave can begin
+
+---
+
+## Batch 5 Step 3 — c-success Token Cleanup (2026-05-18)
+
+### Scope
+- `theme/templates/base.html` — added `c-success` CSS utility
+- `theme/templates/contracts/invoice_list.html` — replaced `text-green-600` → `c-success`
+- `theme/templates/contracts/invoice_detail.html` — replaced `text-green-600` → `c-success`
+- `DESIGN_CONSTITUTION.md` — documented `c-success` in §12 color utilities
+
+### Token Added
+
+| Class | Value | Semantic use |
+|---|---|---|
+| `.c-success` | `#16A34A` (green-700) | Paid amounts, positive balance, success emphasis |
+
+Chosen value is darker than `badge-green` text (#15803D) for legibility at body size; consistent family.
+
+### Exceptions Resolved
+- `text-green-600` on Total Paid stat card (invoice_list) → `c-success` ✅
+- `text-green-600` on Paid balance row (invoice_detail) → `c-success` ✅
+
+### Validation
+- Template parse: ✅ 2/2 OK
+- manage.py check: ✅ 0 issues
+- Tests: ✅ 3/3 passed
+- Inline styles: ✅ 0
+- text-green-600 remaining in invoice pages: ✅ 0
+
+### Status: ✅ Complete — retention_policy wave can begin

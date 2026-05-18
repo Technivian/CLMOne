@@ -26,7 +26,7 @@
         {% if invoice.tax_rate %}<div class="flex justify-between text-sm mb-2"><span class="c-muted">Tax ({{ invoice.tax_rate }}%)</span><span>${{ invoice.tax_amount|floatformat:2 }}</span></div>{% endif %}
         <div class="flex justify-between text-lg font-bold border-t pt-2 mt-2"><span>Total</span><span>${{ invoice.total_amount|floatformat:2 }}</span></div>
         {% if invoice.amount_paid %}
-        <div class="flex justify-between text-sm text-green-600 mt-2"><span>Paid</span><span>-${{ invoice.amount_paid|floatformat:2 }}</span></div>
+        <div class="flex justify-between text-sm c-success mt-2"><span>Paid</span><span>-${{ invoice.amount_paid|floatformat:2 }}</span></div>
         <div class="flex justify-between text-lg font-bold c-warning mt-1"><span>Balance Due</span><span>${{ invoice.balance_due|floatformat:2 }}</span></div>
         {% endif %}
       </div>

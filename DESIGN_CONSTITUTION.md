@@ -110,6 +110,7 @@ Semantic text color utilities:
   - `c-danger` — error/critical emphasis (`#F87171`, red-400)
   - `c-warning` — warning/amber emphasis (`#F59E0B`, amber-500) — Added: 2026-05-18
   - `c-info` — informational/blue emphasis (`#60A5FA`, blue-400) — Added: 2026-05-18
+  - `c-success` — positive/paid/success emphasis (`#16A34A`, green-700) — Added: 2026-05-18
   - `c-success-soft` — positive/green soft emphasis (`#86EFAC`, green-300)
   - `c-primary-brand` — brand accent color (maps to `--primary`)
 - Use these classes instead of raw `text-*` Tailwind utilities for semantic meaning.
