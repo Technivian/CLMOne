@@ -1,65 +1,70 @@
 {% extends "base.html" %}
 {% block title %}Clients - CMS Aegis{% endblock %}
 {% block content %}
-<div class="flex items-center justify-between mb-6">
+<div class="page-wrap">
+<div class="page-header">
     <div>
-        <h1 class="text-2xl font-bold text-gray-900">Clients</h1>
-        <p class="text-sm text-gray-500 mt-1">{{ total_clients }} total &middot; {{ active_clients }} active</p>
+        <h1 class="page-title">Clients</h1>
+        <p class="page-subtitle">{{ total_clients }} total &middot; {{ active_clients }} active</p>
     </div>
-    <a href="{% url 'contracts:client_create' %}" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">
+    <a href="{% url 'contracts:client_create' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 btn-primary-grad">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
         New Client
     </a>
 </div>
-<form method="get" class="mb-4 flex gap-2">
-    <input type="text" name="q" value="{{ search_query }}" placeholder="Search clients..." class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-    <select name="status" class="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white" onchange="this.form.submit()">
+
+<form method="get" class="mb-4 flex items-center gap-2 flex-wrap">
+    <input type="text" name="q" value="{{ search_query }}" placeholder="Search clients..." class="flex-1 min-w-0 px-3 py-2 text-sm rounded-lg border form-input">
+    <select name="status" class="px-3 py-2 text-sm rounded-lg border form-select" onchange="this.form.submit()">
         <option value="">All Statuses</option>
         <option value="ACTIVE" {% if request.GET.status == 'ACTIVE' %}selected{% endif %}>Active</option>
         <option value="INACTIVE" {% if request.GET.status == 'INACTIVE' %}selected{% endif %}>Inactive</option>
         <option value="PROSPECTIVE" {% if request.GET.status == 'PROSPECTIVE' %}selected{% endif %}>Prospective</option>
     </select>
-    <button type="submit" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200">Search</button>
+    <button type="submit" class="px-3 py-2 text-sm rounded-lg border btn-ghost">Search</button>
 </form>
-<div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-    <table class="w-full">
-        <thead class="bg-gray-50">
+
+<div class="panel overflow-hidden stat-card">
+    <table class="w-full text-sm">
+        <thead class="tbl-head">
             <tr>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Name</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Type</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Industry</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Contact</th>
-                <th class="text-right px-5 py-3 text-xs font-medium text-gray-500 uppercase">Actions</th>
+                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Name</th>
+                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Type</th>
+                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Status</th>
+                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Industry</th>
+                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Contact</th>
+                <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Actions</th>
             </tr>
         </thead>
-        <tbody class="divide-y divide-gray-100">
+        <tbody>
             {% for client in clients %}
-            <tr class="hover:bg-gray-50">
-                <td class="px-5 py-3">
-                    <a href="{% url 'contracts:client_detail' client.pk %}" class="text-sm font-medium text-blue-600 hover:text-blue-800">{{ client.name }}</a>
+            <tr class="border-b transition-colors tbl-row">
+                <td class="px-5 py-3.5">
+                    <a href="{% url 'contracts:client_detail' client.pk %}" class="font-medium c-link">{{ client.name }}</a>
                 </td>
-                <td class="px-5 py-3 text-sm text-gray-600">{{ client.get_client_type_display }}</td>
-                <td class="px-5 py-3">
-                    <span class="text-xs px-2 py-1 rounded-full {% if client.status == 'ACTIVE' %}bg-green-100 text-green-800{% elif client.status == 'PROSPECTIVE' %}bg-blue-100 text-blue-800{% else %}bg-gray-100 text-gray-600{% endif %}">{{ client.get_status_display }}</span>
+                <td class="px-5 py-3.5 tbl-td">{{ client.get_client_type_display }}</td>
+                <td class="px-5 py-3.5">
+                    <span class="badge-sm {% if client.status == 'ACTIVE' %}badge-green{% elif client.status == 'PROSPECTIVE' %}badge-blue{% else %}badge-gray{% endif %}">{{ client.get_status_display }}</span>
                 </td>
-                <td class="px-5 py-3 text-sm text-gray-600">{{ client.industry|default:"—" }}</td>
-                <td class="px-5 py-3 text-sm text-gray-600">{{ client.email|default:"—" }}</td>
-                <td class="px-5 py-3 text-right">
-                    <a href="{% url 'contracts:client_update' client.pk %}" class="text-xs text-gray-500 hover:text-blue-600">Edit</a>
+                <td class="px-5 py-3.5 tbl-td">{{ client.industry|default:"—" }}</td>
+                <td class="px-5 py-3.5 tbl-td">{{ client.email|default:"—" }}</td>
+                <td class="px-5 py-3.5 text-right">
+                    <a href="{% url 'contracts:client_update' client.pk %}" class="text-xs font-medium px-2.5 py-1 rounded-md border transition-opacity hover:opacity-80 btn-ghost">Edit</a>
                 </td>
             </tr>
             {% empty %}
-            <tr><td colspan="6" class="px-5 py-12 text-center text-gray-400">No clients found. <a href="{% url 'contracts:client_create' %}" class="text-blue-600">Add your first client</a></td></tr>
+            <tr><td colspan="6" class="px-5 py-12 text-center c-muted">No clients found. <a href="{% url 'contracts:client_create' %}" class="c-link">Add your first client</a></td></tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
+
 {% if is_paginated %}
-<div class="mt-4 flex justify-center gap-2">
-    {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-1 bg-white border border-gray-300 rounded text-sm">Previous</a>{% endif %}
-    <span class="px-3 py-1 text-sm text-gray-600">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-    {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}" class="px-3 py-1 bg-white border border-gray-300 rounded text-sm">Next</a>{% endif %}
+<div class="mt-4 flex items-center justify-center gap-2">
+    {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-1.5 text-sm rounded-lg border btn-ghost">Previous</a>{% endif %}
+    <span class="px-3 py-1.5 text-sm c-muted">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}" class="px-3 py-1.5 text-sm rounded-lg border btn-ghost">Next</a>{% endif %}
 </div>
 {% endif %}
+</div>
 {% endblock %}
