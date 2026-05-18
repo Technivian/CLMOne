@@ -583,3 +583,23 @@ The following `bg-blue-50` / `bg-red-50` usages in templates are decorative pane
 ### Slice B Readiness
 
 ✅ **Slice B can begin** — `contract_detail.html` is the next candidate.
+
+---
+
+## Batch 4 Step 4 — Slice B: contract_list.html QueuePage Migration
+
+**Status:** ✅ Complete
+
+### Changes
+
+| File | Change |
+|---|---|
+| `theme/templates/contracts/contract_list.html` | Removed `contracts-list-page` class; added `page-actions` wrapper; `aria-hidden="true"` on all decorative SVGs |
+| `DESIGN_ARCHETYPE_MAP.md` | `contract_list.html` marked MIGRATED |
+| `DESIGN_UNIFICATION_ROADMAP.md` | Step 4 Slice B log entry added |
+
+### Primitives Applied
+
+Already present from prior batch work: `page-wrap`, `page-header`, `page-title`, `page-subtitle`, `page-actions`, `stat-card`, `stat-card-amber`, `tabs-shell`, `tab-pill-*`, `panel`, `tbl-head`, `tbl-th`, `tbl-row`, `tbl-td`, `badge-sm`, `badge-expiring`, `btn-primary-grad`, `btn-ghost`, `btn-soft-primary`, `c-*`, `row-expiring`
+
+### Next: contract_detail.html (Slice B continues)
