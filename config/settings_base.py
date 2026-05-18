@@ -1,4 +1,5 @@
 import os
+import re
 import subprocess
 from pathlib import Path
 from urllib.parse import parse_qsl, unquote, urlparse
@@ -158,8 +159,15 @@ def _database_config_from_env() -> dict:
 
     # Deployment providers and dashboards sometimes store pasted DSNs with
     # wrapping quotes; strip one matching pair before parsing the URL.
-    if len(database_url) >= 2 and database_url[0] == database_url[-1] and database_url[0] in {'"', "'"}:
+    if len(database_url) >= 2 and database_url[0] == database_url[-1] and database_url[0] in {'"', "'", '`'}:
         database_url = database_url[1:-1].strip()
+
+    # Some UIs or docs copy text like "External Database URL: postgresql://..."
+    # or include markdown wrappers. Pull out the first DSN-looking token.
+    if not database_url.lower().startswith(('postgres://', 'postgresql://', 'sqlite:///')):
+        dsn_match = re.search(r'(postgres(?:ql)?://\S+|sqlite:///\S+)', database_url, flags=re.IGNORECASE)
+        if dsn_match:
+            database_url = dsn_match.group(1).rstrip('"\'`>)')
 
     parsed = urlparse(database_url)
     scheme = (parsed.scheme or '').lower()
