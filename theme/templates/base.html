@@ -70,6 +70,8 @@
             --avatar-gradient: linear-gradient(135deg, #2563EB, #1D4ED8);
             --btn-gradient: linear-gradient(135deg, #2563EB, #1D4ED8);
             --logo-gradient: linear-gradient(135deg, #2563EB, #1D4ED8);
+            --row-unread-bg: rgba(37,99,235,0.08);
+            --row-overdue-bg: rgba(239,68,68,0.08);
         }
 
         [data-theme="light"] {
@@ -113,6 +115,8 @@
             --avatar-gradient: linear-gradient(135deg, #204A83, #2D67C2);
             --btn-gradient: linear-gradient(135deg, #1F4F9E, #2D67C2);
             --logo-gradient: linear-gradient(135deg, #1B436F, #2C5C9B);
+            --row-unread-bg: #EFF6FF;
+            --row-overdue-bg: #FEF2F2;
         }
 
         [data-theme="light"] .top-bar {
@@ -694,6 +698,8 @@
             .avatar-gradient-bg { background: var(--avatar-gradient); }
             .metric-trust { color: #4ADE80; letter-spacing: -0.02em; }
             .row-expiring { border-left: 3px solid rgba(245,158,11,0.7); }
+            .row-unread  { background: var(--row-unread-bg); }
+            .row-overdue { background: var(--row-overdue-bg); }
             .badge-expiring {
                 background: rgba(245,158,11,0.12);
                 color: #FBBF24;

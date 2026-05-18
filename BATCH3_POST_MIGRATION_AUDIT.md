@@ -183,21 +183,15 @@ The following ad-hoc utility classes remain in use because no semantic token cov
 
 ### `bg-blue-50` — Unread row tint
 
-**Location:** `notification_list.html` line 33  
-**Usage:** `<div class="list-row {% if not notification.is_read %}bg-blue-50{% endif %}">`  
-**Semantic intent:** Background tint for unread notification rows  
-**Token gap:** No `--row-unread-bg` token exists  
-**Recommended token:** `--row-unread-bg: #EFF6FF` (light mode); dark-mode equivalent TBD  
-**Risk if resolved:** Low — single-file change once token defined  
+**Status: RESOLVED — Batch 4 Step 1 (2026-05-18)**
+
+Replaced `bg-blue-50` → `row-unread` in `notification_list.html`. Token `--row-unread-bg` defined in `base.html` for both dark (`rgba(37,99,235,0.08)`) and light (`#EFF6FF`) themes.
 
 ### `bg-red-50` — Overdue row tint
 
-**Location:** `deadline_list.html` line 39  
-**Usage:** `<tr class="tbl-row {% if deadline.is_overdue %}bg-red-50{% endif %}">`  
-**Semantic intent:** Background tint for overdue deadline rows  
-**Token gap:** No `--row-overdue-bg` or `--row-exception-bg` token exists  
-**Recommended token:** `--row-overdue-bg: #FEF2F2` (light mode); dark-mode equivalent TBD  
-**Risk if resolved:** Low — single-file change once token defined  
+**Status: RESOLVED — Batch 4 Step 1 (2026-05-18)**
+
+Replaced `bg-red-50` → `row-overdue` in `deadline_list.html`. Token `--row-overdue-bg` defined in `base.html` for both dark (`rgba(239,68,68,0.08)`) and light (`#FEF2F2`) themes.  
 
 ### `text-red-500` — Active legal-hold KPI value
 

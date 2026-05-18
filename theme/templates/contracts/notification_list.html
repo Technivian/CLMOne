@@ -29,8 +29,7 @@
 
   <div class="panel">
     {% for notification in notifications %}
-    {# Preserve unread background signal: bg-blue-50 is an unread-state indicator until a semantic token is available #}
-    <div class="list-row {% if not notification.is_read %}bg-blue-50{% endif %}">
+    <div class="list-row {% if not notification.is_read %}row-unread{% endif %}">
       <div class="flex-shrink-0 mt-0.5">
         {% if notification.notification_type == 'DEADLINE' %}
           <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center" aria-label="Deadline notification">

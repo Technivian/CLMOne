@@ -480,6 +480,24 @@ Full audit report: `BATCH3_POST_MIGRATION_AUDIT.md`
 
 ---
 
+### 2026-05-18 - Batch 4 Step 1 — Row-state token debt cleanup
+
+**Scope:** Token definition + 2 template replacements. No page migration.
+
+**Changes:**
+- `base.html`: Added `--row-unread-bg` and `--row-overdue-bg` CSS variables to both dark (`:root`) and light (`[data-theme="light"]`) token blocks.
+- `base.html`: Added `.row-unread` and `.row-overdue` semantic row-state classes alongside existing `.row-expiring`.
+- `notification_list.html`: `bg-blue-50` → `row-unread` (unread row tint)
+- `deadline_list.html`: `bg-red-50` → `row-overdue` (overdue row tint)
+- `DESIGN_CONSTITUTION.md`: Added "Row state tints" subsection documenting canonical row-state classes and token values.
+- `BATCH3_POST_MIGRATION_AUDIT.md`: Token gap entries for `bg-blue-50` and `bg-red-50` marked RESOLVED.
+
+**Remaining token gaps:** None from Batch 3. `text-red-500` exceptions were resolved in post-migration audit.
+
+**Validation:** manage.py check 0 issues, 2 templates parse OK, 3/3 tests pass.
+
+---
+
 ## Phase 1 - Foundation and Governance (Week 1)
 
 Task 1. Define design source-of-truth boundaries

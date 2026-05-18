@@ -475,3 +475,52 @@ All 8 Batch 3 templates passed the post-migration audit. Full report: `BATCH3_PO
 - Template parse: 8/8 OK
 - manage.py check: 0 issues
 - manage.py test contracts: 3/3 passed
+
+---
+
+## Batch 4 Step 1 — Row-State Token Debt Cleanup (2026-05-18)
+
+**Scope:** Token definition and 2 template replacements. No page migration.
+
+### Tokens Added to base.html
+
+| Token | Dark value | Light value |
+|---|---|---|
+| `--row-unread-bg` | `rgba(37,99,235,0.08)` | `#EFF6FF` |
+| `--row-overdue-bg` | `rgba(239,68,68,0.08)` | `#FEF2F2` |
+
+### Classes Added to base.html
+
+| Class | CSS |
+|---|---|
+| `.row-unread` | `background: var(--row-unread-bg)` |
+| `.row-overdue` | `background: var(--row-overdue-bg)` |
+
+### Raw Utility Exceptions Resolved
+
+| Was | Now | Template |
+|---|---|---|
+| `bg-blue-50` | `row-unread` | `notification_list.html` |
+| `bg-red-50` | `row-overdue` | `deadline_list.html` |
+
+### Remaining Raw Color Usages (Intentional — Not Row-State)
+
+The following `bg-blue-50` / `bg-red-50` usages in templates are decorative panel/button/banner colors — not row-state — and are explicitly NOT replaced by this cleanup:
+
+- `profile.html` — info/warning card banners
+- `workflow_template_detail.html` — step card hover + info banner
+- `workflow_detail.html` — current-step panel tint
+- `contract_form.html` — drag handle and button hover colors
+- `signature_request_detail.html` — status banners and action buttons
+- `organization_team.html` — inline team action buttons
+- `clause_template_detail.html` — selected version card highlight
+- `workflow_form.html` — info banner
+- JS strings in `obligations_list.html`, `clause_library.html`, `templates_list.html`, `reports_dashboard.html` — toast/chart colors
+
+### Validation
+
+- manage.py check: 0 issues
+- Template parse: notification_list.html OK, deadline_list.html OK
+- Tests: 3/3 passed
+
+**Batch 4 page migration wave (reports_dashboard.html, identity_telemetry_dashboard.html, contract_detail.html, contract_list.html, search_results.html) can now begin.**

@@ -36,7 +36,7 @@
         <tbody>
           {% for deadline in deadlines %}
           {# Preserve overdue row tinting: exception-state signal; preserve until semantic token available #}
-          <tr class="border-b transition-colors tbl-row {% if deadline.is_overdue %}bg-red-50{% endif %}">
+          <tr class="border-b transition-colors tbl-row {% if deadline.is_overdue %}row-overdue{% endif %}">
             <td class="px-5 py-3.5 tbl-td">
               <div class="text-sm font-medium c-primary">{{ deadline.title|truncatechars:40 }}</div>
               {% if deadline.matter %}<div class="item-meta">{{ deadline.matter.matter_number }}</div>{% endif %}
