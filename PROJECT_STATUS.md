@@ -10,6 +10,202 @@ CMS Aegis is a multi-tenant Django CLM / legal operations platform with contract
 
 The app is **demo-ready** and **internally MVP-ready** for a CLM pilot. The current checkout can be taken to a `GO` release-gate state by running the synthetic Sprint 3 evidence seed + release evidence bundle command. The remaining production gap is live integration proof and rollback / restore evidence, not basic code correctness.
 
+## UI Design Unification Status (Phase 2)
+
+Latest pass: 2026-05-18 (Classification-only mapping pass)
+
+Classification artifact:
+
+- `DESIGN_ARCHETYPE_MAP.md`
+
+Classification coverage:
+
+- Templates scanned: 123
+- UI routes classified: 190
+- Recommended archetype totals:
+  - QueuePage: 28
+  - WorkspacePage: 20
+  - CommandPage: 32
+  - NetworkPage: 16
+  - ExceptionPage: 19
+  - Unknown / Needs decision: 8
+
+Classification-only outcomes:
+
+- Complete template-level planning matrix now exists with: current archetype, recommended archetype, confidence, drift notes, migration priority/risk, and dependencies.
+- Major named UI routes now have recommended archetype mapping for migration planning.
+- Top migration candidates and recommended Batch 3 scope are explicitly documented.
+
+Classification pass risk level:
+
+- None (no runtime template changes were made)
+
+Previous migration batch: 2026-05-18 (Batch 1)
+
+Migrated files:
+
+- `theme/templates/contracts/contract_list.html`
+- `theme/templates/contracts/risk_log_list.html`
+- `theme/templates/contracts/budget_list.html`
+- `theme/templates/contracts/trademark_request_list.html`
+
+Batch outcomes:
+
+- Canonical page headers applied (`page-wrap`, `page-header`, `page-title`, `page-subtitle`).
+- Canonical form-field primitives maintained (`form-input`, `form-select`).
+- Canonical table surface + row patterns applied (`panel`, `tbl-*`, removal of inline row hover handlers).
+- Canonical status badge primitives applied (`badge-sm` + semantic badge variants).
+
+Remaining inconsistent areas:
+
+- Multiple list/detail templates still use ad-hoc status pills and non-canonical table wrappers.
+- Some pages still use custom header structures and mixed spacing rhythm.
+- `contracts/forms.py` still contains hardcoded utility class constants pending canonical form primitive migration.
+
+Visual-risk level (latest batch):
+
+- Low-to-medium
+- Rationale: no business logic changes, no new visual styles, and no architecture changes; only primitive consolidation.
+
+Pattern-first update (2026-05-18):
+
+- Canonical page archetypes defined in `DESIGN_ARCHETYPE_PATTERNS.md`.
+- Reusable wrappers/examples added in `theme/templates/patterns/archetype_wrappers_examples.html`.
+
+Batch 2 migrated files (QueuePage archetype):
+
+- `theme/templates/contracts/client_list.html`
+- `theme/templates/contracts/matter_list.html`
+- `theme/templates/contracts/document_list.html`
+
+Batch 2 outcomes:
+
+- Queue pages now follow canonical header, filter, table, badge, and spacing behavior.
+- Business logic, data behavior, and routes preserved.
+
+Batch 2 visual-risk level:
+
+- Low-to-medium
+- Rationale: strict archetype/pattern migration without introducing new visual systems or one-off designs.
+
+Batch 3 pre-migration planning (2026-05-18):
+
+- Strict execution checklist created before any template edits begin.
+- Full per-template analysis completed for all 8 Batch 3 candidates.
+- Artifact: `BATCH3_WORKSPACE_MIGRATION_PLAN.md`
+- Status: Planning only — no templates modified.
+
+Batch 3 Slice 1 migration (2026-05-18):
+
+Migrated files:
+
+- `theme/templates/contracts/notification_list.html` (ExceptionPage)
+- `theme/templates/contracts/deadline_list.html` (ExceptionPage)
+- `theme/templates/contracts/privacy_dashboard.html` (WorkspacePage)
+- `theme/templates/contracts/operations_dashboard.html` (ExceptionPage)
+
+Batch 3 Slice 1 outcomes:
+
+- `chip`, `chip-active`, `chip-inactive` filter control primitives added to `base.html` (token-backed, light/dark variant).
+- Canonical `page-wrap`, `page-header`, `page-title`, `page-subtitle` applied to all 4 templates.
+- Canonical `panel`, `panel-head`, `panel-title` applied to table/card surfaces.
+- Canonical `dash-grid dash-grid-4|3|2`, `kpi-card`, `stat-card-lg` applied to dashboard grid layouts.
+- Canonical `tbl-head`, `tbl-th`, `tbl-row`, `tbl-td` applied to all tables.
+- Canonical `badge-sm` + semantic badge variants applied to all status/priority indicators.
+- Canonical `btn-primary-grad`, `btn-ghost` applied to all action buttons.
+- `aria-label` added to form action buttons and icon-only indicators; `aria-hidden` on decorative SVGs; `role="region"` on drill command block.
+- `overflow-x-auto` table wrapper added for mobile safety.
+- Zero business logic changes. Zero inline event handlers introduced. Zero routing changes.
+- Django check: 0 issues. Template parse: 4/4 OK. Test suite: 3/3 passed.
+
+Batch 3 Slice 2 Step 1 migration (2026-05-18):
+
+Migrated files:
+
+- `theme/templates/dashboard.html` (WorkspacePage — action-chip retirement + normalization)
+- `theme/templates/base.html` (removed `.action-chip` CSS block — class fully retired)
+
+Batch 3 Slice 2 Step 1 outcomes:
+
+- `action-chip` is now fully retired from the design system. Zero references remain in any template.
+- 3 × `action-chip` CTAs replaced with `btn-ghost` in dashboard.html page-actions.
+- `audit-action` non-canonical badge replaced with `badge-sm` + semantic variant.
+- `aria-hidden="true"` applied to all decorative SVGs in dashboard.html.
+- Redundant sr-only span (duplicate of visible text) removed.
+- Django check: 0 issues. Template parse: OK. Test suite: 3/3 passed.
+
+Batch 3 Slice 2 Step 2 migration (2026-05-18):
+
+Migrated files:
+
+- `theme/templates/contracts/workflow_dashboard.html` (WorkspacePage — full primitive replacement)
+
+Batch 3 Slice 2 Step 2 outcomes:
+
+- Full WorkspacePage normalization: `page-wrap`, `page-header`, `page-title`, `page-subtitle`, `page-actions`.
+- `bg-teal-600` hardcoded primary CTA replaced with `btn-primary-grad`.
+- Raw secondary buttons/links replaced with `btn-ghost`.
+- Inline `onclick="toggleFilters()"` removed; replaced with `addEventListener` in script block; `aria-expanded`/`aria-controls` added.
+- Filter panel: raw bg/border → `panel` + `panel-inner`; labels → `form-label`.
+- Table: `panel overflow-hidden`, `tbl-head`, `tbl-th`, `tbl-row`, `tbl-td`.
+- Status dots: raw rounded divs → `status-dot [green/blue/yellow/gray]`.
+- Stage badges: raw utility string → `badge-sm badge-[yellow/blue/purple/green/gray]`.
+- Contract links → `c-link`; sub-text → `item-meta`; muted text → `c-muted`.
+- Progress bar: raw Tailwind → `progress-bar-bg` / `progress-bar-fill`; `data-width` JS preserved.
+- Pagination links → `btn-ghost`.
+- Decorative SVG → `aria-hidden="true"`.
+- Django check: 0 issues. Template parse: OK. Test suite: 3/3 passed. 0 inline violations.
+
+Batch 3 Slice 2 Step 3 migration (2026-05-18):
+
+Files changed:
+- `theme/templates/contracts/repository.html` — WorkspacePage normalization; inline handler removal
+- `theme/static/js/cms-aegis-repository.js` — two new addEventListener bindings in setupEventListeners()
+
+Primitives applied: page-wrap, page-header, page-title, page-subtitle, page-actions, dash-grid dash-grid-4, kpi-card, kpi-card stat-card-amber, kpi-label, kpi-value, panel, panel-inner, tbl-th (normalized), aria-hidden on decorative SVGs, aria-label on select-all, aria-live="polite" on selected-count.
+
+Inline handlers removed: saveCurrentView onclick → data-action="save-view" (bound via JS); clearSelection onclick → data-action="clear-selection" (bound via JS).
+
+Batch 3 Slice 2 Step 3 outcomes:
+- Template parse: OK
+- manage.py check: 0 issues
+- manage.py test contracts: 3/3 passed
+- Inline handler/style scan: 0 violations
+- Retired/ad-hoc class scan: 0 remaining
+
+Batch 3 Slice 2 Step 4 migration (2026-05-18):
+
+Files changed:
+- `theme/templates/base.html` — BoardView CSS block added (board-track, board-col, board-col-head, board-card)
+- `theme/templates/contracts/legal_task_board.html` — Full WorkspacePage/BoardView normalization; inline handler removal
+
+Primitives applied: page-wrap, page-header, page-title, page-subtitle, page-actions, board-track, board-col, board-col-head, board-card, badge-sm badge-gray (column count), badge-sm badge-[red/yellow/green] (priority), item-meta, c-link, c-danger, panel, panel-inner, input-base, empty-state, role="region"/role="article" ARIA structure.
+
+Inline handlers removed: `onclick="updateTaskStatus()"` → `data-action="complete-task"` bound via IIFE addEventListener. `updateTaskStatus` function wrapped in IIFE (global scope eliminated).
+
+Batch 3 Slice 2 Step 4 outcomes:
+- Template parse: OK
+- manage.py check: 0 issues
+- manage.py test contracts: 3/3 passed
+- Inline handler/style scan: 0 violations
+- Retired/ad-hoc class scan: 0 remaining
+- Board CSS verified in base.html: all 5 rules present
+
+Remaining accessibility gap: drag-and-drop column movement not keyboard accessible (not faked). Only "Complete" (→ DONE) transition is keyboard reachable. Full column movement documented for Batch 4.
+
+**Batch 3 Complete — all 8 templates migrated.**
+
+Batch 3 targets (8 templates, 1,158 total lines):
+- WorkspacePage: dashboard.html, workflow_dashboard.html, repository.html, privacy_dashboard.html, legal_task_board.html ✅
+- ExceptionPage: operations_dashboard.html, deadline_list.html, notification_list.html ✅
+
+Expected UX impact if Batch 3 succeeds:
+- Visual coherence across top 5 highest-traffic workspace surfaces.
+- 25% of all WorkspacePage templates (5 of 20) on canonical primitive system.
+- Inline event handler violations eliminated from 2 pages.
+- Accessibility baseline improved (ARIA roles, aria-label, aria-hidden on icons).
+- Token-backed primitives replacing hardcoded utility stacks on 4 fully-raw templates.
+
 ## What The App Is For
 
 ### Main user roles
@@ -244,3 +440,87 @@ Treat the app as:
 6. Consolidate experimental UI shells and demo templates.
 7. Keep release evidence bundle commands attached to the release workflow.
 8. Add stronger live E2E coverage for the major user flows.
+
+---
+
+## Batch 3 Post-Migration Audit (2026-05-18)
+
+**Verdict: PASS**
+
+All 8 Batch 3 templates passed the post-migration audit. Full report: `BATCH3_POST_MIGRATION_AUDIT.md`.
+
+### Audit Fixes Applied
+
+| Fix | File | Type |
+|---|---|---|
+| `input-field` × 3 → `input-base` / `select-base` | workflow_dashboard.html | Pre-existing violation fixed |
+| `text-red-500` → `c-danger` on legal-hold KPI | privacy_dashboard.html | Minor canonical substitution |
+| `text-red-500` → `c-danger` on job error text | operations_dashboard.html | Minor canonical substitution |
+
+### Remaining Documented Exceptions
+
+| Exception | Template | Disposition |
+|---|---|---|
+| `bg-blue-50` unread row tint | notification_list.html | Token gap — needs `--row-unread-bg` in Batch 4 |
+| `bg-red-50` overdue row tint | deadline_list.html | Token gap — needs `--row-overdue-bg` in Batch 4 |
+| Drag-and-drop keyboard column movement | legal_task_board.html | ARIA gap — deferred to Batch 4 JS work |
+
+### Batch 3 Final State
+
+- 8/8 templates archived as MIGRATED in DESIGN_ARCHETYPE_MAP.md
+- 0 inline handlers remaining
+- 0 inline styles remaining
+- 0 retired classes remaining
+- 0 undefined primitive classes remaining
+- Template parse: 8/8 OK
+- manage.py check: 0 issues
+- manage.py test contracts: 3/3 passed
+
+---
+
+## Batch 4 Step 1 — Row-State Token Debt Cleanup (2026-05-18)
+
+**Scope:** Token definition and 2 template replacements. No page migration.
+
+### Tokens Added to base.html
+
+| Token | Dark value | Light value |
+|---|---|---|
+| `--row-unread-bg` | `rgba(37,99,235,0.08)` | `#EFF6FF` |
+| `--row-overdue-bg` | `rgba(239,68,68,0.08)` | `#FEF2F2` |
+
+### Classes Added to base.html
+
+| Class | CSS |
+|---|---|
+| `.row-unread` | `background: var(--row-unread-bg)` |
+| `.row-overdue` | `background: var(--row-overdue-bg)` |
+
+### Raw Utility Exceptions Resolved
+
+| Was | Now | Template |
+|---|---|---|
+| `bg-blue-50` | `row-unread` | `notification_list.html` |
+| `bg-red-50` | `row-overdue` | `deadline_list.html` |
+
+### Remaining Raw Color Usages (Intentional — Not Row-State)
+
+The following `bg-blue-50` / `bg-red-50` usages in templates are decorative panel/button/banner colors — not row-state — and are explicitly NOT replaced by this cleanup:
+
+- `profile.html` — info/warning card banners
+- `workflow_template_detail.html` — step card hover + info banner
+- `workflow_detail.html` — current-step panel tint
+- `contract_form.html` — drag handle and button hover colors
+- `signature_request_detail.html` — status banners and action buttons
+- `organization_team.html` — inline team action buttons
+- `clause_template_detail.html` — selected version card highlight
+- `workflow_form.html` — info banner
+- JS strings in `obligations_list.html`, `clause_library.html`, `templates_list.html`, `reports_dashboard.html` — toast/chart colors
+
+### Validation
+
+- manage.py check: 0 issues
+- Template parse: notification_list.html OK, deadline_list.html OK
+- Tests: 3/3 passed
+
+**Batch 4 page migration wave (reports_dashboard.html, identity_telemetry_dashboard.html, contract_detail.html, contract_list.html, search_results.html) can now begin.**

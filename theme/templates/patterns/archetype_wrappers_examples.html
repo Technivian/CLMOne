@@ -1,0 +1,98 @@
+{% comment %}
+Archetype Wrapper Examples (copy-paste starter snippets)
+Source of truth: DESIGN_ARCHETYPE_PATTERNS.md and DESIGN_CONSTITUTION.md
+These are wrapper examples only; do not introduce new styles here.
+{% endcomment %}
+
+{% comment %} QueuePage Wrapper {% endcomment %}
+<div class="page-wrap">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">{{ page_title }}</h1>
+      <p class="page-subtitle">{{ page_subtitle }}</p>
+    </div>
+    <a href="{{ primary_action_url }}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 btn-primary-grad">{{ primary_action_label }}</a>
+  </div>
+
+  <div class="flex items-center gap-3 mb-4 flex-wrap">
+    <form method="get" class="flex items-center gap-2 flex-1 min-w-0">
+      <input type="text" name="q" class="w-full px-3 py-2 text-sm rounded-lg border form-input" placeholder="Search...">
+      <select name="status" class="px-3 py-2 text-sm rounded-lg border form-select"></select>
+      <button type="submit" class="px-3 py-2 text-sm rounded-lg border btn-ghost">Search</button>
+    </form>
+  </div>
+
+  <div class="panel overflow-hidden stat-card">
+    <table class="w-full text-sm">
+      <thead class="tbl-head">
+        <tr>
+          <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Column</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b transition-colors tbl-row">
+          <td class="px-5 py-3.5 tbl-td">Row</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% comment %} WorkspacePage Wrapper {% endcomment %}
+<div class="page-wrap">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">{{ page_title }}</h1>
+      <p class="page-subtitle">{{ page_subtitle }}</p>
+    </div>
+  </div>
+  <div class="dash-grid dash-grid-2-1">
+    <div class="panel card-surface"></div>
+    <div class="panel card-surface"></div>
+  </div>
+</div>
+
+{% comment %} CommandPage Wrapper {% endcomment %}
+<div class="page-wrap page-max-w">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">{{ page_title }}</h1>
+      <p class="page-subtitle">{{ page_subtitle }}</p>
+    </div>
+  </div>
+  <div class="panel panel-inner card-surface section-grid">
+    <div class="form-grid">
+      <div class="form-field">
+        <label class="form-label">Field</label>
+        <input class="w-full px-3 py-2 text-sm rounded-lg border form-input">
+      </div>
+    </div>
+    <div class="btn-group">
+      <button class="px-4 py-2 text-sm font-semibold text-white rounded-lg btn-primary-grad">Run</button>
+      <button class="px-4 py-2 text-sm rounded-lg border btn-ghost">Cancel</button>
+    </div>
+  </div>
+</div>
+
+{% comment %} NetworkPage Wrapper {% endcomment %}
+<div class="page-wrap">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">{{ page_title }}</h1>
+      <p class="page-subtitle">{{ page_subtitle }}</p>
+    </div>
+  </div>
+  <div class="panel overflow-hidden table-card"></div>
+</div>
+
+{% comment %} ExceptionPage Wrapper {% endcomment %}
+<div class="page-wrap">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">{{ page_title }}</h1>
+      <p class="page-subtitle">{{ page_subtitle }}</p>
+    </div>
+  </div>
+  <div class="alert-banner alert-banner-red">Exception summary</div>
+  <div class="panel overflow-hidden stat-card"></div>
+</div>

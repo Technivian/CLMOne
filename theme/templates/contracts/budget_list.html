@@ -1,13 +1,13 @@
-
 {% extends 'base.html' %}
 
 {% block title %}Budgets - CMS Aegis{% endblock %}
 
 {% block content %}
-<div class="flex items-center justify-between mb-6">
+<div class="page-wrap">
+<div class="page-header">
     <div>
-        <h1 class="text-2xl font-bold c-primary">Budgets</h1>
-        <p class="text-sm mt-1 c-muted">Plan allocations and monitor spend across departments.</p>
+        <h1 class="page-title">Budgets</h1>
+        <p class="page-subtitle">Plan allocations and monitor spend across departments.</p>
     </div>
     <a href="{% url 'contracts:budget_create' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 btn-primary-grad">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
@@ -15,7 +15,7 @@
     </a>
 </div>
 
-<div class="grid grid-cols-3 gap-4 mb-6">
+<div class="dash-grid dash-grid-3 mb-6">
     <div class="rounded-xl p-5 border stat-card">
         <p class="text-xs font-semibold uppercase tracking-widest mb-2 c-muted">Total Budgets</p>
         <p class="text-3xl font-bold c-primary">{{ total_budgets }}</p>
@@ -61,7 +61,7 @@
     </form>
 </div>
 
-<div class="rounded-xl border overflow-hidden stat-card">
+<div class="panel overflow-hidden stat-card">
     <table class="w-full text-sm">
         <thead class="tbl-head">
             <tr>
@@ -76,7 +76,7 @@
         </thead>
         <tbody>
             {% for budget in budgets %}
-            <tr class="border-b transition-colors tbl-row" onmouseover="this.style.background='var(--surface)'" onmouseout="this.style.background=''">
+            <tr class="border-b transition-colors tbl-row">
                 <td class="px-5 py-3.5">
                     <a href="{% url 'contracts:budget_detail' budget.pk %}" class="font-medium c-link">{{ budget.department }}</a>
                     {% if budget.description %}<p class="text-xs mt-0.5 c-muted">{{ budget.description|truncatechars:72 }}</p>{% endif %}
@@ -93,5 +93,6 @@
             {% endfor %}
         </tbody>
     </table>
+</div>
 </div>
 {% endblock %}

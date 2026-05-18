@@ -1,62 +1,75 @@
 {% extends "base.html" %}
 {% block title %}Deadlines - CMS Aegis{% endblock %}
 {% block content %}
-<div class="flex items-center justify-between mb-6">
+<div class="page-wrap">
+  <div class="page-header">
     <div>
-        <h1 class="text-2xl font-bold text-gray-900">Deadlines & Calendar</h1>
-        <p class="text-sm text-gray-500">{{ upcoming_count }} upcoming &middot; {{ overdue_count }} overdue</p>
+      <h1 class="page-title">Deadlines &amp; Calendar</h1>
+      <p class="page-subtitle">{{ upcoming_count }} upcoming &middot; {{ overdue_count }} overdue</p>
     </div>
-    <a href="{% url 'contracts:deadline_create' %}" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">New Deadline</a>
-</div>
-<div class="flex gap-2 mb-4">
-    <a href="?show=upcoming" class="px-3 py-1.5 text-sm rounded-lg {% if show == 'upcoming' %}bg-blue-100 text-blue-800{% else %}bg-gray-100 text-gray-600{% endif %}">Upcoming</a>
-    <a href="?show=overdue" class="px-3 py-1.5 text-sm rounded-lg {% if show == 'overdue' %}bg-red-100 text-red-800{% else %}bg-gray-100 text-gray-600{% endif %}">Overdue ({{ overdue_count }})</a>
-    <a href="?show=completed" class="px-3 py-1.5 text-sm rounded-lg {% if show == 'completed' %}bg-green-100 text-green-800{% else %}bg-gray-100 text-gray-600{% endif %}">Completed</a>
-    <a href="?show=all" class="px-3 py-1.5 text-sm rounded-lg {% if show == 'all' %}bg-gray-200 text-gray-800{% else %}bg-gray-100 text-gray-600{% endif %}">All</a>
-</div>
-<div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-    <table class="w-full">
-        <thead class="bg-gray-50">
-            <tr>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Deadline</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Type</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Priority</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Due Date</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Assigned To</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th class="text-right px-5 py-3 text-xs font-medium text-gray-500 uppercase">Actions</th>
-            </tr>
+    <div class="page-actions">
+      <a href="{% url 'contracts:deadline_create' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 btn-primary-grad">New Deadline</a>
+    </div>
+  </div>
+
+  <div class="flex gap-2 mb-6">
+    <a href="?show=upcoming" class="chip {% if show == 'upcoming' %}chip-active{% else %}chip-inactive{% endif %}">Upcoming</a>
+    <a href="?show=overdue" class="chip {% if show == 'overdue' %}chip-active{% else %}chip-inactive{% endif %}">Overdue ({{ overdue_count }})</a>
+    <a href="?show=completed" class="chip {% if show == 'completed' %}chip-active{% else %}chip-inactive{% endif %}">Completed</a>
+    <a href="?show=all" class="chip {% if show == 'all' %}chip-active{% else %}chip-inactive{% endif %}">All</a>
+  </div>
+
+  <div class="panel overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="tbl-head">
+          <tr>
+            <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Deadline</th>
+            <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Type</th>
+            <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Priority</th>
+            <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Due Date</th>
+            <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Assigned To</th>
+            <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Status</th>
+            <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Actions</th>
+          </tr>
         </thead>
-        <tbody class="divide-y divide-gray-100">
-            {% for deadline in deadlines %}
-            <tr class="hover:bg-gray-50 {% if deadline.is_overdue %}bg-red-50{% endif %}">
-                <td class="px-5 py-3">
-                    <div class="text-sm font-medium text-gray-900">{{ deadline.title|truncatechars:40 }}</div>
-                    {% if deadline.matter %}<div class="text-xs text-gray-500">{{ deadline.matter.matter_number }}</div>{% endif %}
-                </td>
-                <td class="px-5 py-3 text-sm text-gray-600">{{ deadline.get_deadline_type_display }}</td>
-                <td class="px-5 py-3"><span class="text-xs px-2 py-1 rounded-full {% if deadline.priority == 'CRITICAL' %}bg-red-100 text-red-800{% elif deadline.priority == 'HIGH' %}bg-orange-100 text-orange-800{% elif deadline.priority == 'MEDIUM' %}bg-yellow-100 text-yellow-800{% else %}bg-gray-100 text-gray-600{% endif %}">{{ deadline.get_priority_display }}</span></td>
-                <td class="px-5 py-3 text-sm {% if deadline.is_overdue %}text-red-600 font-medium{% else %}text-gray-600{% endif %}">{{ deadline.due_date|date:"M d, Y" }}</td>
-                <td class="px-5 py-3 text-sm text-gray-600">{{ deadline.assigned_to.get_full_name|default:"Unassigned" }}</td>
-                <td class="px-5 py-3">
-                    {% if deadline.is_completed %}<span class="text-xs px-2 py-1 rounded-full bg-green-100 text-green-800">Done</span>
-                    {% elif deadline.is_overdue %}<span class="text-xs px-2 py-1 rounded-full bg-red-100 text-red-800">Overdue</span>
-                    {% else %}<span class="text-xs text-gray-500">{{ deadline.days_remaining }}d left</span>{% endif %}
-                </td>
-                <td class="px-5 py-3 text-right flex gap-2 justify-end">
-                    {% if not deadline.is_completed %}
-                    <form method="post" action="{% url 'contracts:deadline_complete' deadline.pk %}">
-                        {% csrf_token %}
-                        <button type="submit" class="text-xs text-green-600 hover:text-green-800">Complete</button>
-                    </form>
-                    {% endif %}
-                    <a href="{% url 'contracts:deadline_update' deadline.pk %}" class="text-xs text-gray-500 hover:text-blue-600">Edit</a>
-                </td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="7" class="px-5 py-12 text-center text-gray-400">No deadlines found.</td></tr>
-            {% endfor %}
+        <tbody>
+          {% for deadline in deadlines %}
+          {# Preserve overdue row tinting: exception-state signal; preserve until semantic token available #}
+          <tr class="border-b transition-colors tbl-row {% if deadline.is_overdue %}row-overdue{% endif %}">
+            <td class="px-5 py-3.5 tbl-td">
+              <div class="text-sm font-medium c-primary">{{ deadline.title|truncatechars:40 }}</div>
+              {% if deadline.matter %}<div class="item-meta">{{ deadline.matter.matter_number }}</div>{% endif %}
+            </td>
+            <td class="px-5 py-3.5 tbl-td">{{ deadline.get_deadline_type_display }}</td>
+            <td class="px-5 py-3.5 tbl-td">
+              <span class="badge-sm {% if deadline.priority == 'CRITICAL' %}badge-red{% elif deadline.priority == 'HIGH' %}badge-red{% elif deadline.priority == 'MEDIUM' %}badge-yellow{% else %}badge-gray{% endif %}">{{ deadline.get_priority_display }}</span>
+            </td>
+            <td class="px-5 py-3.5 tbl-td {% if deadline.is_overdue %}text-red-600 font-medium{% endif %}">{{ deadline.due_date|date:"M d, Y" }}</td>
+            <td class="px-5 py-3.5 tbl-td">{{ deadline.assigned_to.get_full_name|default:"Unassigned" }}</td>
+            <td class="px-5 py-3.5 tbl-td">
+              {% if deadline.is_completed %}<span class="badge-sm badge-green">Done</span>
+              {% elif deadline.is_overdue %}<span class="badge-sm badge-red">Overdue</span>
+              {% else %}<span class="badge-sm badge-gray">{{ deadline.days_remaining }}d left</span>{% endif %}
+            </td>
+            <td class="px-5 py-3.5 tbl-td text-right">
+              <div class="inline-flex items-center gap-2">
+                {% if not deadline.is_completed %}
+                <form method="post" action="{% url 'contracts:deadline_complete' deadline.pk %}">
+                  {% csrf_token %}
+                  <button type="submit" class="text-xs font-medium c-link hover:opacity-80" aria-label="Mark {{ deadline.title|truncatechars:30 }} as complete">Complete</button>
+                </form>
+                {% endif %}
+                <a href="{% url 'contracts:deadline_update' deadline.pk %}" class="text-xs font-medium c-muted hover:c-link">Edit</a>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="7" class="empty-state">No deadlines found.</td></tr>
+          {% endfor %}
         </tbody>
-    </table>
+      </table>
+    </div>
+  </div>
 </div>
 {% endblock %}

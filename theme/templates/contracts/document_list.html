@@ -1,21 +1,26 @@
 {% extends "base.html" %}
 {% block title %}Documents - CMS Aegis{% endblock %}
 {% block content %}
-<div class="flex items-center justify-between mb-6">
-    <div><h1 class="text-2xl font-bold text-gray-900">Document Management</h1></div>
-    <div class="flex items-center gap-2">
-        <a href="{% url 'contracts:document_ocr_queue' %}" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50">
+<div class="page-wrap">
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Document Management</h1>
+        <p class="page-subtitle">Search, review, and maintain document records across matters.</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'contracts:document_ocr_queue' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border btn-ghost">
             OCR Queue
         </a>
-        <a href="{% url 'contracts:document_create' %}" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">
+        <a href="{% url 'contracts:document_create' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 btn-primary-grad">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
             Upload Document
         </a>
     </div>
 </div>
-<form method="get" class="mb-4 flex gap-2">
-    <input type="text" name="q" value="{{ request.GET.q }}" placeholder="Search documents..." class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm">
-    <select name="type" class="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white" onchange="this.form.submit()">
+
+<form method="get" class="mb-4 flex items-center gap-2 flex-wrap">
+    <input type="text" name="q" value="{{ request.GET.q }}" placeholder="Search documents..." class="flex-1 min-w-0 px-3 py-2 text-sm rounded-lg border form-input">
+    <select name="type" class="px-3 py-2 text-sm rounded-lg border form-select" onchange="this.form.submit()">
         <option value="">All Types</option>
         <option value="CONTRACT">Contract</option>
         <option value="COURT_FILING">Court Filing</option>
@@ -23,40 +28,42 @@
         <option value="MEMO">Memorandum</option>
         <option value="RESEARCH">Legal Research</option>
     </select>
-    <button type="submit" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm">Search</button>
+    <button type="submit" class="px-3 py-2 text-sm rounded-lg border btn-ghost">Search</button>
 </form>
-<div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-    <table class="w-full">
-        <thead class="bg-gray-50">
+
+<div class="panel overflow-hidden stat-card">
+    <table class="w-full text-sm">
+        <thead class="tbl-head">
             <tr>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Title</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Type</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Matter</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Version</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Uploaded</th>
-                <th class="text-right px-5 py-3 text-xs font-medium text-gray-500 uppercase">Actions</th>
+                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Title</th>
+                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Type</th>
+                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Status</th>
+                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Matter</th>
+                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Version</th>
+                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Uploaded</th>
+                <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Actions</th>
             </tr>
         </thead>
-        <tbody class="divide-y divide-gray-100">
+        <tbody>
             {% for doc in documents %}
-            <tr class="hover:bg-gray-50">
-                <td class="px-5 py-3">
-                    <a href="{% url 'contracts:document_detail' doc.pk %}" class="text-sm font-medium text-blue-600 hover:text-blue-800">{{ doc.title|truncatechars:40 }}</a>
-                    {% if doc.is_privileged %}<span class="ml-1 text-xs bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded">Privileged</span>{% endif %}
-                    {% if doc.is_confidential %}<span class="ml-1 text-xs bg-red-100 text-red-800 px-1.5 py-0.5 rounded">Confidential</span>{% endif %}
+            <tr class="border-b transition-colors tbl-row">
+                <td class="px-5 py-3.5">
+                    <a href="{% url 'contracts:document_detail' doc.pk %}" class="font-medium c-link">{{ doc.title|truncatechars:40 }}</a>
+                    {% if doc.is_privileged %}<span class="badge-sm badge-yellow ml-1">Privileged</span>{% endif %}
+                    {% if doc.is_confidential %}<span class="badge-sm badge-red ml-1">Confidential</span>{% endif %}
                 </td>
-                <td class="px-5 py-3 text-sm text-gray-600">{{ doc.get_document_type_display }}</td>
-                <td class="px-5 py-3"><span class="text-xs px-2 py-1 rounded-full {% if doc.status == 'FINAL' %}bg-green-100 text-green-800{% elif doc.status == 'REVIEW' %}bg-yellow-100 text-yellow-800{% else %}bg-gray-100 text-gray-600{% endif %}">{{ doc.get_status_display }}</span></td>
-                <td class="px-5 py-3 text-sm text-gray-600">{{ doc.matter.matter_number|default:"—" }}</td>
-                <td class="px-5 py-3 text-sm text-gray-600">v{{ doc.version }}</td>
-                <td class="px-5 py-3 text-sm text-gray-500">{{ doc.created_at|date:"M d, Y" }}</td>
-                <td class="px-5 py-3 text-right"><a href="{% url 'contracts:document_update' doc.pk %}" class="text-xs text-gray-500 hover:text-blue-600">Edit</a></td>
+                <td class="px-5 py-3.5 tbl-td">{{ doc.get_document_type_display }}</td>
+                <td class="px-5 py-3.5"><span class="badge-sm {% if doc.status == 'FINAL' %}badge-green{% elif doc.status == 'REVIEW' %}badge-yellow{% else %}badge-gray{% endif %}">{{ doc.get_status_display }}</span></td>
+                <td class="px-5 py-3.5 tbl-td">{{ doc.matter.matter_number|default:"—" }}</td>
+                <td class="px-5 py-3.5 tbl-td">v{{ doc.version }}</td>
+                <td class="px-5 py-3.5 tbl-td">{{ doc.created_at|date:"M d, Y" }}</td>
+                <td class="px-5 py-3.5 text-right"><a href="{% url 'contracts:document_update' doc.pk %}" class="text-xs font-medium px-2.5 py-1 rounded-md border transition-opacity hover:opacity-80 btn-ghost">Edit</a></td>
             </tr>
             {% empty %}
-            <tr><td colspan="7" class="px-5 py-12 text-center text-gray-400">No documents found.</td></tr>
+            <tr><td colspan="7" class="px-5 py-12 text-center c-muted">No documents found.</td></tr>
             {% endfor %}
         </tbody>
     </table>
+</div>
 </div>
 {% endblock %}

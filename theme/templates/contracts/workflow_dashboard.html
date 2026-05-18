@@ -4,140 +4,142 @@
 {% block title %}Workflow Dashboard - CMS Aegis{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
-    <!-- Header -->
-    <div class="flex items-center justify-between">
+<div class="page-wrap">
+    <!-- Page Header -->
+    <div class="page-header">
         <div>
-            <h1 class="text-2xl font-bold text-gray-900">Workflow Designer</h1>
-            <p class="text-gray-600">Track and manage contract workflows</p>
+            <h1 class="page-title">Workflow Designer</h1>
+            <p class="page-subtitle">Track and manage contract workflows</p>
         </div>
-        <div class="flex space-x-3">
-            <a href="{% url 'contracts:workflow_create' %}" class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-md flex items-center space-x-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="page-actions">
+            <a href="{% url 'contracts:workflow_create' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg btn-primary-grad">
+                <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                 </svg>
-                <span>Start workflow</span>
+                Start workflow
             </a>
-            <a href="{% url 'contracts:workflow_template_list' %}" class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-50">
+            <a href="{% url 'contracts:workflow_template_list' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border btn-ghost">
                 Templates
             </a>
-            <button onclick="toggleFilters()" class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-50">
+            <button id="filters-toggle-btn" aria-expanded="false" aria-controls="filters-panel" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border btn-ghost">
                 Filters
             </button>
         </div>
     </div>
 
     <!-- Filters Panel -->
-    <div id="filters-panel" class="bg-white p-6 rounded-lg border border-gray-200 hidden">
-        <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Search</label>
-                <input type="text" name="search" value="{{ request.GET.search }}" placeholder="Search workflows..." class="input-field w-full">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                <select name="status" class="input-field w-full">
-                    <option value="">All Statuses</option>
-                    <option value="ACTIVE" {% if request.GET.status == 'ACTIVE' %}selected{% endif %}>Active</option>
-                    <option value="COMPLETED" {% if request.GET.status == 'COMPLETED' %}selected{% endif %}>Completed</option>
-                    <option value="ON_HOLD" {% if request.GET.status == 'ON_HOLD' %}selected{% endif %}>On Hold</option>
-                    <option value="CANCELLED" {% if request.GET.status == 'CANCELLED' %}selected{% endif %}>Cancelled</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Contract Type</label>
-                <select name="contract_type" class="input-field w-full">
-                    <option value="">All Types</option>
-                    <option value="NDA" {% if request.GET.contract_type == 'NDA' %}selected{% endif %}>NDA</option>
-                    <option value="MSA" {% if request.GET.contract_type == 'MSA' %}selected{% endif %}>MSA</option>
-                    <option value="SOW" {% if request.GET.contract_type == 'SOW' %}selected{% endif %}>SOW</option>
-                    <option value="EMPLOYMENT" {% if request.GET.contract_type == 'EMPLOYMENT' %}selected{% endif %}>Employment</option>
-                </select>
-            </div>
-            <div class="flex items-end">
-                <button type="submit" class="btn-primary w-full">Apply Filters</button>
-            </div>
-        </form>
+    <div id="filters-panel" class="panel hidden" aria-hidden="true">
+        <div class="panel-inner">
+            <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="form-label block mb-1">Search</label>
+                    <input type="text" name="search" value="{{ request.GET.search }}" placeholder="Search workflows..." class="input-base w-full">
+                </div>
+                <div>
+                    <label class="form-label block mb-1">Status</label>
+                    <select name="status" class="select-base w-full">
+                        <option value="">All Statuses</option>
+                        <option value="ACTIVE" {% if request.GET.status == 'ACTIVE' %}selected{% endif %}>Active</option>
+                        <option value="COMPLETED" {% if request.GET.status == 'COMPLETED' %}selected{% endif %}>Completed</option>
+                        <option value="ON_HOLD" {% if request.GET.status == 'ON_HOLD' %}selected{% endif %}>On Hold</option>
+                        <option value="CANCELLED" {% if request.GET.status == 'CANCELLED' %}selected{% endif %}>Cancelled</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label block mb-1">Contract Type</label>
+                    <select name="contract_type" class="select-base w-full">
+                        <option value="">All Types</option>
+                        <option value="NDA" {% if request.GET.contract_type == 'NDA' %}selected{% endif %}>NDA</option>
+                        <option value="MSA" {% if request.GET.contract_type == 'MSA' %}selected{% endif %}>MSA</option>
+                        <option value="SOW" {% if request.GET.contract_type == 'SOW' %}selected{% endif %}>SOW</option>
+                        <option value="EMPLOYMENT" {% if request.GET.contract_type == 'EMPLOYMENT' %}selected{% endif %}>Employment</option>
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button type="submit" class="btn-primary w-full">Apply Filters</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <!-- Workflows Table -->
-    <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+    <div class="panel overflow-hidden">
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
+                <thead class="tbl-head">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Workflow Name</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stage</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Agreement Date</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jurisdiction</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Projected Value</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Effective Date</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Business Unit</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Progress</th>
+                        <th class="tbl-th px-6 py-3 text-left text-xs uppercase tracking-wider">Workflow Name</th>
+                        <th class="tbl-th px-6 py-3 text-left text-xs uppercase tracking-wider">Stage</th>
+                        <th class="tbl-th px-6 py-3 text-left text-xs uppercase tracking-wider">Agreement Date</th>
+                        <th class="tbl-th px-6 py-3 text-left text-xs uppercase tracking-wider">Jurisdiction</th>
+                        <th class="tbl-th px-6 py-3 text-left text-xs uppercase tracking-wider">Projected Value</th>
+                        <th class="tbl-th px-6 py-3 text-left text-xs uppercase tracking-wider">Effective Date</th>
+                        <th class="tbl-th px-6 py-3 text-left text-xs uppercase tracking-wider">Business Unit</th>
+                        <th class="tbl-th px-6 py-3 text-left text-xs uppercase tracking-wider">Progress</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody class="divide-y divide-gray-200">
                     {% for workflow in workflows %}
-                    <tr class="hover:bg-gray-50">
+                    <tr class="tbl-row hover:bg-gray-50">
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
-                                <div class="w-3 h-3 rounded-full mr-3 
-                                    {% if workflow.status == 'ACTIVE' %}bg-green-400
-                                    {% elif workflow.status == 'COMPLETED' %}bg-blue-400
-                                    {% elif workflow.status == 'ON_HOLD' %}bg-yellow-400
-                                    {% else %}bg-gray-400{% endif %}">
-                                </div>
+                                <span class="status-dot mr-3
+                                    {% if workflow.status == 'ACTIVE' %}green
+                                    {% elif workflow.status == 'COMPLETED' %}blue
+                                    {% elif workflow.status == 'ON_HOLD' %}yellow
+                                    {% else %}gray{% endif %}">
+                                </span>
                                 <div>
-                                    <a href="{% url 'contracts:workflow_detail' workflow.pk %}" class="text-blue-600 hover:text-blue-800 font-medium">
+                                    <a href="{% url 'contracts:workflow_detail' workflow.pk %}" class="c-link font-medium">
                                         {{ workflow.contract.title }}
                                     </a>
-                                    <div class="text-sm text-gray-500">{{ workflow.contract.counterparty }}</div>
+                                    <div class="item-meta">{{ workflow.contract.counterparty }}</div>
                                 </div>
                             </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                {% if workflow.current_stage == 'Internal Review' %}bg-yellow-100 text-yellow-800
-                                {% elif workflow.current_stage == 'External Review' %}bg-blue-100 text-blue-800
-                                {% elif workflow.current_stage == 'Negotiation' %}bg-purple-100 text-purple-800
-                                {% elif workflow.current_stage == 'Signature' %}bg-green-100 text-green-800
-                                {% elif workflow.current_stage == 'Execution' %}bg-gray-100 text-gray-800
-                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            <span class="badge-sm
+                                {% if workflow.current_stage == 'Internal Review' %}badge-yellow
+                                {% elif workflow.current_stage == 'External Review' %}badge-blue
+                                {% elif workflow.current_stage == 'Negotiation' %}badge-purple
+                                {% elif workflow.current_stage == 'Signature' %}badge-green
+                                {% elif workflow.current_stage == 'Execution' %}badge-gray
+                                {% else %}badge-gray{% endif %}">
                                 {{ workflow.current_stage }}
                             </span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td class="tbl-td px-6 py-4 whitespace-nowrap text-sm">
                             {{ workflow.contract.milestone_date|date:"M d, Y"|default:"—" }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td class="tbl-td px-6 py-4 whitespace-nowrap text-sm">
                             {{ workflow.contract.get_jurisdiction_display }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td class="tbl-td px-6 py-4 whitespace-nowrap text-sm">
                             {% if workflow.contract.value %}
                                 ${{ workflow.contract.value|floatformat:2 }}
                             {% else %}
                                 —
                             {% endif %}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td class="tbl-td px-6 py-4 whitespace-nowrap text-sm">
                             {{ workflow.projected_completion|date:"M d, Y"|default:"—" }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td class="tbl-td px-6 py-4 whitespace-nowrap text-sm">
                             {{ workflow.contract.get_contract_type_display }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
-                                <div class="w-full bg-gray-200 rounded-full h-2 mr-2">
-                                    <div class="bg-blue-600 h-2 rounded-full workflow-progress-fill" data-width="{{ workflow.progress_percentage }}"></div>
+                                <div class="progress-bar-bg mr-2">
+                                    <div class="progress-bar-fill bg-blue-600 workflow-progress-fill" data-width="{{ workflow.progress_percentage }}"></div>
                                 </div>
-                                <span class="text-sm text-gray-600">{{ workflow.progress_percentage }}%</span>
+                                <span class="text-sm c-muted">{{ workflow.progress_percentage }}%</span>
                             </div>
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="8" class="px-6 py-8 text-center text-gray-500">
-                            No workflows found. <a href="{% url 'contracts:contract_list' %}" class="text-blue-600 hover:text-blue-800">Create a contract</a> to start a workflow.
+                        <td colspan="8" class="px-6 py-8 text-center c-muted">
+                            No workflows found. <a href="{% url 'contracts:contract_list' %}" class="c-link">Create a contract</a> to start a workflow.
                         </td>
                     </tr>
                     {% endfor %}
@@ -149,15 +151,15 @@
     <!-- Pagination -->
     {% if is_paginated %}
     <div class="flex items-center justify-between">
-        <div class="text-sm text-gray-700">
+        <p class="text-sm c-muted">
             Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} workflows
-        </div>
-        <div class="flex space-x-2">
+        </p>
+        <div class="flex gap-2">
             {% if page_obj.has_previous %}
-                <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-2 bg-white border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">Previous</a>
+                <a href="?page={{ page_obj.previous_page_number }}" class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg border btn-ghost">Previous</a>
             {% endif %}
             {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-2 bg-white border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">Next</a>
+                <a href="?page={{ page_obj.next_page_number }}" class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg border btn-ghost">Next</a>
             {% endif %}
         </div>
     </div>
@@ -167,8 +169,13 @@
 <script>
 function toggleFilters() {
     const panel = document.getElementById('filters-panel');
-    panel.classList.toggle('hidden');
+    const btn = document.getElementById('filters-toggle-btn');
+    const isHidden = panel.classList.toggle('hidden');
+    panel.setAttribute('aria-hidden', isHidden ? 'true' : 'false');
+    btn.setAttribute('aria-expanded', isHidden ? 'false' : 'true');
 }
+
+document.getElementById('filters-toggle-btn').addEventListener('click', toggleFilters);
 
 document.querySelectorAll('.workflow-progress-fill[data-width]').forEach((bar) => {
     const width = Number(bar.dataset.width || 0);
