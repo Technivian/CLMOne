@@ -960,3 +960,76 @@ No other JS changes made.
 | Template | Status |
 |---|---|
 | `legal_task_board.html` | Not started — requires `board-*` CSS added to base.html first |
+
+---
+
+## Slice 2 — Step 4 Complete: legal_task_board.html (2026-05-18)
+
+### Pre-migration: BoardView CSS added to base.html
+
+Per DESIGN_CONSTITUTION.md section on BoardView primitives (lines 122-126), added to base.html after `.chip` block:
+
+```css
+.board-track { display: flex; gap: 16px; overflow-x: auto; padding-bottom: 8px; }
+.board-col { width: 320px; flex-shrink: 0; background: var(--surface); border-radius: 10px; padding: 16px; }
+.board-col-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.board-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 16px; transition: box-shadow 0.15s; }
+.board-card + .board-card { margin-top: 12px; }
+.board-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+```
+
+### Primitives Normalized
+
+| Before | After |
+|---|---|
+| `{% block page_title %}` / `{% block page_actions %}` shell blocks | Dropped; `page-header` / `page-title` / `page-subtitle` / `page-actions` inside `{% block content %}` |
+| `space-y-6` outer wrapper | `page-wrap` |
+| `bg-white rounded-lg border border-gray-200 p-4` filter bar | `panel mb-6` + `panel-inner` |
+| `text-sm font-medium text-gray-700` filter label | `text-sm font-medium c-muted` + `<label>` for accessibility |
+| `input-field w-64 text-sm` search input | `input-base w-64 text-sm` + `<label class="sr-only">` |
+| `flex space-x-4 overflow-x-auto p-2` board container | `board-track` + `role="list"` + `aria-label` |
+| `w-80 bg-gray-100 rounded-lg p-4 flex-shrink-0` column | `board-col` + `role="region"` + `aria-label="[Status] column"` |
+| `flex items-center justify-between mb-4` col header | `board-col-head` |
+| `font-bold text-lg text-gray-700` column title | `text-sm font-bold c-primary` |
+| `bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-full` count | `badge-sm badge-gray` |
+| `bg-white rounded-lg p-4 shadow-sm border border-gray-200 hover:shadow-md...` card | `board-card` + `role="article"` |
+| Raw priority badge conditional | `badge-sm badge-[red/yellow/green]` |
+| `text-sm text-gray-600 mb-3` subject | `item-meta mb-3` |
+| `text-xs text-gray-500` footer | `item-meta` |
+| `text-blue-600 hover:text-blue-800 text-xs` edit link | `c-link text-xs` |
+| `onclick="updateTaskStatus({{ task.id }}, 'DONE')"` button | Removed; `data-action="complete-task"` `data-task-id="{{ task.id }}"` bound via IIFE addEventListener |
+| `text-center py-8` / `text-sm text-gray-500 italic` empty state | `empty-state` + `italic` |
+| Global `updateTaskStatus` function | Wrapped in IIFE; bound via `querySelectorAll('[data-action="complete-task"]')` |
+
+### Behavior Preserved
+
+- AJAX status update fetch to `/contracts/legal-tasks/${taskId}/update-status/` unchanged
+- CSRF token lookup preserved
+- Filter logic (priority + search) preserved exactly; event listeners already used addEventListener
+- `data-task-id`, `data-priority`, `data-status` attributes preserved
+- `{% url 'contracts:legal_task_create' %}` and `{% url 'contracts:legal_task_update' task.pk %}` preserved
+- `tasks_by_status` context variable preserved
+- `today` date comparison for overdue tasks preserved
+- Empty state conditional for 'To Do' column preserved
+- `chip chip-inactive` on priority select preserved (canonical filter control)
+
+### Remaining Accessibility Gap (documented, not faked)
+
+Drag-and-drop keyboard accessibility: The board does not implement drag-and-drop. Column-to-column status transitions are handled by the "Complete" button (DONE state only). Full keyboard-driven column movement is not implemented and not faked — this gap is documented for future Batch 4 work.
+
+### Validation
+
+- Template parse: OK
+- `manage.py check`: 0 issues
+- `manage.py test contracts`: 3/3 passed
+- Inline handler/style scan: 0 violations
+- Retired/ad-hoc class scan: 0 remaining
+- Board CSS verified in base.html: all 5 rules present
+
+---
+
+## Batch 3 Complete (2026-05-18)
+
+All 8 Batch 3 templates migrated:
+- Slice 1: notification_list.html, deadline_list.html, privacy_dashboard.html, operations_dashboard.html
+- Slice 2: dashboard.html, workflow_dashboard.html, repository.html, legal_task_board.html

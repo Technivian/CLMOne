@@ -173,21 +173,31 @@ Batch 3 Slice 2 Step 3 outcomes:
 - Inline handler/style scan: 0 violations
 - Retired/ad-hoc class scan: 0 remaining
 
-Batch 3 Slice 2 remaining templates:
+Batch 3 Slice 2 Step 4 migration (2026-05-18):
 
-- `theme/templates/contracts/legal_task_board.html` (WorkspacePage/BoardView — Kanban AJAX, highest risk, requires board-* CSS first) — **can begin now**
+Files changed:
+- `theme/templates/base.html` — BoardView CSS block added (board-track, board-col, board-col-head, board-card)
+- `theme/templates/contracts/legal_task_board.html` — Full WorkspacePage/BoardView normalization; inline handler removal
+
+Primitives applied: page-wrap, page-header, page-title, page-subtitle, page-actions, board-track, board-col, board-col-head, board-card, badge-sm badge-gray (column count), badge-sm badge-[red/yellow/green] (priority), item-meta, c-link, c-danger, panel, panel-inner, input-base, empty-state, role="region"/role="article" ARIA structure.
+
+Inline handlers removed: `onclick="updateTaskStatus()"` → `data-action="complete-task"` bound via IIFE addEventListener. `updateTaskStatus` function wrapped in IIFE (global scope eliminated).
+
+Batch 3 Slice 2 Step 4 outcomes:
+- Template parse: OK
+- manage.py check: 0 issues
+- manage.py test contracts: 3/3 passed
+- Inline handler/style scan: 0 violations
+- Retired/ad-hoc class scan: 0 remaining
+- Board CSS verified in base.html: all 5 rules present
+
+Remaining accessibility gap: drag-and-drop column movement not keyboard accessible (not faked). Only "Complete" (→ DONE) transition is keyboard reachable. Full column movement documented for Batch 4.
+
+**Batch 3 Complete — all 8 templates migrated.**
 
 Batch 3 targets (8 templates, 1,158 total lines):
-- WorkspacePage: dashboard.html, workflow_dashboard.html, repository.html, privacy_dashboard.html, legal_task_board.html
-- ExceptionPage: operations_dashboard.html, deadline_list.html, notification_list.html
-
-Batch 3 scope estimates:
-- Estimated migration difficulty: Medium overall; High for legal_task_board.html
-- Highest-risk page: theme/templates/contracts/legal_task_board.html
-- Safest page: theme/templates/contracts/notification_list.html
-- Recommended migration order: notification_list → deadline_list → privacy_dashboard → operations_dashboard → dashboard → workflow_dashboard → repository → legal_task_board
-- Templates requiring JS changes (scoped): legal_task_board.html (inline onclick → addEventListener)
-- Pre-migration decisions required: legal_task_board.html (Kanban subvariant governance, board-* CSS must be added to base.html first)
+- WorkspacePage: dashboard.html, workflow_dashboard.html, repository.html, privacy_dashboard.html, legal_task_board.html ✅
+- ExceptionPage: operations_dashboard.html, deadline_list.html, notification_list.html ✅
 
 Expected UX impact if Batch 3 succeeds:
 - Visual coherence across top 5 highest-traffic workspace surfaces.

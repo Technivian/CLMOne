@@ -393,6 +393,68 @@ Risk level:
 
 ---
 
+### 2026-05-18 - Batch 3 Slice 2 Step 4 (legal_task_board.html — BoardView + WorkspacePage normalization)
+
+Pre-migration addition to base.html:
+
+`board-track`, `board-col`, `board-col-head`, `board-card` CSS primitives added to base.html per DESIGN_CONSTITUTION.md v1.1 spec (section on BoardView, lines 122–126). No tokens invented — exact spec values used.
+
+Scope completed:
+
+- `theme/templates/base.html` — BoardView CSS block added after `.chip` section.
+- `theme/templates/contracts/legal_task_board.html` — Full WorkspacePage/BoardView normalization; inline handler removal.
+
+Changes applied:
+
+- Dropped vestigial `{% block page_title %}` / `{% block page_actions %}` shell blocks; replaced with canonical `page-header` / `page-title` / `page-subtitle` / `page-actions` inside `{% block content %}`.
+- Outer wrapper: `space-y-6` → `page-wrap`.
+- Filter bar: `bg-white rounded-lg border ... p-4` → `panel mb-6` + `panel-inner`; filter label and search input gained `<label>` elements for accessibility.
+- `input-field` (non-canonical) → `input-base`.
+- Board container: `flex space-x-4 overflow-x-auto p-2` → `board-track` + `role="list"` + `aria-label`.
+- Board columns: raw gray card → `board-col` + `role="region"` + `aria-label="[Status] column"`.
+- Column header: raw flex div → `board-col-head`.
+- Column count: raw pill badge → `badge-sm badge-gray`.
+- Board cards: raw white card → `board-card` + `role="article"`.
+- Priority badges: raw conditional inline style → `badge-sm badge-[red/yellow/green]`.
+- Subject text: `text-sm text-gray-600` → `item-meta`.
+- Footer metadata: `text-xs text-gray-500` → `item-meta`.
+- Edit link: `text-blue-600 hover:text-blue-800` → `c-link`.
+- Complete button: `onclick="updateTaskStatus({{ task.id }}, 'DONE')"` removed; `data-action="complete-task"` + `data-task-id` bound via IIFE `addEventListener`.
+- Empty state: raw centered div → `empty-state`.
+- `updateTaskStatus` function wrapped in IIFE; all global scope eliminated.
+- Overdue class: `text-red-600` → `c-danger`.
+
+What was NOT changed (preserved):
+
+- AJAX fetch URL and payload to `/contracts/legal-tasks/${taskId}/update-status/`.
+- `data-task-id`, `data-priority`, `data-status` attribute bindings.
+- Filter logic (priority + search text) — preserved exactly; only inline handler removed from filterTasks.
+- All Django template tags, URL reversals, context variables.
+- `chip chip-inactive` on priority select (canonical filter control — preserved as-is).
+
+Remaining accessibility gap (documented, not faked):
+
+Drag-and-drop column transition keyboard accessibility not implemented. Board only supports "Complete" (→ DONE) action via keyboard. Full column movement requires a future controller addition (Batch 4).
+
+Validation:
+
+- Template parse: OK.
+- `manage.py check`: 0 issues.
+- `manage.py test contracts`: 3/3 passed.
+- Inline handler/style scan: 0 violations.
+- Retired/ad-hoc class scan: 0 remaining.
+- Board CSS verified in base.html: 5 rules present.
+
+Risk level:
+
+- Medium — JS IIFE refactor is the highest-risk change; behavior preserved exactly by using querySelectorAll on `data-action` attributes and delegating to same AJAX function body.
+
+---
+
+**Batch 3 Complete — all 8 templates migrated (2026-05-18)**
+
+---
+
 ## Phase 1 - Foundation and Governance (Week 1)
 
 Task 1. Define design source-of-truth boundaries

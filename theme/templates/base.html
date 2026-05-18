@@ -503,6 +503,14 @@
         [data-theme="light"] .chip-inactive { background: #F3F4F6; color: #374151; border-color: #E5E7EB; }
         [data-theme="light"] .chip-inactive:hover { background: #E5E7EB; color: #111827; }
 
+        /* BoardView primitives */
+        .board-track { display: flex; gap: 16px; overflow-x: auto; padding-bottom: 8px; }
+        .board-col { width: 320px; flex-shrink: 0; background: var(--surface); border-radius: 10px; padding: 16px; }
+        .board-col-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+        .board-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 16px; transition: box-shadow 0.15s; }
+        .board-card + .board-card { margin-top: 12px; }
+        .board-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+
         /* Alert banners */
         .alert-banner {
             display: flex; align-items: center; gap: 12px;
