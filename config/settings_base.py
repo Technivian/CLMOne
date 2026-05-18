@@ -147,6 +147,15 @@ def _database_config_from_env() -> dict:
             'NAME': os.getenv('SQLITE_PATH', str(BASE_DIR / 'db.sqlite3')),
         }
 
+    # Accept common copy/paste forms from dashboards or docs.
+    # Examples:
+    # - export DATABASE_URL='postgresql://...'
+    # - DATABASE_URL="postgresql://..."
+    if database_url.lower().startswith('export '):
+        database_url = database_url[7:].strip()
+    if database_url.startswith('DATABASE_URL='):
+        database_url = database_url.split('=', 1)[1].strip()
+
     # Deployment providers and dashboards sometimes store pasted DSNs with
     # wrapping quotes; strip one matching pair before parsing the URL.
     if len(database_url) >= 2 and database_url[0] == database_url[-1] and database_url[0] in {'"', "'"}:
