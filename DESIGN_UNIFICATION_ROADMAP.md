@@ -1155,3 +1155,73 @@ Chosen value is darker than `badge-green` text (#15803D) for legibility at body 
 - text-green-600 remaining in invoice pages: ✅ 0
 
 ### Status: ✅ Complete — retention_policy wave can begin
+
+---
+
+## Batch 5 Step 4 — Retention Policy Page Wave (2026-05-18)
+
+### Scope
+
+- `theme/templates/contracts/retention_policy_list.html` → QueuePage
+- `theme/templates/contracts/retention_policy_form.html` → CommandPage
+
+Note: `retention_policy_detail.html` does not exist in the codebase — no detail route was registered. Only list and form migrated.
+
+### retention_policy_list.html
+
+| Area | Before | After |
+|---|---|---|
+| Outer wrapper | raw `flex items-center justify-between mb-6` | `page-wrap` / `page-header` / `page-title` / `page-subtitle` / `page-actions` |
+| Add New button | `bg-blue-600 text-white rounded-lg` | `btn-primary-grad` |
+| Plus SVG | no `aria-hidden` | `aria-hidden="true"` |
+| Table wrapper | `bg-white rounded-xl border border-gray-200 overflow-hidden` | `panel overflow-hidden` |
+| Table head | `bg-gray-50` | `tbl-head` |
+| TH cells | `text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase` | `tbl-th` |
+| TR rows | `hover:bg-gray-50` | `tbl-row` |
+| TD cells | `px-5 py-3 text-sm text-gray-700` | `tbl-td` |
+| Category/Period/Date cells | `text-gray-700` | `c-muted` |
+| Auto Delete "Yes" | `text-red-600` | `c-danger font-medium` |
+| Auto Delete "No" | plain text | `c-muted` |
+| Active "Yes" | `text-green-600` | `c-success font-medium` |
+| Active "No" | plain text | `c-muted` |
+| Edit link | `text-sm text-blue-600 hover:text-blue-800` | `c-link text-sm` |
+| Empty state | `px-5 py-8 text-center text-sm text-gray-400` | `empty-state` |
+
+### retention_policy_form.html
+
+| Area | Before | After |
+|---|---|---|
+| Max-width wrapper | `max-w-3xl mx-auto` | `page-wrap` |
+| Header | raw `flex items-center justify-between mb-6` | `page-header` / `page-title` |
+| Back link | `text-sm text-gray-500 hover:text-gray-700` | `c-muted text-sm hover:underline` |
+| Panel | `bg-white rounded-xl border border-gray-200 p-6` | `panel` + `panel-inner` |
+| Field label | `block text-sm font-medium text-gray-700 mb-1` | `form-label block mb-1` |
+| Help text | `mt-1 text-xs text-gray-400` | `mt-1 text-xs c-muted` |
+| Error message | `mt-1 text-xs text-red-500` | `mt-1 text-xs c-danger` |
+| Cancel link | `px-4 py-2 bg-gray-100 text-gray-700 rounded-lg` | `btn-ghost` |
+| Submit button | `px-4 py-2 bg-blue-600 text-white rounded-lg` | `btn-primary-grad` |
+
+### Behavior Preserved
+
+- Context vars: `policies`, `item.title`, `item.get_category_display`, `item.retention_period_days`, `item.auto_delete`, `item.next_review`, `item.is_active`, `item.pk`, `form.*`, `object`
+- Routes: `retention_policy_create`, `retention_policy_update`, `retention_policy_list`
+- `{% for item in policies %}{% empty %}` loop preserved
+- `{{ object|yesno:"Edit,New" }}` conditional preserved
+- `{% csrf_token %}`, POST action, form field iteration preserved
+- `field.help_text` conditional preserved
+
+### No Intentional Exceptions
+
+All raw utilities replaced. No `text-green-600`, `text-red-600`, or `bg-*` color classes remain.
+
+### Validation
+
+- Template parse: ✅ 2/2 OK
+- manage.py check: ✅ 0 issues
+- Tests: ✅ 3/3 passed
+- Inline styles: ✅ 0
+- Inline event handlers: ✅ 0
+- Retired classes: ✅ 0
+- Raw color exceptions: ✅ 0
+
+### Status: ✅ Complete — organization/settings wave can begin
