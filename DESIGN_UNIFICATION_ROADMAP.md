@@ -735,3 +735,50 @@ When Phases 1-5 are complete, CMS Aegis should present as one coherent enterpris
 - No new undocumented primitives introduced
 
 ### Status: ✅ Complete
+
+---
+
+## Batch 4 Step 4 Slice B — contract_list.html QueuePage Migration (2026-05-18)
+
+### Scope
+
+- `theme/templates/contracts/contract_list.html`
+
+### State Before Migration
+
+The template was substantially pre-migrated from Batch 4 Step 2 list cleanup but retained 3 gaps:
+1. `contracts-list-page` non-canonical class on outer div
+2. New Contract button lacked `page-actions` wrapper
+3. Decorative SVGs lacked `aria-hidden="true"`
+
+### Changes Made
+
+| Change | Detail |
+|---|---|
+| Removed `contracts-list-page` | Non-canonical namespacing class removed from outer div |
+| Added `page-actions` wrapper | New Contract button now inside `<div class="page-actions">` |
+| `aria-hidden="true"` | Added to: plus icon, search icon, X/clear icon, sort arrows (×4 cols), expiry warning icon, empty-state doc icon, prev/next pagination chevrons |
+
+### Primitives Already Present (No Changes Needed)
+
+`page-wrap`, `page-header`, `page-title`, `page-subtitle`, `dash-grid dash-grid-3`, `stat-card`, `stat-card-amber`, `c-muted`, `c-primary`, `c-accent`, `c-amber`, `c-amber-soft`, `c-dim`, `tabs-shell`, `tab-pill-active`, `tab-pill-idle`, `form-input`, `btn-ghost`, `btn-primary-grad`, `panel`, `tbl-head`, `tbl-th`, `tbl-row`, `tbl-td`, `badge-sm`, `badge-green`, `badge-blue`, `badge-purple`, `badge-yellow`, `badge-gray`, `badge-expiring`, `c-link`, `btn-soft-primary`, `surface-bubble`, `page-pill-active`, `row-expiring`
+
+### Behavior Preserved
+
+- All tab/phase filter links and query param propagation
+- Search form (q param), hidden sort/phase inputs
+- Sortable column headers (sort param, asc/desc toggle)
+- `expiring_contract_ids` row-expiring logic
+- Pagination (page_obj, is_paginated)
+- Empty state with context-aware clear/create links
+- All context variables: `contracts`, `total_contracts`, `active_contracts`, `expiring_soon`, `expiring_contract_ids`, `search_query`, `sort`, `current_phase`, `phase_tabs`, `page_obj`, `is_paginated`
+
+### Validation
+
+- Template parse: OK
+- manage.py check: 0 issues
+- Tests: 3/3 passed
+- Inline style scan: 0
+- Retired class scan: 0
+
+### Status: ✅ Complete

@@ -2,7 +2,7 @@
 {% block title %}Contracts - CMS Aegis{% endblock %}
 {% block content %}
 
-<div class="contracts-list-page page-wrap">
+<div class="page-wrap">
 
 {# ── Page header ───────────────────────────────────────────────────────────── #}
 <div class="page-header">
@@ -10,14 +10,16 @@
         <h1 class="page-title">Contracts<span class="sr-only">Cases</span></h1>
         <p class="page-subtitle">All contracts across your organization</p>
     </div>
-    <a href="{% url 'contracts:contract_create' %}"
-       class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 btn-primary-grad">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-        </svg>
-        New Contract
-        <span class="sr-only">New Case</span>
-    </a>
+    <div class="page-actions">
+        <a href="{% url 'contracts:contract_create' %}"
+           class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 btn-primary-grad">
+            <svg class="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+            </svg>
+            New Contract
+            <span class="sr-only">New Case</span>
+        </a>
+    </div>
 </div>
 
 {# ── Summary stat cards ────────────────────────────────────────────────────── #}
@@ -72,7 +74,7 @@
     {# Search bar #}
     <form method="get" class="flex items-center gap-2 flex-1 min-w-0">
         <div class="relative flex-1 min-w-0">
-            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none c-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none c-muted" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
             </svg>
             <input type="text" name="q" value="{{ search_query }}"
@@ -88,7 +90,7 @@
         {% if search_query or current_phase %}
         <a href="{% url 'contracts:contract_list' %}"
            class="flex-shrink-0 px-3 py-2 text-sm rounded-lg border inline-flex items-center gap-1.5 btn-ghost">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-3.5 h-3.5" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
             </svg>
             Clear
@@ -196,7 +198,7 @@
                     {% if contract.end_date %}
                         {% if contract.pk in expiring_contract_ids %}
                             <span class="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-md badge-expiring">
-                            <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-3 h-3 flex-shrink-0" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                             </svg>
                             {{ contract.end_date|date:"d M Y" }}
@@ -225,7 +227,7 @@
                 <td colspan="7" class="px-5 py-20 text-center">
                     <div class="flex flex-col items-center gap-3">
                         <div class="w-12 h-12 rounded-full flex items-center justify-center surface-bubble">
-                            <svg class="w-6 h-6 c-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-6 h-6 c-muted" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                             </svg>
                         </div>
@@ -258,7 +260,7 @@
         {% if page_obj.has_previous %}
         <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if request.GET.phase %}&phase={{ request.GET.phase|urlencode }}{% endif %}{% if sort %}&sort={{ sort|urlencode }}{% endif %}"
            class="px-3 py-1.5 text-sm rounded-lg border inline-flex items-center gap-1 transition-opacity hover:opacity-80 btn-ghost">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            <svg class="w-3.5 h-3.5" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
             Vorige
         </a>
         {% endif %}
@@ -267,7 +269,7 @@
         <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if request.GET.phase %}&phase={{ request.GET.phase|urlencode }}{% endif %}{% if sort %}&sort={{ sort|urlencode }}{% endif %}"
            class="px-3 py-1.5 text-sm rounded-lg border inline-flex items-center gap-1 transition-opacity hover:opacity-80 btn-ghost">
             Volgende
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            <svg class="w-3.5 h-3.5" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
         </a>
         {% endif %}
     </div>
