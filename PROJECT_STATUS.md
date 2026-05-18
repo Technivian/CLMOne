@@ -118,12 +118,27 @@ Batch 3 Slice 1 outcomes:
 - Zero business logic changes. Zero inline event handlers introduced. Zero routing changes.
 - Django check: 0 issues. Template parse: 4/4 OK. Test suite: 3/3 passed.
 
-Batch 3 Slice 2 (remaining 4 templates) — not yet started:
+Batch 3 Slice 2 Step 1 migration (2026-05-18):
 
-- `theme/templates/dashboard.html` (WorkspacePage — highest traffic, action-chip retirement)
-- `theme/templates/contracts/workflow_dashboard.html` (WorkspacePage — inline onclick removal required)
+Migrated files:
+
+- `theme/templates/dashboard.html` (WorkspacePage — action-chip retirement + normalization)
+- `theme/templates/base.html` (removed `.action-chip` CSS block — class fully retired)
+
+Batch 3 Slice 2 Step 1 outcomes:
+
+- `action-chip` is now fully retired from the design system. Zero references remain in any template.
+- 3 × `action-chip` CTAs replaced with `btn-ghost` in dashboard.html page-actions.
+- `audit-action` non-canonical badge replaced with `badge-sm` + semantic variant.
+- `aria-hidden="true"` applied to all decorative SVGs in dashboard.html.
+- Redundant sr-only span (duplicate of visible text) removed.
+- Django check: 0 issues. Template parse: OK. Test suite: 3/3 passed.
+
+Batch 3 Slice 2 remaining templates:
+
+- `theme/templates/contracts/workflow_dashboard.html` (WorkspacePage — inline onclick removal required) — **can begin now**
 - `theme/templates/contracts/repository.html` (WorkspacePage — JS controller integration)
-- `theme/templates/contracts/legal_task_board.html` (WorkspacePage/BoardView — Kanban AJAX, highest risk)
+- `theme/templates/contracts/legal_task_board.html` (WorkspacePage/BoardView — Kanban AJAX, highest risk, requires board-* CSS first)
 
 Batch 3 targets (8 templates, 1,158 total lines):
 - WorkspacePage: dashboard.html, workflow_dashboard.html, repository.html, privacy_dashboard.html, legal_task_board.html

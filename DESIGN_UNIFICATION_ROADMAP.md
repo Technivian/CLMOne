@@ -252,6 +252,43 @@ Risk level:
 - Low
 - No business logic or route changes; no new visual systems; strict primitive substitution only.
 
+### 2026-05-18 - Batch 3 Slice 2 Step 1 (dashboard.html — action-chip retirement + WorkspacePage normalization)
+
+Scope completed:
+
+- `theme/templates/dashboard.html` — highest-traffic page. Partial normalization + action-chip retirement.
+
+base.html: removed `.action-chip` CSS block (3 lines + comment) after dashboard.html migration validated.
+
+Changes applied:
+
+- 3 × `action-chip` CTA links in `.page-actions` replaced with `inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border btn-ghost`.
+- 1 × redundant `<span class="sr-only">New Contract</span>` removed (visible text already provides accessible name).
+- `audit-action` badge class on governance activity log replaced with `badge-sm` + semantic badge variant.
+- `aria-hidden="true"` added to all decorative SVGs: alert banner icons, KPI icons, kpi-sub clock icon, panel-link chevrons, empty-state illustrations, nav-row icons and trailing chevrons.
+- `.action-chip` CSS block fully removed from `base.html`. `action-chip` is now retired from the design system.
+
+What was NOT changed (preserved):
+
+- `alert-banner`, `alert-banner-red`, `alert-banner-yellow`, `alert-link-fill` — semi-canonical (defined in base.html, token-backed); preserved.
+- `text-[12px]`, `text-[13px]` in workflow recommendation rows — deferred (no canonical text-desc-sm token exists yet).
+- All KPI primitives, progress bar JS behavior, Dutch-language strings, URL routing, context variables.
+- Supplemental `sr-only` spans that provide additional screen reader context (not exact duplicates of visible text).
+
+Validation:
+
+- `manage.py check`: 0 issues.
+- Template parse: OK.
+- `manage.py test contracts`: 3/3 passed.
+- Inline handler/style scan: 0 violations.
+- `action-chip` scan in all templates: 0 remaining references.
+
+Risk level:
+
+- Low
+- `action-chip` retirement is the highest-risk item; mitigated by surgical replacement with `btn-ghost` which provides equivalent visual weight and identical hover interaction model.
+- `audit-action` → `badge-sm` produces minor visual difference (uppercase removed, font-size 10px→11px); semantically equivalent.
+
 ## Phase 1 - Foundation and Governance (Week 1)
 
 Task 1. Define design source-of-truth boundaries

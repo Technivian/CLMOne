@@ -790,3 +790,46 @@ Note: remove redundant `sr-only` span when visible label text already provides t
 - `repository.html` — seventh.
 - `legal_task_board.html` — last. Add `board-*` CSS to `base.html`. Apply BoardView pattern. Update JS handlers.
 
+
+---
+
+## Slice 2 — Step 1 Complete: dashboard.html (2026-05-18)
+
+**Template:** `theme/templates/dashboard.html`
+**Archetype:** WorkspacePage
+**Status:** ✅ Migrated
+
+### Changes Applied
+
+| Change | Detail |
+|---|---|
+| `action-chip` × 3 → `btn-ghost` | All 3 page-actions CTAs replaced with `inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border btn-ghost` |
+| Redundant `sr-only` removed | `<span class="sr-only">New Contract</span>` removed from "New Contract" action (visible text already provides accessible name) |
+| `audit-action` → `badge-sm` | Governance activity log action label replaced with canonical `badge-sm` + semantic variant |
+| `aria-hidden="true"` added | All decorative SVGs throughout the template: alert banner icons, KPI icons, panel-link chevrons, empty-state illustrations, nav-row icons and chevrons |
+| `.action-chip` CSS removed from `base.html` | 3-line block + comment removed after dashboard.html validation passed |
+
+### What Was NOT Changed (Preserved)
+
+- `alert-banner`, `alert-banner-red`, `alert-banner-yellow`, `alert-link-fill` — semi-canonical, defined in base.html, token-backed; preserved
+- `text-[12px]`, `text-[13px]` arbitrary sizes in workflow recommendation section — not replaced (no canonical text-desc-sm class exists; deferred)
+- All KPI primitives (`kpi-card`, `kpi-glow`, `kpi-icon`, `kpi-value`, `kpi-label`, `kpi-sub`)
+- Progress bar JS behavior (`data-width` injection)
+- All context variables, URL routing, Dutch-language strings
+- All `sr-only` spans that provide supplemental (non-duplicate) accessible context
+
+### Validation
+
+- `manage.py check`: 0 issues
+- Template parse: OK
+- `manage.py test contracts`: 3/3 passed
+- Inline handler/style scan: 0 violations
+- `action-chip` scan in all templates: 0 remaining references
+
+### Slice 2 Remaining Steps
+
+| Template | Status |
+|---|---|
+| `workflow_dashboard.html` | Not started — can begin now |
+| `repository.html` | Not started |
+| `legal_task_board.html` | Not started — requires `board-*` CSS added to base.html first |
