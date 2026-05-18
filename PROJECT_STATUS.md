@@ -776,3 +776,29 @@ Already present from prior batch work: `page-wrap`, `page-header`, `page-title`,
 Added `c-success` (`#16A34A`) to base.html. Replaced 2 `text-green-600` raw utility uses in invoice_list.html and invoice_detail.html. Documented in DESIGN_CONSTITUTION.md §12. All exceptions from Batch 5 Step 2 now resolved.
 
 **Next:** retention_policy page wave
+
+---
+
+## Batch 5 Step 4 — Retention Policy Page Wave ✅ COMPLETE (2026-05-18)
+
+### Files Changed
+
+| File | Archetype | Change |
+|---|---|---|
+| `theme/templates/contracts/retention_policy_list.html` | QueuePage | Full migration from raw Tailwind |
+| `theme/templates/contracts/retention_policy_form.html` | CommandPage | Full migration from raw Tailwind |
+| `DESIGN_ARCHETYPE_MAP.md` | — | Both templates marked MIGRATED |
+
+### Primitives Applied
+
+**retention_policy_list:** `page-wrap`, `page-header`, `page-title`, `page-subtitle`, `page-actions`, `btn-primary-grad`, `panel`, `tbl-head`, `tbl-th`, `tbl-row`, `tbl-td`, `c-muted`, `c-danger`, `c-success`, `c-link`, `empty-state`
+
+**retention_policy_form:** `page-wrap`, `page-header`, `page-title`, `page-actions`, `panel`, `panel-inner`, `form-label`, `c-muted` (help/back), `c-danger` (errors), `btn-ghost`, `btn-primary-grad`
+
+### No Exceptions
+
+Zero raw color utilities remain. Zero documented exceptions.
+
+Note: `retention_policy_detail.html` does not exist — no detail route registered. Scope limited to list + form.
+
+### Next: organization/settings templates wave
