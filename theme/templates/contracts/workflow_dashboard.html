@@ -33,11 +33,11 @@
             <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
                     <label class="form-label block mb-1">Search</label>
-                    <input type="text" name="search" value="{{ request.GET.search }}" placeholder="Search workflows..." class="input-field w-full">
+                    <input type="text" name="search" value="{{ request.GET.search }}" placeholder="Search workflows..." class="input-base w-full">
                 </div>
                 <div>
                     <label class="form-label block mb-1">Status</label>
-                    <select name="status" class="input-field w-full">
+                    <select name="status" class="select-base w-full">
                         <option value="">All Statuses</option>
                         <option value="ACTIVE" {% if request.GET.status == 'ACTIVE' %}selected{% endif %}>Active</option>
                         <option value="COMPLETED" {% if request.GET.status == 'COMPLETED' %}selected{% endif %}>Completed</option>
@@ -47,7 +47,7 @@
                 </div>
                 <div>
                     <label class="form-label block mb-1">Contract Type</label>
-                    <select name="contract_type" class="input-field w-full">
+                    <select name="contract_type" class="select-base w-full">
                         <option value="">All Types</option>
                         <option value="NDA" {% if request.GET.contract_type == 'NDA' %}selected{% endif %}>NDA</option>
                         <option value="MSA" {% if request.GET.contract_type == 'MSA' %}selected{% endif %}>MSA</option>
