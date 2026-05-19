@@ -1,75 +1,73 @@
-{% extends 'base.html' %}
-
-{% block title %}Compliance Checklists{% endblock %}
-
-{% block page_title %}
-Compliance Checklists
-{% endblock %}
-
-{% block page_actions %}
-<a href="{% url 'contracts:compliance_checklist_create' %}" class="btn-primary-grad text-white shadow-sm">New Checklist</a>
-{% endblock %}
-
+{% extends "base.html" %}
+{% block title %}Compliance Checklists - CMS Aegis{% endblock %}
 {% block content %}
-<div class="space-y-6">
-    <!-- Search and Filters -->
-    <div class="bg-white rounded-lg border border-gray-200 p-4">
-        <form method="get" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
-                <input type="text" name="search" value="{{ request.GET.search }}" placeholder="Search checklists..." class="input-field w-full">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                <select name="status" class="input-field w-full">
-                    <option value="">All Statuses</option>
-                    <option value="NOT_STARTED" {% if request.GET.status == 'NOT_STARTED' %}selected{% endif %}>Not Started</option>
-                    <option value="IN_PROGRESS" {% if request.GET.status == 'IN_PROGRESS' %}selected{% endif %}>In Progress</option>
-                    <option value="COMPLETE" {% if request.GET.status == 'COMPLETE' %}selected{% endif %}>Complete</option>
-                </select>
-            </div>
-            <div class="flex items-end">
-                <button type="submit" class="btn-primary-grad text-white w-full">Apply Filters</button>
-            </div>
-        </form>
+<div class="page-wrap">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Compliance Checklists</h1>
+            <p class="page-subtitle c-muted">Track regulatory compliance across all active checklists.</p>
+        </div>
+        <div class="page-actions">
+            <a href="{% url 'contracts:compliance_checklist_create' %}" class="btn-primary-grad text-white">
+                <svg class="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                New Checklist
+            </a>
+        </div>
     </div>
 
-<div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
-    <div class="overflow-x-auto">
-        <table class="w-full text-sm text-left text-gray-500">
-            <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+    <form method="get" class="mb-4 grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+        <div>
+            <label class="form-label">Search</label>
+            <input type="text" name="search" value="{{ request.GET.search }}" placeholder="Search checklists…" class="input-field w-full">
+        </div>
+        <div>
+            <label class="form-label">Status</label>
+            <select name="status" class="input-field w-full">
+                <option value="">All Statuses</option>
+                <option value="NOT_STARTED" {% if request.GET.status == 'NOT_STARTED' %}selected{% endif %}>Not Started</option>
+                <option value="IN_PROGRESS" {% if request.GET.status == 'IN_PROGRESS' %}selected{% endif %}>In Progress</option>
+                <option value="COMPLETE" {% if request.GET.status == 'COMPLETE' %}selected{% endif %}>Complete</option>
+            </select>
+        </div>
+        <div>
+            <button type="submit" class="btn-primary-grad text-white w-full">Apply Filters</button>
+        </div>
+    </form>
+
+    <div class="panel overflow-hidden">
+        <table class="w-full text-sm">
+            <thead class="tbl-head">
                 <tr>
-                    <th scope="col" class="px-6 py-3">Checklist Name</th>
-                    <th scope="col" class="px-6 py-3">Regulation</th>
-                    <th scope="col" class="px-6 py-3">Status</th>
-                    <th scope="col" class="px-6 py-3">Due Date</th>
-                    <th scope="col" class="px-6 py-3">Reviewed By</th>
-                    <th scope="col" class="px-6 py-3">Actions</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Checklist Name</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Regulation</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Status</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Due Date</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Reviewed By</th>
+                    <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Actions</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody class="divide-y">
                 {% for checklist in checklists %}
-                    <tr class="bg-white border-b hover:bg-gray-50">
-                        <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
-                            {{ checklist.name }}
-                        </th>
-                        <td class="px-6 py-4">{{ checklist.regulation }}</td>
-                        <td class="px-6 py-4">{{ checklist.get_status_display }}</td>
-                        <td class="px-6 py-4">{{ checklist.due_date|default:"N/A" }}</td>
-                        <td class="px-6 py-4">{{ checklist.reviewed_by.username|default:"N/A" }}</td>
-                        <td class="px-6 py-4">
-                            <a href="{% url 'contracts:compliance_checklist_detail' checklist.pk %}" class="font-medium text-blue-600 hover:underline">View</a>
-                            <a href="{% url 'contracts:compliance_checklist_update' checklist.pk %}" class="font-medium text-blue-600 hover:underline ml-4">Edit</a>
-                        </td>
-                    </tr>
+                <tr class="border-b transition-colors hover:bg-gray-50 tbl-row">
+                    <td class="px-5 py-3 font-medium tbl-td">{{ checklist.name }}</td>
+                    <td class="px-5 py-3 tbl-td">{{ checklist.regulation }}</td>
+                    <td class="px-5 py-3">
+                        <span class="badge-sm {% if checklist.status == 'COMPLETE' %}badge-green{% elif checklist.status == 'IN_PROGRESS' %}badge-blue{% else %}badge-gray{% endif %}">{{ checklist.get_status_display }}</span>
+                    </td>
+                    <td class="px-5 py-3 tbl-td">{{ checklist.due_date|default:"—" }}</td>
+                    <td class="px-5 py-3 tbl-td">{{ checklist.reviewed_by.username|default:"—" }}</td>
+                    <td class="px-5 py-3 text-right space-x-3">
+                        <a href="{% url 'contracts:compliance_checklist_detail' checklist.pk %}" class="text-sm c-link">View</a>
+                        <a href="{% url 'contracts:compliance_checklist_update' checklist.pk %}" class="text-sm c-link">Edit</a>
+                    </td>
+                </tr>
                 {% empty %}
-                    <tr>
-                        <td colspan="6" class="px-6 py-4 text-center text-gray-600">No compliance checklists have been created yet.</td>
-                    </tr>
+                <tr>
+                    <td colspan="6" class="empty-state">No compliance checklists have been created yet.</td>
+                </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
-</div>
 </div>
 {% endblock %}

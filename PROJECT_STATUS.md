@@ -1329,3 +1329,23 @@ All 4 templates were fully raw Tailwind. Full WorkspacePage migration applied:
 **JS Prototype Debt:** 0
 **Remaining real template debt:** ~11 templates
 **Next:** Cluster 3 Compliance cluster (compliance_checklist_form, compliance_checklist_detail, compliance_checklist_list)
+
+---
+
+## Batch 7 Step 6 — Compliance Checklist Cluster (COMPLETE)
+
+**Date:** 2026-05-19
+**Templates migrated:** 3 (compliance_checklist_list, compliance_checklist_detail, compliance_checklist_form)
+
+**Highlights:**
+- All 3 compliance templates fully normalized to canonical structure
+- Old `page_title`/`page_actions` block pattern retired on all 3
+- Item toggle POST mechanism preserved exactly (checkbox onchange → form submit)
+- Status badge semantics: COMPLETE=green, IN_PROGRESS=blue, NOT_STARTED=gray
+- Form field errors added with `c-danger` (previously missing)
+
+**Validation:** 3/3 parse OK · manage.py check 0 issues · 3/3 tests pass
+
+**JS Prototype Debt:** 0
+**Remaining real template debt:** ~8 templates
+**Next:** Cluster 5 Medium complexity pages

@@ -2252,3 +2252,45 @@ Panel+stat-card redundancy removed:
 **Validation:** 4/4 template parse OK · manage.py check 0 issues · 3/3 tests pass
 
 **Remaining real template debt:** ~11 templates (Clusters 3, 5, 6, 7)
+
+---
+
+## Batch 7 Step 6 — Compliance Checklist Cluster (COMPLETE)
+
+**Date:** 2026-05-19
+**Templates migrated:** 3
+
+| Template | Status | Notes |
+|----------|--------|-------|
+| compliance_checklist_list.html | MIGRATED | page-wrap + filter form + panel overflow-hidden table + badge-sm status |
+| compliance_checklist_detail.html | MIGRATED | page-wrap + 2-col grid + panel sections; item toggle POST forms preserved exactly |
+| compliance_checklist_form.html | MIGRATED | page-wrap + panel-inner + form-label + c-danger errors; enctype preserved |
+
+**What was standardized:**
+- Removed old `{% block page_title %}` / `{% block page_actions %}` pattern from all 3; replaced with inline `page-wrap`/`page-header`
+- `shadow-md bg-white rounded-lg` panels → `panel` / `panel panel-inner` / `panel overflow-hidden`
+- `panel-head` + `panel-title` for section headers in detail view
+- `badge-sm` status normalization: COMPLETE→green, IN_PROGRESS→blue, NOT_STARTED/else→gray
+- `form-label` on all form labels
+- `c-danger` field error display added to form
+- `text-blue-600 hover:underline` links → `c-link`
+- `bg-gray-200 text-gray-800` cancel → `btn-ghost`
+- `bg-gray-600 text-white` Add Item button → `btn-primary-grad text-white`
+
+**Behavior preserved:**
+- Compliance status semantics (NOT_STARTED/IN_PROGRESS/COMPLETE) unchanged
+- Item toggle POST form with `onchange="this.form.submit()"` preserved exactly (both csrf_token instances)
+- Add Item POST form with csrf_token preserved
+- Search + status filter form GET params preserved (`search`, `status`)
+- `enctype="multipart/form-data"` preserved for attachments field
+- `checklist.attachments` conditional preserved
+- `form.instance.pk` create/edit conditional preserved
+- `id_for_label` label bindings preserved on all 6 form fields
+- Cancel → `compliance_checklist_list` preserved
+- All context var accessors unchanged: `checklists`, `checklist`, `item_form`
+
+**High-impact actions:** item toggle + add-item are POST with CSRF; no destructive actions without gating present.
+
+**Validation:** 3/3 template parse OK · manage.py check 0 issues · 3/3 tests pass
+
+**Remaining real template debt:** ~8 templates (Clusters 5, 6, contract_form)

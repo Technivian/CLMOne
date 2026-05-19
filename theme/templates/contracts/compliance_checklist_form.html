@@ -1,45 +1,63 @@
-{% extends 'base.html' %}
-
-{% block title %}{% if form.instance.pk %}Edit Checklist{% else %}New Compliance Checklist{% endif %}{% endblock %}
-
-{% block page_title %}
-{% if form.instance.pk %}Edit Compliance Checklist{% else %}New Compliance Checklist{% endif %}
-{% endblock %}
-
+{% extends "base.html" %}
+{% block title %}{% if form.instance.pk %}Edit Checklist{% else %}New Compliance Checklist{% endif %} - CMS Aegis{% endblock %}
 {% block content %}
-<div class="bg-white p-8 rounded-lg shadow-md">
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="md:col-span-2">
-                <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700">Checklist Name</label>
-                {{ form.name }}
-            </div>
-            <div class="md:col-span-2">
-                <label for="{{ form.regulation.id_for_label }}" class="block text-sm font-medium text-gray-700">Regulation</label>
-                {{ form.regulation }}
-            </div>
-            <div>
-                <label for="{{ form.status.id_for_label }}" class="block text-sm font-medium text-gray-700">Status</label>
-                {{ form.status }}
-            </div>
-            <div>
-                <label for="{{ form.due_date.id_for_label }}" class="block text-sm font-medium text-gray-700">Due Date</label>
-                {{ form.due_date }}
-            </div>
-            <div>
-                <label for="{{ form.reviewed_by.id_for_label }}" class="block text-sm font-medium text-gray-700">Reviewed By</label>
-                {{ form.reviewed_by }}
-            </div>
-            <div>
-                <label for="{{ form.attachments.id_for_label }}" class="block text-sm font-medium text-gray-700">Attachment (Optional)</label>
-                {{ form.attachments }}
-            </div>
+<div class="page-wrap">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">{% if form.instance.pk %}Edit Compliance Checklist{% else %}New Compliance Checklist{% endif %}</h1>
+            <p class="page-subtitle c-muted">{% if form.instance.pk %}Update checklist details and settings.{% else %}Create a new compliance checklist.{% endif %}</p>
         </div>
-        <div class="mt-8 flex justify-end space-x-4">
-            <a href="{% url 'contracts:compliance_checklist_list' %}" class="bg-gray-200 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-300">Cancel</a>
-            <button type="submit" class="btn-primary-grad text-white">Save Checklist</button>
+    </div>
+
+    <div class="panel">
+        <div class="panel-inner">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {% if form.non_field_errors %}
+                <div class="mb-4">
+                    {% for error in form.non_field_errors %}
+                    <p class="text-sm c-danger">{{ error }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="md:col-span-2">
+                        <label for="{{ form.name.id_for_label }}" class="form-label">Checklist Name</label>
+                        {{ form.name }}
+                        {% if form.name.errors %}<p class="text-xs c-danger mt-1">{{ form.name.errors|join:", " }}</p>{% endif %}
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="{{ form.regulation.id_for_label }}" class="form-label">Regulation</label>
+                        {{ form.regulation }}
+                        {% if form.regulation.errors %}<p class="text-xs c-danger mt-1">{{ form.regulation.errors|join:", " }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label for="{{ form.status.id_for_label }}" class="form-label">Status</label>
+                        {{ form.status }}
+                        {% if form.status.errors %}<p class="text-xs c-danger mt-1">{{ form.status.errors|join:", " }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label for="{{ form.due_date.id_for_label }}" class="form-label">Due Date</label>
+                        {{ form.due_date }}
+                        {% if form.due_date.errors %}<p class="text-xs c-danger mt-1">{{ form.due_date.errors|join:", " }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label for="{{ form.reviewed_by.id_for_label }}" class="form-label">Reviewed By</label>
+                        {{ form.reviewed_by }}
+                        {% if form.reviewed_by.errors %}<p class="text-xs c-danger mt-1">{{ form.reviewed_by.errors|join:", " }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label for="{{ form.attachments.id_for_label }}" class="form-label">Attachment <span class="c-muted">(Optional)</span></label>
+                        {{ form.attachments }}
+                        {% if form.attachments.errors %}<p class="text-xs c-danger mt-1">{{ form.attachments.errors|join:", " }}</p>{% endif %}
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 pt-6 mt-2 border-t">
+                    <a href="{% url 'contracts:compliance_checklist_list' %}" class="btn-ghost">Cancel</a>
+                    <button type="submit" class="btn-primary-grad text-white">Save Checklist</button>
+                </div>
+            </form>
         </div>
-    </form>
+    </div>
 </div>
 {% endblock %}
