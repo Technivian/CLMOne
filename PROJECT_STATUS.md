@@ -1075,3 +1075,20 @@ None present — no confirm guards required.
 - Template parse: ✅ all 3 OK
 - manage.py check: ✅ 0 issues
 - Tests: ✅ 3/3 pass
+
+---
+
+## Batch 6 Step 4 — Matter Triad
+
+**Status:** ✅ COMPLETE
+**Templates:** `matter_list.html`, `matter_detail.html`, `matter_form.html`
+**Risk Level:** MEDIUM-HIGH+ (lifecycle, relationship panels, sub-lists)
+
+- **matter_list.html**: Minimal hardening only — already had canonical structure; fixed aria-hidden on SVG; removed retired `stat-card overflow-hidden` from panel wrapper
+- **matter_detail.html**: Full WorkspacePage migration — page-wrap/header/actions, 4 info panels (panel+panel-inner), Time Entries + Deadlines sections (panel+panel-head), all badge-sm variants (green/yellow/gray/red/blue), c-muted/c-danger, btn-primary-grad/btn-ghost, empty-state
+- **matter_form.html**: Full WorkspacePage migration — page-wrap/header, panel+panel-inner, form-label/c-danger, btn-primary-grad/btn-ghost; structural exceptions (max-w-3xl, grid, md:col-span-2) preserved
+
+**Lifecycle preserved:** ACTIVE/ON_HOLD/CLOSED status badges; SOL date with c-danger; deadline overdue/remaining with badge-red/badge-blue
+**Relationships preserved:** responsible_attorney, originating_attorney, client.name linked rendering; `contracts/documents/tasks/risks` in context (not rendered) preserved
+**No destructive actions** in any of the 3 templates.
+**Tests:** 3/3 ✅ | **manage.py check:** 0 issues ✅

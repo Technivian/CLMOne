@@ -1557,3 +1557,68 @@ No delete/archive/revoke/deactivate actions exist in any of these templates. No 
 | Inline styles | ✅ 0 |
 | Raw Tailwind utility violations | ✅ 0 (hover:bg-gray-50 documented exception) |
 | Retired classes | ✅ 0 |
+
+---
+
+## Batch 6 Step 4 — NetworkPage Matter Triad
+
+**Templates:** `matter_list.html`, `matter_detail.html`, `matter_form.html`
+**Risk:** MEDIUM-HIGH+ — lifecycle/status rendering, relationship panels, time entry / deadline sub-lists
+
+### matter_list.html (minimal hardening)
+- Added `aria-hidden="true"` to decorative SVG in New Matter button
+- Removed redundant `overflow-hidden stat-card` from `panel` wrapper
+- Already had: page-wrap/header/title/subtitle, form-input/form-select, btn-ghost, tbl-head/tbl-th/tbl-row/tbl-td, badge-sm (green/yellow/gray), c-link/c-muted, empty state
+
+### matter_detail.html (full migration)
+- `page-wrap / page-header / page-title / page-subtitle / page-actions` replacing raw flex header
+- Log Time button: `btn-primary-grad text-white` replacing `bg-green-600 text-white`
+- Edit button: `btn-ghost` replacing `bg-gray-100 text-gray-700`
+- 3 info panels (Details, Team, Billing Summary): `panel panel-inner` replacing `bg-white rounded-xl border border-gray-200 p-5`
+- `panel-title` replacing raw `<h3>` with `text-sm font-semibold text-gray-500 uppercase`
+- `c-muted` replacing `text-gray-500` on all field labels
+- Status badge: `badge-sm badge-green` / `badge-sm badge-yellow` / `badge-sm badge-gray`
+- SOL `text-red-600 font-medium` → `c-danger font-medium`
+- Conditional Case Info section: `panel panel-inner` replacing `bg-white rounded-xl border border-gray-200 p-5`
+- Time Entries panel: `panel` + `panel-head` + `panel-title`; per-row `border-b`; `c-muted` on metadata; `empty-state`
+- Deadlines panel: `panel` + `panel-head` + `panel-title`; per-row `border-b`; deadline badge: `badge-sm badge-red` (overdue) / `badge-sm badge-blue` (remaining)
+- `c-muted` on time entry / deadline secondary text; removed all `divide-y divide-gray-100`
+
+### matter_form.html (full migration)
+- `page-wrap / page-header / page-title` replacing raw div header
+- `panel panel-inner` replacing `bg-white rounded-xl border border-gray-200 p-6`
+- `form-label block mb-1` replacing `block text-sm font-medium text-gray-700 mb-1`
+- `c-danger text-xs mt-1` replacing `text-red-500 text-xs mt-1`
+- Submit button: `btn-primary-grad text-white`; Cancel link: `btn-ghost`
+- `max-w-3xl` kept as structural layout exception
+- `grid grid-cols-1 md:grid-cols-2 gap-4` kept as structural layout exception
+- `md:col-span-2` on description/notes/title fields preserved
+
+### Preserved
+- Context vars: `matters`, `total_matters`, `active_matters`, `search_query`, `is_paginated`, `page_obj`; `matter`, `time_entries`, `deadlines`, `contracts`, `documents`, `tasks`, `risks`; `form`, `form.instance.pk`
+- URL names: `matter_create`, `matter_list`, `matter_detail`, `matter_update`, `time_entry_create`
+- `matter.status` ACTIVE/ON_HOLD/CLOSED lifecycle states
+- `matter.statute_of_limitations` — lifecycle critical field, preserved with c-danger emphasis
+- `dl.is_overdue`, `dl.days_remaining` — deadline lifecycle rendering
+- `matter.responsible_attorney` / `originating_attorney` — relationship fields
+- `{% if matter.opposing_party or matter.court_name %}` conditional case info block
+- `{{ field }}` widget rendering; `{% csrf_token %}`
+- `onchange="this.form.submit()"` on status filter (acceptable pattern)
+
+### No Destructive Actions
+No delete/archive/close/unlink actions in any of the 3 templates. No confirm guards required.
+
+### Lifecycle / Badge Variants Used
+All confirmed in base.html:
+- `badge-sm badge-green` ✅ `badge-sm badge-yellow` ✅ `badge-sm badge-gray` ✅ (matter status)
+- `badge-sm badge-red` ✅ `badge-sm badge-blue` ✅ (deadline overdue/remaining)
+
+### Validation
+| Check | Result |
+|---|---|
+| Template parse (all 3) | ✅ |
+| manage.py check | ✅ 0 issues |
+| Tests (3/3) | ✅ |
+| Inline styles | ✅ 0 |
+| Raw Tailwind utility violations | ✅ 0 |
+| Retired classes | ✅ 0 |
