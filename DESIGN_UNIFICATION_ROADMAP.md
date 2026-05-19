@@ -2367,3 +2367,42 @@ Panel+stat-card redundancy removed:
 **Remaining real template debt:** 1 template
 - `contract_form.html` (231 lines, most complex form — final step)
 - Auth/security permanently deferred
+
+---
+
+## Batch 7 Step 9 — contract_form.html (Final Non-Auth Template)
+
+**Status:** COMPLETE
+
+**Template migrated:**
+- `contract_form.html` — CommandPage, final non-auth template
+
+**Canonical patterns applied:**
+- `page-wrap` / `page-header` / `page-title` / `page-actions`
+- `panel` + `panel-inner` wrapping the form
+- `form-label` on all field labels
+- `text-xs c-muted mb-1` for help_text
+- `text-xs c-danger mt-1` for field errors
+- `btn-primary-grad text-white` for primary submit
+- `btn-ghost` for Preview draft (secondary submit) and Cancel
+
+**Behavior preserved:**
+- `form_action|default:request.path` context variable preserved on form action
+- `{% for field in form %}` loop + `md:col-span-2` overrides for content/title/clause_templates preserved exactly
+- `preview_mode and draft_sections` conditional block (inside form) preserved verbatim — complex drag-and-drop UI with section reordering, include toggles, order inputs, insert/remove controls
+- `draft_section_{{ section.index }}_*` dynamic field names preserved (draft_section_count, include, order, title, content)
+- Section badge tone conditionals (indigo/blue/red/amber/emerald/slate) preserved verbatim
+- `<template id="draft-section-template">` HTML element preserved verbatim
+- Full JS IIFE preserved verbatim (dragstart/dragend/dragover/drop, bindCard, renumberSections, insertSectionAfter, addButton click)
+- All `data-*` attributes that JS depends on preserved
+
+**High-impact actions:** Normal form save only (no destructive POST). Preview draft is a secondary submit with `name="preview_draft" value="1"`. CSRF token present.
+
+**Structural exceptions preserved:**
+- Draft sections block retains internal blue-theme styling (bg-blue-600 "Add section" button, blue-100/200 borders, etc.) — these are functional UI for the draft compose flow, not style drift
+
+**Validation:** 1/1 template parse OK · manage.py check 0 issues · 3/3 tests pass · 0 canonical drift
+
+**Remaining real non-auth template debt:** NONE
+- All real non-auth templates are now migrated
+- Auth/security permanently deferred: profile.html, registration/*, saml_select.html, organization_identity_settings.html
