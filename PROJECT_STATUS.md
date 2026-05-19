@@ -942,3 +942,53 @@ All 6 documented exceptions reviewed and kept as-is (see BATCH5_POST_MIGRATION_A
 ### Artifact
 
 `BATCH5_POST_MIGRATION_AUDIT.md` — full audit report
+
+---
+
+## Batch 6 Step 1 — organization_team.html ✅ COMPLETE (2026-05-19)
+
+**Risk:** HIGH | **Archetype:** WorkspacePage
+
+### Migration Summary
+
+- 150-line raw-Tailwind template → canonical WorkspacePage (130 lines, 45 raw utility violations eliminated)
+- page-wrap / page-header / page-title / page-subtitle / page-actions
+- `panel` + `panel-head` for Active Members table panel
+- 4× `panel` + `panel-inner` for sidebar panels
+- `tbl-head` / `tbl-th` / `tbl-row` / `tbl-td` / `c-muted` for member table
+- `panel-item` for all list rows
+- `select-base` for role select; `btn-primary-grad` for invite submit
+- `btn-ghost` + semantic color tokens (c-warning, c-danger, c-success) for inline actions
+- `empty-state` for all empty tables/lists
+
+### Destructive Action Hardening
+
+| Action | Before | After |
+|---|---|---|
+| Revoke Sessions | 1-click POST | `onsubmit` confirm guard added |
+| Deactivate Member | 1-click POST | `onsubmit` confirm guard added |
+| Revoke Invite | 1-click POST | `onsubmit` confirm guard added |
+
+### Preserved
+
+- All 7 form action URLs and field names (backend-safe)
+- CSRF on every form
+- Owner-gating: `{% if membership.role == 'OWNER' and not is_owner %}disabled{% endif %}`
+- Self-guard: `{% if membership.user_id != current_user_id %}` on destructive actions
+- `invite_form` template variable (no action URL override)
+
+### Validation
+
+| Check | Result |
+|---|---|
+| Template parse | ✅ |
+| manage.py check | ✅ 0 issues |
+| Tests (3/3) | ✅ |
+| Inline styles | ✅ 0 |
+| Raw Tailwind utilities | ✅ 0 |
+| Retired classes | ✅ 0 |
+| Undocumented primitives | ✅ 0 |
+
+### Next
+
+Batch 6 Step 2: NetworkPage client wave — `client_list.html`, `client_detail.html`, `client_form.html`
