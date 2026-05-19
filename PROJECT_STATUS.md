@@ -1392,3 +1392,29 @@ All 4 templates were fully raw Tailwind. Full WorkspacePage migration applied:
 **Remaining real template debt:** 1 template (contract_form.html — final complex form)
 **Auth/security:** permanently deferred
 **Next:** contract_form.html (final)
+
+---
+
+## Batch 7 Step 9 — contract_form.html Final Non-Auth Template (COMPLETE)
+
+**Date:** 2026-05-19
+**Template migrated:** 1 (contract_form.html)
+
+**Highlights:**
+- Final real non-auth template fully normalized to canonical CommandPage structure
+- `form_action|default:request.path` context variable preserved on form action
+- `{% for field in form %}` loop and all field rendering preserved exactly — no individual field changes
+- `md:col-span-2` overrides for content/title/clause_templates preserved
+- Entire draft sections block (drag-and-drop section reordering, include/order/title/content inputs) preserved verbatim inside the form
+- All `data-draft-*` attributes preserved — JS IIFE references them directly
+- `<template id="draft-section-template">` HTML element preserved verbatim
+- Full drag-and-drop JS (renumberSections, bindCard, insertSectionAfter, dragstart/dragend events) preserved verbatim
+- Preview draft secondary submit → btn-ghost; primary submit → btn-primary-grad text-white; Cancel → btn-ghost
+- Back to Contracts link added to page-actions
+
+**Validation:** 1/1 parse OK · manage.py check 0 issues · 3/3 tests pass · 0 canonical drift
+
+**JS Prototype Debt:** 0
+**Remaining real non-auth template debt:** 0 — COMPLETE
+**Auth/security permanently deferred:** profile.html, registration/*, saml_select.html, organization_identity_settings.html
+**Batch 7 Status:** FULLY COMPLETE
