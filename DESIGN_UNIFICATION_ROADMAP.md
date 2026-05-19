@@ -1325,3 +1325,54 @@ These are rendering with no styles currently. Slice A will fix them.
 - Destructive handlers: ✅ all preserved
 
 ### Status: ✅ Complete — Slice B (organization_activity) can begin
+
+---
+
+### 2026-05-18 — Batch 5 Step 7: organization_activity.html (Slice B)
+
+**Scope:** `theme/templates/contracts/organization_activity.html` → QueuePage archetype
+
+**Files Changed**
+
+| File | Archetype | Changes |
+|---|---|---|
+| `theme/templates/contracts/organization_activity.html` | QueuePage | Full migration: `page-wrap`/`page-header`/`page-title`/`page-subtitle`/`page-actions`; filter `select-base`/`input-base` with `sr-only` labels; `btn-primary-grad`/`btn-ghost`; `panel`/`tbl-head`/`tbl-th`/`tbl-row`/`tbl-td`/`c-muted`; `badge-sm badge-*` for action badges; `empty-state`; `nav[aria-label]` pagination |
+
+**Primitives Normalized**
+
+- `page-wrap` outer wrapper added
+- `page-header` / `page-title` / `page-subtitle` / `page-actions` for header structure
+- `select-base` + `input-base` on filter controls with `sr-only` accessible labels
+- `btn-primary-grad` on Apply button; `btn-ghost` on Export CSV and Back to Team
+- `panel` replacing raw `bg-white rounded-xl border border-gray-200 overflow-hidden`
+- `tbl-head` replacing `bg-gray-50`; `tbl-th` replacing `text-gray-500`; `tbl-row` + `border-b` replacing `hover:bg-gray-50`; `tbl-td c-muted` replacing `text-gray-500/text-gray-600`
+- `badge-sm badge-green/blue/red/yellow/gray` replacing inline `bg-*/text-*` badge classes (no badge-emerald/orange; APPROVE→badge-green, REJECT→badge-yellow)
+- `empty-state` on empty row `<td>`
+- `<nav aria-label="Pagination">` wrapping pagination; `btn-ghost` on prev/next links; `c-muted` on page counter
+
+**Behavior Preserved**
+
+- Both `onchange="this.form.submit()"` filter selects retained (progressive enhancement)
+- All filter GET params (`action`, `model`, `start_date`, `end_date`) preserved
+- `query_string` context variable preserved in export URL and pagination links
+- All context variables: `organization`, `logs`, `is_paginated`, `page_obj`, `request.GET.*`
+- All template filters: `date:"M d, Y H:i"`, `default:`, `truncatechars:50`
+- `organization_activity_export` URL preserved
+- `organization_team` back-link URL preserved
+- `colspan="6"` on empty state preserved
+
+**Exceptions**
+
+- None — full clean migration
+
+**Validation**
+
+- Template parse: ✅ OK
+- manage.py check: ✅ 0 issues
+- Tests: ✅ 3/3 passed
+- Inline styles: ✅ 0
+- Inline event handlers (other than preserved onchange): ✅ 0
+- Retired/raw Tailwind classes: ✅ 0
+- Undocumented primitives: ✅ 0
+
+**Status: ✅ Complete — Batch 5 Step 7 done. Batch 5 should pause for a post-migration audit before high-risk settings pages (organization_team.html, profile.html).**
