@@ -1116,3 +1116,23 @@ All 5 templates were fully raw Tailwind. Full WorkspacePage migration applied to
 
 **🏁 NetworkPage domain now COMPLETE — all templates migrated across Batch 6 Steps 1–5.**
 **Next wave:** QueuePage cluster (approval_request_list, clause_library, budget_list, etc.)
+
+---
+
+## Batch 6 Step 6 — QueuePage Wave 1: Approval Cluster
+
+**Status:** ✅ COMPLETE
+**Templates:** `approval_request_list.html`, `approval_request_form.html`, `approval_rule_list.html`, `approval_rule_form.html`
+**Risk Level:** HIGH declared → LOW-MEDIUM actual (no inline workflow actions in templates)
+
+All 4 templates were fully raw Tailwind. Full WorkspacePage migration applied:
+- `page-wrap/header/title/subtitle/page-actions` on all 4
+- List tables: `panel` + `tbl-head/tbl-th/tbl-row/tbl-td` + `btn-ghost Edit` + `empty-state`
+- Approval status badges: `badge-sm badge-green` (APPROVED) / `badge-sm badge-yellow` (PENDING) / `badge-sm badge-red` (REJECTED) / `badge-sm badge-blue` (other) — semantics preserved exactly
+- Rule active: `badge-sm badge-green` Yes / `c-muted` No; SLA hours as `c-muted`
+- Forms: `panel panel-inner space-y-4`, `form-label`, `c-muted`/`c-danger`, `btn-primary-grad text-white/btn-ghost`
+
+**Approval workflow safety confirmed:** No inline approve/reject/escalate actions in templates. All state transitions in view layer. `item.status`, `item.get_status_display`, `assigned_to`, `delegated_to`, `approval_step` all preserved.
+**No destructive actions** in any template. No confirm guards needed.
+**Tests:** 3/3 ✅ | **manage.py check:** 0 issues ✅
+**Next:** QueuePage wave 2 — clause cluster or budget cluster

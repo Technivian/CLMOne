@@ -1717,3 +1717,86 @@ All NetworkPage templates now migrated:
 - subprocessor_list/detail/form + transfer_record_list/form ✅ Batch 6 Step 5
 
 **NetworkPage domain: COMPLETE ✅**
+
+---
+
+## Batch 6 Step 6 — QueuePage Wave 1: Approval Cluster
+
+**Cluster:** Approval Requests + Approval Rules (QueuePage/CommandPage domain entry)
+**Risk level:** HIGH (approval workflow semantics) — downgraded to LOW-MEDIUM in practice (no inline approve/reject/escalate actions in templates; all state transitions in view layer)
+
+**Templates:**
+- `approval_request_list.html` — QueuePage (list)
+- `approval_request_form.html` — CommandPage (form)
+- `approval_rule_list.html` — QueuePage (list)
+- `approval_rule_form.html` — CommandPage (form)
+
+### approval_request_list.html (full migration)
+- `page-wrap / page-header / page-title / page-subtitle / page-actions`
+- `aria-hidden="true"` on decorative Add New SVG
+- `btn-primary-grad text-white` replacing `bg-blue-600 text-white`
+- `panel` replacing `bg-white rounded-xl border border-gray-200 overflow-hidden`
+- `tbl-head / tbl-th / tbl-row / tbl-td` replacing raw `bg-gray-50` thead + `px-5 py-3` cells
+- `badge-sm badge-green` (APPROVED) / `badge-sm badge-yellow` (PENDING) / `badge-sm badge-red` (REJECTED) / `badge-sm badge-blue` (other — escalated/in-review) — approval state semantics preserved exactly
+- `c-muted` on `assigned_to`, `delegated_to`, `created_at` columns — secondary info
+- `btn-ghost px-3 py-1` on Edit row action
+- `empty-state` replacing `px-5 py-8 text-center text-sm text-gray-400`
+
+### approval_request_form.html (full migration)
+- `page-wrap / page-header / page-title`
+- `max-w-3xl` wrapper — structural layout exception kept
+- `panel panel-inner space-y-4` replacing `bg-white rounded-xl border border-gray-200 p-6`
+- `form-label block mb-1` replacing `block text-sm font-medium text-gray-700 mb-1`
+- `c-muted text-xs mt-1` on help text; `c-danger text-xs mt-1` on field errors
+- `btn-primary-grad text-white` / `btn-ghost` for Save/Cancel
+- `enctype="multipart/form-data"` preserved; `{% csrf_token %}` preserved
+- `field.id_for_label` / `field.errors|join:", "` / `field.help_text` all preserved
+- `object|yesno:"Edit,New"` create/edit mode preserved
+- Cancel → `approval_request_list` preserved
+
+### approval_rule_list.html (full migration)
+- Same list pattern as approval_request_list
+- `page-wrap / page-header / page-title / page-subtitle / page-actions`
+- `panel` + `tbl-head / tbl-th / tbl-row / tbl-td`
+- `badge-sm badge-green` / `c-muted` for `is_active` Yes/No
+- `c-muted` on `trigger_value` and `sla_hours` (secondary data)
+- `get_trigger_type_display` / `get_approval_step_display` preserved
+- `btn-ghost px-3 py-1` on Edit; `empty-state` for empty
+- SLA hours rendered as plain value — no semantic change
+
+### approval_rule_form.html (full migration)
+- Same form pattern as approval_request_form
+- `page-wrap / page-header / page-title`; `panel panel-inner space-y-4`
+- `form-label / c-muted / c-danger`; `btn-primary-grad text-white / btn-ghost`
+- `enctype` + `field.id_for_label` + `field.errors|join` preserved
+- Cancel → `approval_rule_list` preserved
+
+### Approval Workflow Safety — CONFIRMED CLEAN
+- No inline approve/reject/escalate/revoke/close actions in any template
+- All approval state transitions handled in view layer (not exposed to template)
+- `item.status` values preserved verbatim: APPROVED / PENDING / REJECTED / (fallback=blue)
+- `item.get_status_display` preserved — human-readable display unchanged
+- `item.approval_step` / `item.assigned_to` / `item.delegated_to` preserved
+- No confirm guards needed (no destructive template-level actions exist)
+- No privilege leakage risk (Edit links only — permission gating in views)
+
+### Permission Assessment
+- No admin-only or approver-only template blocks found
+- Permission gating is view-level (login_required, queryset filtering)
+- Template-level visibility preserved as-is — no changes to permission logic
+
+### No Destructive Actions
+No delete/archive/revoke/close actions in any of the 4 templates.
+
+### Structural Exceptions Kept
+- `max-w-3xl` on form wrappers — content-width constraint
+- `hover:bg-gray-50` on table rows — interactive affordance
+
+### Validation
+| Check | Result |
+|---|---|
+| Template parse (all 4) | ✅ |
+| manage.py check | ✅ 0 issues |
+| Tests (3/3) | ✅ |
+| Raw Tailwind violations | ✅ 0 |
+| Inline styles | ✅ 0 |
