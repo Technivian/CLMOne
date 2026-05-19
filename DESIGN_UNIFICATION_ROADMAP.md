@@ -1402,3 +1402,39 @@ These are rendering with no styles currently. Slice A will fix them.
 **Artifact produced:** `BATCH5_POST_MIGRATION_AUDIT.md`
 
 **Recommended Batch 6 scope:** organization_team.html (Step 1), then NetworkPage client wave (client_list, client_detail, client_form)
+
+---
+
+### 2026-05-19 — Batch 6 Step 1 — organization_team.html
+
+**Archetype:** WorkspacePage (primary: NetworkPage classification)
+**Risk:** HIGH — 7 forms, destructive actions, owner-gating, self-guard
+
+**Migration:**
+- page-wrap / page-header / page-title / page-subtitle / page-actions
+- `panel` + `panel-head` + `panel-title` for Active Members table panel
+- `panel` + `panel-inner` for all 4 sidebar panels (Inactive Members, Invite, Pending Invites, History)
+- `tbl-head` / `tbl-th` / `tbl-row border-b` / `tbl-td` / `c-muted` for member table
+- `panel-item` for all list rows (inactive members, pending invites, history)
+- `select-base` for role select
+- `btn-primary-grad text-white` for invite submit
+- `btn-ghost` for all small action buttons; `c-warning` (Revoke Sessions), `c-danger` (Deactivate, Revoke Invite), `c-success` (Reactivate)
+- `empty-state` for all empty states
+
+**Hardening (Phase 3):**
+- Added `onsubmit="return confirm(...)"` to 3 destructive forms:
+  - `revoke_member_sessions` — "Revoke all active sessions... They will be signed out immediately."
+  - `deactivate_organization_member` — "Deactivate this member? They will lose access to the organization."
+  - `revoke_organization_invite` — "Revoke this invitation? The recipient will no longer be able to join."
+
+**Preserved:**
+- All 7 form action URLs and POST routes
+- CSRF tokens on all forms
+- `{% if membership.role == 'OWNER' and not is_owner %}disabled{% endif %}` owner-gating on role select and Save button
+- `{% if membership.user_id != current_user_id %}` self-guard on destructive actions
+- `invite_form` template variable passthrough (no explicit action URL — posts to current page)
+- `inactive_memberships`, `invitations`, `invitation_history` context variables
+- `max-h-72 overflow-auto` on Invitation History scroll container
+- `grid grid-cols-1 lg:grid-cols-3 gap-6` structural layout (Section 12 exception)
+
+**Validation:** template parse ✅ · manage.py check 0 issues ✅ · 3/3 tests ✅ · 0 inline styles · 0 retired classes · 0 raw Tailwind utility violations · 3 confirm guards confirmed
