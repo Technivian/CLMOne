@@ -867,3 +867,37 @@ All forms, routes, context variables, CSRF tokens untouched.
 
 - Slice B: `organization_activity.html` (MEDIUM), `organization_team.html` (HIGH)
 - Deferred: `profile.html` (HIGH, MFA-critical)
+
+---
+
+## Batch 5 Step 7 — organization_activity.html QueuePage Migration ✅ COMPLETE (2026-05-18)
+
+### File Migrated
+
+| File | Archetype | Key Changes |
+|---|---|---|
+| `contracts/organization_activity.html` | QueuePage | `page-wrap`/`page-header`/`page-title`/`page-subtitle`/`page-actions`; `panel`/`tbl-*`; `badge-sm badge-*`; `select-base`/`input-base`/`btn-primary-grad`/`btn-ghost`; `sr-only` accessible labels; `empty-state`; `nav[aria-label]` pagination |
+
+### Behavior Preserved
+
+- Both `onchange="this.form.submit()"` filter selects retained
+- All filter params, export URL, pagination, context variables, template filters preserved
+
+### Exceptions
+
+None — full clean migration
+
+### Validation
+
+- Template parse: ✅ OK
+- manage.py check: ✅ 0 issues
+- Tests: ✅ 3/3 passed
+- Inline styles/handlers: ✅ 0
+- Retired/raw Tailwind: ✅ 0
+- Undocumented primitives: ✅ 0
+
+### Next Steps
+
+Batch 5 should **pause for a post-migration audit** before attempting high-risk remaining templates:
+- `organization_team.html` — HIGH risk (defer)
+- `profile.html` — deferred indefinitely (MFA-critical)
