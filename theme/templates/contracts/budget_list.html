@@ -10,23 +10,23 @@
         <p class="page-subtitle">Plan allocations and monitor spend across departments.</p>
     </div>
     <a href="{% url 'contracts:budget_create' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 btn-primary-grad">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+        <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
         New Budget
     </a>
 </div>
 
 <div class="dash-grid dash-grid-3 mb-6">
-    <div class="rounded-xl p-5 border stat-card">
+    <div class="panel panel-inner">
         <p class="text-xs font-semibold uppercase tracking-widest mb-2 c-muted">Total Budgets</p>
         <p class="text-3xl font-bold c-primary">{{ total_budgets }}</p>
         <p class="text-xs mt-1 c-muted">tracked budget lines</p>
     </div>
-    <div class="rounded-xl p-5 border stat-card">
+    <div class="panel panel-inner">
         <p class="text-xs font-semibold uppercase tracking-widest mb-2 c-muted">{{ current_year }}</p>
         <p class="text-3xl font-bold c-primary-brand">{{ current_year_budgets }}</p>
         <p class="text-xs mt-1 c-muted">current-year budgets</p>
     </div>
-    <div class="rounded-xl p-5 border stat-card">
+    <div class="panel panel-inner">
         <p class="text-xs font-semibold uppercase tracking-widest mb-2 c-muted">Allocated</p>
         <p class="text-3xl font-bold c-accent">${{ total_allocated|floatformat:0 }}</p>
         <p class="text-xs mt-1 c-muted">total planned spend</p>
@@ -61,7 +61,7 @@
     </form>
 </div>
 
-<div class="panel overflow-hidden stat-card">
+<div class="panel">
     <table class="w-full text-sm">
         <thead class="tbl-head">
             <tr>
@@ -85,8 +85,8 @@
                 <td class="px-5 py-3.5 tbl-td">{{ budget.quarter }}</td>
                 <td class="px-5 py-3.5 font-medium tabular-nums c-primary">${{ budget.allocated_amount|floatformat:2 }}</td>
                 <td class="px-5 py-3.5 tabular-nums tbl-td">${{ budget.spent_amount|floatformat:2 }}</td>
-                <td class="px-5 py-3.5 tabular-nums {% if budget.is_over_budget %}c-red{% else %}tbl-td{% endif %}">${{ budget.remaining_amount|floatformat:2 }}</td>
-                <td class="px-5 py-3.5 text-right"><a href="{% url 'contracts:budget_detail' budget.pk %}" class="text-xs font-medium px-2.5 py-1 rounded-md border transition-opacity hover:opacity-80 btn-ghost">View</a></td>
+                <td class="px-5 py-3.5 tabular-nums {% if budget.is_over_budget %}c-danger{% else %}tbl-td{% endif %}">${{ budget.remaining_amount|floatformat:2 }}</td>
+                <td class="px-5 py-3.5 text-right"><a href="{% url 'contracts:budget_detail' budget.pk %}" class="btn-ghost px-3 py-1 text-xs font-medium rounded-md">View</a></td>
             </tr>
             {% empty %}
             <tr><td colspan="7" class="px-5 py-20 text-center"><div class="flex flex-col items-center gap-3"><div class="w-12 h-12 rounded-full flex items-center justify-center surface-bubble"><svg class="w-6 h-6 c-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/></svg></div><div><p class="font-medium c-primary">No budgets found</p><p class="text-sm mt-1 c-muted">{% if search_query or selected_year %}Try adjusting your filters or <a href="{% url 'contracts:budget_list' %}" class="c-link">clear the search</a>.{% else %}Get started by <a href="{% url 'contracts:budget_create' %}" class="c-link">creating your first budget</a>.{% endif %}</p></div></div></td></tr>
