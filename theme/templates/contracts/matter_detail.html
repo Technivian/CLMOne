@@ -1,85 +1,95 @@
 {% extends "base.html" %}
 {% block title %}{{ matter.matter_number }} - CMS Aegis{% endblock %}
 {% block content %}
-<div class="flex items-center justify-between mb-6">
+<div class="page-wrap">
+  <div class="page-header">
     <div>
-        <h1 class="text-2xl font-bold text-gray-900">{{ matter.title }}</h1>
-        <p class="text-sm text-gray-500">{{ matter.matter_number }} &middot; {{ matter.get_practice_area_display }} &middot; {{ matter.client.name }}</p>
+      <h1 class="page-title">{{ matter.title }}</h1>
+      <p class="page-subtitle">{{ matter.matter_number }} &middot; {{ matter.get_practice_area_display }} &middot; {{ matter.client.name }}</p>
     </div>
-    <div class="flex gap-2">
-        <a href="{% url 'contracts:time_entry_create' %}" class="px-3 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700">Log Time</a>
-        <a href="{% url 'contracts:matter_update' matter.pk %}" class="px-3 py-2 bg-gray-100 text-gray-700 text-sm rounded-lg hover:bg-gray-200">Edit</a>
+    <div class="page-actions">
+      <a href="{% url 'contracts:time_entry_create' %}" class="inline-flex items-center px-3 py-2 rounded-lg text-sm font-medium text-white border border-transparent btn-primary-grad">Log Time</a>
+      <a href="{% url 'contracts:matter_update' matter.pk %}" class="inline-flex items-center px-3 py-2 rounded-lg text-sm border btn-ghost">Edit</a>
     </div>
-</div>
+  </div>
 
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-    <div class="bg-white rounded-xl border border-gray-200 p-5">
-        <h3 class="text-sm font-semibold text-gray-500 uppercase mb-3">Details</h3>
-        <div class="space-y-2 text-sm">
-            <div><span class="text-gray-500">Status:</span> <span class="px-2 py-0.5 rounded-full text-xs {% if matter.status == 'ACTIVE' %}bg-green-100 text-green-800{% else %}bg-gray-100 text-gray-600{% endif %}">{{ matter.get_status_display }}</span></div>
-            <div><span class="text-gray-500">Billing:</span> {{ matter.get_billing_type_display }}</div>
-            <div><span class="text-gray-500">Opened:</span> {{ matter.open_date|date:"M d, Y" }}</div>
-            {% if matter.budget_amount %}<div><span class="text-gray-500">Budget:</span> ${{ matter.budget_amount|floatformat:2 }}</div>{% endif %}
-            {% if matter.statute_of_limitations %}<div><span class="text-gray-500">SOL:</span> <span class="text-red-600 font-medium">{{ matter.statute_of_limitations|date:"M d, Y" }}</span></div>{% endif %}
-        </div>
-    </div>
-    <div class="bg-white rounded-xl border border-gray-200 p-5">
-        <h3 class="text-sm font-semibold text-gray-500 uppercase mb-3">Team</h3>
-        <div class="space-y-2 text-sm">
-            <div><span class="text-gray-500">Lead:</span> {{ matter.responsible_attorney.get_full_name|default:"Unassigned" }}</div>
-            <div><span class="text-gray-500">Originating:</span> {{ matter.originating_attorney.get_full_name|default:"—" }}</div>
-        </div>
-    </div>
-    <div class="bg-white rounded-xl border border-gray-200 p-5">
-        <h3 class="text-sm font-semibold text-gray-500 uppercase mb-3">Billing Summary</h3>
-        <div class="space-y-2 text-sm">
-            <div><span class="text-gray-500">Hours:</span> {{ matter.total_time_billed|floatformat:1 }}h</div>
-            <div><span class="text-gray-500">Amount:</span> ${{ matter.total_amount_billed|floatformat:2 }}</div>
-        </div>
-    </div>
-</div>
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
 
-{% if matter.opposing_party or matter.court_name %}
-<div class="bg-white rounded-xl border border-gray-200 p-5 mb-6">
-    <h3 class="text-sm font-semibold text-gray-500 uppercase mb-3">Case Info</h3>
+    <!-- Details -->
+    <div class="panel panel-inner">
+      <h3 class="panel-title mb-3">Details</h3>
+      <div class="space-y-2 text-sm">
+        <div><span class="c-muted">Status:</span> <span class="badge-sm {% if matter.status == 'ACTIVE' %}badge-green{% elif matter.status == 'ON_HOLD' %}badge-yellow{% else %}badge-gray{% endif %}">{{ matter.get_status_display }}</span></div>
+        <div><span class="c-muted">Billing:</span> {{ matter.get_billing_type_display }}</div>
+        <div><span class="c-muted">Opened:</span> {{ matter.open_date|date:"M d, Y" }}</div>
+        {% if matter.budget_amount %}<div><span class="c-muted">Budget:</span> ${{ matter.budget_amount|floatformat:2 }}</div>{% endif %}
+        {% if matter.statute_of_limitations %}<div><span class="c-muted">SOL:</span> <span class="c-danger font-medium">{{ matter.statute_of_limitations|date:"M d, Y" }}</span></div>{% endif %}
+      </div>
+    </div>
+
+    <!-- Team -->
+    <div class="panel panel-inner">
+      <h3 class="panel-title mb-3">Team</h3>
+      <div class="space-y-2 text-sm">
+        <div><span class="c-muted">Lead:</span> {{ matter.responsible_attorney.get_full_name|default:"Unassigned" }}</div>
+        <div><span class="c-muted">Originating:</span> {{ matter.originating_attorney.get_full_name|default:"—" }}</div>
+      </div>
+    </div>
+
+    <!-- Billing Summary -->
+    <div class="panel panel-inner">
+      <h3 class="panel-title mb-3">Billing Summary</h3>
+      <div class="space-y-2 text-sm">
+        <div><span class="c-muted">Hours:</span> {{ matter.total_time_billed|floatformat:1 }}h</div>
+        <div><span class="c-muted">Amount:</span> ${{ matter.total_amount_billed|floatformat:2 }}</div>
+      </div>
+    </div>
+
+  </div>
+
+  {% if matter.opposing_party or matter.court_name %}
+  <div class="panel panel-inner mb-6">
+    <h3 class="panel-title mb-3">Case Info</h3>
     <div class="grid grid-cols-2 gap-4 text-sm">
-        {% if matter.opposing_party %}<div><span class="text-gray-500">Opposing Party:</span> {{ matter.opposing_party }}</div>{% endif %}
-        {% if matter.opposing_counsel %}<div><span class="text-gray-500">Opposing Counsel:</span> {{ matter.opposing_counsel }}</div>{% endif %}
-        {% if matter.court_name %}<div><span class="text-gray-500">Court:</span> {{ matter.court_name }}</div>{% endif %}
-        {% if matter.case_number %}<div><span class="text-gray-500">Case #:</span> {{ matter.case_number }}</div>{% endif %}
+      {% if matter.opposing_party %}<div><span class="c-muted">Opposing Party:</span> {{ matter.opposing_party }}</div>{% endif %}
+      {% if matter.opposing_counsel %}<div><span class="c-muted">Opposing Counsel:</span> {{ matter.opposing_counsel }}</div>{% endif %}
+      {% if matter.court_name %}<div><span class="c-muted">Court:</span> {{ matter.court_name }}</div>{% endif %}
+      {% if matter.case_number %}<div><span class="c-muted">Case #:</span> {{ matter.case_number }}</div>{% endif %}
     </div>
-</div>
-{% endif %}
+  </div>
+  {% endif %}
 
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-    <div class="bg-white rounded-xl border border-gray-200">
-        <div class="px-5 py-4 border-b border-gray-100"><h2 class="font-semibold text-gray-900">Recent Time Entries</h2></div>
-        <div class="divide-y divide-gray-100">
-            {% for entry in time_entries %}
-            <div class="px-5 py-3">
-                <div class="text-sm text-gray-900">{{ entry.description|truncatechars:50 }}</div>
-                <div class="text-xs text-gray-500">{{ entry.date|date:"M d" }} &middot; {{ entry.hours }}h &middot; {{ entry.user.get_full_name|default:entry.user.username }}</div>
-            </div>
-            {% empty %}
-            <div class="px-5 py-8 text-center text-gray-400 text-sm">No time entries.</div>
-            {% endfor %}
-        </div>
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+    <!-- Time Entries -->
+    <div class="panel">
+      <div class="panel-head"><h2 class="panel-title">Recent Time Entries</h2></div>
+      {% for entry in time_entries %}
+      <div class="px-5 py-3 border-b">
+        <div class="text-sm">{{ entry.description|truncatechars:50 }}</div>
+        <div class="text-xs c-muted">{{ entry.date|date:"M d" }} &middot; {{ entry.hours }}h &middot; {{ entry.user.get_full_name|default:entry.user.username }}</div>
+      </div>
+      {% empty %}
+      <div class="empty-state">No time entries.</div>
+      {% endfor %}
     </div>
-    <div class="bg-white rounded-xl border border-gray-200">
-        <div class="px-5 py-4 border-b border-gray-100"><h2 class="font-semibold text-gray-900">Deadlines</h2></div>
-        <div class="divide-y divide-gray-100">
-            {% for dl in deadlines %}
-            <div class="px-5 py-3 flex items-center justify-between">
-                <div>
-                    <div class="text-sm text-gray-900">{{ dl.title }}</div>
-                    <div class="text-xs text-gray-500">{{ dl.due_date|date:"M d, Y" }}</div>
-                </div>
-                <span class="text-xs px-2 py-1 rounded-full {% if dl.is_overdue %}bg-red-100 text-red-800{% else %}bg-blue-100 text-blue-800{% endif %}">{% if dl.is_overdue %}Overdue{% else %}{{ dl.days_remaining }}d{% endif %}</span>
-            </div>
-            {% empty %}
-            <div class="px-5 py-8 text-center text-gray-400 text-sm">No active deadlines.</div>
-            {% endfor %}
+
+    <!-- Deadlines -->
+    <div class="panel">
+      <div class="panel-head"><h2 class="panel-title">Deadlines</h2></div>
+      {% for dl in deadlines %}
+      <div class="px-5 py-3 border-b flex items-center justify-between">
+        <div>
+          <div class="text-sm">{{ dl.title }}</div>
+          <div class="text-xs c-muted">{{ dl.due_date|date:"M d, Y" }}</div>
         </div>
+        <span class="badge-sm {% if dl.is_overdue %}badge-red{% else %}badge-blue{% endif %}">{% if dl.is_overdue %}Overdue{% else %}{{ dl.days_remaining }}d{% endif %}</span>
+      </div>
+      {% empty %}
+      <div class="empty-state">No active deadlines.</div>
+      {% endfor %}
     </div>
+
+  </div>
 </div>
 {% endblock %}
