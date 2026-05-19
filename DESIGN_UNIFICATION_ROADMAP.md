@@ -1280,3 +1280,48 @@ These are rendering with no styles currently. Slice A will fix them.
 4. `organization_identity_settings.html` — fix 4 undefined button classes; preserve 2× `onsubmit` confirms
 
 ### Status: ✅ Discovery complete — Slice A ready to begin
+
+---
+
+## Batch 5 Step 6 — Org/Settings Slice A Migration ✅ COMPLETE (2026-05-18)
+
+### Files Changed
+
+| File | Archetype | Changes |
+|---|---|---|
+| `theme/templates/settings_hub.html` | WorkspacePage | `page-container` → `page-wrap` |
+| `theme/templates/contracts/organization_security_settings.html` | WorkspacePage | `page-container`→`page-wrap`, `ds-badge`→`badge-sm`, removed `checkbox-primary`, `btn-primary`→`btn-primary-grad`, `btn-secondary`→`btn-ghost` |
+| `theme/templates/contracts/organization_session_audit.html` | QueuePage | `page-container`→`page-wrap`, raw border div→`panel-item`, `btn-secondary`→`btn-ghost` |
+| `theme/templates/contracts/organization_identity_settings.html` | WorkspacePage | `btn-primary`→`btn-primary-grad` (×1), `btn-secondary`→`btn-ghost` (×2) |
+
+### Behavior Preserved
+
+- All `onsubmit="return confirm(...)"` destructive guards retained (4 total across 3 templates)
+- All form fields, POST actions, `action` hidden inputs, CSRF tokens preserved
+- All context variables, routes, conditional blocks preserved
+- Export links, audit links, telemetry links preserved
+
+### Documented Exceptions
+
+- `input-base w-180 px-3 py-2 rounded-lg border` in organization_security_settings.html session timeout input — structural Tailwind retained; `input-base` in settings block is theming-only (no padding/radius); documented exception
+- `page-max-w` in organization_identity_settings.html — settings-specific max-width (980px); narrower than `page-wrap` (1400px); kept to preserve layout intent
+- Settings heading classes (`heading-xl`, `text-subtitle`, `text-desc-sm`) retained — defined in base.html settings block; equivalent to `page-title`/`page-subtitle` for settings page context
+
+### Slice B Scope (remaining)
+
+| Template | Archetype | Risk | Blocker |
+|---|---|---|---|
+| `organization_activity.html` | QueuePage | MEDIUM | 28 raw Tailwind hits; `onchange` handlers |
+| `organization_team.html` | WorkspacePage | HIGH | 48 raw Tailwind; destructive member actions; complex multi-panel |
+| `profile.html` | WorkspacePage | HIGH | MFA enrollment flow; named submit actions; security-critical |
+
+### Validation
+
+- Template parse: ✅ 4/4 OK
+- manage.py check: ✅ 0 issues
+- Tests: ✅ 3/3 passed
+- Inline styles: ✅ 0
+- Undefined classes: ✅ 0 (all resolved)
+- Destructive handlers: ✅ all preserved
+
+### Status: ✅ Complete — Slice B (organization_activity) can begin
