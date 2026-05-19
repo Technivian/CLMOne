@@ -1,53 +1,63 @@
 {% extends "base.html" %}
 {% block title %}Budget Detail - CMS Aegis{% endblock %}
 {% block content %}
-<div class="flex items-center justify-between mb-6">
+<div class="page-wrap">
+
+  <div class="page-header">
     <div>
-        <h1 class="text-2xl font-bold text-gray-900">{{ budget.department|default:"Budget" }} - Q{{ budget.quarter }} {{ budget.year }}</h1>
-        <p class="text-sm text-gray-500">Allocated: ${{ budget.allocated_amount|floatformat:2 }}</p>
+      <h1 class="page-title">{{ budget.department|default:"Budget" }} — Q{{ budget.quarter }} {{ budget.year }}</h1>
+      <p class="page-subtitle">Allocated: ${{ budget.allocated_amount|floatformat:2 }}</p>
     </div>
     <div class="flex gap-2">
-        <a href="{% url 'contracts:add_expense' budget.pk %}" class="px-3 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700">Add Expense</a>
-        <a href="{% url 'contracts:budget_update' budget.pk %}" class="px-3 py-2 bg-gray-100 text-gray-700 text-sm rounded-lg hover:bg-gray-200">Edit</a>
+      <a href="{% url 'contracts:add_expense' budget.pk %}" class="btn-primary-grad text-white inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg">Add Expense</a>
+      <a href="{% url 'contracts:budget_update' budget.pk %}" class="btn-ghost px-4 py-2 text-sm font-medium rounded-lg">Edit</a>
     </div>
-</div>
-<div class="grid grid-cols-3 gap-4 mb-6">
-    <div class="bg-white rounded-xl p-4 border border-gray-200">
-        <div class="text-sm text-gray-500">Allocated</div>
-        <div class="text-2xl font-bold text-gray-900">${{ budget.allocated_amount|floatformat:0 }}</div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <div class="panel panel-inner">
+      <p class="text-xs font-semibold uppercase tracking-widest c-muted mb-1">Allocated</p>
+      <p class="text-2xl font-bold c-primary">${{ budget.allocated_amount|floatformat:0 }}</p>
     </div>
-    <div class="bg-white rounded-xl p-4 border border-gray-200">
-        <div class="text-sm text-gray-500">Spent</div>
-        <div class="text-2xl font-bold text-orange-600">${{ budget.total_spent|floatformat:0 }}</div>
+    <div class="panel panel-inner">
+      <p class="text-xs font-semibold uppercase tracking-widest c-muted mb-1">Spent</p>
+      <p class="text-2xl font-bold c-warning">${{ budget.total_spent|floatformat:0 }}</p>
     </div>
-    <div class="bg-white rounded-xl p-4 border border-gray-200">
-        <div class="text-sm text-gray-500">Remaining</div>
-        <div class="text-2xl font-bold {% if budget.remaining >= 0 %}text-green-600{% else %}text-red-600{% endif %}">${{ budget.remaining|floatformat:0 }}</div>
+    <div class="panel panel-inner">
+      <p class="text-xs font-semibold uppercase tracking-widest c-muted mb-1">Remaining</p>
+      <p class="text-2xl font-bold {% if budget.remaining >= 0 %}c-success{% else %}c-danger{% endif %}">${{ budget.remaining|floatformat:0 }}</p>
     </div>
-</div>
-<div class="bg-white rounded-xl border border-gray-200">
-    <div class="px-5 py-4 border-b border-gray-100"><h2 class="font-semibold text-gray-900">Expenses</h2></div>
-    <table class="w-full">
-        <thead class="bg-gray-50">
-            <tr>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Date</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Description</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Category</th>
-                <th class="text-right px-5 py-3 text-xs font-medium text-gray-500 uppercase">Amount</th>
-            </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-100">
-            {% for expense in budget.expenses.all %}
-            <tr>
-                <td class="px-5 py-3 text-sm text-gray-500">{{ expense.date|date:"M d, Y" }}</td>
-                <td class="px-5 py-3 text-sm text-gray-900">{{ expense.description }}</td>
-                <td class="px-5 py-3 text-sm text-gray-600">{{ expense.get_category_display }}</td>
-                <td class="px-5 py-3 text-sm text-right font-medium">${{ expense.amount|floatformat:2 }}</td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="4" class="px-5 py-8 text-center text-gray-400">No expenses recorded.</td></tr>
-            {% endfor %}
-        </tbody>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <h2 class="panel-title">Expenses</h2>
+    </div>
+    <table class="w-full text-sm">
+      <thead class="tbl-head">
+        <tr>
+          <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Date</th>
+          <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Description</th>
+          <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Category</th>
+          <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for expense in budget.expenses.all %}
+        <tr class="border-b transition-colors tbl-row">
+          <td class="px-5 py-3.5 tbl-td">{{ expense.date|date:"M d, Y" }}</td>
+          <td class="px-5 py-3.5">{{ expense.description }}</td>
+          <td class="px-5 py-3.5 tbl-td">{{ expense.get_category_display }}</td>
+          <td class="px-5 py-3.5 text-right font-medium tabular-nums">${{ expense.amount|floatformat:2 }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="4"><div class="empty-state">No expenses recorded.</div></td>
+        </tr>
+        {% endfor %}
+      </tbody>
     </table>
+  </div>
+
 </div>
 {% endblock %}

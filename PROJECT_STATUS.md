@@ -1136,3 +1136,20 @@ All 4 templates were fully raw Tailwind. Full WorkspacePage migration applied:
 **No destructive actions** in any template. No confirm guards needed.
 **Tests:** 3/3 ✅ | **manage.py check:** 0 issues ✅
 **Next:** QueuePage wave 2 — clause cluster or budget cluster
+
+---
+
+## Batch 6 Step 7 — QueuePage Wave 2: Budget Cluster
+
+**Status:** ✅ COMPLETE
+**Templates:** `budget_list.html`, `budget_detail.html`, `budget_form.html`
+**Risk Level:** MEDIUM-HIGH declared → LOW actual (no template-level financial state transitions)
+
+- `budget_list.html`: targeted fixes — stat-card KPI cards → panel panel-inner; c-red → c-danger; aria-hidden SVG; View button normalized
+- `budget_detail.html`: full migration — page-wrap/header, 3-col panel KPI cards (c-warning Spent / c-success|c-danger Remaining), panel+panel-head Expenses table with tbl-head/tbl-th/tbl-row/tbl-td, empty-state, btn-primary-grad Add Expense / btn-ghost Edit
+- `budget_form.html`: full migration — page-wrap/header, panel+panel-inner, form-label/c-danger, btn-primary-grad/btn-ghost; non-field errors + per-field error display added; btn-outline → btn-ghost; legacy {% block page_title %} removed
+
+**Financial semantics preserved:** `floatformat:0`/`:2` precision; `is_over_budget` conditional; `remaining >= 0` conditional; `budget.total_spent`/`budget.remaining`/`expense.amount|floatformat:2` all preserved verbatim.
+**No high-impact template actions** — no approve/close/archive in templates.
+**Tests:** 3/3 ✅ | **manage.py check:** 0 issues ✅
+**Next:** QueuePage wave 3 — Clause cluster (clause_category + clause_template + clause_library)

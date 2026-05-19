@@ -1800,3 +1800,83 @@ No delete/archive/revoke/close actions in any of the 4 templates.
 | Tests (3/3) | ✅ |
 | Raw Tailwind violations | ✅ 0 |
 | Inline styles | ✅ 0 |
+
+---
+
+## Batch 6 Step 7 — QueuePage Wave 2: Budget Cluster
+
+**Cluster:** Budget (financially sensitive — list / detail / form)
+**Risk level:** MEDIUM-HIGH declared → LOW actual (no inline financial state transitions in templates)
+
+**Templates:**
+- `budget_list.html` — QueuePage (list, filter, KPI bar)
+- `budget_detail.html` — WorkspacePage (KPI cards + expenses table)
+- `budget_form.html` — CommandPage (form)
+
+### budget_list.html (targeted fixes — already mostly canonical)
+- `aria-hidden="true"` added to decorative Add New SVG
+- KPI bar cards: `rounded-xl p-5 border stat-card` → `panel panel-inner` (stat-card RETIRED)
+- Table wrapper: `panel overflow-hidden stat-card` → `panel` (overflow already in panel CSS; stat-card retired)
+- Remaining column: `c-red` → `c-danger` on `is_over_budget` conditional
+- View row button: cleaned to `btn-ghost px-3 py-1 text-xs font-medium rounded-md`
+- All financial formatting preserved: `floatformat:2` on Allocated/Spent; `is_over_budget` conditional logic unchanged
+
+### budget_detail.html (full migration — was entirely raw Tailwind)
+- `page-wrap / page-header / page-title / page-subtitle / page-actions`
+- `btn-primary-grad text-white` for Add Expense (was `bg-green-600 text-white`)
+- `btn-ghost` for Edit (was `bg-gray-100 text-gray-700`)
+- 3-col KPI cards: `bg-white rounded-xl p-4 border border-gray-200` → `panel panel-inner`
+  - Allocated: `c-primary` (was `text-gray-900`)
+  - Spent: `c-warning` (was `text-orange-600`) — financially meaningful color preserved
+  - Remaining: `c-success` / `c-danger` conditional (was `text-green-600` / `text-red-600`) — semantic preserved exactly
+- Expenses panel: `bg-white rounded-xl border border-gray-200` → `panel` + `panel-head panel-title`
+- Expenses table: raw `bg-gray-50` thead + `px-5 py-3` cells → `tbl-head / tbl-th / tbl-row / tbl-td`
+- Empty expenses: `px-5 py-8 text-center text-gray-400` → `empty-state`
+- Preserved exactly: `budget.expenses.all`, `expense.date|date:"M d, Y"`, `expense.description`, `expense.get_category_display`, `expense.amount|floatformat:2`, `budget.total_spent`, `budget.remaining` (not `budget.remaining_amount`), `budget.allocated_amount`
+- URLs preserved: `contracts:add_expense`, `contracts:budget_update`
+
+### budget_form.html (full migration — had legacy/partial patterns)
+- Removed `{% block page_title %}` block (non-standard, not defined in WorkspacePage base)
+- Added `page-wrap / page-header / page-title` with `{% if object %}Edit{% else %}Create{% endif %}` detection
+- `bg-white rounded-lg border border-gray-200 p-6` → `panel panel-inner`
+- Labels: `block text-sm font-medium text-gray-700 mb-2` → `form-label block mb-1`
+- `space-y-6` → `space-y-4` (canonical spacing); `gap-6` → `gap-4`
+- `btn-outline` → `btn-ghost px-4 py-2 text-sm font-medium rounded-lg` (btn-outline not canonical)
+- `btn-primary` → `btn-primary-grad text-white px-4 py-2 text-sm font-semibold rounded-lg`
+- Added `{% if form.non_field_errors %}` block for non-field error display
+- Added per-field `{% if form.FIELD.errors %}` + `c-danger text-xs mt-1` pattern
+- Fields preserved exactly: `name`, `department`, `year`, `quarter`, `total_budget`, `status`, `owner`
+- `{% csrf_token %}` preserved; Cancel → `contracts:budget_list` preserved
+- `{% if object %}Update{% else %}Create{% endif %}` create/edit mode preserved
+
+### Financial Semantics — CONFIRMED CLEAN
+- No inline approve/close/archive/delete budget actions in any template
+- `budget.is_over_budget` boolean conditional preserved in list (c-danger on remaining)
+- `budget.remaining >= 0` conditional preserved in detail (c-success/c-danger)
+- `floatformat:0` on KPI cards / `floatformat:2` on table rows — precision preserved exactly
+- `budget.total_spent` vs `budget.remaining_amount` vs `budget.remaining` — all preserved per context var naming in each template
+- `expense.amount|floatformat:2` — decimal precision preserved
+- `add_expense` URL is a separate view (not a template-level action) — preserved as link
+
+### High-Impact Financial Actions
+No template-level approve/close/archive/delete budget actions found. Edit is a GET link to `budget_update` view. No confirm guards needed in templates.
+
+### Permission Assessment
+Permission gating is view-level (login_required, queryset filtering). No admin-only or finance-only template blocks found. Template-level visibility preserved as-is.
+
+### Structural Exceptions Kept
+- `max-w-2xl` on budget_form.html — content-width constraint
+- `grid grid-cols-1 md:grid-cols-3 gap-4` on budget_detail.html KPI row — 3-col financial summary layout
+- `tabular-nums` on financial amount columns — numeric alignment, keep
+- `inline-flex items-center gap-2` on CTAs — layout affordance, keep
+
+### Validation
+| Check | Result |
+|---|---|
+| Template parse (all 3) | ✅ |
+| manage.py check | ✅ 0 issues |
+| Tests (3/3) | ✅ |
+| Raw Tailwind drift (text-gray-/bg-white/etc.) | ✅ 0 |
+| stat-card usage | ✅ 0 |
+| c-red usage | ✅ 0 |
+| btn-outline usage | ✅ 0 |
