@@ -1,0 +1,66 @@
+name: Frontend Redesign E2E
+
+on:
+  pull_request:
+    paths:
+      - 'client/**'
+      - 'theme/templates/**'
+      - '.github/workflows/frontend-redesign-e2e.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'client/**'
+      - 'theme/templates/**'
+      - '.github/workflows/frontend-redesign-e2e.yml'
+  workflow_dispatch:
+
+jobs:
+  redesigned-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements/dev.txt
+
+      - name: Apply database migrations
+        run: python manage.py migrate --noinput
+
+      - name: Install client dependencies
+        run: npm --prefix client ci
+
+      - name: Install Playwright browser
+        run: npm --prefix client exec playwright install --with-deps chromium
+
+      - name: Run redesigned frontend smoke
+        run: |
+          cd client
+          npx playwright test tests/e2e/smoke.spec.js --grep "redesigned workspace shells render on key frontend pages"
+
+      - name: Run critical contract lifecycle detail flow
+        run: |
+          cd client
+          npx playwright test tests/e2e/critical-flows.spec.js --grep "critical contract create and edit flow works"
+
+      - name: Run redesigned workflow end-to-end flow
+        run: |
+          cd client
+          npx playwright test tests/e2e/critical-flows.spec.js --grep "critical redesigned workflow path works end-to-end"
