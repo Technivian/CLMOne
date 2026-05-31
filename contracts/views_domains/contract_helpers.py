@@ -2,6 +2,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from contracts.models import ClauseTemplate, Contract, OrganizationMembership
+from contracts.services.contract_lifecycle import build_contract_lifecycle_guidance as build_contract_lifecycle_guidance_service
 
 
 def _extract_valid_mentions(raw_text, organization, author_user_id):
@@ -184,3 +185,7 @@ def _build_contract_ai_response(contract, prompt):
         },
         'mode': 'internal-rules-engine',
     }
+
+
+def build_contract_lifecycle_guidance(contract):
+    return build_contract_lifecycle_guidance_service(contract)
