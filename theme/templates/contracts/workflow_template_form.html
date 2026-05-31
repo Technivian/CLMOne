@@ -1,10 +1,39 @@
 {% extends 'base.html' %}
 {% block title %}Create Workflow Template{% endblock %}
 {% block content %}
-<div class="page-wrap">
-    <div class="page-header">
-        <div>
-            <h1 class="page-title">Create Workflow Template</h1>
+<div class="page-wrap reveal-stagger">
+    <div class="workspace-main hero-shell mb-6">
+        <div class="workspace-main-head">
+            <div>
+                <h1 class="workspace-title">Create Workflow Template</h1>
+                <p class="workspace-subtitle">Define a reusable workflow blueprint for contract execution, review, and approvals.</p>
+                <div class="workspace-kicker-row">
+                    <span class="workspace-kicker"><strong>Reusable</strong> workflow structure</span>
+                    <span class="workspace-kicker"><strong>Template-first</strong> operating model</span>
+                </div>
+            </div>
+            <div class="workspace-tools">
+                <a href="{% url 'contracts:workflow_template_list' %}" class="inline-flex items-center px-3 py-2 text-sm rounded-lg border btn-ghost">Back to Templates</a>
+            </div>
+        </div>
+        <div class="workspace-toolbar">
+            <div class="summary-grid w-full">
+                <div class="summary-card">
+                    <div class="summary-label">Goal</div>
+                    <div class="summary-value">Standardize</div>
+                    <div class="summary-meta">Create a repeatable workflow pattern</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Output</div>
+                    <div class="summary-value">Template</div>
+                    <div class="summary-meta">Reusable across multiple contracts</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Next step</div>
+                    <div class="summary-value">Add steps</div>
+                    <div class="summary-meta">Configure the sequence after creation</div>
+                </div>
+            </div>
         </div>
     </div>
     <div class="panel">

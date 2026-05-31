@@ -9,6 +9,7 @@ from contracts.models import (
     Contract,
     Organization,
     OrganizationMembership,
+    RetentionPolicy,
     SalesforceSyncRun,
     SignatureRequest,
     WebhookDelivery,
@@ -58,6 +59,27 @@ class Command(BaseCommand):
             },
         )
 
+        retention_policy, _ = RetentionPolicy.objects.get_or_create(
+            organization=organization,
+            title='Sprint 3 Contract Retention',
+            defaults={
+                'category': RetentionPolicy.Category.CONTRACTS,
+                'retention_period_days': 30,
+                'description': 'Synthetic policy for release-gate retention evidence.',
+                'is_active': True,
+                'created_by': admin,
+            },
+        )
+        if (
+            retention_policy.category != RetentionPolicy.Category.CONTRACTS
+            or retention_policy.retention_period_days != 30
+            or not retention_policy.is_active
+        ):
+            retention_policy.category = RetentionPolicy.Category.CONTRACTS
+            retention_policy.retention_period_days = 30
+            retention_policy.is_active = True
+            retention_policy.save(update_fields=['category', 'retention_period_days', 'is_active'])
+
         contract = Contract.objects.filter(
             organization=organization,
             title='Sprint 3 Evidence Contract',
@@ -79,6 +101,54 @@ class Command(BaseCommand):
                 lifecycle_stage='EXECUTED',
                 created_by=admin,
             )
+
+        retention_candidate, _ = Contract.objects.get_or_create(
+            organization=organization,
+            title='Sprint 3 Retention Archive Candidate',
+            defaults={
+                'contract_type': Contract.ContractType.MSA,
+                'content': 'Synthetic retention archive candidate contract.',
+                'status': Contract.Status.ACTIVE,
+                'counterparty': 'Retention Counterparty LLC',
+                'value': 50000,
+                'currency': Contract.Currency.USD,
+                'governing_law': 'State of Delaware',
+                'jurisdiction': 'New York',
+                'start_date': now.date() - timedelta(days=450),
+                'end_date': now.date() - timedelta(days=120),
+                'lifecycle_stage': 'EXECUTED',
+                'created_by': admin,
+            },
+        )
+        retention_candidate.lifecycle_stage = 'EXECUTED'
+        retention_candidate.end_date = now.date() - timedelta(days=120)
+        retention_candidate.save(update_fields=['lifecycle_stage', 'end_date', 'updated_at'])
+
+        renewal_candidate, _ = Contract.objects.get_or_create(
+            organization=organization,
+            title='Sprint 3 Renewal Promotion Candidate',
+            defaults={
+                'contract_type': Contract.ContractType.MSA,
+                'content': 'Synthetic renewal promotion candidate contract.',
+                'status': Contract.Status.ACTIVE,
+                'counterparty': 'Renewal Counterparty LLC',
+                'value': 125000,
+                'currency': Contract.Currency.USD,
+                'governing_law': 'State of Delaware',
+                'jurisdiction': 'New York',
+                'start_date': now.date() - timedelta(days=200),
+                'end_date': now.date() + timedelta(days=10),
+                'renewal_date': now.date() + timedelta(days=7),
+                'auto_renew': True,
+                'lifecycle_stage': 'EXECUTED',
+                'created_by': admin,
+            },
+        )
+        renewal_candidate.lifecycle_stage = 'EXECUTED'
+        renewal_candidate.end_date = now.date() + timedelta(days=10)
+        renewal_candidate.renewal_date = now.date() + timedelta(days=7)
+        renewal_candidate.auto_renew = True
+        renewal_candidate.save(update_fields=['lifecycle_stage', 'end_date', 'renewal_date', 'auto_renew', 'updated_at'])
 
         sync_run = SalesforceSyncRun.objects.filter(
             organization=organization,
@@ -226,5 +296,8 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS('Sprint 3 evidence seeded successfully.'))
         self.stdout.write(f'  Organization: {organization.slug}')
+        self.stdout.write(f'  Retention policy: {retention_policy.id}')
+        self.stdout.write(f'  Retention candidate: {retention_candidate.id}')
+        self.stdout.write(f'  Renewal candidate: {renewal_candidate.id}')
         self.stdout.write(f'  Salesforce sync run: {sync_run.id}')
         self.stdout.write(f'  Signature request: {signature_request.id}')

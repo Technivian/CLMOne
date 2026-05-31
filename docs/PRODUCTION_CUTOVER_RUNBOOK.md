@@ -205,6 +205,28 @@ Pass criteria:
 - the release gate remains `GO`
 - no new violations appear after traffic is restored
 
+## Recurring Jobs After Cutover
+
+Keep the contract maintenance jobs enabled on the same cadence after production goes live:
+
+```bash
+python manage.py run_retention_jobs
+python manage.py run_contract_lifecycle_jobs
+```
+
+For targeted validation in staging or evidence runs, scope them to a tenant:
+
+```bash
+python manage.py run_retention_jobs --organization-slug <slug>
+python manage.py run_contract_lifecycle_jobs --organization-slug <slug>
+```
+
+Pass criteria:
+
+- eligible contracts continue to archive after the retention window
+- active contracts move into `RENEWAL` before they become archive-only
+- scheduled evidence remains green for both jobs
+
 ## Rollback Trigger
 
 Rollback immediately if any of these happen:

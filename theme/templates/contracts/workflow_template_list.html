@@ -1,34 +1,60 @@
 {% extends "base.html" %}
 {% block title %}Workflow Templates - CMS Aegis{% endblock %}
 {% block content %}
-<div class="page-wrap">
-    <div class="page-header">
-        <div>
-            <h1 class="page-title">Workflow Templates</h1>
-            <p class="page-subtitle">Manage reusable workflow templates.</p>
+<div class="page-wrap reveal-stagger">
+    <div class="workspace-main hero-shell mb-6">
+        <div class="workspace-main-head">
+            <div>
+                <h1 class="workspace-title">Workflow Templates</h1>
+                <p class="workspace-subtitle">Manage reusable workflow blueprints for review, negotiation, approval, and signature.</p>
+                <div class="workspace-kicker-row">
+                    <span class="workspace-kicker"><strong>{{ workflow_templates|length }}</strong> templates available</span>
+                    <span class="workspace-kicker"><strong>Reusable</strong> operational design patterns</span>
+                </div>
+            </div>
+            <div class="workspace-tools">
+                <a href="{% url 'contracts:workflow_dashboard' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border btn-ghost">Back to Workflows</a>
+                <a href="{% url 'contracts:workflow_template_create' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 btn-primary-grad">
+                    <svg class="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                    Create Template
+                </a>
+            </div>
         </div>
-        <div class="flex items-center gap-3">
-            <a href="{% url 'contracts:workflow_dashboard' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border btn-ghost">Back to Workflows</a>
-            <a href="{% url 'contracts:workflow_template_create' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 btn-primary-grad">
-                <svg class="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                Create Template
-            </a>
+        <div class="workspace-toolbar">
+            <div class="summary-grid w-full">
+                <div class="summary-card">
+                    <div class="summary-label">Templates</div>
+                    <div class="summary-value">{{ workflow_templates|length }}</div>
+                    <div class="summary-meta">Available in this workspace</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Primary use</div>
+                    <div class="summary-value">Reuse</div>
+                    <div class="summary-meta">Standardize repeatable workflow design</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Next move</div>
+                    <div class="summary-value">Create template</div>
+                    <div class="summary-meta">Add a new workflow blueprint or revise an existing one</div>
+                </div>
+            </div>
         </div>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {% for template in workflow_templates %}
-        <div class="bg-white p-6 rounded-xl border border-gray-200 hover:shadow-md transition-shadow">
+        <div class="panel">
+            <div class="panel-inner">
             <div class="flex items-start justify-between gap-3 mb-2">
-                <h3 class="text-lg font-semibold text-gray-900">{{ template.name }}</h3>
+                <h3 class="text-lg font-semibold c-primary">{{ template.name }}</h3>
                 <span class="badge-sm badge-gray">v{{ template.version }}</span>
             </div>
             {% if template.description %}
             <p class="c-muted text-sm mb-4">{{ template.description }}</p>
             {% endif %}
             <div class="text-sm c-muted mb-4">{{ template.steps.count }} step{{ template.steps.count|pluralize }}</div>
-            <div class="space-y-2">
+            <div class="template-preview-list">
                 {% for step in template.steps.all|slice:":3" %}
-                <div class="text-xs bg-gray-100 px-2 py-1 rounded">{{ step.order }}. {{ step.name }}</div>
+                <div class="template-preview-item">{{ step.order }}. {{ step.name }}</div>
                 {% endfor %}
                 {% if template.steps.count > 3 %}
                 <div class="text-xs c-muted">+{{ template.steps.count|add:"-3" }} more</div>
@@ -37,6 +63,7 @@
             <div class="mt-4 pt-4 border-t border-gray-200 flex justify-between items-center">
                 <span class="text-xs c-muted">Created {{ template.created_at|date:"M d, Y" }}</span>
                 <a href="{% url 'contracts:workflow_template_detail' template.pk %}" class="text-sm font-medium c-link">View</a>
+            </div>
             </div>
         </div>
         {% empty %}

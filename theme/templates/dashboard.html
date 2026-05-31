@@ -3,13 +3,18 @@
 
 {% block content %}
 
-<div class="page-wrap">
+<div class="page-wrap reveal-stagger">
 
-    <div class="workspace-main mb-6">
+    <div class="workspace-main hero-shell mb-6">
         <div class="workspace-main-head">
             <div>
                 <h1 class="workspace-title">Legal Operations Workspace{% if user.first_name %} · {{ user.first_name }}{% endif %}</h1>
                 <p class="workspace-subtitle">{{ today|date:"l, F j, Y" }} · Central command center for contracts, approvals, workflows, and compliance operations.</p>
+                <div class="workspace-kicker-row">
+                    <span class="workspace-kicker"><strong>{{ active_cases }}</strong> active contracts</span>
+                    <span class="workspace-kicker"><strong>{{ approval_stats.pending|default:0 }}</strong> pending approvals</span>
+                    <span class="workspace-kicker"><strong>{{ signature_stats.pending|default:0 }}</strong> signatures waiting</span>
+                </div>
             </div>
             <div class="workspace-tools">
                 <a href="{% url 'contracts:contract_create' %}" class="btn-primary-grad text-white inline-flex items-center gap-2 px-3 py-2 text-sm rounded-lg">
@@ -53,38 +58,38 @@
     <div class="panel mb-6">
         <div class="panel-inner">
             <div class="text-xs font-semibold uppercase tracking-[0.18em] c-muted mb-3">Operational snapshot</div>
-            <div class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-4 text-sm">
-                <div>
-                    <div class="metric-xl">{{ active_cases }}</div>
-                    <div class="item-meta">Active Contracts</div>
+            <div class="ops-strip">
+                <div class="ops-kpi">
+                    <div class="ops-kpi-value">{{ active_cases }}</div>
+                    <div class="ops-kpi-label">Active contracts</div>
                 </div>
-                <div>
-                    <div class="metric-xl">{{ approval_stats.pending|default:0 }}</div>
-                    <div class="item-meta">Pending Approval</div>
+                <div class="ops-kpi">
+                    <div class="ops-kpi-value">{{ approval_stats.pending|default:0 }}</div>
+                    <div class="ops-kpi-label">Pending approval</div>
                 </div>
-                <div>
-                    <div class="metric-xl">{{ expiring_case_count }}</div>
-                    <div class="item-meta">Expiring Soon</div>
+                <div class="ops-kpi">
+                    <div class="ops-kpi-value">{{ expiring_case_count }}</div>
+                    <div class="ops-kpi-label">Expiring soon</div>
                 </div>
-                <div>
-                    <div class="metric-xl">{{ risk_stats.high_critical|default:0 }}</div>
-                    <div class="item-meta">High Risk</div>
+                <div class="ops-kpi">
+                    <div class="ops-kpi-value">{{ risk_stats.high_critical|default:0 }}</div>
+                    <div class="ops-kpi-label">High risk</div>
                 </div>
-                <div>
-                    <div class="metric-xl">{{ dsar_stats.open|default:0 }}</div>
-                    <div class="item-meta">Compliance Issues</div>
+                <div class="ops-kpi">
+                    <div class="ops-kpi-value">{{ dsar_stats.open|default:0 }}</div>
+                    <div class="ops-kpi-label">Compliance issues</div>
                 </div>
-                <div>
-                    <div class="metric-xl">{{ case_stats.draft|default:0 }}</div>
-                    <div class="item-meta">Drafts</div>
+                <div class="ops-kpi">
+                    <div class="ops-kpi-value">{{ case_stats.draft|default:0 }}</div>
+                    <div class="ops-kpi-label">Drafts</div>
                 </div>
-                <div>
-                    <div class="metric-xl">{{ signature_stats.pending|default:0 }}</div>
-                    <div class="item-meta">Signatures Pending</div>
+                <div class="ops-kpi">
+                    <div class="ops-kpi-value">{{ signature_stats.pending|default:0 }}</div>
+                    <div class="ops-kpi-label">Signatures pending</div>
                 </div>
-                <div>
-                    <div class="metric-xl">{{ recent_audit|length }}</div>
-                    <div class="item-meta">Recent Activity</div>
+                <div class="ops-kpi">
+                    <div class="ops-kpi-value">{{ recent_audit|length }}</div>
+                    <div class="ops-kpi-label">Recent activity</div>
                 </div>
             </div>
         </div>

@@ -1,6 +1,8 @@
 from datetime import date
 from decimal import Decimal
 
+from django.utils import timezone
+
 
 CONTRACT_LIFECYCLE_TRANSITIONS = {
     'DRAFTING': {'INTERNAL_REVIEW', 'ARCHIVED'},
@@ -8,7 +10,7 @@ CONTRACT_LIFECYCLE_TRANSITIONS = {
     'NEGOTIATION': {'APPROVAL', 'ARCHIVED'},
     'APPROVAL': {'SIGNATURE', 'ARCHIVED'},
     'SIGNATURE': {'EXECUTED', 'ARCHIVED'},
-    'EXECUTED': {'OBLIGATION_TRACKING', 'ARCHIVED'},
+    'EXECUTED': {'OBLIGATION_TRACKING', 'RENEWAL', 'ARCHIVED'},
     'OBLIGATION_TRACKING': {'RENEWAL', 'ARCHIVED'},
     'RENEWAL': {'DRAFTING', 'ARCHIVED'},
     'ARCHIVED': set(),
@@ -76,3 +78,96 @@ def build_contract_audit_changes(before_contract, after_contract, tracked_fields
                 'after': after_value,
             }
     return changes
+
+
+def build_contract_lifecycle_guidance(contract, today=None):
+    today = today or timezone.localdate()
+
+    guidance = {
+        'state': 'Active',
+        'severity': 'low',
+        'action': 'No immediate lifecycle action required.',
+        'next_stage': getattr(contract, 'lifecycle_stage', None),
+        'detail': '',
+        'signals': [],
+    }
+
+    if contract is None:
+        return guidance
+
+    if contract.lifecycle_stage == 'ARCHIVED':
+        guidance.update({
+            'state': 'Archived',
+            'severity': 'low',
+            'action': 'No operational action required.',
+            'next_stage': 'ARCHIVED',
+            'detail': 'Archived contracts are retained for evidence and reference only.',
+        })
+        return guidance
+
+    if contract.end_date:
+        days_until_end = (contract.end_date - today).days
+        guidance['signals'].append(
+            f'End date is in {days_until_end} day(s) on {contract.end_date.isoformat()}.'
+        )
+        if days_until_end < 0:
+            guidance.update({
+                'state': 'Expired',
+                'severity': 'high',
+                'action': 'Review immediately for renewal, termination, or archive eligibility.',
+                'next_stage': 'RENEWAL',
+            })
+        elif days_until_end <= 30:
+            guidance.update({
+                'state': 'Renewal Window',
+                'severity': 'medium',
+                'action': 'Prepare renewal or termination decision now.',
+                'next_stage': 'RENEWAL',
+            })
+
+    if contract.renewal_date:
+        days_until_renewal = (contract.renewal_date - today).days
+        guidance['signals'].append(
+            f'Renewal date is in {days_until_renewal} day(s) on {contract.renewal_date.isoformat()}.'
+        )
+        if days_until_renewal <= 14 and guidance['severity'] != 'high':
+            guidance.update({
+                'state': 'Renewal Due',
+                'severity': 'medium',
+                'action': 'Finalize renewal language and stakeholder approvals.',
+                'next_stage': 'RENEWAL',
+            })
+
+    if contract.auto_renew:
+        guidance['signals'].append('Auto-renew is enabled.')
+        if guidance['severity'] == 'low':
+            guidance.update({
+                'state': 'Auto-Renew Enabled',
+                'severity': 'medium',
+                'action': 'Set a cancellation checkpoint before the notice deadline.',
+                'next_stage': 'RENEWAL',
+            })
+        else:
+            guidance['action'] = f"{guidance['action']} Auto-renew is enabled."
+
+    if contract.termination_notice_date:
+        days_until_notice = (contract.termination_notice_date - today).days
+        guidance['signals'].append(
+            f'Termination notice date is in {days_until_notice} day(s) on {contract.termination_notice_date.isoformat()}.'
+        )
+        if days_until_notice <= 0:
+            guidance.update({
+                'state': 'Termination Notice Due',
+                'severity': 'high',
+                'action': 'Send termination notice or move to archive review immediately.',
+                'next_stage': 'RENEWAL',
+            })
+
+    if guidance['severity'] == 'low' and contract.lifecycle_stage == 'EXECUTED' and not contract.end_date:
+        guidance.update({
+            'state': 'Execution Complete',
+            'action': 'Capture renewal date and notice period to prepare for lifecycle management.',
+            'next_stage': 'OBLIGATION_TRACKING',
+        })
+
+    return guidance

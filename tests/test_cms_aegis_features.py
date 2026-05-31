@@ -39,9 +39,9 @@ class CMSAegisFeaturesTests(TestCase):
         response = self.client.get(reverse('contracts:contract_list'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Search contracts...')
-        self.assertContains(response, 'All statuses')
-        self.assertContains(response, 'Title')
-        self.assertContains(response, 'Status')
+        self.assertContains(response, 'Contracts Workspace')
+        self.assertContains(response, 'Contract')
+        self.assertContains(response, 'Stage')
         self.assertContains(response, 'Test Contract')
 
     def test_contracts_api_returns_payload(self):

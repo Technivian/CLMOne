@@ -408,9 +408,6 @@ The app currently includes:
 
 ## What Is Broken Or Missing
 
-- The repo currently has a moderate `postcss` vulnerability reported by `npm audit`
-- `theme/templates/contracts/templates_list.html` still contains placeholder TODO actions for edit/use-template behavior
-- `contracts/services/repository.py` still retains a mock service path and abstract interface
 - Production proof is not complete without a backup / restore rehearsal and real live cutover evidence
 - Live Salesforce / webhook evidence from the target environment is still needed for true rollout confidence
 
@@ -420,7 +417,7 @@ The app currently includes:
 - Integrations depend on external systems and live credentials
 - Release confidence depends on evidence, not just code passing locally
 - The UI contains some experimental/demonstration shells that can confuse scope
-- Frontend dependency audit has a moderate PostCSS issue
+- Frontend dependency drift can recur between release windows if audit cadence slips
 
 ## Recommendation
 
@@ -435,11 +432,9 @@ Treat the app as:
 1. Capture live Salesforce sync evidence in the target org.
 2. Capture webhook delivery evidence from a real endpoint.
 3. Finish the backup / restore rehearsal on the real database target.
-4. Remove or resolve the remaining frontend TODO actions.
-5. Address the moderate PostCSS advisory.
-6. Consolidate experimental UI shells and demo templates.
-7. Keep release evidence bundle commands attached to the release workflow.
-8. Add stronger live E2E coverage for the major user flows.
+4. Consolidate experimental UI shells and demo templates.
+5. Keep release evidence bundle commands attached to the release workflow.
+6. Add stronger live E2E coverage for the major user flows.
 
 ---
 

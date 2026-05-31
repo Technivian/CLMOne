@@ -50,7 +50,7 @@ from contracts.services.ai_policy import evaluate_prompt
 from contracts.services.ai_actions import build_action_plan, execute_action_plan
 from config.feature_flags import is_feature_redesign_enabled
 
-from .contract_helpers import _build_contract_ai_response
+from .contract_helpers import _build_contract_ai_response, build_contract_lifecycle_guidance
 
 
 class ContractListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
@@ -151,6 +151,7 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
         ctx['negotiation_threads'] = case_record.negotiation_threads.all()[:10]
         ctx['case_negotiation_threads'] = ctx['negotiation_threads']
         ctx['related_case_matter'] = case_record.matter
+        ctx['lifecycle_guidance'] = build_contract_lifecycle_guidance(case_record)
         return ctx
 
 

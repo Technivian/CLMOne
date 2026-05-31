@@ -84,7 +84,6 @@ jobs:
 
       - name: Seed baseline and synthetic evidence
         run: |
-          python manage.py seed_data
           python manage.py seed_sprint3_evidence --organization-slug "${{ inputs.organization_slug != '' && inputs.organization_slug || 'demo-firm' }}"
 
       - name: Run optional live syncs
@@ -110,11 +109,13 @@ jobs:
           if [[ -n "${{ inputs.organization_slug }}" ]]; then
             python manage.py generate_executive_analytics_evidence --organization-slug "${{ inputs.organization_slug }}" --output evidence/executive-analytics-evidence.json
             python manage.py run_retention_jobs --organization-slug "${{ inputs.organization_slug }}" > evidence/retention-jobs-run.json
+            python manage.py run_contract_lifecycle_jobs --organization-slug "${{ inputs.organization_slug }}" > evidence/contract-lifecycle-jobs-run.json
             python manage.py export_retention_audit_actions --organization-slug "${{ inputs.organization_slug }}" --output evidence/retention-audit-actions.json
             python manage.py generate_esign_integration_report --organization-slug "${{ inputs.organization_slug }}" --output evidence/esign-integration-report.json
           else
             python manage.py generate_executive_analytics_evidence --output evidence/executive-analytics-evidence.json
             python manage.py run_retention_jobs > evidence/retention-jobs-run.json
+            python manage.py run_contract_lifecycle_jobs > evidence/contract-lifecycle-jobs-run.json
             python manage.py export_retention_audit_actions --output evidence/retention-audit-actions.json
             python manage.py generate_esign_integration_report --output evidence/esign-integration-report.json
           fi
@@ -135,6 +136,7 @@ jobs:
             --include evidence/esign-integration-report.json \
             --include evidence/postgres-cutover-evidence.json \
             --include evidence/executive-analytics-evidence.json \
+            --include evidence/contract-lifecycle-jobs-run.json \
             --include evidence/retention-audit-actions.json \
             --output-dir evidence > evidence/compliance-evidence-export.json
 

@@ -620,7 +620,7 @@ def contracts_api(request):
             page_size=int(request.GET.get('page_size', 25))
         )
 
-        service = get_repository_service(request.user, use_mock=False)
+        service = get_repository_service(request.user)
         result = service.list(params)
         return JsonResponse(result.to_dict())
     except Exception:
@@ -636,7 +636,7 @@ def contracts_api_v1(request):
         return _error_response(request, 'Missing or invalid API bearer token.', 401)
 
     try:
-        service = get_repository_service(request.user, use_mock=False)
+        service = get_repository_service(request.user)
         service.organization = organization
         try:
             page_size = int(request.GET.get('limit', request.GET.get('page_size', 25)) or 25)
@@ -704,7 +704,7 @@ def contract_detail_api_v1(request, contract_id):
         return _error_response(request, 'Missing or invalid API bearer token.', 401)
 
     try:
-        service = get_repository_service(request.user, use_mock=False)
+        service = get_repository_service(request.user)
         service.organization = organization
         contract = service.get_by_id(contract_id)
         if not contract:
@@ -729,7 +729,7 @@ def contract_detail_api_v1(request, contract_id):
 def contract_detail_api(request, contract_id):
     """Legacy authenticated contract detail endpoint."""
     try:
-        service = get_repository_service(request.user, use_mock=False)
+        service = get_repository_service(request.user)
         result = service.get_by_id(contract_id)
         if not result:
             return _error_response(request, 'Contract not found', 404)
@@ -756,7 +756,7 @@ def cases_bulk_update_api(request):
         except (TypeError, ValueError):
             return _error_response(request, 'contract_ids must contain numeric IDs only', 400)
 
-        service = get_repository_service(request.user, use_mock=False)
+        service = get_repository_service(request.user)
         result = service.bulk_update(normalized_contract_ids, updates)
         log_action(
             request.user,

@@ -4,31 +4,57 @@
 {% block title %}Workflow Dashboard - CMS Aegis{% endblock %}
 
 {% block content %}
-<div class="page-wrap">
-    <!-- Page Header -->
-    <div class="page-header">
-        <div>
-            <h1 class="page-title">Workflow Designer</h1>
-            <p class="page-subtitle">Track and manage contract workflows</p>
+<div class="page-wrap reveal-stagger">
+    <div class="workspace-main hero-shell mb-6">
+        <div class="workspace-main-head">
+            <div>
+                <h1 class="workspace-title">Workflow Designer</h1>
+                <p class="workspace-subtitle">Track and manage contract workflows across review, negotiation, signature, and execution.</p>
+                <div class="workspace-kicker-row">
+                    <span class="workspace-kicker"><strong>{{ workflows|length }}</strong> workflows in view</span>
+                    <span class="workspace-kicker"><strong>{{ request.GET.status|default:'All statuses' }}</strong> active status filter</span>
+                    <span class="workspace-kicker"><strong>{{ request.GET.contract_type|default:'All contract types' }}</strong> contract scope</span>
+                </div>
+            </div>
+            <div class="workspace-tools">
+                <button id="filters-toggle-btn" aria-expanded="false" aria-controls="filters-panel" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border btn-ghost">
+                    Filters
+                </button>
+            </div>
         </div>
-        <div class="page-actions">
-            <a href="{% url 'contracts:workflow_create' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg btn-primary-grad">
-                <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                </svg>
-                Start workflow
-            </a>
-            <a href="{% url 'contracts:workflow_template_list' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border btn-ghost">
-                Templates
-            </a>
-            <button id="filters-toggle-btn" aria-expanded="false" aria-controls="filters-panel" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border btn-ghost">
-                Filters
-            </button>
+        <div class="workspace-toolbar">
+            <div class="summary-grid w-full">
+                <div class="summary-card">
+                    <div class="summary-label">Visible workflows</div>
+                    <div class="summary-value">{{ workflows|length }}</div>
+                    <div class="summary-meta">Current page selection</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Current search</div>
+                    <div class="summary-value">{% if request.GET.search %}{{ request.GET.search }}{% else %}All records{% endif %}</div>
+                    <div class="summary-meta">Search and filter context</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Next step</div>
+                    <div class="summary-value">Start workflow</div>
+                    <div class="summary-meta">Launch a new sequence or refine templates</div>
+                </div>
+            </div>
+            <div class="workspace-tools">
+                <a href="{% url 'contracts:workflow_create' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg btn-primary-grad">
+                    <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    Start workflow
+                </a>
+                <a href="{% url 'contracts:workflow_template_list' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border btn-ghost">
+                    Templates
+                </a>
+            </div>
         </div>
     </div>
 
-    <!-- Filters Panel -->
-    <div id="filters-panel" class="panel hidden" aria-hidden="true">
+    <div class="panel hidden mb-6" id="filters-panel" aria-hidden="true">
         <div class="panel-inner">
             <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
@@ -55,15 +81,21 @@
                         <option value="EMPLOYMENT" {% if request.GET.contract_type == 'EMPLOYMENT' %}selected{% endif %}>Employment</option>
                     </select>
                 </div>
-                <div class="flex items-end">
+                <div class="flex items-end gap-2">
                     <button type="submit" class="btn-primary-grad text-white w-full">Apply Filters</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Workflows Table -->
     <div class="panel overflow-hidden">
+        <div class="panel-head">
+            <div class="panel-head-inner">
+                <div class="dot dot-blue"></div>
+                <span class="panel-title">Workflow pipeline</span>
+            </div>
+            <span class="panel-link">{{ workflows|length }} in view</span>
+        </div>
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="tbl-head">
@@ -148,7 +180,6 @@
         </div>
     </div>
 
-    <!-- Pagination -->
     {% if is_paginated %}
     <div class="flex items-center justify-between">
         <p class="text-sm c-muted">
