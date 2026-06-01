@@ -32,10 +32,10 @@ This list contains every task that is still open, partial, or queued for follow-
 
 ## Clause And Playbook Layer
 
-- Jurisdictional clause variants and fallback positions
-- Mandatory clause enforcement policies
-- Playbooks for negotiation fallback language
-- Clause usage analytics and dependency graph
+- ~~Jurisdictional clause variants and fallback positions~~ ✅ (`clause_variants.py`, `clause_policy.py` already existed)
+- ~~Mandatory clause enforcement policies~~ ✅ (`mandatory_clauses.py`, per-contract + org-summary API, commit `509aec8`)
+- ~~Playbooks for negotiation fallback language~~ ✅ (`playbook.py`, list/detail/contract-resolution API, commit `509aec8`)
+- ~~Clause usage analytics and dependency graph~~ ✅ (`clause_analytics.py`, `ClauseUsageEvent` model, co-occurrence graph, commit `509aec8`)
 
 ## Obligation And Renewal Operations
 
