@@ -70,6 +70,10 @@ from contracts.models import (
     OrgBillingSubscription,
     UsageRecord,
     ApprovalRequest,
+    ClauseTemplate,
+    ClausePlaybook,
+    ClauseVariant,
+    ClauseUsageEvent,
 )
 
 logger = logging.getLogger(__name__)
@@ -2723,3 +2727,205 @@ def _approval_dto_to_dict(dto) -> dict:
         'comments': dto.comments,
         'created_at': dto.created_at,
     }
+
+
+# ---------------------------------------------------------------------------
+# Clause Analytics
+# ---------------------------------------------------------------------------
+
+from contracts.services.clause_analytics import get_clause_analytics_service
+from contracts.services.mandatory_clauses import get_mandatory_enforcement_service
+from contracts.services.playbook import get_playbook_service
+
+
+@login_required
+@require_http_methods(['GET'])
+def clause_analytics_stats(request):
+    org = get_user_organization(request.user)
+    svc = get_clause_analytics_service()
+    stats = svc.get_clause_usage_stats(org)
+    return JsonResponse({'stats': stats})
+
+
+@login_required
+@require_http_methods(['GET'])
+def clause_analytics_top_clauses(request):
+    org = get_user_organization(request.user)
+    limit = int(request.GET.get('limit', 20))
+    svc = get_clause_analytics_service()
+    results = svc.get_most_used_clauses(org, limit=limit)
+    return JsonResponse({'clauses': [
+        {
+            'clause_id': r.clause_id,
+            'clause_title': r.clause_title,
+            'category': r.category,
+            'jurisdiction_scope': r.jurisdiction_scope,
+            'total_uses': r.total_uses,
+            'accepted_count': r.accepted_count,
+            'rejected_count': r.rejected_count,
+            'modified_count': r.modified_count,
+            'acceptance_rate_pct': r.acceptance_rate_pct,
+        }
+        for r in results
+    ]})
+
+
+@login_required
+@require_http_methods(['GET'])
+def clause_dependency_graph(request):
+    org = get_user_organization(request.user)
+    svc = get_clause_analytics_service()
+    nodes = svc.get_dependency_graph(org)
+    return JsonResponse({'nodes': [
+        {
+            'clause_id': n.clause_id,
+            'clause_title': n.clause_title,
+            'co_occurring_clauses': n.co_occurring_clauses,
+        }
+        for n in nodes
+    ]})
+
+
+@csrf_exempt
+@login_required
+@require_http_methods(['POST'])
+def clause_record_usage(request):
+    org = get_user_organization(request.user)
+    try:
+        body = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    clause_id = body.get('clause_id')
+    action = body.get('action', ClauseUsageEvent.Action.ADDED)
+    contract_id = body.get('contract_id')
+    note = body.get('note', '')
+    if not clause_id:
+        return JsonResponse({'error': 'clause_id required'}, status=400)
+    clause = get_object_or_404(ClauseTemplate, pk=clause_id, organization=org)
+    contract = None
+    if contract_id:
+        contract = get_object_or_404(Contract, pk=contract_id, organization=org)
+    svc = get_clause_analytics_service()
+    ev = svc.record_usage(org, clause, contract, action, performed_by=request.user, note=note)
+    return JsonResponse({'event_id': ev.pk, 'action': ev.action}, status=201)
+
+
+# ---------------------------------------------------------------------------
+# Mandatory Clause Enforcement
+# ---------------------------------------------------------------------------
+
+@login_required
+@require_http_methods(['GET'])
+def mandatory_clause_compliance_contract(request, contract_id):
+    org = get_user_organization(request.user)
+    contract = get_object_or_404(Contract, pk=contract_id, organization=org)
+    svc = get_mandatory_enforcement_service()
+    report = svc.check_contract_compliance(contract)
+    return JsonResponse({
+        'contract_id': report.contract_id,
+        'contract_title': report.contract_title,
+        'contract_type': report.contract_type,
+        'is_compliant': report.is_compliant,
+        'missing_mandatory_clauses': [
+            {
+                'clause_id': m.clause_id,
+                'clause_title': m.clause_title,
+                'jurisdiction_scope': m.jurisdiction_scope,
+                'applicable_contract_types': m.applicable_contract_types,
+                'fallback_available': m.fallback_available,
+            }
+            for m in report.missing_mandatory_clauses
+        ],
+        'present_mandatory_clauses': report.present_mandatory_clauses,
+    })
+
+
+@login_required
+@require_http_methods(['GET'])
+def mandatory_clause_org_summary(request):
+    org = get_user_organization(request.user)
+    svc = get_mandatory_enforcement_service()
+    summary = svc.get_org_compliance_summary(org)
+    return JsonResponse({
+        'org_id': summary.org_id,
+        'total_contracts_checked': summary.total_contracts_checked,
+        'compliant_contracts': summary.compliant_contracts,
+        'non_compliant_contracts': summary.non_compliant_contracts,
+        'compliance_rate_pct': summary.compliance_rate_pct,
+        'most_missing_clauses': summary.most_missing_clauses,
+    })
+
+
+# ---------------------------------------------------------------------------
+# Playbooks
+# ---------------------------------------------------------------------------
+
+@login_required
+@require_http_methods(['GET'])
+def playbook_list(request):
+    org = get_user_organization(request.user)
+    jurisdiction = request.GET.get('jurisdiction')
+    risk_level = request.GET.get('risk_level')
+    svc = get_playbook_service()
+    playbooks = svc.list_playbooks(org, jurisdiction=jurisdiction, risk_level=risk_level)
+    return JsonResponse({'playbooks': [
+        {
+            'playbook_id': p.playbook_id,
+            'name': p.name,
+            'description': p.description,
+            'jurisdiction_scope': p.jurisdiction_scope,
+            'risk_level': p.risk_level,
+            'fallback_position': p.fallback_position,
+        }
+        for p in playbooks
+    ]})
+
+
+@login_required
+@require_http_methods(['GET'])
+def playbook_detail(request, playbook_id):
+    org = get_user_organization(request.user)
+    svc = get_playbook_service()
+    try:
+        pb = svc.get_playbook(playbook_id, org)
+    except ClausePlaybook.DoesNotExist:
+        return JsonResponse({'error': 'Not found'}, status=404)
+    return JsonResponse({
+        'playbook_id': pb.playbook_id,
+        'name': pb.name,
+        'description': pb.description,
+        'jurisdiction_scope': pb.jurisdiction_scope,
+        'risk_level': pb.risk_level,
+        'fallback_position': pb.fallback_position,
+        'clauses': [
+            {
+                'clause_id': c.clause_id,
+                'clause_title': c.clause_title,
+                'standard_text': c.standard_text,
+                'variant_content': c.variant_content,
+                'fallback_content': c.fallback_content,
+                'playbook_notes': c.playbook_notes,
+                'jurisdiction_scope': c.jurisdiction_scope,
+            }
+            for c in pb.clauses
+        ],
+    })
+
+
+@login_required
+@require_http_methods(['GET'])
+def playbook_for_contract(request, contract_id):
+    org = get_user_organization(request.user)
+    contract = get_object_or_404(Contract, pk=contract_id, organization=org)
+    svc = get_playbook_service()
+    playbooks = svc.get_playbooks_for_contract(contract)
+    return JsonResponse({'playbooks': [
+        {
+            'playbook_id': p.playbook_id,
+            'name': p.name,
+            'jurisdiction_scope': p.jurisdiction_scope,
+            'risk_level': p.risk_level,
+            'fallback_position': p.fallback_position,
+        }
+        for p in playbooks
+    ]})

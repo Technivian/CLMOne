@@ -89,6 +89,21 @@ urlpatterns = [
     path('api/contracts/<int:contract_id>/approvals/', api_views.approval_contract_list_api, name='approval_contract_list_api'),
     path('api/contracts/<int:contract_id>/approvals/initiate/', api_views.approval_initiate_api, name='approval_initiate_api'),
 
+    # Clause Analytics
+    path('api/clause-analytics/stats/', api_views.clause_analytics_stats, name='clause_analytics_stats'),
+    path('api/clause-analytics/top/', api_views.clause_analytics_top_clauses, name='clause_analytics_top_clauses'),
+    path('api/clause-analytics/dependency-graph/', api_views.clause_dependency_graph, name='clause_dependency_graph'),
+    path('api/clause-analytics/record-usage/', api_views.clause_record_usage, name='clause_record_usage'),
+
+    # Mandatory Clause Enforcement
+    path('api/contracts/<int:contract_id>/mandatory-compliance/', api_views.mandatory_clause_compliance_contract, name='mandatory_clause_compliance_contract'),
+    path('api/clause-enforcement/org-summary/', api_views.mandatory_clause_org_summary, name='mandatory_clause_org_summary'),
+
+    # Playbooks
+    path('api/playbooks/', api_views.playbook_list, name='playbook_list'),
+    path('api/playbooks/<int:playbook_id>/', api_views.playbook_detail, name='playbook_detail'),
+    path('api/contracts/<int:contract_id>/playbooks/', api_views.playbook_for_contract, name='playbook_for_contract'),
+
     # Clients
     path('clients/', views.ClientListView.as_view(), name='client_list'),
     path('clients/new/', views.ClientCreateView.as_view(), name='client_create'),

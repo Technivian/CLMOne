@@ -2637,6 +2637,31 @@ class OrgPolicy(models.Model):
         return f'Policy for {self.organization}'
 
 
+class ClauseUsageEvent(models.Model):
+    """Tracks each time a clause template is used in a contract."""
+
+    class Action(models.TextChoices):
+        ADDED = 'ADDED', 'Added to contract'
+        REMOVED = 'REMOVED', 'Removed from contract'
+        ACCEPTED = 'ACCEPTED', 'Accepted during negotiation'
+        REJECTED = 'REJECTED', 'Rejected during negotiation'
+        MODIFIED = 'MODIFIED', 'Modified before use'
+
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='clause_usage_events')
+    clause = models.ForeignKey('ClauseTemplate', on_delete=models.CASCADE, related_name='usage_events')
+    contract = models.ForeignKey(Contract, on_delete=models.SET_NULL, null=True, blank=True, related_name='clause_usage_events')
+    action = models.CharField(max_length=10, choices=Action.choices, default=Action.ADDED)
+    performed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='clause_usage_events')
+    note = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.clause.title} {self.action} on {self.contract_id}'
+
+
 class OnboardingProgress(models.Model):
     """Tracks guided-setup completion state for an organisation."""
 
