@@ -27,8 +27,8 @@ This list contains every task that is still open, partial, or queued for follow-
 ## Workflow Engine
 
 - Conditional workflow routing by value, jurisdiction, and type
-- Multi-step approvals for legal, finance, and privacy
-- SLA, escalation, reassignment, and delegation flows
+- ~~Multi-step approvals for legal, finance, and privacy~~ ✅ (`ApprovalWorkflowService` with initiate/approve/reject/delegate/escalate, commit `4428b8f`)
+- ~~SLA, escalation, reassignment, and delegation flows~~ ✅ (`get_overdue_approvals`, `escalate_overdue_for_org`, `delegate`, commit `4428b8f`)
 
 ## Clause And Playbook Layer
 
