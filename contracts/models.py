@@ -2637,6 +2637,89 @@ class OrgPolicy(models.Model):
         return f'Policy for {self.organization}'
 
 
+class OnboardingProgress(models.Model):
+    """Tracks guided-setup completion state for an organisation."""
+
+    STEPS = [
+        'org_profile',
+        'invite_members',
+        'first_contract',
+        'configure_policy',
+        'connect_integration',
+    ]
+
+    organization = models.OneToOneField(Organization, on_delete=models.CASCADE, related_name='onboarding')
+    steps_completed = models.JSONField(default=list, blank=True)
+    current_step = models.CharField(max_length=50, default='org_profile')
+    completed = models.BooleanField(default=False)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f'Onboarding for {self.organization} ({"done" if self.completed else self.current_step})'
+
+    @property
+    def progress_pct(self) -> int:
+        total = len(self.STEPS)
+        done = len([s for s in self.steps_completed if s in self.STEPS])
+        return int(done / total * 100) if total else 0
+
+
+class BillingPlan(models.Model):
+    """Available subscription tiers."""
+
+    class Tier(models.TextChoices):
+        FREE = 'FREE', 'Free'
+        STARTER = 'STARTER', 'Starter'
+        PROFESSIONAL = 'PROFESSIONAL', 'Professional'
+        ENTERPRISE = 'ENTERPRISE', 'Enterprise'
+
+    name = models.CharField(max_length=50, choices=Tier.choices, unique=True)
+    max_users = models.PositiveIntegerField(default=5)
+    max_contracts = models.PositiveIntegerField(default=50)
+    max_api_calls_per_month = models.PositiveIntegerField(default=1000)
+    price_monthly = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.name
+
+
+class OrgBillingSubscription(models.Model):
+    """Links an organisation to its current plan."""
+
+    organization = models.OneToOneField(Organization, on_delete=models.CASCADE, related_name='billing_subscription')
+    plan = models.ForeignKey(BillingPlan, on_delete=models.PROTECT, related_name='subscriptions')
+    subscribed_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f'{self.organization.name} → {self.plan.name}'
+
+
+class UsageRecord(models.Model):
+    """Monthly usage snapshot for an organisation."""
+
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='usage_records')
+    period_start = models.DateField()
+    period_end = models.DateField()
+    user_count = models.PositiveIntegerField(default=0)
+    contract_count = models.PositiveIntegerField(default=0)
+    api_call_count = models.PositiveIntegerField(default=0)
+    overage_users = models.BooleanField(default=False)
+    overage_contracts = models.BooleanField(default=False)
+    overage_api_calls = models.BooleanField(default=False)
+    recorded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-period_start']
+        unique_together = ('organization', 'period_start')
+
+    def __str__(self):
+        return f'{self.organization.name} usage {self.period_start}'
+
+
 # Alias-first structural migration layer.
 # These symbols let care-native code paths move toward case-oriented names
 # without changing database tables, migration history, or legacy imports yet.

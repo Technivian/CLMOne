@@ -65,6 +65,10 @@ from contracts.models import (
     AuditLog,
     SignatureRequest,
     BackgroundJob,
+    OnboardingProgress,
+    BillingPlan,
+    OrgBillingSubscription,
+    UsageRecord,
 )
 
 logger = logging.getLogger(__name__)
@@ -2380,3 +2384,210 @@ def admin_audit_api(request):
     limit = min(int(request.GET.get('limit', 50)), 200)
     logs = svc.get_audit_summary(org, limit=limit)
     return JsonResponse({'logs': logs})
+
+
+# ---------------------------------------------------------------------------
+# Feature 4: Permission Transparency
+# ---------------------------------------------------------------------------
+
+from contracts.services.permissions import get_permission_service
+
+
+@login_required
+@require_http_methods(['GET'])
+def permissions_matrix_api(request):
+    org = get_user_organization(request.user)
+    svc = get_permission_service()
+    matrix = svc.get_org_permission_matrix(org)
+    return JsonResponse({
+        'org_id': matrix.org_id,
+        'org_name': matrix.org_name,
+        'users': [
+            {
+                'user_id': u.user_id,
+                'username': u.username,
+                'role': u.role,
+                'capabilities': u.capabilities,
+                'is_active': u.is_active,
+            }
+            for u in matrix.users
+        ],
+    })
+
+
+@login_required
+@require_http_methods(['GET'])
+def contract_access_api(request, contract_id):
+    org = get_user_organization(request.user)
+    svc = get_permission_service()
+    entry = svc.get_record_access(contract_id, org)
+    return JsonResponse({
+        'contract_id': entry.contract_id,
+        'contract_title': entry.contract_title,
+        'users_with_access': [
+            {
+                'user_id': u.user_id,
+                'username': u.username,
+                'role': u.role,
+                'capabilities': u.capabilities,
+                'is_active': u.is_active,
+            }
+            for u in entry.users_with_access
+        ],
+    })
+
+
+@login_required
+@require_http_methods(['GET'])
+def user_permissions_api(request, user_id):
+    org = get_user_organization(request.user)
+    svc = get_permission_service()
+    access = svc.get_user_permissions(user_id, org)
+    if access is None:
+        return JsonResponse({'error': 'User not found in organisation'}, status=404)
+    return JsonResponse({
+        'user_id': access.user_id,
+        'username': access.username,
+        'role': access.role,
+        'capabilities': access.capabilities,
+        'is_active': access.is_active,
+    })
+
+
+# ---------------------------------------------------------------------------
+# Feature 5: Self-Serve Onboarding
+# ---------------------------------------------------------------------------
+
+from contracts.services.onboarding import get_onboarding_service
+
+
+@login_required
+@require_http_methods(['GET'])
+def onboarding_status_api(request):
+    org = get_user_organization(request.user)
+    svc = get_onboarding_service()
+    state = svc.get_progress(org)
+    return JsonResponse({
+        'org_id': state.org_id,
+        'current_step': state.current_step,
+        'steps_completed': state.steps_completed,
+        'progress_pct': state.progress_pct,
+        'completed': state.completed,
+        'completed_at': state.completed_at,
+        'remaining_steps': state.remaining_steps,
+        'next_step': state.next_step,
+    })
+
+
+@login_required
+@require_http_methods(['POST'])
+def onboarding_advance_api(request):
+    org = get_user_organization(request.user)
+    data = json.loads(request.body or '{}')
+    step = data.get('step')
+    if not step:
+        return JsonResponse({'error': 'step is required'}, status=400)
+    svc = get_onboarding_service()
+    try:
+        state = svc.advance_step(org, step)
+    except ValueError as e:
+        return JsonResponse({'error': str(e)}, status=400)
+    return JsonResponse({
+        'ok': True,
+        'org_id': state.org_id,
+        'current_step': state.current_step,
+        'steps_completed': state.steps_completed,
+        'progress_pct': state.progress_pct,
+        'completed': state.completed,
+        'next_step': state.next_step,
+    })
+
+
+@login_required
+@require_http_methods(['POST'])
+def onboarding_complete_api(request):
+    org = get_user_organization(request.user)
+    svc = get_onboarding_service()
+    state = svc.mark_complete(org)
+    return JsonResponse({'ok': True, 'completed': state.completed, 'progress_pct': state.progress_pct})
+
+
+# ---------------------------------------------------------------------------
+# Feature 6: Billing + Subscription Controls
+# ---------------------------------------------------------------------------
+
+from contracts.services.billing import get_billing_service
+
+
+@login_required
+@require_http_methods(['GET'])
+def billing_usage_api(request):
+    org = get_user_organization(request.user)
+    svc = get_billing_service()
+    usage = svc.get_current_usage(org)
+    return JsonResponse({
+        'org_id': usage.org_id,
+        'plan_name': usage.plan_name,
+        'period_start': usage.period_start,
+        'period_end': usage.period_end,
+        'user_count': usage.user_count,
+        'contract_count': usage.contract_count,
+        'api_call_count': usage.api_call_count,
+        'max_users': usage.max_users,
+        'max_contracts': usage.max_contracts,
+        'max_api_calls_per_month': usage.max_api_calls_per_month,
+        'overage_users': usage.overage_users,
+        'overage_contracts': usage.overage_contracts,
+        'overage_api_calls': usage.overage_api_calls,
+        'any_overage': usage.any_overage,
+    })
+
+
+@login_required
+@require_http_methods(['GET'])
+def billing_plan_api(request):
+    org = get_user_organization(request.user)
+    svc = get_billing_service()
+    plan = svc.get_plan(org)
+    return JsonResponse({
+        'name': plan.name,
+        'max_users': plan.max_users,
+        'max_contracts': plan.max_contracts,
+        'max_api_calls_per_month': plan.max_api_calls_per_month,
+        'price_monthly': str(plan.price_monthly),
+    })
+
+
+# ---------------------------------------------------------------------------
+# Feature 7: Compliance Portal
+# ---------------------------------------------------------------------------
+
+from contracts.services.compliance_portal import get_compliance_portal_service
+
+
+@login_required
+@require_http_methods(['GET'])
+def compliance_trust_report_api(request):
+    org = get_user_organization(request.user)
+    svc = get_compliance_portal_service()
+    report = svc.generate_trust_report(org)
+    return JsonResponse({
+        'org_id': report.org_id,
+        'org_name': report.org_name,
+        'generated_at': report.generated_at,
+        'policy_summary': report.policy_summary,
+        'dsar_stats': report.dsar_stats,
+        'retention_config': report.retention_config,
+        'ai_governance': report.ai_governance,
+        'audit_counts': report.audit_counts,
+        'contract_stats': report.contract_stats,
+    })
+
+
+@login_required
+@require_http_methods(['GET'])
+def compliance_export_api(request):
+    org = get_user_organization(request.user)
+    svc = get_compliance_portal_service()
+    bundle = svc.export_compliance_bundle(org)
+    return JsonResponse(bundle)

@@ -61,6 +61,24 @@ urlpatterns = [
     path('api/admin/integrations/', api_views.admin_integrations_api, name='admin_integrations_api'),
     path('api/admin/audit/', api_views.admin_audit_api, name='admin_audit_api'),
 
+    # Permission transparency
+    path('api/admin/permissions/matrix/', api_views.permissions_matrix_api, name='permissions_matrix_api'),
+    path('api/admin/users/<int:user_id>/permissions/', api_views.user_permissions_api, name='user_permissions_api'),
+    path('api/contracts/<int:contract_id>/access/', api_views.contract_access_api, name='contract_access_api'),
+
+    # Onboarding
+    path('api/onboarding/', api_views.onboarding_status_api, name='onboarding_status_api'),
+    path('api/onboarding/advance/', api_views.onboarding_advance_api, name='onboarding_advance_api'),
+    path('api/onboarding/complete/', api_views.onboarding_complete_api, name='onboarding_complete_api'),
+
+    # Billing
+    path('api/admin/billing/usage/', api_views.billing_usage_api, name='billing_usage_api'),
+    path('api/admin/billing/plan/', api_views.billing_plan_api, name='billing_plan_api'),
+
+    # Compliance portal
+    path('api/compliance/trust-report/', api_views.compliance_trust_report_api, name='compliance_trust_report_api'),
+    path('api/compliance/export/', api_views.compliance_export_api, name='compliance_export_api'),
+
     # Clients
     path('clients/', views.ClientListView.as_view(), name='client_list'),
     path('clients/new/', views.ClientCreateView.as_view(), name='client_create'),
