@@ -21,7 +21,7 @@ This list contains every task that is still open, partial, or queued for follow-
 ## Contract Core
 
 - End-to-end lifecycle states from draft to archive
-- Versioned documents and immutable history
+- ~~Versioned documents and immutable history~~ ✅ (`ContractVersion` model, `ContractVersionService`, diff API, commit `518194b`)
 - ~~Upload + OCR pipeline~~ ✅ (PDF/DOCX OCR + `AIExtractionSpan` model, commit `ee655e1`)
 
 ## Workflow Engine
@@ -71,7 +71,7 @@ This list contains every task that is still open, partial, or queued for follow-
 
 - Prompt-injection controls and output policy engine ✅ (commit `59d91e6`)
 - ~~AI summarization/risk extraction with citations~~ ✅ (clause text-span citations + confidence thresholds, `AIExtractionSpan`, commit `ee655e1`)
-- AI-assisted drafting and clause recommendations
+- ~~AI-assisted drafting and clause recommendations~~ ✅ (`ClauseRecommendation` model, `AIClauseDraftingService`, suggest/accept/draft-section API, commit `518194b`)
 - Agentic AI actions with approval gates and rollback logs ✅ (commit `59d91e6`)
 - AI governance with model registry, safety policies, and red-team tests ✅ (final archive + hash verifier, commit `59d91e6`)
 
@@ -85,7 +85,7 @@ This list contains every task that is still open, partial, or queued for follow-
 
 ## Product And Commercial Readiness
 
-- Enterprise admin console for org settings, policy controls, and integrations
+- ~~Enterprise admin console for org settings, policy controls, and integrations~~ ✅ (`OrgPolicy` model, `AdminConsoleService`, admin API, commit `518194b`)
 - Permission transparency UI for record-level access
 - Self-serve onboarding and guided setup
 - Billing, subscription, and usage controls

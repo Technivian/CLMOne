@@ -62,6 +62,9 @@ Canonical remaining worklist:
 - Obligation tracker: RENEWAL/PAYMENT/NDA_EXPIRY/SLA types, renewal playbook, reminder cadence, obligation CRUD API, management commands (`generate_renewal_tasks`, `run_obligation_reminders`, commit `31378da`)
 - DSAR SLA countdown + evidence bundle export: `DSARService`, `export_dsar_evidence` command, DSAR CRUD + evidence API, commit `75166a5`
 - Async job system: `run_worker` daemon, `review_dead_letter_jobs`, `queue_background_jobs` extended, job status API, GitHub Actions cron scheduler (every 15 min), commit `a945238`
+- Document versioning + immutable history: `ContractVersion` model, `ContractVersionService` (diff via difflib), versions + diff API, commit `518194b`
+- AI-assisted clause drafting: `ClauseRecommendation` model, `AIClauseDraftingService` (template library NDA/MSA/EMPLOYMENT/VENDOR), suggest/accept/draft-section API, commit `518194b`
+- Enterprise admin console: `OrgPolicy` model, `AdminConsoleService` (settings, policy, integrations, audit), admin API, commit `518194b`
 - Postgres cutover verification command + scheduled CI workflow
 - Optional observability HTTP sink transport
 - NetSuite ingestion adapter/command baseline
@@ -75,9 +78,10 @@ Canonical remaining worklist:
 
 ## Next Up
 
-1. **Document versioning + immutable history** — version compare, diff view, audit trail
-2. **AI-assisted drafting and clause recommendations** — next AI governance gap
-3. **Enterprise admin console** — org settings, policy controls, integrations UI
+1. **Permission transparency UI** — record-level access visibility for org members
+2. **Self-serve onboarding + guided setup** — org creation wizard, first-contract flow
+3. **Billing and subscription controls** — usage tracking, plan enforcement
+4. **Customer-facing trust/compliance portal** — exportable compliance artifacts
 
 ## Source Of Truth
 
