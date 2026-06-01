@@ -58,7 +58,8 @@ Canonical remaining worklist:
 - `SPR3-002` Salesforce + webhook E2E evidence run (2026-06-01): Salesforce sync SUCCESS created_count=1, webhook SENT confirmed — `evidence/spr3-cutover-20260601/sprint3-integration-report.json` status=GO
 - `SPR3-003` Postgres cutover simulation evidence run (2026-06-01): `--simulation` flag + 5 passing tests; rehearsal artifact in `evidence/spr3-003-postgres-cutover/postgres-cutover-simulation.json` (simulation=true, migrations clean)
 - `SPR3-005` e-sign rehearsal evidence run (2026-06-01): full PENDING→SIGNED lifecycle + dedup; report in `evidence/spr3-005-esign-rehearsal/esign-integration-report.json` status=GO
-- `SPR3-008` executive analytics evidence run (2026-06-01): multi-org snapshot in `evidence/spr3-008-executive-analytics/executive-analytics-evidence.json` (bottlenecks + 6-month risk trend captured)
+- AI clause-span citations + confidence thresholds + PDF/DOCX upload pipeline (`AIExtractionSpan` model, `/api/documents/upload/`, `/api/contracts/<id>/ai-extract/`, commit `ee655e1`)
+- Obligation tracker: RENEWAL/PAYMENT/NDA_EXPIRY/SLA types, renewal playbook, reminder cadence, obligation CRUD API, management commands (`generate_renewal_tasks`, `run_obligation_reminders`, commit `31378da`)
 - Postgres cutover verification command + scheduled CI workflow
 - Optional observability HTTP sink transport
 - NetSuite ingestion adapter/command baseline
@@ -72,12 +73,11 @@ Canonical remaining worklist:
 
 ## Next Up
 
-1. Run target-environment Postgres cutover evidence workflow with `cutover_ready=true` (`SPR3-003`)
-2. Run NetSuite and e-sign live provider evidence in staging/prod-like env (`SPR3-004`, `SPR3-005`)
-3. Attach first scheduled retention evidence artifact from target environment (`SPR3-006`)
-4. Capture production-window scheduler artifacts (retention + lifecycle) on live tenant data
-5. Attach production executive analytics evidence artifact (`SPR3-008`)
-6. Expand AI extraction provenance to include clause text-span citations and confidence calibration thresholds
+1. **DSAR SLA countdown + evidence bundle export** — privacy ops gap; SLA timer on data subject requests + downloadable evidence pack
+2. **Async job system** — reminders, OCR, integrations (Celery or Django-Q baseline)
+3. **Document versioning + immutable history** — version compare, diff view, audit trail
+4. **AI-assisted drafting and clause recommendations** — next AI governance gap
+5. **Enterprise admin console** — org settings, policy controls, integrations UI
 
 ## Source Of Truth
 

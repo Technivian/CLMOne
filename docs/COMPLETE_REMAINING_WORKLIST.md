@@ -1,6 +1,6 @@
 # Remaining Worklist
 
-Last updated: 2026-04-14
+Last updated: 2026-06-01
 
 Source of truth:
 - [`docs/MASTER_TODO_CMS_AEGIS_PARITY.md`](/Users/haroonwahed/Documents/Projects/CMS-Aegis/docs/MASTER_TODO_CMS_AEGIS_PARITY.md)
@@ -22,7 +22,7 @@ This list contains every task that is still open, partial, or queued for follow-
 
 - End-to-end lifecycle states from draft to archive
 - Versioned documents and immutable history
-- Upload + OCR pipeline
+- ~~Upload + OCR pipeline~~ ✅ (PDF/DOCX OCR + `AIExtractionSpan` model, commit `ee655e1`)
 
 ## Workflow Engine
 
@@ -39,9 +39,9 @@ This list contains every task that is still open, partial, or queued for follow-
 
 ## Obligation And Renewal Operations
 
-- Renewal playbooks and auto-generated tasks
-- Configurable reminder cadence by contract type and priority
-- Expanded obligation taxonomy and playbooks
+- ~~Renewal playbooks and auto-generated tasks~~ ✅ (`renewal_playbook.py`, `generate_renewal_tasks` command, commit `31378da`)
+- ~~Configurable reminder cadence by contract type and priority~~ ✅ (`run_obligation_reminders` command, reminder window per-obligation, commit `31378da`)
+- ~~Expanded obligation taxonomy and playbooks~~ ✅ (RENEWAL/PAYMENT/NDA_EXPIRY/SLA deadline types, obligation CRUD API, commit `31378da`)
 
 ## Search, Analytics, And Repository UX
 
@@ -69,11 +69,11 @@ This list contains every task that is still open, partial, or queued for follow-
 
 ## AI Governance And Actions
 
-- Prompt-injection controls and output policy engine
-- AI summarization/risk extraction with citations
+- Prompt-injection controls and output policy engine ✅ (commit `59d91e6`)
+- ~~AI summarization/risk extraction with citations~~ ✅ (clause text-span citations + confidence thresholds, `AIExtractionSpan`, commit `ee655e1`)
 - AI-assisted drafting and clause recommendations
-- Agentic AI actions with approval gates and rollback logs
-- AI governance with model registry, safety policies, and red-team tests
+- Agentic AI actions with approval gates and rollback logs ✅ (commit `59d91e6`)
+- AI governance with model registry, safety policies, and red-team tests ✅ (final archive + hash verifier, commit `59d91e6`)
 
 ## Reliability And Operations
 
