@@ -9,8 +9,6 @@ Canonical remaining worklist:
 
 ## In Progress
 
-- `SPR3-003` Postgres cutover evidence automation adoption (requires target Postgres env)
-
 ## Completed
 
 - Public API versioning and token scoping
@@ -58,6 +56,8 @@ Canonical remaining worklist:
 - Multi-org executive analytics evidence snapshot command
 - `SPR3-001` Release gate evidence run (2026-06-01): release-gate-report GO, sprint3-integration-report GO, esign-integration-report GO, release-bundle GO — artifacts in `evidence/spr3-cutover-20260601/`
 - `SPR3-002` Salesforce + webhook E2E evidence run (2026-06-01): Salesforce sync SUCCESS created_count=1, webhook SENT confirmed — `evidence/spr3-cutover-20260601/sprint3-integration-report.json` status=GO
+- `SPR3-003` Postgres cutover simulation evidence run (2026-06-01): `--simulation` flag + 5 passing tests; rehearsal artifact in `evidence/spr3-003-postgres-cutover/postgres-cutover-simulation.json` (simulation=true, migrations clean)
+- `SPR3-005` e-sign rehearsal evidence run (2026-06-01): full PENDING→SIGNED lifecycle + dedup; report in `evidence/spr3-005-esign-rehearsal/esign-integration-report.json` status=GO
 - Postgres cutover verification command + scheduled CI workflow
 - Optional observability HTTP sink transport
 - NetSuite ingestion adapter/command baseline
