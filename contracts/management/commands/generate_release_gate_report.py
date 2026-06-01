@@ -1,4 +1,5 @@
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -26,6 +27,12 @@ class Command(BaseCommand):
             '--fail-on-no-go',
             action='store_true',
             help='Exit with non-zero status when go_no_go is NO-GO.',
+        )
+        parser.add_argument(
+            '--npm-fail-threshold',
+            default='moderate',
+            choices=['low', 'moderate', 'high', 'critical'],
+            help='Minimum npm vulnerability severity that causes gate failure.',
         )
 
     def _run_command(self, args):
@@ -56,9 +63,34 @@ class Command(BaseCommand):
             'status': 'fail',
         }
 
+    def _extract_npm_severity_summary(self, output_text):
+        counts = {'critical': 0, 'high': 0, 'moderate': 0, 'low': 0}
+        if not output_text:
+            return {
+                'counts': counts,
+                'has_moderate_or_higher': False,
+            }
+
+        for severity in counts:
+            pattern = rf'(\d+)\s+{severity}\s+severity\s+vulnerabilit(?:y|ies)'
+            match = re.search(pattern, output_text, re.IGNORECASE)
+            if match:
+                counts[severity] = int(match.group(1))
+
+        return {
+            'counts': counts,
+            'has_moderate_or_higher': any(counts[key] > 0 for key in ('moderate', 'high', 'critical')),
+        }
+
+    def _severity_violates_threshold(self, counts, threshold):
+        order = ['low', 'moderate', 'high', 'critical']
+        idx = order.index(threshold)
+        return any(counts[level] > 0 for level in order[idx:])
+
     def handle(self, *args, **options):
         now = timezone.now()
         seven_days_ago = now - timedelta(days=7)
+        npm_fail_threshold = options.get('npm_fail_threshold', 'moderate')
 
         executor = MigrationExecutor(connection)
         targets = executor.loader.graph.leaf_nodes()
@@ -112,9 +144,25 @@ class Command(BaseCommand):
             client_npm_result = self._run_command(['npm', '--prefix', 'client', 'audit', '--audit-level=high'])
             theme_npm_result = self._run_command(['npm', '--prefix', 'theme/static_src', 'audit', '--audit-level=high'])
 
+        client_npm_result['severity_summary'] = self._extract_npm_severity_summary(client_npm_result.get('stdout', ''))
+        theme_npm_result['severity_summary'] = self._extract_npm_severity_summary(theme_npm_result.get('stdout', ''))
+
+        for npm_result in (client_npm_result, theme_npm_result):
+            counts = npm_result['severity_summary']['counts']
+            policy_violation = self._severity_violates_threshold(counts, npm_fail_threshold)
+            npm_result['policy_threshold'] = npm_fail_threshold
+            npm_result['policy_violation'] = policy_violation
+            if policy_violation:
+                npm_result['status'] = 'fail'
+
         report = {
             'captured_at': now.isoformat(),
             'sprint_stage': 'SPR3-001',
+            'security_threshold': {
+                'npm_audit_level': 'high',
+                'npm_fail_threshold': npm_fail_threshold,
+                'pip_audit_mode': 'known-vuln-db',
+            },
             'gates': {
                 'database': {
                     'unapplied_migrations': len(unapplied),
@@ -147,6 +195,12 @@ class Command(BaseCommand):
         database_ok = report['gates']['database']['status'] == 'pass'
         integration_ok = report['gates']['integrations']['status'] == 'pass'
         report['go_no_go'] = 'GO' if database_ok and security_ok and integration_ok else 'NO-GO'
+        report['security_warnings'] = {
+            'npm_moderate_or_higher_present': (
+                report['gates']['security']['npm_client_audit']['severity_summary']['has_moderate_or_higher']
+                or report['gates']['security']['npm_theme_audit']['severity_summary']['has_moderate_or_higher']
+            )
+        }
 
         output_json = json.dumps(report, indent=2, sort_keys=True)
         output_path = options.get('output') or ''

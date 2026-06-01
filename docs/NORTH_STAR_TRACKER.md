@@ -4,6 +4,12 @@ Last updated: 2026-05-16
 
 This tracker converts the north-star matrix and owner checklist into a board-style view. It is optimized for execution: what is open, who owns it, what blocks it, and what comes next.
 
+Canonical release status source:
+- `docs/READINESS_SCOREBOARD_2026-05-31.md`
+
+Scope note:
+- This tracker includes strategic maturity workstreams (P1/P2) and should not be used alone as the launch go/no-go source.
+
 ## Status Legend
 
 - `DONE` = complete and accepted

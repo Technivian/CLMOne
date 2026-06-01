@@ -4,6 +4,12 @@ Last updated: 2026-05-16
 
 This checklist is the execution view of the north-star maturity matrix. It groups the remaining work by accountable owner so the team can drive the app from strong internal MVP to production-complete.
 
+Canonical release status source:
+- `docs/READINESS_SCOREBOARD_2026-05-31.md`
+
+Scope note:
+- This checklist tracks north-star maturity work in addition to launch blockers; use the canonical readiness scoreboard for release go/no-go.
+
 ## Legend
 
 - `READY` = can start immediately

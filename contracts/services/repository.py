@@ -5,10 +5,9 @@ Provides abstraction between UI and data layer
 """
 from django.contrib.auth.models import User
 from contracts.models import Contract
-from contracts.domain.contracts import ListParams, ContractData, ListResult, ContractStatus
+from contracts.domain.contracts import ListParams, ContractData, ListResult
 from django.core.paginator import Paginator
 from django.db.models import Q, Case, When, Value, IntegerField
-import time
 from typing import List, Optional
 from contracts.tenancy import get_user_organization, scope_queryset_for_organization
 
@@ -17,26 +16,11 @@ class BulkUpdateValidationError(Exception):
     """Raised when bulk update payload fails validation."""
 
 
-def get_repository_service(user: User, use_mock: bool = False):
-    """Factory function to get repository service"""
-    if use_mock:
-        return MockRepositoryService(user)
-    else:
-        return DjangoRepositoryService(user)
+def get_repository_service(user: User):
+    """Factory function for the Django-backed repository service."""
+    return DjangoRepositoryService(user)
 
-class RepositoryServiceInterface:
-    """Interface for repository services"""
-    
-    def list(self, params: ListParams) -> ListResult:
-        raise NotImplementedError
-        
-    def get_by_id(self, contract_id: str) -> Optional[ContractData]:
-        raise NotImplementedError
-        
-    def bulk_update(self, contract_ids: List[str], updates: dict) -> int:
-        raise NotImplementedError
-
-class DjangoRepositoryService(RepositoryServiceInterface):
+class DjangoRepositoryService:
     """Production repository service using Django ORM"""
     ALLOWED_BULK_UPDATE_FIELDS = {'status', 'lifecycle_stage'}
     
@@ -180,66 +164,3 @@ class DjangoRepositoryService(RepositoryServiceInterface):
                     updated_count += 1
 
         return updated_count
-
-class MockRepositoryService(RepositoryServiceInterface):
-    """Mock service for testing with simulated latency"""
-    
-    def __init__(self, user: User):
-        self.user = user
-        
-    def list(self, params: ListParams) -> ListResult:
-        """Mock list with simulated data and latency"""
-        time.sleep(0.1)  # Simulate network latency
-        
-        # Generate mock data
-        mock_contracts = []
-        for i in range(1, 26):
-            mock_contracts.append(ContractData(
-                id=str(i),
-                title=f"Sample Contract {i}",
-                status="ACTIVE" if i % 2 == 0 else "DRAFT",
-                counterparty=f"Company {i}",
-                value=10000.0 * i,
-                start_date="2024-01-15",
-                end_date="2025-01-15",
-                owner="John Doe",
-                updated_at="2024-01-15T10:00:00Z",
-                created_at="2024-01-01T10:00:00Z"
-            ))
-        
-        # Apply filtering (simplified)
-        filtered = mock_contracts
-        if params.q:
-            filtered = [c for c in filtered if params.q.lower() in c.title.lower()]
-        if params.status:
-            filtered = [c for c in filtered if c.status in params.status]
-            
-        return ListResult(
-            contracts=filtered,
-            total_count=len(filtered),
-            page=params.page,
-            page_size=params.page_size,
-            total_pages=(len(filtered) + params.page_size - 1) // params.page_size
-        )
-    
-    def get_by_id(self, contract_id: str) -> Optional[ContractData]:
-        """Mock get by ID"""
-        time.sleep(0.05)
-        return ContractData(
-            id=contract_id,
-            title=f"Sample Contract {contract_id}",
-            status="ACTIVE",
-            counterparty="Sample Company",
-            value=50000.0,
-            start_date="2024-01-15",
-            end_date="2025-01-15",
-            owner="John Doe",
-            updated_at="2024-01-15T10:00:00Z",
-            created_at="2024-01-01T10:00:00Z",
-            content="Sample contract content..."
-        )
-    
-    def bulk_update(self, contract_ids: List[str], updates: dict) -> int:
-        """Mock bulk update"""
-        time.sleep(0.2)
-        return len(contract_ids)

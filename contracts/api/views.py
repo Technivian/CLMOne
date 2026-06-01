@@ -34,6 +34,7 @@ from contracts.services.salesforce import (
 from contracts.services.webhooks import queue_webhook_event
 from contracts.services.esign import ESignReconciliationError, apply_esign_event
 from contracts.services.executive_analytics import build_executive_analytics_snapshot
+from contracts.services.obligations import get_obligation_service
 from contracts.services.netsuite import (
     NetSuiteSyncError,
     fetch_netsuite_records,
@@ -48,6 +49,7 @@ from contracts.tenancy import get_user_organization
 from contracts.tenancy import scope_queryset_for_organization
 from contracts.models import (
     Contract,
+    Document,
     OrganizationAPIToken,
     OrganizationContractFieldMap,
     Organization,
@@ -62,6 +64,16 @@ from contracts.models import (
     UserProfile,
     AuditLog,
     SignatureRequest,
+    BackgroundJob,
+    OnboardingProgress,
+    BillingPlan,
+    OrgBillingSubscription,
+    UsageRecord,
+    ApprovalRequest,
+    ClauseTemplate,
+    ClausePlaybook,
+    ClauseVariant,
+    ClauseUsageEvent,
 )
 
 logger = logging.getLogger(__name__)
@@ -620,7 +632,7 @@ def contracts_api(request):
             page_size=int(request.GET.get('page_size', 25))
         )
 
-        service = get_repository_service(request.user, use_mock=False)
+        service = get_repository_service(request.user)
         result = service.list(params)
         return JsonResponse(result.to_dict())
     except Exception:
@@ -636,7 +648,7 @@ def contracts_api_v1(request):
         return _error_response(request, 'Missing or invalid API bearer token.', 401)
 
     try:
-        service = get_repository_service(request.user, use_mock=False)
+        service = get_repository_service(request.user)
         service.organization = organization
         try:
             page_size = int(request.GET.get('limit', request.GET.get('page_size', 25)) or 25)
@@ -704,7 +716,7 @@ def contract_detail_api_v1(request, contract_id):
         return _error_response(request, 'Missing or invalid API bearer token.', 401)
 
     try:
-        service = get_repository_service(request.user, use_mock=False)
+        service = get_repository_service(request.user)
         service.organization = organization
         contract = service.get_by_id(contract_id)
         if not contract:
@@ -729,7 +741,7 @@ def contract_detail_api_v1(request, contract_id):
 def contract_detail_api(request, contract_id):
     """Legacy authenticated contract detail endpoint."""
     try:
-        service = get_repository_service(request.user, use_mock=False)
+        service = get_repository_service(request.user)
         result = service.get_by_id(contract_id)
         if not result:
             return _error_response(request, 'Contract not found', 404)
@@ -756,7 +768,7 @@ def cases_bulk_update_api(request):
         except (TypeError, ValueError):
             return _error_response(request, 'contract_ids must contain numeric IDs only', 400)
 
-        service = get_repository_service(request.user, use_mock=False)
+        service = get_repository_service(request.user)
         result = service.bulk_update(normalized_contract_ids, updates)
         log_action(
             request.user,
@@ -1686,3 +1698,1653 @@ def esign_webhook_api(request):
             summary['errors'].append({'index': index, 'error': f'Unknown reconciliation result: {result_key}'})
 
     return JsonResponse({'summary': summary})
+
+
+# ── Document upload ingestion ─────────────────────────────────────────────────
+
+_ALLOWED_UPLOAD_EXTENSIONS = {
+    '.pdf', '.docx', '.txt', '.md', '.csv', '.html', '.xml', '.json',
+}
+_MAX_UPLOAD_BYTES = 50 * 1024 * 1024  # 50 MB
+
+
+@login_required
+@require_http_methods(['POST'])
+def document_upload_api(request):
+    """Ingest a contract document file: upload → hash → OCR queue → AI extraction.
+
+    Multipart POST:
+      file        — required, the document file
+      contract_id — optional, associate with an existing contract
+      document_type — optional, one of Document.DocType choices (default OTHER)
+      title       — optional, defaults to the original filename
+    """
+    organization = get_user_organization(request.user)
+    if organization is None:
+        return _error_response(request, 'No organization found for this user.', 400)
+
+    uploaded_file = request.FILES.get('file')
+    if uploaded_file is None:
+        return _error_response(request, 'No file provided.', 400)
+
+    if uploaded_file.size > _MAX_UPLOAD_BYTES:
+        return _error_response(request, f'File exceeds maximum size of {_MAX_UPLOAD_BYTES // (1024*1024)} MB.', 413)
+
+    import os
+    ext = os.path.splitext(uploaded_file.name)[1].lower()
+    if ext not in _ALLOWED_UPLOAD_EXTENSIONS:
+        return _error_response(
+            request,
+            f'File type {ext!r} is not supported. Allowed: {", ".join(sorted(_ALLOWED_UPLOAD_EXTENSIONS))}',
+            415,
+        )
+
+    contract_id = request.POST.get('contract_id')
+    contract = None
+    if contract_id:
+        contract = Contract.objects.filter(
+            id=contract_id,
+            organization=organization,
+        ).first()
+        if contract is None:
+            return _error_response(request, 'Contract not found or access denied.', 404)
+
+    doc_type = request.POST.get('document_type', Document.DocType.OTHER)
+    if doc_type not in {c[0] for c in Document.DocType.choices}:
+        doc_type = Document.DocType.OTHER
+
+    title = (request.POST.get('title') or '').strip() or uploaded_file.name
+
+    document = Document(
+        organization=organization,
+        title=title,
+        document_type=doc_type,
+        status=Document.Status.DRAFT,
+        contract=contract,
+        uploaded_by=request.user,
+    )
+    document.file = uploaded_file
+    document.save()  # triggers SHA256 hash + OCR queue in Document.save()
+
+    ocr_status = 'unknown'
+    confidence = None
+    ocr_source = None
+    try:
+        ocr_review = document.ocr_review
+        ocr_status = ocr_review.status
+        confidence = float(ocr_review.confidence_score) if ocr_review.confidence_score is not None else None
+        ocr_source = ocr_review.source
+    except Exception:
+        pass
+
+    return JsonResponse(
+        {
+            'ok': True,
+            'document_id': document.id,
+            'title': document.title,
+            'file_hash': document.file_hash,
+            'file_size': document.file_size,
+            'mime_type': document.mime_type,
+            'document_type': document.document_type,
+            'ocr': {
+                'status': ocr_status,
+                'confidence': confidence,
+                'source': ocr_source,
+            },
+        },
+        status=201,
+    )
+
+
+# ── AI clause-span extraction ─────────────────────────────────────────────────
+
+@login_required
+@require_http_methods(['GET'])
+def contract_ai_extract_api(request, contract_id):
+    """Return AI text-span citations for all documents attached to a contract.
+
+    For each document that has an OCR review with extracted text the rules
+    engine is run (or cached results are returned). The response includes
+    labelled spans with character offsets, excerpt text, and confidence score.
+    """
+    from contracts.services.ai_extraction import extract_clause_spans, get_spans_summary
+    from contracts.models import DocumentOCRReview
+
+    organization = get_user_organization(request.user)
+    contract = Contract.objects.filter(
+        id=contract_id,
+        organization=organization,
+    ).first()
+    if contract is None:
+        return _error_response(request, 'Contract not found or access denied.', 404)
+
+    force_reextract = request.GET.get('reextract') == '1'
+
+    results = []
+    for document in contract.documents.select_related('organization').order_by('created_at'):
+        try:
+            ocr_review = document.ocr_review
+        except DocumentOCRReview.DoesNotExist:
+            results.append({
+                'document_id': document.id,
+                'title': document.title,
+                'status': 'no-ocr-review',
+                'spans': None,
+            })
+            continue
+
+        extracted_text = ocr_review.extracted_text or ''
+
+        if force_reextract and extracted_text:
+            extract_clause_spans(extracted_text, organization, document, replace_existing=True)
+        elif extracted_text and not document.ai_extraction_spans.exists():
+            extract_clause_spans(extracted_text, organization, document, replace_existing=False)
+
+        results.append({
+            'document_id': document.id,
+            'title': document.title,
+            'ocr_status': ocr_review.status,
+            'ocr_confidence': float(ocr_review.confidence_score) if ocr_review.confidence_score else None,
+            'status': 'ok',
+            'spans': get_spans_summary(document),
+        })
+
+    return JsonResponse({
+        'contract_id': contract_id,
+        'document_count': len(results),
+        'results': results,
+    })
+
+
+
+# ── Obligation (Deadline) CRUD API ────────────────────────────────────────────
+
+def _obligation_to_dict(obl) -> dict:
+    return {
+        'id': obl.id,
+        'title': obl.title,
+        'description': obl.description,
+        'due_date': obl.due_date,
+        'contract_id': obl.contract_id,
+        'assigned_to': obl.assigned_to,
+        'priority': obl.priority,
+        'status': obl.status,
+        'reminder_days': obl.reminder_days,
+        'created_at': obl.created_at,
+        'deadline_type': obl.deadline_type,
+        'auto_generated': obl.auto_generated,
+        'days_remaining': obl.days_remaining,
+    }
+
+
+@login_required
+@require_http_methods(['GET', 'POST'])
+def contract_obligations_api(request, contract_id):
+    """List or create obligations for a contract.
+
+    GET  — returns all deadlines attached to the contract.
+    POST — creates a new obligation. Body (JSON):
+        title, description, due_date (YYYY-MM-DD), priority (optional),
+        deadline_type (optional), reminder_days (optional), assigned_to (optional).
+    """
+
+    organization = get_user_organization(request.user)
+    contract = Contract.objects.filter(id=contract_id, organization=organization).first()
+    if contract is None:
+        return _error_response(request, 'Contract not found or access denied.', 404)
+
+    svc = get_obligation_service(organization)
+
+    if request.method == 'GET':
+        status_filter = request.GET.get('status')
+        type_filter = request.GET.get('deadline_type')
+        obligations = svc.list_obligations(
+            contract_id=str(contract_id),
+            status=status_filter,
+            deadline_type=type_filter,
+        )
+        return JsonResponse({
+            'contract_id': contract_id,
+            'count': len(obligations),
+            'obligations': [_obligation_to_dict(o) for o in obligations],
+        })
+
+    # POST — create
+    try:
+        body = json.loads(request.body)
+    except (json.JSONDecodeError, Exception):
+        return _error_response(request, 'Invalid JSON body.', 400)
+
+    title = (body.get('title') or '').strip()
+    due_date = (body.get('due_date') or '').strip()
+    if not title:
+        return _error_response(request, 'title is required.', 400)
+    if not due_date:
+        return _error_response(request, 'due_date is required (YYYY-MM-DD).', 400)
+
+    try:
+        obligation = svc.create_obligation(
+            title=title,
+            description=body.get('description', ''),
+            due_date=due_date,
+            contract_id=str(contract_id),
+            assigned_to=body.get('assigned_to', ''),
+            priority=body.get('priority', 'medium'),
+            deadline_type=body.get('deadline_type', 'CONTRACT'),
+            reminder_days=int(body.get('reminder_days', 7)),
+        )
+    except Exception as exc:
+        return _error_response(request, str(exc), 400)
+
+    return JsonResponse({'ok': True, 'obligation': _obligation_to_dict(obligation)}, status=201)
+
+
+@login_required
+@require_http_methods(['GET', 'PATCH', 'DELETE'])
+def obligation_detail_api(request, obligation_id):
+    """Retrieve, update, or delete a single obligation.
+
+    PATCH body (JSON, all fields optional):
+        title, description, due_date, priority, status, reminder_days, assigned_to.
+    """
+
+    organization = get_user_organization(request.user)
+    svc = get_obligation_service(organization)
+
+    if request.method == 'GET':
+        obligations = svc.list_obligations()
+        match = next((o for o in obligations if o.id == str(obligation_id)), None)
+        if match is None:
+            return _error_response(request, 'Obligation not found.', 404)
+        return JsonResponse({'obligation': _obligation_to_dict(match)})
+
+    if request.method == 'PATCH':
+        try:
+            body = json.loads(request.body)
+        except Exception:
+            return _error_response(request, 'Invalid JSON body.', 400)
+        updated = svc.update_obligation(str(obligation_id), **body)
+        if updated is None:
+            return _error_response(request, 'Obligation not found.', 404)
+        return JsonResponse({'ok': True, 'obligation': _obligation_to_dict(updated)})
+
+    # DELETE
+    deleted = svc.delete_obligation(str(obligation_id))
+    if not deleted:
+        return _error_response(request, 'Obligation not found.', 404)
+    return JsonResponse({'ok': True, 'deleted_id': obligation_id})
+
+
+@login_required
+@require_http_methods(['GET'])
+def obligation_reminders_api(request):
+    """Return all obligations currently within their reminder window."""
+
+    organization = get_user_organization(request.user)
+    svc = get_obligation_service(organization)
+    reminders = svc.get_reminders_due()
+    return JsonResponse({
+        'count': len(reminders),
+        'reminders': [_obligation_to_dict(o) for o in reminders],
+    })
+
+
+# ---------------------------------------------------------------------------
+# DSAR SLA API
+# ---------------------------------------------------------------------------
+from contracts.services.dsar import get_dsar_service
+
+
+def _dsar_dto_to_dict(dto) -> dict:
+    return {
+        'id': dto.id,
+        'reference_number': dto.reference_number,
+        'request_type': dto.request_type,
+        'status': dto.status,
+        'sla_label': dto.sla_label,
+        'days_remaining': dto.days_remaining,
+        'is_overdue': dto.is_overdue,
+        'is_extended': dto.is_extended,
+        'received_date': dto.received_date,
+        'due_date': dto.due_date,
+        'completed_date': dto.completed_date,
+        'requester_name': dto.requester_name,
+        'requester_email': dto.requester_email,
+        'assigned_to': dto.assigned_to,
+    }
+
+
+@login_required
+@require_http_methods(['GET', 'POST'])
+def dsar_list_api(request):
+    """GET /api/dsar/ — list | POST — create."""
+    organization = get_user_organization(request.user)
+    svc = get_dsar_service()
+
+    if request.method == 'GET':
+        status_filter = request.GET.get('status')
+        overdue_only = request.GET.get('overdue_only') in ('1', 'true', 'True')
+        result = svc.list_requests(organization, status_filter=status_filter, overdue_only=overdue_only)
+        return JsonResponse({
+            'total': result.total,
+            'overdue_count': result.overdue_count,
+            'at_risk_count': result.at_risk_count,
+            'requests': [_dsar_dto_to_dict(r) for r in result.requests],
+        })
+
+    # POST — create
+    import json as _json
+    try:
+        body = _json.loads(request.body or '{}')
+    except ValueError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    required = ('request_type', 'requester_name', 'requester_email', 'description')
+    missing = [f for f in required if not body.get(f)]
+    if missing:
+        return JsonResponse({'error': f'Missing fields: {missing}'}, status=400)
+
+    dto = svc.create_request(
+        organization=organization,
+        request_type=body['request_type'],
+        requester_name=body['requester_name'],
+        requester_email=body['requester_email'],
+        description=body['description'],
+        created_by=request.user,
+    )
+    return JsonResponse({'ok': True, 'dsar': _dsar_dto_to_dict(dto)}, status=201)
+
+
+@login_required
+@require_http_methods(['GET', 'PATCH'])
+def dsar_detail_api(request, dsar_id: int):
+    """GET /api/dsar/<id>/ | PATCH — update."""
+    organization = get_user_organization(request.user)
+    svc = get_dsar_service()
+
+    if request.method == 'GET':
+        dto = svc.get_request(dsar_id, organization)
+        if dto is None:
+            return JsonResponse({'error': 'Not found'}, status=404)
+        return JsonResponse({'dsar': _dsar_dto_to_dict(dto)})
+
+    # PATCH
+    import json as _json
+    try:
+        body = _json.loads(request.body or '{}')
+    except ValueError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    dto = svc.update_request(dsar_id, organization, **body)
+    if dto is None:
+        return JsonResponse({'error': 'Not found'}, status=404)
+    return JsonResponse({'ok': True, 'dsar': _dsar_dto_to_dict(dto)})
+
+
+@login_required
+@require_http_methods(['GET'])
+def dsar_evidence_api(request, dsar_id: int):
+    """GET /api/dsar/<id>/evidence/ — export evidence bundle as JSON."""
+    organization = get_user_organization(request.user)
+    svc = get_dsar_service()
+    bundle = svc.generate_evidence_bundle(dsar_id, organization)
+    if bundle is None:
+        return JsonResponse({'error': 'Not found'}, status=404)
+    return JsonResponse(bundle)
+
+
+# ---------------------------------------------------------------------------
+# Background Job Status API
+# ---------------------------------------------------------------------------
+
+def _job_to_dict(job) -> dict:
+    return {
+        'id': job.id,
+        'job_type': job.job_type,
+        'status': job.status,
+        'attempt_count': job.attempt_count,
+        'max_attempts': job.max_attempts,
+        'error_message': job.error_message or '',
+        'result': job.result or {},
+        'payload': job.payload or {},
+        'scheduled_at': job.scheduled_at.isoformat() if job.scheduled_at else None,
+        'started_at': job.started_at.isoformat() if job.started_at else None,
+        'completed_at': job.completed_at.isoformat() if job.completed_at else None,
+        'dead_lettered_at': job.dead_lettered_at.isoformat() if job.dead_lettered_at else None,
+        'created_at': job.created_at.isoformat() if job.created_at else None,
+        'organization_id': job.organization_id,
+    }
+
+
+@login_required
+@require_http_methods(['GET'])
+def job_list_api(request):
+    """GET /api/jobs/ — list recent background jobs for the user's org."""
+    organization = get_user_organization(request.user)
+    status_filter = request.GET.get('status')
+    job_type_filter = request.GET.get('job_type')
+    limit = min(int(request.GET.get('limit', 50)), 200)
+
+    qs = BackgroundJob.objects.filter(organization=organization).order_by('-created_at')
+    if status_filter:
+        qs = qs.filter(status=status_filter)
+    if job_type_filter:
+        qs = qs.filter(job_type=job_type_filter)
+
+    jobs = list(qs[:limit])
+    counts = {s: 0 for s in ('PENDING', 'RUNNING', 'COMPLETED', 'FAILED')}
+    for j in jobs:
+        if j.status in counts:
+            counts[j.status] += 1
+
+    return JsonResponse({
+        'total': len(jobs),
+        'status_counts': counts,
+        'jobs': [_job_to_dict(j) for j in jobs],
+    })
+
+
+@login_required
+@require_http_methods(['GET'])
+def job_detail_api(request, job_id: int):
+    """GET /api/jobs/<id>/ — single job detail."""
+    organization = get_user_organization(request.user)
+    try:
+        job = BackgroundJob.objects.get(id=job_id, organization=organization)
+    except BackgroundJob.DoesNotExist:
+        return JsonResponse({'error': 'Not found'}, status=404)
+    return JsonResponse({'job': _job_to_dict(job)})
+
+
+@login_required
+@require_http_methods(['POST'])
+def job_retry_api(request, job_id: int):
+    """POST /api/jobs/<id>/retry/ — re-queue a failed job."""
+    from django.utils import timezone as _tz
+    organization = get_user_organization(request.user)
+    try:
+        job = BackgroundJob.objects.get(id=job_id, organization=organization)
+    except BackgroundJob.DoesNotExist:
+        return JsonResponse({'error': 'Not found'}, status=404)
+
+    if job.status != BackgroundJob.Status.FAILED:
+        return JsonResponse({'error': f'Job is {job.status}, not FAILED'}, status=400)
+
+    job.status = BackgroundJob.Status.PENDING
+    job.attempt_count = 0
+    job.error_message = ''
+    job.dead_lettered_at = None
+    job.scheduled_at = _tz.now()
+    job.save(update_fields=[
+        'status', 'attempt_count', 'error_message', 'dead_lettered_at', 'scheduled_at',
+    ])
+    return JsonResponse({'ok': True, 'job': _job_to_dict(job)})
+
+
+# ---------------------------------------------------------------------------
+# Feature 1: Document Versioning + Immutable History
+# ---------------------------------------------------------------------------
+
+from contracts.services.contract_versions import get_version_service
+from contracts.models import ContractVersion
+
+
+@login_required
+@require_http_methods(['GET', 'POST'])
+def contract_versions_api(request, contract_id):
+    org = get_user_organization(request.user)
+    svc = get_version_service()
+    if request.method == 'POST':
+        data = json.loads(request.body or '{}')
+        try:
+            contract = Contract.objects.get(pk=contract_id, organization=org)
+        except Contract.DoesNotExist:
+            return JsonResponse({'error': 'Not found'}, status=404)
+        ver = svc.create_version(contract, changed_by=request.user, change_summary=data.get('change_summary', ''))
+        return JsonResponse({'ok': True, 'version': _version_to_dict(ver)}, status=201)
+    try:
+        versions = svc.list_versions(contract_id, org)
+    except Exception:
+        return JsonResponse({'error': 'Not found'}, status=404)
+    return JsonResponse({'versions': [_version_to_dict(v) for v in versions]})
+
+
+@login_required
+@require_http_methods(['GET'])
+def contract_version_detail_api(request, contract_id, version_number):
+    org = get_user_organization(request.user)
+    svc = get_version_service()
+    try:
+        ver = svc.get_version(contract_id, version_number, org)
+    except ContractVersion.DoesNotExist:
+        return JsonResponse({'error': 'Not found'}, status=404)
+    return JsonResponse({'version': _version_to_dict(ver)})
+
+
+@login_required
+@require_http_methods(['GET'])
+def contract_version_diff_api(request, contract_id):
+    org = get_user_organization(request.user)
+    svc = get_version_service()
+    try:
+        v1 = int(request.GET.get('v1', 0))
+        v2 = int(request.GET.get('v2', 0))
+        if not v1 or not v2:
+            return JsonResponse({'error': 'v1 and v2 query params required'}, status=400)
+        diff = svc.diff_versions(contract_id, v1, v2, org)
+    except ContractVersion.DoesNotExist:
+        return JsonResponse({'error': 'Version not found'}, status=404)
+    except Exception as exc:
+        return JsonResponse({'error': str(exc)}, status=400)
+    return JsonResponse({
+        'contract_id': diff.contract_id,
+        'v1': diff.v1,
+        'v2': diff.v2,
+        'added_lines': diff.added_lines,
+        'removed_lines': diff.removed_lines,
+        'unified_diff': diff.unified_diff,
+    })
+
+
+def _version_to_dict(ver: ContractVersion) -> dict:
+    return {
+        'id': ver.pk,
+        'version_number': ver.version_number,
+        'title_snapshot': ver.title_snapshot,
+        'status_snapshot': ver.status_snapshot,
+        'content_hash': ver.content_hash,
+        'change_summary': ver.change_summary,
+        'changed_by': ver.changed_by.username if ver.changed_by else None,
+        'created_at': ver.created_at.isoformat() if ver.created_at else None,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Feature 2: AI-Assisted Drafting + Clause Recommendations
+# ---------------------------------------------------------------------------
+
+from contracts.services.ai_drafting import get_ai_drafting_service
+from contracts.models import ClauseRecommendation
+
+
+@login_required
+@require_http_methods(['POST'])
+def ai_suggest_clauses_api(request, contract_id):
+    org = get_user_organization(request.user)
+    svc = get_ai_drafting_service()
+    try:
+        recs = svc.suggest_clauses(contract_id, org)
+    except Contract.DoesNotExist:
+        return JsonResponse({'error': 'Not found'}, status=404)
+    return JsonResponse({'created': len(recs), 'recommendations': [_rec_to_dict(r) for r in recs]}, status=201)
+
+
+@login_required
+@require_http_methods(['GET'])
+def ai_clause_recommendations_api(request, contract_id):
+    org = get_user_organization(request.user)
+    svc = get_ai_drafting_service()
+    accepted_only = request.GET.get('accepted') == 'true'
+    recs = svc.list_recommendations(contract_id, org, accepted_only=accepted_only)
+    return JsonResponse({'recommendations': [_rec_to_dict(r) for r in recs]})
+
+
+@login_required
+@require_http_methods(['POST'])
+def ai_accept_clause_api(request, contract_id, recommendation_id):
+    org = get_user_organization(request.user)
+    svc = get_ai_drafting_service()
+    try:
+        rec = svc.accept_clause(contract_id, recommendation_id, request.user, org)
+    except ClauseRecommendation.DoesNotExist:
+        return JsonResponse({'error': 'Not found'}, status=404)
+    return JsonResponse({'ok': True, 'recommendation': _rec_to_dict(rec)})
+
+
+@login_required
+@require_http_methods(['POST'])
+def ai_draft_section_api(request, contract_id):
+    org = get_user_organization(request.user)
+    svc = get_ai_drafting_service()
+    data = json.loads(request.body or '{}')
+    section = data.get('section', 'recitals')
+    try:
+        result = svc.generate_draft_section(contract_id, section, org)
+    except Contract.DoesNotExist:
+        return JsonResponse({'error': 'Not found'}, status=404)
+    return JsonResponse(result)
+
+
+def _rec_to_dict(rec: ClauseRecommendation) -> dict:
+    return {
+        'id': rec.pk,
+        'clause_type': rec.clause_type,
+        'recommendation_text': rec.recommendation_text,
+        'confidence': rec.confidence,
+        'rationale': rec.rationale,
+        'accepted': rec.accepted,
+        'accepted_by': rec.accepted_by.username if rec.accepted_by else None,
+        'accepted_at': rec.accepted_at.isoformat() if rec.accepted_at else None,
+        'created_at': rec.created_at.isoformat() if rec.created_at else None,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Feature 3: Enterprise Admin Console
+# ---------------------------------------------------------------------------
+
+from contracts.services.admin_console import get_admin_console_service
+from contracts.models import OrgPolicy
+
+
+@login_required
+@require_http_methods(['GET'])
+def admin_settings_api(request):
+    org = get_user_organization(request.user)
+    svc = get_admin_console_service()
+    settings = svc.get_settings(org)
+    return JsonResponse({
+        'org_id': settings.org_id,
+        'name': settings.name,
+        'slug': settings.slug,
+        'member_count': settings.member_count,
+        'token_count': settings.token_count,
+        'policy': settings.policy,
+    })
+
+
+@login_required
+@require_http_methods(['GET', 'PATCH'])
+def admin_policy_api(request):
+    org = get_user_organization(request.user)
+    svc = get_admin_console_service()
+    if request.method == 'PATCH':
+        data = json.loads(request.body or '{}')
+        policy = svc.update_policy(org, request.user, **data)
+        from contracts.services.admin_console import _policy_to_dict
+        return JsonResponse({'ok': True, 'policy': _policy_to_dict(policy)})
+    settings = svc.get_settings(org)
+    return JsonResponse({'policy': settings.policy})
+
+
+@login_required
+@require_http_methods(['GET'])
+def admin_integrations_api(request):
+    org = get_user_organization(request.user)
+    svc = get_admin_console_service()
+    integrations = svc.list_integrations(org)
+    return JsonResponse({
+        'integrations': [
+            {'name': i.name, 'enabled': i.enabled, 'details': i.details}
+            for i in integrations
+        ]
+    })
+
+
+@login_required
+@require_http_methods(['GET'])
+def admin_audit_api(request):
+    org = get_user_organization(request.user)
+    svc = get_admin_console_service()
+    limit = min(int(request.GET.get('limit', 50)), 200)
+    logs = svc.get_audit_summary(org, limit=limit)
+    return JsonResponse({'logs': logs})
+
+
+# ---------------------------------------------------------------------------
+# Feature 4: Permission Transparency
+# ---------------------------------------------------------------------------
+
+from contracts.services.permissions import get_permission_service
+
+
+@login_required
+@require_http_methods(['GET'])
+def permissions_matrix_api(request):
+    org = get_user_organization(request.user)
+    svc = get_permission_service()
+    matrix = svc.get_org_permission_matrix(org)
+    return JsonResponse({
+        'org_id': matrix.org_id,
+        'org_name': matrix.org_name,
+        'users': [
+            {
+                'user_id': u.user_id,
+                'username': u.username,
+                'role': u.role,
+                'capabilities': u.capabilities,
+                'is_active': u.is_active,
+            }
+            for u in matrix.users
+        ],
+    })
+
+
+@login_required
+@require_http_methods(['GET'])
+def contract_access_api(request, contract_id):
+    org = get_user_organization(request.user)
+    svc = get_permission_service()
+    entry = svc.get_record_access(contract_id, org)
+    return JsonResponse({
+        'contract_id': entry.contract_id,
+        'contract_title': entry.contract_title,
+        'users_with_access': [
+            {
+                'user_id': u.user_id,
+                'username': u.username,
+                'role': u.role,
+                'capabilities': u.capabilities,
+                'is_active': u.is_active,
+            }
+            for u in entry.users_with_access
+        ],
+    })
+
+
+@login_required
+@require_http_methods(['GET'])
+def user_permissions_api(request, user_id):
+    org = get_user_organization(request.user)
+    svc = get_permission_service()
+    access = svc.get_user_permissions(user_id, org)
+    if access is None:
+        return JsonResponse({'error': 'User not found in organisation'}, status=404)
+    return JsonResponse({
+        'user_id': access.user_id,
+        'username': access.username,
+        'role': access.role,
+        'capabilities': access.capabilities,
+        'is_active': access.is_active,
+    })
+
+
+# ---------------------------------------------------------------------------
+# Feature 5: Self-Serve Onboarding
+# ---------------------------------------------------------------------------
+
+from contracts.services.onboarding import get_onboarding_service
+
+
+@login_required
+@require_http_methods(['GET'])
+def onboarding_status_api(request):
+    org = get_user_organization(request.user)
+    svc = get_onboarding_service()
+    state = svc.get_progress(org)
+    return JsonResponse({
+        'org_id': state.org_id,
+        'current_step': state.current_step,
+        'steps_completed': state.steps_completed,
+        'progress_pct': state.progress_pct,
+        'completed': state.completed,
+        'completed_at': state.completed_at,
+        'remaining_steps': state.remaining_steps,
+        'next_step': state.next_step,
+    })
+
+
+@login_required
+@require_http_methods(['POST'])
+def onboarding_advance_api(request):
+    org = get_user_organization(request.user)
+    data = json.loads(request.body or '{}')
+    step = data.get('step')
+    if not step:
+        return JsonResponse({'error': 'step is required'}, status=400)
+    svc = get_onboarding_service()
+    try:
+        state = svc.advance_step(org, step)
+    except ValueError as e:
+        return JsonResponse({'error': str(e)}, status=400)
+    return JsonResponse({
+        'ok': True,
+        'org_id': state.org_id,
+        'current_step': state.current_step,
+        'steps_completed': state.steps_completed,
+        'progress_pct': state.progress_pct,
+        'completed': state.completed,
+        'next_step': state.next_step,
+    })
+
+
+@login_required
+@require_http_methods(['POST'])
+def onboarding_complete_api(request):
+    org = get_user_organization(request.user)
+    svc = get_onboarding_service()
+    state = svc.mark_complete(org)
+    return JsonResponse({'ok': True, 'completed': state.completed, 'progress_pct': state.progress_pct})
+
+
+# ---------------------------------------------------------------------------
+# Feature 6: Billing + Subscription Controls
+# ---------------------------------------------------------------------------
+
+from contracts.services.billing import get_billing_service
+
+
+@login_required
+@require_http_methods(['GET'])
+def billing_usage_api(request):
+    org = get_user_organization(request.user)
+    svc = get_billing_service()
+    usage = svc.get_current_usage(org)
+    return JsonResponse({
+        'org_id': usage.org_id,
+        'plan_name': usage.plan_name,
+        'period_start': usage.period_start,
+        'period_end': usage.period_end,
+        'user_count': usage.user_count,
+        'contract_count': usage.contract_count,
+        'api_call_count': usage.api_call_count,
+        'max_users': usage.max_users,
+        'max_contracts': usage.max_contracts,
+        'max_api_calls_per_month': usage.max_api_calls_per_month,
+        'overage_users': usage.overage_users,
+        'overage_contracts': usage.overage_contracts,
+        'overage_api_calls': usage.overage_api_calls,
+        'any_overage': usage.any_overage,
+    })
+
+
+@login_required
+@require_http_methods(['GET'])
+def billing_plan_api(request):
+    org = get_user_organization(request.user)
+    svc = get_billing_service()
+    plan = svc.get_plan(org)
+    return JsonResponse({
+        'name': plan.name,
+        'max_users': plan.max_users,
+        'max_contracts': plan.max_contracts,
+        'max_api_calls_per_month': plan.max_api_calls_per_month,
+        'price_monthly': str(plan.price_monthly),
+    })
+
+
+# ---------------------------------------------------------------------------
+# Feature 7: Compliance Portal
+# ---------------------------------------------------------------------------
+
+from contracts.services.compliance_portal import get_compliance_portal_service
+
+
+@login_required
+@require_http_methods(['GET'])
+def compliance_trust_report_api(request):
+    org = get_user_organization(request.user)
+    svc = get_compliance_portal_service()
+    report = svc.generate_trust_report(org)
+    return JsonResponse({
+        'org_id': report.org_id,
+        'org_name': report.org_name,
+        'generated_at': report.generated_at,
+        'policy_summary': report.policy_summary,
+        'dsar_stats': report.dsar_stats,
+        'retention_config': report.retention_config,
+        'ai_governance': report.ai_governance,
+        'audit_counts': report.audit_counts,
+        'contract_stats': report.contract_stats,
+    })
+
+
+@login_required
+@require_http_methods(['GET'])
+def compliance_export_api(request):
+    org = get_user_organization(request.user)
+    svc = get_compliance_portal_service()
+    bundle = svc.export_compliance_bundle(org)
+    return JsonResponse(bundle)
+
+
+# ---------------------------------------------------------------------------
+# Feature 8: Approval Workflow API
+# ---------------------------------------------------------------------------
+
+from contracts.services.approval_workflow import get_approval_workflow_service
+
+
+@login_required
+@require_http_methods(['POST'])
+def approval_initiate_api(request, contract_id):
+    contract = get_object_or_404(Contract, pk=contract_id)
+    svc = get_approval_workflow_service()
+    requests_created = svc.initiate_approval_workflow(contract)
+    return JsonResponse({
+        'ok': True,
+        'created': len(requests_created),
+        'requests': [_approval_dto_to_dict(r) for r in requests_created],
+    })
+
+
+@login_required
+@require_http_methods(['GET'])
+def approval_contract_list_api(request, contract_id):
+    contract = get_object_or_404(Contract, pk=contract_id)
+    svc = get_approval_workflow_service()
+    summary = svc.get_contract_approvals(contract)
+    return JsonResponse({
+        'contract_id': summary.contract_id,
+        'all_approved': summary.all_approved,
+        'any_rejected': summary.any_rejected,
+        'any_pending': summary.any_pending,
+        'requests': [_approval_dto_to_dict(r) for r in summary.requests],
+    })
+
+
+@login_required
+@require_http_methods(['POST'])
+def approval_approve_api(request, approval_id):
+    data = json.loads(request.body or '{}')
+    svc = get_approval_workflow_service()
+    try:
+        dto = svc.approve(approval_id, request.user, comments=data.get('comments', ''))
+    except ApprovalRequest.DoesNotExist:
+        return JsonResponse({'error': 'Not found'}, status=404)
+    except ValueError as e:
+        return JsonResponse({'error': str(e)}, status=400)
+    return JsonResponse({'ok': True, 'request': _approval_dto_to_dict(dto)})
+
+
+@login_required
+@require_http_methods(['POST'])
+def approval_reject_api(request, approval_id):
+    data = json.loads(request.body or '{}')
+    svc = get_approval_workflow_service()
+    try:
+        dto = svc.reject(approval_id, request.user, comments=data.get('comments', ''))
+    except ApprovalRequest.DoesNotExist:
+        return JsonResponse({'error': 'Not found'}, status=404)
+    except ValueError as e:
+        return JsonResponse({'error': str(e)}, status=400)
+    return JsonResponse({'ok': True, 'request': _approval_dto_to_dict(dto)})
+
+
+@login_required
+@require_http_methods(['POST'])
+def approval_delegate_api(request, approval_id):
+    data = json.loads(request.body or '{}')
+    to_user_id = data.get('to_user_id')
+    if not to_user_id:
+        return JsonResponse({'error': 'to_user_id is required'}, status=400)
+    User = get_user_model()
+    try:
+        to_user = User.objects.get(pk=to_user_id)
+    except User.DoesNotExist:
+        return JsonResponse({'error': 'Delegate user not found'}, status=404)
+    svc = get_approval_workflow_service()
+    try:
+        dto = svc.delegate(approval_id, to_user, request.user)
+    except ApprovalRequest.DoesNotExist:
+        return JsonResponse({'error': 'Not found'}, status=404)
+    except ValueError as e:
+        return JsonResponse({'error': str(e)}, status=400)
+    return JsonResponse({'ok': True, 'request': _approval_dto_to_dict(dto)})
+
+
+@login_required
+@require_http_methods(['GET'])
+def approval_overdue_api(request):
+    org = get_user_organization(request.user)
+    svc = get_approval_workflow_service()
+    overdue = svc.get_overdue_approvals(org)
+    return JsonResponse({'overdue': [_approval_dto_to_dict(r) for r in overdue]})
+
+
+@login_required
+@require_http_methods(['POST'])
+def approval_escalate_overdue_api(request):
+    org = get_user_organization(request.user)
+    svc = get_approval_workflow_service()
+    count = svc.escalate_overdue_for_org(org)
+    return JsonResponse({'ok': True, 'escalated': count})
+
+
+@login_required
+@require_http_methods(['GET'])
+def approval_list_api(request):
+    org = get_user_organization(request.user)
+    status_filter = request.GET.get('status')
+    svc = get_approval_workflow_service()
+    requests_list = svc.list_approvals(org, status=status_filter)
+    return JsonResponse({'requests': [_approval_dto_to_dict(r) for r in requests_list]})
+
+
+def _approval_dto_to_dict(dto) -> dict:
+    return {
+        'id': dto.id,
+        'contract_id': dto.contract_id,
+        'contract_title': dto.contract_title,
+        'approval_step': dto.approval_step,
+        'status': dto.status,
+        'assigned_to_id': dto.assigned_to_id,
+        'assigned_to_username': dto.assigned_to_username,
+        'delegated_to_id': dto.delegated_to_id,
+        'due_date': dto.due_date,
+        'sla_hours': dto.sla_hours,
+        'is_overdue': dto.is_overdue,
+        'comments': dto.comments,
+        'created_at': dto.created_at,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Clause Analytics
+# ---------------------------------------------------------------------------
+
+from contracts.services.clause_analytics import get_clause_analytics_service
+from contracts.services.mandatory_clauses import get_mandatory_enforcement_service
+from contracts.services.playbook import get_playbook_service
+
+
+@login_required
+@require_http_methods(['GET'])
+def clause_analytics_stats(request):
+    org = get_user_organization(request.user)
+    svc = get_clause_analytics_service()
+    stats = svc.get_clause_usage_stats(org)
+    return JsonResponse({'stats': stats})
+
+
+@login_required
+@require_http_methods(['GET'])
+def clause_analytics_top_clauses(request):
+    org = get_user_organization(request.user)
+    limit = int(request.GET.get('limit', 20))
+    svc = get_clause_analytics_service()
+    results = svc.get_most_used_clauses(org, limit=limit)
+    return JsonResponse({'clauses': [
+        {
+            'clause_id': r.clause_id,
+            'clause_title': r.clause_title,
+            'category': r.category,
+            'jurisdiction_scope': r.jurisdiction_scope,
+            'total_uses': r.total_uses,
+            'accepted_count': r.accepted_count,
+            'rejected_count': r.rejected_count,
+            'modified_count': r.modified_count,
+            'acceptance_rate_pct': r.acceptance_rate_pct,
+        }
+        for r in results
+    ]})
+
+
+@login_required
+@require_http_methods(['GET'])
+def clause_dependency_graph(request):
+    org = get_user_organization(request.user)
+    svc = get_clause_analytics_service()
+    nodes = svc.get_dependency_graph(org)
+    return JsonResponse({'nodes': [
+        {
+            'clause_id': n.clause_id,
+            'clause_title': n.clause_title,
+            'co_occurring_clauses': n.co_occurring_clauses,
+        }
+        for n in nodes
+    ]})
+
+
+@csrf_exempt
+@login_required
+@require_http_methods(['POST'])
+def clause_record_usage(request):
+    org = get_user_organization(request.user)
+    try:
+        body = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    clause_id = body.get('clause_id')
+    action = body.get('action', ClauseUsageEvent.Action.ADDED)
+    contract_id = body.get('contract_id')
+    note = body.get('note', '')
+    if not clause_id:
+        return JsonResponse({'error': 'clause_id required'}, status=400)
+    clause = get_object_or_404(ClauseTemplate, pk=clause_id, organization=org)
+    contract = None
+    if contract_id:
+        contract = get_object_or_404(Contract, pk=contract_id, organization=org)
+    svc = get_clause_analytics_service()
+    ev = svc.record_usage(org, clause, contract, action, performed_by=request.user, note=note)
+    return JsonResponse({'event_id': ev.pk, 'action': ev.action}, status=201)
+
+
+# ---------------------------------------------------------------------------
+# Mandatory Clause Enforcement
+# ---------------------------------------------------------------------------
+
+@login_required
+@require_http_methods(['GET'])
+def mandatory_clause_compliance_contract(request, contract_id):
+    org = get_user_organization(request.user)
+    contract = get_object_or_404(Contract, pk=contract_id, organization=org)
+    svc = get_mandatory_enforcement_service()
+    report = svc.check_contract_compliance(contract)
+    return JsonResponse({
+        'contract_id': report.contract_id,
+        'contract_title': report.contract_title,
+        'contract_type': report.contract_type,
+        'is_compliant': report.is_compliant,
+        'missing_mandatory_clauses': [
+            {
+                'clause_id': m.clause_id,
+                'clause_title': m.clause_title,
+                'jurisdiction_scope': m.jurisdiction_scope,
+                'applicable_contract_types': m.applicable_contract_types,
+                'fallback_available': m.fallback_available,
+            }
+            for m in report.missing_mandatory_clauses
+        ],
+        'present_mandatory_clauses': report.present_mandatory_clauses,
+    })
+
+
+@login_required
+@require_http_methods(['GET'])
+def mandatory_clause_org_summary(request):
+    org = get_user_organization(request.user)
+    svc = get_mandatory_enforcement_service()
+    summary = svc.get_org_compliance_summary(org)
+    return JsonResponse({
+        'org_id': summary.org_id,
+        'total_contracts_checked': summary.total_contracts_checked,
+        'compliant_contracts': summary.compliant_contracts,
+        'non_compliant_contracts': summary.non_compliant_contracts,
+        'compliance_rate_pct': summary.compliance_rate_pct,
+        'most_missing_clauses': summary.most_missing_clauses,
+    })
+
+
+# ---------------------------------------------------------------------------
+# Playbooks
+# ---------------------------------------------------------------------------
+
+@login_required
+@require_http_methods(['GET'])
+def playbook_list(request):
+    org = get_user_organization(request.user)
+    jurisdiction = request.GET.get('jurisdiction')
+    risk_level = request.GET.get('risk_level')
+    svc = get_playbook_service()
+    playbooks = svc.list_playbooks(org, jurisdiction=jurisdiction, risk_level=risk_level)
+    return JsonResponse({'playbooks': [
+        {
+            'playbook_id': p.playbook_id,
+            'name': p.name,
+            'description': p.description,
+            'jurisdiction_scope': p.jurisdiction_scope,
+            'risk_level': p.risk_level,
+            'fallback_position': p.fallback_position,
+        }
+        for p in playbooks
+    ]})
+
+
+@login_required
+@require_http_methods(['GET'])
+def playbook_detail(request, playbook_id):
+    org = get_user_organization(request.user)
+    svc = get_playbook_service()
+    try:
+        pb = svc.get_playbook(playbook_id, org)
+    except ClausePlaybook.DoesNotExist:
+        return JsonResponse({'error': 'Not found'}, status=404)
+    return JsonResponse({
+        'playbook_id': pb.playbook_id,
+        'name': pb.name,
+        'description': pb.description,
+        'jurisdiction_scope': pb.jurisdiction_scope,
+        'risk_level': pb.risk_level,
+        'fallback_position': pb.fallback_position,
+        'clauses': [
+            {
+                'clause_id': c.clause_id,
+                'clause_title': c.clause_title,
+                'standard_text': c.standard_text,
+                'variant_content': c.variant_content,
+                'fallback_content': c.fallback_content,
+                'playbook_notes': c.playbook_notes,
+                'jurisdiction_scope': c.jurisdiction_scope,
+            }
+            for c in pb.clauses
+        ],
+    })
+
+
+@login_required
+@require_http_methods(['GET'])
+def playbook_for_contract(request, contract_id):
+    org = get_user_organization(request.user)
+    contract = get_object_or_404(Contract, pk=contract_id, organization=org)
+    svc = get_playbook_service()
+    playbooks = svc.get_playbooks_for_contract(contract)
+    return JsonResponse({'playbooks': [
+        {
+            'playbook_id': p.playbook_id,
+            'name': p.name,
+            'jurisdiction_scope': p.jurisdiction_scope,
+            'risk_level': p.risk_level,
+            'fallback_position': p.fallback_position,
+        }
+        for p in playbooks
+    ]})
+
+
+# ---------------------------------------------------------------------------
+# Area 1: Search & Analytics API
+# ---------------------------------------------------------------------------
+from contracts.services.search_api import (
+    get_contract_search_service,
+    get_clause_search_service,
+)
+from contracts.models import SearchTelemetryEvent
+
+
+@login_required
+@require_http_methods(['GET'])
+def api_contract_search(request):
+    org = get_user_organization(request.user)
+    svc = get_contract_search_service()
+    q = request.GET.get('q', '')
+    filters = {
+        'status': request.GET.get('status', ''),
+        'contract_type': request.GET.get('contract_type', ''),
+        'jurisdiction': request.GET.get('jurisdiction', ''),
+        'date_from': request.GET.get('date_from', ''),
+        'date_to': request.GET.get('date_to', ''),
+    }
+    filters = {k: v for k, v in filters.items() if v}
+    try:
+        page = max(1, int(request.GET.get('page', 1)))
+    except (ValueError, TypeError):
+        page = 1
+    result = svc.search_contracts(org, q=q, filters=filters, page=page)
+    svc.record_search_event(org, q, result.total, request.user)
+    return JsonResponse({
+        'results': result.results,
+        'total': result.total,
+        'page': result.page,
+        'page_size': result.page_size,
+        'total_pages': result.total_pages,
+    })
+
+
+@login_required
+@require_http_methods(['GET'])
+def api_clause_search(request):
+    org = get_user_organization(request.user)
+    svc = get_clause_search_service()
+    q = request.GET.get('q', '')
+    filters = {
+        'category_id': request.GET.get('category_id'),
+        'jurisdiction': request.GET.get('jurisdiction', ''),
+        'is_mandatory': request.GET.get('is_mandatory'),
+    }
+    filters = {k: v for k, v in filters.items() if v is not None and v != ''}
+    if 'is_mandatory' in filters:
+        filters['is_mandatory'] = filters['is_mandatory'].lower() in ('true', '1', 'yes')
+    try:
+        page = max(1, int(request.GET.get('page', 1)))
+    except (ValueError, TypeError):
+        page = 1
+    result = svc.search_clauses(org, q=q, filters=filters, page=page)
+    svc.record_search_event(org, q, result.total, request.user)
+    return JsonResponse({
+        'results': result.results,
+        'total': result.total,
+        'page': result.page,
+        'page_size': result.page_size,
+        'total_pages': result.total_pages,
+    })
+
+
+@login_required
+@require_http_methods(['GET'])
+def api_search_facets(request):
+    org = get_user_organization(request.user)
+    svc = get_contract_search_service()
+    facets = svc.get_contract_facets(org)
+    return JsonResponse(facets)
+
+
+@login_required
+@require_http_methods(['GET'])
+def api_search_telemetry(request):
+    org = get_user_organization(request.user)
+    events = SearchTelemetryEvent.objects.filter(organization=org)[:50]
+    return JsonResponse({'events': [
+        {
+            'id': e.id,
+            'query': e.query,
+            'result_count': e.result_count,
+            'search_type': e.search_type,
+            'created_at': e.created_at.isoformat(),
+        }
+        for e in events
+    ]})
+
+
+# ---------------------------------------------------------------------------
+# Area 2: Privacy Ops
+# ---------------------------------------------------------------------------
+from contracts.services.subprocessor_alerts import get_subprocessor_alert_service
+from contracts.services.retention_jobs import get_retention_service
+
+
+@login_required
+@require_http_methods(['GET'])
+def api_subprocessor_alerts(request):
+    org = get_user_organization(request.user)
+    svc = get_subprocessor_alert_service()
+    alerts = svc.get_alerts(org)
+    return JsonResponse({'alerts': [
+        {
+            'subprocessor_id': a.subprocessor_id,
+            'subprocessor_name': a.subprocessor_name,
+            'country': a.country,
+            'alert_type': a.alert_type,
+            'severity': a.severity,
+            'description': a.description,
+        }
+        for a in alerts
+    ]})
+
+
+@login_required
+@require_http_methods(['GET'])
+def api_transfer_risk_flags(request):
+    org = get_user_organization(request.user)
+    svc = get_subprocessor_alert_service()
+    flags = svc.get_transfer_risk_flags(org)
+    return JsonResponse({'flags': [
+        {
+            'transfer_id': f.transfer_id,
+            'title': f.title,
+            'flag_type': f.flag_type,
+            'description': f.description,
+        }
+        for f in flags
+    ]})
+
+
+@login_required
+@require_http_methods(['GET'])
+def api_retention_overdue(request):
+    org = get_user_organization(request.user)
+    svc = get_retention_service()
+    items = svc.get_overdue_contracts(org)
+    return JsonResponse({'items': [
+        {
+            'contract_id': item.contract_id,
+            'contract_title': item.contract_title,
+            'created_at': item.created_at.isoformat(),
+            'days_overdue': item.days_overdue,
+            'policy_id': item.policy_id,
+            'policy_title': item.policy_title,
+            'auto_delete': item.auto_delete,
+        }
+        for item in items
+    ]})
+
+
+@login_required
+@require_http_methods(['POST'])
+def api_retention_log_action(request):
+    org = get_user_organization(request.user)
+    svc = get_retention_service()
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, Exception):
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    contract_id = data.get('contract_id')
+    action = data.get('action', '')
+    notes = data.get('notes', '')
+    if not contract_id or not action:
+        return JsonResponse({'error': 'contract_id and action required'}, status=400)
+    log = svc.log_retention_action(org, contract_id, action, request.user, notes=notes)
+    return JsonResponse({'id': log.id, 'action': log.action, 'created_at': log.created_at.isoformat()})
+
+
+@login_required
+@require_http_methods(['GET'])
+def api_retention_log(request):
+    org = get_user_organization(request.user)
+    svc = get_retention_service()
+    logs = svc.get_retention_log(org)
+    return JsonResponse({'logs': logs})
+
+
+# ---------------------------------------------------------------------------
+# Area 3: Integrations
+# ---------------------------------------------------------------------------
+from contracts.services.webhook_management import get_webhook_management_service
+from contracts.services.inbound_import import get_inbound_import_service
+from contracts.services.crm_sync import get_crm_sync_service
+
+
+@login_required
+@require_http_methods(['GET'])
+def api_webhook_failed(request):
+    org = get_user_organization(request.user)
+    svc = get_webhook_management_service()
+    return JsonResponse({'deliveries': svc.get_failed_deliveries(org)})
+
+
+@login_required
+@require_http_methods(['POST'])
+def api_webhook_retry(request, delivery_id):
+    org = get_user_organization(request.user)
+    svc = get_webhook_management_service()
+    try:
+        result = svc.retry_delivery(delivery_id, org)
+        return JsonResponse(result)
+    except ValueError as e:
+        return JsonResponse({'error': str(e)}, status=404)
+
+
+@login_required
+@require_http_methods(['GET'])
+def api_webhook_dlq(request):
+    org = get_user_organization(request.user)
+    svc = get_webhook_management_service()
+    return JsonResponse({'deliveries': svc.get_dead_letter_queue(org)})
+
+
+@login_required
+@require_http_methods(['GET'])
+def api_webhook_diagnostics(request):
+    org = get_user_organization(request.user)
+    svc = get_webhook_management_service()
+    return JsonResponse(svc.get_diagnostics(org))
+
+
+@login_required
+@require_http_methods(['POST'])
+def api_webhook_requeue(request, delivery_id):
+    org = get_user_organization(request.user)
+    svc = get_webhook_management_service()
+    try:
+        result = svc.requeue_dead_letter(delivery_id, org)
+        return JsonResponse(result)
+    except ValueError as e:
+        return JsonResponse({'error': str(e)}, status=404)
+
+
+@login_required
+@require_http_methods(['POST'])
+def api_import_contracts_csv(request):
+    org = get_user_organization(request.user)
+    svc = get_inbound_import_service()
+    csv_text = request.body.decode('utf-8', errors='replace')
+    dry_run = request.GET.get('dry_run', '').lower() in ('true', '1', 'yes')
+    result = svc.import_contracts_from_csv(org, csv_text, request.user, dry_run=dry_run)
+    return JsonResponse({
+        'imported_count': result.imported_count,
+        'skipped_count': result.skipped_count,
+        'errors': result.errors,
+        'dry_run': result.dry_run,
+    })
+
+
+@login_required
+@require_http_methods(['POST'])
+def api_import_contracts_json(request):
+    org = get_user_organization(request.user)
+    svc = get_inbound_import_service()
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, Exception):
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    if not isinstance(data, list):
+        return JsonResponse({'error': 'Expected a JSON array'}, status=400)
+    dry_run = request.GET.get('dry_run', '').lower() in ('true', '1', 'yes')
+    result = svc.import_contracts_from_json(org, data, request.user, dry_run=dry_run)
+    return JsonResponse({
+        'imported_count': result.imported_count,
+        'skipped_count': result.skipped_count,
+        'errors': result.errors,
+        'dry_run': result.dry_run,
+    })
+
+
+@login_required
+@require_http_methods(['GET'])
+def api_crm_sync_status(request):
+    org = get_user_organization(request.user)
+    svc = get_crm_sync_service()
+    return JsonResponse(svc.get_sync_status(org))
+
+
+@login_required
+@require_http_methods(['GET'])
+def api_crm_list_integrations(request):
+    org = get_user_organization(request.user)
+    svc = get_crm_sync_service()
+    return JsonResponse({'integrations': svc.list_available_integrations(org)})
+
+
+@login_required
+@require_http_methods(['POST'])
+def api_crm_trigger_sync(request):
+    org = get_user_organization(request.user)
+    svc = get_crm_sync_service()
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, Exception):
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    provider = data.get('provider', 'salesforce')
+    try:
+        result = svc.trigger_sync(org, provider, request.user)
+        return JsonResponse(result)
+    except ValueError as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+# ---------------------------------------------------------------------------
+# Area 4: Ops Hardening
+# ---------------------------------------------------------------------------
+from contracts.services.postgres_health import get_postgres_health_service
+from contracts.services.cve_gate import get_cve_gate_service
+from contracts.services.restore_drill import get_restore_drill_service
+from contracts.models import RestoreDrill as _RestoreDrillModel
+
+
+@login_required
+@require_http_methods(['GET'])
+def api_db_health(request):
+    svc = get_postgres_health_service()
+    return JsonResponse(svc.check_connection())
+
+
+@login_required
+@require_http_methods(['GET'])
+def api_migration_status(request):
+    svc = get_postgres_health_service()
+    return JsonResponse(svc.get_migration_status())
+
+
+@login_required
+@require_http_methods(['GET'])
+def api_cve_gate_status(request):
+    svc = get_cve_gate_service()
+    return JsonResponse(svc.get_gate_status())
+
+
+@login_required
+@require_http_methods(['GET'])
+def api_cve_scan_requirements(request):
+    svc = get_cve_gate_service()
+    result = svc.scan_requirements()
+    svc.record_scan_result(
+        packages_checked=len(result.packages),
+        issues_found=0,
+        performed_by=request.user,
+    )
+    return JsonResponse({
+        'packages': result.packages,
+        'scan_timestamp': result.scan_timestamp,
+        'note': result.note,
+    })
+
+
+@login_required
+@require_http_methods(['GET'])
+def api_restore_drill_list(request):
+    org = get_user_organization(request.user)
+    svc = get_restore_drill_service()
+    return JsonResponse({'drills': svc.list_drills(org)})
+
+
+@login_required
+@require_http_methods(['POST'])
+def api_restore_drill_schedule(request):
+    org = get_user_organization(request.user)
+    svc = get_restore_drill_service()
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, Exception):
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    try:
+        from datetime import date
+        drill_date = date.fromisoformat(data.get('drill_date', ''))
+    except (ValueError, TypeError):
+        return JsonResponse({'error': 'drill_date must be YYYY-MM-DD'}, status=400)
+    drill = svc.schedule_drill(
+        org=org,
+        drill_date=drill_date,
+        rto_hours=float(data.get('rto_hours', 4.0)),
+        rpo_hours=float(data.get('rpo_hours', 1.0)),
+        performed_by=request.user,
+    )
+    return JsonResponse({'id': drill.id, 'drill_date': drill.drill_date.isoformat()}, status=201)
+
+
+@login_required
+@require_http_methods(['POST'])
+def api_restore_drill_record(request, drill_id):
+    svc = get_restore_drill_service()
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, Exception):
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    try:
+        drill = svc.record_result(
+            drill_id=drill_id,
+            actual_rto_minutes=int(data.get('actual_rto_minutes', 0)),
+            actual_rpo_minutes=int(data.get('actual_rpo_minutes', 0)),
+            passed=bool(data.get('passed', False)),
+            notes=data.get('notes', ''),
+            performed_by=request.user,
+        )
+        return JsonResponse({'id': drill.id, 'passed': drill.passed})
+    except ValueError as e:
+        return JsonResponse({'error': str(e)}, status=404)
+
+
+@login_required
+@require_http_methods(['GET'])
+def api_restore_drill_summary(request):
+    org = get_user_organization(request.user)
+    svc = get_restore_drill_service()
+    return JsonResponse(svc.get_drill_summary(org))

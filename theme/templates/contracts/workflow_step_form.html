@@ -1,11 +1,39 @@
 {% extends 'base.html' %}
 {% block title %}Update Workflow Step{% endblock %}
 {% block content %}
-<div class="page-wrap">
-    <div class="page-header">
-        <div>
-            <h1 class="page-title">Update Workflow Step</h1>
-            <p class="page-subtitle c-muted">{{ object.workflow.title }}</p>
+<div class="page-wrap reveal-stagger">
+    <div class="workspace-main hero-shell mb-6">
+        <div class="workspace-main-head">
+            <div>
+                <h1 class="workspace-title">Update Workflow Step</h1>
+                <p class="workspace-subtitle c-muted">{{ object.workflow.title }}</p>
+                <div class="workspace-kicker-row">
+                    <span class="workspace-kicker"><strong>{{ object.get_status_display }}</strong> current step status</span>
+                    <span class="workspace-kicker"><strong>{{ object.order }}</strong> workflow order</span>
+                </div>
+            </div>
+            <div class="workspace-tools">
+                <a href="{% url 'contracts:workflow_detail' object.workflow.pk %}" class="inline-flex items-center px-3 py-2 text-sm rounded-lg border btn-ghost">Back to Workflow</a>
+            </div>
+        </div>
+        <div class="workspace-toolbar">
+            <div class="summary-grid w-full">
+                <div class="summary-card">
+                    <div class="summary-label">Step</div>
+                    <div class="summary-value">{{ object.name }}</div>
+                    <div class="summary-meta">Workflow step being edited</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Assigned to</div>
+                    <div class="summary-value">{% if object.assigned_to %}{{ object.assigned_to.get_full_name|default:object.assigned_to.username }}{% else %}Unassigned{% endif %}</div>
+                    <div class="summary-meta">Current ownership</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Due date</div>
+                    <div class="summary-value">{% if object.due_date %}{{ object.due_date|date:"M d, Y" }}{% else %}Not set{% endif %}</div>
+                    <div class="summary-meta">Schedule control</div>
+                </div>
+            </div>
         </div>
     </div>
     <div class="panel">

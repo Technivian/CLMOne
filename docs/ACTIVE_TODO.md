@@ -1,16 +1,13 @@
 # Active Todo
 
-Last updated: 2026-04-18
+Last updated: 2026-06-01
 
 Canonical remaining worklist:
 - [`docs/COMPLETE_REMAINING_WORKLIST.md`](/Users/haroonwahed/Documents/Projects/CMS-Aegis/docs/COMPLETE_REMAINING_WORKLIST.md)
 - [`docs/SPRINT3_BOARD_2026-04-18.md`](/Users/haroonwahed/Documents/Projects/CMS-Aegis/docs/SPRINT3_BOARD_2026-04-18.md)
+- [`docs/READINESS_SCOREBOARD_2026-05-31.md`](/Users/haroonwahed/Documents/Projects/CMS-Aegis/docs/READINESS_SCOREBOARD_2026-05-31.md)
 
 ## In Progress
-
-- `SPR3-001` Release candidate gate execution (staging to production)
-- `SPR3-002` Salesforce + webhook production e2e validation
-- `SPR3-003` Postgres cutover evidence automation adoption
 
 ## Completed
 
@@ -31,6 +28,13 @@ Canonical remaining worklist:
 - Clause policy edge cases and fallback playbook reconciliation
 - `TKT-003` Manual smoke checklist for two-org validation
 - `TKT-004` Centralize scoped form/query helpers
+- Document versioning + immutable history (`ContractVersion`, `ContractVersionService`, diff API)
+- AI clause drafting with citations (`ClauseRecommendation`, `AIClauseDraftingService`)
+- Enterprise admin console (`OrgPolicy`, `AdminConsoleService`, settings/policy/integrations/audit API)
+- Permission transparency (`PermissionTransparencyService`, matrix + access APIs)
+- Self-serve onboarding (`OnboardingProgress`, `OnboardingService`, advance/complete API)
+- Billing + subscription controls (`BillingPlan`, `UsageRecord`, `BillingService`, usage/plan API)
+- Compliance portal (`CompliancePortalService`, trust-report + export-bundle API)
 - `TKT-005` Structured request logging and correlation IDs
 - `TKT-006` Overdue work and deadline health reporting
 - `TKT-007` Formalize production env contract
@@ -50,10 +54,24 @@ Canonical remaining worklist:
 - E-sign provider webhook callback endpoint baseline (`/contracts/api/integrations/esign/webhook/`)
 - Retention job runner with immutable retention audit traces (`run_retention_jobs`)
 - Retention scheduled execution workflow + evidence artifact export (`retention-jobs-scheduler.yml`)
+- Contract lifecycle scheduled execution workflow + evidence artifact export (`contract-lifecycle-jobs-scheduler.yml`)
 - Tamper-evident compliance evidence bundle export/verify commands
+- AI governance final archive generation and SHA256 verification
+- Tenant-scoped positive-path evidence run with non-zero retention + lifecycle outcomes (`run 26708926283`)
 - Executive analytics and saved dashboard preset APIs
 - Reports dashboard executive analytics panel integration
 - Multi-org executive analytics evidence snapshot command
+- `SPR3-001` Release gate evidence run (2026-06-01): release-gate-report GO, sprint3-integration-report GO, esign-integration-report GO, release-bundle GO — artifacts in `evidence/spr3-cutover-20260601/`
+- `SPR3-002` Salesforce + webhook E2E evidence run (2026-06-01): Salesforce sync SUCCESS created_count=1, webhook SENT confirmed — `evidence/spr3-cutover-20260601/sprint3-integration-report.json` status=GO
+- `SPR3-003` Postgres cutover simulation evidence run (2026-06-01): `--simulation` flag + 5 passing tests; rehearsal artifact in `evidence/spr3-003-postgres-cutover/postgres-cutover-simulation.json` (simulation=true, migrations clean)
+- `SPR3-005` e-sign rehearsal evidence run (2026-06-01): full PENDING→SIGNED lifecycle + dedup; report in `evidence/spr3-005-esign-rehearsal/esign-integration-report.json` status=GO
+- AI clause-span citations + confidence thresholds + PDF/DOCX upload pipeline (`AIExtractionSpan` model, `/api/documents/upload/`, `/api/contracts/<id>/ai-extract/`, commit `ee655e1`)
+- Obligation tracker: RENEWAL/PAYMENT/NDA_EXPIRY/SLA types, renewal playbook, reminder cadence, obligation CRUD API, management commands (`generate_renewal_tasks`, `run_obligation_reminders`, commit `31378da`)
+- DSAR SLA countdown + evidence bundle export: `DSARService`, `export_dsar_evidence` command, DSAR CRUD + evidence API, commit `75166a5`
+- Async job system: `run_worker` daemon, `review_dead_letter_jobs`, `queue_background_jobs` extended, job status API, GitHub Actions cron scheduler (every 15 min), commit `a945238`
+- Document versioning + immutable history: `ContractVersion` model, `ContractVersionService` (diff via difflib), versions + diff API, commit `518194b`
+- AI-assisted clause drafting: `ClauseRecommendation` model, `AIClauseDraftingService` (template library NDA/MSA/EMPLOYMENT/VENDOR), suggest/accept/draft-section API, commit `518194b`
+- Enterprise admin console: `OrgPolicy` model, `AdminConsoleService` (settings, policy, integrations, audit), admin API, commit `518194b`
 - Postgres cutover verification command + scheduled CI workflow
 - Optional observability HTTP sink transport
 - NetSuite ingestion adapter/command baseline
@@ -67,13 +85,10 @@ Canonical remaining worklist:
 
 ## Next Up
 
-1. Complete Sprint 3 release gate checklist for staging/prod cutover (`SPR3-001`)
-2. Execute live Salesforce + webhook E2E evidence run in staging/prod-like env (`SPR3-002`)
-3. Run target-environment Postgres cutover evidence workflow with `cutover_ready=true` (`SPR3-003`)
-4. Run NetSuite and e-sign live provider evidence in staging/prod-like env (`SPR3-004`, `SPR3-005`)
-5. Attach first scheduled retention evidence artifact from target environment (`SPR3-006`)
-6. Attach staging-produced executive analytics evidence artifact (`SPR3-008`)
-7. Expand AI extraction provenance to include clause text-span citations and confidence calibration thresholds
+1. **Permission transparency UI** — record-level access visibility for org members
+2. **Self-serve onboarding + guided setup** — org creation wizard, first-contract flow
+3. **Billing and subscription controls** — usage tracking, plan enforcement
+4. **Customer-facing trust/compliance portal** — exportable compliance artifacts
 
 ## Source Of Truth
 

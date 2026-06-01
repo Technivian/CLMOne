@@ -944,6 +944,34 @@ class DocumentOCRReview(models.Model):
         self.reviewed_at = timezone.now()
 
 
+class AIExtractionSpan(models.Model):
+    """A text-span citation produced by the AI extraction rules engine."""
+
+    document = models.ForeignKey(
+        Document, on_delete=models.CASCADE, related_name='ai_extraction_spans'
+    )
+    organization = models.ForeignKey(
+        Organization, on_delete=models.CASCADE, related_name='ai_extraction_spans'
+    )
+    label = models.CharField(max_length=100)
+    span_text = models.TextField()
+    start_char = models.PositiveIntegerField()
+    end_char = models.PositiveIntegerField()
+    confidence = models.DecimalField(max_digits=5, decimal_places=4)
+    extraction_model = models.CharField(max_length=100, default='rules-engine-v1')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['start_char']
+        indexes = [
+            models.Index(fields=['document', 'label']),
+            models.Index(fields=['organization', 'label']),
+        ]
+
+    def __str__(self):
+        return f'{self.label} span [{self.start_char}:{self.end_char}] on {self.document_id}'
+
+
 class TimeEntry(models.Model):
     class ActivityType(models.TextChoices):
         RESEARCH = 'RESEARCH', 'Legal Research'
@@ -1131,6 +1159,10 @@ class Deadline(models.Model):
         REGULATORY = 'REGULATORY', 'Regulatory Deadline'
         INTERNAL = 'INTERNAL', 'Internal Deadline'
         CLIENT = 'CLIENT', 'Client Deadline'
+        RENEWAL = 'RENEWAL', 'Renewal / Termination'
+        PAYMENT = 'PAYMENT', 'Payment Obligation'
+        NDA_EXPIRY = 'NDA_EXPIRY', 'NDA Expiry'
+        SLA = 'SLA', 'SLA Obligation'
         OTHER = 'OTHER', 'Other'
 
     title = models.CharField(max_length=300)
@@ -2507,6 +2539,274 @@ class BackgroundJob(models.Model):
 
     def __str__(self):
         return f'{self.job_type} ({self.get_status_display()})'
+
+
+class ContractVersion(models.Model):
+    """Immutable snapshot of a contract at a point in time."""
+
+    contract = models.ForeignKey(Contract, on_delete=models.CASCADE, related_name='versions')
+    version_number = models.PositiveIntegerField()
+    title_snapshot = models.CharField(max_length=200)
+    status_snapshot = models.CharField(max_length=20)
+    content_snapshot = models.TextField(blank=True)
+    content_hash = models.CharField(max_length=64, blank=True, help_text='SHA-256 of content_snapshot')
+    change_summary = models.CharField(max_length=500, blank=True)
+    changed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='contract_versions')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('contract', 'version_number')
+        ordering = ['-version_number']
+        indexes = [
+            models.Index(fields=['contract', '-version_number'], name='cv_contract_ver_ix'),
+        ]
+
+    def __str__(self):
+        return f'{self.contract.title} v{self.version_number}'
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            raise ValueError('ContractVersion records are immutable and cannot be updated.')
+        import hashlib
+        if self.content_snapshot and not self.content_hash:
+            self.content_hash = hashlib.sha256(self.content_snapshot.encode()).hexdigest()
+        super().save(*args, **kwargs)
+
+
+class ClauseRecommendation(models.Model):
+    """AI-suggested clause for a contract, optionally accepted by a user."""
+
+    class ClauseType(models.TextChoices):
+        LIMITATION_OF_LIABILITY = 'LIMITATION_OF_LIABILITY', 'Limitation of Liability'
+        INDEMNIFICATION = 'INDEMNIFICATION', 'Indemnification'
+        CONFIDENTIALITY = 'CONFIDENTIALITY', 'Confidentiality'
+        TERMINATION = 'TERMINATION', 'Termination'
+        GOVERNING_LAW = 'GOVERNING_LAW', 'Governing Law'
+        DISPUTE_RESOLUTION = 'DISPUTE_RESOLUTION', 'Dispute Resolution'
+        DATA_PROTECTION = 'DATA_PROTECTION', 'Data Protection'
+        FORCE_MAJEURE = 'FORCE_MAJEURE', 'Force Majeure'
+        PAYMENT_TERMS = 'PAYMENT_TERMS', 'Payment Terms'
+        IP_OWNERSHIP = 'IP_OWNERSHIP', 'IP Ownership'
+        WARRANTY = 'WARRANTY', 'Warranty'
+        OTHER = 'OTHER', 'Other'
+
+    contract = models.ForeignKey(Contract, on_delete=models.CASCADE, related_name='clause_recommendations')
+    clause_type = models.CharField(max_length=40, choices=ClauseType.choices)
+    recommendation_text = models.TextField()
+    confidence = models.FloatField(default=0.8, help_text='0.0–1.0 confidence score')
+    rationale = models.TextField(blank=True, help_text='Why this clause is recommended')
+    accepted = models.BooleanField(default=False)
+    accepted_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='accepted_clause_recommendations')
+    accepted_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-confidence', 'clause_type']
+        indexes = [
+            models.Index(fields=['contract', 'accepted'], name='cr_contract_accepted_ix'),
+        ]
+
+    def __str__(self):
+        return f'{self.get_clause_type_display()} for {self.contract.title}'
+
+
+class OrgPolicy(models.Model):
+    """Configurable policy controls for an organization."""
+
+    organization = models.OneToOneField(Organization, on_delete=models.CASCADE, related_name='policy')
+    mfa_required = models.BooleanField(default=False)
+    require_approval_above_value = models.DecimalField(
+        max_digits=14, decimal_places=2, null=True, blank=True,
+        help_text='Contracts above this value require approval',
+    )
+    data_transfer_review_required = models.BooleanField(default=True)
+    retention_period_days = models.PositiveIntegerField(
+        default=2555, help_text='Document retention period (default 7 years)',
+    )
+    max_api_tokens_per_user = models.PositiveIntegerField(default=5)
+    allow_public_sharing = models.BooleanField(default=False)
+    ai_features_enabled = models.BooleanField(default=True)
+    updated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='updated_org_policies')
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Organisation Policy'
+        verbose_name_plural = 'Organisation Policies'
+
+    def __str__(self):
+        return f'Policy for {self.organization}'
+
+
+class ClauseUsageEvent(models.Model):
+    """Tracks each time a clause template is used in a contract."""
+
+    class Action(models.TextChoices):
+        ADDED = 'ADDED', 'Added to contract'
+        REMOVED = 'REMOVED', 'Removed from contract'
+        ACCEPTED = 'ACCEPTED', 'Accepted during negotiation'
+        REJECTED = 'REJECTED', 'Rejected during negotiation'
+        MODIFIED = 'MODIFIED', 'Modified before use'
+
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='clause_usage_events')
+    clause = models.ForeignKey('ClauseTemplate', on_delete=models.CASCADE, related_name='usage_events')
+    contract = models.ForeignKey(Contract, on_delete=models.SET_NULL, null=True, blank=True, related_name='clause_usage_events')
+    action = models.CharField(max_length=10, choices=Action.choices, default=Action.ADDED)
+    performed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='clause_usage_events')
+    note = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.clause.title} {self.action} on {self.contract_id}'
+
+
+class OnboardingProgress(models.Model):
+    """Tracks guided-setup completion state for an organisation."""
+
+    STEPS = [
+        'org_profile',
+        'invite_members',
+        'first_contract',
+        'configure_policy',
+        'connect_integration',
+    ]
+
+    organization = models.OneToOneField(Organization, on_delete=models.CASCADE, related_name='onboarding')
+    steps_completed = models.JSONField(default=list, blank=True)
+    current_step = models.CharField(max_length=50, default='org_profile')
+    completed = models.BooleanField(default=False)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f'Onboarding for {self.organization} ({"done" if self.completed else self.current_step})'
+
+    @property
+    def progress_pct(self) -> int:
+        total = len(self.STEPS)
+        done = len([s for s in self.steps_completed if s in self.STEPS])
+        return int(done / total * 100) if total else 0
+
+
+class BillingPlan(models.Model):
+    """Available subscription tiers."""
+
+    class Tier(models.TextChoices):
+        FREE = 'FREE', 'Free'
+        STARTER = 'STARTER', 'Starter'
+        PROFESSIONAL = 'PROFESSIONAL', 'Professional'
+        ENTERPRISE = 'ENTERPRISE', 'Enterprise'
+
+    name = models.CharField(max_length=50, choices=Tier.choices, unique=True)
+    max_users = models.PositiveIntegerField(default=5)
+    max_contracts = models.PositiveIntegerField(default=50)
+    max_api_calls_per_month = models.PositiveIntegerField(default=1000)
+    price_monthly = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.name
+
+
+class OrgBillingSubscription(models.Model):
+    """Links an organisation to its current plan."""
+
+    organization = models.OneToOneField(Organization, on_delete=models.CASCADE, related_name='billing_subscription')
+    plan = models.ForeignKey(BillingPlan, on_delete=models.PROTECT, related_name='subscriptions')
+    subscribed_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f'{self.organization.name} → {self.plan.name}'
+
+
+class UsageRecord(models.Model):
+    """Monthly usage snapshot for an organisation."""
+
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='usage_records')
+    period_start = models.DateField()
+    period_end = models.DateField()
+    user_count = models.PositiveIntegerField(default=0)
+    contract_count = models.PositiveIntegerField(default=0)
+    api_call_count = models.PositiveIntegerField(default=0)
+    overage_users = models.BooleanField(default=False)
+    overage_contracts = models.BooleanField(default=False)
+    overage_api_calls = models.BooleanField(default=False)
+    recorded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-period_start']
+        unique_together = ('organization', 'period_start')
+
+    def __str__(self):
+        return f'{self.organization.name} usage {self.period_start}'
+
+
+class SearchTelemetryEvent(models.Model):
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='search_events')
+    query = models.CharField(max_length=500)
+    result_count = models.PositiveIntegerField(default=0)
+    performed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='search_events')
+    search_type = models.CharField(max_length=20, default='contract')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'Search "{self.query}" by {self.performed_by} ({self.search_type})'
+
+
+class RetentionActionLog(models.Model):
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='retention_action_logs')
+    contract = models.ForeignKey('Contract', on_delete=models.SET_NULL, null=True, blank=True, related_name='retention_logs')
+    action = models.CharField(max_length=50)
+    performed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='retention_actions')
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.action} on contract {self.contract_id} by {self.performed_by}'
+
+
+class CVEScanRecord(models.Model):
+    packages_checked = models.PositiveIntegerField(default=0)
+    issues_found = models.PositiveIntegerField(default=0)
+    performed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='cve_scans')
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'CVE scan {self.created_at} ({self.packages_checked} packages)'
+
+
+class RestoreDrill(models.Model):
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='restore_drills')
+    drill_date = models.DateField()
+    rto_target_hours = models.FloatField(default=4.0)
+    rpo_target_hours = models.FloatField(default=1.0)
+    actual_rto_minutes = models.PositiveIntegerField(null=True, blank=True)
+    actual_rpo_minutes = models.PositiveIntegerField(null=True, blank=True)
+    passed = models.BooleanField(null=True, blank=True)
+    notes = models.TextField(blank=True)
+    performed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='restore_drills')
+    completed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-drill_date']
+
+    def __str__(self):
+        return f'Restore drill {self.drill_date} ({self.organization})'
 
 
 # Alias-first structural migration layer.

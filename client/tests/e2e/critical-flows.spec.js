@@ -21,6 +21,26 @@ async function submitOwningForm(page, fieldSelector) {
   });
 }
 
+async function selectOptionContainingText(page, selector, textFragment) {
+  const value = await page.$eval(
+    selector,
+    (el, fragment) => {
+      const options = Array.from(el.options || []);
+      const match = options.find((opt) =>
+        (opt.textContent || '').toLowerCase().includes(String(fragment).toLowerCase())
+      );
+      return match ? match.value : null;
+    },
+    textFragment
+  );
+
+  if (!value) {
+    throw new Error(`No option containing '${textFragment}' for selector ${selector}`);
+  }
+
+  await page.selectOption(selector, value);
+}
+
 test('critical contract create and edit flow works', async ({ page }) => {
   await login(page);
 
@@ -48,6 +68,9 @@ test('critical contract create and edit flow works', async ({ page }) => {
 
   await page.getByRole('link', { name: title }).click();
   await expect(page).toHaveURL(/\/contracts\/\d+\/?$/);
+  await expect(page.locator('.workspace-main.hero-shell').first()).toBeVisible();
+  await expect(page.locator('.summary-grid').first()).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Lifecycle Guidance/i })).toBeVisible();
   const detailUrl = page.url().replace(/\/$/, '');
   await page.goto(`${detailUrl}/edit/`);
   await expect(page).toHaveURL(/\/contracts\/\d+\/edit\/?$/);
@@ -82,4 +105,76 @@ test('critical invoice and time-entry submissions accept valid precision', async
   await page.locator('form').filter({ has: page.locator('input[name="rate"]') }).evaluate((form) => form.submit());
 
   await expect(page).toHaveURL(/\/contracts\/time\/?$/);
+});
+
+test('critical redesigned workflow path works end-to-end', async ({ page }) => {
+  test.slow();
+  await login(page);
+
+  const suffix = Date.now().toString().slice(-6);
+  const contractTitle = `E2E Workflow Contract ${suffix}`;
+  const workflowTitle = `E2E Workflow ${suffix}`;
+  const templateName = `E2E Template ${suffix}`;
+  const templateStepName = `Template Step ${suffix}`;
+
+  await page.goto('/contracts/new/');
+  await page.fill('input[name="title"]', contractTitle);
+  await page.selectOption('select[name="contract_type"]', 'MSA');
+  await page.fill('textarea[name="content"]', 'Workflow path contract body');
+  await page.selectOption('select[name="status"]', 'DRAFT');
+  await page.fill('input[name="counterparty"]', 'Workflow Counterparty');
+  await page.fill('input[name="value"]', '5000');
+  await page.selectOption('select[name="currency"]', 'USD');
+  await page.fill('input[name="governing_law"]', 'State of Delaware');
+  await page.fill('input[name="jurisdiction"]', 'New York');
+  await page.selectOption('select[name="risk_level"]', 'LOW');
+  await page.fill('input[name="start_date"]', '2026-04-12');
+  await page.fill('input[name="end_date"]', '2026-12-31');
+  await page.selectOption('select[name="lifecycle_stage"]', 'DRAFTING');
+  await submitOwningForm(page, 'input[name="title"]');
+
+  await expect(page).toHaveURL(/\/contracts\/?(\?.*)?$/);
+  await expect(page.getByRole('link', { name: contractTitle })).toBeVisible();
+
+  await page.goto('/contracts/workflows/');
+  await expect(page.locator('.workspace-main.hero-shell').first()).toBeVisible();
+  await expect(page.getByText(/Workflow pipeline/).first()).toBeVisible();
+  const workflowCreateResponse = await page.goto('/contracts/workflows/create/');
+  expect(workflowCreateResponse).not.toBeNull();
+  expect(workflowCreateResponse.status()).toBeLessThan(400);
+
+  await expect(page.locator('.workspace-main.hero-shell').first()).toBeVisible();
+  await page.fill('input[name="title"]', workflowTitle);
+  await selectOptionContainingText(page, 'select[name="contract"]', contractTitle);
+  await submitOwningForm(page, 'input[name="title"]');
+
+  await expect(page).toHaveURL(/\/contracts\/workflows\/\d+\/?$/);
+  await expect(page.locator('.workspace-main.hero-shell').first()).toBeVisible();
+  await expect(page.getByText(/Workflow Steps & Ownership/).first()).toBeVisible();
+
+  await page.goto('/contracts/workflows/templates/');
+  await expect(page.locator('.workspace-main.hero-shell').first()).toBeVisible();
+  await expect(page.getByText(/Workflow Templates/).first()).toBeVisible();
+  const templateCreateResponse = await page.goto('/contracts/workflows/templates/create/');
+  expect(templateCreateResponse).not.toBeNull();
+  expect(templateCreateResponse.status()).toBeLessThan(400);
+
+  await expect(page).toHaveURL(/\/contracts\/workflows\/templates\/create\/?$/);
+  await expect(page.getByText(/Create Workflow Template/).first()).toBeVisible();
+  await page.fill('input[name="name"]', templateName);
+  await page.fill('textarea[name="description"]', 'Automated template for redesigned path test');
+  await page.selectOption('select[name="category"]', { index: 1 });
+  await submitOwningForm(page, 'input[name="name"]');
+
+  await expect(page).toHaveURL(/\/contracts\/workflows\/templates\/\d+\/?$/);
+  await expect(page.locator('.workspace-main.hero-shell').first()).toBeVisible();
+  await expect(page.getByText(/Version History/).first()).toBeVisible();
+
+  await page.fill('input[name="name"]', templateStepName);
+  await page.fill('textarea[name="description"]', 'Step created by e2e redesigned workflow path test');
+  await page.selectOption('select[name="step_kind"]', { index: 1 });
+  await page.fill('input[name="order"]', '1');
+  await submitOwningForm(page, 'input[name="name"]');
+
+  await expect(page.getByText(templateStepName).first()).toBeVisible();
 });

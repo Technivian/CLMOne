@@ -12,10 +12,24 @@ from django.utils import timezone
 class Command(BaseCommand):
     help = 'Verify production Postgres cutover readiness and emit machine-readable evidence.'
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--simulation',
+            action='store_true',
+            default=False,
+            help=(
+                'Run in local-rehearsal simulation mode. '
+                'Produces a complete evidence payload for non-Postgres environments and exits 0. '
+                'simulation=true is set in the output; cutover_ready will be false unless on Postgres. '
+                'Not a production signoff — use only for local rehearsal and CI dry-runs.'
+            ),
+        )
+
     def handle(self, *args, **options):
+        simulation = bool(options.get('simulation'))
         engine = connection.settings_dict.get('ENGINE', '')
         env = os.getenv('DJANGO_ENV', '').strip().lower()
-        if env == 'production' and engine != 'django.db.backends.postgresql':
+        if not simulation and env == 'production' and engine != 'django.db.backends.postgresql':
             raise CommandError('Production cutover check failed: default DB is not PostgreSQL.')
 
         started = time.perf_counter()
@@ -44,6 +58,7 @@ class Command(BaseCommand):
         payload = {
             'captured_at': timezone.now().isoformat(),
             'environment': env or 'unknown',
+            'simulation': simulation,
             'database': {
                 'engine': engine,
                 'name': database_name,
@@ -57,7 +72,13 @@ class Command(BaseCommand):
             },
             'cutover_ready': bool(engine == 'django.db.backends.postgresql' and len(unapplied) == 0),
         }
+        if simulation and not payload['cutover_ready']:
+            payload['simulation_note'] = (
+                'Local rehearsal mode: cutover_ready=false because the database is not PostgreSQL. '
+                'This artifact is a structural rehearsal only and is NOT a production signoff. '
+                'Run the postgres-cutover-check workflow against a PostgreSQL target to obtain cutover_ready=true.'
+            )
 
         self.stdout.write(json.dumps(payload, indent=2, sort_keys=True))
-        if not payload['cutover_ready']:
+        if not payload['cutover_ready'] and not simulation:
             raise CommandError('Postgres cutover is not ready. See output for details.')

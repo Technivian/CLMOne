@@ -164,3 +164,56 @@ class ReleaseGateReportTests(TestCase):
 
         self.assertEqual(payload['go_no_go'], 'NO-GO')
         self.assertEqual(payload['gates']['security']['pip_audit']['status'], 'fail')
+
+    def test_generate_release_gate_report_includes_npm_severity_summary(self):
+        organization = Organization.objects.create(name='Gate Org', slug='gate-org')
+        SalesforceSyncRun.objects.create(
+            organization=organization,
+            trigger_source=SalesforceSyncRun.TriggerSource.COMMAND,
+            status=SalesforceSyncRun.Status.SUCCESS,
+            completed_at=timezone.now(),
+        )
+
+        def _command_result(args):
+            command = ' '.join(args)
+            if '--prefix client' in command:
+                return {
+                    'command': command,
+                    'exit_code': 0,
+                    'stdout': '1 moderate severity vulnerability',
+                    'stderr': '',
+                    'status': 'pass',
+                }
+            if '--prefix theme/static_src' in command:
+                return {
+                    'command': command,
+                    'exit_code': 0,
+                    'stdout': '2 moderate severity vulnerabilities',
+                    'stderr': '',
+                    'status': 'pass',
+                }
+            return self._passing_command_result(args)
+
+        with patch(
+            'contracts.management.commands.generate_release_gate_report.shutil.which',
+            side_effect=self._tool_lookup,
+        ), patch(
+            'contracts.management.commands.generate_release_gate_report.Command._run_command',
+            side_effect=_command_result,
+        ):
+            out = StringIO()
+            call_command('generate_release_gate_report', stdout=out)
+            payload = json.loads(out.getvalue())
+
+        self.assertEqual(payload['go_no_go'], 'NO-GO')
+        self.assertEqual(
+            payload['gates']['security']['npm_client_audit']['severity_summary']['counts']['moderate'],
+            1,
+        )
+        self.assertEqual(
+            payload['gates']['security']['npm_theme_audit']['severity_summary']['counts']['moderate'],
+            2,
+        )
+        self.assertTrue(payload['security_warnings']['npm_moderate_or_higher_present'])
+        self.assertEqual(payload['gates']['security']['npm_client_audit']['status'], 'fail')
+        self.assertTrue(payload['gates']['security']['npm_client_audit']['policy_violation'])

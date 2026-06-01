@@ -1,6 +1,6 @@
 # Remaining Worklist
 
-Last updated: 2026-04-14
+Last updated: 2026-06-01
 
 Source of truth:
 - [`docs/MASTER_TODO_CMS_AEGIS_PARITY.md`](/Users/haroonwahed/Documents/Projects/CMS-Aegis/docs/MASTER_TODO_CMS_AEGIS_PARITY.md)
@@ -21,27 +21,27 @@ This list contains every task that is still open, partial, or queued for follow-
 ## Contract Core
 
 - End-to-end lifecycle states from draft to archive
-- Versioned documents and immutable history
-- Upload + OCR pipeline
+- ~~Versioned documents and immutable history~~ ✅ (`ContractVersion` model, `ContractVersionService`, diff API, commit `518194b`)
+- ~~Upload + OCR pipeline~~ ✅ (PDF/DOCX OCR + `AIExtractionSpan` model, commit `ee655e1`)
 
 ## Workflow Engine
 
 - Conditional workflow routing by value, jurisdiction, and type
-- Multi-step approvals for legal, finance, and privacy
-- SLA, escalation, reassignment, and delegation flows
+- ~~Multi-step approvals for legal, finance, and privacy~~ ✅ (`ApprovalWorkflowService` with initiate/approve/reject/delegate/escalate, commit `4428b8f`)
+- ~~SLA, escalation, reassignment, and delegation flows~~ ✅ (`get_overdue_approvals`, `escalate_overdue_for_org`, `delegate`, commit `4428b8f`)
 
 ## Clause And Playbook Layer
 
-- Jurisdictional clause variants and fallback positions
-- Mandatory clause enforcement policies
-- Playbooks for negotiation fallback language
-- Clause usage analytics and dependency graph
+- ~~Jurisdictional clause variants and fallback positions~~ ✅ (`clause_variants.py`, `clause_policy.py` already existed)
+- ~~Mandatory clause enforcement policies~~ ✅ (`mandatory_clauses.py`, per-contract + org-summary API, commit `509aec8`)
+- ~~Playbooks for negotiation fallback language~~ ✅ (`playbook.py`, list/detail/contract-resolution API, commit `509aec8`)
+- ~~Clause usage analytics and dependency graph~~ ✅ (`clause_analytics.py`, `ClauseUsageEvent` model, co-occurrence graph, commit `509aec8`)
 
 ## Obligation And Renewal Operations
 
-- Renewal playbooks and auto-generated tasks
-- Configurable reminder cadence by contract type and priority
-- Expanded obligation taxonomy and playbooks
+- ~~Renewal playbooks and auto-generated tasks~~ ✅ (`renewal_playbook.py`, `generate_renewal_tasks` command, commit `31378da`)
+- ~~Configurable reminder cadence by contract type and priority~~ ✅ (`run_obligation_reminders` command, reminder window per-obligation, commit `31378da`)
+- ~~Expanded obligation taxonomy and playbooks~~ ✅ (RENEWAL/PAYMENT/NDA_EXPIRY/SLA deadline types, obligation CRUD API, commit `31378da`)
 
 ## Search, Analytics, And Repository UX
 
@@ -54,7 +54,7 @@ This list contains every task that is still open, partial, or queued for follow-
 ## Privacy And Compliance Ops
 
 - Data inventory cross-references to processing systems and subprocessors
-- DSAR SLA countdown and evidence bundle export
+- ~~DSAR SLA countdown and evidence bundle export~~ ✅ (`DSARService`, `export_dsar_evidence` command, DSAR API, commit `75166a5`)
 - Subprocessor and transfer auto-alerts for expired agreements and risk flags
 - Retention execution jobs and immutable action logs
 - Tamper-evident compliance/audit evidence exports
@@ -69,27 +69,27 @@ This list contains every task that is still open, partial, or queued for follow-
 
 ## AI Governance And Actions
 
-- Prompt-injection controls and output policy engine
-- AI summarization/risk extraction with citations
-- AI-assisted drafting and clause recommendations
-- Agentic AI actions with approval gates and rollback logs
-- AI governance with model registry, safety policies, and red-team tests
+- Prompt-injection controls and output policy engine ✅ (commit `59d91e6`)
+- ~~AI summarization/risk extraction with citations~~ ✅ (clause text-span citations + confidence thresholds, `AIExtractionSpan`, commit `ee655e1`)
+- ~~AI-assisted drafting and clause recommendations~~ ✅ (`ClauseRecommendation` model, `AIClauseDraftingService`, suggest/accept/draft-section API, commit `518194b`)
+- Agentic AI actions with approval gates and rollback logs ✅ (commit `59d91e6`)
+- AI governance with model registry, safety policies, and red-team tests ✅ (final archive + hash verifier, commit `59d91e6`)
 
 ## Reliability And Operations
 
 - Postgres production cutover completion
-- Async job system for reminders, OCR, and integrations
+- ~~Async job system for reminders, OCR, and integrations~~ ✅ (`run_worker`, `review_dead_letter_jobs`, job status API, cron workflow, commit `a945238`)
 - Sink-specific observability transport
 - Clear high CVEs and enforce scanner gates
 - Recurring restore drills with RTO/RPO evidence
 
 ## Product And Commercial Readiness
 
-- Enterprise admin console for org settings, policy controls, and integrations
-- Permission transparency UI for record-level access
-- Self-serve onboarding and guided setup
-- Billing, subscription, and usage controls
-- Customer-facing trust/compliance portal artifacts
+- ~~Enterprise admin console for org settings, policy controls, and integrations~~ ✅ (`OrgPolicy` model, `AdminConsoleService`, admin API, commit `518194b`)
+- ~~Permission transparency UI for record-level access~~ ✅ (`PermissionTransparencyService`, permission matrix/user/contract-access API, commit `df7c7a2`)
+- ~~Self-serve onboarding and guided setup~~ ✅ (`OnboardingProgress` model, `OnboardingService`, onboarding API, commit `df7c7a2`)
+- ~~Billing, subscription, and usage controls~~ ✅ (`BillingPlan`/`UsageRecord` models, `BillingService`, billing usage/plan API, commit `df7c7a2`)
+- ~~Customer-facing trust/compliance portal artifacts~~ ✅ (`CompliancePortalService`, trust-report + export-bundle API, commit `df7c7a2`)
 
 ## Execution Order
 

@@ -33,6 +33,76 @@ urlpatterns = [
     path('api/analytics/executive/', api_views.executive_analytics_api, name='executive_analytics_api'),
     path('api/analytics/executive/presets/', api_views.executive_dashboard_presets_api, name='executive_dashboard_presets_api'),
     path('api/analytics/executive/presets/<int:preset_id>/', api_views.executive_dashboard_preset_delete_api, name='executive_dashboard_preset_delete_api'),
+    path('api/documents/upload/', api_views.document_upload_api, name='document_upload_api'),
+    path('api/contracts/<str:contract_id>/ai-extract/', api_views.contract_ai_extract_api, name='contract_ai_extract_api'),
+    path('api/contracts/<str:contract_id>/obligations/', api_views.contract_obligations_api, name='contract_obligations_api'),
+    path('api/obligations/reminders/', api_views.obligation_reminders_api, name='obligation_reminders_api'),
+    path('api/obligations/<int:obligation_id>/', api_views.obligation_detail_api, name='obligation_detail_api'),
+    # DSAR SLA
+    path('api/dsar/', api_views.dsar_list_api, name='dsar_list_api'),
+    path('api/dsar/<int:dsar_id>/evidence/', api_views.dsar_evidence_api, name='dsar_evidence_api'),
+    path('api/dsar/<int:dsar_id>/', api_views.dsar_detail_api, name='dsar_detail_api'),
+    # Background job status
+    path('api/jobs/', api_views.job_list_api, name='job_list_api'),
+    path('api/jobs/<int:job_id>/retry/', api_views.job_retry_api, name='job_retry_api'),
+    path('api/jobs/<int:job_id>/', api_views.job_detail_api, name='job_detail_api'),
+    # Contract versioning
+    path('api/contracts/<int:contract_id>/versions/diff/', api_views.contract_version_diff_api, name='contract_version_diff_api'),
+    path('api/contracts/<int:contract_id>/versions/<int:version_number>/', api_views.contract_version_detail_api, name='contract_version_detail_api'),
+    path('api/contracts/<int:contract_id>/versions/', api_views.contract_versions_api, name='contract_versions_api'),
+    # AI drafting + clause recommendations
+    path('api/contracts/<int:contract_id>/ai-suggest/', api_views.ai_suggest_clauses_api, name='ai_suggest_clauses_api'),
+    path('api/contracts/<int:contract_id>/ai-draft/', api_views.ai_draft_section_api, name='ai_draft_section_api'),
+    path('api/contracts/<int:contract_id>/ai-clauses/<int:recommendation_id>/accept/', api_views.ai_accept_clause_api, name='ai_accept_clause_api'),
+    path('api/contracts/<int:contract_id>/ai-clauses/', api_views.ai_clause_recommendations_api, name='ai_clause_recommendations_api'),
+    # Enterprise admin console
+    path('api/admin/settings/', api_views.admin_settings_api, name='admin_settings_api'),
+    path('api/admin/policy/', api_views.admin_policy_api, name='admin_policy_api'),
+    path('api/admin/integrations/', api_views.admin_integrations_api, name='admin_integrations_api'),
+    path('api/admin/audit/', api_views.admin_audit_api, name='admin_audit_api'),
+
+    # Permission transparency
+    path('api/admin/permissions/matrix/', api_views.permissions_matrix_api, name='permissions_matrix_api'),
+    path('api/admin/users/<int:user_id>/permissions/', api_views.user_permissions_api, name='user_permissions_api'),
+    path('api/contracts/<int:contract_id>/access/', api_views.contract_access_api, name='contract_access_api'),
+
+    # Onboarding
+    path('api/onboarding/', api_views.onboarding_status_api, name='onboarding_status_api'),
+    path('api/onboarding/advance/', api_views.onboarding_advance_api, name='onboarding_advance_api'),
+    path('api/onboarding/complete/', api_views.onboarding_complete_api, name='onboarding_complete_api'),
+
+    # Billing
+    path('api/admin/billing/usage/', api_views.billing_usage_api, name='billing_usage_api'),
+    path('api/admin/billing/plan/', api_views.billing_plan_api, name='billing_plan_api'),
+
+    # Compliance portal
+    path('api/compliance/trust-report/', api_views.compliance_trust_report_api, name='compliance_trust_report_api'),
+    path('api/compliance/export/', api_views.compliance_export_api, name='compliance_export_api'),
+
+    # Approval workflow API
+    path('api/approvals/', api_views.approval_list_api, name='approval_list_api'),
+    path('api/approvals/overdue/', api_views.approval_overdue_api, name='approval_overdue_api'),
+    path('api/approvals/escalate-overdue/', api_views.approval_escalate_overdue_api, name='approval_escalate_overdue_api'),
+    path('api/approvals/<int:approval_id>/approve/', api_views.approval_approve_api, name='approval_approve_api'),
+    path('api/approvals/<int:approval_id>/reject/', api_views.approval_reject_api, name='approval_reject_api'),
+    path('api/approvals/<int:approval_id>/delegate/', api_views.approval_delegate_api, name='approval_delegate_api'),
+    path('api/contracts/<int:contract_id>/approvals/', api_views.approval_contract_list_api, name='approval_contract_list_api'),
+    path('api/contracts/<int:contract_id>/approvals/initiate/', api_views.approval_initiate_api, name='approval_initiate_api'),
+
+    # Clause Analytics
+    path('api/clause-analytics/stats/', api_views.clause_analytics_stats, name='clause_analytics_stats'),
+    path('api/clause-analytics/top/', api_views.clause_analytics_top_clauses, name='clause_analytics_top_clauses'),
+    path('api/clause-analytics/dependency-graph/', api_views.clause_dependency_graph, name='clause_dependency_graph'),
+    path('api/clause-analytics/record-usage/', api_views.clause_record_usage, name='clause_record_usage'),
+
+    # Mandatory Clause Enforcement
+    path('api/contracts/<int:contract_id>/mandatory-compliance/', api_views.mandatory_clause_compliance_contract, name='mandatory_clause_compliance_contract'),
+    path('api/clause-enforcement/org-summary/', api_views.mandatory_clause_org_summary, name='mandatory_clause_org_summary'),
+
+    # Playbooks
+    path('api/playbooks/', api_views.playbook_list, name='playbook_list'),
+    path('api/playbooks/<int:playbook_id>/', api_views.playbook_detail, name='playbook_detail'),
+    path('api/contracts/<int:contract_id>/playbooks/', api_views.playbook_for_contract, name='playbook_for_contract'),
 
     # Clients
     path('clients/', views.ClientListView.as_view(), name='client_list'),
@@ -241,6 +311,41 @@ urlpatterns = [
     path('approvals/', views.ApprovalRequestListView.as_view(), name='approval_request_list'),
     path('approvals/new/', views.ApprovalRequestCreateView.as_view(), name='approval_request_create'),
     path('approvals/<int:pk>/edit/', views.ApprovalRequestUpdateView.as_view(), name='approval_request_update'),
+
+    # Area 1: Search & Analytics API
+    path('api/search/contracts/', api_views.api_contract_search, name='api_contract_search'),
+    path('api/search/clauses/', api_views.api_clause_search, name='api_clause_search'),
+    path('api/search/facets/', api_views.api_search_facets, name='api_search_facets'),
+    path('api/search/telemetry/', api_views.api_search_telemetry, name='api_search_telemetry'),
+
+    # Area 2: Privacy Ops
+    path('api/privacy/subprocessor-alerts/', api_views.api_subprocessor_alerts, name='api_subprocessor_alerts'),
+    path('api/privacy/transfer-risk/', api_views.api_transfer_risk_flags, name='api_transfer_risk_flags'),
+    path('api/privacy/retention/overdue/', api_views.api_retention_overdue, name='api_retention_overdue'),
+    path('api/privacy/retention/log-action/', api_views.api_retention_log_action, name='api_retention_log_action'),
+    path('api/privacy/retention/log/', api_views.api_retention_log, name='api_retention_log'),
+
+    # Area 3: Integrations
+    path('api/integrations/webhooks/failed/', api_views.api_webhook_failed, name='api_webhook_failed'),
+    path('api/integrations/webhooks/<int:delivery_id>/retry/', api_views.api_webhook_retry, name='api_webhook_retry'),
+    path('api/integrations/webhooks/dlq/', api_views.api_webhook_dlq, name='api_webhook_dlq'),
+    path('api/integrations/webhooks/diagnostics/', api_views.api_webhook_diagnostics, name='api_webhook_diagnostics'),
+    path('api/integrations/webhooks/<int:delivery_id>/requeue/', api_views.api_webhook_requeue, name='api_webhook_requeue'),
+    path('api/integrations/import/csv/', api_views.api_import_contracts_csv, name='api_import_contracts_csv'),
+    path('api/integrations/import/json/', api_views.api_import_contracts_json, name='api_import_contracts_json'),
+    path('api/integrations/crm/status/', api_views.api_crm_sync_status, name='api_crm_sync_status'),
+    path('api/integrations/crm/list/', api_views.api_crm_list_integrations, name='api_crm_list_integrations'),
+    path('api/integrations/crm/sync/', api_views.api_crm_trigger_sync, name='api_crm_trigger_sync'),
+
+    # Area 4: Ops Hardening
+    path('api/ops/db-health/', api_views.api_db_health, name='api_db_health'),
+    path('api/ops/migrations/', api_views.api_migration_status, name='api_migration_status'),
+    path('api/ops/cve-gate/', api_views.api_cve_gate_status, name='api_cve_gate_status'),
+    path('api/ops/cve-scan/', api_views.api_cve_scan_requirements, name='api_cve_scan_requirements'),
+    path('api/ops/restore-drills/', api_views.api_restore_drill_list, name='api_restore_drill_list'),
+    path('api/ops/restore-drills/schedule/', api_views.api_restore_drill_schedule, name='api_restore_drill_schedule'),
+    path('api/ops/restore-drills/<int:drill_id>/result/', api_views.api_restore_drill_record, name='api_restore_drill_record'),
+    path('api/ops/restore-drills/summary/', api_views.api_restore_drill_summary, name='api_restore_drill_summary'),
 
     # Search
     path('search/', views.global_search, name='global_search'),

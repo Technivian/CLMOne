@@ -4,6 +4,12 @@
 
 The original 2026-04-12 plan has mostly been executed through the security, tenancy, workflow, and release-evidence hardening layers. What remains now is not core product invention; it is production proof, release-gate completion, and enterprise polish.
 
+Canonical release status source:
+- `docs/READINESS_SCOREBOARD_2026-05-31.md`
+
+Scope note:
+- This plan contains strategic 30/60/90 maturity work and should be read alongside the canonical scoreboard for launch gating decisions.
+
 ### Current Maturity Read
 
 - Core CLM product: strong and usable.

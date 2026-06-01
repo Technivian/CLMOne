@@ -1,15 +1,40 @@
 {% extends "base.html" %}
 {% block title %}{{ contract.title }} - CMS Aegis{% endblock %}
 {% block content %}
-<div class="page-wrap">
-  <div class="page-header">
-    <div>
-      <h1 class="page-title">{{ contract.title }}</h1>
-      <p class="page-subtitle">Contract flow <span class="sr-only">Case Flow</span>&middot; {{ contract.get_contract_type_display }} &middot; {{ contract.get_status_display }} {% if contract.client %}&middot; {{ contract.client.name }}{% endif %}</p>
+<div class="page-wrap reveal-stagger">
+  <div class="workspace-main hero-shell mb-6">
+    <div class="workspace-main-head">
+      <div>
+        <h1 class="workspace-title">{{ contract.title }}</h1>
+        <p class="workspace-subtitle">Contract flow <span class="sr-only">Case Flow</span>&middot; {{ contract.get_contract_type_display }} &middot; {{ contract.get_status_display }} {% if contract.client %}&middot; {{ contract.client.name }}{% endif %}</p>
+        <div class="workspace-kicker-row">
+          <span class="workspace-kicker"><strong>{{ contract.get_status_display }}</strong> current status</span>
+          <span class="workspace-kicker"><strong>{{ contract.get_contract_type_display }}</strong> contract type</span>
+          {% if contract.end_date %}<span class="workspace-kicker"><strong>{{ contract.end_date|date:"M d, Y" }}</strong> target end date</span>{% endif %}
+        </div>
+      </div>
+      <div class="workspace-tools">
+        <a href="{% url 'contracts:contract_update' contract.pk %}" class="inline-flex items-center px-3 py-2 text-sm rounded-lg border btn-ghost">Edit</a>
+      </div>
     </div>
-    <div class="page-actions">
-      <a href="{% url 'contracts:contract_update' contract.pk %}"
-         class="inline-flex items-center px-3 py-2 text-sm rounded-lg btn-ghost">Edit</a>
+    <div class="workspace-toolbar">
+      <div class="summary-grid w-full">
+        <div class="summary-card">
+          <div class="summary-label">Lifecycle state</div>
+          <div class="summary-value">{{ lifecycle_guidance.state }}</div>
+          <div class="summary-meta">{{ lifecycle_guidance.next_stage }}</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Counterparty</div>
+          <div class="summary-value">{{ contract.counterparty|default:"—" }}</div>
+          <div class="summary-meta">{% if contract.client %}{{ contract.client.name }}{% else %}No linked client{% endif %}</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Commercial value</div>
+          <div class="summary-value">{% if contract.value %}${{ contract.value|floatformat:2 }}{% else %}—{% endif %}</div>
+          <div class="summary-meta">{% if contract.renewal_date %}Renewal {{ contract.renewal_date|date:"M d, Y" }}{% else %}No renewal date set{% endif %}</div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -37,14 +62,64 @@
         <div class="panel-head">
           <h3 class="panel-title">Record Summary</h3>
         </div>
+        <div class="panel-inner detail-stack">
+          <div class="detail-row"><span class="detail-label">Status</span><span class="badge-sm {% if contract.status == 'ACTIVE' %}badge-green{% elif contract.status == 'PENDING' %}badge-blue{% else %}badge-gray{% endif %}">{{ contract.get_status_display }}</span></div>
+          <div class="detail-row"><span class="detail-label">Type</span><span class="detail-value">{{ contract.get_contract_type_display }}</span></div>
+          <div class="detail-row"><span class="detail-label">Counterparty</span><span class="detail-value">{{ contract.counterparty|default:"—" }}</span></div>
+          {% if contract.value %}<div class="detail-row"><span class="detail-label">Value</span><span class="detail-value">${{ contract.value|floatformat:2 }}</span></div>{% endif %}
+          {% if contract.start_date %}<div class="detail-row"><span class="detail-label">Start</span><span class="detail-value">{{ contract.start_date|date:"M d, Y" }}</span></div>{% endif %}
+          {% if contract.end_date %}<div class="detail-row"><span class="detail-label">End</span><span class="detail-value">{{ contract.end_date|date:"M d, Y" }}</span></div>{% endif %}
+          {% if contract.renewal_date %}<div class="detail-row"><span class="detail-label">Renewal</span><span class="detail-value">{{ contract.renewal_date|date:"M d, Y" }}</span></div>{% endif %}
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h3 class="panel-title">Lifecycle Guidance</h3>
+        </div>
+        <div class="panel-inner detail-stack">
+          <div class="detail-row">
+            <span class="detail-label">State</span>
+            <span class="badge-sm {% if lifecycle_guidance.severity == 'high' %}badge-red{% elif lifecycle_guidance.severity == 'medium' %}badge-yellow{% else %}badge-green{% endif %}">{{ lifecycle_guidance.state }}</span>
+          </div>
+          <div>
+            <span class="detail-label">Next step</span>
+            <div class="mt-1 c-primary text-sm">{{ lifecycle_guidance.action }}</div>
+          </div>
+          <div>
+            <span class="detail-label">Target stage</span>
+            <div class="mt-1 c-primary text-sm">{{ lifecycle_guidance.next_stage }}</div>
+          </div>
+          {% if lifecycle_guidance.detail %}<div class="text-xs c-muted">{{ lifecycle_guidance.detail }}</div>{% endif %}
+          {% if lifecycle_guidance.signals %}
+          <div class="signal-list pt-1">
+            {% for signal in lifecycle_guidance.signals %}
+            <div class="signal-item">{{ signal }}</div>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h3 class="panel-title">Lifecycle Guidance</h3>
+        </div>
         <div class="panel-inner space-y-3 text-sm">
-          <div class="flex items-center justify-between gap-3"><span class="c-muted">Status</span><span class="badge-sm {% if contract.status == 'ACTIVE' %}badge-green{% elif contract.status == 'PENDING' %}badge-blue{% else %}badge-gray{% endif %}">{{ contract.get_status_display }}</span></div>
-          <div class="flex items-center justify-between gap-3"><span class="c-muted">Type</span><span class="c-primary">{{ contract.get_contract_type_display }}</span></div>
-          <div class="flex items-center justify-between gap-3"><span class="c-muted">Counterparty</span><span class="c-primary">{{ contract.counterparty|default:"—" }}</span></div>
-          {% if contract.value %}<div class="flex items-center justify-between gap-3"><span class="c-muted">Value</span><span class="c-primary">${{ contract.value|floatformat:2 }}</span></div>{% endif %}
-          {% if contract.start_date %}<div class="flex items-center justify-between gap-3"><span class="c-muted">Start</span><span class="c-primary">{{ contract.start_date|date:"M d, Y" }}</span></div>{% endif %}
-          {% if contract.end_date %}<div class="flex items-center justify-between gap-3"><span class="c-muted">End</span><span class="c-primary">{{ contract.end_date|date:"M d, Y" }}</span></div>{% endif %}
-          {% if contract.renewal_date %}<div class="flex items-center justify-between gap-3"><span class="c-muted">Renewal</span><span class="c-primary">{{ contract.renewal_date|date:"M d, Y" }}</span></div>{% endif %}
+          <div class="flex items-center justify-between gap-3">
+            <span class="c-muted">State</span>
+            <span class="badge-sm {% if lifecycle_guidance.severity == 'high' %}badge-red{% elif lifecycle_guidance.severity == 'medium' %}badge-yellow{% else %}badge-green{% endif %}">{{ lifecycle_guidance.state }}</span>
+          </div>
+          <div><span class="c-muted">Next step</span><div class="mt-1 c-primary">{{ lifecycle_guidance.action }}</div></div>
+          <div><span class="c-muted">Target stage</span><div class="mt-1 c-primary">{{ lifecycle_guidance.next_stage }}</div></div>
+          {% if lifecycle_guidance.detail %}<div class="text-xs c-muted">{{ lifecycle_guidance.detail }}</div>{% endif %}
+          {% if lifecycle_guidance.signals %}
+          <div class="space-y-2 pt-1">
+            {% for signal in lifecycle_guidance.signals %}
+            <div class="rounded-lg bg-gray-50 px-3 py-2 text-xs c-muted">{{ signal }}</div>
+            {% endfor %}
+          </div>
+          {% endif %}
         </div>
       </div>
 
@@ -86,9 +161,11 @@
           <h3 class="panel-title">Primary Draft</h3>
           <span class="badge-sm badge-blue">Source of truth</span>
         </div>
-        <div class="panel-inner" style="min-height: 520px;">
+        <div class="panel-inner">
           {% if contract.content %}
-          <div class="text-sm whitespace-pre-wrap">{{ contract.content }}</div>
+          <div class="content-surface">
+            <div class="content-prose">{{ contract.content }}</div>
+          </div>
           {% else %}
           <div class="empty-state">No contract body has been added yet.</div>
           {% endif %}
@@ -121,15 +198,15 @@
         <div class="panel-head">
           <h3 class="panel-title">Action Cockpit</h3>
         </div>
-        <div class="panel-inner space-y-2 text-sm">
-          <a href="{% url 'contracts:approval_request_list' %}" class="block c-link hover:underline">Approvals queue</a>
-          <a href="{% url 'contracts:signature_request_list' %}" class="block c-link hover:underline">Signature requests</a>
-          <a href="{% url 'contracts:risk_log_list' %}" class="block c-link hover:underline">Risk register</a>
-          <a href="{% url 'contracts:audit_log_list' %}" class="block c-link hover:underline">Audit events</a>
-          <a href="{% url 'contracts:document_create' %}" class="block c-link hover:underline">Attach document</a>
-          <a href="{% url 'contracts:deadline_create' %}" class="block c-link hover:underline">Add deadline</a>
-          <a href="{% url 'contracts:add_negotiation_note' contract.pk %}" class="block c-link hover:underline">Add negotiation note</a>
-          <button id="ai-assistant-trigger" type="button" class="block text-left c-link hover:underline">Run internal AI review</button>
+        <div class="panel-inner action-list text-sm">
+          <a href="{% url 'contracts:approval_request_list' %}" class="action-link"><span>Approvals queue</span><svg aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
+          <a href="{% url 'contracts:signature_request_list' %}" class="action-link"><span>Signature requests</span><svg aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
+          <a href="{% url 'contracts:risk_log_list' %}" class="action-link"><span>Risk register</span><svg aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
+          <a href="{% url 'contracts:audit_log_list' %}" class="action-link"><span>Audit events</span><svg aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
+          <a href="{% url 'contracts:document_create' %}" class="action-link"><span>Attach document</span><svg aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
+          <a href="{% url 'contracts:deadline_create' %}" class="action-link"><span>Add deadline</span><svg aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
+          <a href="{% url 'contracts:add_negotiation_note' contract.pk %}" class="action-link"><span>Add negotiation note</span><svg aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
+          <button id="ai-assistant-trigger" type="button" class="action-link text-left"><span>Run internal AI review</span><svg aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></button>
         </div>
       </div>
 
@@ -137,11 +214,11 @@
         <div class="panel-head">
           <h3 class="panel-title">Record Context</h3>
         </div>
-        <div class="panel-inner space-y-3 text-sm">
-          {% if contract.client %}<div><span class="c-muted">Client</span><div class="mt-1"><a href="{% url 'contracts:client_detail' contract.client.pk %}" class="c-link">{{ contract.client.name }}</a></div></div>{% endif %}
-          {% if related_case_matter %}<div><span class="c-muted">Matter</span><div class="mt-1"><a href="{% url 'contracts:matter_detail' related_case_matter.pk %}" class="c-link">{{ related_case_matter.title }}</a></div></div>{% endif %}
-          <div><span class="c-muted">Created by</span><div class="mt-1 c-primary">{{ contract.created_by.get_full_name|default:"System" }}</div></div>
-          <div><span class="c-muted">Created</span><div class="mt-1 c-primary">{{ contract.created_at|date:"M d, Y" }}</div></div>
+        <div class="panel-inner detail-stack text-sm">
+          {% if contract.client %}<div><span class="detail-label">Client</span><div class="mt-1"><a href="{% url 'contracts:client_detail' contract.client.pk %}" class="c-link">{{ contract.client.name }}</a></div></div>{% endif %}
+          {% if related_case_matter %}<div><span class="detail-label">Matter</span><div class="mt-1"><a href="{% url 'contracts:matter_detail' related_case_matter.pk %}" class="c-link">{{ related_case_matter.title }}</a></div></div>{% endif %}
+          <div><span class="detail-label">Created by</span><div class="mt-1 c-primary">{{ contract.created_by.get_full_name|default:"System" }}</div></div>
+          <div><span class="detail-label">Created</span><div class="mt-1 c-primary">{{ contract.created_at|date:"M d, Y" }}</div></div>
         </div>
       </div>
 

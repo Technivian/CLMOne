@@ -3,6 +3,15 @@ const { test, expect } = require('@playwright/test');
 const username = process.env.E2E_USERNAME || 'e2e_owner';
 const password = process.env.E2E_PASSWORD || 'e2e_pass_123';
 
+async function login(page) {
+  await page.goto('/login/');
+  await page.fill('input[name="username"]', username);
+  await page.fill('input[name="password"]', password);
+  await page.click('button[type="submit"]');
+  await page.goto('/dashboard/');
+  await expect(page).not.toHaveURL(/\/login\/?$/);
+}
+
 test('login page renders and SSO entry is wired', async ({ page }) => {
   await page.goto('/login/');
 
@@ -16,10 +25,7 @@ test('login page renders and SSO entry is wired', async ({ page }) => {
 });
 
 test('local login works and key pages load', async ({ page }) => {
-  await page.goto('/login/');
-  await page.fill('input[name="username"]', username);
-  await page.fill('input[name="password"]', password);
-  await page.click('button[type="submit"]');
+  await login(page);
 
   // Some deployments keep /login in history; assert authenticated access directly.
   const dashboardResponse = await page.goto('/dashboard/');
@@ -32,5 +38,50 @@ test('local login works and key pages load', async ({ page }) => {
     const response = await page.goto(path);
     expect(response).not.toBeNull();
     expect(response.status()).toBeLessThan(400);
+  }
+});
+
+test('redesigned workspace shells render on key frontend pages', async ({ page }) => {
+  await login(page);
+
+  const cases = [
+    {
+      path: '/dashboard/',
+      title: /Legal Operations Workspace/,
+      summaryText: /Operational snapshot/,
+      marker: '.ops-strip',
+      shell: '.workspace-main.hero-shell',
+    },
+    {
+      path: '/contracts/',
+      title: /Contracts Workspace/,
+      summaryText: /Contracts/,
+      marker: '.views-rail',
+      shell: '.workspace-main',
+    },
+    {
+      path: '/contracts/workflows/',
+      title: /Workflow Designer/,
+      summaryText: /Workflow pipeline/,
+      marker: '.summary-grid',
+      shell: '.workspace-main.hero-shell',
+    },
+    {
+      path: '/contracts/workflows/templates/',
+      title: /Workflow Templates/,
+      summaryText: /Create Template|No workflow templates found\./,
+      marker: '.summary-grid',
+      shell: '.workspace-main.hero-shell',
+    },
+  ];
+
+  for (const item of cases) {
+    const response = await page.goto(item.path);
+    expect(response).not.toBeNull();
+    expect(response.status()).toBeLessThan(400);
+    await expect(page.locator(item.shell).first()).toBeVisible();
+    await expect(page.locator(item.marker).first()).toBeVisible();
+    await expect(page.getByText(item.title).first()).toBeVisible();
+    await expect(page.getByText(item.summaryText).first()).toBeVisible();
   }
 });

@@ -2,7 +2,7 @@
 {% block title %}Contracts - CMS Aegis{% endblock %}
 {% block content %}
 
-<div class="page-wrap">
+<div class="page-wrap reveal-stagger">
 
 {# ── Page header ───────────────────────────────────────────────────────────── #}
 <div class="page-header">
@@ -133,7 +133,7 @@
                 <th class="text-left px-5 py-3">
                           <a href="?sort={% if sort == 'value' %}-value{% else %}value{% endif %}{% if qs %}&q={{ qs|urlencode }}{% endif %}{% if ph %}&phase={{ ph|urlencode }}{% endif %}"
                        class="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wide hover:opacity-80 transition-opacity tbl-th">
-                        Complexiteit
+                    Complexity
                         <svg class="w-3 h-3" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             {% if sort == 'value' %}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/>
                             {% elif sort == '-value' %}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
@@ -152,7 +152,7 @@
                         </svg>
                     </a>
                 </th>
-                <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Acties</th>
+                <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Actions</th>
                 {% endwith %}
             </tr>
         </thead>
@@ -215,9 +215,9 @@
                 <td class="px-5 py-3.5 text-right">
                     <div class="inline-flex items-center gap-2">
                                 <a href="{% url 'contracts:contract_detail' contract.pk %}"
-                                    class="text-xs font-medium px-2.5 py-1 rounded-md border transition-opacity hover:opacity-80 btn-soft-primary">Bekijk</a>
+                                    class="text-xs font-medium px-2.5 py-1 rounded-md border transition-opacity hover:opacity-80 btn-soft-primary">View</a>
                         <a href="{% url 'contracts:contract_update' contract.pk %}"
-                           class="text-xs font-medium px-2.5 py-1 rounded-md border transition-opacity hover:opacity-80 btn-ghost">Bewerken</a>
+                           class="text-xs font-medium px-2.5 py-1 rounded-md border transition-opacity hover:opacity-80 btn-ghost">Edit</a>
                     </div>
                 </td>
 
@@ -255,7 +255,7 @@
 {% if is_paginated %}
 <div class="mt-4 flex items-center justify-between">
     <p class="text-sm c-muted">
-        Pagina {{ page_obj.number }} van {{ page_obj.paginator.num_pages }}
+        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
         &middot; {{ page_obj.paginator.count }} contract{{ page_obj.paginator.count|pluralize }}
     </p>
     <div class="flex items-center gap-1">
@@ -263,14 +263,14 @@
         <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if request.GET.phase %}&phase={{ request.GET.phase|urlencode }}{% endif %}{% if sort %}&sort={{ sort|urlencode }}{% endif %}"
            class="px-3 py-1.5 text-sm rounded-lg border inline-flex items-center gap-1 transition-opacity hover:opacity-80 btn-ghost">
             <svg class="w-3.5 h-3.5" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-            Vorige
+            Previous
         </a>
         {% endif %}
         <span class="px-3 py-1.5 text-sm rounded-lg font-semibold page-pill-active">{{ page_obj.number }}</span>
         {% if page_obj.has_next %}
         <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if request.GET.phase %}&phase={{ request.GET.phase|urlencode }}{% endif %}{% if sort %}&sort={{ sort|urlencode }}{% endif %}"
            class="px-3 py-1.5 text-sm rounded-lg border inline-flex items-center gap-1 transition-opacity hover:opacity-80 btn-ghost">
-            Volgende
+            Next
             <svg class="w-3.5 h-3.5" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
         </a>
         {% endif %}

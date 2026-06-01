@@ -1,7 +1,8 @@
 from django.db.models import Q
 from django.utils import timezone
 
-from contracts.models import ClauseTemplate, Contract, OrganizationMembership
+from contracts.models import ClauseTemplate, Contract, DocumentOCRReview, OrganizationMembership
+from contracts.services.contract_lifecycle import build_contract_lifecycle_guidance as build_contract_lifecycle_guidance_service
 
 
 def _extract_valid_mentions(raw_text, organization, author_user_id):
@@ -159,6 +160,29 @@ def _build_contract_ai_response(contract, prompt):
 
     clause_findings = clause_findings[:5]
 
+    # ── Text-span citations from OCR documents ────────────────────────────────
+    from contracts.services.ai_extraction import get_spans_summary
+
+    text_span_citations = []
+    try:
+        ocr_reviews = (
+            DocumentOCRReview.objects
+            .filter(document__contract=contract, status=DocumentOCRReview.Status.IN_REVIEW)
+            .select_related('document')
+            .order_by('created_at')
+        )
+        for review in ocr_reviews:
+            spans = get_spans_summary(review.document)
+            if spans:
+                text_span_citations.append({
+                    'document_id': review.document.id,
+                    'document_title': review.document.title,
+                    'ocr_confidence': float(review.confidence_score) if review.confidence_score else None,
+                    'spans': spans,
+                })
+    except Exception:
+        pass
+
     return {
         'summary': {
             'title': contract.title,
@@ -178,9 +202,14 @@ def _build_contract_ai_response(contract, prompt):
             'clause_findings': clause_findings,
             'recommended_actions': recommendations,
         },
+        'text_span_citations': text_span_citations,
         'output_policy': {
             'grounded_to_contract_fields': True,
             'external_data_used': False,
         },
         'mode': 'internal-rules-engine',
     }
+
+
+def build_contract_lifecycle_guidance(contract):
+    return build_contract_lifecycle_guidance_service(contract)

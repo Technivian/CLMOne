@@ -1,53 +1,83 @@
 {% extends 'base.html' %}
 {% block title %}{% if object %}Edit Workflow{% else %}Start New Workflow{% endif %}{% endblock %}
 {% block content %}
-<div class="page-wrap">
-    <div class="page-header">
-        <div>
-            <h1 class="page-title">{% if object %}Edit Workflow{% else %}Start New Workflow{% endif %}</h1>
-            <p class="page-subtitle c-muted">Create a new workflow to manage your contract process</p>
+<div class="page-wrap reveal-stagger">
+    <div class="workspace-main hero-shell mb-6">
+        <div class="workspace-main-head">
+            <div>
+                <h1 class="workspace-title">{% if object %}Edit Workflow{% else %}Start New Workflow{% endif %}</h1>
+                <p class="workspace-subtitle c-muted">Configure a workflow to manage contract review, approval, and execution.</p>
+                <div class="workspace-kicker-row">
+                    <span class="workspace-kicker"><strong>{% if object %}Editing{% else %}Starting{% endif %}</strong> workflow setup</span>
+                    <span class="workspace-kicker"><strong>Template-aware</strong> workflow creation</span>
+                </div>
+            </div>
+            <div class="workspace-tools">
+                <a href="{% url 'contracts:workflow_dashboard' %}" class="inline-flex items-center px-3 py-2 text-sm rounded-lg border btn-ghost">Back to Dashboard</a>
+            </div>
         </div>
-        <div class="page-actions">
-            <a href="{% url 'contracts:workflow_dashboard' %}" class="btn-ghost">Back to Dashboard</a>
+        <div class="workspace-toolbar">
+            <div class="summary-grid w-full">
+                <div class="summary-card">
+                    <div class="summary-label">Mode</div>
+                    <div class="summary-value">{% if object %}Edit{% else %}Create{% endif %}</div>
+                    <div class="summary-meta">Workflow configuration state</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Template support</div>
+                    <div class="summary-value">{% if suggested_template %}Suggested{% else %}Manual{% endif %}</div>
+                    <div class="summary-meta">{% if suggested_template %}A matching template is available{% else %}Choose a template or configure manually{% endif %}</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Next outcome</div>
+                    <div class="summary-value">{% if object %}Update{% else %}Launch{% endif %}</div>
+                    <div class="summary-meta">Save the workflow and continue to step management</div>
+                </div>
+            </div>
         </div>
     </div>
 
     <div class="panel">
         <div class="panel-inner">
             {% if suggested_template %}
-            <div class="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
+            <div class="panel mb-6">
+                <div class="panel-head">
+                    <span class="panel-title">Suggested template</span>
+                    <a href="{% url 'contracts:workflow_template_detail' suggested_template.pk %}" class="panel-link">View template</a>
+                </div>
+                <div class="panel-inner">
                 <div class="flex items-center justify-between gap-3">
                     <div>
-                        <h2 class="text-sm font-semibold text-blue-900">Suggested template</h2>
-                        <p class="text-sm text-blue-800 mt-1">{{ suggested_template.name }} v{{ suggested_template.version }}</p>
+                        <h2 class="text-sm font-semibold c-primary">{{ suggested_template.name }} v{{ suggested_template.version }}</h2>
+                        <p class="text-sm c-muted mt-1">Suggested based on the selected workflow context.</p>
                     </div>
-                    <a href="{% url 'contracts:workflow_template_detail' suggested_template.pk %}" class="text-sm font-medium text-blue-700 hover:text-blue-900">View template</a>
                 </div>
                 {% if template_comparison %}
-                <div class="mt-4 rounded-lg border border-blue-200 bg-white p-4">
+                <div class="mt-4 content-surface" style="min-height: auto;">
                     <div class="flex items-center justify-between">
-                        <h3 class="text-sm font-semibold text-gray-900">Compare against selected template</h3>
-                        <a href="{% url 'contracts:workflow_template_compare' selected_template.pk suggested_template.pk %}?preset=legal_ops" class="text-xs font-medium text-blue-700 hover:text-blue-900">Open legal ops diff</a>
+                        <h3 class="text-sm font-semibold c-primary">Compare against selected template</h3>
+                        <a href="{% url 'contracts:workflow_template_compare' selected_template.pk suggested_template.pk %}?preset=legal_ops" class="text-xs font-medium c-link">Open legal ops diff</a>
                     </div>
                     {% if template_comparison.field_diffs %}
-                    <ul class="mt-3 space-y-2 text-sm text-gray-700">
+                    <ul class="template-preview-list mt-3 text-sm c-secondary">
                         {% for field_name, left_value, right_value in template_comparison.field_diffs %}
-                        <li class="rounded-md border border-gray-200 p-3">
-                            <div class="font-medium text-gray-900">{{ field_name }}</div>
+                        <li class="template-preview-item">
+                            <div class="font-medium c-primary">{{ field_name }}</div>
                             <div class="mt-1">Selected: {{ left_value }} &middot; Suggested: {{ right_value }}</div>
                         </li>
                         {% endfor %}
                     </ul>
                     {% endif %}
                     {% if template_comparison.step_diffs %}
-                    <ul class="mt-3 space-y-2 text-sm text-gray-700">
+                    <ul class="template-preview-list mt-3 text-sm c-secondary">
                         {% for diff in template_comparison.step_diffs %}
-                        <li class="rounded-md border border-gray-200 p-3">{{ diff }}</li>
+                        <li class="template-preview-item">{{ diff }}</li>
                         {% endfor %}
                     </ul>
                     {% endif %}
                 </div>
                 {% endif %}
+            </div>
             </div>
             {% endif %}
 
@@ -91,9 +121,9 @@
 <script>
 function updateWorkflowName() {
     const contractSelect = document.getElementById('{{ form.contract.id_for_label }}');
-    const workflowNameInput = document.getElementById('{{ form.name.id_for_label }}');
+    const workflowNameInput = document.getElementById('{{ form.title.id_for_label }}');
 
-    if (contractSelect.value && contractSelect.selectedOptions[0]) {
+    if (contractSelect && workflowNameInput && contractSelect.value && contractSelect.selectedOptions[0]) {
         const contractText = contractSelect.selectedOptions[0].text;
         const contractTitle = contractText.split(' - ')[0];
         workflowNameInput.value = contractTitle + ' Workflow';
