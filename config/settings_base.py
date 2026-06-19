@@ -373,6 +373,21 @@ ESIGN_DOCUSIGN_ACCESS_TOKEN = os.getenv('ESIGN_DOCUSIGN_ACCESS_TOKEN', '').strip
 
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@cms-aegis.local')
 SERVER_EMAIL = os.getenv('SERVER_EMAIL', DEFAULT_FROM_EMAIL)
+
+# SMTP — defaults to console backend in dev; set EMAIL_HOST to enable real sending.
+_email_host = os.getenv('EMAIL_HOST', '').strip()
+if _email_host:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = _email_host
+    EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
+    EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '').strip()
+    EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '').strip()
+    EMAIL_USE_TLS = _bool_env('EMAIL_USE_TLS', default=True)
+    EMAIL_USE_SSL = _bool_env('EMAIL_USE_SSL', default=False)
+    EMAIL_TIMEOUT = int(os.getenv('EMAIL_TIMEOUT', '10'))
+else:
+    EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
+
 DJANGO_LOG_LEVEL = os.getenv('DJANGO_LOG_LEVEL', 'INFO').upper()
 LOG_SINK_ENABLED = _bool_env('LOG_SINK_ENABLED', default=False)
 LOG_SINK_URL = os.getenv('LOG_SINK_URL', '').strip()
