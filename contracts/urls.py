@@ -223,17 +223,25 @@ urlpatterns = [
     path('budgets/<int:budget_pk>/add-expense/', views.AddExpenseView.as_view(), name='add_expense'),
 
     # Workflows
+    # Canonical workflow authoring routes use the FBVs below; CBVs are kept for legacy/internal references.
     path('workflows/', views.workflow_dashboard, name='workflow_dashboard'),
     path('workflow-dashboard/', views.workflow_dashboard, name='workflow_dashboard_legacy'),
     path('workflows/create/', views.workflow_create, name='workflow_create'),
     path('workflows/templates/', views.workflow_template_list, name='workflow_template_list'),
     path('workflows/templates/create/', views.workflow_template_create, name='workflow_template_create'),
     path('workflows/templates/<int:pk>/', views.workflow_template_detail, name='workflow_template_detail'),
+    path('workflows/templates/<int:pk>/edit/', views.WorkflowTemplateUpdateView.as_view(), name='workflow_template_update'),
+    path('workflows/templates/<int:pk>/preview/', views.workflow_template_preview, name='workflow_template_preview'),
+    path('workflows/templates/<int:pk>/activity/', views.workflow_template_activity, name='workflow_template_activity'),
     path('workflows/templates/<int:pk>/steps/add/', views.AddWorkflowTemplateStepView.as_view(), name='workflow_template_step_add'),
+    path('workflows/templates/<int:pk>/steps/<int:step_pk>/delete/', views.workflow_template_step_delete, name='workflow_template_step_delete'),
+    path('workflows/templates/<int:pk>/steps/reorder/', views.workflow_template_step_reorder, name='workflow_template_step_reorder'),
+    path('workflows/templates/<int:pk>/publish-toggle/', views.workflow_template_publish_toggle, name='workflow_template_publish_toggle'),
     path('workflows/templates/<int:pk>/clone-version/', views.workflow_template_clone_version, name='workflow_template_clone_version'),
     path('workflows/templates/<int:pk>/restore-version/', views.workflow_template_restore_version, name='workflow_template_restore_version'),
     path('workflows/templates/<int:pk>/compare/<int:other_pk>/', views.workflow_template_compare, name='workflow_template_compare'),
     path('workflows/<int:pk>/', views.workflow_detail, name='workflow_detail'),
+    path('workflows/<int:pk>/activity/', views.workflow_activity, name='workflow_activity'),
     path('workflows/<int:pk>/steps/add/', views.AddWorkflowStepView.as_view(), name='workflow_step_add'),
     path('workflows/step/<int:pk>/complete/', views.WorkflowStepCompleteView.as_view(), name='workflow_step_complete'),
     path('workflows/step/<int:pk>/update/', views.update_workflow_step, name='update_workflow_step'),
@@ -277,6 +285,10 @@ urlpatterns = [
     path('signatures/<int:pk>/edit/', views.SignatureRequestUpdateView.as_view(), name='signature_request_update'),
     path('signatures/<int:pk>/transition/<str:new_status>/', views.signature_request_transition, name='signature_request_transition'),
     path('signatures/<int:pk>/reminder/', views.signature_request_send_reminder, name='signature_request_send_reminder'),
+    path('signatures/<int:contract_pk>/packet/', views.SignaturePacketDetailView.as_view(), name='signature_packet_detail'),
+    path('signatures/<int:contract_pk>/packet/resend/', views.signature_packet_resend, name='signature_packet_resend'),
+    path('signatures/<int:contract_pk>/packet/cancel/', views.signature_packet_cancel, name='signature_packet_cancel'),
+    path('signatures/<int:contract_pk>/packet/retry/', views.signature_packet_retry, name='signature_packet_retry'),
 
     # Privacy & GDPR
     path('privacy/', views.privacy_dashboard, name='privacy_dashboard'),
