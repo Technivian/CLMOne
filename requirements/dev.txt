@@ -12,6 +12,9 @@ pip-audit==2.9.0
 mypy==1.20.2
 django-stubs==6.0.3
 
+# Used by the audit_required_checks management command (CI tooling)
+PyYAML==6.0.3
+
 # Legacy browser/robot automation toolchain (kept for compatibility)
 robotframework==7.3.2
 robotframework-bsnlibrary==1.0.0
