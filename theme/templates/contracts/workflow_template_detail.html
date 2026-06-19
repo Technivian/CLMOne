@@ -8,6 +8,11 @@
                 <h1 class="workspace-title">
                     {{ workflow_template.name }}
                     <span class="badge-sm badge-gray align-middle ml-2">v{{ workflow_template.version }}</span>
+                    {% if workflow_template.is_active %}
+                    <span class="badge-sm badge-green align-middle ml-2">Published</span>
+                    {% else %}
+                    <span class="badge-sm badge-gray align-middle ml-2">Unpublished</span>
+                    {% endif %}
                 </h1>
                 <p class="workspace-subtitle c-muted">{{ workflow_template.description }}</p>
                 <div class="workspace-kicker-row">
@@ -16,10 +21,17 @@
                 </div>
             </div>
             <div class="workspace-tools">
+                <a href="{% url 'contracts:workflow_template_update' workflow_template.pk %}" class="inline-flex items-center px-3 py-2 text-sm rounded-lg border btn-ghost">Edit Template</a>
                 <a href="{% url 'contracts:workflow_template_list' %}" class="inline-flex items-center px-3 py-2 text-sm rounded-lg border btn-ghost">Back to Templates</a>
                 <form method="post" action="{% url 'contracts:workflow_template_clone_version' workflow_template.pk %}">
                     {% csrf_token %}
                     <button type="submit" class="btn-primary-grad text-white px-4 py-2 rounded-lg">Create New Version</button>
+                </form>
+                <form method="post" action="{% url 'contracts:workflow_template_publish_toggle' workflow_template.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border btn-ghost">
+                        {% if workflow_template.is_active %}Unpublish{% else %}Publish{% endif %}
+                    </button>
                 </form>
             </div>
         </div>
@@ -147,12 +159,157 @@
         </div>
     </div>
 
+    <div class="panel mb-6">
+        <div class="panel-head">
+            <span class="panel-title">Preview Template</span>
+            <span class="panel-link">Dry-run only</span>
+        </div>
+        <div class="panel-inner">
+            <form method="post" action="{% url 'contracts:workflow_template_preview' workflow_template.pk %}" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                {% csrf_token %}
+                <div>
+                    <label class="form-label" for="{{ preview_form.contract_type.id_for_label }}">Contract type</label>
+                    {{ preview_form.contract_type }}
+                    {% if preview_form.contract_type.errors %}<p class="mt-1 text-xs c-danger">{{ preview_form.contract_type.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="form-label" for="{{ preview_form.value.id_for_label }}">Value</label>
+                    {{ preview_form.value }}
+                    {% if preview_form.value.errors %}<p class="mt-1 text-xs c-danger">{{ preview_form.value.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="form-label" for="{{ preview_form.jurisdiction.id_for_label }}">Jurisdiction</label>
+                    {{ preview_form.jurisdiction }}
+                    {% if preview_form.jurisdiction.errors %}<p class="mt-1 text-xs c-danger">{{ preview_form.jurisdiction.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="form-label" for="{{ preview_form.governing_law.id_for_label }}">Governing law</label>
+                    {{ preview_form.governing_law }}
+                    {% if preview_form.governing_law.errors %}<p class="mt-1 text-xs c-danger">{{ preview_form.governing_law.errors.0 }}</p>{% endif %}
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-2 mt-6">
+                        {{ preview_form.data_transfer_flag }}
+                        <label class="form-label" for="{{ preview_form.data_transfer_flag.id_for_label }}">Data transfer</label>
+                    </div>
+                    {% if preview_form.data_transfer_flag.errors %}<p class="mt-1 text-xs c-danger">{{ preview_form.data_transfer_flag.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="form-label" for="{{ preview_form.risk_level.id_for_label }}">Risk level</label>
+                    {{ preview_form.risk_level }}
+                    {% if preview_form.risk_level.errors %}<p class="mt-1 text-xs c-danger">{{ preview_form.risk_level.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="form-label" for="{{ preview_form.counterparty_name.id_for_label }}">Counterparty</label>
+                    {{ preview_form.counterparty_name }}
+                    {% if preview_form.counterparty_name.errors %}<p class="mt-1 text-xs c-danger">{{ preview_form.counterparty_name.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="form-label" for="{{ preview_form.status.id_for_label }}">Status</label>
+                    {{ preview_form.status }}
+                    {% if preview_form.status.errors %}<p class="mt-1 text-xs c-danger">{{ preview_form.status.errors.0 }}</p>{% endif %}
+                </div>
+                <div class="flex items-end">
+                    <button type="submit" class="btn-primary-grad text-white w-full">Preview template</button>
+                </div>
+            </form>
+
+            {% if preview_form.non_field_errors %}
+            <div class="mt-4 text-sm c-danger">
+                {{ preview_form.non_field_errors.0 }}
+            </div>
+            {% endif %}
+
+            {% if preview_result %}
+            <div class="mt-6">
+                <div class="flex items-center justify-between gap-3 mb-3">
+                    <div>
+                        <h3 class="text-sm font-semibold c-primary">Preview Results</h3>
+                        <p class="text-xs c-muted">{{ preview_result.active_step_count }} active · {{ preview_result.skipped_step_count }} skipped</p>
+                    </div>
+                </div>
+                <div class="overflow-x-auto border border-gray-200 rounded-xl">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="tbl-head">
+                            <tr>
+                                <th class="tbl-th px-4 py-3 text-left text-xs uppercase tracking-wider">Order</th>
+                                <th class="tbl-th px-4 py-3 text-left text-xs uppercase tracking-wider">Step</th>
+                                <th class="tbl-th px-4 py-3 text-left text-xs uppercase tracking-wider">Kind</th>
+                                <th class="tbl-th px-4 py-3 text-left text-xs uppercase tracking-wider">Condition</th>
+                                <th class="tbl-th px-4 py-3 text-left text-xs uppercase tracking-wider">Status</th>
+                                <th class="tbl-th px-4 py-3 text-left text-xs uppercase tracking-wider">Reason</th>
+                                <th class="tbl-th px-4 py-3 text-left text-xs uppercase tracking-wider">Assignee</th>
+                                <th class="tbl-th px-4 py-3 text-left text-xs uppercase tracking-wider">SLA</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            {% for step in preview_result.preview_steps %}
+                            <tr class="{% if step.preview_status == 'WOULD_START' %}bg-blue-50{% elif step.preview_status == 'WOULD_COMPLETE_AUTOMATICALLY' %}bg-green-50{% elif step.preview_status == 'WOULD_SKIP' %}bg-gray-50 opacity-70{% endif %}">
+                                <td class="px-4 py-3 text-sm c-muted">{{ step.order }}</td>
+                                <td class="px-4 py-3 text-sm c-primary font-medium">{{ step.name }}</td>
+                                <td class="px-4 py-3 text-sm c-muted">{{ step.step_kind }}</td>
+                                <td class="px-4 py-3 text-sm c-muted">{{ step.condition_expression|default:'—' }}</td>
+                                <td class="px-4 py-3 text-sm">
+                                    <span class="badge-sm
+                                        {% if step.preview_status == 'WOULD_START' %}badge-blue
+                                        {% elif step.preview_status == 'WOULD_COMPLETE_AUTOMATICALLY' %}badge-green
+                                        {% elif step.preview_status == 'WOULD_SKIP' %}badge-gray
+                                        {% else %}badge-yellow{% endif %}">
+                                        {{ step.preview_status }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3 text-sm c-muted">{{ step.reason }}</td>
+                                <td class="px-4 py-3 text-sm c-muted">
+                                    {% if step.resolved_assignee %}{{ step.resolved_assignee }}{% else %}—{% endif %}
+                                </td>
+                                <td class="px-4 py-3 text-sm c-muted">
+                                    {% if step.sla_hours %}{{ step.sla_hours }}h{% else %}—{% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-head flex items-center justify-between gap-3">
+            <span class="panel-title">Activity History</span>
+            <a href="{{ workflow_template_activity_url }}" class="text-xs font-medium c-link">View all activity</a>
+        </div>
+        <div class="panel-inner space-y-3 text-sm">
+            {% for entry in workflow_template_audit_feed %}
+            <div class="rounded-lg border border-gray-100 p-3">
+                <div class="flex items-center justify-between gap-3">
+                    <span class="badge-sm {{ entry.action_class }}">{{ entry.action }}</span>
+                    <span class="text-xs c-muted">{{ entry.timestamp|date:"M d, H:i" }}</span>
+                </div>
+                <div class="mt-2 font-medium c-primary">{{ entry.summary }}</div>
+                <div class="mt-1 text-xs c-muted">{{ entry.actor }}</div>
+                {% if entry.changed_fields %}
+                <div class="mt-2 flex flex-wrap gap-2">
+                    {% for field in entry.changed_fields %}
+                    <span class="badge-sm badge-gray">{{ field }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            {% empty %}
+            <div class="empty-state">No activity recorded yet.</div>
+            {% endfor %}
+        </div>
+    </div>
+
     <div class="panel overflow-hidden">
         <div class="panel-head">
             <span class="panel-title">Workflow Steps</span>
         </div>
         <div class="divide-y divide-gray-100">
-            {% for step in steps %}
+            {% for control in step_controls %}
+            {% with step=control.step %}
             <div class="px-5 py-4">
                 <div class="flex items-center gap-3">
                     <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center surface-bubble">
@@ -182,8 +339,33 @@
                         <p class="text-sm c-muted mt-1">{{ step.description }}</p>
                         {% endif %}
                     </div>
+                    <div class="flex-shrink-0 flex items-center gap-2">
+                        {% if control.move_up_ids %}
+                        <form method="post" action="{% url 'contracts:workflow_template_step_reorder' workflow_template.pk %}">
+                            {% csrf_token %}
+                            {% for step_id in control.move_up_ids %}
+                            <input type="hidden" name="step_ids" value="{{ step_id }}">
+                            {% endfor %}
+                            <button type="submit" class="text-xs font-medium c-link">Move up</button>
+                        </form>
+                        {% endif %}
+                        {% if control.move_down_ids %}
+                        <form method="post" action="{% url 'contracts:workflow_template_step_reorder' workflow_template.pk %}">
+                            {% csrf_token %}
+                            {% for step_id in control.move_down_ids %}
+                            <input type="hidden" name="step_ids" value="{{ step_id }}">
+                            {% endfor %}
+                            <button type="submit" class="text-xs font-medium c-link">Move down</button>
+                        </form>
+                        {% endif %}
+                        <form method="post" action="{% url 'contracts:workflow_template_step_delete' workflow_template.pk step.pk %}" onsubmit="return confirm('Delete this workflow step?');">
+                            {% csrf_token %}
+                            <button type="submit" class="text-xs font-medium c-danger">Delete</button>
+                        </form>
+                    </div>
                 </div>
             </div>
+            {% endwith %}
             {% empty %}
             <div class="empty-state">No steps defined for this template.</div>
             {% endfor %}

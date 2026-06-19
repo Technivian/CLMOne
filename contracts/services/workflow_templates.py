@@ -48,12 +48,15 @@ def list_template_versions(template: WorkflowTemplate) -> list[WorkflowTemplate]
     root = template
     while root.parent_template_id:
         root = root.parent_template
-    return list(
-        WorkflowTemplate.objects.filter(
-            name=root.name,
-            category=root.category,
-        ).order_by('-version', '-created_at', '-pk')
-    )
+    family_filter = {
+        'name': root.name,
+        'category': root.category,
+    }
+    if root.organization_id:
+        family_filter['organization'] = root.organization
+    else:
+        family_filter['organization__isnull'] = True
+    return list(WorkflowTemplate.objects.filter(**family_filter).order_by('-version', '-created_at', '-pk'))
 
 
 def _next_version_number(template: WorkflowTemplate) -> int:
@@ -77,6 +80,7 @@ def clone_template_version(
     clone = WorkflowTemplate.objects.create(
         name=name or template.name,
         description=description if description is not None else template.description,
+        organization=template.organization,
         category=category or template.category,
         version=next_version,
         parent_template=template,
@@ -91,6 +95,12 @@ def clone_template_version(
                 description=step.description,
                 order=step.order,
                 estimated_duration=step.estimated_duration,
+                step_kind=step.step_kind,
+                condition_expression=step.condition_expression,
+                assignee_role=step.assignee_role,
+                specific_assignee=step.specific_assignee,
+                sla_hours=step.sla_hours,
+                escalation_after_hours=step.escalation_after_hours,
             )
 
     return clone

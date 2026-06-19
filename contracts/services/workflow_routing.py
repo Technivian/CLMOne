@@ -1,6 +1,8 @@
 from datetime import timedelta
 from decimal import Decimal
 
+from django.db import models
+from django.db.models import Case, IntegerField, Value, When
 from django.utils import timezone
 
 from contracts.models import ApprovalRequest, ApprovalRule, Contract, OrganizationMembership, UserProfile, WorkflowTemplate
@@ -40,6 +42,28 @@ def _normalized_text(value):
     return (value or '').strip().upper()
 
 
+def _template_queryset_for_contract(contract, *, category):
+    if not contract:
+        return WorkflowTemplate.objects.filter(
+            is_active=True,
+            category=category,
+            organization__isnull=True,
+        )
+
+    return WorkflowTemplate.objects.filter(
+        is_active=True,
+        category=category,
+    ).filter(
+        models.Q(organization=contract.organization) | models.Q(organization__isnull=True)
+    ).annotate(
+        organization_sort=Case(
+            When(organization__isnull=True, then=Value(1)),
+            default=Value(0),
+            output_field=IntegerField(),
+        )
+    ).order_by('organization_sort', '-version', '-created_at', '-pk')
+
+
 def suggest_workflow_category_for_contract(contract):
     if not contract:
         return WorkflowTemplate.Category.GENERAL
@@ -64,19 +88,13 @@ def suggest_workflow_category_for_contract(contract):
 
 def suggest_workflow_template_for_contract(contract):
     category = suggest_workflow_category_for_contract(contract)
-    template = WorkflowTemplate.objects.filter(
-        is_active=True,
-        category=category,
-    ).order_by('-version', '-created_at', '-pk').first()
+    template = _template_queryset_for_contract(contract, category=category).first()
 
     if template:
         return template
 
     if category != WorkflowTemplate.Category.GENERAL:
-        return WorkflowTemplate.objects.filter(
-            is_active=True,
-            category=WorkflowTemplate.Category.GENERAL,
-        ).order_by('-version', '-created_at', '-pk').first()
+        return _template_queryset_for_contract(contract, category=WorkflowTemplate.Category.GENERAL).first()
 
     return None
 

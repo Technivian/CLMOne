@@ -232,6 +232,34 @@
             </div>
 
             <div class="panel">
+                <div class="panel-head flex items-center justify-between gap-3">
+                    <span class="panel-title">Activity History</span>
+                    <a href="{{ workflow_activity_url }}" class="text-xs font-medium c-link">View all activity</a>
+                </div>
+                <div class="panel-inner space-y-3 text-sm">
+                    {% for entry in workflow_audit_feed %}
+                    <div class="rounded-lg border border-gray-100 p-3">
+                        <div class="flex items-center justify-between gap-3">
+                            <span class="badge-sm {{ entry.action_class }}">{{ entry.action }}</span>
+                            <span class="text-xs c-muted">{{ entry.timestamp|date:"M d, H:i" }}</span>
+                        </div>
+                        <div class="mt-2 font-medium c-primary">{{ entry.summary }}</div>
+                        <div class="mt-1 text-xs c-muted">{{ entry.actor }}</div>
+                        {% if entry.changed_fields %}
+                        <div class="mt-2 flex flex-wrap gap-2">
+                            {% for field in entry.changed_fields %}
+                            <span class="badge-sm badge-gray">{{ field }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% empty %}
+                    <div class="empty-state">No activity recorded yet.</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="panel">
                 <div class="panel-head">
                     <span class="panel-title">Add Workflow Step</span>
                 </div>

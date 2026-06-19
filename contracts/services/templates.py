@@ -29,8 +29,7 @@ class TemplateService:
     def _base_queryset(self) -> QuerySet[WorkflowTemplate]:
         qs = WorkflowTemplate.objects.all()
         if self.organization is not None:
-            # WorkflowTemplate is currently global; keep organization arg for forward compatibility.
-            return qs
+            return qs.filter(organization=self.organization) | qs.filter(organization__isnull=True)
         return qs
 
     @staticmethod
@@ -77,6 +76,7 @@ class TemplateService:
         template = WorkflowTemplate.objects.create(
             name=title,
             description=content,
+            organization=self.organization,
             category=str(category or "general").upper(),
             version=1,
             is_active=True,

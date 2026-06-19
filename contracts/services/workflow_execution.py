@@ -42,7 +42,7 @@ def _contract_field_value(contract, field_name):
 
 
 def _coerce_boolean(raw_value):
-    normalized = _normalized_text(raw_value)
+    normalized = _normalized_text(raw_value).lower()
     if normalized in _BOOL_TRUE:
         return True
     if normalized in _BOOL_FALSE:

@@ -56,6 +56,8 @@ from contracts.models import (
     ApprovalRule,
     ApprovalRequest,
     EthicalWall,
+    WorkflowTemplate,
+    WorkflowTemplateStep,
 )
 
 User = get_user_model()
@@ -699,6 +701,30 @@ class BudgetIsolationTest(CrossTenantFixtureMixin, TestCase):
 
 
 class WorkflowIsolationTest(CrossTenantFixtureMixin, TestCase):
+    def setUp(self):
+        super().setUp()
+        self.workflow_template_a = WorkflowTemplate.objects.create(
+            name='Alpha Template',
+            description='Template A',
+            organization=self.org_a,
+            category=WorkflowTemplate.Category.CONTRACT_REVIEW,
+            version=1,
+            is_active=True,
+        )
+        self.workflow_template_a_step = WorkflowTemplateStep.objects.create(
+            template=self.workflow_template_a,
+            name='Alpha Step',
+            order=1,
+        )
+        self.workflow_template_b = WorkflowTemplate.objects.create(
+            name='Beta Template',
+            description='Template B',
+            organization=self.org_b,
+            category=WorkflowTemplate.Category.CONTRACT_REVIEW,
+            version=1,
+            is_active=True,
+        )
+
     def test_workflow_dashboard_excludes_other_org(self):
         self.client.login(username='user_b', password='passB1234!')
         response = self.client.get(reverse('contracts:workflow_dashboard'))
@@ -706,6 +732,37 @@ class WorkflowIsolationTest(CrossTenantFixtureMixin, TestCase):
         ids = [w.id for w in response.context.get('workflows', [])]
         self.assertNotIn(self.workflow_a.id, ids)
         self.assertIn(self.workflow_b.id, ids)
+
+    def test_workflow_template_list_excludes_other_org(self):
+        self.client.login(username='user_b', password='passB1234!')
+        response = self.client.get(reverse('contracts:workflow_template_list'))
+        self.assertEqual(response.status_code, 200)
+        ids = [template.id for template in response.context.get('workflow_templates', [])]
+        self.assertNotIn(self.workflow_template_a.id, ids)
+        self.assertIn(self.workflow_template_b.id, ids)
+
+    def test_workflow_template_detail_cross_org_returns_404(self):
+        self.client.login(username='user_b', password='passB1234!')
+        url = reverse('contracts:workflow_template_detail', kwargs={'pk': self.workflow_template_a.pk})
+        self.assertEqual(self.client.get(url).status_code, 404)
+
+    def test_workflow_template_step_delete_cross_org_returns_404(self):
+        self.client.login(username='user_b', password='passB1234!')
+        url = reverse(
+            'contracts:workflow_template_step_delete',
+            kwargs={'pk': self.workflow_template_a.pk, 'step_pk': self.workflow_template_a_step.pk},
+        )
+        self.assertEqual(self.client.post(url).status_code, 404)
+
+    def test_workflow_activity_cross_org_returns_404(self):
+        self.client.login(username='user_b', password='passB1234!')
+        url = reverse('contracts:workflow_activity', kwargs={'pk': self.workflow_a.pk})
+        self.assertEqual(self.client.get(url).status_code, 404)
+
+    def test_workflow_template_activity_cross_org_returns_404(self):
+        self.client.login(username='user_b', password='passB1234!')
+        url = reverse('contracts:workflow_template_activity', kwargs={'pk': self.workflow_template_a.pk})
+        self.assertEqual(self.client.get(url).status_code, 404)
 
     def test_workflow_detail_cross_org_returns_404(self):
         self.client.login(username='user_b', password='passB1234!')
@@ -797,6 +854,11 @@ class SignatureIsolationTest(CrossTenantFixtureMixin, TestCase):
     def test_detail_cross_org_returns_404(self):
         self.client.login(username='user_b', password='passB1234!')
         url = reverse('contracts:signature_request_detail', kwargs={'pk': self.signature_a.pk})
+        self.assertEqual(self.client.get(url).status_code, 404)
+
+    def test_packet_detail_cross_org_returns_404(self):
+        self.client.login(username='user_b', password='passB1234!')
+        url = reverse('contracts:signature_packet_detail', kwargs={'contract_pk': self.contract_a.pk})
         self.assertEqual(self.client.get(url).status_code, 404)
 
 

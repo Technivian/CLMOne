@@ -7,6 +7,7 @@ from .services.clause_policy import validate_clause_policy
 from .services.clause_variants import resolve_clause_variant
 from .services.contract_policies import get_required_fields_for_contract_type
 from .services.contract_lifecycle import can_transition_lifecycle_stage
+from .services.workflow_execution import _CONDITION_PATTERN, _FIELD_ALIASES
 from .tenancy import scope_queryset_for_organization
 from .models import (
     Contract, NegotiationThread, TrademarkRequest, LegalTask, RiskLog, ComplianceChecklist, ChecklistItem,
@@ -703,6 +704,45 @@ class WorkflowTemplateForm(forms.ModelForm):
         }
 
 
+class WorkflowTemplatePreviewForm(forms.Form):
+    contract_type = forms.ChoiceField(
+        required=False,
+        choices=[('', 'Any')] + list(Contract.ContractType.choices),
+        widget=forms.Select(attrs={'class': TAILWIND_SELECT}),
+    )
+    value = forms.DecimalField(
+        required=False,
+        min_value=0,
+        widget=forms.NumberInput(attrs={'class': TAILWIND_INPUT, 'step': '0.01', 'min': '0'}),
+    )
+    jurisdiction = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={'class': TAILWIND_INPUT}),
+    )
+    governing_law = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={'class': TAILWIND_INPUT}),
+    )
+    data_transfer_flag = forms.BooleanField(
+        required=False,
+        widget=forms.CheckboxInput(attrs={'class': TAILWIND_CHECKBOX}),
+    )
+    risk_level = forms.ChoiceField(
+        required=False,
+        choices=[('', 'Any')] + list(Contract.RiskLevel.choices),
+        widget=forms.Select(attrs={'class': TAILWIND_SELECT}),
+    )
+    counterparty_name = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={'class': TAILWIND_INPUT}),
+    )
+    status = forms.ChoiceField(
+        required=False,
+        choices=[('', 'Any')] + list(Contract.Status.choices),
+        widget=forms.Select(attrs={'class': TAILWIND_SELECT}),
+    )
+
+
 class WorkflowTemplateStepForm(forms.ModelForm):
     order = forms.IntegerField(
         required=False,
@@ -733,6 +773,42 @@ class WorkflowTemplateStepForm(forms.ModelForm):
             'sla_hours': forms.NumberInput(attrs={'class': TAILWIND_INPUT, 'min': '1'}),
             'escalation_after_hours': forms.NumberInput(attrs={'class': TAILWIND_INPUT, 'min': '1'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # BRANCH is reserved until branching execution is implemented; keep existing DB values renderable.
+        step_kind_field = self.fields.get('step_kind')
+        if step_kind_field:
+            allowed_choices = [
+                choice for choice in step_kind_field.choices
+                if choice[0] != WorkflowTemplateStep.StepKind.BRANCH
+            ]
+            if self.instance and self.instance.pk and self.instance.step_kind == WorkflowTemplateStep.StepKind.BRANCH:
+                allowed_choices.append((WorkflowTemplateStep.StepKind.BRANCH, WorkflowTemplateStep.StepKind.BRANCH.label))
+            step_kind_field.choices = allowed_choices
+
+    def clean_condition_expression(self):
+        expression = (self.cleaned_data.get('condition_expression') or '').strip()
+        if not expression:
+            return ''
+
+        match = _CONDITION_PATTERN.match(expression)
+        if not match:
+            raise ValidationError(
+                'Invalid condition expression. Use a supported field alias, operator, and value such as value>=250000.',
+            )
+
+        field_name = match.group('field').strip().lower()
+        if field_name not in _FIELD_ALIASES:
+            raise ValidationError(f"Unknown condition field '{field_name}'.")
+
+        value = match.group('value').strip()
+        if not value:
+            raise ValidationError('Condition value cannot be empty.')
+        if value[0] in {'>', '<', '=', '!', '~'}:
+            raise ValidationError('Malformed condition expression.')
+
+        return expression
 
 
 class WorkflowStepForm(forms.ModelForm):

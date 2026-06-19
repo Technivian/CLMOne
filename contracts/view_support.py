@@ -11,6 +11,7 @@ from .models import (
     OrganizationMembership,
     Workflow,
     WorkflowStep,
+    WorkflowTemplate,
 )
 from .tenancy import get_user_organization, scope_queryset_for_organization, set_organization_on_instance
 
@@ -90,6 +91,16 @@ def scope_workflows_for_organization(organization):
     return Workflow.objects.filter(organization=organization)
 
 
+def scope_workflow_templates_for_organization(organization):
+    if organization is None:
+        return WorkflowTemplate.objects.none()
+    return WorkflowTemplate.objects.filter(
+        organization=organization,
+    ) | WorkflowTemplate.objects.filter(
+        organization__isnull=True,
+    )
+
+
 def scope_workflow_steps_for_organization(organization):
     if organization is None:
         return WorkflowStep.objects.none()
@@ -136,4 +147,19 @@ def organization_user_queryset(organization):
 
 
 def configure_workflow_form(form, organization):
-    return apply_form_queryset_scopes(form, organization, {'contract': Contract})
+    form = apply_form_queryset_scopes(form, organization, {'contract': Contract})
+    if 'template' in form.fields:
+        if organization is None:
+            form.fields['template'].queryset = WorkflowTemplate.objects.none()
+        else:
+            form.fields['template'].queryset = (
+                WorkflowTemplate.objects.filter(
+                    organization=organization,
+                    is_active=True,
+                )
+                | WorkflowTemplate.objects.filter(
+                    organization__isnull=True,
+                    is_active=True,
+                )
+            ).distinct().order_by('name', '-version', '-created_at', '-pk')
+    return form

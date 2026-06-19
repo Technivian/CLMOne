@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block content %}
+<div class="page-wrap reveal-stagger">
+    <div class="workspace-main hero-shell mb-6">
+        <div class="workspace-main-head">
+            <div>
+                <h1 class="workspace-title">{{ page_title }}</h1>
+                {% if page_subtitle %}<p class="workspace-subtitle c-muted">{{ page_subtitle }}</p>{% endif %}
+            </div>
+            <div class="workspace-tools">
+                {% if back_url %}
+                <a href="{{ back_url }}" class="inline-flex items-center px-3 py-2 text-sm rounded-lg border btn-ghost">Back</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="panel overflow-hidden">
+        <div class="panel-head">
+            <span class="panel-title">Activity Timeline</span>
+            <span class="panel-link">Latest compliance events</span>
+        </div>
+        <div class="divide-y divide-gray-100">
+            {% for entry in audit_feed %}
+            <div class="px-5 py-4 hover:bg-gray-50 transition-colors">
+                <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="badge-sm {{ entry.action_class }}">{{ entry.action }}</span>
+                            <span class="text-sm font-medium c-primary">{{ entry.summary }}</span>
+                        </div>
+                        <div class="text-xs c-muted">
+                            {{ entry.timestamp|date:"M d, Y H:i" }} · {{ entry.actor }}
+                        </div>
+                        {% if entry.changed_fields %}
+                        <div class="flex flex-wrap gap-2 pt-1">
+                            {% for field in entry.changed_fields %}
+                            <span class="badge-sm badge-gray">{{ field }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="text-xs c-muted lg:text-right">
+                        {{ entry.log.model_name }}
+                        {% if entry.log.object_repr %}<div class="mt-1 font-medium c-primary">{{ entry.log.object_repr }}</div>{% endif %}
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-state">No activity has been recorded for this item yet.</div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

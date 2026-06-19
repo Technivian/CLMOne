@@ -1566,6 +1566,13 @@ class WorkflowTemplate(models.Model):
 
     name = models.CharField(max_length=200)
     description = models.TextField()
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='workflow_templates',
+    )
     category = models.CharField(max_length=30, choices=Category.choices, default=Category.GENERAL)
     version = models.PositiveIntegerField(default=1)
     parent_template = models.ForeignKey(

@@ -46,7 +46,14 @@
             <div class="panel-inner">
             <div class="flex items-start justify-between gap-3 mb-2">
                 <h3 class="text-lg font-semibold c-primary">{{ template.name }}</h3>
-                <span class="badge-sm badge-gray">v{{ template.version }}</span>
+                <div class="flex items-center gap-2">
+                    <span class="badge-sm badge-gray">v{{ template.version }}</span>
+                    {% if template.is_active %}
+                    <span class="badge-sm badge-green">Published</span>
+                    {% else %}
+                    <span class="badge-sm badge-gray">Unpublished</span>
+                    {% endif %}
+                </div>
             </div>
             {% if template.description %}
             <p class="c-muted text-sm mb-4">{{ template.description }}</p>

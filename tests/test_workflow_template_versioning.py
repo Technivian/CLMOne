@@ -3,7 +3,8 @@ from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
 
-from contracts.models import Contract, Organization, OrganizationMembership, Workflow, WorkflowTemplate, WorkflowTemplateStep
+from contracts.forms import WorkflowTemplateStepForm
+from contracts.models import AuditLog, Contract, Organization, OrganizationMembership, UserProfile, Workflow, WorkflowTemplate, WorkflowTemplateStep
 from contracts.services.workflow_templates import clone_template_version, list_template_versions
 
 
@@ -63,13 +64,29 @@ class WorkflowTemplateVersioningTests(TestCase):
         )
 
     def test_clone_template_version_copies_steps_and_links_lineage(self):
+        first_step = self.template.steps.get(order=1)
+        first_step.step_kind = WorkflowTemplateStep.StepKind.APPROVAL
+        first_step.condition_expression = 'value>=250000'
+        first_step.assignee_role = UserProfile.Role.ADMIN
+        first_step.sla_hours = 12
+        first_step.escalation_after_hours = 24
+        first_step.save(
+            update_fields=['step_kind', 'condition_expression', 'assignee_role', 'sla_hours', 'escalation_after_hours']
+        )
+
         clone = clone_template_version(self.template, name='Contract Review v2')
 
         self.assertEqual(clone.version, 2)
         self.assertEqual(clone.parent_template_id, self.template.id)
         self.assertEqual(clone.name, 'Contract Review v2')
         self.assertEqual(clone.steps.count(), 2)
-        self.assertEqual(clone.steps.first().name, 'Intake')
+        cloned_step = clone.steps.get(order=1)
+        self.assertEqual(cloned_step.name, 'Intake')
+        self.assertEqual(cloned_step.step_kind, WorkflowTemplateStep.StepKind.APPROVAL)
+        self.assertEqual(cloned_step.condition_expression, 'value>=250000')
+        self.assertEqual(cloned_step.assignee_role, UserProfile.Role.ADMIN)
+        self.assertEqual(cloned_step.sla_hours, 12)
+        self.assertEqual(cloned_step.escalation_after_hours, 24)
 
     def test_list_template_versions_returns_latest_first(self):
         clone = clone_template_version(self.template)
@@ -134,6 +151,138 @@ class WorkflowTemplateVersioningTests(TestCase):
         created_step = WorkflowTemplateStep.objects.get(template=self.template, name='Signature')
         self.assertEqual(created_step.description, 'Collect signatures')
         self.assertEqual(created_step.order, 3)
+
+    def test_template_detail_delete_step_is_post_only_and_scoped(self):
+        self.client.force_login(self.user)
+        step = self.template.steps.get(order=1)
+
+        get_response = self.client.get(reverse('contracts:workflow_template_step_delete', args=[self.template.pk, step.pk]))
+        self.assertEqual(get_response.status_code, 405)
+
+        response = self.client.post(reverse('contracts:workflow_template_step_delete', args=[self.template.pk, step.pk]))
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(WorkflowTemplateStep.objects.filter(pk=step.pk).exists())
+        self.assertTrue(
+            AuditLog.objects.filter(
+                model_name='WorkflowTemplateStep',
+                action=AuditLog.Action.DELETE,
+                object_id=step.pk,
+            ).exists()
+        )
+
+    def test_template_detail_reorder_steps(self):
+        self.client.force_login(self.user)
+        ordered_ids = list(self.template.steps.order_by('order').values_list('id', flat=True))
+        response = self.client.post(
+            reverse('contracts:workflow_template_step_reorder', args=[self.template.pk]),
+            data={'step_ids': [ordered_ids[1], ordered_ids[0]]},
+        )
+        self.assertEqual(response.status_code, 302)
+        refreshed = list(self.template.steps.order_by('order').values_list('id', flat=True))
+        self.assertEqual(refreshed, [ordered_ids[1], ordered_ids[0]])
+
+    def test_template_publish_toggle_requires_steps_and_hides_inactive_from_new_workflows(self):
+        self.client.force_login(self.user)
+
+        empty_template = WorkflowTemplate.objects.create(
+            name='Empty Template',
+            description='No steps yet',
+            organization=self.org,
+            category=WorkflowTemplate.Category.CONTRACT_REVIEW,
+            version=1,
+            is_active=False,
+        )
+        empty_response = self.client.post(reverse('contracts:workflow_template_publish_toggle', args=[empty_template.pk]))
+        self.assertEqual(empty_response.status_code, 302)
+        empty_template.refresh_from_db()
+        self.assertFalse(empty_template.is_active)
+
+        active_response = self.client.post(reverse('contracts:workflow_template_publish_toggle', args=[self.template.pk]))
+        self.assertEqual(active_response.status_code, 302)
+        self.template.refresh_from_db()
+        self.assertFalse(self.template.is_active)
+
+        create_response = self.client.get(reverse('contracts:workflow_create'))
+        self.assertEqual(create_response.status_code, 200)
+        self.assertNotIn(self.template.pk, list(create_response.context['form'].fields['template'].queryset.values_list('pk', flat=True)))
+
+        republish_response = self.client.post(reverse('contracts:workflow_template_publish_toggle', args=[self.template.pk]))
+        self.assertEqual(republish_response.status_code, 302)
+        self.template.refresh_from_db()
+        self.assertTrue(self.template.is_active)
+
+    def test_condition_expression_validation(self):
+        valid_form = WorkflowTemplateStepForm(
+            data={
+                'name': 'Approval',
+                'description': '',
+                'order': 1,
+                'step_kind': WorkflowTemplateStep.StepKind.APPROVAL,
+                'condition_expression': 'value>=250000',
+                'assignee_role': '',
+                'specific_assignee': '',
+                'sla_hours': '',
+                'escalation_after_hours': '',
+            }
+        )
+        self.assertTrue(valid_form.is_valid(), valid_form.errors)
+
+        invalid_field = WorkflowTemplateStepForm(
+            data={
+                'name': 'Approval',
+                'description': '',
+                'order': 1,
+                'step_kind': WorkflowTemplateStep.StepKind.APPROVAL,
+                'condition_expression': 'unknown=HIGH',
+                'assignee_role': '',
+                'specific_assignee': '',
+                'sla_hours': '',
+                'escalation_after_hours': '',
+            }
+        )
+        self.assertFalse(invalid_field.is_valid())
+        self.assertIn('condition_expression', invalid_field.errors)
+
+        invalid_syntax = WorkflowTemplateStepForm(
+            data={
+                'name': 'Approval',
+                'description': '',
+                'order': 1,
+                'step_kind': WorkflowTemplateStep.StepKind.APPROVAL,
+                'condition_expression': 'value>>250000',
+                'assignee_role': '',
+                'specific_assignee': '',
+                'sla_hours': '',
+                'escalation_after_hours': '',
+            }
+        )
+        self.assertFalse(invalid_syntax.is_valid())
+        self.assertIn('condition_expression', invalid_syntax.errors)
+
+    def test_template_list_scopes_other_org_templates_out(self):
+        other_org = Organization.objects.create(name='Other Org', slug='other-org')
+        other_user = User.objects.create_user(username='other-user', password='pass12345')
+        OrganizationMembership.objects.create(
+            organization=other_org,
+            user=other_user,
+            role=OrganizationMembership.Role.OWNER,
+            is_active=True,
+        )
+        other_template = WorkflowTemplate.objects.create(
+            name='Other Review',
+            description='Other org flow',
+            organization=other_org,
+            category=WorkflowTemplate.Category.CONTRACT_REVIEW,
+            version=1,
+            is_active=True,
+        )
+
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('contracts:workflow_template_list'))
+        self.assertEqual(response.status_code, 200)
+        template_ids = [item.id for item in response.context['workflow_templates']]
+        self.assertIn(self.template.id, template_ids)
+        self.assertNotIn(other_template.id, template_ids)
 
     def test_template_detail_clone_action_creates_new_version(self):
         self.client.force_login(self.user)
