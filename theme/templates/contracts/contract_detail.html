@@ -103,28 +103,6 @@
 
       <div class="panel">
         <div class="panel-head">
-          <h3 class="panel-title">Lifecycle Guidance</h3>
-        </div>
-        <div class="panel-inner space-y-3 text-sm">
-          <div class="flex items-center justify-between gap-3">
-            <span class="c-muted">State</span>
-            <span class="badge-sm {% if lifecycle_guidance.severity == 'high' %}badge-red{% elif lifecycle_guidance.severity == 'medium' %}badge-yellow{% else %}badge-green{% endif %}">{{ lifecycle_guidance.state }}</span>
-          </div>
-          <div><span class="c-muted">Next step</span><div class="mt-1 c-primary">{{ lifecycle_guidance.action }}</div></div>
-          <div><span class="c-muted">Target stage</span><div class="mt-1 c-primary">{{ lifecycle_guidance.next_stage }}</div></div>
-          {% if lifecycle_guidance.detail %}<div class="text-xs c-muted">{{ lifecycle_guidance.detail }}</div>{% endif %}
-          {% if lifecycle_guidance.signals %}
-          <div class="space-y-2 pt-1">
-            {% for signal in lifecycle_guidance.signals %}
-            <div class="rounded-lg bg-gray-50 px-3 py-2 text-xs c-muted">{{ signal }}</div>
-            {% endfor %}
-          </div>
-          {% endif %}
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-head">
           <h3 class="panel-title">Documents &amp; Versions</h3>
         </div>
         {% for doc in documents %}
