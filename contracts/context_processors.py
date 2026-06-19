@@ -22,6 +22,7 @@ def feature_flags(request):
         'SSO_ENABLED': getattr(settings, 'SSO_ENABLED', False),
         'BUILD_SHA': getattr(settings, 'BUILD_SHA', 'unknown'),
         'BUILD_LABEL': getattr(settings, 'BUILD_LABEL', 'commit unknown'),
+        'csp_nonce': getattr(request, 'csp_nonce', ''),
         'CURRENT_ORGANIZATION': getattr(request, 'organization', None),
         'UNREAD_NOTIFICATIONS': unread_notifications,
         'USER_ORGANIZATION_MEMBERSHIPS': (

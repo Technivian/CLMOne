@@ -5,7 +5,7 @@
 {% block title %}Components Demo{% endblock %}
 
 {% block content %}
-<style>
+<style nonce="{{ csp_nonce }}">
   .progress-w-75 { width: 75%; }
   .progress-w-40 { width: 40%; }
 </style>

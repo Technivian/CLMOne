@@ -1,4 +1,5 @@
 import logging
+import secrets
 import time
 import traceback
 from uuid import uuid4
@@ -50,6 +51,9 @@ class SecurityHeadersMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
+        # Per-request CSP nonce. Set before get_response so templates can stamp
+        # inline <script>/<style> via the csp_nonce context processor.
+        request.csp_nonce = secrets.token_urlsafe(16)
         response = self.get_response(request)
         if not getattr(settings, 'SECURITY_HEADERS_ENABLED', True):
             return response
@@ -57,7 +61,8 @@ class SecurityHeadersMiddleware:
         response.setdefault('X-Content-Type-Options', 'nosniff')
         response.setdefault('Referrer-Policy', getattr(settings, 'SECURE_REFERRER_POLICY', 'same-origin'))
         response.setdefault('Permissions-Policy', getattr(settings, 'PERMISSIONS_POLICY', 'geolocation=(), microphone=(), camera=()'))
-        response.setdefault('Content-Security-Policy', getattr(settings, 'CONTENT_SECURITY_POLICY', "default-src 'self'"))
+        policy = getattr(settings, 'CONTENT_SECURITY_POLICY', "default-src 'self'")
+        response.setdefault('Content-Security-Policy', policy.replace('{nonce}', request.csp_nonce))
         return response
 
 

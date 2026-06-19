@@ -12,22 +12,20 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Manrope:wght@500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script>
+    <script nonce="{{ csp_nonce }}">
+        // Apply persisted theme before paint to avoid a flash.
         (function() {
             var t = localStorage.getItem('cms-aegis-theme') || 'dark';
             document.documentElement.setAttribute('data-theme', t);
         })();
-        function toggleTheme() {
-            var html = document.documentElement;
-            var current = html.getAttribute('data-theme');
-            var next = current === 'dark' ? 'light' : 'dark';
-            html.setAttribute('data-theme', next);
-            localStorage.setItem('cms-aegis-theme', next);
-        }
     </script>
-    <style>
+    <script src="{% static 'js/csp-handlers.js' %}" defer></script>
+    <style nonce="{{ csp_nonce }}">
         * { font-family: 'Manrope', 'Inter', system-ui, -apple-system, sans-serif; }
+        /* Token-backed utilities replacing former inline style="" attributes (CSP). */
+        .u-divider { background: var(--border); }
+        .u-panel-canvas { background: var(--surface); border-color: var(--border); }
+        .u-min-h-editor { min-height: 620px; }
         h1, h2, h3, h4, h5, h6,
         .page-title,
         .workspace-title,
@@ -1107,7 +1105,7 @@
                 {% if USER_ORGANIZATION_MEMBERSHIPS|length > 1 %}
                     <form method="post" action="{% url 'contracts:switch_organization' %}" class="org-form">
                         {% csrf_token %}
-                        <select name="organization_id" onchange="this.form.submit()" class="org-select">
+                        <select name="organization_id" data-autosubmit class="org-select">
                             {% for membership in USER_ORGANIZATION_MEMBERSHIPS %}
                                 <option value="{{ membership.organization.id }}" {% if CURRENT_ORGANIZATION and membership.organization.id == CURRENT_ORGANIZATION.id %}selected{% endif %}>{{ membership.organization.name }}</option>
                             {% endfor %}
@@ -1125,7 +1123,7 @@
                 <a href="{% url 'settings_hub' %}" class="nav-icon-link" title="Instellingen">
                     <svg class="nav-icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317a1 1 0 011.35-.936l.478.239a1 1 0 00.894 0l.478-.239a1 1 0 011.35.936l.067.53a1 1 0 00.611.822l.49.198a1 1 0 01.554 1.266l-.18.52a1 1 0 00.174.952l.325.44a1 1 0 010 1.19l-.325.44a1 1 0 00-.174.952l.18.52a1 1 0 01-.554 1.266l-.49.198a1 1 0 00-.611.822l-.067.53a1 1 0 01-1.35.936l-.478-.239a1 1 0 00-.894 0l-.478.239a1 1 0 01-1.35-.936l-.067-.53a1 1 0 00-.611-.822l-.49-.198a1 1 0 01-.554-1.266l.18-.52a1 1 0 00-.174-.952l-.325-.44a1 1 0 010-1.19l.325-.44a1 1 0 00.174-.952l-.18-.52a1 1 0 01.554-1.266l.49-.198a1 1 0 00.611-.822l.067-.53z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15a3 3 0 100-6 3 3 0 000 6z"></path></svg>
                 </a>
-                <button onclick="toggleTheme()" class="theme-toggle-btn" title="Thema wisselen">
+                <button type="button" data-action="toggle-theme" class="theme-toggle-btn" title="Thema wisselen">
                     <svg class="icon-sun nav-icon-svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
                     <svg class="icon-moon nav-icon-svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
                 </button>
@@ -1153,7 +1151,7 @@
                     </form>
                 </div>
             {% else %}
-                <button onclick="toggleTheme()" class="theme-toggle-btn" title="Thema wisselen">
+                <button type="button" data-action="toggle-theme" class="theme-toggle-btn" title="Thema wisselen">
                     <svg class="icon-sun nav-icon-svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
                     <svg class="icon-moon nav-icon-svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
                 </button>
@@ -1272,7 +1270,7 @@
     </main>
     {% endif %}
 
-    <script>
+    <script nonce="{{ csp_nonce }}">
     (function () {
         var railToggle = document.getElementById('rail-toggle');
         if (!railToggle) {

@@ -58,7 +58,7 @@
                             <span class="{% if item.is_checked %}line-through text-gray-500{% endif %}">{{ item.text }}</span>
                             <form action="{% url 'contracts:toggle_checklist_item' item.pk %}" method="post">
                                 {% csrf_token %}
-                                <input type="checkbox" onchange="this.form.submit()" {% if item.is_checked %}checked{% endif %}
+                                <input type="checkbox" data-autosubmit {% if item.is_checked %}checked{% endif %}
                                        class="h-6 w-6 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                             </form>
                         </div>

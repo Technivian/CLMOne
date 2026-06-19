@@ -35,7 +35,7 @@
     <div class="mt-3 flex space-x-2">
         <a href="{% url 'contracts:legal_task_update' task.pk %}" class="text-blue-600 hover:text-blue-800 text-xs">Edit</a>
         {% if task.status != 'DONE' %}
-        <button onclick="updateTaskStatus({{ task.id }}, 'DONE')" class="text-green-600 hover:text-green-800 text-xs">Complete</button>
+        <button type="button" data-action="complete-task" data-task-id="{{ task.id }}" class="text-green-600 hover:text-green-800 text-xs">Complete</button>
         {% endif %}
     </div>
 </div>

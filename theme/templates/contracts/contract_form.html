@@ -94,7 +94,7 @@
                     {% csrf_token %}
                     <div class="mb-2">
                         <div class="text-xs uppercase tracking-[0.18em] c-muted mb-2">Request package</div>
-                        <div class="h-px" style="background: var(--border);"></div>
+                        <div class="h-px u-divider"></div>
                     </div>
                     <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
                         <div class="xl:col-span-3 space-y-4">
@@ -116,7 +116,7 @@
                         </div>
 
                         <div class="xl:col-span-9 space-y-4">
-                            <div class="rounded-xl border p-4 surface-subtle" style="min-height: 620px;">
+                            <div class="rounded-xl border p-4 surface-subtle u-min-h-editor">
                                 <div class="flex items-center justify-between gap-3 flex-wrap mb-4">
                                     <div>
                                         <div class="text-xs uppercase tracking-[0.18em] c-muted mb-1">Drafting canvas</div>
@@ -242,7 +242,7 @@
         <p class="text-xs text-blue-700" data-draft-section-source>Source: Inserted section</p>
     </div>
 </template>
-<script>
+<script nonce="{{ csp_nonce }}">
 (function () {
     const list = document.querySelector('[data-draft-section-list]');
     const template = document.getElementById('draft-section-template');

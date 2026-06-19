@@ -22,7 +22,9 @@ class RedesignLayoutTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'CMS Aegis')
         self.assertContains(response, 'data-theme="dark"')
-        self.assertContains(response, 'toggleTheme()')
+        # Theme toggle is wired via a delegated handler (CSP: no inline onclick).
+        self.assertContains(response, 'data-action="toggle-theme"')
+        self.assertContains(response, 'js/csp-handlers.js')
         self.assertContains(response, 'title="Search"')
 
     def test_sidebar_navigation_sections_and_links(self):

@@ -87,7 +87,7 @@
                     Enabled: <strong class="c-primary">{{ organization.scim_enabled|yesno:"Yes,No" }}</strong>
                     {% if organization.scim_token_last4 %} · Token ending in <strong class="c-primary">{{ organization.scim_token_last4 }}</strong>{% endif %}
                 </div>
-                <form method="post" onsubmit="return confirm('Rotate the SCIM token? This will invalidate the existing token.');">
+                <form method="post" data-confirm="Rotate the SCIM token? This will invalidate the existing token.">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="rotate_scim_token">
                     <button type="submit" class="btn-ghost">Rotate SCIM token</button>
@@ -127,7 +127,7 @@
                         <div class="mt-1">Latest token: <strong class="c-primary">{{ organization.api_tokens.first.token_last4 }}</strong></div>
                     {% endif %}
                 </div>
-                <form method="post" onsubmit="return confirm('Rotate the API token? This will invalidate the existing token value.');">
+                <form method="post" data-confirm="Rotate the API token? This will invalidate the existing token value.">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="rotate_api_token">
                     <button type="submit" class="btn-ghost">Rotate API token</button>

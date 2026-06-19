@@ -15,7 +15,7 @@
 
 <form method="get" class="mb-4 flex items-center gap-2 flex-wrap">
     <input type="text" name="q" value="{{ search_query }}" placeholder="Search clients..." class="flex-1 min-w-0 px-3 py-2 text-sm rounded-lg border form-input">
-    <select name="status" class="px-3 py-2 text-sm rounded-lg border form-select" onchange="this.form.submit()">
+    <select name="status" class="px-3 py-2 text-sm rounded-lg border form-select" data-autosubmit>
         <option value="">All Statuses</option>
         <option value="ACTIVE" {% if request.GET.status == 'ACTIVE' %}selected{% endif %}>Active</option>
         <option value="INACTIVE" {% if request.GET.status == 'INACTIVE' %}selected{% endif %}>Inactive</option>

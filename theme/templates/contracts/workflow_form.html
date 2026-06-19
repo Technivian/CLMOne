@@ -53,7 +53,7 @@
                     </div>
                 </div>
                 {% if template_comparison %}
-                <div class="mt-4 content-surface" style="min-height: auto;">
+                <div class="mt-4 content-surface">
                     <div class="flex items-center justify-between">
                         <h3 class="text-sm font-semibold c-primary">Compare against selected template</h3>
                         <a href="{% url 'contracts:workflow_template_compare' selected_template.pk suggested_template.pk %}?preset=legal_ops" class="text-xs font-medium c-link">Open legal ops diff</a>
@@ -118,7 +118,7 @@
     </div>
 </div>
 
-<script>
+<script nonce="{{ csp_nonce }}">
 function updateWorkflowName() {
     const contractSelect = document.getElementById('{{ form.contract.id_for_label }}');
     const workflowNameInput = document.getElementById('{{ form.title.id_for_label }}');

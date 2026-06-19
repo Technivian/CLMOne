@@ -56,7 +56,7 @@
                 <div class="btn-group">
                     <a href="{% url 'organization_session_audit' %}" class="btn-ghost">Session audit</a>
                     <a href="{% url 'organization_security_export' %}" class="btn-ghost">Export security CSV</a>
-                    <form method="post" onsubmit="return confirm('Revoke sessions for all active organization members?');">
+                    <form method="post" data-confirm="Revoke sessions for all active organization members?">
                         {% csrf_token %}
                         <input type="hidden" name="action" value="revoke_sessions">
                         <button type="submit" class="btn-ghost">Revoke all sessions</button>

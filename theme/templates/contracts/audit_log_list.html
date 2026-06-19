@@ -10,14 +10,14 @@
     </div>
 
     <form method="get" class="mb-4 flex gap-2">
-        <select name="action" class="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white" onchange="this.form.submit()">
+        <select name="action" class="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white" data-autosubmit>
             <option value="">All Actions</option>
             <option value="CREATE" {% if request.GET.action == 'CREATE' %}selected{% endif %}>Created</option>
             <option value="UPDATE" {% if request.GET.action == 'UPDATE' %}selected{% endif %}>Updated</option>
             <option value="DELETE" {% if request.GET.action == 'DELETE' %}selected{% endif %}>Deleted</option>
             <option value="APPROVE" {% if request.GET.action == 'APPROVE' %}selected{% endif %}>Approved</option>
         </select>
-        <select name="model" class="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white" onchange="this.form.submit()">
+        <select name="model" class="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white" data-autosubmit>
             <option value="">All Types</option>
             <option value="Contract" {% if request.GET.model == 'Contract' %}selected{% endif %}>Contract</option>
             <option value="Client" {% if request.GET.model == 'Client' %}selected{% endif %}>Client</option>

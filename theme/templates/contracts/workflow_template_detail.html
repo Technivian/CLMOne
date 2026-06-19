@@ -358,7 +358,7 @@
                             <button type="submit" class="text-xs font-medium c-link">Move down</button>
                         </form>
                         {% endif %}
-                        <form method="post" action="{% url 'contracts:workflow_template_step_delete' workflow_template.pk step.pk %}" onsubmit="return confirm('Delete this workflow step?');">
+                        <form method="post" action="{% url 'contracts:workflow_template_step_delete' workflow_template.pk step.pk %}" data-confirm="Delete this workflow step?">
                             {% csrf_token %}
                             <button type="submit" class="text-xs font-medium c-danger">Delete</button>
                         </form>

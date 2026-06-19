@@ -216,7 +216,7 @@
     {% endif %}
 </div>
 
-<script>
+<script nonce="{{ csp_nonce }}">
 function toggleFilters() {
     const panel = document.getElementById('filters-panel');
     const btn = document.getElementById('filters-toggle-btn');

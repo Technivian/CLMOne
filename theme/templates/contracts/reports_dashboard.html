@@ -154,7 +154,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
+<script nonce="{{ csp_nonce }}">
     const data = JSON.parse('{{ monthly_billing|safe }}');
     const chart = document.getElementById('billing-chart');
 

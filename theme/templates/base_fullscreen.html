@@ -10,23 +10,16 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
-                }
-            }
-        }
-    </script>
-    <script>
+    <link href="{% static 'css/dist/styles.css' %}" rel="stylesheet">
+    <script src="{% static 'js/csp-handlers.js' %}" defer></script>
+    <script nonce="{{ csp_nonce }}">
+        // Apply persisted theme before paint to avoid a flash.
         (function() {
             var t = localStorage.getItem('cms-aegis-theme') || 'dark';
             document.documentElement.setAttribute('data-theme', t);
         })();
     </script>
-    <style>
+    <style nonce="{{ csp_nonce }}">
         * { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
 
         :root, [data-theme="dark"] {
@@ -152,14 +145,5 @@
     </div>
     {% endblock %}
 
-    <script>
-        function toggleTheme() {
-            var html = document.documentElement;
-            var current = html.getAttribute('data-theme');
-            var next = current === 'dark' ? 'light' : 'dark';
-            html.setAttribute('data-theme', next);
-            localStorage.setItem('cms-aegis-theme', next);
-        }
-    </script>
 </body>
 </html>

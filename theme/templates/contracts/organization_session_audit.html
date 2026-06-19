@@ -22,7 +22,7 @@
                     <div class="text-xs c-muted">Session key: {{ session.session_key }}</div>
                     <div class="text-xs c-muted">Last activity: {% if session.last_activity_at %}{{ session.last_activity_at|date:"Y-m-d H:i" }}{% else %}Unknown{% endif %} · Expires: {{ session.expire_date|date:"Y-m-d H:i" }}</div>
                 </div>
-                <form method="post" onsubmit="return confirm('Revoke this session now?');">
+                <form method="post" data-confirm="Revoke this session now?">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="revoke_session">
                     <input type="hidden" name="session_key" value="{{ session.session_key }}">

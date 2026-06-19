@@ -88,9 +88,9 @@
         <h2 class="text-xl font-semibold text-primary-700 mb-4">Interactive States</h2>
         <p class="text-sm text-muted mb-4">Hover and focus on the buttons below to see state changes</p>
         <div class="flex flex-wrap gap-4 items-center">
-            <button class="btn-primary btn-lg" onclick="alert('Primary button clicked!')">Click Me (Primary)</button>
-            <button class="btn-accent btn-lg" onclick="alert('Accent button clicked!')">Click Me (Accent)</button>
-            <button class="btn-outline btn-lg" onclick="alert('Outline button clicked!')">Click Me (Outline)</button>
+            <button type="button" class="btn-primary btn-lg" data-action="demo-alert" data-message="Primary button clicked!">Click Me (Primary)</button>
+            <button type="button" class="btn-accent btn-lg" data-action="demo-alert" data-message="Accent button clicked!">Click Me (Accent)</button>
+            <button type="button" class="btn-outline btn-lg" data-action="demo-alert" data-message="Outline button clicked!">Click Me (Outline)</button>
         </div>
     </div>
 
@@ -105,7 +105,7 @@
     </div>
 </div>
 
-<script>
+<script nonce="{{ csp_nonce }}">
 // Simple button interaction test
 document.addEventListener('DOMContentLoaded', function() {
     const buttons = document.querySelectorAll('button[class*="btn-"]');

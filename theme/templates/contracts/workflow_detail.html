@@ -132,8 +132,12 @@
                                 {% csrf_token %}
                                 <button type="submit" class="text-sm font-medium c-success hover:underline">Complete</button>
                             </form>
-                            <button
-                                onclick="openStepModal({{ step.pk }}, '{{ step.name|escapejs }}', '{{ step.status }}', '{{ step.description|default_if_none:''|escapejs }}')"
+                            <button type="button"
+                                data-action="open-step-modal"
+                                data-step-pk="{{ step.pk }}"
+                                data-step-name="{{ step.name }}"
+                                data-step-status="{{ step.status }}"
+                                data-step-description="{{ step.description|default_if_none:'' }}"
                                 class="text-sm font-medium c-link">
                                 Update
                             </button>
@@ -330,7 +334,7 @@
                     </div>
                 </div>
                 <div class="flex justify-end gap-3 mt-6">
-                    <button type="button" onclick="closeStepModal()" class="btn-ghost">Cancel</button>
+                    <button type="button" data-action="close-step-modal" class="btn-ghost">Cancel</button>
                     <button type="submit" class="btn-primary-grad text-white">Update Step</button>
                 </div>
             </form>
@@ -339,7 +343,7 @@
     </div>
 </div>
 
-<script>
+<script nonce="{{ csp_nonce }}">
 function openStepModal(stepId, stepName, currentStatus, currentDescription) {
     document.getElementById('modal-title').textContent = `Update ${stepName}`;
     document.getElementById('step-status').value = currentStatus;
@@ -351,5 +355,16 @@ function openStepModal(stepId, stepName, currentStatus, currentDescription) {
 function closeStepModal() {
     document.getElementById('step-modal').classList.add('hidden');
 }
+
+document.addEventListener('click', function (e) {
+    var openBtn = e.target.closest('[data-action="open-step-modal"]');
+    if (openBtn) {
+        openStepModal(openBtn.dataset.stepPk, openBtn.dataset.stepName, openBtn.dataset.stepStatus, openBtn.dataset.stepDescription);
+        return;
+    }
+    if (e.target.closest('[data-action="close-step-modal"]')) {
+        closeStepModal();
+    }
+});
 </script>
 {% endblock %}

@@ -50,12 +50,12 @@
               {% if membership.user_id != current_user_id %}
               <div class="flex items-center justify-end gap-2">
                 <form method="post" action="{% url 'contracts:revoke_member_sessions' membership.id %}" class="inline"
-                      onsubmit="return confirm('Revoke all active sessions for this member? They will be signed out immediately.')">
+                      data-confirm="Revoke all active sessions for this member? They will be signed out immediately.">
                   {% csrf_token %}
                   <button type="submit" class="inline-flex items-center px-2 py-1 rounded text-xs border btn-ghost c-warning">Revoke Sessions</button>
                 </form>
                 <form method="post" action="{% url 'contracts:deactivate_organization_member' membership.id %}" class="inline"
-                      onsubmit="return confirm('Deactivate this member? They will lose access to the organization.')">
+                      data-confirm="Deactivate this member? They will lose access to the organization.">
                   {% csrf_token %}
                   <button type="submit" class="inline-flex items-center px-2 py-1 rounded text-xs border btn-ghost c-danger">Deactivate</button>
                 </form>
@@ -132,7 +132,7 @@
                 <button type="submit" class="inline-flex items-center px-2 py-1 rounded text-xs border btn-ghost">Resend</button>
               </form>
               <form method="post" action="{% url 'contracts:revoke_organization_invite' invitation.id %}"
-                    onsubmit="return confirm('Revoke this invitation? The recipient will no longer be able to join.')">
+                    data-confirm="Revoke this invitation? The recipient will no longer be able to join.">
                 {% csrf_token %}
                 <button type="submit" class="inline-flex items-center px-2 py-1 rounded text-xs border btn-ghost c-danger">Revoke</button>
               </form>

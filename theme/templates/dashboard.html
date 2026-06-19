@@ -453,7 +453,7 @@
     </div>
 
 </div>
-<script>
+<script nonce="{{ csp_nonce }}">
 document.querySelectorAll('.progress-bar-fill[data-width]').forEach((bar) => {
     const width = Number(bar.dataset.width || 0);
     bar.style.width = `${Math.max(0, Math.min(100, width))}%`;
