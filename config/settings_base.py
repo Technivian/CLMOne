@@ -371,6 +371,31 @@ ESIGN_DOCUSIGN_BASE_URI = os.getenv('ESIGN_DOCUSIGN_BASE_URI', '').strip()
 ESIGN_DOCUSIGN_ACCOUNT_ID = os.getenv('ESIGN_DOCUSIGN_ACCOUNT_ID', '').strip()
 ESIGN_DOCUSIGN_ACCESS_TOKEN = os.getenv('ESIGN_DOCUSIGN_ACCESS_TOKEN', '').strip()
 
+# Cache — uses Redis when REDIS_URL is set, falls back to LocMem for local dev.
+# LocMem is per-process and breaks rate limiting across gunicorn workers; always
+# set REDIS_URL in production.
+_redis_url = os.getenv('REDIS_URL', '').strip()
+if _redis_url:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django_redis.cache.RedisCache',
+            'LOCATION': _redis_url,
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+                'SOCKET_CONNECT_TIMEOUT': 5,
+                'SOCKET_TIMEOUT': 5,
+                'IGNORE_EXCEPTIONS': True,
+            },
+            'KEY_PREFIX': 'cms',
+        }
+    }
+else:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        }
+    }
+
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@cms-aegis.local')
 SERVER_EMAIL = os.getenv('SERVER_EMAIL', DEFAULT_FROM_EMAIL)
 
@@ -387,6 +412,20 @@ if _email_host:
     EMAIL_TIMEOUT = int(os.getenv('EMAIL_TIMEOUT', '10'))
 else:
     EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
+
+# Sentry — enabled when SENTRY_DSN is set; silent no-op otherwise.
+_sentry_dsn = os.getenv('SENTRY_DSN', '').strip()
+if _sentry_dsn:
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+    from sentry_sdk.integrations.redis import RedisIntegration
+    sentry_sdk.init(
+        dsn=_sentry_dsn,
+        integrations=[DjangoIntegration(), RedisIntegration()],
+        traces_sample_rate=float(os.getenv('SENTRY_TRACES_SAMPLE_RATE', '0.1')),
+        send_default_pii=False,
+        environment=os.getenv('DJANGO_ENV', 'development'),
+    )
 
 DJANGO_LOG_LEVEL = os.getenv('DJANGO_LOG_LEVEL', 'INFO').upper()
 LOG_SINK_ENABLED = _bool_env('LOG_SINK_ENABLED', default=False)
