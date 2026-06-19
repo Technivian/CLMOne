@@ -43,7 +43,8 @@ from contracts.models import (
 )
 from contracts.middleware import log_action
 from contracts.tenancy import get_user_organization, scope_queryset_for_organization
-from contracts.services.esign import ESignTransitionError, transition_signature_request
+from contracts.services.esign import ESignTransitionError, send_signature_request, transition_signature_request
+from contracts.services.signature_providers import SignatureProviderError
 from contracts.services.signature_audit import (
     log_signature_packet_cancel,
     log_signature_packet_created,
@@ -239,6 +240,43 @@ def signature_request_transition(request, pk, new_status):
         request=request,
     )
     messages.success(request, f'Signature request marked as {signature_request.get_status_display().lower()}.')
+    return redirect(reverse('contracts:signature_request_detail', kwargs={'pk': signature_request.pk}))
+
+
+@login_required
+@require_POST
+def signature_request_send(request, pk):
+    org = get_user_organization(request.user)
+    queryset = scope_queryset_for_organization(
+        SignatureRequest.objects.select_related('contract', 'document', 'created_by'), org
+    )
+    signature_request = get_object_or_404(queryset, pk=pk)
+    try:
+        result = send_signature_request(signature_request, actor=request.user)
+    except ESignTransitionError as exc:
+        return HttpResponseForbidden(str(exc))
+    except SignatureProviderError as exc:
+        messages.error(request, f'Could not send for signature: {exc}')
+        return redirect(reverse('contracts:signature_request_detail', kwargs={'pk': signature_request.pk}))
+
+    if result.get('sent'):
+        log_action(
+            request.user,
+            AuditLog.Action.UPDATE,
+            'SignatureRequest',
+            object_id=signature_request.id,
+            object_repr=str(signature_request),
+            changes={
+                'event': 'signature_request_sent',
+                'provider': result.get('provider'),
+                'external_id': result.get('external_id'),
+                'organization_id': getattr(org, 'id', None),
+            },
+            request=request,
+        )
+        messages.success(request, f'Sent to {signature_request.signer_email} for signature.')
+    else:
+        messages.info(request, 'Signature request was already sent.')
     return redirect(reverse('contracts:signature_request_detail', kwargs={'pk': signature_request.pk}))
 
 

@@ -159,6 +159,51 @@ def transition_signature_request(
     }
 
 
+def send_signature_request(signature_request: SignatureRequest, *, actor=None, provider=None):
+    """Dispatch a PENDING signature request to the configured e-sign provider.
+
+    Resolves the outbound provider, records the returned external reference and
+    signing URL, and transitions the request PENDING -> SENT (which also emits
+    the packet-sent audit event). Idempotent: a request that is already SENT (or
+    further along) is returned unchanged rather than re-dispatched.
+    """
+    from contracts.services.signature_providers import get_signature_provider
+
+    if signature_request.status != SignatureRequest.Status.PENDING:
+        # Already sent / signed / cancelled — nothing to dispatch.
+        return {
+            'sent': False,
+            'reason': 'not_pending',
+            'status': signature_request.status,
+            'signature_request_id': signature_request.id,
+        }
+
+    provider = provider or get_signature_provider()
+    result = provider.send(signature_request)
+
+    signature_request.external_id = result.external_id
+    signature_request.esign_provider = result.provider
+    signature_request.signing_url = result.signing_url
+
+    transition_signature_request(
+        signature_request,
+        SignatureRequest.Status.SENT,
+        actor=actor,
+        external_id=result.external_id,
+        enforce_actor=False,
+    )
+    # transition_signature_request saves; persist the provider metadata too.
+    signature_request.save(update_fields=['esign_provider', 'signing_url'])
+
+    return {
+        'sent': True,
+        'provider': result.provider,
+        'external_id': result.external_id,
+        'signing_url': result.signing_url,
+        'signature_request_id': signature_request.id,
+    }
+
+
 def apply_esign_event(signature_request: SignatureRequest, event: dict, *, dry_run: bool = False) -> dict:
     event_id = str(event.get('event_id') or '').strip()
     if not event_id:

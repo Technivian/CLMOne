@@ -98,6 +98,7 @@ from .views_domains.privacy_approvals import (
     SignatureRequestListView,
     SignatureRequestUpdateView,
     SignaturePacketDetailView,
+    signature_request_send,
     signature_request_send_reminder,
     signature_request_transition,
     signature_packet_resend,

@@ -2114,6 +2114,8 @@ class SignatureRequest(models.Model):
     signer_role = models.CharField(max_length=100, blank=True, help_text='e.g. CEO, Legal Counsel')
     status = models.CharField(max_length=15, choices=Status.choices, default=Status.PENDING)
     external_id = models.CharField(max_length=200, blank=True, help_text='External provider reference ID')
+    esign_provider = models.CharField(max_length=40, blank=True, help_text='Outbound e-sign provider that dispatched this request')
+    signing_url = models.CharField(max_length=500, blank=True, help_text='Provider signing URL returned when the request was sent')
     sent_at = models.DateTimeField(null=True, blank=True)
     viewed_at = models.DateTimeField(null=True, blank=True)
     signed_at = models.DateTimeField(null=True, blank=True)

@@ -283,6 +283,7 @@ urlpatterns = [
     path('signatures/new/', views.SignatureRequestCreateView.as_view(), name='signature_request_create'),
     path('signatures/<int:pk>/', views.SignatureRequestDetailView.as_view(), name='signature_request_detail'),
     path('signatures/<int:pk>/edit/', views.SignatureRequestUpdateView.as_view(), name='signature_request_update'),
+    path('signatures/<int:pk>/send/', views.signature_request_send, name='signature_request_send'),
     path('signatures/<int:pk>/transition/<str:new_status>/', views.signature_request_transition, name='signature_request_transition'),
     path('signatures/<int:pk>/reminder/', views.signature_request_send_reminder, name='signature_request_send_reminder'),
     path('signatures/<int:contract_pk>/packet/', views.SignaturePacketDetailView.as_view(), name='signature_packet_detail'),

@@ -121,6 +121,17 @@
                     <span class="panel-title">Quick Actions</span>
                 </div>
                 <div class="panel-inner">
+                    {% if object.status == 'PENDING' %}
+                    <form method="post" action="{% url 'contracts:signature_request_send' object.pk %}" class="mb-4">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-primary-grad text-white w-full text-left">
+                            Send for signature
+                        </button>
+                    </form>
+                    {% endif %}
+                    {% if object.signing_url %}
+                    <div class="detail-row mb-3"><span class="detail-label">Signing link</span><a class="c-primary truncate" href="{{ object.signing_url }}">{{ object.signing_url }}</a></div>
+                    {% endif %}
                     {% if available_transitions %}
                     <div class="space-y-3">
                         {% for transition in available_transitions %}
