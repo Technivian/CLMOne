@@ -159,21 +159,21 @@ class UIButtonAndFlowIntegrityTests(TestCase):
     def test_case_flow_semantics_on_high_traffic_pages(self):
         dashboard_response = self.client.get(reverse('dashboard'))
         self.assertEqual(dashboard_response.status_code, 200)
-        self.assertContains(dashboard_response, 'Active Cases')
-        self.assertContains(dashboard_response, 'Open Task Signals')
+        self.assertContains(dashboard_response, 'Active contracts')
+        self.assertContains(dashboard_response, 'Task Signals')
         self.assertContains(dashboard_response, 'Recent Cases')
 
         list_response = self.client.get(reverse('contracts:contract_list'))
         self.assertEqual(list_response.status_code, 200)
         self.assertContains(list_response, 'Cases')
-        self.assertContains(list_response, 'Search cases...')
+        self.assertContains(list_response, 'Search contracts...')
         self.assertContains(list_response, 'New Case')
 
         detail_response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': Contract.objects.first().pk}))
         self.assertEqual(detail_response.status_code, 200)
         self.assertContains(detail_response, 'Case Flow')
-        self.assertContains(detail_response, 'Case Details')
-        self.assertContains(detail_response, 'Case Actions')
+        self.assertContains(detail_response, 'Record Summary')
+        self.assertContains(detail_response, 'Action Cockpit')
 
         search_response = self.client.get(reverse('contracts:global_search'), {'q': 'UI Integrity'})
         self.assertEqual(search_response.status_code, 200)

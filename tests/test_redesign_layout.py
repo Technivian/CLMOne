@@ -27,12 +27,11 @@ class RedesignLayoutTests(TestCase):
 
     def test_sidebar_navigation_sections_and_links(self):
         response = self.client.get(reverse('dashboard'))
-        self.assertContains(response, 'COUNTERPARTIES')
+        self.assertContains(response, 'REFERENCE')
         self.assertContains(response, 'Contracts')
-        self.assertContains(response, 'GOVERNANCE')
+        self.assertContains(response, 'RISK &amp; COMPLIANCE')
         self.assertContains(response, 'Dashboard')
-        self.assertContains(response, 'Contracts')
-        self.assertContains(response, 'Tasks')
+        self.assertContains(response, 'Counterparties')
         self.assertContains(response, 'Workflows')
 
     def test_topbar_actions(self):
@@ -44,10 +43,10 @@ class RedesignLayoutTests(TestCase):
 
     def test_dashboard_kpis_and_panels(self):
         response = self.client.get(reverse('dashboard'))
-        self.assertContains(response, 'Active Matters')
-        self.assertContains(response, 'Clients')
-        self.assertContains(response, 'Contracts in intake')
-        self.assertContains(response, 'Open Task Signals')
+        self.assertContains(response, 'Active contracts')
+        self.assertContains(response, 'Pending approval')
+        self.assertContains(response, 'Expiring soon')
+        self.assertContains(response, 'Task Signals')
         self.assertContains(response, 'My Work Queue')
         self.assertContains(response, 'Recent Contracts')
         self.assertContains(response, 'Workflow recommendations open')
@@ -55,8 +54,9 @@ class RedesignLayoutTests(TestCase):
     def test_dashboard_quick_actions(self):
         response = self.client.get(reverse('dashboard'))
         self.assertContains(response, 'New Contract')
-        self.assertContains(response, 'New Counterparty')
-        self.assertContains(response, 'Start intake from contract')
+        self.assertContains(response, 'Quick links')
+        self.assertContains(response, 'Reports &amp; analytics')
+        self.assertContains(response, 'Privacy &amp; compliance')
 
     def tearDown(self):
         if 'FEATURE_REDESIGN' in os.environ:

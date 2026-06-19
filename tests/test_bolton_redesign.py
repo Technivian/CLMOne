@@ -30,10 +30,10 @@ class BoltonRedesignTestCase(TestCase):
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
 
-        self.assertContains(response, 'Active Matters')
-        self.assertContains(response, 'Clients')
-        self.assertContains(response, 'Contracts in intake')
-        self.assertContains(response, 'Open Task Signals')
+        self.assertContains(response, 'Active contracts')
+        self.assertContains(response, 'Pending approval')
+        self.assertContains(response, 'Expiring soon')
+        self.assertContains(response, 'High risk')
         self.assertContains(response, 'kpi-card')
 
     def test_dashboard_container_constraint(self):
@@ -73,8 +73,8 @@ class BoltonRedesignTestCase(TestCase):
 
         self.assertContains(response, 'Title')
         self.assertContains(response, 'Contract type')
-        self.assertContains(response, 'Status')
-        self.assertContains(response, 'Complexiteit')
+        self.assertContains(response, 'Stage')
+        self.assertContains(response, 'Complexity')
         self.assertContains(response, 'Counterparty')
         self.assertContains(response, 'Test Contract')
 
@@ -82,7 +82,7 @@ class BoltonRedesignTestCase(TestCase):
         response = self.client.get(reverse('contracts:contract_list'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Search contracts...')
-        self.assertContains(response, 'All statuses')
+        self.assertContains(response, 'In progress')
         self.assertContains(response, 'Search')
         self.assertContains(response, 'New Contract')
 
@@ -98,7 +98,7 @@ class BoltonRedesignTestCase(TestCase):
     def test_typography_and_spacing(self):
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "font-family: 'Inter'")
+        self.assertContains(response, "font-family: 'Manrope'")
         self.assertContains(response, 'dash-grid')
         self.assertContains(response, 'gap: 20px')
 

@@ -29,7 +29,7 @@ class RedesignComponentsTestCase(TestCase):
     def test_dashboard_component_labels(self):
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Active Contracts')
+        self.assertContains(response, 'Active contracts')
         self.assertContains(response, 'Recent Contracts')
         self.assertContains(response, 'Case Portfolio')
         self.assertContains(response, 'Workflow recommendations open')
@@ -49,7 +49,7 @@ class RedesignComponentsTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Test Contract')
         self.assertContains(response, 'Search contracts...')
-        self.assertContains(response, 'All statuses')
+        self.assertContains(response, 'In progress')
         self.assertContains(response, 'New Contract')
 
     def test_navigation_structure(self):
@@ -143,7 +143,7 @@ class RedesignComponentsTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Search across contracts, matters, documents, and task signals with relevance ranking.')
         self.assertContains(response, 'Search contracts, clients, matters, documents, clauses, task signals...')
-        self.assertContains(response, 'Contracts (1)')
+        self.assertContains(response, 'Cases (1)')
         self.assertContains(response, contract.title)
 
     def tearDown(self):
