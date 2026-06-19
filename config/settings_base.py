@@ -299,6 +299,13 @@ LOGIN_RATE_LIMIT_WINDOW_SECONDS = int(os.getenv('LOGIN_RATE_LIMIT_WINDOW_SECONDS
 REGISTER_RATE_LIMIT_REQUESTS = int(os.getenv('REGISTER_RATE_LIMIT_REQUESTS', '10'))
 REGISTER_RATE_LIMIT_WINDOW_SECONDS = int(os.getenv('REGISTER_RATE_LIMIT_WINDOW_SECONDS', '300'))
 
+# Token-authenticated API surfaces (Bearer token). We throttle repeated AUTH
+# FAILURES per IP rather than total volume, so legitimate authenticated traffic
+# is never rate-limited while credential-stuffing / provisioning abuse is.
+API_RATELIMIT_PREFIXES = ('/api/', '/scim/', '/contracts/api/', '/contracts/scim/')
+API_AUTH_FAIL_LIMIT = int(os.getenv('API_AUTH_FAIL_LIMIT', '20'))
+API_AUTH_FAIL_WINDOW_SECONDS = int(os.getenv('API_AUTH_FAIL_WINDOW_SECONDS', '300'))
+
 SECURITY_HEADERS_ENABLED = _bool_env('SECURITY_HEADERS_ENABLED', default=True)
 CONTENT_SECURITY_POLICY = os.getenv(
     'CONTENT_SECURITY_POLICY',

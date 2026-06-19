@@ -77,14 +77,22 @@ class AuthRateLimitMiddleware:
                 return self.get_response(request)
 
             path = request.path
+            client_ip = self._client_ip(request)
+            trusted = client_ip in getattr(settings, 'RATELIMIT_TRUSTED_IPS', ())
+
+            # Token-authenticated API/SCIM surfaces: throttle repeated auth
+            # FAILURES per IP, leaving legitimate authenticated traffic alone.
+            api_prefix = self._matched_api_prefix(path)
+            if api_prefix and not trusted:
+                return self._handle_api_request(request, api_prefix, client_ip)
+
             if path not in getattr(settings, 'RATELIMIT_PATHS', ('/login/', '/register/')):
                 return self.get_response(request)
 
             if request.method not in {'POST'}:
                 return self.get_response(request)
 
-            client_ip = self._client_ip(request)
-            if client_ip in getattr(settings, 'RATELIMIT_TRUSTED_IPS', ()):
+            if trusted:
                 return self.get_response(request)
 
             limit, window = self._policy_for_path(path)
@@ -130,6 +138,37 @@ class AuthRateLimitMiddleware:
             int(getattr(settings, 'LOGIN_RATE_LIMIT_REQUESTS', 10)),
             int(getattr(settings, 'LOGIN_RATE_LIMIT_WINDOW_SECONDS', 300)),
         )
+
+    @staticmethod
+    def _matched_api_prefix(path):
+        for prefix in getattr(settings, 'API_RATELIMIT_PREFIXES', ()):
+            if path.startswith(prefix):
+                return prefix
+        return None
+
+    def _handle_api_request(self, request, prefix, client_ip):
+        limit = int(getattr(settings, 'API_AUTH_FAIL_LIMIT', 20))
+        window = int(getattr(settings, 'API_AUTH_FAIL_WINDOW_SECONDS', 300))
+        key = f'api-authfail-rl:{prefix}:{client_ip}'
+        now = int(time.time())
+        bucket = cache.get(key)
+        if not bucket or not isinstance(bucket, dict) or now >= bucket.get('reset_at', 0):
+            bucket = {'count': 0, 'reset_at': now + window}
+
+        # Block once too many recent auth failures have accumulated.
+        if bucket['count'] >= limit:
+            retry_after = max(bucket['reset_at'] - now, 1)
+            response = HttpResponse('Too many failed authentication attempts.', status=429)
+            response['Retry-After'] = str(retry_after)
+            return response
+
+        response = self.get_response(request)
+
+        # Count only auth failures, so authenticated clients are never throttled.
+        if response.status_code in (401, 403):
+            bucket['count'] += 1
+            cache.set(key, bucket, timeout=max(bucket['reset_at'] - now, 1))
+        return response
 
 
 class AuditLogMiddleware:
