@@ -1,204 +1,108 @@
-"""AI-assisted clause drafting service.
+"""AI clause drafting service — uses Claude API to generate and suggest contract clauses."""
 
-Uses a deterministic template library keyed on contract_type and clause_type —
-no external LLM call required. Confidence scores reflect how well a template
-matches the contract context.
-"""
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Optional
+import json
+import logging
 
+import anthropic
 from django.utils import timezone
 
 from contracts.models import ClauseRecommendation, Contract
 
-# ---------------------------------------------------------------------------
-# Template library
-# ---------------------------------------------------------------------------
+logger = logging.getLogger(__name__)
 
-_CLAUSE_TEMPLATES: dict[str, dict[str, dict]] = {
-    'NDA': {
-        'CONFIDENTIALITY': {
-            'text': (
-                'Each party agrees to hold the other party\'s Confidential Information in strict '
-                'confidence and not to disclose it to any third party without prior written consent. '
-                'This obligation survives termination of this Agreement for a period of five (5) years.'
-            ),
-            'confidence': 0.95,
-            'rationale': 'Standard NDA confidentiality clause with 5-year survival period.',
-        },
-        'GOVERNING_LAW': {
-            'text': (
-                'This Agreement shall be governed by and construed in accordance with the laws of '
-                'the State of Delaware, without regard to its conflict of laws provisions.'
-            ),
-            'confidence': 0.85,
-            'rationale': 'Delaware is a common governing law choice for commercial agreements.',
-        },
-        'TERMINATION': {
-            'text': (
-                'Either party may terminate this Agreement upon thirty (30) days written notice to '
-                'the other party. Obligations of confidentiality shall survive termination.'
-            ),
-            'confidence': 0.90,
-            'rationale': 'Standard 30-day termination notice with confidentiality survival.',
-        },
+_MODEL = "claude-opus-4-8"
+
+_SUGGEST_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "clauses": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "clause_type": {
+                        "type": "string",
+                        "description": "Short ALL_CAPS identifier, e.g. GOVERNING_LAW",
+                    },
+                    "recommendation_text": {
+                        "type": "string",
+                        "description": "Professionally drafted clause text ready to insert",
+                    },
+                    "confidence": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+                    "rationale": {
+                        "type": "string",
+                        "description": "One sentence explaining why this clause matters",
+                    },
+                },
+                "required": ["clause_type", "recommendation_text", "confidence", "rationale"],
+            },
+        }
     },
-    'MSA': {
-        'LIMITATION_OF_LIABILITY': {
-            'text': (
-                'In no event shall either party be liable for indirect, incidental, special, '
-                'consequential, or punitive damages. Each party\'s total aggregate liability shall '
-                'not exceed the fees paid in the twelve (12) months preceding the claim.'
-            ),
-            'confidence': 0.92,
-            'rationale': 'Standard MSA liability cap tied to fees paid.',
-        },
-        'INDEMNIFICATION': {
-            'text': (
-                'Each party ("Indemnifying Party") shall defend, indemnify, and hold harmless the '
-                'other party from and against any claims, damages, and expenses arising from the '
-                'Indemnifying Party\'s breach of this Agreement or gross negligence.'
-            ),
-            'confidence': 0.88,
-            'rationale': 'Mutual indemnification for breach and gross negligence.',
-        },
-        'DATA_PROTECTION': {
-            'text': (
-                'Each party shall comply with applicable data protection laws, including the GDPR '
-                'where applicable. Processor obligations and data processing details shall be set '
-                'forth in a separate Data Processing Agreement.'
-            ),
-            'confidence': 0.90,
-            'rationale': 'GDPR-aligned data protection clause requiring a separate DPA.',
-        },
-        'PAYMENT_TERMS': {
-            'text': (
-                'Invoices are due and payable within thirty (30) days of invoice date. '
-                'Late payments shall accrue interest at 1.5% per month on the outstanding balance.'
-            ),
-            'confidence': 0.85,
-            'rationale': 'Net-30 payment terms with standard late-payment interest.',
-        },
-    },
-    'EMPLOYMENT': {
-        'CONFIDENTIALITY': {
-            'text': (
-                'Employee agrees to keep all proprietary information, trade secrets, and business '
-                'strategies of the Employer strictly confidential during and after employment, '
-                'for a period of three (3) years post-termination.'
-            ),
-            'confidence': 0.93,
-            'rationale': 'Employee confidentiality with 3-year post-termination obligation.',
-        },
-        'IP_OWNERSHIP': {
-            'text': (
-                'All inventions, works of authorship, and developments created by Employee in the '
-                'scope of employment shall be the sole property of the Employer. Employee hereby '
-                'assigns all intellectual property rights therein to Employer.'
-            ),
-            'confidence': 0.90,
-            'rationale': 'Standard work-for-hire IP assignment clause.',
-        },
-    },
-    'VENDOR': {
-        'LIMITATION_OF_LIABILITY': {
-            'text': (
-                'Vendor\'s total liability under this Agreement shall not exceed the amount paid '
-                'by Client in the three (3) months preceding the event giving rise to the claim. '
-                'Vendor shall not be liable for any indirect or consequential damages.'
-            ),
-            'confidence': 0.88,
-            'rationale': 'Vendor liability cap capped at 3 months fees.',
-        },
-        'FORCE_MAJEURE': {
-            'text': (
-                'Neither party shall be liable for delays or failure to perform due to causes '
-                'beyond its reasonable control, including acts of God, natural disasters, pandemic, '
-                'government action, or failure of third-party suppliers.'
-            ),
-            'confidence': 0.87,
-            'rationale': 'Standard force majeure clause covering common uncontrollable events.',
-        },
-    },
+    "required": ["clauses"],
 }
 
-_DEFAULT_CLAUSES: dict[str, dict] = {
-    'GOVERNING_LAW': {
-        'text': (
-            'This Agreement shall be governed by the laws of the applicable jurisdiction, without '
-            'regard to conflicts of law principles.'
-        ),
-        'confidence': 0.70,
-        'rationale': 'Generic governing law placeholder — specify jurisdiction.',
-    },
-    'DISPUTE_RESOLUTION': {
-        'text': (
-            'Any disputes arising under this Agreement shall be resolved through binding '
-            'arbitration under the rules of the American Arbitration Association.'
-        ),
-        'confidence': 0.72,
-        'rationale': 'AAA arbitration as dispute resolution mechanism.',
-    },
-    'WARRANTY': {
-        'text': (
-            'Each party represents and warrants that it has the full right, power, and authority '
-            'to enter into and perform this Agreement.'
-        ),
-        'confidence': 0.80,
-        'rationale': 'Standard authority and capacity warranty.',
-    },
-}
-
-_SECTION_DRAFTS: dict[str, dict[str, str]] = {
-    'NDA': {
-        'recitals': (
-            'WHEREAS, the parties wish to explore a potential business relationship and, in '
-            'connection therewith, may disclose confidential information to each other;\n\n'
-            'NOW, THEREFORE, in consideration of the mutual covenants herein, the parties agree as follows:'
-        ),
-        'definitions': (
-            '"Confidential Information" means any non-public information disclosed by one party to '
-            'the other, whether oral, written, or electronic, that is designated as confidential '
-            'or that reasonably should be understood to be confidential given the context.'
-        ),
-    },
-    'MSA': {
-        'recitals': (
-            'WHEREAS, Client wishes to obtain certain services from Provider, and Provider '
-            'wishes to provide such services, subject to the terms and conditions set forth herein;\n\n'
-            'NOW, THEREFORE, the parties agree as follows:'
-        ),
-        'definitions': (
-            '"Services" means the professional services described in one or more Statements of '
-            'Work executed under this Agreement.\n'
-            '"Deliverables" means any work product created by Provider specifically for Client.\n'
-            '"Confidential Information" means non-public business, technical, or financial information.'
-        ),
-    },
-}
+_client: anthropic.Anthropic | None = None
 
 
-# ---------------------------------------------------------------------------
-# Service
-# ---------------------------------------------------------------------------
+def _get_client() -> anthropic.Anthropic:
+    global _client
+    if _client is None:
+        _client = anthropic.Anthropic()
+    return _client
 
 
 class AIClauseDraftingService:
-    def suggest_clauses(
-        self, contract_id: int, org
-    ) -> list[ClauseRecommendation]:
+    def suggest_clauses(self, contract_id: int, org) -> list[ClauseRecommendation]:
         contract = Contract.objects.get(pk=contract_id, organization=org)
-        contract_type = contract.contract_type
-        type_templates = _CLAUSE_TEMPLATES.get(contract_type, {})
 
-        # Merge type-specific + default clauses (type-specific wins)
-        all_templates = {**_DEFAULT_CLAUSES, **type_templates}
+        context_parts = [
+            f"Contract type: {contract.contract_type}",
+            f"Title: {contract.title}",
+        ]
+        if contract.content:
+            context_parts.append(f"Existing content (excerpt):\n{contract.content[:3000]}")
+        context = "\n".join(context_parts)
 
-        recommendations = []
-        for clause_type, tmpl in all_templates.items():
-            # Skip if recommendation already exists
+        prompt = (
+            "You are a legal drafting assistant. Generate recommended clauses for the following contract.\n\n"
+            f"{context}\n\n"
+            "Suggest 3-7 essential clauses appropriate for this contract type. "
+            "For each clause provide:\n"
+            "  clause_type          - a short ALL_CAPS identifier (e.g. GOVERNING_LAW, INDEMNIFICATION)\n"
+            "  recommendation_text  - professionally drafted clause text ready to insert verbatim\n"
+            "  confidence           - how strongly this clause is recommended (0.7-1.0)\n"
+            "  rationale            - one sentence explaining why this clause matters for this contract type\n\n"
+            "Do not duplicate clauses that already appear in the existing content."
+        )
+
+        with _get_client().messages.stream(
+            model=_MODEL,
+            max_tokens=4096,
+            thinking={"type": "adaptive"},
+            output_config={
+                "format": {
+                    "type": "json_schema",
+                    "json_schema": {"name": "clause_suggestions", "schema": _SUGGEST_SCHEMA},
+                }
+            },
+            messages=[{"role": "user", "content": prompt}],
+        ) as stream:
+            message = stream.get_final_message()
+
+        text_block = next((b for b in message.content if b.type == "text"), None)
+        if not text_block:
+            logger.warning("ai_drafting: no text block in suggest_clauses response for contract %s", contract_id)
+            return []
+
+        data = json.loads(text_block.text)
+        recommendations: list[ClauseRecommendation] = []
+
+        for item in data.get("clauses", []):
+            clause_type = (item.get("clause_type") or "").strip().upper()
+            if not clause_type:
+                continue
             if ClauseRecommendation.objects.filter(
                 contract=contract, clause_type=clause_type
             ).exists():
@@ -206,11 +110,12 @@ class AIClauseDraftingService:
             rec = ClauseRecommendation.objects.create(
                 contract=contract,
                 clause_type=clause_type,
-                recommendation_text=tmpl['text'],
-                confidence=tmpl['confidence'],
-                rationale=tmpl.get('rationale', ''),
+                recommendation_text=item.get("recommendation_text", ""),
+                confidence=round(float(item.get("confidence", 0.8)), 4),
+                rationale=item.get("rationale", ""),
             )
             recommendations.append(rec)
+
         return recommendations
 
     def list_recommendations(
@@ -221,22 +126,39 @@ class AIClauseDraftingService:
         )
         if accepted_only:
             qs = qs.filter(accepted=True)
-        return list(qs.order_by('-confidence'))
+        return list(qs.order_by("-confidence"))
 
-    def generate_draft_section(
-        self, contract_id: int, section: str, org
-    ) -> dict:
+    def generate_draft_section(self, contract_id: int, section: str, org) -> dict:
         contract = Contract.objects.get(pk=contract_id, organization=org)
-        type_drafts = _SECTION_DRAFTS.get(contract.contract_type, {})
-        fallback_drafts = _SECTION_DRAFTS.get('MSA', {})
-        text = type_drafts.get(section) or fallback_drafts.get(section) or (
-            f'[{section.upper()} — Customise this section for {contract.contract_type} agreements.]'
+
+        prompt = (
+            f"You are a legal drafting assistant. Draft the '{section}' section for the following contract.\n\n"
+            f"Contract type: {contract.contract_type}\n"
+            f"Title: {contract.title}\n\n"
+            f"Write a professional, clear '{section}' section appropriate for this {contract.contract_type} agreement. "
+            "Output only the section text — no preamble, no commentary, no headings."
         )
+
+        with _get_client().messages.stream(
+            model=_MODEL,
+            max_tokens=2048,
+            thinking={"type": "adaptive"},
+            messages=[{"role": "user", "content": prompt}],
+        ) as stream:
+            message = stream.get_final_message()
+
+        text_block = next((b for b in message.content if b.type == "text"), None)
+        draft_text = (
+            text_block.text.strip()
+            if text_block
+            else f"[{section.upper()} — draft unavailable]"
+        )
+
         return {
-            'contract_id': contract_id,
-            'section': section,
-            'draft_text': text,
-            'contract_type': contract.contract_type,
+            "contract_id": contract_id,
+            "section": section,
+            "draft_text": draft_text,
+            "contract_type": contract.contract_type,
         }
 
     def accept_clause(
@@ -252,13 +174,12 @@ class AIClauseDraftingService:
         rec.accepted = True
         rec.accepted_by = user
         rec.accepted_at = timezone.now()
-        rec.save(update_fields=['accepted', 'accepted_by', 'accepted_at'])
+        rec.save(update_fields=["accepted", "accepted_by", "accepted_at"])
 
-        # Append clause text to contract content
         contract = rec.contract
-        separator = '\n\n---\n\n'
-        contract.content = (contract.content or '') + separator + rec.recommendation_text
-        contract.save(update_fields=['content', 'updated_at'])
+        separator = "\n\n---\n\n"
+        contract.content = (contract.content or "") + separator + rec.recommendation_text
+        contract.save(update_fields=["content", "updated_at"])
         return rec
 
 

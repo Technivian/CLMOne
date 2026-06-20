@@ -427,6 +427,16 @@ if _sentry_dsn:
         environment=os.getenv('DJANGO_ENV', 'development'),
     )
 
+ANTHROPIC_API_KEY = os.getenv('ANTHROPIC_API_KEY', '').strip()
+ANTHROPIC_AI_ENABLED = bool(ANTHROPIC_API_KEY)
+
+STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY', '').strip()
+STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY', '').strip()
+STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET', '').strip()
+STRIPE_PRICE_STARTER = os.getenv('STRIPE_PRICE_STARTER', '').strip()
+STRIPE_PRICE_PROFESSIONAL = os.getenv('STRIPE_PRICE_PROFESSIONAL', '').strip()
+STRIPE_ENABLED = bool(STRIPE_SECRET_KEY)
+
 DJANGO_LOG_LEVEL = os.getenv('DJANGO_LOG_LEVEL', 'INFO').upper()
 LOG_SINK_ENABLED = _bool_env('LOG_SINK_ENABLED', default=False)
 LOG_SINK_URL = os.getenv('LOG_SINK_URL', '').strip()

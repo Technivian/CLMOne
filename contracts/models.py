@@ -2721,15 +2721,36 @@ class BillingPlan(models.Model):
 
 
 class OrgBillingSubscription(models.Model):
-    """Links an organisation to its current plan."""
+    """Links an organisation to its current plan and Stripe subscription."""
+
+    class Status(models.TextChoices):
+        FREE = 'free', 'Free'
+        TRIALING = 'trialing', 'Trialing'
+        ACTIVE = 'active', 'Active'
+        PAST_DUE = 'past_due', 'Past due'
+        CANCELED = 'canceled', 'Canceled'
+        INCOMPLETE = 'incomplete', 'Incomplete'
 
     organization = models.OneToOneField(Organization, on_delete=models.CASCADE, related_name='billing_subscription')
     plan = models.ForeignKey(BillingPlan, on_delete=models.PROTECT, related_name='subscriptions')
     subscribed_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    # Stripe references — blank until first payment
+    stripe_customer_id = models.CharField(max_length=100, blank=True, default='', db_index=True)
+    stripe_subscription_id = models.CharField(max_length=100, blank=True, default='', db_index=True)
+    stripe_price_id = models.CharField(max_length=100, blank=True, default='')
+    subscription_status = models.CharField(
+        max_length=20, choices=Status.choices, default=Status.FREE
+    )
+    current_period_end = models.DateTimeField(null=True, blank=True)
+
     def __str__(self):
-        return f'{self.organization.name} → {self.plan.name}'
+        return f'{self.organization.name} → {self.plan.name} ({self.subscription_status})'
+
+    @property
+    def is_paid(self) -> bool:
+        return self.subscription_status in (self.Status.ACTIVE, self.Status.TRIALING)
 
 
 class UsageRecord(models.Model):

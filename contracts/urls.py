@@ -1,6 +1,13 @@
 from django.urls import path
 from . import views
 from .api import views as api_views
+from .views_domains.subscription import (
+    billing_checkout,
+    billing_dashboard,
+    billing_portal,
+    billing_success,
+    stripe_webhook,
+)
 
 app_name = 'contracts'
 
@@ -370,4 +377,11 @@ urlpatterns = [
     path('<int:pk>/edit/', views.ContractUpdateView.as_view(), name='contract_update'),
     path('<int:pk>/add_note/', views.AddNegotiationNoteView.as_view(), name='add_negotiation_note'),
     path('<int:pk>/ai-assistant/', views.contract_ai_assistant, name='contract_ai_assistant'),
+
+    # Subscription / billing
+    path('billing/', billing_dashboard, name='billing_dashboard'),
+    path('billing/checkout/<str:tier>/', billing_checkout, name='billing_checkout'),
+    path('billing/portal/', billing_portal, name='billing_portal'),
+    path('billing/success/', billing_success, name='billing_success'),
+    path('billing/webhook/', stripe_webhook, name='stripe_webhook'),
 ]

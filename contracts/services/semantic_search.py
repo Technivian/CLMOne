@@ -1,12 +1,23 @@
-"""Lightweight semantic ranking helpers for clause search."""
+"""Semantic clause search — uses Claude API to rerank results by query relevance.
+
+Falls back to a keyword/synonym ranker when ANTHROPIC_API_KEY is not configured,
+so the search UI stays functional in local dev without credentials.
+"""
 
 from __future__ import annotations
 
+import json
+import logging
+import os
 import re
 from typing import Iterable
 
 from contracts.models import ClauseTemplate
 
+logger = logging.getLogger(__name__)
+
+_MODEL = "claude-opus-4-8"
+_MAX_CANDIDATES = 40  # cap prompt size for the reranking call
 
 _TOKEN_RE = re.compile(r"[a-z0-9]+")
 _SYNONYM_GROUPS = (
@@ -17,53 +28,17 @@ _SYNONYM_GROUPS = (
     {"governing", "law", "jurisdiction", "venue"},
 )
 
-
-def _tokenize(text: str) -> set[str]:
-    if not text:
-        return set()
-    return {token for token in _TOKEN_RE.findall(text.lower()) if token}
-
-
-def _expand_tokens(tokens: set[str]) -> set[str]:
-    if not tokens:
-        return set()
-    expanded = set(tokens)
-    for group in _SYNONYM_GROUPS:
-        if expanded.intersection(group):
-            expanded.update(group)
-    return expanded
-
-
-def _field_tokens(clause: ClauseTemplate) -> tuple[set[str], set[str], set[str], set[str]]:
-    title_tokens = _expand_tokens(_tokenize(clause.title or ""))
-    tags_tokens = _expand_tokens(_tokenize(clause.tags or ""))
-    content_tokens = _expand_tokens(_tokenize(clause.content or ""))
-    fallback_tokens = _expand_tokens(_tokenize((clause.fallback_content or "") + " " + (clause.playbook_notes or "")))
-    return title_tokens, tags_tokens, content_tokens, fallback_tokens
-
-
-def _semantic_score(clause: ClauseTemplate, query_tokens: set[str], query_text: str) -> float:
-    if not query_tokens:
-        return 0.0
-
-    title_tokens, tags_tokens, content_tokens, fallback_tokens = _field_tokens(clause)
-    weighted_overlap = (
-        3.0 * len(query_tokens.intersection(title_tokens))
-        + 2.0 * len(query_tokens.intersection(tags_tokens))
-        + 1.0 * len(query_tokens.intersection(content_tokens))
-        + 1.0 * len(query_tokens.intersection(fallback_tokens))
-    )
-    max_weight = 7.0 * max(len(query_tokens), 1)
-    base_score = weighted_overlap / max_weight
-
-    query_text_normalized = (query_text or "").strip().lower()
-    if query_text_normalized:
-        if query_text_normalized in (clause.title or "").lower():
-            base_score += 0.35
-        elif query_text_normalized in (clause.content or "").lower():
-            base_score += 0.2
-
-    return base_score
+_RERANK_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "ranked_indices": {
+            "type": "array",
+            "items": {"type": "integer"},
+            "description": "Input list indices ordered by relevance, most relevant first",
+        }
+    },
+    "required": ["ranked_indices"],
+}
 
 
 def rank_clause_templates_semantic(
@@ -73,12 +48,123 @@ def rank_clause_templates_semantic(
     limit: int = 10,
     min_score: float = 0.1,
 ) -> list[ClauseTemplate]:
-    query_tokens = _expand_tokens(_tokenize(query))
-    scored: list[tuple[float, ClauseTemplate]] = []
-    for clause in clauses:
-        score = _semantic_score(clause, query_tokens, query)
-        if score >= min_score:
-            scored.append((score, clause))
+    clause_list = list(clauses)
+    if not clause_list or not query:
+        return []
 
-    scored.sort(key=lambda entry: (-entry[0], -(entry[1].updated_at.timestamp() if entry[1].updated_at else 0), entry[1].pk))
-    return [entry[1] for entry in scored[:limit]]
+    if not os.getenv("ANTHROPIC_API_KEY", "").strip():
+        return _keyword_rank(clause_list, query, limit=limit, min_score=min_score)
+
+    return _llm_rank(clause_list, query, limit=limit)
+
+
+# ---------------------------------------------------------------------------
+# LLM reranker
+# ---------------------------------------------------------------------------
+
+
+def _llm_rank(clauses: list[ClauseTemplate], query: str, *, limit: int) -> list[ClauseTemplate]:
+    import anthropic
+
+    candidates = clauses[:_MAX_CANDIDATES]
+    items_text = "\n".join(
+        f"[{i}] {c.title or 'Untitled'}: {(c.content or c.tags or '')[:200]}"
+        for i, c in enumerate(candidates)
+    )
+
+    prompt = (
+        f'Rank the following contract clause templates by relevance to this search query: "{query}"\n\n'
+        f"Return the indices of the most relevant clauses ordered from most to least relevant. "
+        f"Include at most {limit} indices. Omit clauses that are not relevant to the query.\n\n"
+        f"CLAUSES:\n{items_text}"
+    )
+
+    client = anthropic.Anthropic()
+    message = client.messages.create(
+        model=_MODEL,
+        max_tokens=512,
+        output_config={
+            "format": {
+                "type": "json_schema",
+                "json_schema": {"name": "ranked_results", "schema": _RERANK_SCHEMA},
+            }
+        },
+        messages=[{"role": "user", "content": prompt}],
+    )
+
+    text_block = next((b for b in message.content if b.type == "text"), None)
+    if not text_block:
+        logger.warning("ai semantic_search: no text block in rerank response")
+        return _keyword_rank(clauses, query, limit=limit, min_score=0.0)
+
+    data = json.loads(text_block.text)
+    ranked_indices = data.get("ranked_indices", [])
+
+    result: list[ClauseTemplate] = []
+    seen: set[int] = set()
+    for idx in ranked_indices:
+        if isinstance(idx, int) and 0 <= idx < len(candidates) and idx not in seen:
+            result.append(candidates[idx])
+            seen.add(idx)
+
+    return result[:limit]
+
+
+# ---------------------------------------------------------------------------
+# Keyword fallback (no API key required)
+# ---------------------------------------------------------------------------
+
+
+def _tokenize(text: str) -> set[str]:
+    if not text:
+        return set()
+    return {t for t in _TOKEN_RE.findall(text.lower()) if t}
+
+
+def _expand_tokens(tokens: set[str]) -> set[str]:
+    if not tokens:
+        return set()
+    expanded = set(tokens)
+    for group in _SYNONYM_GROUPS:
+        if expanded & group:
+            expanded.update(group)
+    return expanded
+
+
+def _keyword_score(clause: ClauseTemplate, query_tokens: set[str]) -> float:
+    title_t = _expand_tokens(_tokenize(clause.title or ""))
+    tags_t = _expand_tokens(_tokenize(clause.tags or ""))
+    content_t = _expand_tokens(_tokenize(clause.content or ""))
+    fallback_t = _expand_tokens(
+        _tokenize((clause.fallback_content or "") + " " + (clause.playbook_notes or ""))
+    )
+    weighted = (
+        3.0 * len(query_tokens & title_t)
+        + 2.0 * len(query_tokens & tags_t)
+        + 1.0 * len(query_tokens & content_t)
+        + 1.0 * len(query_tokens & fallback_t)
+    )
+    return weighted / max(7.0 * len(query_tokens), 1)
+
+
+def _keyword_rank(
+    clauses: list[ClauseTemplate],
+    query: str,
+    *,
+    limit: int,
+    min_score: float,
+) -> list[ClauseTemplate]:
+    query_tokens = _expand_tokens(_tokenize(query))
+    scored = [
+        (c, _keyword_score(c, query_tokens))
+        for c in clauses
+    ]
+    scored = [(c, s) for c, s in scored if s >= min_score]
+    scored.sort(
+        key=lambda x: (
+            -x[1],
+            -(x[0].updated_at.timestamp() if x[0].updated_at else 0),
+            x[0].pk,
+        )
+    )
+    return [c for c, _ in scored[:limit]]
