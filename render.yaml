@@ -1,5 +1,5 @@
 services:
-  - name: cms-aegis-preview
+  - name: cms-aegis
     type: web
     runtime: python
     plan: free
@@ -8,6 +8,7 @@ services:
     buildCommand: ./build.sh
     startCommand: sh -c 'python3 manage.py migrate --noinput && exec gunicorn config.wsgi:application --bind 0.0.0.0:$PORT'
     envVars:
+      # Core Django
       - key: DJANGO_ENV
         value: production
       - key: DJANGO_SECRET_KEY
@@ -16,14 +17,87 @@ services:
         value: localhost,.onrender.com
       - key: CSRF_TRUSTED_ORIGINS
         value: https://*.onrender.com
-      - key: DEFAULT_FROM_EMAIL
-        value: ops@example.com
-      # Set DATABASE_URL in Render to your external PostgreSQL connection string.
-      - key: ALLOW_SQLITE_IN_PRODUCTION
-        value: false
       - key: DB_SSL_REQUIRE
         value: true
       - key: SECURE_SSL_REDIRECT
         value: true
       - key: SECURE_HSTS_PRELOAD
         value: true
+
+      # Database — set to your Supabase connection string
+      - key: DATABASE_URL
+        sync: false
+
+      # Redis — Upstash or other Redis provider
+      - key: REDIS_URL
+        sync: false
+
+      # Email — Resend SMTP
+      - key: EMAIL_HOST
+        value: smtp.resend.com
+      - key: EMAIL_PORT
+        value: 587
+      - key: EMAIL_HOST_USER
+        value: resend
+      - key: EMAIL_USE_TLS
+        value: true
+      - key: EMAIL_HOST_PASSWORD
+        sync: false
+      - key: DEFAULT_FROM_EMAIL
+        value: onboarding@resend.dev
+
+      # Error tracking — Sentry
+      - key: SENTRY_DSN
+        sync: false
+
+      # Google SSO (OIDC)
+      - key: SSO_ENABLED
+        value: true
+      - key: OIDC_OP_DISCOVERY_ENDPOINT
+        value: https://accounts.google.com/.well-known/openid-configuration
+      - key: OIDC_OP_AUTHORIZATION_ENDPOINT
+        value: https://accounts.google.com/o/oauth2/v2/auth
+      - key: OIDC_OP_TOKEN_ENDPOINT
+        value: https://oauth2.googleapis.com/token
+      - key: OIDC_OP_USER_ENDPOINT
+        value: https://openidconnect.googleapis.com/v1/userinfo
+      - key: OIDC_OP_JWKS_ENDPOINT
+        value: https://www.googleapis.com/oauth2/v3/certs
+      - key: OIDC_RP_SCOPES
+        value: openid email profile
+      - key: OIDC_VERIFY_SSL
+        value: true
+      - key: OIDC_RP_CLIENT_ID
+        sync: false
+      - key: OIDC_RP_CLIENT_SECRET
+        sync: false
+
+      # AI — Google Gemini Flash (free tier)
+      - key: GEMINI_API_KEY
+        sync: false
+
+      # Stripe billing
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_PRICE_STARTER_MONTHLY
+        sync: false
+      - key: STRIPE_PRICE_STARTER_YEARLY
+        sync: false
+      - key: STRIPE_PRICE_PROFESSIONAL_MONTHLY
+        sync: false
+      - key: STRIPE_PRICE_PROFESSIONAL_YEARLY
+        sync: false
+
+      # E-signature — Documenso (free tier)
+      - key: ESIGN_PROVIDER
+        value: documenso
+      - key: ESIGN_DOCUMENSO_API_KEY
+        sync: false
+      - key: ESIGN_DOCUMENSO_WEBHOOK_SECRET
+        sync: false
+      - key: ESIGN_DOCUMENSO_BASE_URL
+        value: https://app.documenso.com
