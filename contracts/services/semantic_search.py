@@ -1,6 +1,6 @@
-"""Semantic clause search — uses Claude API to rerank results by query relevance.
+"""Semantic clause search — uses Google Gemini Flash to rerank results by query relevance.
 
-Falls back to a keyword/synonym ranker when ANTHROPIC_API_KEY is not configured,
+Falls back to a keyword/synonym ranker when GEMINI_API_KEY is not configured,
 so the search UI stays functional in local dev without credentials.
 """
 
@@ -16,7 +16,6 @@ from contracts.models import ClauseTemplate
 
 logger = logging.getLogger(__name__)
 
-_MODEL = "claude-opus-4-8"
 _MAX_CANDIDATES = 40  # cap prompt size for the reranking call
 
 _TOKEN_RE = re.compile(r"[a-z0-9]+")
@@ -52,7 +51,7 @@ def rank_clause_templates_semantic(
     if not clause_list or not query:
         return []
 
-    if not os.getenv("ANTHROPIC_API_KEY", "").strip():
+    if not os.getenv("GEMINI_API_KEY", "").strip():
         return _keyword_rank(clause_list, query, limit=limit, min_score=min_score)
 
     return _llm_rank(clause_list, query, limit=limit)
@@ -64,7 +63,8 @@ def rank_clause_templates_semantic(
 
 
 def _llm_rank(clauses: list[ClauseTemplate], query: str, *, limit: int) -> list[ClauseTemplate]:
-    import anthropic
+    from google import genai
+    from google.genai import types
 
     candidates = clauses[:_MAX_CANDIDATES]
     items_text = "\n".join(
@@ -79,25 +79,19 @@ def _llm_rank(clauses: list[ClauseTemplate], query: str, *, limit: int) -> list[
         f"CLAUSES:\n{items_text}"
     )
 
-    client = anthropic.Anthropic()
-    message = client.messages.create(
-        model=_MODEL,
-        max_tokens=512,
-        output_config={
-            "format": {
-                "type": "json_schema",
-                "json_schema": {"name": "ranked_results", "schema": _RERANK_SCHEMA},
-            }
-        },
-        messages=[{"role": "user", "content": prompt}],
+    client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+    response = client.models.generate_content(
+        model="gemini-2.0-flash",
+        contents=prompt,
+        config=types.GenerateContentConfig(response_mime_type='application/json'),
     )
 
-    text_block = next((b for b in message.content if b.type == "text"), None)
-    if not text_block:
-        logger.warning("ai semantic_search: no text block in rerank response")
+    try:
+        data = json.loads(response.text)
+    except (ValueError, TypeError):
+        logger.warning("ai semantic_search: could not parse rerank response")
         return _keyword_rank(clauses, query, limit=limit, min_score=0.0)
 
-    data = json.loads(text_block.text)
     ranked_indices = data.get("ranked_indices", [])
 
     result: list[ClauseTemplate] = []

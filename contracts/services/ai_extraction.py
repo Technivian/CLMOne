@@ -1,22 +1,19 @@
-"""AI clause extraction service — uses Claude API to identify and locate legal clause spans.
-
-Claude is asked to quote verbatim text for each clause it finds; Python then locates
-exact character offsets via str.find so AIExtractionSpan records carry valid positions.
-"""
-
+"""AI clause extraction — uses Google Gemini Flash to identify and locate legal clause spans."""
 from __future__ import annotations
 
 import json
 import logging
+import os
 from decimal import Decimal
 
-import anthropic
+from google import genai
+from google.genai import types
 
 from contracts.models import AIExtractionSpan, Document, Organization
 
 logger = logging.getLogger(__name__)
 
-_MODEL = "claude-opus-4-8"
+_MODEL = "gemini-2.0-flash"
 _MAX_TEXT_CHARS = 50_000  # ~12.5 K tokens — covers most contracts
 
 _CLAUSE_LABELS = [
@@ -53,13 +50,14 @@ _EXTRACTION_SCHEMA = {
     "required": ["spans"],
 }
 
-_client: anthropic.Anthropic | None = None
+_client: genai.Client | None = None
 
 
-def _get_client() -> anthropic.Anthropic:
+def _get_client() -> genai.Client:
     global _client
     if _client is None:
-        _client = anthropic.Anthropic()
+        from django.conf import settings
+        _client = genai.Client(api_key=settings.GEMINI_API_KEY)
     return _client
 
 
@@ -70,7 +68,7 @@ def extract_clause_spans(
     *,
     replace_existing: bool = True,
 ) -> list[AIExtractionSpan]:
-    """Extract labelled clause spans from *text* using Claude and persist AIExtractionSpan rows.
+    """Extract labelled clause spans from *text* using Gemini and persist AIExtractionSpan rows.
 
     Set *replace_existing=True* (default) to delete prior spans for this document
     before inserting new ones (idempotent re-extraction).
@@ -90,26 +88,13 @@ def extract_clause_spans(
         f"CONTRACT TEXT:\n{text[:_MAX_TEXT_CHARS]}"
     )
 
-    with _get_client().messages.stream(
+    response = _get_client().models.generate_content(
         model=_MODEL,
-        max_tokens=8192,
-        thinking={"type": "adaptive"},
-        output_config={
-            "format": {
-                "type": "json_schema",
-                "json_schema": {"name": "clause_spans", "schema": _EXTRACTION_SCHEMA},
-            }
-        },
-        messages=[{"role": "user", "content": prompt}],
-    ) as stream:
-        message = stream.get_final_message()
+        contents=prompt,
+        config=types.GenerateContentConfig(response_mime_type='application/json'),
+    )
 
-    text_block = next((b for b in message.content if b.type == "text"), None)
-    if not text_block:
-        logger.warning("ai_extraction: no text block in response for document %s", document.pk)
-        return []
-
-    data = json.loads(text_block.text)
+    data = json.loads(response.text)
 
     if replace_existing:
         AIExtractionSpan.objects.filter(document=document).delete()

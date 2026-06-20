@@ -1,18 +1,19 @@
-"""AI clause drafting service — uses Claude API to generate and suggest contract clauses."""
+"""AI clause drafting service — uses Google Gemini Flash to generate and suggest contract clauses."""
 
 from __future__ import annotations
 
 import json
 import logging
 
-import anthropic
+from google import genai
+from google.genai import types
 from django.utils import timezone
 
 from contracts.models import ClauseRecommendation, Contract
 
 logger = logging.getLogger(__name__)
 
-_MODEL = "claude-opus-4-8"
+_MODEL = "gemini-2.0-flash"
 
 _SUGGEST_SCHEMA = {
     "type": "object",
@@ -43,13 +44,14 @@ _SUGGEST_SCHEMA = {
     "required": ["clauses"],
 }
 
-_client: anthropic.Anthropic | None = None
+_client: genai.Client | None = None
 
 
-def _get_client() -> anthropic.Anthropic:
+def _get_client() -> genai.Client:
     global _client
     if _client is None:
-        _client = anthropic.Anthropic()
+        from django.conf import settings
+        _client = genai.Client(api_key=settings.GEMINI_API_KEY)
     return _client
 
 
@@ -77,26 +79,13 @@ class AIClauseDraftingService:
             "Do not duplicate clauses that already appear in the existing content."
         )
 
-        with _get_client().messages.stream(
+        response = _get_client().models.generate_content(
             model=_MODEL,
-            max_tokens=4096,
-            thinking={"type": "adaptive"},
-            output_config={
-                "format": {
-                    "type": "json_schema",
-                    "json_schema": {"name": "clause_suggestions", "schema": _SUGGEST_SCHEMA},
-                }
-            },
-            messages=[{"role": "user", "content": prompt}],
-        ) as stream:
-            message = stream.get_final_message()
+            contents=prompt,
+            config=types.GenerateContentConfig(response_mime_type='application/json'),
+        )
 
-        text_block = next((b for b in message.content if b.type == "text"), None)
-        if not text_block:
-            logger.warning("ai_drafting: no text block in suggest_clauses response for contract %s", contract_id)
-            return []
-
-        data = json.loads(text_block.text)
+        data = json.loads(response.text)
         recommendations: list[ClauseRecommendation] = []
 
         for item in data.get("clauses", []):
@@ -139,18 +128,14 @@ class AIClauseDraftingService:
             "Output only the section text — no preamble, no commentary, no headings."
         )
 
-        with _get_client().messages.stream(
+        response = _get_client().models.generate_content(
             model=_MODEL,
-            max_tokens=2048,
-            thinking={"type": "adaptive"},
-            messages=[{"role": "user", "content": prompt}],
-        ) as stream:
-            message = stream.get_final_message()
+            contents=prompt,
+        )
 
-        text_block = next((b for b in message.content if b.type == "text"), None)
         draft_text = (
-            text_block.text.strip()
-            if text_block
+            response.text.strip()
+            if response.text
             else f"[{section.upper()} — draft unavailable]"
         )
 

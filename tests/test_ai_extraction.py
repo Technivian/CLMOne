@@ -1,6 +1,6 @@
-"""Tests for the AI clause-span extraction service (Claude LLM backend).
+"""Tests for the AI clause-span extraction service (Gemini LLM backend).
 
-All tests use unittest.mock to avoid hitting the database or the real Anthropic API.
+All tests use unittest.mock to avoid hitting the database or the real Gemini API.
 """
 import json
 import unittest
@@ -8,26 +8,12 @@ from decimal import Decimal
 from unittest.mock import MagicMock, patch
 
 
-def _make_stream_ctx(json_payload: dict):
-    """Return a mock context-manager that mimics client.messages.stream()."""
-    text_block = MagicMock()
-    text_block.type = "text"
-    text_block.text = json.dumps(json_payload)
-
-    message = MagicMock()
-    message.content = [text_block]
-
-    stream = MagicMock()
-    stream.__enter__ = MagicMock(return_value=stream)
-    stream.__exit__ = MagicMock(return_value=False)
-    stream.get_final_message.return_value = message
-    return stream
-
-
-def _make_mock_client(json_payload: dict):
-    client = MagicMock()
-    client.messages.stream.return_value = _make_stream_ctx(json_payload)
-    return client
+def _make_mock_client(json_payload):
+    mock_response = MagicMock()
+    mock_response.text = json.dumps(json_payload)
+    mock_client = MagicMock()
+    mock_client.models.generate_content.return_value = mock_response
+    return mock_client
 
 
 class TestClauseLabels(unittest.TestCase):
@@ -48,7 +34,7 @@ class TestClauseLabels(unittest.TestCase):
 
 
 class TestExtractClauseSpans(unittest.TestCase):
-    """Test extract_clause_spans with mocked DB and mocked Anthropic client."""
+    """Test extract_clause_spans with mocked DB and mocked Gemini client."""
 
     def setUp(self):
         # Reset module-level client singleton so patches take effect cleanly
@@ -143,8 +129,8 @@ class TestExtractClauseSpans(unittest.TestCase):
         result, _, _ = self._run(text, api_spans=spans)
         self.assertEqual(len(result), 0)
 
-    def test_api_calls_stream(self):
-        """Verify the service calls client.messages.stream (not create)."""
+    def test_api_calls_generate_content(self):
+        """Verify the service calls client.models.generate_content."""
         text = "The vendor shall indemnify the client."
         mock_org = MagicMock()
         mock_doc = MagicMock()
@@ -162,11 +148,11 @@ class TestExtractClauseSpans(unittest.TestCase):
                 from contracts.services.ai_extraction import extract_clause_spans
                 extract_clause_spans(text, mock_org, mock_doc)
 
-        mock_client.messages.stream.assert_called_once()
+        mock_client.models.generate_content.assert_called_once()
 
-    def test_uses_claude_opus_model(self):
+    def test_uses_gemini_flash_model(self):
         from contracts.services.ai_extraction import _MODEL
-        self.assertEqual(_MODEL, "claude-opus-4-8")
+        self.assertEqual(_MODEL, "gemini-2.0-flash")
 
 
 class TestGetSpansSummary(unittest.TestCase):

@@ -31,35 +31,26 @@ def _make_rec(id=1, clause_type="CONFIDENTIALITY", accepted=False, confidence=0.
     return r
 
 
-def _make_stream_ctx(text_content: str):
-    """Return a mock context-manager that mimics client.messages.stream()."""
-    text_block = MagicMock()
-    text_block.type = "text"
-    text_block.text = text_content
-
-    message = MagicMock()
-    message.content = [text_block]
-
-    stream = MagicMock()
-    stream.__enter__ = MagicMock(return_value=stream)
-    stream.__exit__ = MagicMock(return_value=False)
-    stream.get_final_message.return_value = message
-    return stream
+def _make_mock_client(json_payload):
+    mock_response = MagicMock()
+    mock_response.text = json.dumps(json_payload)
+    mock_client = MagicMock()
+    mock_client.models.generate_content.return_value = mock_response
+    return mock_client
 
 
 def _mock_suggest_client(clauses: list[dict]):
     """Mock client that returns structured JSON for suggest_clauses."""
-    payload = json.dumps({"clauses": clauses})
-    client = MagicMock()
-    client.messages.stream.return_value = _make_stream_ctx(payload)
-    return client
+    return _make_mock_client({"clauses": clauses})
 
 
 def _mock_draft_client(draft_text: str):
     """Mock client that returns plain text for generate_draft_section."""
-    client = MagicMock()
-    client.messages.stream.return_value = _make_stream_ctx(draft_text)
-    return client
+    mock_response = MagicMock()
+    mock_response.text = draft_text
+    mock_client = MagicMock()
+    mock_client.models.generate_content.return_value = mock_response
+    return mock_client
 
 
 # ---------------------------------------------------------------------------
@@ -136,7 +127,7 @@ class TestAIClauseDraftingService(SimpleTestCase):
             svc = AIClauseDraftingService()
             svc.suggest_clauses(1, org)
 
-        # Should create whatever Claude returned
+        # Should create whatever Gemini returned
         self.assertGreater(MockRec.objects.create.call_count, 0)
 
     @patch("contracts.services.ai_drafting.ClauseRecommendation")
@@ -218,13 +209,13 @@ class TestAIClauseDraftingService(SimpleTestCase):
         svc.accept_clause(1, 1, MagicMock(), org)
         rec.save.assert_not_called()
 
-    def test_uses_claude_opus_model(self):
+    def test_uses_gemini_flash_model(self):
         from contracts.services.ai_drafting import _MODEL
-        self.assertEqual(_MODEL, "claude-opus-4-8")
+        self.assertEqual(_MODEL, "gemini-2.0-flash")
 
 
 # ---------------------------------------------------------------------------
-# API tests (service is fully mocked — no Anthropic calls)
+# API tests (service is fully mocked — no Gemini calls)
 # ---------------------------------------------------------------------------
 
 class TestAIClauseApi(SimpleTestCase):

@@ -210,9 +210,137 @@ class DocuSignSignatureProvider:
         return SendResult(external_id=external_id, signing_url='', provider=self.name, raw=raw)
 
 
+class DocumensoSignatureProvider:
+    """Documenso e-signature provider (free tier: API + webhooks included).
+
+    Sends a document for signature via the Documenso REST API.
+    Documenso emails the signer; status flows back via inbound webhook
+    reconciliation (PENDING -> SENT -> SIGNED).
+
+    Set ESIGN_PROVIDER=documenso plus ESIGN_DOCUMENSO_API_KEY.
+    """
+    name = 'documenso'
+
+    def __init__(self, api_key: str, base_url: str = 'https://app.documenso.com', *, timeout: int = 15, opener=None):
+        self.api_key = api_key
+        self.base_url = base_url.rstrip('/')
+        self.timeout = timeout
+        self._opener = opener or urllib_request.urlopen
+
+    def send(self, signature_request) -> SendResult:
+        if not self.api_key:
+            raise SignatureProviderError('ESIGN_DOCUMENSO_API_KEY is not configured.')
+
+        # Build document payload - try to attach real PDF if document exists
+        document = getattr(signature_request, 'document', None)
+        file_field = getattr(document, 'file', None) if document else None
+
+        title = f'Signature requested: {signature_request.contract}'
+
+        if file_field:
+            # Upload with real PDF via multipart
+            try:
+                file_field.open('rb')
+                file_content = file_field.read()
+                file_field.close()
+            except Exception as exc:
+                raise SignatureProviderError(f'Could not read document file: {exc}') from exc
+
+            boundary = b'----DocumensoFormBoundary'
+            body_parts = []
+
+            # title field
+            body_parts.append(b'--' + boundary + b'\r\nContent-Disposition: form-data; name="title"\r\n\r\n' + title.encode() + b'\r\n')
+
+            # externalId for idempotency
+            ext_id = f'cms-aegis-{signature_request.organization_id}-{signature_request.id}'
+            body_parts.append(b'--' + boundary + b'\r\nContent-Disposition: form-data; name="externalId"\r\n\r\n' + ext_id.encode() + b'\r\n')
+
+            # recipients as JSON
+            recipients_json = json.dumps([{
+                'name': signature_request.signer_name,
+                'email': signature_request.signer_email,
+                'role': 'SIGNER',
+            }]).encode()
+            body_parts.append(b'--' + boundary + b'\r\nContent-Disposition: form-data; name="recipients"\r\n\r\n' + recipients_json + b'\r\n')
+
+            # file
+            doc_name = getattr(document, 'title', 'contract') or 'contract'
+            body_parts.append(b'--' + boundary + b'\r\nContent-Disposition: form-data; name="file"; filename="' + doc_name.encode() + b'.pdf"\r\nContent-Type: application/pdf\r\n\r\n' + file_content + b'\r\n')
+            body_parts.append(b'--' + boundary + b'--\r\n')
+
+            body = b''.join(body_parts)
+            content_type = f'multipart/form-data; boundary={boundary.decode()}'
+        else:
+            # No document: create a minimal document with a placeholder
+            payload = {
+                'title': title,
+                'externalId': f'cms-aegis-{signature_request.organization_id}-{signature_request.id}',
+                'recipients': [{
+                    'name': signature_request.signer_name,
+                    'email': signature_request.signer_email,
+                    'role': 'SIGNER',
+                }],
+            }
+            body = json.dumps(payload).encode('utf-8')
+            content_type = 'application/json'
+
+        req = urllib_request.Request(
+            f'{self.base_url}/api/v1/documents',
+            data=body,
+            method='POST',
+            headers={
+                'Authorization': f'Bearer {self.api_key}',
+                'Content-Type': content_type,
+            },
+        )
+        try:
+            with self._opener(req, timeout=self.timeout) as response:
+                raw = json.loads(response.read().decode('utf-8') or '{}')
+        except urllib_error.URLError as exc:
+            raise SignatureProviderError(f'Documenso request failed: {exc}') from exc
+        except (ValueError, TypeError) as exc:
+            raise SignatureProviderError(f'Documenso returned an invalid response: {exc}') from exc
+
+        doc_id = str(raw.get('documentId') or raw.get('id') or '').strip()
+        if not doc_id:
+            raise SignatureProviderError(f'Documenso response is missing a document id. Response: {raw}')
+
+        # Trigger send
+        send_req = urllib_request.Request(
+            f'{self.base_url}/api/v1/documents/{doc_id}/send',
+            data=b'{}',
+            method='POST',
+            headers={
+                'Authorization': f'Bearer {self.api_key}',
+                'Content-Type': 'application/json',
+            },
+        )
+        try:
+            with self._opener(send_req, timeout=self.timeout) as send_resp:
+                send_raw = json.loads(send_resp.read().decode('utf-8') or '{}')
+        except urllib_error.URLError as exc:
+            raise SignatureProviderError(f'Documenso send request failed: {exc}') from exc
+
+        signing_url = str(raw.get('signingUrl') or send_raw.get('signingUrl') or '').strip()
+
+        return SendResult(
+            external_id=doc_id,
+            signing_url=signing_url,
+            provider=self.name,
+            raw={**raw, **send_raw},
+        )
+
+
 def get_signature_provider(config: Optional[Any] = None) -> OutboundSignatureProvider:
     config = config or settings
     provider_name = str(getattr(config, 'ESIGN_PROVIDER', 'null') or 'null').strip().lower()
+    if provider_name == 'documenso':
+        return DocumensoSignatureProvider(
+            api_key=str(getattr(config, 'ESIGN_DOCUMENSO_API_KEY', '') or ''),
+            base_url=str(getattr(config, 'ESIGN_DOCUMENSO_BASE_URL', 'https://app.documenso.com') or 'https://app.documenso.com'),
+            timeout=int(getattr(config, 'ESIGN_API_TIMEOUT_SECONDS', 15)),
+        )
     if provider_name == 'docusign':
         return DocuSignSignatureProvider(
             base_uri=str(getattr(config, 'ESIGN_DOCUSIGN_BASE_URI', '') or ''),
