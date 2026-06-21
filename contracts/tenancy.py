@@ -38,6 +38,9 @@ def ensure_user_organization(user: Optional[User]) -> Optional[Organization]:
         role=OrganizationMembership.Role.OWNER,
         is_active=True,
     )
+    # Guarantee a policy row exists for every new org (mirrors require_mfa).
+    from .services.mfa_policy import ensure_org_policy
+    ensure_org_policy(organization)
     ensure_org_starter_content(organization)
     return organization
 

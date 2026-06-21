@@ -196,6 +196,8 @@ def profile(request):
                         profile_obj.mfa_verified_at = timezone.now()
                         profile_obj.save()
                         request.user.save()
+                        # Proving a recovery code verifies this session.
+                        request.session['mfa_verified'] = True
                         log_action(
                             request.user,
                             AuditLog.Action.UPDATE,
@@ -216,6 +218,8 @@ def profile(request):
                         form.add_error('mfa_enrollment_code', 'Enter the 6-digit verification code sent to your email.')
                     else:
                         request.user.save()
+                        # Completing enrollment verifies this session.
+                        request.session['mfa_verified'] = True
                         log_action(
                             request.user,
                             AuditLog.Action.UPDATE,
@@ -371,6 +375,10 @@ def organization_security_settings(request):
 
         if changes:
             organization.save(update_fields=['require_mfa', 'session_idle_timeout_minutes', 'updated_at'])
+            if 'require_mfa' in changes:
+                # Keep the OrgPolicy mirror in sync with the authoritative field.
+                from contracts.services.mfa_policy import set_organization_mfa_required
+                set_organization_mfa_required(organization, enable_mfa, user=request.user)
             log_action(
                 request.user,
                 AuditLog.Action.UPDATE,

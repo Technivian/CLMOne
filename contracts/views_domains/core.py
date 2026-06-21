@@ -7,17 +7,29 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.conf import settings
 from django.core.cache import cache
+from django.core.mail import send_mail
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
+from urllib.parse import urlencode
+
 from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
 from django.views.generic import FormView, View
 from django.contrib.auth import get_user_model
 
 from contracts.forms import UserProfileForm, RegistrationForm, LoginForm
-from contracts.models import AuditLog, BackgroundJob, Case, CaseMatter, Client, Deadline, Invoice, Notification, RiskLog, TimeEntry, TrustAccount, UserProfile, Workflow, CaseSignal, ApprovalRequest, SignatureRequest, DSARRequest, Document
+
+
+def _safe_next(request, fallback='/dashboard/') -> str:
+    """Return next URL only if it is a safe same-host redirect target."""
+    url = request.POST.get('next') or request.GET.get('next') or ''
+    if url and url_has_allowed_host_and_scheme(url, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+        return url
+    return fallback
+from contracts.models import AuditLog, BackgroundJob, Case, CaseMatter, Client, Deadline, Invoice, Notification, OrgPolicy, RiskLog, TimeEntry, TrustAccount, UserProfile, Workflow, CaseSignal, ApprovalRequest, SignatureRequest, DSARRequest, Document
 from contracts.middleware import log_action
 from contracts.observability import db_health_snapshot, request_metrics_snapshot, scheduler_health_snapshot, evaluate_alert_policy
 from contracts.tenancy import get_user_organization, scope_queryset_for_organization
@@ -160,7 +172,9 @@ class SignUpView(FormView):
             return super().dispatch(request, *args, **kwargs)
         except Exception as exc:
             logger.exception('signup_view_failed')
-            return HttpResponse(f'Signup failed: {exc.__class__.__name__}: {exc}', status=500, content_type='text/plain')
+            if settings.DEBUG:
+                return HttpResponse(f'Signup failed: {exc.__class__.__name__}: {exc}', status=500, content_type='text/plain')
+            raise  # production: render branded handler500, no internals leaked
 
     def form_valid(self, form):
         self.object = form.save()
@@ -185,7 +199,9 @@ class LoginView(FormView):
             return super().dispatch(request, *args, **kwargs)
         except Exception as exc:
             logger.exception('login_view_failed')
-            return HttpResponse(f'Login failed: {exc.__class__.__name__}: {exc}', status=500, content_type='text/plain')
+            if settings.DEBUG:
+                return HttpResponse(f'Login failed: {exc.__class__.__name__}: {exc}', status=500, content_type='text/plain')
+            raise  # production: render branded handler500, no internals leaked
 
     def form_valid(self, form):
         user = form.cleaned_data['user']
@@ -196,11 +212,149 @@ class LoginView(FormView):
         )
         if not form.cleaned_data.get('remember'):
             self.request.session.set_expiry(0)
-        next_url = self.request.POST.get('next') or self.request.GET.get('next')
-        if next_url:
+
+        # MFA enforcement (fail-closed): authoritative source is
+        # Organization.require_mfa via the mfa_policy service. We deliberately do
+        # NOT wrap this in a broad try/except — a failure here must block login,
+        # never silently bypass MFA. See contracts/services/mfa_policy.py.
+        from contracts.tenancy import get_user_organization
+        from contracts.services.mfa_policy import organization_requires_mfa
+        org = get_user_organization(user)
+        if organization_requires_mfa(org):
+            profile, _ = UserProfile.objects.get_or_create(user=user)
+            # A fresh challenge is required this session.
+            self.request.session['mfa_verified'] = False
+            if not profile.mfa_enabled:
+                return redirect('mfa_enroll')
+            code = profile.issue_mfa_enrollment_code()
+            _send_mfa_email(user, code)
+            return redirect('mfa_challenge')
+
+        next_url = _safe_next(self.request)
+        if next_url != '/dashboard/':
             return redirect(next_url)
         return super().form_valid(form)
 
 
 if settings.DEBUG:
     SignUpView = method_decorator(csrf_exempt, name='dispatch')(SignUpView)
+
+
+import json
+
+
+@csrf_exempt
+def csp_report(request):
+    if request.method != 'POST':
+        return HttpResponse(status=405)
+    try:
+        report = json.loads(request.body.decode('utf-8', errors='replace'))
+        try:
+            import sentry_sdk
+            violation = (report.get('csp-report') or report).get('violated-directive', 'unknown')
+            with sentry_sdk.new_scope() as scope:
+                scope.set_context('csp_report', report)
+                sentry_sdk.capture_message(f'CSP Violation: {violation}', level='warning')
+        except Exception:
+            logger.warning('CSP violation (Sentry unavailable): %s', report)
+    except Exception:
+        pass
+    return HttpResponse(status=204)
+
+
+# ---------------------------------------------------------------------------
+# MFA support
+# ---------------------------------------------------------------------------
+
+def _send_mfa_email(user, code: str) -> None:
+    try:
+        send_mail(
+            subject='Your CMS Aegis verification code',
+            message=(
+                f'Your verification code is: {code}\n\n'
+                'This code expires in 10 minutes. Do not share it with anyone.'
+            ),
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[user.email],
+            fail_silently=True,
+        )
+    except Exception:
+        logger.exception('mfa_email_failed user=%s', user.pk)
+
+
+class MfaRequiredMixin:
+    """Block access if the org requires MFA and this session hasn't verified it."""
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            # Fail-closed: authoritative MFA check, no broad exception swallow.
+            from contracts.tenancy import get_user_organization
+            from contracts.services.mfa_policy import organization_requires_mfa
+            org = get_user_organization(request.user)
+            if organization_requires_mfa(org) and not request.session.get('mfa_verified'):
+                from django.urls import reverse
+                redirect_url = reverse('mfa_challenge') + '?' + urlencode({'next': request.path})
+                return redirect(redirect_url)
+        return super().dispatch(request, *args, **kwargs)
+
+
+@login_required
+def mfa_challenge(request):
+    """Enter the emailed OTP to set the mfa_verified session flag."""
+    next_url = _safe_next(request)
+    error = None
+
+    if request.method == 'POST':
+        code = request.POST.get('code', '').strip()
+        profile, _ = UserProfile.objects.get_or_create(user=request.user)
+        # Accept either the emailed OTP or a one-time recovery code. The recovery
+        # code is the explicit operator escape hatch if email delivery is broken,
+        # so a configuration defect cannot permanently lock everyone out.
+        if profile.check_mfa_code(code) or profile.verify_mfa_recovery_code(code):
+            request.session['mfa_verified'] = True
+            return redirect(next_url)
+        error = 'Invalid or expired code. Request a new one below.'
+
+    return render(request, 'contracts/mfa_challenge.html', {
+        'next': next_url,
+        'error': error,
+    })
+
+
+@login_required
+def mfa_challenge_resend(request):
+    """Re-issue the OTP and redirect back to the challenge page."""
+    if request.method == 'POST':
+        profile, _ = UserProfile.objects.get_or_create(user=request.user)
+        code = profile.issue_mfa_enrollment_code()
+        _send_mfa_email(request.user, code)
+        messages.success(request, 'A new verification code has been sent to your email.')
+    next_url = _safe_next(request)
+    return redirect(reverse('mfa_challenge') + '?' + urlencode({'next': next_url}))
+
+
+@login_required
+def mfa_enroll(request):
+    """First-time MFA enrollment: issue code, verify, activate MFA for user."""
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    error = None
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'send':
+            code = profile.issue_mfa_enrollment_code()
+            _send_mfa_email(request.user, code)
+            messages.success(request, 'Verification code sent to your email.')
+            return redirect('mfa_enroll')
+
+        code = request.POST.get('code', '').strip()
+        if profile.verify_mfa_enrollment_code(code):
+            request.session['mfa_verified'] = True
+            messages.success(request, 'MFA enabled. Your account is now protected.')
+            return redirect('dashboard')
+        error = 'Invalid or expired code. Please try again.'
+
+    return render(request, 'contracts/mfa_enroll.html', {
+        'profile': profile,
+        'error': error,
+    })

@@ -8,6 +8,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.http import HttpResponse
 from django.shortcuts import redirect
+from django.urls import reverse
 
 from .logging_context import (
     request_id_var,
@@ -25,7 +26,14 @@ logger = logging.getLogger(__name__)
 
 
 class PreviewExceptionMiddleware:
-    """Surface unexpected preview errors instead of Django's generic 500 page."""
+    """Surface verbose errors **only in DEBUG/preview**; never leak in production.
+
+    Audit finding B4: this middleware previously returned a full Python
+    traceback to any client on any unhandled 500, defeating ``DEBUG=False``.
+    It now emits the verbose body only when ``settings.DEBUG`` is on (local
+    dev / preview). In production it logs server-side and re-raises so Django's
+    standard handler500 renders the branded, information-free 500 page.
+    """
 
     def __init__(self, get_response):
         self.get_response = get_response
@@ -34,14 +42,17 @@ class PreviewExceptionMiddleware:
         try:
             return self.get_response(request)
         except Exception as exc:
-            logger.exception('preview_request_failed', extra={'path': request.path, 'method': request.method})
-            return HttpResponse(
-                'Preview request failed:\n\n'
-                f'{exc.__class__.__name__}: {exc}\n\n'
-                f'{traceback.format_exc()}',
-                status=500,
-                content_type='text/plain',
-            )
+            logger.exception('request_failed', extra={'path': request.path, 'method': request.method})
+            if settings.DEBUG:
+                return HttpResponse(
+                    'Preview request failed:\n\n'
+                    f'{exc.__class__.__name__}: {exc}\n\n'
+                    f'{traceback.format_exc()}',
+                    status=500,
+                    content_type='text/plain',
+                )
+            # Production: do not disclose internals. Let Django render handler500.
+            raise
 
 
 class SecurityHeadersMiddleware:
@@ -119,11 +130,16 @@ class AuthRateLimitMiddleware:
             return self.get_response(request)
         except Exception as exc:
             logger.exception('auth_rate_limit_cache_failure', extra={'path': request.path, 'client_ip': self._client_ip(request)})
-            return HttpResponse(
-                f'Auth rate limit failed open: {exc.__class__.__name__}: {exc}',
-                status=500,
-                content_type='text/plain',
-            )
+            if settings.DEBUG:
+                return HttpResponse(
+                    f'Auth rate limit error: {exc.__class__.__name__}: {exc}',
+                    status=503,
+                    content_type='text/plain',
+                )
+            # Production: cache backend is unavailable. Fail closed on auth
+            # endpoints rather than disclose internals or silently stop
+            # throttling (audit C10). Generic, information-free response.
+            return HttpResponse('Service temporarily unavailable.', status=503, content_type='text/plain')
 
     @staticmethod
     def _client_ip(request):
@@ -213,8 +229,9 @@ class SessionSecurityMiddleware:
         if not user or not getattr(user, 'is_authenticated', False):
             return self.get_response(request)
 
-        if self._requires_mfa_but_not_enrolled(request):
-            return redirect(f"{settings.LOGIN_URL}?next={request.get_full_path()}")
+        mfa_redirect = self._mfa_gate_redirect(request)
+        if mfa_redirect is not None:
+            return mfa_redirect
 
         session = request.session
         profile, _ = UserProfile.objects.get_or_create(user=user)
@@ -248,19 +265,37 @@ class SessionSecurityMiddleware:
 
         return self.get_response(request)
 
-    @staticmethod
-    def _is_exempt_path(path):
-        exempt_prefixes = ('/login/', '/logout/', '/register/', '/profile/', '/settings/', '/admin/')
-        return any(path.startswith(prefix) for prefix in exempt_prefixes)
+    # Paths that must stay reachable so a user can complete (or escape) the MFA
+    # flow without a redirect loop: auth pages, the MFA pages themselves, and
+    # account/admin management. Static/media are served outside this middleware.
+    _MFA_EXEMPT_PREFIXES = (
+        '/login/', '/logout/', '/register/', '/mfa/',
+        '/profile/', '/settings/', '/admin/',
+    )
 
-    def _requires_mfa_but_not_enrolled(self, request):
+    @classmethod
+    def _is_exempt_path(cls, path):
+        return any(path.startswith(prefix) for prefix in cls._MFA_EXEMPT_PREFIXES)
+
+    def _mfa_gate_redirect(self, request):
+        """Fail-closed MFA gate applied to EVERY non-exempt authenticated view.
+
+        Enforcement lives here (not only in MfaRequiredMixin) so a view that
+        forgets the mixin cannot become an MFA bypass. Returns a redirect
+        response when the user must satisfy MFA first, else None.
+        """
         if self._is_exempt_path(request.path):
-            return False
+            return None
+        from contracts.services.mfa_policy import organization_requires_mfa
         organization = getattr(request, 'organization', None) or get_user_organization(request.user)
-        if organization is None or not getattr(organization, 'require_mfa', False):
-            return False
+        if not organization_requires_mfa(organization):
+            return None
         profile, _ = UserProfile.objects.get_or_create(user=request.user)
-        return not profile.mfa_enabled or profile.mfa_verified_at is None
+        if not profile.mfa_enabled or profile.mfa_verified_at is None:
+            return redirect('mfa_enroll')
+        if not request.session.get('mfa_verified'):
+            return redirect(f"{reverse('mfa_challenge')}?next={request.get_full_path()}")
+        return None
 class RequestContextMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
@@ -309,7 +344,7 @@ def log_action(user, action, model_name, object_id=None, object_repr='', changes
             ip_address = ip_address.split(',')[0].strip()
         user_agent = request.META.get('HTTP_USER_AGENT', '')
 
-    AuditLog.objects.create(
+    entry = AuditLog.objects.create(
         user=user,
         action=action,
         model_name=model_name,
@@ -319,3 +354,8 @@ def log_action(user, action, model_name, object_id=None, object_repr='', changes
         ip_address=ip_address,
         user_agent=user_agent[:500],
     )
+    try:
+        entry.entry_hash = entry.compute_hash()
+        entry.save(update_fields=['entry_hash'])
+    except Exception:
+        pass

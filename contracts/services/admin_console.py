@@ -58,6 +58,10 @@ class AdminConsoleService:
                 setattr(policy, field, value)
         policy.updated_by = user
         policy.save()
+        if 'mfa_required' in kwargs:
+            # mfa_required is mirrored; the authority is Organization.require_mfa.
+            from contracts.services.mfa_policy import mirror_policy_mfa_to_organization
+            mirror_policy_mfa_to_organization(org, policy, user=user)
         return policy
 
     def list_integrations(self, org: Organization) -> list[IntegrationStatus]:

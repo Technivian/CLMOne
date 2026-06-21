@@ -52,7 +52,10 @@ class MfaPolicyTests(TestCase):
 
         blocked = self.client.get(reverse('dashboard'))
         self.assertEqual(blocked.status_code, 302)
-        self.assertIn(reverse('login'), blocked.url)
+        # Fail-closed MFA gate now sends un-enrolled users straight to the
+        # enrollment page (previously bounced to /login/). Dashboard is still
+        # blocked until MFA is satisfied.
+        self.assertIn(reverse('mfa_enroll'), blocked.url)
 
         profile_page = self.client.get(reverse('profile'))
         self.assertEqual(profile_page.status_code, 200)
