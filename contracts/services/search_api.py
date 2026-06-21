@@ -11,6 +11,11 @@ from contracts.models import Contract, ClauseTemplate, SearchTelemetryEvent
 
 _SearchTelemetryEventDoesNotExist = SearchTelemetryEvent.DoesNotExist
 
+# Upper bound on the ranked clause window used for pagination. Clause libraries
+# are small (tens to low hundreds per org); this keeps pagination totals correct
+# without an unbounded ranking pass.
+_CLAUSE_SEARCH_MAX = 500
+
 
 @dataclass
 class PaginatedResult:
@@ -132,25 +137,38 @@ class ClauseSearchAPIService:
 
         jurisdiction = filters.get('jurisdiction')
         if jurisdiction:
-            qs = qs.filter(jurisdiction__icontains=jurisdiction)
+            # The model field is `jurisdiction_scope`; there is no `jurisdiction`
+            # field, so the old lookup raised FieldError (500) on any filter.
+            qs = qs.filter(jurisdiction_scope__icontains=jurisdiction)
 
         is_mandatory = filters.get('is_mandatory')
         if is_mandatory is not None:
             qs = qs.filter(is_mandatory=is_mandatory)
 
-        if q:
-            qs = rank_clause_templates_semantic(q, qs)
+        # Coerce to a safe string: the API may pass None or a non-str value and
+        # the ranker tokenizes with .lower(), which would 500 on bad input.
+        q = (str(q) if q is not None else '').strip()
 
-        total = qs.count()
         offset = (page - 1) * page_size
-        clauses = qs[offset: offset + page_size]
+        if q:
+            # rank_clause_templates_semantic returns a *list* (ranked + filtered
+            # by relevance), NOT a queryset — paginate the list, not the qs.
+            # Cap the ranked window generously so pagination totals stay correct
+            # for realistically-sized clause libraries.
+            ranked = rank_clause_templates_semantic(qs, q, limit=_CLAUSE_SEARCH_MAX)
+            total = len(ranked)
+            clauses = ranked[offset: offset + page_size]
+        else:
+            qs = qs.order_by('-updated_at', 'pk')  # deterministic ordering
+            total = qs.count()
+            clauses = list(qs[offset: offset + page_size])
 
         results = [
             {
                 'id': c.id,
                 'title': c.title,
                 'category_id': getattr(c, 'category_id', None),
-                'jurisdiction': getattr(c, 'jurisdiction', ''),
+                'jurisdiction': getattr(c, 'jurisdiction_scope', ''),
                 'is_mandatory': getattr(c, 'is_mandatory', False),
             }
             for c in clauses

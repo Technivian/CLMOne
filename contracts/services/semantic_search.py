@@ -47,8 +47,18 @@ def rank_clause_templates_semantic(
     limit: int = 10,
     min_score: float = 0.1,
 ) -> list[ClauseTemplate]:
+    """Rank clause templates by relevance to ``query``.
+
+    Contract:
+      - Args are ``(clauses, query)`` in that order. ``clauses`` is any iterable
+        of ClauseTemplate (a queryset is accepted and materialized here).
+      - Returns a plain ``list[ClauseTemplate]`` (NOT a queryset), ordered most
+        relevant first, already truncated to ``limit`` and filtered by relevance.
+        Callers must paginate the list, not call queryset methods on it.
+      - Empty/blank query or empty candidate set returns ``[]`` (never raises).
+    """
     clause_list = list(clauses)
-    if not clause_list or not query:
+    if not clause_list or not query or not str(query).strip():
         return []
 
     if not os.getenv("GEMINI_API_KEY", "").strip():
