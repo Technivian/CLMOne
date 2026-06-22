@@ -30,6 +30,13 @@ class MfaPolicyTests(TestCase):
         )
         self.profile, _ = UserProfile.objects.get_or_create(user=self.user)
 
+    def _verify_session(self):
+        # Phase 4F: profile MFA-management requires a completed MFA session
+        # (initial enrollment uses the dedicated, exempt mfa_enroll route).
+        session = self.client.session
+        session['mfa_verified'] = True
+        session.save()
+
     def _profile_payload(self):
         return {
             'first_name': 'Mfa',
@@ -52,22 +59,17 @@ class MfaPolicyTests(TestCase):
 
         blocked = self.client.get(reverse('dashboard'))
         self.assertEqual(blocked.status_code, 302)
-        # Fail-closed MFA gate now sends un-enrolled users straight to the
-        # enrollment page (previously bounced to /login/). Dashboard is still
-        # blocked until MFA is satisfied.
+        # Fail-closed MFA gate sends un-enrolled users to the dedicated (exempt)
+        # enrollment page. Dashboard is blocked until MFA is satisfied. Profile
+        # is now gated too (Phase 4F) — enrollment goes through mfa_enroll.
         self.assertIn(reverse('mfa_enroll'), blocked.url)
 
-        profile_page = self.client.get(reverse('profile'))
-        self.assertEqual(profile_page.status_code, 200)
+        enroll_page = self.client.get(reverse('mfa_enroll'))
+        self.assertEqual(enroll_page.status_code, 200)
 
-        request_code = self.client.post(reverse('profile'), data={'action': 'send_mfa_code'}, follow=True)
-        self.assertEqual(request_code.status_code, 200)
-        mock_send_mail.assert_called_once()
-
-        self.profile.refresh_from_db()
-        self.assertTrue(self.profile.mfa_enrollment_code_hash)
-
-        submit = self.client.post(reverse('profile'), data=self._profile_payload())
+        # Complete enrollment via the dedicated route: send code, then verify.
+        self.client.post(reverse('mfa_enroll'), data={'action': 'send'})
+        submit = self.client.post(reverse('mfa_enroll'), data={'code': '123456'})
         self.assertEqual(submit.status_code, 302)
 
         self.profile.refresh_from_db()
@@ -100,9 +102,11 @@ class MfaPolicyTests(TestCase):
     def test_mfa_enrollment_requires_verification_code(self):
         self.assertTrue(self.client.login(username='mfa-user', password='testpass123'))
 
-        submit = self.client.post(reverse('profile'), data=self._profile_payload())
+        # Enrollment via the dedicated route requires a valid code; a wrong code
+        # must not enable MFA.
+        submit = self.client.post(reverse('mfa_enroll'), data={'code': '000000'})
         self.assertEqual(submit.status_code, 200)
-        self.assertContains(submit, 'Enter the 6-digit verification code sent to your email.', html=False)
+        self.assertContains(submit, 'Invalid or expired code', html=False)
         self.profile.refresh_from_db()
         self.assertFalse(self.profile.mfa_enabled)
         self.assertIsNone(self.profile.mfa_verified_at)
@@ -112,6 +116,8 @@ class MfaPolicyTests(TestCase):
         self.profile.mfa_enabled = True
         self.profile.mfa_verified_at = self.profile.mfa_verified_at or timezone.now()
         self.profile.save(update_fields=['mfa_enabled', 'mfa_verified_at', 'updated_at'])
+        # Managing recovery codes on the profile page requires a verified session.
+        self._verify_session()
 
         response = self.client.post(reverse('profile'), data={'action': 'generate_mfa_recovery_codes'}, follow=True)
         self.assertEqual(response.status_code, 200)

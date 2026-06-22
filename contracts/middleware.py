@@ -265,17 +265,40 @@ class SessionSecurityMiddleware:
 
         return self.get_response(request)
 
-    # Paths that must stay reachable so a user can complete (or escape) the MFA
-    # flow without a redirect loop: auth pages, the MFA pages themselves, and
-    # account/admin management. Static/media are served outside this middleware.
-    _MFA_EXEMPT_PREFIXES = (
-        '/login/', '/logout/', '/register/', '/mfa/',
-        '/profile/', '/settings/', '/admin/',
+    # Phase 4F: ONLY the exact routes needed to complete or escape the MFA flow
+    # are exempt — not broad /profile//settings//admin/ prefixes. Profile,
+    # security/org settings, billing and the admin console are now gated.
+    _MFA_EXEMPT_ROUTE_NAMES = (
+        'mfa_enroll',           # first-time enrollment
+        'mfa_challenge',        # per-session challenge + recovery-code use
+        'mfa_challenge_resend',
+        'login',                # auth
+        'logout',               # escape hatch
     )
+    # Infrastructure prefixes (not sensitive app routes); exempting these avoids
+    # 302'ing the enrollment page's own assets.
+    _MFA_EXEMPT_INFRA_PREFIXES = ('/static/', '/media/')
+
+    @classmethod
+    def _exempt_paths(cls):
+        cached = cls.__dict__.get('_exempt_paths_cache')
+        if cached is None:
+            from django.urls import NoReverseMatch, reverse
+            paths = set()
+            for name in cls._MFA_EXEMPT_ROUTE_NAMES:
+                try:
+                    paths.add(reverse(name))
+                except NoReverseMatch:
+                    pass
+            cls._exempt_paths_cache = paths
+            cached = paths
+        return cached
 
     @classmethod
     def _is_exempt_path(cls, path):
-        return any(path.startswith(prefix) for prefix in cls._MFA_EXEMPT_PREFIXES)
+        if path in cls._exempt_paths():
+            return True
+        return any(path.startswith(prefix) for prefix in cls._MFA_EXEMPT_INFRA_PREFIXES)
 
     def _mfa_gate_redirect(self, request):
         """Fail-closed MFA gate applied to EVERY non-exempt authenticated view.
