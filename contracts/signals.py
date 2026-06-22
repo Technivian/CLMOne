@@ -68,21 +68,51 @@ def _audit_logout(sender, request, user, **kwargs):
         logger.exception('audit logout failed')
 
 
+_LOGIN_FAIL_WINDOW_SECONDS = 300
+_LOGIN_FAIL_MAX_PER_WINDOW = 5  # cap audit rows per (ip, username) window
+
+
 @receiver(user_login_failed)
 def _audit_login_failure(sender, credentials, request=None, **kwargs):
+    """Audit login failures with abuse controls.
+
+    - The attempted password / raw auth payload is NEVER stored — only the
+      normalized username.
+    - Unknown usernames stay on the system (NULL) chain — never misattributed to
+      a tenant.
+    - Throttled per (ip, username) so an attacker cannot flood the audit table;
+      suppressed attempts are still counted in application logs.
+    """
+    from django.core.cache import cache
     from contracts.services.audit import append_audit
+
     ip, ua, rid = _request_meta(request)
-    # Never store the attempted password; record only the username attempted.
-    username = ''
+    raw = ''
     if isinstance(credentials, dict):
-        username = credentials.get('username') or credentials.get('email') or ''
+        raw = credentials.get('username') or credentials.get('email') or ''
+    # Normalize + bound the identifier; do not copy any other credential fields.
+    username = str(raw).strip().lower()[:150]
+
+    throttle_key = f'login_fail_audit:{ip or "noip"}:{username}'
+    try:
+        count = cache.get_or_set(throttle_key, 0, _LOGIN_FAIL_WINDOW_SECONDS)
+        if count >= _LOGIN_FAIL_MAX_PER_WINDOW:
+            logger.warning('login_failed audit throttled ip=%s user=%s', ip, username)
+            return
+        try:
+            cache.incr(throttle_key)
+        except ValueError:
+            cache.set(throttle_key, 1, _LOGIN_FAIL_WINDOW_SECONDS)
+    except Exception:
+        pass  # cache unavailable -> still record (fail open on throttling only)
+
     try:
         append_audit(
             action='LOGIN', model_name='User', organization=None, user=None,
-            object_repr=str(username)[:300],
+            object_repr=username[:300],
             event_type='auth.login_failed', actor_type='human', outcome='failure',
             request_id=rid, ip_address=ip, user_agent=ua,
-            changes={'event': 'auth.login_failed', 'username': str(username)[:150]},
+            changes={'event': 'auth.login_failed', 'username': username},
         )
     except Exception:
         logger.exception('audit login_failed failed')

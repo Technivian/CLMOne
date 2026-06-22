@@ -1,0 +1,71 @@
+name: Audit PostgreSQL Guarantees
+
+# Release gate: the append-only trigger and advisory-lock concurrency can only be
+# proven on PostgreSQL (SQLite cannot enforce them). This job runs the audit
+# suite against a real PostgreSQL service so the immutability + concurrency
+# guarantees are continuously verified, not just shown once in an evidence file.
+
+on:
+  pull_request:
+    paths:
+      - 'contracts/**'
+      - 'config/**'
+      - 'tests/test_audit_*.py'
+      - '.github/workflows/audit-postgres.yml'
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  audit-postgres:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: aegis_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DJANGO_SETTINGS_MODULE: config.settings_development
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/aegis_ci
+      DB_SSL_REQUIRE: 'false'
+      DJANGO_SECRET_KEY: ci-only-not-production-0000000000000000000000
+      ALLOWED_HOSTS: localhost,127.0.0.1
+      CSRF_TRUSTED_ORIGINS: http://localhost
+      DEFAULT_FROM_EMAIL: noreply@example.com
+      GEMINI_API_KEY: ''
+      STRIPE_SECRET_KEY: ''
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements/runtime.txt
+
+      - name: Confirm migration plan is linear and clean
+        run: |
+          python manage.py makemigrations --check --dry-run
+          python manage.py migrate --plan | tail -n 20
+
+      - name: Run audit guarantees against PostgreSQL
+        run: |
+          python manage.py test tests.test_audit_postgres tests.test_audit_integrity --noinput -v2
+
+      - name: Verify audit chain integrity (management command)
+        run: |
+          python manage.py verify_audit_chain --json

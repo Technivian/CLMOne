@@ -366,6 +366,7 @@ def log_action(
     if organization is None and organization_id is None and isinstance(changes, dict):
         organization_id = changes.get('organization_id')
 
+    from contracts.services.audit import AuditMisclassificationError
     try:
         return append_audit(
             action=action,
@@ -384,6 +385,10 @@ def log_action(
             ip_address=ip_address,
             user_agent=user_agent,
         )
+    except AuditMisclassificationError:
+        # Never silently downgrade a tenant event onto the system chain — fail
+        # loud so the missing-organization call site is fixed.
+        raise
     except Exception:
         logger.exception('audit append failed action=%s model=%s', action, model_name)
         return None

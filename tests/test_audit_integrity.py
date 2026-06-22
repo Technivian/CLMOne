@@ -2,7 +2,8 @@
 from __future__ import annotations
 
 from django.contrib.auth import get_user_model
-from django.db import transaction
+from django.core.cache import cache
+from django.db import IntegrityError, transaction
 from django.test import Client, TestCase
 from django.urls import reverse
 
@@ -256,6 +257,120 @@ class AuditReadTenantSafetyTests(TestCase):
         c.force_login(self.user_a)
         resp = c.get(reverse('contracts:audit_log_list'))
         self.assertEqual(resp.context['chain_status']['status'], VERDICT_VALID)
+
+
+class SeqUniquenessTests(TestCase):
+    """Both chains enforce sequence uniqueness via partial unique constraints."""
+
+    def test_system_chain_duplicate_seq_rejected(self):
+        AuditLog.objects.create(organization=None, action='LOGIN', model_name='User',
+                                event_type='auth.login_failed', seq=1, hash_version=2,
+                                entry_hash='a')
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                AuditLog.objects.create(organization=None, action='LOGIN', model_name='User',
+                                        event_type='auth.login_failed', seq=1, hash_version=2,
+                                        entry_hash='b')
+
+    def test_tenant_chain_duplicate_seq_rejected(self):
+        org = _org('UniqOrg', 'uniq-org')
+        AuditLog.objects.create(organization=org, action='CREATE', model_name='Contract',
+                                event_type='contract.created', seq=1, hash_version=2, entry_hash='a')
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                AuditLog.objects.create(organization=org, action='CREATE', model_name='Contract',
+                                        event_type='contract.created', seq=1, hash_version=2,
+                                        entry_hash='b')
+
+    def test_two_orgs_may_share_seq_number(self):
+        a = _org('SeqA', 'seq-a')
+        b = _org('SeqB', 'seq-b')
+        _append(a, 1)
+        _append(b, 1)
+        self.assertEqual(verify_chain(a.id)['status'], VERDICT_VALID)
+        self.assertEqual(verify_chain(b.id)['status'], VERDICT_VALID)
+
+
+class TenantAttributionGuardTests(TestCase):
+    """Org-owned events must never silently fall onto the system chain."""
+
+    def setUp(self):
+        self.org = _org('Attr Org', 'attr-org')
+        self.user = _member(self.org, 'attruser')
+
+    def test_org_resolved_from_target_when_omitted(self):
+        from contracts.services.audit import append_audit
+        contract = Contract.objects.create(organization=self.org, title='C', created_by=self.user)
+        entry = append_audit(action='UPDATE', model_name='Contract', object_id=contract.pk,
+                             changes={'event': 'contract.updated'})
+        self.assertEqual(entry.organization_id, self.org.id)  # auto-resolved
+
+    def test_unresolvable_org_owned_event_is_rejected(self):
+        from contracts.services.audit import append_audit, AuditMisclassificationError
+        with self.assertRaises(AuditMisclassificationError):
+            append_audit(action='UPDATE', model_name='Contract', object_id=999999,
+                         changes={'event': 'contract.updated'})
+
+    def test_log_action_reraises_misclassification(self):
+        from contracts.middleware import log_action
+        from contracts.services.audit import AuditMisclassificationError
+        with self.assertRaises(AuditMisclassificationError):
+            log_action(None, 'UPDATE', 'Contract', object_id=999999,
+                       changes={'event': 'contract.updated'})
+
+    def test_platform_event_allowed_on_system_chain(self):
+        from contracts.services.audit import append_audit
+        # 'User' is a platform target -> system chain is legitimate, no raise.
+        entry = append_audit(action='LOGIN', model_name='User',
+                             event_type='auth.login_failed', outcome='failure')
+        self.assertIsNone(entry.organization_id)
+
+
+class VerifierDuplicateSeqTests(TestCase):
+    """Verifier flags duplicate seq explicitly (defense even if DB allows it).
+
+    The unique constraint normally prevents duplicates, so we drop it for this
+    test to simulate 'database protection absent' and prove the verifier still
+    catches it. TransactionTestCase-free via schema_editor within the test txn.
+    """
+
+    def test_verifier_detects_duplicate_seq_without_db_constraint(self):
+        from django.db import connection
+        from contracts.services.audit import VERDICT_DUPLICATE_SEQ, verify_chain
+        org = _org('DupOrg', 'dup-org')
+        _append(org, 2)  # valid seq 1,2
+        # Simulate absent DB protection: drop the unique index, inject a
+        # duplicate seq=2, and prove the verifier still rejects it.
+        with connection.cursor() as cur:
+            cur.execute('DROP INDEX IF EXISTS audit_org_seq_uniq')
+        AuditLog.objects.create(
+            organization=org, action='CREATE', model_name='Contract',
+            event_type='contract.created', seq=2, hash_version=2, entry_hash='dup',
+        )
+        res = verify_chain(org.id)
+        self.assertEqual(res['status'], VERDICT_DUPLICATE_SEQ)
+
+
+class LoginFailureAbuseTests(TestCase):
+    def setUp(self):
+        cache.clear()
+
+    def tearDown(self):
+        cache.clear()  # avoid leaking throttle/rate-limit counters to other tests
+
+    def test_login_failure_audit_is_throttled(self):
+        # Fire the auth signal directly to test the audit throttle in isolation
+        # (without tripping the HTTP login rate-limiter).
+        from django.contrib.auth.signals import user_login_failed
+        for _ in range(12):
+            user_login_failed.send(sender='test', credentials={'username': 'GHOST@x.com'}, request=None)
+        rows = AuditLog.objects.filter(event_type='auth.login_failed')
+        # Capped well below 12 attempts (throttle window).
+        self.assertLessEqual(rows.count(), 5)
+        self.assertGreaterEqual(rows.count(), 1)
+        # Never tenant-attributed; username normalized; no password stored.
+        self.assertTrue(all(r.organization_id is None for r in rows))
+        self.assertTrue(all(r.changes.get('username') == 'ghost@x.com' for r in rows))
 
 
 class VerifyCommandTests(TestCase):

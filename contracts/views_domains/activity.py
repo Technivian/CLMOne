@@ -55,8 +55,11 @@ class AuditLogListView(LoginRequiredMixin, ListView):
         ctx = super().get_context_data(**kwargs)
         org = get_user_organization(self.request.user)
         if org is not None:
-            from contracts.services.audit import verify_chain
-            ctx['chain_status'] = verify_chain(org.id)
+            # Cached (keyed by latest seq) so the list page is not an O(n)
+            # cryptographic treadmill; verify_audit_chain is the authoritative
+            # on-demand check.
+            from contracts.services.audit import verify_chain_cached
+            ctx['chain_status'] = verify_chain_cached(org.id)
         return ctx
 
 

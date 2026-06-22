@@ -32,7 +32,8 @@ import hashlib
 import json
 import logging
 
-from django.db import IntegrityError, transaction
+from django.apps import apps
+from django.db import IntegrityError, connection, transaction
 
 from contracts.models import AuditLog
 
@@ -40,7 +41,55 @@ logger = logging.getLogger(__name__)
 
 HASH_VERSION = 2
 GENESIS_PREV_HASH = ''  # prev_hash of the first entry in each org chain
-_MAX_SEQ_RETRIES = 4
+_MAX_SEQ_RETRIES = 6
+# Advisory-lock namespace (arbitrary stable int) used to serialize appends per
+# chain on PostgreSQL. Paired with the org id (0 = system chain) as the 2nd key.
+_AUDIT_LOCK_CLASSID = 0x41554454  # "AUDT"
+_SYSTEM_CHAIN_LOCK_KEY = 0        # org ids are >= 1, so 0 is a safe sentinel
+
+# Models that are NOT contracts-app org-owned models but legitimately appear as
+# audit targets on the system chain (no tenant), or carry org explicitly.
+_PLATFORM_TARGET_MODELS = frozenset({
+    'User',                 # auth events; org passed explicitly when known
+    'ScheduledJobRun',      # job.failed carries org when tenant-scoped
+    'ESignEvent',           # webhook reconcile carries org explicitly
+    'RetentionExecution',   # synthetic; carries org explicitly
+    'SignaturePacket',      # synthetic; carries org explicitly
+})
+
+
+class AuditMisclassificationError(Exception):
+    """An organization-owned event was about to be written with no organization.
+
+    Raised (not swallowed) so a tenant event can never silently fall into the
+    system chain — the caller must supply or make the organization resolvable.
+    """
+
+
+def _is_org_owned_model(model_name):
+    """True if `model_name` is a contracts-app model carrying an organization FK."""
+    if not model_name or model_name in _PLATFORM_TARGET_MODELS:
+        return False
+    try:
+        model = apps.get_model('contracts', model_name)
+    except Exception:
+        return False
+    return any(getattr(f, 'name', None) == 'organization' for f in model._meta.fields)
+
+
+def _resolve_org_id_from_target(model_name, object_id):
+    """Best-effort resolve organization_id from an org-owned target row."""
+    if object_id is None:
+        return None
+    try:
+        model = apps.get_model('contracts', model_name)
+    except Exception:
+        return None
+    return (
+        model.objects.filter(pk=object_id)
+        .values_list('organization_id', flat=True)
+        .first()
+    )
 
 
 def canonical_material(
@@ -83,11 +132,28 @@ def compute_entry_hash(**kwargs) -> str:
     return hashlib.sha256(canonical_material(**kwargs).encode('utf-8')).hexdigest()
 
 
+def _lock_chain(organization_id):
+    """Serialize appends to one chain.
+
+    On PostgreSQL, take a transaction-scoped advisory lock keyed by the chain
+    (org id, or a sentinel for the system chain). This is a STABLE lock target
+    that works even at genesis (no row to lock yet) and for the NULL system
+    chain — locking the latest AuditLog row would not. The lock is released at
+    transaction end. On other backends (SQLite in tests) writes are already
+    serialized, so this is a no-op; the unique constraints + retry remain the
+    backstop.
+    """
+    if connection.vendor != 'postgresql':
+        return
+    key2 = organization_id if organization_id is not None else _SYSTEM_CHAIN_LOCK_KEY
+    with connection.cursor() as cursor:
+        cursor.execute('SELECT pg_advisory_xact_lock(%s, %s)', [_AUDIT_LOCK_CLASSID, int(key2)])
+
+
 def _chain_tail(organization_id):
-    """Most recent chained entry for an org (locked for update within atomic)."""
+    """Most recent chained entry for a chain (called while holding the lock)."""
     return (
         AuditLog.objects
-        .select_for_update()
         .filter(organization_id=organization_id, seq__isnull=False)
         .order_by('-seq')
         .first()
@@ -120,6 +186,18 @@ def append_audit(
     """
     org_id = organization.id if organization is not None else organization_id
     actor_id = getattr(user, 'id', None)
+
+    # Tenant-attribution guard: an organization-owned target must never be
+    # written to the system (NULL) chain. Resolve the org from the target row if
+    # the caller didn't provide it; reject if it cannot be resolved.
+    if org_id is None and _is_org_owned_model(model_name):
+        org_id = _resolve_org_id_from_target(model_name, object_id)
+        if org_id is None:
+            raise AuditMisclassificationError(
+                f'Org-owned audit target {model_name}#{object_id} has no '
+                f'organization; refusing to file it on the system chain.'
+            )
+
     if not event_type:
         event_type = (changes or {}).get('event') if isinstance(changes, dict) else None
         event_type = event_type or f'{model_name}.{action}'.lower()
@@ -130,6 +208,7 @@ def append_audit(
     for _attempt in range(_MAX_SEQ_RETRIES):
         try:
             with transaction.atomic():
+                _lock_chain(org_id)
                 tail = _chain_tail(org_id)
                 seq = (tail.seq + 1) if tail else 1
                 prev_hash = tail.entry_hash if tail else GENESIS_PREV_HASH
@@ -166,6 +245,7 @@ def append_audit(
 VERDICT_VALID = 'valid'
 VERDICT_EMPTY = 'empty'
 VERDICT_MISSING_PREDECESSOR = 'missing_predecessor'
+VERDICT_DUPLICATE_SEQ = 'duplicate_seq'
 VERDICT_HASH_MISMATCH = 'hash_mismatch'
 VERDICT_BROKEN_LINK = 'broken_link'
 VERDICT_MALFORMED = 'malformed'
@@ -193,6 +273,10 @@ def verify_chain(organization_id, *, since=None, until=None) -> dict:
     full_range = since is None and until is None
 
     for idx, e in enumerate(entries):
+        # Duplicate sequence number — explicitly rejected even if a DB unique
+        # constraint is somehow absent (defense-in-depth for the verifier).
+        if idx > 0 and e.seq == entries[idx - 1].seq:
+            return _broken(organization_id, e, VERDICT_DUPLICATE_SEQ, len(entries))
         # Sequence continuity (no missing predecessor within the examined set).
         if idx > 0 and e.seq != entries[idx - 1].seq + 1:
             return _broken(organization_id, e, VERDICT_MISSING_PREDECESSOR, len(entries))
@@ -219,6 +303,27 @@ def verify_chain(organization_id, *, since=None, until=None) -> dict:
             return _broken(organization_id, e, VERDICT_HASH_MISMATCH, len(entries))
 
     return {'status': VERDICT_VALID, 'checked': len(entries), 'organization_id': organization_id}
+
+
+def verify_chain_cached(organization_id, ttl=300) -> dict:
+    """Cached chain status for cheap UI badges.
+
+    Keyed by (org, latest seq) so the O(n) verification runs only when a new
+    entry appends (or the short TTL lapses); repeated page loads are O(1). Use
+    the management command / verify_chain for an authoritative on-demand check.
+    """
+    from django.core.cache import cache
+    latest_seq = (
+        AuditLog.objects.filter(organization_id=organization_id, seq__isnull=False)
+        .order_by('-seq').values_list('seq', flat=True).first()
+    )
+    key = f'audit_chain_status:{organization_id}:{latest_seq}'
+    cached = cache.get(key)
+    if cached is not None:
+        return cached
+    result = verify_chain(organization_id)
+    cache.set(key, result, ttl)
+    return result
 
 
 def _broken(organization_id, entry, reason, checked) -> dict:

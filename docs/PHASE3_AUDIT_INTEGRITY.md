@@ -68,6 +68,59 @@ first broken entry's `seq` / `event_type` / reason only (never sensitive
 Operators also see a per-organization chain-verification badge on the Audit Log
 page (`/contracts/audit-log/`), which is tenant-scoped and read-only.
 
+## Concurrency & sequence allocation
+
+Appending an entry must atomically (1) read the chain tail, (2) pick the next
+`seq`, (3) compute `prev_hash`, (4) insert. Serialization:
+
+- **PostgreSQL:** a transaction-scoped advisory lock — `pg_advisory_xact_lock(classid, key)`
+  where `key` = organization id, or a fixed sentinel (`0`) for the system chain.
+  This is a **stable lock target** that works even at genesis (no row exists to
+  lock yet) and for the NULL system chain. The lock releases at transaction end.
+- **SQLite (tests):** writes are already serialized; the lock is a no-op.
+- **Backstop (all backends):** partial unique constraints on `(organization, seq)`
+  (tenant chains) and `(seq) WHERE organization IS NULL` (system chain) — a plain
+  `(organization, seq)` unique would NOT constrain the system chain because
+  PostgreSQL treats NULLs as distinct. `append_audit` retries on `IntegrityError`
+  and recomputes from the new tail.
+
+Proven on PostgreSQL by `tests/test_audit_postgres.py` (concurrent appends from
+genesis on both tenant and system chains stay contiguous and verify clean) and
+the `audit-postgres` CI job.
+
+## Tenant attribution invariant
+
+Every audit event about an organization-owned object **must** carry an
+organization; only explicitly-platform targets may use the NULL system chain.
+`append_audit` enforces this: for a contracts-app model with an `organization`
+field it derives the org from the target row when the caller omits it, and
+**raises `AuditMisclassificationError`** (re-raised by `log_action`, never
+swallowed) if it cannot — so a tenant event can never silently fall onto the
+system chain. Platform targets (`User`, `ScheduledJobRun`, `ESignEvent`,
+`RetentionExecution`, `SignaturePacket`) are exempt and carry org explicitly when
+tenant-scoped.
+
+## Operating the append-only trigger (escape hatch)
+
+The PostgreSQL trigger (`migration 0053`) blocks all UPDATE/DELETE. Legitimate
+operations:
+
+- **Schema migrations that alter audit storage:** add new *columns*/indexes
+  normally — `ALTER TABLE ... ADD COLUMN` is not UPDATE/DELETE and is not
+  blocked. A migration that must rewrite rows has to drop the trigger first
+  (`migration 0053` reverse) and re-create it after.
+- **Emergency repair / GDPR erasure of an audit row:** only a database
+  superuser, in a maintenance window:
+  1. `ALTER TABLE contracts_auditlog DISABLE TRIGGER USER;`
+  2. perform the minimal change;
+  3. `ALTER TABLE contracts_auditlog ENABLE TRIGGER USER;`
+  4. `python manage.py verify_audit_chain` and record the result;
+  5. record who/why/when in an out-of-band operations log (the change itself is,
+     by design, not self-auditable while the trigger is off).
+- **Database restore:** restoring from a logical dump re-runs `migrate`, which
+  re-installs the trigger; verify it exists (`select tgname from pg_trigger`)
+  and run `verify_audit_chain` after any restore.
+
 ## Retention vs. legal retention
 
 Ordinary record deletion / tenant cleanup does NOT remove audit evidence

@@ -1372,9 +1372,21 @@ class AuditLog(models.Model):
             models.Index(fields=['event_type'], name='audit_event_type_ix'),
         ]
         constraints = [
-            # Per-org chain sequence is unique (NULLs — legacy rows — exempt).
+            # Tenant chains: (organization, seq) unique where organization is set.
             models.UniqueConstraint(
-                fields=['organization', 'seq'], name='audit_org_seq_uniq',
+                fields=['organization', 'seq'],
+                condition=models.Q(organization__isnull=False),
+                name='audit_org_seq_uniq',
+            ),
+            # System/global chain: seq unique where organization IS NULL. A plain
+            # (organization, seq) unique would NOT enforce this on PostgreSQL,
+            # which treats NULLs as distinct — so the system chain needs its own
+            # partial constraint. (Legacy v1 rows have seq IS NULL and are exempt
+            # from both, since seq is part of each constraint.)
+            models.UniqueConstraint(
+                fields=['seq'],
+                condition=models.Q(organization__isnull=True, seq__isnull=False),
+                name='audit_system_seq_uniq',
             ),
         ]
 

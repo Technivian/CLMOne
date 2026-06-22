@@ -156,9 +156,12 @@ class APITokenExpiryTest(TestCase):
 class AuditLogHashTest(TestCase):
     def setUp(self):
         self.user = _make_user('auditor')
+        # Org-owned audit targets must carry an organization (Phase 3 hardening),
+        # so these hashing tests file under a real org.
+        self.org = _make_org('AuditHashOrg')
 
     def test_log_action_sets_entry_hash(self):
-        log_action(self.user, AuditLog.Action.VIEW, 'Contract', object_id=1)
+        log_action(self.user, AuditLog.Action.VIEW, 'Contract', object_id=1, organization=self.org)
         entry = AuditLog.objects.filter(user=self.user, model_name='Contract').latest('timestamp')
         self.assertTrue(bool(entry.entry_hash), 'entry_hash must be set')
         self.assertEqual(len(entry.entry_hash), 64)  # SHA-256 hex
@@ -167,7 +170,7 @@ class AuditLogHashTest(TestCase):
         # Phase 3: entry_hash is now the per-org CHAIN hash (covers prev_hash,
         # seq, org, actor, outcome, ...), computed by contracts.services.audit.
         # Verify it is deterministic by recomputing from the stored fields.
-        log_action(self.user, AuditLog.Action.VIEW, 'Document', object_id=99)
+        log_action(self.user, AuditLog.Action.VIEW, 'Document', object_id=99, organization=self.org)
         entry = AuditLog.objects.filter(user=self.user, model_name='Document').latest('timestamp')
         from contracts.services.audit import compute_entry_hash
         expected = compute_entry_hash(
@@ -180,7 +183,7 @@ class AuditLogHashTest(TestCase):
         self.assertEqual(entry.entry_hash, expected)
 
     def test_compute_hash_changes_when_action_changes(self):
-        log_action(self.user, AuditLog.Action.VIEW, 'Matter', object_id=7)
+        log_action(self.user, AuditLog.Action.VIEW, 'Matter', object_id=7, organization=self.org)
         entry = AuditLog.objects.filter(user=self.user, model_name='Matter').latest('timestamp')
         original = entry.entry_hash
         entry.action = AuditLog.Action.DELETE
