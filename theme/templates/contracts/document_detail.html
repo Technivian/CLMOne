@@ -37,7 +37,7 @@
             <p class="page-subtitle c-muted">Version {{ document.version }} &middot; {{ document.get_document_type_display }} &middot; {{ document.get_status_display }}</p>
         </div>
         <div class="page-actions">
-            {% if document.file %}<a href="{{ document.file.url }}" class="btn-primary-grad text-white" download>Download</a>{% endif %}
+            {% if document.file %}<a href="{% url 'contracts:document_download' document.pk %}" class="btn-primary-grad text-white">Download</a>{% endif %}
             <a href="{% url 'contracts:document_update' document.pk %}" class="btn-ghost">Edit</a>
         </div>
     </div>
@@ -82,7 +82,7 @@
                 <div class="text-sm">v{{ v.version }} – {{ v.created_at|date:"M d, Y" }}</div>
                 <div class="flex items-center gap-4">
                     <a href="{% url 'contracts:document_compare' document.pk v.pk %}" class="text-xs c-link">Compare</a>
-                    {% if v.file %}<a href="{{ v.file.url }}" class="text-xs c-link" download>Download</a>{% endif %}
+                    {% if v.file %}<a href="{% url 'contracts:document_download' v.pk %}" class="text-xs c-link">Download</a>{% endif %}
                 </div>
             </div>
             {% endfor %}
@@ -97,7 +97,7 @@
             {% for version in version_chain %}
             <div class="px-5 py-3 flex items-center justify-between">
                 <div class="text-sm">v{{ version.version }} – {{ version.created_at|date:"M d, Y" }}</div>
-                {% if version.file %}<a href="{{ version.file.url }}" class="text-xs c-link" download>Download</a>{% endif %}
+                {% if version.file %}<a href="{% url 'contracts:document_download' version.pk %}" class="text-xs c-link">Download</a>{% endif %}
             </div>
             {% endfor %}
         </div>

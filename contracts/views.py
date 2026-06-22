@@ -113,6 +113,7 @@ from .views_domains.privacy_approvals import (
     TransferRecordUpdateView,
     privacy_dashboard,
     privacy_evidence_export,
+    ai_data_controls,
 )
 from .views_domains.organization_admin import (
     accept_organization_invite,
@@ -193,9 +194,14 @@ from .views_domains.actions import (
     toggle_redesign,
 )
 from .views_domains.core import (
+    csp_report,
     health_check,
     index,
     LoginView,
+    MfaRequiredMixin,
+    mfa_challenge,
+    mfa_challenge_resend,
+    mfa_enroll,
     operations_dashboard,
     SignUpView,
     switch_organization,
@@ -212,10 +218,12 @@ from .views_domains.client_matter_document import (
     ClientListView,
     ClientUpdateView,
     DocumentCreateView,
+    DocumentDeleteView,
     DocumentDetailView,
     DocumentCompareView,
     DocumentListView,
     DocumentUpdateView,
+    document_download,
     DocumentOCRQueueView,
     DocumentOCRReviewUpdateView,
     MatterCreateView,

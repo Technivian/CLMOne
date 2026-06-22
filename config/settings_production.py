@@ -15,7 +15,7 @@ if not ALLOWED_HOSTS:
     raise ImproperlyConfigured('ALLOWED_HOSTS must be set in production.')
 if not CSRF_TRUSTED_ORIGINS:
     raise ImproperlyConfigured('CSRF_TRUSTED_ORIGINS must be set in production.')
-if DEFAULT_FROM_EMAIL == 'noreply@cms-aegis.local':
+if DEFAULT_FROM_EMAIL in ('noreply@cms-aegis.local', 'noreply@docclad.local'):
     raise ImproperlyConfigured('DEFAULT_FROM_EMAIL must be set in production.')
 
 ALLOW_SQLITE_IN_PRODUCTION = base._bool_env('ALLOW_SQLITE_IN_PRODUCTION', default=False)
@@ -26,6 +26,19 @@ if not ALLOW_SQLITE_IN_PRODUCTION:
             'Production requires PostgreSQL. Set DATABASE_URL=postgresql://... '
             'or explicitly set ALLOW_SQLITE_IN_PRODUCTION=true for temporary emergency use.'
         )
+
+# Durable document storage (A6): production must never silently use ephemeral
+# local-disk media (lost on redeploy/instance replacement). Require object
+# storage unless an operator explicitly opts into ephemeral media for temporary
+# emergency use. The s3 backend itself validates bucket/credentials in
+# settings_base; this guard rejects the filesystem fallback in production.
+ALLOW_EPHEMERAL_MEDIA_IN_PRODUCTION = base._bool_env('ALLOW_EPHEMERAL_MEDIA_IN_PRODUCTION', default=False)
+if not ALLOW_EPHEMERAL_MEDIA_IN_PRODUCTION and MEDIA_STORAGE_BACKEND != 's3':
+    raise ImproperlyConfigured(
+        'Production requires durable object storage. Set MEDIA_STORAGE_BACKEND=s3 '
+        '(AWS S3 or an S3-compatible endpoint such as Supabase Storage), or set '
+        'ALLOW_EPHEMERAL_MEDIA_IN_PRODUCTION=true for temporary emergency use only.'
+    )
 
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True

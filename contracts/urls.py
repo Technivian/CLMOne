@@ -128,7 +128,9 @@ urlpatterns = [
     path('documents/', views.DocumentListView.as_view(), name='document_list'),
     path('documents/new/', views.DocumentCreateView.as_view(), name='document_create'),
     path('documents/<int:pk>/', views.DocumentDetailView.as_view(), name='document_detail'),
+    path('documents/<int:pk>/download/', views.document_download, name='document_download'),
     path('documents/<int:pk>/edit/', views.DocumentUpdateView.as_view(), name='document_update'),
+    path('documents/<int:pk>/delete/', views.DocumentDeleteView.as_view(), name='document_delete'),
     path('documents/<int:pk>/compare/<int:other_pk>/', views.DocumentCompareView.as_view(), name='document_compare'),
     path('documents/ocr-queue/', views.DocumentOCRQueueView.as_view(), name='document_ocr_queue'),
     path('documents/ocr-queue/<int:pk>/', views.DocumentOCRReviewUpdateView.as_view(), name='document_ocr_review'),
@@ -302,6 +304,7 @@ urlpatterns = [
     # Privacy & GDPR
     path('privacy/', views.privacy_dashboard, name='privacy_dashboard'),
     path('privacy/evidence-export/', views.privacy_evidence_export, name='privacy_evidence_export'),
+    path('privacy/data-controls/', views.ai_data_controls, name='ai_data_controls'),
     path('privacy/data-inventory/', views.DataInventoryListView.as_view(), name='data_inventory_list'),
     path('privacy/data-inventory/new/', views.DataInventoryCreateView.as_view(), name='data_inventory_create'),
     path('privacy/data-inventory/<int:pk>/', views.DataInventoryDetailView.as_view(), name='data_inventory_detail'),

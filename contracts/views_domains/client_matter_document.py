@@ -2,9 +2,10 @@ from datetime import date, timedelta
 from decimal import Decimal
 
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, Q, Sum
-from django.http import HttpResponseForbidden, HttpResponseRedirect
+from django.http import Http404, HttpResponseForbidden, HttpResponseRedirect
 from django.urls import reverse, reverse_lazy
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
@@ -12,7 +13,7 @@ from django.views.generic import CreateView, DeleteView, DetailView, ListView, U
 
 from contracts.forms import ClientForm, DocumentForm, DocumentOCRReviewForm, MatterForm
 from contracts.middleware import log_action
-from contracts.models import Client, Document, DocumentOCRReview, Matter
+from contracts.models import AuditLog, Client, Document, DocumentOCRReview, Matter
 from contracts.permissions import ContractAction, can_access_contract_action
 from contracts.tenancy import get_user_organization, scope_queryset_for_organization, set_organization_on_instance
 from contracts.view_support import TenantAssignCreateMixin, TenantScopedQuerysetMixin
@@ -372,6 +373,64 @@ class DocumentDeleteView(TenantScopedQuerysetMixin, LoginRequiredMixin, DeleteVi
         )
         messages.success(self.request, f'Document "{doc_title}" deleted.')
         return HttpResponseRedirect(self.get_success_url())
+
+
+@login_required
+def document_download(request, pk):
+    """Authenticated, tenant-safe, audited document download (A6).
+
+    DocClad authorizes here and then redirects to a short-lived signed URL
+    (private object storage) rather than exposing object URLs directly. Enforces
+    tenant access, document permission, and (soft-)deletion state, and records a
+    download/blocked audit event without storing the URL or file contents.
+    """
+    org = get_user_organization(request.user)
+    if org is None:
+        raise Http404
+
+    # Cross-tenant attempts: detect a foreign document to audit the block, but
+    # never reveal it (still 404). The blocked event is filed on the ACTOR's org.
+    scoped = scope_queryset_for_organization(Document.objects.all(), org)
+    document = scoped.filter(pk=pk).first()
+    if document is None:
+        if Document.objects.filter(pk=pk).exists():
+            log_action(
+                request.user, AuditLog.Action.VIEW, 'Document',
+                object_id=None, object_repr='cross-tenant document access blocked',
+                organization=org, event_type='document.access_blocked', outcome='blocked',
+                changes={'event': 'document.access_blocked', 'attempted_document_id': pk},
+                request=request,
+            )
+        raise Http404
+
+    # Document permission: VIEW on the linked contract where present.
+    if document.contract_id and not can_access_contract_action(
+        request.user, document.contract, ContractAction.VIEW
+    ):
+        return HttpResponseForbidden('You do not have permission to access this document.')
+
+    # Deletion/retention state (soft-delete added in 4E; defensive until then).
+    if getattr(document, 'is_deleted', False):
+        raise Http404
+
+    if not document.file:
+        raise Http404
+
+    log_action(
+        request.user, AuditLog.Action.VIEW, 'Document',
+        object_id=document.pk, object_repr=document.title[:300],
+        organization=org, event_type='document.downloaded',
+        changes={'event': 'document.downloaded', 'document_id': document.pk,
+                 'contract_id': document.contract_id},
+        request=request,
+    )
+    # Redirect to the storage URL: a signed, expiring URL under S3; the dev
+    # media handler under filesystem. We never persist the URL.
+    try:
+        return redirect(document.file.url)
+    except Exception:
+        # Object missing/unavailable — fail safe without leaking backend detail.
+        raise Http404
 
 
 class DocumentOCRQueueView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
