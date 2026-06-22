@@ -4,12 +4,22 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from contracts.models import BackgroundJob, Organization, SalesforceOrganizationConnection, SalesforceSyncRun
+from contracts.services.job_runs import record_job_run
+
+JOB_NAME = 'queue_background_jobs'
 
 
 class Command(BaseCommand):
     help = 'Queue reminder and document-processing background jobs.'
 
     def handle(self, *args, **options):
+        with record_job_run(JOB_NAME) as run:
+            queued = self._queue_all()
+            run.records_changed = queued
+            run.detail = {'jobs_queued': queued}
+        self.stdout.write(self.style.SUCCESS(f'Queued {queued} background job(s).'))
+
+    def _queue_all(self):
         queued = 0
         for organization in Organization.objects.filter(is_active=True):
             for job_type in ['send_contract_reminders', 'process_document_ocr_reviews']:
@@ -68,4 +78,4 @@ class Command(BaseCommand):
                     scheduled_at=timezone.now(),
                 )
                 queued += 1
-        self.stdout.write(self.style.SUCCESS(f'Queued {queued} background job(s).'))
+        return queued

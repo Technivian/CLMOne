@@ -1,12 +1,33 @@
 from __future__ import annotations
 
+import logging
 from datetime import timedelta
 
 from django.core.management import call_command
-from django.db.models import Q
+from django.db.models import F, Q
 from django.utils import timezone
 
 from contracts.models import BackgroundJob
+
+logger = logging.getLogger(__name__)
+
+_STALE_JOB_MINUTES = 30
+
+
+def _enqueue_rq(job: BackgroundJob, scheduled_at=None) -> None:
+    """Enqueue job to Redis via django-rq.  Silently skips if unavailable."""
+    try:
+        import django_rq
+        from contracts.tasks import execute_background_job
+
+        queue = django_rq.get_queue('default')
+        if scheduled_at and scheduled_at > timezone.now():
+            delay = (scheduled_at - timezone.now()).total_seconds()
+            queue.enqueue_in(timedelta(seconds=max(0, delay)), execute_background_job, job.pk)
+        else:
+            queue.enqueue(execute_background_job, job.pk)
+    except Exception:
+        logger.debug('RQ enqueue skipped (Redis unavailable); DB polling will pick up job %s', job.pk)
 
 
 def queue_background_job(job_type: str, organization=None, payload=None, created_by=None, scheduled_at=None):
@@ -21,20 +42,55 @@ def queue_background_job(job_type: str, organization=None, payload=None, created
             job_type=job_type,
             status=BackgroundJob.Status.PENDING,
         ).order_by('-scheduled_at', '-created_at').first()
-    return BackgroundJob.objects.create(
+    job = BackgroundJob.objects.create(
         organization=organization,
         job_type=job_type,
         payload=payload or {},
         created_by=created_by,
         scheduled_at=scheduled_at or timezone.now(),
     )
+    _enqueue_rq(job, scheduled_at=scheduled_at)
+    return job
 
 
-def process_background_job(job: BackgroundJob):
-    job.status = BackgroundJob.Status.RUNNING
-    job.started_at = timezone.now()
-    job.attempt_count = int(job.attempt_count or 0) + 1
-    job.save(update_fields=['status', 'started_at', 'attempt_count'])
+def claim_background_job(job: BackgroundJob) -> bool:
+    """Atomically transition a job PENDING -> RUNNING.
+
+    Overlap protection: a single conditional UPDATE means only ONE processor can
+    claim a given job, even if a continuous worker, a cron drain, and an RQ
+    worker all attempt it concurrently. Returns True if this caller won the
+    claim. Portable across SQLite and PostgreSQL (no SELECT ... FOR UPDATE
+    needed — the WHERE status=PENDING guard is the lock).
+    """
+    now = timezone.now()
+    claimed = (
+        BackgroundJob.objects
+        .filter(pk=job.pk, status=BackgroundJob.Status.PENDING)
+        .update(
+            status=BackgroundJob.Status.RUNNING,
+            started_at=now,
+            attempt_count=F('attempt_count') + 1,
+        )
+    )
+    if not claimed:
+        return False
+    job.refresh_from_db(fields=['status', 'started_at', 'attempt_count'])
+    return True
+
+
+def process_background_job(job: BackgroundJob, *, claim: bool = True):
+    # Claim atomically; if another processor already took it, do nothing.
+    # claim=False is for callers that have already claimed the row (or for
+    # routing-only unit tests that pass a stand-in job).
+    if claim:
+        if not claim_background_job(job):
+            logger.info('process_background_job: job %s already claimed; skipping', job.pk)
+            return
+    else:
+        job.status = BackgroundJob.Status.RUNNING
+        job.started_at = timezone.now()
+        job.attempt_count = int(job.attempt_count or 0) + 1
+        job.save(update_fields=['status', 'started_at', 'attempt_count'])
     try:
         if job.job_type == 'send_contract_reminders':
             call_command('send_contract_reminders')
@@ -89,7 +145,28 @@ def process_background_job(job: BackgroundJob):
         raise
 
 
+def reset_stale_running_jobs() -> int:
+    """Move RUNNING jobs that have been stuck for too long back to PENDING.
+
+    Handles the case where a worker dyno crashed mid-execution, leaving the
+    BackgroundJob record in RUNNING state with no worker to finish it.
+    """
+    stale_cutoff = timezone.now() - timedelta(minutes=_STALE_JOB_MINUTES)
+    count = BackgroundJob.objects.filter(
+        status=BackgroundJob.Status.RUNNING,
+        started_at__lt=stale_cutoff,
+    ).update(
+        status=BackgroundJob.Status.PENDING,
+        scheduled_at=timezone.now(),
+        error_message='Reset from RUNNING: worker likely crashed.',
+    )
+    if count:
+        logger.warning('reset_stale_running_jobs: reset %d stale job(s) to PENDING', count)
+    return count
+
+
 def process_pending_background_jobs(limit=50):
+    reset_stale_running_jobs()
     processed = 0
     pending_jobs = (
         BackgroundJob.objects

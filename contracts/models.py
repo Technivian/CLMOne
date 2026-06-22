@@ -6,6 +6,7 @@ from django.utils import timezone
 from decimal import Decimal
 from datetime import date, timedelta
 import hashlib
+import json
 import secrets
 import uuid
 import os
@@ -237,6 +238,19 @@ class UserProfile(models.Model):
     def mfa_recovery_code_count(self):
         return len(self.mfa_recovery_code_hashes or [])
 
+    def check_mfa_code(self, code) -> bool:
+        """Verify a login-challenge OTP without changing enrollment state."""
+        if not code or not self.mfa_enrollment_code_hash:
+            return False
+        if self.mfa_enrollment_code_expires_at and timezone.now() > self.mfa_enrollment_code_expires_at:
+            return False
+        ok = self.mfa_enrollment_code_hash == self._mfa_code_hash(str(code).strip())
+        if ok:
+            self.mfa_enrollment_code_hash = ''
+            self.mfa_enrollment_code_expires_at = None
+            self.save(update_fields=['mfa_enrollment_code_hash', 'mfa_enrollment_code_expires_at', 'updated_at'])
+        return ok
+
     @property
     def can_approve(self):
         return self.role in [self.Role.PARTNER, self.Role.SENIOR_ASSOCIATE, self.Role.ADMIN]
@@ -299,6 +313,7 @@ class OrganizationAPIToken(models.Model):
     is_active = models.BooleanField(default=True)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_api_tokens')
     last_used_at = models.DateTimeField(null=True, blank=True)
+    expires_at = models.DateTimeField(null=True, blank=True, help_text='Token is rejected after this datetime. Leave blank for no expiry.')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -307,6 +322,11 @@ class OrganizationAPIToken(models.Model):
 
     def __str__(self):
         return f'{self.label} @ {self.organization.name}'
+
+    @property
+    def is_expired(self):
+        from django.utils import timezone
+        return bool(self.expires_at and self.expires_at <= timezone.now())
 
     @staticmethod
     def _hash_token(raw_token):
@@ -907,6 +927,21 @@ class Document(models.Model):
             return os.path.splitext(self.file.name)[1].lower()
         return ''
 
+    def _check_retention_hold(self):
+        active_holds = LegalHold.objects.filter(status=LegalHold.Status.ACTIVE)
+        if self.matter_id and active_holds.filter(matter_id=self.matter_id).exists():
+            raise PermissionError(
+                'This document cannot be deleted: its matter is under an active legal hold.'
+            )
+        if self.client_id and active_holds.filter(client_id=self.client_id).exists():
+            raise PermissionError(
+                'This document cannot be deleted: its client is under an active legal hold.'
+            )
+
+    def delete(self, *args, **kwargs):
+        self._check_retention_hold()
+        super().delete(*args, **kwargs)
+
 
 class DocumentOCRReview(models.Model):
     class Status(models.TextChoices):
@@ -1261,12 +1296,25 @@ class AuditLog(models.Model):
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     user_agent = models.TextField(blank=True)
     timestamp = models.DateTimeField(auto_now_add=True)
+    entry_hash = models.CharField(
+        max_length=64, blank=True,
+        help_text='SHA-256 of (id:user_id:action:model_name:object_id:timestamp:changes). '
+                  'Blank on rows written before this field was added.',
+    )
 
     class Meta:
         ordering = ['-timestamp']
 
     def __str__(self):
         return f'{self.user} {self.get_action_display()} {self.model_name} #{self.object_id}'
+
+    def compute_hash(self) -> str:
+        material = (
+            f'{self.pk}:{self.user_id}:{self.action}:{self.model_name}:'
+            f'{self.object_id}:{self.timestamp.isoformat() if self.timestamp else ""}:'
+            f'{json.dumps(self.changes, sort_keys=True, default=str)}'
+        )
+        return hashlib.sha256(material.encode('utf-8')).hexdigest()
 
 
 class Notification(models.Model):
@@ -2548,6 +2596,61 @@ class BackgroundJob(models.Model):
 
     def __str__(self):
         return f'{self.job_type} ({self.get_status_display()})'
+
+
+class ScheduledJobRun(models.Model):
+    """Durable, per-run evidence that a scheduled/maintenance job actually ran.
+
+    Replaces the previous reliance on green CI artifacts (which ran against an
+    empty SQLite DB) as 'proof' that tenant jobs executed. One row per run, so
+    operators can answer 'did renewals/reminders/retention run for org X last
+    night, and what did they change?' directly from the production database.
+
+    Never store secrets or full document content here — counts and short
+    summaries only.
+    """
+
+    class Status(models.TextChoices):
+        RUNNING = 'RUNNING', 'Running'
+        SUCCESS = 'SUCCESS', 'Success'
+        PARTIAL = 'PARTIAL', 'Partial failure'
+        FAILED = 'FAILED', 'Failed'
+        SKIPPED = 'SKIPPED', 'Skipped (overlap)'
+
+    run_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    job_name = models.CharField(max_length=100)
+    # Null = a cross-tenant/global run (e.g. queue dispatch); otherwise the run
+    # is scoped to a single organization.
+    organization = models.ForeignKey(
+        Organization, on_delete=models.CASCADE, null=True, blank=True,
+        related_name='scheduled_job_runs',
+    )
+    status = models.CharField(max_length=12, choices=Status.choices, default=Status.RUNNING)
+    started_at = models.DateTimeField(default=timezone.now)
+    finished_at = models.DateTimeField(null=True, blank=True)
+    records_examined = models.PositiveIntegerField(default=0)
+    records_changed = models.PositiveIntegerField(default=0)
+    notifications_created = models.PositiveIntegerField(default=0)
+    error_summary = models.TextField(blank=True)
+    detail = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-started_at']
+        indexes = [
+            models.Index(fields=['job_name', '-started_at'], name='sjr_job_started_ix'),
+            models.Index(fields=['organization', 'job_name', 'status'], name='sjr_org_job_status_ix'),
+        ]
+
+    def __str__(self):
+        scope = self.organization.slug if self.organization_id else 'global'
+        return f'{self.job_name}[{scope}] {self.status} ({self.run_id})'
+
+    @property
+    def duration_seconds(self):
+        if self.finished_at and self.started_at:
+            return (self.finished_at - self.started_at).total_seconds()
+        return None
 
 
 class ContractVersion(models.Model):

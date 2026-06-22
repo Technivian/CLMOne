@@ -60,7 +60,8 @@ class TestBackgroundJobsObligationReminders(SimpleTestCase):
         job.organization.slug = 'test-org'
         with patch('contracts.services.background_jobs.call_command') as mock_cmd:
             from contracts.services.background_jobs import process_background_job
-            process_background_job(job)
+            # claim=False: this is a routing test with a stand-in job (no DB).
+            process_background_job(job, claim=False)
         mock_cmd.assert_called_once_with(
             'run_obligation_reminders',
             organization_slug='test-org',
@@ -73,7 +74,7 @@ class TestBackgroundJobsObligationReminders(SimpleTestCase):
         job.organization_id = None
         with self.assertRaises(RuntimeError):
             from contracts.services.background_jobs import process_background_job
-            process_background_job(job)
+            process_background_job(job, claim=False)
 
 
 # ---------------------------------------------------------------------------

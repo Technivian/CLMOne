@@ -1,9 +1,12 @@
-name: Background Job Worker (Scheduled)
+name: Background Job Worker (CI smoke test)
+
+# NOTE: MANUAL CI smoke test of the job machinery against an ephemeral CI
+# SQLite DB. NOT proof that tenant production jobs ran. Production scheduling is
+# owned by Render worker/cron services (render.yaml,
+# docs/PHASE2_BACKGROUND_JOBS_RUNBOOK.md). Scheduled trigger removed so CI no
+# longer masquerades as production execution.
 
 on:
-  schedule:
-    # Run every 15 minutes
-    - cron: '*/15 * * * *'
   workflow_dispatch:
     inputs:
       max_cycles:

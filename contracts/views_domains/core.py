@@ -1,5 +1,7 @@
 import logging
-from datetime import date
+from datetime import date, timedelta
+
+from django.utils import timezone
 
 from django.contrib import messages
 from django.contrib.auth import login
@@ -90,6 +92,15 @@ def operations_dashboard(request):
         'completed': BackgroundJob.objects.filter(organization=org, status=BackgroundJob.Status.COMPLETED).count(),
         'failed': BackgroundJob.objects.filter(organization=org, status=BackgroundJob.Status.FAILED).count(),
     }
+    # Scheduled-job run evidence so operators can see whether nightly/periodic
+    # jobs actually ran for this tenant — and any failures — without DB access.
+    from contracts.models import ScheduledJobRun
+    org_runs = ScheduledJobRun.objects.filter(organization=org)
+    recent_job_runs = list(org_runs.order_by('-started_at')[:12])
+    failed_job_runs_24h = org_runs.filter(
+        status__in=[ScheduledJobRun.Status.FAILED, ScheduledJobRun.Status.PARTIAL],
+        started_at__gte=timezone.now() - timedelta(hours=24),
+    ).count()
     context = {
         'organization': org,
         'scheduler': scheduler_health_snapshot(),
@@ -98,6 +109,8 @@ def operations_dashboard(request):
         'alerts': evaluate_alert_policy(),
         'job_counts': job_counts,
         'recent_jobs': recent_jobs,
+        'recent_job_runs': recent_job_runs,
+        'failed_job_runs_24h': failed_job_runs_24h,
         'drill_state': {
             'last_run_iso': cache.get('operations_drill.last_run_iso'),
             'last_summary': cache.get('operations_drill.last_summary'),
@@ -269,7 +282,7 @@ def csp_report(request):
 def _send_mfa_email(user, code: str) -> None:
     try:
         send_mail(
-            subject='Your CMS Aegis verification code',
+            subject='Your DocClad verification code',
             message=(
                 f'Your verification code is: {code}\n\n'
                 'This code expires in 10 minutes. Do not share it with anyone.'

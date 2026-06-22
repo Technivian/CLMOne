@@ -12,7 +12,10 @@ from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
 
 from contracts.models import Organization
+from contracts.services.job_runs import record_job_run
 from contracts.services.obligations import get_obligation_service
+
+JOB_NAME = 'run_obligation_reminders'
 
 
 class Command(BaseCommand):
@@ -53,8 +56,15 @@ class Command(BaseCommand):
         org_results = []
 
         for org in orgs:
-            svc = get_obligation_service(org)
-            result = svc.dispatch_reminders(dry_run=dry_run)
+            with record_job_run(JOB_NAME, organization=org, prevent_overlap=not dry_run) as run:
+                if run is None:
+                    org_results.append({'organization': org.slug, 'skipped': 'overlap'})
+                    continue
+                svc = get_obligation_service(org)
+                result = svc.dispatch_reminders(dry_run=dry_run)
+                run.notifications_created = int(result.get('dispatched') or 0)
+                run.records_examined = int(result.get('examined') or result.get('dispatched') or 0)
+                run.detail = {'dry_run': result['dry_run']}
             total_dispatched += result['dispatched']
             org_results.append({
                 'organization': org.slug,

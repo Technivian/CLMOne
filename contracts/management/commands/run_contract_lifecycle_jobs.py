@@ -6,6 +6,9 @@ from django.utils import timezone
 
 from contracts.models import AuditLog, Contract, Organization
 from contracts.services.contract_lifecycle import build_contract_audit_changes, build_contract_lifecycle_guidance
+from contracts.services.job_runs import record_job_run
+
+JOB_NAME = 'run_contract_lifecycle_jobs'
 
 
 class Command(BaseCommand):
@@ -40,51 +43,60 @@ class Command(BaseCommand):
 
         for organization in organizations:
             summary['organizations_scanned'] += 1
-            candidates = (
-                Contract.objects.filter(organization=organization)
-                .exclude(lifecycle_stage='ARCHIVED')
-                .order_by('id')[:limit]
-            )
-            for contract in candidates:
-                summary['contracts_evaluated'] += 1
-                guidance = build_contract_lifecycle_guidance(contract)
-                trace_id = str(uuid.uuid4())
+            with record_job_run(
+                JOB_NAME, organization=organization, prevent_overlap=not dry_run,
+            ) as run:
+                if run is None:
+                    summary['actions'].append({'organization_id': organization.id, 'skipped': 'overlap'})
+                    continue
+                run.detail = {'dry_run': dry_run}
+                candidates = (
+                    Contract.objects.filter(organization=organization)
+                    .exclude(lifecycle_stage='ARCHIVED')
+                    .order_by('id')[:limit]
+                )
+                for contract in candidates:
+                    summary['contracts_evaluated'] += 1
+                    run.records_examined += 1
+                    guidance = build_contract_lifecycle_guidance(contract)
+                    trace_id = str(uuid.uuid4())
 
-                action_payload = {
-                    'trace_id': trace_id,
-                    'organization_id': organization.id,
-                    'contract_id': contract.id,
-                    'dry_run': dry_run,
-                    'current_stage': contract.lifecycle_stage,
-                    'recommended_stage': guidance['next_stage'],
-                    'guidance_state': guidance['state'],
-                    'guidance_severity': guidance['severity'],
-                    'guidance_action': guidance['action'],
-                }
+                    action_payload = {
+                        'trace_id': trace_id,
+                        'organization_id': organization.id,
+                        'contract_id': contract.id,
+                        'dry_run': dry_run,
+                        'current_stage': contract.lifecycle_stage,
+                        'recommended_stage': guidance['next_stage'],
+                        'guidance_state': guidance['state'],
+                        'guidance_severity': guidance['severity'],
+                        'guidance_action': guidance['action'],
+                    }
 
-                should_promote_to_renewal = guidance['next_stage'] == 'RENEWAL' and contract.lifecycle_stage in {'EXECUTED', 'OBLIGATION_TRACKING'}
+                    should_promote_to_renewal = guidance['next_stage'] == 'RENEWAL' and contract.lifecycle_stage in {'EXECUTED', 'OBLIGATION_TRACKING'}
 
-                if not dry_run and should_promote_to_renewal and contract.can_transition_lifecycle_stage('RENEWAL'):
-                    before_contract = Contract.objects.get(pk=contract.pk)
-                    contract.lifecycle_stage = 'RENEWAL'
-                    contract.save(update_fields=['lifecycle_stage', 'updated_at'])
-                    AuditLog.objects.create(
-                        action=AuditLog.Action.UPDATE,
-                        model_name='Contract',
-                        object_id=contract.id,
-                        object_repr=contract.title[:300],
-                        changes={
-                            'event': 'contract_lifecycle_stage_changed',
-                            'changed_fields': ['lifecycle_stage'],
-                            'field_changes': build_contract_audit_changes(before_contract, contract),
-                            'trace_id': trace_id,
-                            'automated': True,
-                            'reason': guidance['action'],
-                        },
-                    )
-                    summary['contracts_promoted_to_renewal'] += 1
-                    summary['audit_entries_created'] += 1
+                    if not dry_run and should_promote_to_renewal and contract.can_transition_lifecycle_stage('RENEWAL'):
+                        before_contract = Contract.objects.get(pk=contract.pk)
+                        contract.lifecycle_stage = 'RENEWAL'
+                        contract.save(update_fields=['lifecycle_stage', 'updated_at'])
+                        AuditLog.objects.create(
+                            action=AuditLog.Action.UPDATE,
+                            model_name='Contract',
+                            object_id=contract.id,
+                            object_repr=contract.title[:300],
+                            changes={
+                                'event': 'contract_lifecycle_stage_changed',
+                                'changed_fields': ['lifecycle_stage'],
+                                'field_changes': build_contract_audit_changes(before_contract, contract),
+                                'trace_id': trace_id,
+                                'automated': True,
+                                'reason': guidance['action'],
+                            },
+                        )
+                        summary['contracts_promoted_to_renewal'] += 1
+                        summary['audit_entries_created'] += 1
+                        run.records_changed += 1
 
-                summary['actions'].append(action_payload)
+                    summary['actions'].append(action_payload)
 
         self.stdout.write(json.dumps(summary, indent=2, sort_keys=True))

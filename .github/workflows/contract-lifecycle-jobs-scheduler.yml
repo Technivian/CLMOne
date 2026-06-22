@@ -1,8 +1,12 @@
-name: Contract Lifecycle Jobs Scheduler
+name: Contract Lifecycle Jobs (CI smoke test)
+
+# NOTE: MANUAL CI smoke test of the job machinery against an ephemeral CI
+# SQLite DB. NOT proof that tenant production jobs ran. Production scheduling is
+# owned by Render worker/cron services (render.yaml,
+# docs/PHASE2_BACKGROUND_JOBS_RUNBOOK.md). Scheduled trigger removed so CI no
+# longer masquerades as production execution.
 
 on:
-  schedule:
-    - cron: '30 2 * * *'
   workflow_dispatch:
 
 jobs:
@@ -40,6 +44,6 @@ jobs:
       - name: Upload lifecycle evidence artifact
         uses: actions/upload-artifact@v4
         with:
-          name: contract-lifecycle-execution-evidence-${{ github.run_id }}
+          name: contract-lifecycle-ci-smoke-${{ github.run_id }}
           path: contract-lifecycle-jobs-run.json
           if-no-files-found: error

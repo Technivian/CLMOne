@@ -1,8 +1,12 @@
-name: Retention Jobs Scheduler
+name: Retention Jobs (CI smoke test)
+
+# NOTE: MANUAL CI smoke test of the job machinery against an ephemeral CI
+# SQLite DB. NOT proof that tenant production jobs ran. Production scheduling is
+# owned by Render worker/cron services (render.yaml,
+# docs/PHASE2_BACKGROUND_JOBS_RUNBOOK.md). Scheduled trigger removed so CI no
+# longer masquerades as production execution.
 
 on:
-  schedule:
-    - cron: '0 2 * * *'
   workflow_dispatch:
 
 jobs:
@@ -43,7 +47,7 @@ jobs:
       - name: Upload retention evidence artifact
         uses: actions/upload-artifact@v4
         with:
-          name: retention-execution-evidence-${{ github.run_id }}
+          name: retention-ci-smoke-${{ github.run_id }}
           path: |
             retention-jobs-run.json
             retention-audit-actions.json

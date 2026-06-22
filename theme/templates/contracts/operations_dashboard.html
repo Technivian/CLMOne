@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Operations Dashboard - CMS Aegis{% endblock %}
+{% block title %}Operations Dashboard – DocClad{% endblock %}
 {% block content %}
 <style nonce="{{ csp_nonce }}">
   .drill-pre { background: var(--surface); color: var(--text-secondary); border: 1px solid var(--card-border); }
@@ -99,6 +99,32 @@
     </div>
     {% empty %}
     <div class="empty-state">No background jobs yet.</div>
+    {% endfor %}
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <h2 class="panel-title">Scheduled job runs</h2>
+      <span class="item-meta">
+        Evidence that nightly/periodic jobs ran for this organization
+        {% if failed_job_runs_24h %}· <span class="c-danger">{{ failed_job_runs_24h }} failed/partial in 24h</span>{% endif %}
+      </span>
+    </div>
+    {% for run in recent_job_runs %}
+    <div class="list-row">
+      <div class="flex-1 min-w-0">
+        <div class="text-sm font-medium c-primary">{{ run.job_name }}</div>
+        <div class="item-meta">
+          {{ run.started_at }} · examined {{ run.records_examined }} · changed {{ run.records_changed }} · notified {{ run.notifications_created }}
+        </div>
+        {% if run.error_summary %}
+        <p class="text-sm c-danger mt-1">{{ run.error_summary }}</p>
+        {% endif %}
+      </div>
+      <span class="badge-sm badge-gray">{{ run.get_status_display }}</span>
+    </div>
+    {% empty %}
+    <div class="empty-state">No scheduled job runs recorded yet.</div>
     {% endfor %}
   </div>
 </div>

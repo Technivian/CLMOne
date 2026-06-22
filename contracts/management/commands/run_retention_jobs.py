@@ -6,6 +6,9 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from contracts.models import AuditLog, Contract, Organization, RetentionPolicy
+from contracts.services.job_runs import record_job_run
+
+JOB_NAME = 'run_retention_jobs'
 
 
 class Command(BaseCommand):
@@ -38,43 +41,55 @@ class Command(BaseCommand):
 
         for organization in organizations:
             summary['organizations_scanned'] += 1
-            policies = RetentionPolicy.objects.filter(
-                organization=organization,
-                is_active=True,
-                category=RetentionPolicy.Category.CONTRACTS,
-            ).order_by('id')
-            for policy in policies:
-                summary['policies_scanned'] += 1
-                cutoff_date = timezone.now().date() - timedelta(days=policy.retention_period_days)
-                candidates = Contract.objects.filter(
+            # Per-org evidence + overlap protection (skip if another retention
+            # run for this org is already in flight). dry_run is exploratory, so
+            # it does not take the overlap lock.
+            with record_job_run(
+                JOB_NAME, organization=organization, prevent_overlap=not dry_run,
+            ) as run:
+                if run is None:
+                    summary['actions'].append({'organization_id': organization.id, 'skipped': 'overlap'})
+                    continue
+                run.detail = {'dry_run': dry_run}
+                policies = RetentionPolicy.objects.filter(
                     organization=organization,
-                    end_date__isnull=False,
-                    end_date__lte=cutoff_date,
-                ).exclude(lifecycle_stage='ARCHIVED').order_by('id')[:limit]
-                for contract in candidates:
-                    summary['contracts_evaluated'] += 1
-                    trace_id = str(uuid.uuid4())
-                    action_payload = {
-                        'trace_id': trace_id,
-                        'organization_id': organization.id,
-                        'policy_id': policy.id,
-                        'contract_id': contract.id,
-                        'retention_period_days': policy.retention_period_days,
-                        'cutoff_date': cutoff_date.isoformat(),
-                        'dry_run': dry_run,
-                    }
-                    if not dry_run:
-                        contract.lifecycle_stage = 'ARCHIVED'
-                        contract.save(update_fields=['lifecycle_stage', 'updated_at'])
-                        AuditLog.objects.create(
-                            action=AuditLog.Action.UPDATE,
-                            model_name='RetentionExecution',
-                            object_id=contract.id,
-                            object_repr=contract.title[:300],
-                            changes=action_payload,
-                        )
-                        summary['contracts_archived'] += 1
-                        summary['audit_entries_created'] += 1
-                    summary['actions'].append(action_payload)
+                    is_active=True,
+                    category=RetentionPolicy.Category.CONTRACTS,
+                ).order_by('id')
+                for policy in policies:
+                    summary['policies_scanned'] += 1
+                    cutoff_date = timezone.now().date() - timedelta(days=policy.retention_period_days)
+                    candidates = Contract.objects.filter(
+                        organization=organization,
+                        end_date__isnull=False,
+                        end_date__lte=cutoff_date,
+                    ).exclude(lifecycle_stage='ARCHIVED').order_by('id')[:limit]
+                    for contract in candidates:
+                        summary['contracts_evaluated'] += 1
+                        run.records_examined += 1
+                        trace_id = str(uuid.uuid4())
+                        action_payload = {
+                            'trace_id': trace_id,
+                            'organization_id': organization.id,
+                            'policy_id': policy.id,
+                            'contract_id': contract.id,
+                            'retention_period_days': policy.retention_period_days,
+                            'cutoff_date': cutoff_date.isoformat(),
+                            'dry_run': dry_run,
+                        }
+                        if not dry_run:
+                            contract.lifecycle_stage = 'ARCHIVED'
+                            contract.save(update_fields=['lifecycle_stage', 'updated_at'])
+                            AuditLog.objects.create(
+                                action=AuditLog.Action.UPDATE,
+                                model_name='RetentionExecution',
+                                object_id=contract.id,
+                                object_repr=contract.title[:300],
+                                changes=action_payload,
+                            )
+                            summary['contracts_archived'] += 1
+                            summary['audit_entries_created'] += 1
+                            run.records_changed += 1
+                        summary['actions'].append(action_payload)
 
         self.stdout.write(json.dumps(summary, indent=2, sort_keys=True))
