@@ -927,6 +927,13 @@ class Document(models.Model):
             return os.path.splitext(self.file.name)[1].lower()
         return ''
 
+    # Soft deletion (Phase 4E): legal documents are tombstoned, not hard-removed.
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    deleted_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name='deleted_documents',
+    )
+
     def _check_retention_hold(self):
         active_holds = LegalHold.objects.filter(status=LegalHold.Status.ACTIVE)
         if self.matter_id and active_holds.filter(matter_id=self.matter_id).exists():

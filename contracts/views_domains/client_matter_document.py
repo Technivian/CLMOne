@@ -206,7 +206,7 @@ class DocumentListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
         qs = scope_queryset_for_organization(
             Document.objects.select_related('contract', 'matter', 'client', 'uploaded_by'),
             org,
-        )
+        ).filter(is_deleted=False)  # soft-deleted documents are hidden from listings
         q = self.request.GET.get('q')
         doc_type = self.request.GET.get('type')
         if q:
@@ -223,7 +223,7 @@ class DocumentDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
 
     def get_queryset(self):
         org = self.get_organization()
-        return scope_queryset_for_organization(Document.objects.all(), org)
+        return scope_queryset_for_organization(Document.objects.all(), org).filter(is_deleted=False)
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -244,7 +244,7 @@ class DocumentCompareView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailV
 
     def get_queryset(self):
         org = self.get_organization()
-        return scope_queryset_for_organization(Document.objects.all(), org)
+        return scope_queryset_for_organization(Document.objects.all(), org).filter(is_deleted=False)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -354,23 +354,20 @@ class DocumentDeleteView(TenantScopedQuerysetMixin, LoginRequiredMixin, DeleteVi
         return scope_queryset_for_organization(Document.objects.all(), org)
 
     def form_valid(self, form):
+        # Authorization + retention + soft-delete + chained audit all live in the
+        # canonical deletion service (Phase 4E). The DeleteView is tenant-scoped
+        # via get_queryset, so this can only target the user's own org.
+        from contracts.services.document_deletion import (
+            DocumentDeletionError,
+            soft_delete_document,
+        )
         document = self.get_object()
-        org = get_user_organization(self.request.user)
-        doc_id, doc_title = document.pk, document.title
-        contract_id = document.contract_id
+        doc_title = document.title
         try:
-            document.delete()
-        except PermissionError as exc:
+            soft_delete_document(self.request.user, document, request=self.request)
+        except DocumentDeletionError as exc:
             messages.error(self.request, str(exc))
             return redirect('contracts:document_detail', pk=document.pk)
-        # Governed deletion is security/evidence-relevant — audit it.
-        log_action(
-            self.request.user, AuditLog.Action.DELETE, 'Document',
-            object_id=doc_id, object_repr=doc_title[:300],
-            organization=org, event_type='document.deleted',
-            changes={'event': 'document.deleted', 'document_id': doc_id, 'contract_id': contract_id},
-            request=self.request,
-        )
         messages.success(self.request, f'Document "{doc_title}" deleted.')
         return HttpResponseRedirect(self.get_success_url())
 
