@@ -1,6 +1,7 @@
 """Approval workflow service — initiate, approve, reject, delegate, SLA escalation."""
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from datetime import timedelta
 from typing import Optional
@@ -13,6 +14,20 @@ from contracts.services.workflow_routing import (
     build_approval_request_plan_for_contract,
     select_approval_rules_for_contract,
 )
+
+logger = logging.getLogger(__name__)
+
+
+class ApprovalAccessDenied(Exception):
+    """Raised when an actor is not permitted to act on an approval request.
+
+    Carries an HTTP ``status_code`` so callers can map it directly:
+    404 for a cross-tenant request (do not reveal existence), 403 otherwise.
+    """
+
+    def __init__(self, message: str = 'You are not allowed to act on this approval.', status_code: int = 403):
+        super().__init__(message)
+        self.status_code = status_code
 
 
 @dataclass
@@ -66,6 +81,86 @@ def _to_dto(ar: ApprovalRequest) -> ApprovalRequestDTO:
     )
 
 
+def authorize_approval_actor(ar: ApprovalRequest, actor: User, *, action: str) -> None:
+    """Single source of truth for approval authorization (used by API AND HTML).
+
+    Enforces tenant isolation, assignee/admin ownership, and segregation of
+    duties. Raises ``ApprovalAccessDenied`` (404 across tenants, 403 within).
+    Centralizing here means the HTML form/view cannot apply a weaker rule than
+    the API — the self-approval bypass (blocker A5) is closed everywhere.
+    """
+    from contracts.models import OrganizationMembership
+    from contracts.tenancy import get_user_organization
+
+    if actor is None or not getattr(actor, 'is_authenticated', False):
+        raise ApprovalAccessDenied('Authentication required.', status_code=403)
+
+    actor_org = get_user_organization(actor)
+    effective_org_id = ar.organization_id or (ar.contract.organization_id if ar.contract_id else None)
+
+    # Tenant boundary. Behave as "not found" so IDs cannot be enumerated
+    # across organizations.
+    if actor_org is None or effective_org_id is None or effective_org_id != actor_org.id:
+        raise ApprovalAccessDenied('Approval request not found.', status_code=404)
+
+    is_admin = OrganizationMembership.objects.filter(
+        organization_id=effective_org_id,
+        user=actor,
+        is_active=True,
+        role__in=[OrganizationMembership.Role.OWNER, OrganizationMembership.Role.ADMIN],
+    ).exists()
+
+    is_assignee = actor.id in {ar.assigned_to_id, ar.delegated_to_id}
+    if not (is_admin or is_assignee):
+        raise ApprovalAccessDenied('This approval is assigned to someone else.', status_code=403)
+
+    # Segregation of duties: nobody (not even an org admin/owner) may decide on
+    # an approval for a contract they themselves created.
+    if action in ('approve', 'reject') and ar.contract_id:
+        creator_id = ar.contract.created_by_id
+        if creator_id is not None and creator_id == actor.id:
+            raise ApprovalAccessDenied(
+                'You cannot decide on an approval for a contract you created.',
+                status_code=403,
+            )
+
+
+def actor_can_decide(ar: ApprovalRequest, actor: User, action: str) -> bool:
+    """Boolean form of :func:`authorize_approval_actor` for form-level checks."""
+    try:
+        authorize_approval_actor(ar, actor, action=action)
+        return True
+    except ApprovalAccessDenied:
+        return False
+
+
+def _audit_approval_decision(ar: ApprovalRequest, actor: User, action: str, *, allowed: bool, comments: str = '') -> None:
+    """Audit successful and blocked approve/reject decisions (no sensitive data).
+
+    Audit writes must never break the decision itself, so failures are logged and
+    suppressed here (the decision has already been authorized and persisted).
+    """
+    try:
+        from contracts.middleware import log_action
+        from contracts.models import AuditLog
+
+        action_map = {'approve': AuditLog.Action.APPROVE, 'reject': AuditLog.Action.REJECT}
+        log_action(
+            actor if getattr(actor, 'is_authenticated', False) else None,
+            action_map.get(action, AuditLog.Action.UPDATE),
+            'ApprovalRequest',
+            object_id=ar.pk,
+            object_repr=f'ApprovalRequest #{ar.pk} ({ar.approval_step})',
+            changes={
+                'event': f'approval_{action}_{"succeeded" if allowed else "blocked"}',
+                'contract_id': ar.contract_id,
+                'has_comment': bool(comments),
+            },
+        )
+    except Exception:
+        logger.warning('approval audit logging failed for action=%s', action, exc_info=True)
+
+
 class ApprovalWorkflowService:
     def initiate_approval_workflow(self, contract: Contract) -> list[ApprovalRequestDTO]:
         """Evaluate all matching rules and create ApprovalRequest rows for the contract."""
@@ -106,36 +201,80 @@ class ApprovalWorkflowService:
             any_pending=ApprovalRequest.Status.PENDING in statuses,
         )
 
+    def _authorize_actor(self, ar: ApprovalRequest, actor: User, *, action: str) -> None:
+        """Delegate to the shared module-level rule (single source of truth)."""
+        authorize_approval_actor(ar, actor, action=action)
+
+    def _decide(self, approval_id: int, actor: User, *, action: str, new_status: str, comments: str) -> ApprovalRequestDTO:
+        """Shared approve/reject body: authorize, transition, audit.
+
+        A blocked decision is audited OUTSIDE the (rolled-back) transaction so
+        the denial record persists; a successful decision is audited inside it.
+        """
+        try:
+            with transaction.atomic():
+                ar = (
+                    ApprovalRequest.objects
+                    .select_related('contract', 'rule', 'assigned_to')
+                    .select_for_update(of=('self',))
+                    .get(pk=approval_id)
+                )
+                self._authorize_actor(ar, actor, action=action)
+                if ar.status not in ('PENDING', 'ESCALATED'):
+                    raise ValueError(f'Cannot {action} from status {ar.status}')
+                ar.status = new_status
+                ar.comments = comments
+                ar.decided_at = timezone.now()
+                ar.decided_by = actor
+                ar.save(update_fields=['status', 'comments', 'decided_at', 'decided_by'])
+                _audit_approval_decision(ar, actor, action, allowed=True, comments=comments)
+            return _to_dto(ar)
+        except ApprovalAccessDenied:
+            # The transaction rolled back; record the blocked attempt separately.
+            try:
+                blocked_ar = ApprovalRequest.objects.select_related('contract').get(pk=approval_id)
+                _audit_approval_decision(blocked_ar, actor, action, allowed=False, comments=comments)
+            except ApprovalRequest.DoesNotExist:
+                pass
+            raise
+
     def approve(self, approval_id: int, actor: User, comments: str = '') -> ApprovalRequestDTO:
-        ar = ApprovalRequest.objects.select_related('contract', 'rule', 'assigned_to').get(pk=approval_id)
-        if ar.status not in ('PENDING', 'ESCALATED'):
-            raise ValueError(f'Cannot approve from status {ar.status}')
-        ar.status = 'APPROVED'
-        ar.comments = comments
-        ar.decided_at = timezone.now()
-        ar.decided_by = actor
-        ar.save(update_fields=['status', 'comments', 'decided_at', 'decided_by'])
-        return _to_dto(ar)
+        return self._decide(approval_id, actor, action='approve', new_status='APPROVED', comments=comments)
 
     def reject(self, approval_id: int, actor: User, comments: str = '') -> ApprovalRequestDTO:
-        ar = ApprovalRequest.objects.select_related('contract', 'rule', 'assigned_to').get(pk=approval_id)
-        if ar.status not in ('PENDING', 'ESCALATED'):
-            raise ValueError(f'Cannot reject from status {ar.status}')
-        ar.status = 'REJECTED'
-        ar.comments = comments
-        ar.decided_at = timezone.now()
-        ar.decided_by = actor
-        ar.save(update_fields=['status', 'comments', 'decided_at', 'decided_by'])
-        return _to_dto(ar)
+        return self._decide(approval_id, actor, action='reject', new_status='REJECTED', comments=comments)
 
     def delegate(self, approval_id: int, to_user: User, actor: User) -> ApprovalRequestDTO:
-        ar = ApprovalRequest.objects.select_related('contract', 'rule', 'assigned_to').get(pk=approval_id)
-        if ar.status != 'PENDING':
-            raise ValueError(f'Can only delegate PENDING approvals, current status: {ar.status}')
-        ar.delegated_to = to_user
-        ar.delegated_at = timezone.now()
-        ar.assigned_to = to_user
-        ar.save(update_fields=['delegated_to', 'delegated_at', 'assigned_to'])
+        from contracts.models import OrganizationMembership
+
+        with transaction.atomic():
+            ar = (
+                ApprovalRequest.objects
+                .select_related('contract', 'rule', 'assigned_to')
+                .select_for_update(of=('self',))
+                .get(pk=approval_id)
+            )
+            self._authorize_actor(ar, actor, action='delegate')
+            if ar.status != 'PENDING':
+                raise ValueError(f'Can only delegate PENDING approvals, current status: {ar.status}')
+
+            # The delegate must belong to the same organization — never assign an
+            # approval to a user outside the tenant.
+            effective_org_id = ar.organization_id or (ar.contract.organization_id if ar.contract_id else None)
+            in_org = OrganizationMembership.objects.filter(
+                organization_id=effective_org_id,
+                user=to_user,
+                is_active=True,
+            ).exists()
+            if not in_org:
+                raise ApprovalAccessDenied(
+                    'Delegate must be a member of this organization.', status_code=400,
+                )
+
+            ar.delegated_to = to_user
+            ar.delegated_at = timezone.now()
+            ar.assigned_to = to_user
+            ar.save(update_fields=['delegated_to', 'delegated_at', 'assigned_to'])
         return _to_dto(ar)
 
     def escalate(self, approval_id: int) -> ApprovalRequestDTO:

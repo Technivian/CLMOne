@@ -1221,8 +1221,23 @@ class ApprovalRequestForm(forms.ModelForm):
             self.add_error('status', 'Invalid approval status transition.')
             return cleaned_data
 
-        if new_status != self.instance.status and not self.instance.can_actor_transition(self.actor):
-            self.add_error('status', 'You are not authorized to perform this approval transition.')
+        # Authorization (incl. segregation of duties) is owned by the approval
+        # service, not the form. We reuse the SAME rule here only to surface a
+        # friendly field error; the view re-checks it through the service so the
+        # form can never apply a weaker rule (blocker A5).
+        if new_status != self.instance.status:
+            from contracts.services.approval_workflow import (
+                ApprovalAccessDenied,
+                authorize_approval_actor,
+            )
+            action = {
+                ApprovalRequest.Status.APPROVED: 'approve',
+                ApprovalRequest.Status.REJECTED: 'reject',
+            }.get(new_status, 'delegate')
+            try:
+                authorize_approval_actor(self.instance, self.actor, action=action)
+            except ApprovalAccessDenied as exc:
+                self.add_error('status', str(exc))
 
         assigned_to = cleaned_data.get('assigned_to')
         delegated_to = cleaned_data.get('delegated_to')

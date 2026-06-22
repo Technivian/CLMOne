@@ -34,6 +34,7 @@ from contracts.models import (
     Document,
     LegalHold,
     Matter,
+    OrgPolicy,
     RetentionPolicy,
     SignatureRequest,
     Subprocessor,
@@ -678,33 +679,60 @@ class ApprovalRequestUpdateView(TenantScopedFormMixin, TenantScopedQuerysetMixin
         return kwargs
 
     def form_valid(self, form):
+        # Approve/reject/delegate decisions are routed through the approval
+        # service so the HTML path enforces the exact same authorization
+        # (incl. segregation of duties) as the API — blocker A5. Plain field
+        # edits (comments/due_date/PENDING reset) keep the normal save path.
+        from contracts.services.approval_workflow import (
+            ApprovalAccessDenied,
+            get_approval_workflow_service,
+        )
+
+        svc = get_approval_workflow_service()
+        ar = self.object
         new_status = form.cleaned_data.get('status')
         delegated_to = form.cleaned_data.get('delegated_to')
-        previous_assignee_id = self.object.assigned_to_id if self.object.pk else None
-        if delegated_to:
-            form.instance.assigned_to = delegated_to
-            form.instance.delegated_at = timezone.now()
-        if new_status in {ApprovalRequest.Status.APPROVED, ApprovalRequest.Status.REJECTED}:
-            form.instance.decided_at = timezone.now()
-            form.instance.decided_by = self.request.user
-        elif new_status == ApprovalRequest.Status.PENDING:
+        comments = form.cleaned_data.get('comments') or ''
+        # NB: form.is_valid() has already copied POST data onto self.object, so
+        # ar.status reflects the *submitted* value. Read the PERSISTED status and
+        # assignee from the DB to detect what actually changed.
+        persisted = (
+            type(ar).objects
+            .filter(pk=ar.pk)
+            .values('status', 'assigned_to_id')
+            .first()
+            or {}
+        )
+        original_status = persisted.get('status')
+        previous_assignee_id = persisted.get('assigned_to_id')
+
+        decision_made = False
+        try:
+            if delegated_to and delegated_to.id != previous_assignee_id:
+                svc.delegate(ar.pk, delegated_to, self.request.user)
+                decision_made = True
+            if new_status == ApprovalRequest.Status.APPROVED and original_status != ApprovalRequest.Status.APPROVED:
+                svc.approve(ar.pk, self.request.user, comments)
+                decision_made = True
+            elif new_status == ApprovalRequest.Status.REJECTED and original_status != ApprovalRequest.Status.REJECTED:
+                svc.reject(ar.pk, self.request.user, comments)
+                decision_made = True
+        except ApprovalAccessDenied as exc:
+            form.add_error(None, str(exc))
+            return self.form_invalid(form)
+        except ValueError as exc:
+            form.add_error('status', str(exc))
+            return self.form_invalid(form)
+
+        if decision_made:
+            messages.success(self.request, 'Approval updated.')
+            return redirect(self.get_success_url())
+
+        # No decision was made — persist plain field edits normally.
+        if new_status == ApprovalRequest.Status.PENDING:
             form.instance.decided_at = None
             form.instance.decided_by = None
-        response = super().form_valid(form)
-        if delegated_to and delegated_to.id != previous_assignee_id:
-            log_action(
-                self.request.user,
-                AuditLog.Action.UPDATE,
-                'ApprovalRequest',
-                object_id=self.object.id,
-                object_repr=str(self.object),
-                changes={
-                    'event': 'approval_request_delegated',
-                    'delegated_to_id': delegated_to.id,
-                },
-                request=self.request,
-            )
-        return response
+        return super().form_valid(form)
 
 
 @login_required
@@ -769,3 +797,24 @@ def privacy_evidence_export(request):
     for log in AuditLog.objects.filter(changes__organization_id=org.id).order_by('-timestamp')[:20]:
         writer.writerow(['audit_log', log.timestamp.isoformat(), f'{log.model_name}:{log.action}:{(log.changes or {}).get("event", "")}'])
     return response
+
+
+@login_required
+def ai_data_controls(request):
+    org = get_user_organization(request.user)
+    if org is None:
+        return HttpResponseForbidden('No active organization found.')
+    policy, _ = OrgPolicy.objects.get_or_create(organization=org)
+    can_manage = can_manage_organization(request.user, org)
+    if request.method == 'POST':
+        if not can_manage:
+            return HttpResponseForbidden('Only administrators can modify AI data controls.')
+        policy.ai_features_enabled = request.POST.get('ai_features_enabled') == '1'
+        policy.updated_by = request.user
+        policy.save(update_fields=['ai_features_enabled', 'updated_by', 'updated_at'])
+        messages.success(request, 'AI data controls updated.')
+        return redirect('contracts:ai_data_controls')
+    return render(request, 'contracts/ai_data_controls.html', {
+        'policy': policy,
+        'can_manage': can_manage,
+    })

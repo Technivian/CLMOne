@@ -270,7 +270,10 @@ class WorkflowTransitionGuardrailsTests(TestCase):
             data=self._approval_update_payload(ApprovalRequest.Status.APPROVED),
         )
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'You are not authorized to perform this approval transition.')
+        # Authorization is now owned by the approval service; the message is the
+        # service's specific reason (a non-assignee/non-admin member). The block
+        # itself is still asserted below.
+        self.assertContains(response, 'This approval is assigned to someone else.')
 
         self.approval_request.refresh_from_db()
         self.assertEqual(self.approval_request.status, ApprovalRequest.Status.PENDING)
