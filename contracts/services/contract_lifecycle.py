@@ -318,12 +318,34 @@ class ContractLifecycleService:
             if not has_approval:
                 raise ContractTransitionPreconditionFailed(
                     'A contract cannot be activated without an approved approval request.')
-            # Signature is required only where the workflow configured it (i.e.
-            # signature requests exist). If so, every request must be SIGNED.
-            sig_qs = SignatureRequest.objects.filter(contract=contract)
-            if sig_qs.exists() and sig_qs.exclude(status=SignatureRequest.Status.SIGNED).exists():
+            # Signature prerequisite — evaluate only the CURRENT applicable
+            # signing workflow, not every historical request. There is no packet
+            # model, so the "current" request for each signer is the most recent
+            # one (by created_at); a re-issued request supersedes older ones for
+            # that signer. Rules for each signer's current request:
+            #   SIGNED                       -> satisfied
+            #   CANCELLED / EXPIRED          -> withdrawn (does NOT block)
+            #   PENDING / SENT / VIEWED      -> in-flight (BLOCKS: not complete)
+            #   DECLINED                     -> active refusal (BLOCKS)
+            # This ensures cancelled/expired/superseded/abandoned historical
+            # requests cannot wrongly block activation, while genuinely open or
+            # refused current requests still do.
+            S = SignatureRequest.Status
+            withdrawn = {S.CANCELLED, S.EXPIRED}
+            latest_by_signer = {}
+            for req in (
+                SignatureRequest.objects.filter(contract=contract)
+                .order_by('signer_email', '-created_at', '-id')
+            ):
+                latest_by_signer.setdefault(req.signer_email, req)
+            blocking = [
+                r for r in latest_by_signer.values()
+                if r.status != S.SIGNED and r.status not in withdrawn
+            ]
+            if blocking:
                 raise ContractTransitionPreconditionFailed(
-                    'A contract with signature requests cannot be activated until all are signed.')
+                    'A contract cannot be activated while its current signature '
+                    'workflow has unsigned, in-flight or declined requests.')
 
 
 def get_contract_lifecycle_service():
