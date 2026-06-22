@@ -13,7 +13,8 @@
   function applyTheme(next) {
     document.documentElement.setAttribute('data-theme', next);
     try {
-      localStorage.setItem('cms-aegis-theme', next);
+      localStorage.setItem('docclad-theme', next);
+      localStorage.removeItem('cms-aegis-theme');
     } catch (e) {
       /* storage unavailable; theme still applies for this page */
     }

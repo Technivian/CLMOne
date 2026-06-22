@@ -1,9 +1,29 @@
+import logging
 import os
+import warnings
 
 from django.core.exceptions import ImproperlyConfigured
 
 from . import settings_base as base
 from .settings_base import *  # noqa: F401,F403
+
+_prod_logger = logging.getLogger('docclad.production')
+
+
+def _emergency_bypass_warning(flag_name):
+    """Emit a high-severity warning when an emergency bypass flag is enabled.
+
+    Temporary-exception process (see docs/PHASE5_PRODUCTION_CONFIG_GATE.md):
+    a bypass requires a named Technical Owner, written rationale, and an expiry
+    date; it must be removed at expiry and is logged here on every boot.
+    """
+    message = (
+        f'HIGH SEVERITY: emergency bypass {flag_name}=true is ENABLED in '
+        f'production. This disables a pilot safety guard. Requires Technical '
+        f'Owner approval, rationale and an expiry date; remove ASAP.'
+    )
+    _prod_logger.critical(message)
+    warnings.warn(message, RuntimeWarning, stacklevel=2)
 
 
 DEBUG = base._bool_env('DJANGO_DEBUG', default=False)
@@ -18,6 +38,15 @@ if not CSRF_TRUSTED_ORIGINS:
 if DEFAULT_FROM_EMAIL in ('noreply@cms-aegis.local', 'noreply@docclad.local'):
     raise ImproperlyConfigured('DEFAULT_FROM_EMAIL must be set in production.')
 
+# Reject weak / placeholder secret keys (settings_base only rejects an empty
+# key). A short or dev-marker key in production is a security defect.
+_INSECURE_SECRET_MARKERS = ('django-insecure-', 'change-me', 'changeme', 'dev-only', 'insecure')
+if len(SECRET_KEY) < 32 or any(m in SECRET_KEY.lower() for m in _INSECURE_SECRET_MARKERS):
+    raise ImproperlyConfigured(
+        'DJANGO_SECRET_KEY is missing or too weak for production. Use a strong, '
+        'randomly generated secret of at least 32 characters (50+ recommended).'
+    )
+
 ALLOW_SQLITE_IN_PRODUCTION = base._bool_env('ALLOW_SQLITE_IN_PRODUCTION', default=False)
 if not ALLOW_SQLITE_IN_PRODUCTION:
     db_engine = DATABASES.get('default', {}).get('ENGINE', '')
@@ -26,6 +55,8 @@ if not ALLOW_SQLITE_IN_PRODUCTION:
             'Production requires PostgreSQL. Set DATABASE_URL=postgresql://... '
             'or explicitly set ALLOW_SQLITE_IN_PRODUCTION=true for temporary emergency use.'
         )
+else:
+    _emergency_bypass_warning('ALLOW_SQLITE_IN_PRODUCTION')
 
 # Durable document storage (A6): production must never silently use ephemeral
 # local-disk media (lost on redeploy/instance replacement). Require object
@@ -39,6 +70,8 @@ if not ALLOW_EPHEMERAL_MEDIA_IN_PRODUCTION and MEDIA_STORAGE_BACKEND != 's3':
         '(AWS S3 or an S3-compatible endpoint such as Supabase Storage), or set '
         'ALLOW_EPHEMERAL_MEDIA_IN_PRODUCTION=true for temporary emergency use only.'
     )
+elif ALLOW_EPHEMERAL_MEDIA_IN_PRODUCTION:
+    _emergency_bypass_warning('ALLOW_EPHEMERAL_MEDIA_IN_PRODUCTION')
 
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True

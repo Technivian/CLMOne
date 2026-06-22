@@ -1,0 +1,78 @@
+name: Audit Log Nightly Digest
+
+on:
+  schedule:
+    # 02:30 UTC every day
+    - cron: '30 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  digest:
+    name: Compute and store audit log chain digest
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r requirements/runtime.txt psycopg2-binary
+
+      - name: Compute daily digest
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+          DJANGO_ENV: production
+          ALLOWED_HOSTS: localhost
+        run: |
+          python manage.py shell -c "
+          import hashlib, json
+          from datetime import date, timedelta
+          from django.utils import timezone
+          from contracts.models import AuditLog
+
+          yesterday = date.today() - timedelta(days=1)
+          entries = (
+              AuditLog.objects
+              .filter(timestamp__date=yesterday)
+              .order_by('id')
+              .values_list('id', 'entry_hash')
+          )
+          ids = [str(e[0]) for e in entries]
+          hashes = [e[1] or '' for e in entries]
+          chain = hashlib.sha256('|'.join(hashes).encode()).hexdigest()
+          print(json.dumps({
+              'date': str(yesterday),
+              'entry_count': len(ids),
+              'chain_hash': chain,
+              'first_id': ids[0] if ids else None,
+              'last_id': ids[-1] if ids else None,
+          }))
+          " > digest.json
+
+          cat digest.json
+
+      - name: Upload digest to S3 (if configured)
+        if: env.AWS_STORAGE_BUCKET_NAME != ''
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_S3_REGION_NAME }}
+          AWS_STORAGE_BUCKET_NAME: ${{ secrets.AWS_STORAGE_BUCKET_NAME }}
+        run: |
+          DATE=$(python -c "from datetime import date, timedelta; print(date.today() - timedelta(days=1))")
+          aws s3 cp digest.json "s3://${AWS_STORAGE_BUCKET_NAME}/audit-digests/${DATE}.json" \
+            --content-type application/json
+
+      - name: Store digest as workflow artifact (always)
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-digest-${{ github.run_id }}
+          path: digest.json
+          retention-days: 90

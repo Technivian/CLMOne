@@ -118,8 +118,8 @@ def _start_trace_server(kind: str):
                     {
                         'received': True,
                         'processed': True,
-                        'delivery_id': self.headers.get('X-CMS-AEGIS-DELIVERY-ID'),
-                        'event_type': self.headers.get('X-CMS-AEGIS-EVENT'),
+                        'delivery_id': self.headers.get('X-DOCCLAD-DELIVERY-ID'),
+                        'event_type': self.headers.get('X-DOCCLAD-EVENT'),
                     },
                 )
                 return

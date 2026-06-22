@@ -39,9 +39,9 @@ def _webhook_headers(delivery: WebhookDelivery, body: bytes):
     secret = (delivery.endpoint.secret or '').encode('utf-8')
     if secret:
         signature = hmac.new(secret, body, hashlib.sha256).hexdigest()
-        headers['X-CMS-AEGIS-SIGNATURE'] = f'sha256={signature}'
-    headers['X-CMS-AEGIS-EVENT'] = delivery.event_type
-    headers['X-CMS-AEGIS-DELIVERY-ID'] = str(delivery.id)
+        headers['X-DOCCLAD-SIGNATURE'] = f'sha256={signature}'
+    headers['X-DOCCLAD-EVENT'] = delivery.event_type
+    headers['X-DOCCLAD-DELIVERY-ID'] = str(delivery.id)
     return headers
 
 

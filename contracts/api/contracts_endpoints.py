@@ -1,6 +1,6 @@
 
 """
-API views for CMS Aegis repository functionality.
+API views for DocClad repository functionality.
 """
 import hashlib
 import json
@@ -131,7 +131,7 @@ from contracts.api._helpers import (
 def contracts_api(request):
     """
     API endpoint for listing contracts with filtering and pagination.
-    Used by the CMS Aegis repository UI.
+    Used by the DocClad repository UI.
     """
     try:
         # Parse filters from request

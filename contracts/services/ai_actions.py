@@ -24,7 +24,16 @@ def _normalize_prompt(prompt: str) -> str:
     return (prompt or "").strip().lower()
 
 
+def _ai_enabled_for_contract(contract: Contract) -> bool:
+    try:
+        return bool(contract.organization.policy.ai_features_enabled)
+    except Exception:
+        return True
+
+
 def build_action_plan(contract: Contract, prompt: str) -> list[PlannedAction]:
+    if not _ai_enabled_for_contract(contract):
+        return []
     normalized = _normalize_prompt(prompt)
     planned: list[PlannedAction] = []
 

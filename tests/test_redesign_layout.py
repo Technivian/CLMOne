@@ -20,7 +20,7 @@ class RedesignLayoutTests(TestCase):
     def test_base_shell_and_theme_controls(self):
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'CMS Aegis')
+        self.assertContains(response, 'DocClad')
         self.assertContains(response, 'data-theme="dark"')
         # Theme toggle is wired via a delegated handler (CSP: no inline onclick).
         self.assertContains(response, 'data-action="toggle-theme"')

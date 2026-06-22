@@ -4,18 +4,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}CMS Aegis{% endblock %}</title>
+    <title>{% block title %}DocClad{% endblock %}</title>
     <meta name="build-sha" content="{{ BUILD_SHA|default:'unknown' }}">
     <meta name="build-label" content="{{ BUILD_LABEL|default:'commit unknown' }}">
+    <link rel="icon" type="image/x-icon"  href="{% static 'img/brand/favicon.ico' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'img/brand/favicon-16.png' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/brand/favicon-32.png' %}">
+    <link rel="icon" type="image/png" sizes="48x48" href="{% static 'img/brand/favicon-48.png' %}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'img/brand/apple-touch-icon.png' %}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="{% static 'css/docclad-tokens.css' %}" rel="stylesheet">
     <link href="{% static 'css/dist/styles.css' %}" rel="stylesheet">
     <script src="{% static 'js/csp-handlers.js' %}" defer></script>
     <script nonce="{{ csp_nonce }}">
         // Apply persisted theme before paint to avoid a flash.
         (function() {
-            var t = localStorage.getItem('cms-aegis-theme') || 'dark';
+            var t = localStorage.getItem('docclad-theme') || localStorage.getItem('cms-aegis-theme') || 'dark';
             document.documentElement.setAttribute('data-theme', t);
         })();
     </script>
@@ -86,6 +92,21 @@
         [data-theme="dark"] .icon-moon { display: none; }
         [data-theme="light"] .icon-sun { display: none; }
         [data-theme="light"] .icon-moon { display: block; }
+
+        /* ── Brand logo theme switching ────────────────────────────────────── */
+        [data-theme="dark"]  .brand-logo-light { display: none; }
+        [data-theme="light"] .brand-logo-dark  { display: none; }
+
+        /* ── Brand logo sizing + white-canvas crop (inline style= blocked by CSP) ── */
+        /* clip-path trims measured white border + 1.5% anti-aliasing buffer per edge */
+        .logo-left-dark   { display:block; width:auto;  height:80px;    object-fit:contain;
+                            clip-path: inset(14.5% 3% 1.5% 4.5%); }
+        .logo-left-light  { display:block; width:340px; max-width:100%; height:auto; object-fit:contain;
+                            clip-path: inset(20% 2.5% 6% 3%); mix-blend-mode: multiply; }
+        .logo-right-dark  { display:block; width:auto;  height:44px;    object-fit:contain;
+                            clip-path: inset(14.5% 3% 1.5% 4.5%); }
+        .logo-right-light { display:block; width:auto;  height:44px;    object-fit:contain;
+                            clip-path: inset(25.5% 2% 2% 11%); }
 
         /* ── Auth pages (login / register) ─────────────────────────────────── */
         .login-panel-left  { background: var(--surface); }

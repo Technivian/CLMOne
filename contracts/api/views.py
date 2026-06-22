@@ -1,5 +1,5 @@
 """
-API views for CMS Aegis repository functionality.
+API views for DocClad repository functionality.
 
 Thin facade: implementations live in domain-aligned submodules under
 ``contracts.api``. Every public symbol is re-exported here so existing imports

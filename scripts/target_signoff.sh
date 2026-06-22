@@ -71,7 +71,7 @@ SKIP_DRILL="${SKIP_DRILL:-false}"
 mkdir -p "$EVIDENCE_DIR"
 
 echo "================================================================"
-echo " CMS Aegis Target Signoff"
+echo " DocClad Target Signoff"
 echo " Timestamp : $SIGNOFF_TS"
 echo " Commit    : $COMMIT_SHORT"
 echo " Org       : $ORG_SLUG ($ORG_NAME)"

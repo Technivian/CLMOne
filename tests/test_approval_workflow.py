@@ -103,34 +103,55 @@ class TestApprovalWorkflowService(unittest.TestCase):
         dtos = self.svc.initiate_approval_workflow(self.contract)
         self.assertEqual(dtos, [])
 
+    # NOTE: These are focused state-transition unit tests. Authorization
+    # (tenant isolation, assignee ownership, self-approval) is a separate
+    # concern verified end-to-end with a real database in
+    # tests/test_approval_authorization.py, so it is stubbed here.
+    @staticmethod
+    def _wire_fetch(MockAR, mock_txn, ar):
+        mock_txn.atomic.return_value.__enter__ = MagicMock(return_value=None)
+        mock_txn.atomic.return_value.__exit__ = MagicMock(return_value=False)
+        (MockAR.objects.select_related.return_value
+            .select_for_update.return_value.get.return_value) = ar
+
+    @patch.object(ApprovalWorkflowService, '_authorize_actor', return_value=None)
+    @patch('contracts.services.approval_workflow.transaction')
     @patch('contracts.services.approval_workflow.ApprovalRequest')
-    def test_approve_transitions_status(self, MockAR):
+    def test_approve_transitions_status(self, MockAR, mock_txn, _mock_auth):
         ar = _make_ar(status='PENDING')
-        MockAR.objects.select_related.return_value.get.return_value = ar
+        self._wire_fetch(MockAR, mock_txn, ar)
         dto = self.svc.approve(1, self.actor, comments='LGTM')
         self.assertEqual(ar.status, ApprovalRequest.Status.APPROVED)
         self.assertEqual(ar.comments, 'LGTM')
         ar.save.assert_called_once()
 
+    @patch.object(ApprovalWorkflowService, '_authorize_actor', return_value=None)
+    @patch('contracts.services.approval_workflow.transaction')
     @patch('contracts.services.approval_workflow.ApprovalRequest')
-    def test_approve_invalid_from_rejected(self, MockAR):
+    def test_approve_invalid_from_rejected(self, MockAR, mock_txn, _mock_auth):
         ar = _make_ar(status='REJECTED')
-        MockAR.objects.select_related.return_value.get.return_value = ar
+        self._wire_fetch(MockAR, mock_txn, ar)
         with self.assertRaises(ValueError):
             self.svc.approve(1, self.actor)
 
+    @patch.object(ApprovalWorkflowService, '_authorize_actor', return_value=None)
+    @patch('contracts.services.approval_workflow.transaction')
     @patch('contracts.services.approval_workflow.ApprovalRequest')
-    def test_reject_transitions_status(self, MockAR):
+    def test_reject_transitions_status(self, MockAR, mock_txn, _mock_auth):
         ar = _make_ar(status='PENDING')
-        MockAR.objects.select_related.return_value.get.return_value = ar
+        self._wire_fetch(MockAR, mock_txn, ar)
         dto = self.svc.reject(1, self.actor, comments='Needs revision')
         self.assertEqual(ar.status, ApprovalRequest.Status.REJECTED)
         ar.save.assert_called_once()
 
+    @patch.object(ApprovalWorkflowService, '_authorize_actor', return_value=None)
+    @patch('contracts.models.OrganizationMembership')
+    @patch('contracts.services.approval_workflow.transaction')
     @patch('contracts.services.approval_workflow.ApprovalRequest')
-    def test_delegate_reassigns_user(self, MockAR):
+    def test_delegate_reassigns_user(self, MockAR, mock_txn, MockOM, _mock_auth):
         ar = _make_ar(status='PENDING', assigned_to_id=5)
-        MockAR.objects.select_related.return_value.get.return_value = ar
+        self._wire_fetch(MockAR, mock_txn, ar)
+        MockOM.objects.filter.return_value.exists.return_value = True  # delegate is in-org
         new_user = MagicMock()
         new_user.pk = 7
         dto = self.svc.delegate(1, new_user, self.actor)
@@ -138,10 +159,14 @@ class TestApprovalWorkflowService(unittest.TestCase):
         self.assertEqual(ar.assigned_to, new_user)
         ar.save.assert_called_once()
 
+    @patch.object(ApprovalWorkflowService, '_authorize_actor', return_value=None)
+    @patch('contracts.models.OrganizationMembership')
+    @patch('contracts.services.approval_workflow.transaction')
     @patch('contracts.services.approval_workflow.ApprovalRequest')
-    def test_delegate_fails_if_not_pending(self, MockAR):
+    def test_delegate_fails_if_not_pending(self, MockAR, mock_txn, MockOM, _mock_auth):
         ar = _make_ar(status='APPROVED')
-        MockAR.objects.select_related.return_value.get.return_value = ar
+        self._wire_fetch(MockAR, mock_txn, ar)
+        MockOM.objects.filter.return_value.exists.return_value = True
         with self.assertRaises(ValueError):
             self.svc.delegate(1, MagicMock(), self.actor)
 

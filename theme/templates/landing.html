@@ -1,7 +1,7 @@
 {% extends 'base_fullscreen.html' %}
 {% load static %}
 
-{% block title %}CMS Aegis - Contract Lifecycle Management{% endblock %}
+{% block title %}DocClad - Contract Lifecycle Management{% endblock %}
 
 {% block body %}
 <style nonce="{{ csp_nonce }}">
@@ -132,11 +132,8 @@
         <div class="landing-nav-line"></div>
         <div class="max-w-6xl mx-auto px-5 sm:px-8">
             <div class="flex items-center justify-between h-16">
-                <a href="/" class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-lg flex items-center justify-center btn-glow-blue">
-                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                    </div>
-                    <span class="brand-text text-lg font-extrabold tracking-tight">CMS Aegis</span>
+                <a href="/" aria-label="DocClad">
+                    <img src="{% static 'img/brand/docclad-dark-header-logo.png' %}" alt="DocClad" style="display:block;width:auto;height:42px;object-fit:contain;">
                 </a>
                 <div class="hidden md:flex items-center gap-7">
                     <a href="#features" class="landing-link text-[13px] font-medium">Features</a>
@@ -168,7 +165,7 @@
                 <span class="block gradient-text-primary">to audit-ready.</span>
             </h1>
             <p class="landing-muted text-base sm:text-lg max-w-xl mx-auto mb-10 leading-relaxed">
-                The only CLM with IOLTA-compliant trust accounts built in. Stop stitching together contract tools and billing software — CMS Aegis handles everything from first draft to renewal.
+                The only CLM with IOLTA-compliant trust accounts built in. Stop stitching together contract tools and billing software — DocClad handles everything from first draft to renewal.
             </p>
             <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <a href="{% url 'register' %}" class="glow-btn w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-3.5 text-white rounded-xl font-semibold text-[15px] transition-all duration-200 btn-glow-blue-lg">
@@ -189,7 +186,7 @@
                         <span class="hero-dot-red"></span>
                         <span class="hero-dot-yellow"></span>
                         <span class="hero-dot-green"></span>
-                        <div class="flex-1 mx-4 rounded-md px-3 py-1 text-[11px] text-center hero-url-bar">app.cmsaegis.com/dashboard</div>
+                        <div class="flex-1 mx-4 rounded-md px-3 py-1 text-[11px] text-center hero-url-bar">app.docclad.com/dashboard</div>
                     </div>
                     <!-- Dashboard mockup SVG -->
                     <svg viewBox="0 0 880 480" xmlns="http://www.w3.org/2000/svg" class="hero-mockup-svg">
@@ -207,7 +204,7 @@
                         <rect x="0" y="0" width="155" height="480" fill="#111827"/>
                         <rect x="154" y="0" width="1" height="480" fill="rgba(255,255,255,0.05)"/>
                         <rect x="12" y="12" width="20" height="20" rx="5" fill="#2563EB"/>
-                        <text x="38" y="26" font-family="system-ui,sans-serif" font-size="10" font-weight="700" fill="white">CMS Aegis</text>
+                        <text x="38" y="26" font-family="system-ui,sans-serif" font-size="10" font-weight="700" fill="white">DocClad</text>
                         <rect x="7" y="44" width="141" height="24" rx="5" fill="rgba(37,99,235,0.15)"/>
                         <rect x="18" y="52" width="6" height="6" rx="1" fill="#3B82F6"/>
                         <text x="30" y="60" font-family="system-ui,sans-serif" font-size="9.5" fill="rgba(255,255,255,0.9)">Dashboard</text>
@@ -567,7 +564,7 @@
             <!-- CTA -->
             <div class="text-center">
                 <h2 class="landing-title text-2xl sm:text-3xl font-extrabold tracking-tight mb-3">Your next contract breach starts with a missed deadline.</h2>
-                <p class="landing-muted-strong text-base mb-10">CMS Aegis closes that gap. No credit card required.</p>
+                <p class="landing-muted-strong text-base mb-10">DocClad closes that gap. No credit card required.</p>
                 <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
                     <a href="{% url 'register' %}" class="glow-btn w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-3.5 text-white rounded-xl font-semibold text-[15px] transition-all duration-200 btn-glow-blue-lg">
                         Get started free
@@ -586,12 +583,12 @@
                 <div class="w-6 h-6 rounded-md flex items-center justify-center btn-glow-blue">
                     <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
                 </div>
-                <span class="landing-muted-soft text-xs font-bold">CMS Aegis</span>
+                <span class="landing-muted-soft text-xs font-bold">DocClad</span>
             </div>
             <div class="flex items-center gap-5">
                 <a href="{% url 'privacy' %}" class="landing-muted-soft text-[11px] hover:text-gray-400 transition-colors">Privacy Policy</a>
                 <a href="{% url 'terms' %}" class="landing-muted-soft text-[11px] hover:text-gray-400 transition-colors">Terms of Service</a>
-                <p class="landing-muted-soft text-[11px]">&copy; 2026 CMS Aegis. All rights reserved.</p>
+                <p class="landing-muted-soft text-[11px]">&copy; 2026 DocClad. All rights reserved.</p>
             </div>
         </div>
     </footer>

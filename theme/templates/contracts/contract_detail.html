@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{{ contract.title }} – CMS Aegis{% endblock %}
+{% block title %}{{ contract.title }} – DocClad{% endblock %}
 {% block content %}
 <div class="page-wrap reveal-stagger">
 
@@ -52,11 +52,12 @@
   </div>
 
   {# ── Tab navigation ───────────────────────────────────────── #}
+  {# semantic labels: Case Flow / Record Summary / Action Cockpit #}
   <div class="arch-tabs" role="tablist">
-    <button class="arch-tab tab-active" role="tab" aria-selected="true"  data-tab="overview"   aria-controls="tab-overview">Overview</button>
+    <button class="arch-tab tab-active" role="tab" aria-selected="true"  data-tab="overview"   aria-controls="tab-overview">Record Summary</button>
     <button class="arch-tab"            role="tab" aria-selected="false" data-tab="documents"  aria-controls="tab-documents">Documents</button>
-    <button class="arch-tab"            role="tab" aria-selected="false" data-tab="workflow"   aria-controls="tab-workflow">Workflow</button>
-    <button class="arch-tab"            role="tab" aria-selected="false" data-tab="activity"   aria-controls="tab-activity">Activity</button>
+    <button class="arch-tab"            role="tab" aria-selected="false" data-tab="workflow"   aria-controls="tab-workflow">Case Flow</button>
+    <button class="arch-tab"            role="tab" aria-selected="false" data-tab="activity"   aria-controls="tab-activity">Action Cockpit</button>
   </div>
 
   {# ── Content grid ─────────────────────────────────────────── #}

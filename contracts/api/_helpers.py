@@ -1,6 +1,6 @@
 
 """
-API views for CMS Aegis repository functionality.
+API views for DocClad repository functionality.
 """
 import hashlib
 import json
@@ -181,6 +181,8 @@ def _resolve_api_organization(request, required_scope='contracts:read'):
         .first()
     )
     if api_token:
+        if api_token.is_expired:
+            return None, token, api_token
         if not api_token.has_scope(required_scope):
             return None, token, api_token
         api_token.last_used_at = timezone.now()

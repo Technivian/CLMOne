@@ -66,7 +66,10 @@ class SecurityGuardrailsTests(TestCase):
         RATELIMIT_ENABLED=True,
         RATELIMIT_TRUSTED_IPS=(),
     )
-    def test_auth_rate_limit_fails_open_when_cache_errors(self):
+    def test_auth_rate_limit_fails_closed_when_cache_errors(self):
+        # Audit C10 / B4: when the cache backend is unavailable, the auth
+        # throttle must fail CLOSED (deny) — never fail open (which silently
+        # disables brute-force protection) and never leak the exception text.
         with mock.patch('contracts.middleware.cache.get', side_effect=RuntimeError('cache down')):
             response = self.client.post(
                 reverse('register'),
@@ -79,8 +82,10 @@ class SecurityGuardrailsTests(TestCase):
                 REMOTE_ADDR='203.0.113.10',
         )
 
-        self.assertEqual(response.status_code, 500)
-        self.assertContains(response, 'Auth rate limit failed open', status_code=500)
+        self.assertEqual(response.status_code, 503)
+        # No internal details (exception class/message) must leak to the client.
+        self.assertNotContains(response, 'RuntimeError', status_code=503)
+        self.assertNotContains(response, 'cache down', status_code=503)
 
     def test_notification_mutations_emit_audit_logs(self):
         self.client.login(username='security-user', password='testpass123')

@@ -66,6 +66,25 @@ def soft_delete_document(user, document, *, request=None):
     except PermissionError as exc:
         raise DocumentDeletionBlocked(str(exc))
 
+    # Evidentiary protection: signed/executed/legal records must not be removed.
+    # Emit a chained blocked audit event so the attempt is recorded.
+    try:
+        document._check_evidentiary()
+    except PermissionError as exc:
+        log_action(
+            user, AuditLog.Action.DELETE, 'Document',
+            object_id=document.pk, object_repr=document.title[:300],
+            organization=document.organization, request=request,
+            event_type='document.deletion_blocked',
+            outcome=AuditLog.Outcome.BLOCKED,
+            changes={
+                'event': 'document.deletion_blocked',
+                'document_id': document.pk,
+                'reason': 'evidentiary_protection',
+            },
+        )
+        raise DocumentDeletionBlocked(str(exc))
+
     document.is_deleted = True
     document.deleted_at = timezone.now()
     document.deleted_by = user

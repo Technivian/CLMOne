@@ -101,7 +101,7 @@ class RedesignComponentsTestCase(TestCase):
             created_by=self.user,
         )
         TrademarkRequest.objects.create(
-            mark_text='AEGIS MARK',
+            mark_text='DOCCLAD MARK',
             description='Primary trademark filing for the platform.',
             goods_services='Legal software services',
             filing_basis='Use in commerce',
@@ -115,7 +115,7 @@ class RedesignComponentsTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Trademark Requests')
         self.assertContains(response, 'Search marks, clients, matters, or descriptions...')
-        self.assertContains(response, 'AEGIS MARK')
+        self.assertContains(response, 'DOCCLAD MARK')
         self.assertContains(response, 'Brand Protection')
         self.assertContains(response, 'Use in commerce')
 

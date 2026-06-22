@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="ad-container" style="max-width:640px;margin:2rem auto">
+  <div class="ad-card" style="padding:2rem">
+    <h1 class="ad-head-title" style="margin-bottom:0.5rem">Delete Document</h1>
+    <p style="margin-bottom:1.5rem;color:var(--ad-text-secondary)">
+      Are you sure you want to permanently delete
+      <strong>{{ object.title }}</strong> (version {{ object.version }})?
+      This action cannot be undone.
+    </p>
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="ad-alert ad-alert-{{ message.tags }}" style="margin-bottom:1rem">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+
+    <form method="post">
+      {% csrf_token %}
+      <div style="display:flex;gap:0.75rem">
+        <button type="submit" class="btn-danger">Delete permanently</button>
+        <a href="{% url 'contracts:document_detail' object.pk %}" class="btn-quiet">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

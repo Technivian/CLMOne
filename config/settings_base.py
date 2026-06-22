@@ -71,6 +71,7 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
     'theme',
     'contracts',
+    'django_rq',
 ]
 
 SSO_ENABLED = _bool_env('SSO_ENABLED', default=False)
@@ -226,7 +227,6 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'theme' / 'static']
-
 # ---------------------------------------------------------------------------
 # Media storage — set MEDIA_STORAGE_BACKEND=s3 in any real deployment.
 # Works with AWS S3 and Supabase Storage's S3-compatible endpoint.
@@ -265,7 +265,8 @@ else:
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CMS_AEGIS_MODE = False
+DOCCLAD_MODE = False
+CMS_AEGIS_MODE = DOCCLAD_MODE  # deprecated alias — remove after env var migration
 BUILD_SHA = os.getenv('BUILD_SHA', '').strip() or _git_short_sha(BASE_DIR) or 'unknown'
 BUILD_LABEL = f'commit {BUILD_SHA}' if BUILD_SHA != 'unknown' else 'commit unknown'
 
@@ -274,13 +275,16 @@ LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/'
 
 # Keep default CSRF cookie name for browser compatibility with form posts.
-SESSION_COOKIE_NAME = os.getenv('SESSION_COOKIE_NAME', 'cms_aegis_sessionid')
+# Session cookie renamed from cms_aegis_sessionid → docclad_sessionid.
+# Existing sessions using the old name will require re-login once the env var is
+# not overriding this. Production must set SESSION_COOKIE_NAME explicitly during transition.
+SESSION_COOKIE_NAME = os.getenv('SESSION_COOKIE_NAME', 'docclad_sessionid')
 CSRF_COOKIE_NAME = os.getenv('CSRF_COOKIE_NAME', 'csrftoken')
 SESSION_IDLE_TIMEOUT_MINUTES = int(os.getenv('SESSION_IDLE_TIMEOUT_MINUTES', '120'))
 
 AUTHENTICATION_BACKENDS = ['django.contrib.auth.backends.ModelBackend']
 if SSO_ENABLED:
-    AUTHENTICATION_BACKENDS.insert(0, 'contracts.auth_backends.AegisOIDCAuthenticationBackend')
+    AUTHENTICATION_BACKENDS.insert(0, 'contracts.auth_backends.DoccladOIDCAuthenticationBackend')
 
 OIDC_RP_CLIENT_ID = os.getenv('OIDC_RP_CLIENT_ID', '')
 OIDC_RP_CLIENT_SECRET = os.getenv('OIDC_RP_CLIENT_SECRET', '')
@@ -368,7 +372,8 @@ CONTENT_SECURITY_POLICY = os.getenv(
     "frame-src 'none'; "
     "frame-ancestors 'none'; "
     "base-uri 'self'; "
-    "form-action 'self'"
+    "form-action 'self'; "
+    "report-uri /csp-report/"
 )
 PERMISSIONS_POLICY = os.getenv('PERMISSIONS_POLICY', 'geolocation=(), microphone=(), camera=()')
 REMINDER_SCHEDULER_EXPECTED_INTERVAL_MINUTES = int(os.getenv('REMINDER_SCHEDULER_EXPECTED_INTERVAL_MINUTES', '60'))
@@ -444,7 +449,18 @@ else:
         }
     }
 
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@cms-aegis.local')
+# RQ job queue — backed by Redis when available, synchronous fallback otherwise.
+# The worker runs via: manage.py rqworker default
+RQ_QUEUES = {
+    'default': {
+        'URL': _redis_url or 'redis://localhost:6379/0',
+        'DEFAULT_TIMEOUT': 360,
+    },
+}
+if not _redis_url:
+    RQ_QUEUES['default']['ASYNC'] = False
+
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@docclad.local')
 SERVER_EMAIL = os.getenv('SERVER_EMAIL', DEFAULT_FROM_EMAIL)
 
 # SMTP — defaults to console backend in dev; set EMAIL_HOST to enable real sending.
@@ -476,7 +492,21 @@ if _sentry_dsn:
     )
 
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '').strip()
-GEMINI_AI_ENABLED = bool(GEMINI_API_KEY)
+# An explicit GEMINI_AI_ENABLED env override always wins; otherwise AI is on
+# only when a key is present. A pilot deployment sets GEMINI_AI_ENABLED=false
+# to keep confidential contract text off the LLM until the AI-controls work
+# (redaction / opt-in / audit / DPA — roadmap B6) lands.
+GEMINI_AI_ENABLED = _bool_env('GEMINI_AI_ENABLED', default=bool(GEMINI_API_KEY))
+
+# ---------------------------------------------------------------------------
+# Pilot scope flags (roadmap item 0.2)
+# ---------------------------------------------------------------------------
+# Default to current behaviour (enabled) so existing environments/tests are
+# unaffected. A contained pilot deployment sets these to ``false`` to descope
+# self-serve billing (invoice manually) and trust accounting (until its ledger
+# is made atomic — roadmap B8), shrinking the critical path to pilot.
+BILLING_SELF_SERVE_ENABLED = _bool_env('BILLING_SELF_SERVE_ENABLED', default=True)
+TRUST_ACCOUNTING_ENABLED = _bool_env('TRUST_ACCOUNTING_ENABLED', default=True)
 
 STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY', '').strip()
 STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY', '').strip()
