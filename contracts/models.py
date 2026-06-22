@@ -1008,6 +1008,7 @@ class Document(models.Model):
 
     def delete(self, *args, **kwargs):
         self._check_retention_hold()
+        self._check_evidentiary()
         super().delete(*args, **kwargs)
 
 
