@@ -30,12 +30,23 @@ class OrganizationSecurityExportTests(TestCase):
             role=OrganizationMembership.Role.MEMBER,
             is_active=True,
         )
-        owner_profile, _ = UserProfile.objects.get_or_create(user=self.owner)
-        owner_profile.mfa_enabled = True
-        owner_profile.save(update_fields=['mfa_enabled', 'mfa_verified_at', 'updated_at'])
+        from django.utils import timezone
+        for u in (self.owner, self.member):
+            p, _ = UserProfile.objects.get_or_create(user=u)
+            p.mfa_enabled = True
+            p.mfa_verified_at = timezone.now()
+            p.save(update_fields=['mfa_enabled', 'mfa_verified_at', 'updated_at'])
+
+    def _login_verified(self, username):
+        # Phase 4F: /settings/ is MFA-gated; mark the session verified so the
+        # request reaches the view's authorization check.
+        self.client.login(username=username, password='testpass123')
+        session = self.client.session
+        session['mfa_verified'] = True
+        session.save()
 
     def test_owner_can_export_security_csv(self):
-        self.client.login(username='owner', password='testpass123')
+        self._login_verified('owner')
 
         response = self.client.get(reverse('organization_security_export'))
 
@@ -49,7 +60,7 @@ class OrganizationSecurityExportTests(TestCase):
         self.assertIn('owner,owner@example.com,OWNER,True', body)
 
     def test_member_cannot_export_security_csv(self):
-        self.client.login(username='member', password='testpass123')
+        self._login_verified('member')
 
         response = self.client.get(reverse('organization_security_export'))
 

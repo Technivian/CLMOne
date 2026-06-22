@@ -129,7 +129,7 @@ class DocumentVersioningTests(TestCase):
         response = self.client.get(reverse('contracts:document_ocr_queue'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'OCR Queue')
+        self.assertContains(response, 'Text Extraction Queue')
         self.assertContains(response, self.document.title)
 
     def test_document_ocr_review_can_be_verified(self):

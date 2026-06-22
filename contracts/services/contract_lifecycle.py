@@ -189,10 +189,14 @@ def build_contract_lifecycle_guidance(contract, today=None):
 # Allowed status transitions. Terminal states have no outgoing edges; returning
 # from a terminal state requires a separately designed restoration workflow
 # (intentionally not provided here).
+# Activation is reachable from the review states (PENDING/IN_REVIEW/APPROVED) but
+# is gated by the ACTIVE precondition (an approved ApprovalRequest, plus signature
+# completion where signatures exist). DRAFT->ACTIVE and any terminal->ACTIVE are
+# blocked by the graph; the precondition then enforces approval/signature.
 CONTRACT_STATUS_TRANSITIONS = {
     'DRAFT': {'IN_REVIEW', 'PENDING', 'CANCELLED'},
-    'PENDING': {'IN_REVIEW', 'APPROVED', 'CANCELLED'},        # submitted for approval
-    'IN_REVIEW': {'APPROVED', 'PENDING', 'DRAFT', 'CANCELLED'},
+    'PENDING': {'IN_REVIEW', 'APPROVED', 'ACTIVE', 'CANCELLED'},   # submitted for approval
+    'IN_REVIEW': {'APPROVED', 'PENDING', 'ACTIVE', 'DRAFT', 'CANCELLED'},
     'APPROVED': {'ACTIVE', 'CANCELLED'},
     'ACTIVE': {'EXPIRED', 'TERMINATED', 'COMPLETED'},
     'EXPIRED': set(),
