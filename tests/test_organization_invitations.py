@@ -117,12 +117,15 @@ class OrganizationInvitationTests(TestCase):
         )
 
         self.client.login(username='invitee', password='testpass123')
-        response = self.client.get(
-            reverse('contracts:accept_organization_invite', kwargs={'token': invitation.token}),
-            follow=True,
-        )
+        url = reverse('contracts:accept_organization_invite', kwargs={'token': invitation.token})
 
-        self.assertEqual(response.status_code, 200)
+        # GET renders the confirmation page without accepting yet
+        get_response = self.client.get(url)
+        self.assertEqual(get_response.status_code, 200)
+
+        # POST performs the acceptance
+        post_response = self.client.post(url, follow=True)
+        self.assertEqual(post_response.status_code, 200)
         self.assertTrue(
             OrganizationMembership.objects.filter(
                 organization=self.organization,

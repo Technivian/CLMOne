@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="ad-container" style="max-width:600px;margin:3rem auto">
+  <div class="ad-card" style="padding:2rem">
+
+    <div style="text-align:center;margin-bottom:1.75rem">
+      <div style="width:56px;height:56px;border-radius:50%;background:var(--ad-brand-100,#eff6ff);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem">
+        <svg width="28" height="28" fill="none" stroke="var(--ad-brand,#2563eb)" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19 21v-2a4 4 0 00-4-4H9a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z"/>
+        </svg>
+      </div>
+      <h1 style="font-size:1.375rem;font-weight:700;margin-bottom:0.25rem">You've been invited</h1>
+      <p style="color:var(--ad-text-secondary)">Join <strong>{{ org.name }}</strong> on DocClad</p>
+    </div>
+
+    <div style="background:var(--ad-surface-2);border-radius:8px;padding:1.25rem;margin-bottom:1.5rem">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;font-size:0.875rem">
+        <div>
+          <div style="color:var(--ad-text-secondary);margin-bottom:0.2rem">Organisation</div>
+          <div style="font-weight:600">{{ org.name }}</div>
+        </div>
+        <div>
+          <div style="color:var(--ad-text-secondary);margin-bottom:0.2rem">Your role</div>
+          <div style="font-weight:600">{{ invitation.role|title }}</div>
+        </div>
+        <div>
+          <div style="color:var(--ad-text-secondary);margin-bottom:0.2rem">Invited email</div>
+          <div style="font-weight:600">{{ invitation.email }}</div>
+        </div>
+        {% if invitation.expires_at %}
+        <div>
+          <div style="color:var(--ad-text-secondary);margin-bottom:0.2rem">Expires</div>
+          <div style="font-weight:600">{{ invitation.expires_at|date:"N j, Y" }}</div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit" class="btn-primary" style="width:100%;justify-content:center">
+        Accept invitation and join {{ org.name }}
+      </button>
+    </form>
+
+    <p style="text-align:center;font-size:0.8rem;color:var(--ad-text-secondary);margin-top:1rem">
+      Signed in as <strong>{{ request.user.email }}</strong>.
+      Not you? <a href="{% url 'logout' %}">Sign out</a> and open this link again with the correct account.
+    </p>
+
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,20 @@
+name: Brand Guardrail
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  forbidden-brand-check:
+    name: Forbidden-brand scan (DocClad)
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run forbidden-brand check
+        run: bash scripts/check_brand_regression.sh

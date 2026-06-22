@@ -16,9 +16,13 @@ def is_feature_redesign_enabled():
     """Check if FEATURE_REDESIGN flag is enabled"""
     return get_feature_flag('FEATURE_REDESIGN', False)
 
+def is_docclad_mode_enabled():
+    """Check if DOCCLAD_MODE flag is enabled"""
+    return get_feature_flag('DOCCLAD_MODE', False)
+
 def is_cms_aegis_mode_enabled():
-    """Check if CMS_AEGIS_MODE flag is enabled"""
-    return get_feature_flag('CMS_AEGIS_MODE', False)
+    """Deprecated alias for is_docclad_mode_enabled — remove after template migration"""
+    return is_docclad_mode_enabled()
 
 def is_mochadocs_mode_enabled():
     """Check if MOCHADOCS_MODE flag is enabled"""

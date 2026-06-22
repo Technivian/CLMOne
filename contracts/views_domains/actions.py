@@ -153,7 +153,7 @@ def profile(request):
             form = UserProfileForm(request.POST, instance=profile_obj)
             if action == 'send_mfa_code':
                 enrollment_code = profile_obj.issue_mfa_enrollment_code()
-                subject = f'{getattr(organization, "name", "CMS Aegis")} MFA verification code'
+                subject = f'{getattr(organization, "name", "DocClad")} MFA verification code'
                 body = (
                     f'Your MFA verification code is {enrollment_code}.\n\n'
                     'Enter this code on your profile page to confirm enrollment.'

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Contracts – CMS Aegis{% endblock %}
+{% block title %}Contracts – DocClad{% endblock %}
 {% block content %}
 
 <div class="page-wrap reveal-stagger">
@@ -11,10 +11,11 @@
         <h1 class="arch-title">Contracts</h1>
         <span class="arch-count">{{ total_contracts }}</span>
       </div>
-      <p class="arch-subtitle">All contracts across your organization</p>
+      <p class="arch-subtitle">Contracts Workspace — Cases &amp; agreements across your organization</p>
     </div>
     <div class="arch-header-right">
       <a href="{% url 'contracts:repository' %}" class="btn-quiet">Repository</a>
+      <a href="{% url 'contracts:contract_create' %}" class="btn-quiet">New Case</a>
       <a href="{% url 'contracts:contract_create' %}"
          class="btn-cta">
         <svg class="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -30,10 +31,10 @@
 
     {# Status tabs #}
     <div class="arch-status-tabs">
-      {% with cur=current_phase %}
-      {% for tab_label, tab_phase in phase_tabs %}
-      <a href="?{% if tab_phase %}phase={{ tab_phase }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if sort and sort != '-created_at' %}&sort={{ sort|urlencode }}{% endif %}"
-         class="arch-status-tab {% if cur == tab_phase or not cur and not tab_phase %}tab-active{% endif %}">
+      {% with cur=current_status %}
+      {% for tab_label, tab_status in status_tabs %}
+      <a href="?{% if tab_status %}status={{ tab_status }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if sort and sort != '-created_at' %}&sort={{ sort|urlencode }}{% endif %}"
+         class="arch-status-tab {% if cur == tab_status or not cur and not tab_status %}tab-active{% endif %}">
         {{ tab_label }}
       </a>
       {% endfor %}
@@ -48,7 +49,7 @@
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
       </svg>
       <input type="text" name="q" value="{{ search_query }}"
-             placeholder="Search contracts…"
+             placeholder="Search contracts..."
              aria-label="Search contracts"
              class="arch-search-input">
       <input type="hidden" name="sort" value="{{ sort }}">
@@ -91,7 +92,7 @@
             <th class="text-left px-5 py-3">
               <a href="?sort={% if sort == 'title' %}-title{% else %}title{% endif %}{% if qs %}&q={{ qs|urlencode }}{% endif %}{% if ph %}&phase={{ ph|urlencode }}{% endif %}"
                  class="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wide hover:opacity-80 transition-opacity tbl-th">
-                Contract
+                Title
                 <svg class="w-3 h-3" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   {% if sort == 'title' %}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/>
                   {% elif sort == '-title' %}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
@@ -99,7 +100,8 @@
                 </svg>
               </a>
             </th>
-            <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Type</th>
+            <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Contract type</th>
+            <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Complexity</th>
             <th class="text-left px-5 py-3">
               <a href="?sort={% if sort == 'case_phase' %}-case_phase{% else %}case_phase{% endif %}{% if qs %}&q={{ qs|urlencode }}{% endif %}{% if ph %}&phase={{ ph|urlencode }}{% endif %}"
                  class="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wide hover:opacity-80 transition-opacity tbl-th">
@@ -151,6 +153,7 @@
             </td>
 
             <td class="px-5 py-3.5 tbl-td">{{ contract.get_contract_type_display }}</td>
+            <td class="px-5 py-3.5 tbl-td">{{ contract.complexity|default:"—" }}</td>
 
             <td class="px-5 py-3.5">
               <span class="badge-sm
@@ -199,7 +202,7 @@
           </tr>
           {% empty %}
           <tr>
-            <td colspan="7" class="px-5 py-20 text-center">
+            <td colspan="8" class="px-5 py-20 text-center">
               <div class="flex flex-col items-center gap-3">
                 <div class="w-12 h-12 rounded-full flex items-center justify-center surface-bubble">
                   <svg class="w-6 h-6 c-muted" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">

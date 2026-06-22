@@ -1,6 +1,6 @@
 
 """
-API views for CMS Aegis repository functionality.
+API views for DocClad repository functionality.
 """
 import hashlib
 import json
@@ -94,7 +94,10 @@ from contracts.services.permissions import get_permission_service
 from contracts.services.onboarding import get_onboarding_service
 from contracts.services.billing import get_billing_service
 from contracts.services.compliance_portal import get_compliance_portal_service
-from contracts.services.approval_workflow import get_approval_workflow_service
+from contracts.services.approval_workflow import (
+    ApprovalAccessDenied,
+    get_approval_workflow_service,
+)
 from contracts.services.clause_analytics import get_clause_analytics_service
 from contracts.services.mandatory_clauses import get_mandatory_enforcement_service
 from contracts.services.playbook import get_playbook_service
@@ -362,7 +365,10 @@ def compliance_export_api(request):
 @login_required
 @require_http_methods(['POST'])
 def approval_initiate_api(request, contract_id):
-    contract = get_object_or_404(Contract, pk=contract_id)
+    contract = get_object_or_404(
+        scope_queryset_for_organization(Contract.objects.all(), get_user_organization(request.user)),
+        pk=contract_id,
+    )
     svc = get_approval_workflow_service()
     requests_created = svc.initiate_approval_workflow(contract)
     return JsonResponse({
@@ -375,7 +381,10 @@ def approval_initiate_api(request, contract_id):
 @login_required
 @require_http_methods(['GET'])
 def approval_contract_list_api(request, contract_id):
-    contract = get_object_or_404(Contract, pk=contract_id)
+    contract = get_object_or_404(
+        scope_queryset_for_organization(Contract.objects.all(), get_user_organization(request.user)),
+        pk=contract_id,
+    )
     svc = get_approval_workflow_service()
     summary = svc.get_contract_approvals(contract)
     return JsonResponse({
@@ -396,6 +405,8 @@ def approval_approve_api(request, approval_id):
         dto = svc.approve(approval_id, request.user, comments=data.get('comments', ''))
     except ApprovalRequest.DoesNotExist:
         return JsonResponse({'error': 'Not found'}, status=404)
+    except ApprovalAccessDenied as e:
+        return JsonResponse({'error': str(e)}, status=e.status_code)
     except ValueError as e:
         return JsonResponse({'error': str(e)}, status=400)
     return JsonResponse({'ok': True, 'request': _approval_dto_to_dict(dto)})
@@ -410,6 +421,8 @@ def approval_reject_api(request, approval_id):
         dto = svc.reject(approval_id, request.user, comments=data.get('comments', ''))
     except ApprovalRequest.DoesNotExist:
         return JsonResponse({'error': 'Not found'}, status=404)
+    except ApprovalAccessDenied as e:
+        return JsonResponse({'error': str(e)}, status=e.status_code)
     except ValueError as e:
         return JsonResponse({'error': str(e)}, status=400)
     return JsonResponse({'ok': True, 'request': _approval_dto_to_dict(dto)})
@@ -432,6 +445,8 @@ def approval_delegate_api(request, approval_id):
         dto = svc.delegate(approval_id, to_user, request.user)
     except ApprovalRequest.DoesNotExist:
         return JsonResponse({'error': 'Not found'}, status=404)
+    except ApprovalAccessDenied as e:
+        return JsonResponse({'error': str(e)}, status=e.status_code)
     except ValueError as e:
         return JsonResponse({'error': str(e)}, status=400)
     return JsonResponse({'ok': True, 'request': _approval_dto_to_dict(dto)})

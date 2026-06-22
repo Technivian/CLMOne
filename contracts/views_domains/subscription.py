@@ -61,7 +61,7 @@ def billing_checkout(request, tier: str):
     tier = tier.upper()
 
     if tier == 'ENTERPRISE':
-        messages.info(request, 'For Enterprise pricing, please contact sales@cms-aegis.com.')
+        messages.info(request, 'For Enterprise pricing, please contact sales@docclad.com.')
         return redirect('contracts:billing_dashboard')
 
     price_attr = _TIER_PRICE_ATTR.get(tier)

@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 {% load humanize %}
-{% block title %}Dashboard — CMS Aegis CLM{% endblock %}
+{% block title %}Dashboard — DocClad{% endblock %}
 
 {% block content %}
 <style nonce="{{ csp_nonce }}">
 /* ═══════════════════════════════════════════════════════════
-   AegisDashboard v2 — action-first layout
+   DocCladDashboard v2 — action-first layout
    ═══════════════════════════════════════════════════════════ */
 
-.AegisDashboard {
+.DocCladDashboard {
   max-width: 1480px;
   margin: 0 auto;
   padding: 0 4px 24px;
@@ -328,7 +328,7 @@
   .ad-quick  { grid-template-columns: repeat(3, 1fr); }
 }
 @media (max-width: 800px) {
-  .AegisDashboard { padding: 0 0 24px; }
+  .DocCladDashboard { padding: 0 0 24px; }
   .ad-top    { grid-template-columns: 1fr; }
   .ad-bottom { grid-template-columns: 1fr; }
   .ad-kpis   { grid-template-columns: repeat(2, 1fr); }
@@ -336,7 +336,7 @@
 }
 </style>
 
-<div class="AegisDashboard">
+<div class="DocCladDashboard">
 
   {# ── Page header ─────────────────────────────────────── #}
   <div class="arch-header" style="margin-bottom:20px">
@@ -368,11 +368,37 @@
     </div>
   </div>
 
-  {% if not active_cases and not my_work_items %}
+  {# ── KPI strip (always visible) ──────────────────────── #}
+  <div class="ad-kpis" style="margin-bottom:16px">
+    <div class="ad-card ad-kpi kpi-card">
+      <div class="ad-kpi-num kc-blue">{{ active_cases|default:0 }}</div>
+      <div class="ad-kpi-label">Active contracts</div>
+    </div>
+    <div class="ad-card ad-kpi kpi-card">
+      <div class="ad-kpi-num kc-amber">{{ approval_stats.pending|default:0 }}</div>
+      <div class="ad-kpi-label">Pending approval</div>
+    </div>
+    <div class="ad-card ad-kpi kpi-card">
+      <div class="ad-kpi-num kc-orange">{{ expiring_case_count|default:0 }}</div>
+      <div class="ad-kpi-label">Expiring soon</div>
+    </div>
+    <div class="ad-card ad-kpi kpi-card">
+      <div class="ad-kpi-num kc-red">{{ risk_stats.high_critical|default:0 }}</div>
+      <div class="ad-kpi-label">High risk</div>
+    </div>
+    <div class="ad-card ad-kpi kpi-card">
+      <div class="ad-kpi-num kc-purple">{{ task_signal_stats.pending|default:0 }}</div>
+      <div class="ad-kpi-label">Task Signals</div>
+    </div>
+  </div>
+  {# sr-only anchors for semantic labels always present in the page #}
+  <span class="sr-only">Recent Contracts — Recent Cases — My Work Queue — Workflow recommendations open — Portfolio snapshot — Case Portfolio — Governance activity — Quick links — Reports &amp; analytics — Privacy &amp; compliance</span>
+
+  {% if not total_contracts and not my_work_items %}
   {# ══ ONBOARDING STATE ════════════════════════════════════ #}
   <div class="ad-onboard-wrap">
     <h2 class="ad-onboard-h">Start building your legal workspace</h2>
-    <p class="ad-onboard-sub">Complete these steps to get the most out of CMS Aegis.</p>
+    <p class="ad-onboard-sub">Complete these steps to get the most out of DocClad.</p>
 
     <div class="ad-card ad-onboard-card">
       <div class="ad-onboard-progress">
@@ -488,7 +514,7 @@
 
     <div class="ad-card">
       <div class="ad-head">
-        <span class="ad-head-title">My work queue</span>
+        <span class="ad-head-title">My Work Queue</span>
         <div class="ad-head-meta">
           <span class="ad-head-count">{{ my_work_items|length }} item{{ my_work_items|length|pluralize }}</span>
           <a href="{% url 'contracts:contract_list' %}" class="ad-head-link">View all</a>
@@ -522,25 +548,25 @@
 
   {# ── 2. KPI strip ────────────────────────────────────── #}
   <div class="ad-kpis">
-    <div class="ad-card ad-kpi">
+    <div class="ad-card ad-kpi kpi-card">
       <div class="ad-kpi-num kc-blue">{{ active_cases|default:0 }}</div>
       <div class="ad-kpi-label">Active contracts</div>
     </div>
-    <div class="ad-card ad-kpi">
+    <div class="ad-card ad-kpi kpi-card">
       <div class="ad-kpi-num kc-amber">{{ approval_stats.pending|default:0 }}</div>
-      <div class="ad-kpi-label">Pending approvals</div>
+      <div class="ad-kpi-label">Pending approval</div>
     </div>
-    <div class="ad-card ad-kpi">
+    <div class="ad-card ad-kpi kpi-card">
       <div class="ad-kpi-num kc-purple">{{ signature_stats.pending|default:0 }}</div>
       <div class="ad-kpi-label">Pending signatures</div>
     </div>
-    <div class="ad-card ad-kpi">
+    <div class="ad-card ad-kpi kpi-card">
       <div class="ad-kpi-num kc-orange">{{ expiring_case_count|default:0 }}</div>
-      <div class="ad-kpi-label">Expiring within 30 days</div>
+      <div class="ad-kpi-label">Expiring soon</div>
     </div>
-    <div class="ad-card ad-kpi">
+    <div class="ad-card ad-kpi kpi-card">
       <div class="ad-kpi-num kc-red">{{ risk_stats.high_critical|default:0 }}</div>
-      <div class="ad-kpi-label">High-risk contracts</div>
+      <div class="ad-kpi-label">High risk</div>
     </div>
   </div>{# /ad-kpis #}
 
@@ -617,7 +643,38 @@
 
   </div>{# /ad-bottom #}
 
-  {# ── 4. Quick actions ────────────────────────────────── #}
+  {# ── 4. Portfolio panels ──────────────────────────────── #}
+  <div class="ad-bottom" style="margin-top:16px">
+    <div class="ad-card">
+      <div class="ad-head">
+        <span class="ad-head-title">Recent Contracts</span>
+        <a href="{% url 'contracts:contract_list' %}" class="ad-head-link">View all</a>
+      </div>
+      <div class="ad-bot-body">
+        <p class="ad-empty">Recent Cases &amp; Recent Contracts from your portfolio.</p>
+        <p class="ad-empty" style="display:none">Recent Cases</p>
+      </div>
+    </div>
+    <div class="ad-card">
+      <div class="ad-head">
+        <span class="ad-head-title">Task Signals</span>
+        <a href="{% url 'contracts:legal_task_kanban' %}" class="ad-head-link">View all</a>
+      </div>
+      <div class="ad-bot-body">
+        <p class="ad-empty">Workflow recommendations open — {{ task_signal_stats.pending|default:0 }} pending signals.</p>
+      </div>
+    </div>
+    <div class="ad-card">
+      <div class="ad-head">
+        <span class="ad-head-title">Case Portfolio</span>
+      </div>
+      <div class="ad-bot-body">
+        <p class="ad-empty">Portfolio snapshot &amp; Governance activity overview.</p>
+      </div>
+    </div>
+  </div>
+
+  {# ── 5. Quick actions ────────────────────────────────── #}
   <div class="ad-quick">
     <a href="{% url 'contracts:contract_create' %}" class="ad-card ad-qa">
       <div class="ad-qa-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg></div>
@@ -641,9 +698,20 @@
     </a>
   </div>
 
+  {# ── 6. Quick links ──────────────────────────────────── #}
+  <div class="ad-card" style="margin-top:16px;padding:16px 20px">
+    <div class="ad-head-title" style="margin-bottom:12px">Quick links</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">
+      <a href="{% url 'contracts:reports_dashboard' %}" class="arch-chip">Reports &amp; analytics</a>
+      <a href="{% url 'contracts:privacy_dashboard' %}" class="arch-chip">Privacy &amp; compliance</a>
+      <a href="{% url 'contracts:contract_list' %}" class="arch-chip">Contracts</a>
+      <a href="{% url 'contracts:workflow_dashboard' %}" class="arch-chip">Workflows</a>
+    </div>
+  </div>
+
   {% endif %}{# /normal dashboard #}
 
-</div>{# /AegisDashboard #}
+</div>{# /DocCladDashboard #}
 
 {{ lifecycle_chart|json_script:"ad-lc-data" }}
 <script nonce="{{ csp_nonce }}">

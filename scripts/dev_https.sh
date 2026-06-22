@@ -88,8 +88,8 @@ x509_extensions = v3_ca
 C = NL
 ST = Noord-Holland
 L = Amsterdam
-O = CMS Aegis Local Dev
-CN = CMS Aegis Local Root CA
+O = DocClad Local Dev
+CN = DocClad Local Root CA
 
 [v3_ca]
 subjectKeyIdentifier = hash
@@ -117,7 +117,7 @@ req_extensions = req_ext
 C = NL
 ST = Noord-Holland
 L = Amsterdam
-O = CMS Aegis Local Dev
+O = DocClad Local Dev
 CN = localhost
 
 [req_ext]

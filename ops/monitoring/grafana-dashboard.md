@@ -1,4 +1,4 @@
-# Grafana Dashboard Spec: CMS Aegis SLO
+# Grafana Dashboard Spec: DocClad SLO
 
 Panels:
 1. Requests per second by route (`rate(http_requests_total[5m])`)

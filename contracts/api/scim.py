@@ -1,6 +1,6 @@
 
 """
-API views for CMS Aegis repository functionality.
+API views for DocClad repository functionality.
 """
 import hashlib
 import json

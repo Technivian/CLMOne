@@ -40,8 +40,8 @@ class FeatureGapAuditor {
     async scanCodebase() {
         console.log('🔎 Scanning codebase for features...');
         
-        // Check CMS Aegis-like features
-        this.results.repository_cms_aegis_like = {
+        // Check DocClad repository features
+        this.results.repository_docclad_like = {
             filter_chips: this.checkFilterChips(),
             saved_views: this.checkSavedViews(), 
             bulk_operations: this.checkBulkOperations(),

@@ -21,7 +21,7 @@ class DesignSystemTests(TestCase):
         self.client.login(username='testuser', password='testpass123')
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'CMS Aegis')
+        self.assertContains(response, 'DocClad')
         self.assertContains(response, 'Active contracts')
 
     def test_dashboard_loads_with_feature_flag_disabled(self):

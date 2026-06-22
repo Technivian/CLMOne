@@ -3,6 +3,7 @@ from django.conf import settings
 
 from config.feature_flags import (
     is_feature_redesign_enabled,
+    is_docclad_mode_enabled,
     is_cms_aegis_mode_enabled,
     is_mochadocs_mode_enabled,
     is_test_mode_enabled
@@ -16,10 +17,14 @@ def feature_flags(request):
         unread_notifications = Notification.objects.filter(recipient=request.user, is_read=False).count()
     return {
         'FEATURE_REDESIGN': is_feature_redesign_enabled(),
-        'CMS_AEGIS_MODE': is_cms_aegis_mode_enabled(),
+        'DOCCLAD_MODE': is_docclad_mode_enabled(),
+        'CMS_AEGIS_MODE': is_docclad_mode_enabled(),  # deprecated alias — remove after template migration
         'MOCHADOCS_MODE': is_mochadocs_mode_enabled(),
         'TEST_MODE': is_test_mode_enabled(),
         'SSO_ENABLED': getattr(settings, 'SSO_ENABLED', False),
+        'GEMINI_AI_ENABLED': getattr(settings, 'GEMINI_AI_ENABLED', False),
+        'BILLING_SELF_SERVE_ENABLED': getattr(settings, 'BILLING_SELF_SERVE_ENABLED', True),
+        'TRUST_ACCOUNTING_ENABLED': getattr(settings, 'TRUST_ACCOUNTING_ENABLED', True),
         'BUILD_SHA': getattr(settings, 'BUILD_SHA', 'unknown'),
         'BUILD_LABEL': getattr(settings, 'BUILD_LABEL', 'commit unknown'),
         'csp_nonce': getattr(request, 'csp_nonce', ''),

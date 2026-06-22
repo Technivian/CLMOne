@@ -1,0 +1,63 @@
+name: DB Backup (scheduled)
+
+# Roadmap B7: automated, verified, offsite database backups.
+#
+# Runs a verified pg_dump (size + restorability checked by scripts/db_backup.sh)
+# against the PRODUCTION database and uploads it to object storage. Unlike the
+# application job schedulers, this needs no app/SQLite — it talks straight to
+# Postgres — so it is a legitimate use of scheduled CI. A platform-native cron
+# (e.g. Render cron) is equally valid; pick one and disable the other.
+#
+# Required repository secrets:
+#   DATABASE_URL          postgres connection string for the prod DB
+#   BACKUP_S3_URL         s3://bucket/prefix/ destination
+#   AWS_ACCESS_KEY_ID     credentials for the backup bucket
+#   AWS_SECRET_ACCESS_KEY
+#   AWS_S3_ENDPOINT_URL   (optional) Supabase / S3-compatible endpoint
+#   AWS_DEFAULT_REGION    (optional)
+
+on:
+  schedule:
+    - cron: '0 3 * * *'   # daily at 03:00 UTC
+  workflow_dispatch: {}
+
+concurrency:
+  group: db-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install PostgreSQL client + AWS CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client awscli
+
+      - name: Run verified backup + offsite upload
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          BACKUP_S3_URL: ${{ secrets.BACKUP_S3_URL }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_S3_ENDPOINT_URL: ${{ secrets.AWS_S3_ENDPOINT_URL }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::DATABASE_URL secret is not set — refusing to run a fake backup."
+            exit 1
+          fi
+          if [ -z "$BACKUP_S3_URL" ]; then
+            echo "::error::BACKUP_S3_URL secret is not set — a local-only backup would be lost when the runner is destroyed."
+            exit 1
+          fi
+          bash scripts/db_backup.sh "${RUNNER_TEMP}/backups"
+
+      - name: Confirm a dump was produced
+        run: |
+          count=$(find "${RUNNER_TEMP}/backups" -name '*.dump' -type f | wc -l)
+          echo "Produced $count verified dump(s)."
+          test "$count" -ge 1

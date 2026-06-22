@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="ad-container" style="max-width:720px;margin:2rem auto">
+
+  <div style="margin-bottom:1.5rem">
+    <h1 class="ad-head-title">AI Data Controls</h1>
+    <p style="color:var(--ad-text-secondary);margin-top:0.25rem">
+      Control how AI features interact with your organisation's contract data.
+    </p>
+  </div>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="ad-alert" style="margin-bottom:1rem">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="ad-card" style="padding:1.5rem;margin-bottom:1.5rem">
+    <h2 style="font-size:1rem;font-weight:600;margin-bottom:0.75rem">AI Feature Status</h2>
+
+    <div style="display:flex;align-items:center;gap:1rem;padding:1rem;background:var(--ad-surface-2);border-radius:8px;margin-bottom:1.25rem">
+      <div style="flex:1">
+        <div style="font-weight:500">AI-assisted features</div>
+        <div style="font-size:0.85rem;color:var(--ad-text-secondary);margin-top:0.2rem">
+          Contract extraction, clause drafting, semantic search, and obligation reminders.
+          When disabled, all AI calls are skipped and no contract data is sent to external AI services.
+        </div>
+      </div>
+      <span style="padding:0.25rem 0.75rem;border-radius:999px;font-size:0.8rem;font-weight:600;
+                   background:{% if policy.ai_features_enabled %}#dcfce7{% else %}#fee2e2{% endif %};
+                   color:{% if policy.ai_features_enabled %}#166534{% else %}#991b1b{% endif %}">
+        {% if policy.ai_features_enabled %}Enabled{% else %}Disabled{% endif %}
+      </span>
+    </div>
+
+    <div style="font-size:0.875rem;color:var(--ad-text-secondary);margin-bottom:1.25rem">
+      <strong>Data scope when AI is enabled:</strong> contract text, clause content, obligation
+      descriptions, and document metadata are processed by the configured AI provider (Anthropic Claude
+      or Google Gemini). No data is stored by the AI provider beyond the duration of each request.
+    </div>
+
+    {% if can_manage %}
+      <form method="post">
+        {% csrf_token %}
+        {% if policy.ai_features_enabled %}
+          <input type="hidden" name="ai_features_enabled" value="0">
+          <button type="submit" class="btn-danger">Disable AI features for this organisation</button>
+        {% else %}
+          <input type="hidden" name="ai_features_enabled" value="1">
+          <button type="submit" class="btn-primary">Enable AI features for this organisation</button>
+        {% endif %}
+      </form>
+    {% else %}
+      <p style="font-size:0.85rem;color:var(--ad-text-secondary)">
+        Contact your organisation administrator to change this setting.
+      </p>
+    {% endif %}
+  </div>
+
+  <div class="ad-card" style="padding:1.5rem">
+    <h2 style="font-size:1rem;font-weight:600;margin-bottom:0.75rem">What AI touches</h2>
+    <ul style="font-size:0.875rem;color:var(--ad-text-secondary);line-height:1.7;padding-left:1.25rem">
+      <li>Contract titles, types, parties, values, and dates (extraction)</li>
+      <li>Clause text for drafting suggestions and playbook matching</li>
+      <li>Free-text obligation descriptions for reminder scheduling</li>
+      <li>Document titles and descriptions for semantic search indexing</li>
+    </ul>
+    <p style="font-size:0.85rem;margin-top:0.75rem;color:var(--ad-text-secondary)">
+      Personal data (names, emails) may appear in contract text but is not used for AI model training.
+      See our <a href="{% url 'privacy' %}">privacy policy</a> for details.
+    </p>
+  </div>
+
+</div>
+{% endblock %}
