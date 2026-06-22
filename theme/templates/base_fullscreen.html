@@ -97,16 +97,11 @@
         [data-theme="dark"]  .brand-logo-light { display: none; }
         [data-theme="light"] .brand-logo-dark  { display: none; }
 
-        /* ── Brand logo sizing + white-canvas crop (inline style= blocked by CSP) ── */
-        /* clip-path trims measured white border + 1.5% anti-aliasing buffer per edge */
-        .logo-left-dark   { display:block; width:auto;  height:80px;    object-fit:contain;
-                            clip-path: inset(14.5% 3% 1.5% 4.5%); }
-        .logo-left-light  { display:block; width:340px; max-width:100%; height:auto; object-fit:contain;
-                            clip-path: inset(20% 2.5% 6% 3%); mix-blend-mode: multiply; }
-        .logo-right-dark  { display:block; width:auto;  height:44px;    object-fit:contain;
-                            clip-path: inset(14.5% 3% 1.5% 4.5%); }
-        .logo-right-light { display:block; width:auto;  height:44px;    object-fit:contain;
-                            clip-path: inset(25.5% 2% 2% 11%); }
+        /* ── Brand logo sizing (SVGs have transparent backgrounds — no crop needed) ── */
+        .logo-left-dark   { display:block; width:200px; max-width:100%; height:auto; }
+        .logo-left-light  { display:block; width:200px; max-width:100%; height:auto; }
+        .logo-right-dark  { display:block; width:130px; max-width:100%; height:auto; }
+        .logo-right-light { display:block; width:130px; max-width:100%; height:auto; }
 
         /* ── Auth pages (login / register) ─────────────────────────────────── */
         .login-panel-left  { background: var(--surface); }
