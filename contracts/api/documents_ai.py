@@ -190,7 +190,11 @@ def document_upload_api(request):
         uploaded_by=request.user,
     )
     document.file = uploaded_file
-    document.save()  # triggers SHA256 hash + OCR queue in Document.save()
+    try:
+        document.save()  # triggers SHA256 hash + OCR queue in Document.save()
+    except Exception:
+        logger.exception('document_upload_storage_failure title=%r org=%s', title, organization.id if organization else None)
+        return _error_response(request, 'File could not be stored. Please try again later.', 503)
 
     ocr_status = 'unknown'
     confidence = None

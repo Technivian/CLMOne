@@ -965,6 +965,47 @@ class Document(models.Model):
                 'This document cannot be deleted: its client is under an active legal hold.'
             )
 
+    def _check_evidentiary(self):
+        """Block soft-deletion of evidentiary records (Phase 5I).
+
+        Derived entirely from existing DocClad model relationships — no second
+        parallel document-classification system is introduced.
+
+        A document is evidentiary when it falls into any of:
+
+        1. It is the direct subject of a completed (SIGNED) signature request.
+           This covers: signed documents, completion evidence, signature packets.
+        2. It has reached FINAL status on a contract whose lifecycle stage is
+           EXECUTED — i.e. the executed source document of a binding agreement.
+        3. It is a final court filing, pleading, or discovery document.
+
+        Unsigned/cancelled drafts follow the ordinary deletion policy.
+        """
+        if not self.pk:
+            return
+        # 1. Completed signature request directly names this document.
+        if self.signature_requests.filter(status='SIGNED').exists():
+            raise PermissionError(
+                'This document cannot be deleted: it is the subject of a '
+                'completed signature request.'
+            )
+        # 2. FINAL source document on an executed contract.
+        if (
+            self.status == self.Status.FINAL
+            and self.contract_id
+            and self.contract.lifecycle_stage == 'EXECUTED'
+        ):
+            raise PermissionError(
+                'This document cannot be deleted: it is a final document on '
+                'an executed contract.'
+            )
+        # 3. Final court / legal filing.
+        legal_types = {self.DocType.COURT_FILING, self.DocType.PLEADING, self.DocType.DISCOVERY}
+        if self.document_type in legal_types and self.status == self.Status.FINAL:
+            raise PermissionError(
+                'This document cannot be deleted: it is a final court/legal record.'
+            )
+
     def delete(self, *args, **kwargs):
         self._check_retention_hold()
         super().delete(*args, **kwargs)
