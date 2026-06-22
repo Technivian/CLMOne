@@ -226,10 +226,42 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'theme' / 'static']
-STORAGES = {
-    'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
-    'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage'},
-}
+
+# ---------------------------------------------------------------------------
+# Media storage — set MEDIA_STORAGE_BACKEND=s3 in any real deployment.
+# Works with AWS S3 and Supabase Storage's S3-compatible endpoint.
+# Falls back to local filesystem only for local development.
+# ---------------------------------------------------------------------------
+MEDIA_STORAGE_BACKEND = os.getenv('MEDIA_STORAGE_BACKEND', 'filesystem').strip().lower()
+
+if MEDIA_STORAGE_BACKEND == 's3':
+    _s3_options = {
+        'bucket_name': os.getenv('AWS_STORAGE_BUCKET_NAME', '').strip(),
+        'region_name': os.getenv('AWS_S3_REGION_NAME', '').strip() or None,
+        'access_key': os.getenv('AWS_ACCESS_KEY_ID', '').strip() or None,
+        'secret_key': os.getenv('AWS_SECRET_ACCESS_KEY', '').strip() or None,
+        'endpoint_url': os.getenv('AWS_S3_ENDPOINT_URL', '').strip() or None,
+        'default_acl': os.getenv('AWS_DEFAULT_ACL', 'private').strip() or None,
+        'querystring_auth': True,
+        'file_overwrite': False,
+        'querystring_expire': int(os.getenv('AWS_SIGNED_URL_EXPIRE', '3600')),
+    }
+    if not _s3_options['bucket_name']:
+        raise ImproperlyConfigured(
+            'MEDIA_STORAGE_BACKEND=s3 requires AWS_STORAGE_BUCKET_NAME to be set.'
+        )
+    STORAGES = {
+        'default': {
+            'BACKEND': 'storages.backends.s3.S3Storage',
+            'OPTIONS': {k: v for k, v in _s3_options.items() if v is not None},
+        },
+        'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage'},
+    }
+else:
+    STORAGES = {
+        'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+        'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage'},
+    }
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
