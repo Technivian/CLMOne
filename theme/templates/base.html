@@ -1088,8 +1088,8 @@
             </button>
             {% endif %}
             <a href="{% url 'dashboard' %}" class="logo-link" aria-label="DocClad — go to dashboard">
-                <img src="{% static 'img/brand/docclad-wordmark-dark.svg' %}" alt="DocClad" class="logo-wordmark">
-                <img src="{% static 'img/brand/docclad-icon-dark.svg' %}" alt="" aria-hidden="true" class="logo-mark">
+                <img src="{% static 'img/brand/docclad-dark-header-logo-transparent.png' %}" alt="DocClad" class="logo-wordmark">
+                <img src="{% static 'img/brand/docclad-app-icon-transparent.png' %}" alt="" aria-hidden="true" class="logo-mark">
             </a>
             {% if user.is_authenticated %}
             <form method="get" action="{% url 'contracts:global_search' %}" class="global-search-form">
