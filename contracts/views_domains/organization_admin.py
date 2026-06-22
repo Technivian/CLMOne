@@ -391,7 +391,12 @@ def revoke_member_sessions(request, membership_id):
 
 
 def _filter_organization_activity_logs(request, organization):
-    logs = AuditLog.objects.select_related('user').filter(changes__organization_id=organization.id)
+    # Tenant-scoped: prefer the organization FK (new rows); also match legacy
+    # rows tagged only in changes.organization_id. Never other tenants' rows.
+    logs = AuditLog.objects.select_related('user').filter(
+        Q(organization=organization)
+        | Q(organization__isnull=True, changes__organization_id=organization.id)
+    )
     action = request.GET.get('action', '').strip()
     model_name = request.GET.get('model', '').strip()
     start_date = parse_date((request.GET.get('start_date') or '').strip())
@@ -593,13 +598,27 @@ def accept_organization_invite(request, token):
     if invitation.expires_at and invitation.expires_at <= timezone.now():
         invitation.status = OrganizationInvitation.Status.EXPIRED
         invitation.save(update_fields=['status'])
+        log_action(
+            request.user if request.user.is_authenticated else None,
+            AuditLog.Action.UPDATE, 'OrganizationInvitation',
+            object_id=invitation.id, object_repr=invitation.email,
+            organization_id=invitation.organization_id, event_type='invite.expired',
+            changes={'organization_id': invitation.organization_id, 'event': 'invite.expired'},
+            request=request,
+        )
         messages.error(request, 'This invitation has expired.')
         return redirect('dashboard')
 
     user_email = (request.user.email or '').strip().lower()
     if not user_email or user_email != invitation.email.lower():
-        messages.error(request, f'This invitation is for {invitation.email}. Please sign in with that email.')
-        return redirect('dashboard')
+        messages.error(request, f'This invitation is for {invitation.email}. Please sign in with that email address.')
+        return redirect('login')
+
+    if request.method == 'GET':
+        return render(request, 'contracts/invite_accept.html', {
+            'invitation': invitation,
+            'org': invitation.organization,
+        })
 
     membership, _ = OrganizationMembership.objects.get_or_create(
         organization=invitation.organization,
@@ -633,7 +652,7 @@ def accept_organization_invite(request, token):
     )
 
     request.session['active_organization_id'] = invitation.organization_id
-    messages.success(request, f'You joined {invitation.organization.name}.')
+    messages.success(request, f'Welcome! You joined {invitation.organization.name} as {invitation.role.lower()}.')
     return redirect('dashboard')
 
 

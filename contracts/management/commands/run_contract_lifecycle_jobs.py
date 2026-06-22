@@ -4,6 +4,7 @@ import uuid
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
+from contracts.middleware import log_action
 from contracts.models import AuditLog, Contract, Organization
 from contracts.services.contract_lifecycle import build_contract_audit_changes, build_contract_lifecycle_guidance
 from contracts.services.job_runs import record_job_run
@@ -79,13 +80,13 @@ class Command(BaseCommand):
                         before_contract = Contract.objects.get(pk=contract.pk)
                         contract.lifecycle_stage = 'RENEWAL'
                         contract.save(update_fields=['lifecycle_stage', 'updated_at'])
-                        AuditLog.objects.create(
-                            action=AuditLog.Action.UPDATE,
-                            model_name='Contract',
-                            object_id=contract.id,
-                            object_repr=contract.title[:300],
+                        log_action(
+                            None, AuditLog.Action.UPDATE, 'Contract',
+                            object_id=contract.id, object_repr=contract.title[:300],
+                            organization=organization, actor_type='scheduled_job',
+                            event_type='contract.renewal_promoted', job_run_id=run.run_id,
                             changes={
-                                'event': 'contract_lifecycle_stage_changed',
+                                'event': 'contract.renewal_promoted',
                                 'changed_fields': ['lifecycle_stage'],
                                 'field_changes': build_contract_audit_changes(before_contract, contract),
                                 'trace_id': trace_id,

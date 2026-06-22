@@ -335,27 +335,55 @@ class RequestContextMiddleware:
             request_org_id_var.reset(org_token)
 
 
-def log_action(user, action, model_name, object_id=None, object_repr='', changes=None, request=None):
+def log_action(
+    user, action, model_name, object_id=None, object_repr='', changes=None, request=None,
+    *, organization=None, organization_id=None, event_type=None, actor_type=None,
+    outcome=None, job_run_id=None,
+):
+    """Canonical audit entry point — appends to the per-org tamper-evident chain.
+
+    Backward compatible: existing callers pass (user, action, model_name, ...).
+    Organization is resolved from the explicit arg, then request.organization,
+    then a legacy ``changes['organization_id']``. Audit failures are logged and
+    swallowed so a logging fault never breaks the business action; the append
+    itself runs in its own savepoint so it cannot poison the caller's
+    transaction.
+    """
+    from contracts.services.audit import append_audit
+
     ip_address = None
     user_agent = ''
+    request_id = ''
     if request:
         ip_address = request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR', ''))
         if ip_address and ',' in ip_address:
             ip_address = ip_address.split(',')[0].strip()
         user_agent = request.META.get('HTTP_USER_AGENT', '')
+        request_id = getattr(request, 'request_id', '') or ''
+        if organization is None and organization_id is None:
+            organization = getattr(request, 'organization', None)
 
-    entry = AuditLog.objects.create(
-        user=user,
-        action=action,
-        model_name=model_name,
-        object_id=object_id,
-        object_repr=object_repr[:300],
-        changes=changes,
-        ip_address=ip_address,
-        user_agent=user_agent[:500],
-    )
+    if organization is None and organization_id is None and isinstance(changes, dict):
+        organization_id = changes.get('organization_id')
+
     try:
-        entry.entry_hash = entry.compute_hash()
-        entry.save(update_fields=['entry_hash'])
+        return append_audit(
+            action=action,
+            model_name=model_name,
+            organization=organization,
+            organization_id=organization_id,
+            user=user,
+            object_id=object_id,
+            object_repr=object_repr,
+            changes=changes,
+            event_type=event_type,
+            actor_type=actor_type,
+            outcome=outcome or AuditLog.Outcome.SUCCESS,
+            request_id=request_id,
+            job_run_id=job_run_id,
+            ip_address=ip_address,
+            user_agent=user_agent,
+        )
     except Exception:
-        pass
+        logger.exception('audit append failed action=%s model=%s', action, model_name)
+        return None

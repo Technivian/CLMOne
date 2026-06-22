@@ -4,11 +4,11 @@ from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, Q, Sum
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, HttpResponseRedirect
 from django.urls import reverse, reverse_lazy
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
-from django.views.generic import CreateView, DetailView, ListView, UpdateView
+from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 
 from contracts.forms import ClientForm, DocumentForm, DocumentOCRReviewForm, MatterForm
 from contracts.middleware import log_action
@@ -341,6 +341,37 @@ class DocumentUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin, UpdateVi
         )
         messages.success(self.request, f'Document "{self.object.title}" updated as version {self.object.version}.')
         return redirect('contracts:document_detail', pk=self.object.pk)
+
+
+class DocumentDeleteView(TenantScopedQuerysetMixin, LoginRequiredMixin, DeleteView):
+    model = Document
+    template_name = 'contracts/document_confirm_delete.html'
+    success_url = reverse_lazy('contracts:document_list')
+
+    def get_queryset(self):
+        org = get_user_organization(self.request.user)
+        return scope_queryset_for_organization(Document.objects.all(), org)
+
+    def form_valid(self, form):
+        document = self.get_object()
+        org = get_user_organization(self.request.user)
+        doc_id, doc_title = document.pk, document.title
+        contract_id = document.contract_id
+        try:
+            document.delete()
+        except PermissionError as exc:
+            messages.error(self.request, str(exc))
+            return redirect('contracts:document_detail', pk=document.pk)
+        # Governed deletion is security/evidence-relevant — audit it.
+        log_action(
+            self.request.user, AuditLog.Action.DELETE, 'Document',
+            object_id=doc_id, object_repr=doc_title[:300],
+            organization=org, event_type='document.deleted',
+            changes={'event': 'document.deleted', 'document_id': doc_id, 'contract_id': contract_id},
+            request=self.request,
+        )
+        messages.success(self.request, f'Document "{doc_title}" deleted.')
+        return HttpResponseRedirect(self.get_success_url())
 
 
 class DocumentOCRQueueView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):

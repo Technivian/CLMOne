@@ -431,3 +431,31 @@ class EthicalWallAdmin(OrganizationScopedAdmin):
     @admin.display(description='Case matter')
     def case_matter(self, obj):
         return obj.matter
+
+
+from .models import AuditLog
+
+
+@admin.register(AuditLog)
+class AuditLogAdmin(admin.ModelAdmin):
+    """Read-only: audit evidence is append-only and must not be edited or
+    deleted through the admin. No add/change/delete permissions are granted."""
+
+    list_display = ('timestamp', 'organization', 'actor_type', 'user', 'action',
+                    'event_type', 'outcome', 'model_name', 'object_id', 'seq')
+    list_filter = ('action', 'actor_type', 'outcome', 'event_type')
+    search_fields = ('event_type', 'model_name', 'object_repr', 'request_id')
+    date_hierarchy = 'timestamp'
+    ordering = ('-timestamp',)
+
+    def get_readonly_fields(self, request, obj=None):
+        return [f.name for f in self.model._meta.fields]
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False

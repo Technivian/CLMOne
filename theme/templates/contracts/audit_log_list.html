@@ -22,8 +22,19 @@
     <div class="page-header">
         <div>
             <h1 class="page-title">Audit Log</h1>
-            <p class="page-subtitle c-muted">Complete history of all actions in the system.</p>
+            <p class="page-subtitle c-muted">Complete history of all actions in your organization.</p>
         </div>
+        {% if chain_status %}
+        <div>
+            {% if chain_status.status == 'valid' %}
+            <span class="badge-sm badge-green">Chain verified · {{ chain_status.checked }} entries</span>
+            {% elif chain_status.status == 'empty' %}
+            <span class="badge-sm badge-gray">No chained entries yet</span>
+            {% else %}
+            <span class="badge-sm badge-red">Chain integrity FAILED ({{ chain_status.status }})</span>
+            {% endif %}
+        </div>
+        {% endif %}
     </div>
 
     <form method="get" class="mb-4 flex gap-2">
@@ -60,7 +71,7 @@
                 {% for log in logs %}
                 <tr class="border-b transition-colors tbl-row">
                     <td class="px-5 py-3 tbl-td">{{ log.timestamp|date:"M d, Y H:i" }}</td>
-                    <td class="px-5 py-3 tbl-td">{{ log.user.get_full_name|default:log.user.username }}</td>
+                    <td class="px-5 py-3 tbl-td">{% if log.user %}{{ log.user.get_full_name|default:log.user.username }}{% else %}{{ log.get_actor_type_display }}{% endif %}</td>
                     <td class="px-5 py-3">
                         <span class="badge-sm {% if log.action == 'CREATE' %}badge-green{% elif log.action == 'UPDATE' %}badge-blue{% elif log.action == 'DELETE' %}badge-red{% else %}badge-gray{% endif %}">{{ log.get_action_display }}</span>
                     </td>

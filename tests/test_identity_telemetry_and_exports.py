@@ -27,6 +27,11 @@ class IdentityTelemetryAndExportsTests(TestCase):
         )
         self.profile, _ = UserProfile.objects.get_or_create(user=self.user)
         self.client.login(username='owner', password='testpass123')
+        # Phase 1 gates MFA-required orgs per session; mark this session verified
+        # so protected pages are reachable (the org has require_mfa=True).
+        session = self.client.session
+        session['mfa_verified'] = True
+        session.save()
 
     def test_identity_telemetry_dashboard_surfaces_event_counts(self):
         self.profile.mfa_enabled = True

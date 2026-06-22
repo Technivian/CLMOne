@@ -9,7 +9,7 @@ from typing import Optional
 from django.db import transaction
 from django.utils import timezone
 
-from contracts.models import ApprovalRequest, ApprovalRule, Contract, Organization, User
+from contracts.models import ApprovalRequest, ApprovalRule, AuditLog, Contract, Organization, User
 from contracts.services.workflow_routing import (
     build_approval_request_plan_for_contract,
     select_approval_rules_for_contract,
@@ -275,6 +275,18 @@ class ApprovalWorkflowService:
             ar.delegated_at = timezone.now()
             ar.assigned_to = to_user
             ar.save(update_fields=['delegated_to', 'delegated_at', 'assigned_to'])
+            # Audit the delegation atomically with the state change.
+            from contracts.middleware import log_action
+            log_action(
+                actor, AuditLog.Action.UPDATE, 'ApprovalRequest',
+                object_id=ar.pk, object_repr=f'ApprovalRequest #{ar.pk} ({ar.approval_step})',
+                organization_id=effective_org_id, event_type='approval.delegated',
+                changes={
+                    'event': 'approval.delegated',
+                    'contract_id': ar.contract_id,
+                    'delegated_to_id': to_user.id,
+                },
+            )
         return _to_dto(ar)
 
     def escalate(self, approval_id: int) -> ApprovalRequestDTO:

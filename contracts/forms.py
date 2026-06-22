@@ -528,8 +528,20 @@ class LoginForm(forms.Form):
 
         user = User.objects.filter(username__iexact=username).first()
         if user is None or not user.check_password(password):
+            # This form authenticates manually (not via authenticate()), so emit
+            # the auth signal ourselves to drive uniform login-failure auditing.
+            from django.contrib.auth.signals import user_login_failed
+            user_login_failed.send(
+                sender=__name__, credentials={'username': username},
+                request=getattr(self, 'request', None),
+            )
             raise ValidationError('Invalid username or password.')
         if not user.is_active:
+            from django.contrib.auth.signals import user_login_failed
+            user_login_failed.send(
+                sender=__name__, credentials={'username': username},
+                request=getattr(self, 'request', None),
+            )
             raise ValidationError('This account is inactive.')
 
         cleaned_data['user'] = user

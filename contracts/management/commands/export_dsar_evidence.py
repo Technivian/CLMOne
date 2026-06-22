@@ -87,6 +87,18 @@ class Command(BaseCommand):
         out_path.parent.mkdir(parents=True, exist_ok=True)
         out_path.write_text(json.dumps(payload, indent=2, default=str), encoding='utf-8')
 
+        # Material export of personal data — audit it (no payload contents).
+        from contracts.middleware import log_action
+        from contracts.models import AuditLog
+        log_action(
+            None, AuditLog.Action.EXPORT, 'DSARRequest',
+            object_id=request_id, object_repr=str(out_path.name),
+            organization=org, actor_type='scheduled_job',
+            event_type='dsar.evidence_exported',
+            changes={'event': 'dsar.evidence_exported', 'scope': 'all' if export_all else 'single',
+                     'request_id': request_id},
+        )
+
         self.stdout.write(self.style.SUCCESS(f'DSAR evidence exported → {out_path}'))
         if not export_all:
             self.stdout.write(f"  reference: {payload.get('reference_number')}")

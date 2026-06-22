@@ -1275,6 +1275,27 @@ class Deadline(models.Model):
         return 0 < days <= self.reminder_days
 
 
+class AuditWriteError(Exception):
+    """Raised when application code attempts to mutate or delete an audit row."""
+
+
+class AuditLogQuerySet(models.QuerySet):
+    """Append-only: block bulk update/delete through ordinary product paths."""
+
+    def update(self, *args, **kwargs):
+        raise AuditWriteError('AuditLog is append-only; bulk update is not allowed.')
+
+    def delete(self, *args, **kwargs):
+        raise AuditWriteError('AuditLog is append-only; bulk delete is not allowed.')
+
+    def _raw_delete(self, *args, **kwargs):  # used by cascade collector
+        raise AuditWriteError('AuditLog is append-only; deletion is not allowed.')
+
+
+class AuditLogManager(models.Manager.from_queryset(AuditLogQuerySet)):
+    pass
+
+
 class AuditLog(models.Model):
     class Action(models.TextChoices):
         CREATE = 'CREATE', 'Created'
@@ -1287,28 +1308,97 @@ class AuditLog(models.Model):
         APPROVE = 'APPROVE', 'Approved'
         REJECT = 'REJECT', 'Rejected'
 
+    class ActorType(models.TextChoices):
+        HUMAN = 'human', 'Human'
+        SERVICE = 'service', 'Service account'
+        SYSTEM = 'system', 'System'
+        SCHEDULED_JOB = 'scheduled_job', 'Scheduled job'
+        WEBHOOK = 'webhook', 'Webhook'
+        MIGRATION = 'migration', 'Migration'
+
+    class Outcome(models.TextChoices):
+        SUCCESS = 'success', 'Success'
+        FAILURE = 'failure', 'Failure'
+        BLOCKED = 'blocked', 'Blocked'
+
+    # Tenant boundary. PROTECT so audit history is never cascade-deleted when an
+    # organization is removed (orgs are soft-deactivated in product, not hard
+    # deleted). NULL = a system/global event with no single tenant.
+    organization = models.ForeignKey(
+        Organization, on_delete=models.PROTECT, null=True, blank=True,
+        related_name='audit_logs',
+    )
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='audit_logs')
+    actor_type = models.CharField(max_length=20, choices=ActorType.choices, default=ActorType.SYSTEM)
     action = models.CharField(max_length=20, choices=Action.choices)
+    # Canonical, stable event key (e.g. 'approval.approved'). Free-form display
+    # text belongs in the UI layer, not here.
+    event_type = models.CharField(max_length=100, blank=True, default='')
+    outcome = models.CharField(max_length=20, choices=Outcome.choices, default=Outcome.SUCCESS)
     model_name = models.CharField(max_length=100)
     object_id = models.PositiveIntegerField(null=True, blank=True)
     object_repr = models.CharField(max_length=300, blank=True)
     changes = models.JSONField(null=True, blank=True)
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     user_agent = models.TextField(blank=True)
+    # Correlation / provenance.
+    request_id = models.CharField(max_length=64, blank=True, default='')
+    job_run_id = models.UUIDField(null=True, blank=True)
     timestamp = models.DateTimeField(auto_now_add=True)
+
+    # Tamper-evident per-organization hash chain.
+    seq = models.PositiveBigIntegerField(
+        null=True, blank=True,
+        help_text='Per-organization monotonic sequence; NULL on legacy rows.',
+    )
+    prev_hash = models.CharField(max_length=64, blank=True, default='')
     entry_hash = models.CharField(
         max_length=64, blank=True,
-        help_text='SHA-256 of (id:user_id:action:model_name:object_id:timestamp:changes). '
-                  'Blank on rows written before this field was added.',
+        help_text='SHA-256 of the canonical entry payload incl. prev_hash; see '
+                  'contracts.services.audit. Blank/legacy on pre-chain rows.',
     )
+    hash_version = models.PositiveSmallIntegerField(
+        default=1,
+        help_text='1 = legacy self-hash (no chain); 2 = per-org hash chain.',
+    )
+
+    objects = AuditLogManager()
 
     class Meta:
         ordering = ['-timestamp']
+        indexes = [
+            models.Index(fields=['organization', 'seq'], name='audit_org_seq_ix'),
+            models.Index(fields=['organization', '-timestamp'], name='audit_org_ts_ix'),
+            models.Index(fields=['event_type'], name='audit_event_type_ix'),
+        ]
+        constraints = [
+            # Per-org chain sequence is unique (NULLs — legacy rows — exempt).
+            models.UniqueConstraint(
+                fields=['organization', 'seq'], name='audit_org_seq_uniq',
+            ),
+        ]
 
     def __str__(self):
         return f'{self.user} {self.get_action_display()} {self.model_name} #{self.object_id}'
 
+    def save(self, *args, **kwargs):
+        # Append-only: once persisted, an audit row may not be modified through
+        # ordinary code paths. A privileged repair tool must pass
+        # allow_audit_update=True explicitly (and should itself be audited).
+        if self.pk is not None and not getattr(self, '_allow_audit_update', False):
+            raise AuditWriteError('AuditLog rows are append-only and cannot be modified.')
+        return super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        if not getattr(self, '_allow_audit_delete', False):
+            raise AuditWriteError('AuditLog rows are append-only and cannot be deleted.')
+        return super().delete(*args, **kwargs)
+
     def compute_hash(self) -> str:
+        """Legacy v1 self-hash (kept for verifying pre-chain rows only).
+
+        New rows use the per-organization chain in contracts.services.audit.
+        """
         material = (
             f'{self.pk}:{self.user_id}:{self.action}:{self.model_name}:'
             f'{self.object_id}:{self.timestamp.isoformat() if self.timestamp else ""}:'

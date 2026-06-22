@@ -93,11 +93,18 @@ class AdminConsoleService:
         return integrations
 
     def get_audit_summary(self, org: Organization, limit: int = 50) -> list[dict]:
-        # AuditLog is not directly org-scoped; filter by org members
+        # Tenant-scoped via the organization FK (captures system/None-user rows
+        # such as scheduled jobs and webhooks); legacy rows matched by member id
+        # or changes.organization_id. Never includes another tenant's rows.
+        from django.db.models import Q
         member_ids = list(
             OrganizationMembership.objects.filter(organization=org).values_list('user_id', flat=True)
         )
-        logs = AuditLog.objects.filter(user_id__in=member_ids).order_by('-timestamp')[:limit]
+        logs = AuditLog.objects.filter(
+            Q(organization=org)
+            | Q(organization__isnull=True, changes__organization_id=org.id)
+            | Q(organization__isnull=True, user_id__in=member_ids)
+        ).order_by('-timestamp')[:limit]
         return [
             {
                 'id': log.pk,

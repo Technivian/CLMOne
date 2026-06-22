@@ -121,6 +121,22 @@ def record_job_run(
         ])
         logger.warning('job_run failed: job=%s org=%s err=%s',
                        job_name, getattr(organization, 'slug', None), exc)
+        # Audit scheduled-job failures (security/governance signal). Written
+        # outside the business transaction; links to the ScheduledJobRun. Stores
+        # only the truncated exception type+message, never a full traceback.
+        try:
+            from contracts.services.audit import append_audit
+            append_audit(
+                action='UPDATE', model_name='ScheduledJobRun',
+                organization=organization, user=None,
+                object_id=row.pk, object_repr=f'{job_name} run {row.run_id}',
+                event_type='job.failed', actor_type='scheduled_job', outcome='failure',
+                job_run_id=row.run_id,
+                changes={'event': 'job.failed', 'job_name': job_name,
+                         'error': row.error_summary},
+            )
+        except Exception:
+            logger.exception('audit job.failed write failed for %s', job_name)
         raise
     else:
         row.status = ScheduledJobRun.Status.PARTIAL if acc.partial else ScheduledJobRun.Status.SUCCESS

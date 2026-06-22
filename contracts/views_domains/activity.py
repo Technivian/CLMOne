@@ -1,29 +1,63 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 from django.views.generic import ListView
 
 from contracts.middleware import log_action
 from contracts.models import AuditLog, Notification
+from contracts.tenancy import get_user_organization
 from contracts.view_support import TenantScopedQuerysetMixin
 
 
-class AuditLogListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
+class AuditLogListView(LoginRequiredMixin, ListView):
     model = AuditLog
     template_name = 'contracts/audit_log_list.html'
     context_object_name = 'logs'
     paginate_by = 50
 
     def get_queryset(self):
-        queryset = AuditLog.objects.select_related('user')
+        org = get_user_organization(self.request.user)
+        if org is None:
+            return AuditLog.objects.none()
+        # Tenant boundary: ONLY this org's rows. New rows carry the organization
+        # FK; legacy rows are matched by changes.organization_id but still scoped
+        # to this org (never another tenant's data).
+        queryset = AuditLog.objects.select_related('user', 'organization').filter(
+            Q(organization=org)
+            | Q(organization__isnull=True, changes__organization_id=org.id)
+        )
         action = self.request.GET.get('action')
         model = self.request.GET.get('model')
+        event_type = self.request.GET.get('event_type')
+        outcome = self.request.GET.get('outcome')
+        actor = self.request.GET.get('actor')
+        since = self.request.GET.get('since')
+        until = self.request.GET.get('until')
         if action:
             queryset = queryset.filter(action=action)
         if model:
             queryset = queryset.filter(model_name=model)
+        if event_type:
+            queryset = queryset.filter(event_type=event_type)
+        if outcome:
+            queryset = queryset.filter(outcome=outcome)
+        if actor:
+            queryset = queryset.filter(user__username=actor)
+        if since:
+            queryset = queryset.filter(timestamp__date__gte=since)
+        if until:
+            queryset = queryset.filter(timestamp__date__lte=until)
         return queryset.order_by('-timestamp')
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        org = get_user_organization(self.request.user)
+        if org is not None:
+            from contracts.services.audit import verify_chain
+            ctx['chain_status'] = verify_chain(org.id)
+        return ctx
 
 
 @login_required

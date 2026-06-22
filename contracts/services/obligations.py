@@ -206,9 +206,11 @@ class ObligationService:
             user = user_model.objects.filter(username=kwargs["assigned_to"]).first()
             deadline.assigned_to = user
             update_fields.append("assigned_to")
+        newly_completed = False
         if "status" in kwargs:
             status = str(kwargs["status"]).lower()
             if status == "completed":
+                newly_completed = not deadline.is_completed
                 deadline.is_completed = True
                 deadline.completed_at = timezone.now()
             elif status in {"pending", "in_progress", "overdue"}:
@@ -218,6 +220,17 @@ class ObligationService:
 
         if update_fields:
             deadline.save(update_fields=sorted(set(update_fields)))
+        if newly_completed:
+            # Obligation completion is contractually material — audit it.
+            from contracts.middleware import log_action
+            from contracts.models import AuditLog
+            log_action(
+                getattr(deadline, "assigned_to", None) or None,
+                AuditLog.Action.UPDATE, "Deadline",
+                object_id=deadline.pk, object_repr=(deadline.title or "")[:300],
+                organization=self.organization, event_type="obligation.completed",
+                changes={"event": "obligation.completed", "contract_id": deadline.contract_id},
+            )
         return self._to_dto(deadline)
 
     def delete_obligation(self, obligation_id: str) -> bool:

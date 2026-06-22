@@ -250,12 +250,20 @@ def apply_esign_event(signature_request: SignatureRequest, event: dict, *, dry_r
         )
 
     if not dry_run:
-        AuditLog.objects.create(
-            action=AuditLog.Action.UPDATE,
-            model_name='ESignEvent',
-            object_id=signature_request.id,
-            object_repr=f'event:{event_id}',
-            changes=change_payload,
+        # Webhook reconciliation is a DELIVERY/reconcile event (not itself a
+        # business state transition — the transition above is the state change).
+        # Route through the canonical chain as a 'webhook' actor. Dedup upstream
+        # (_is_duplicate_event) prevents duplicate-delivery noise.
+        from contracts.middleware import log_action
+        _esign_org_id = getattr(signature_request, 'organization_id', None) or (
+            signature_request.contract.organization_id if getattr(signature_request, 'contract_id', None) else None
+        )
+        log_action(
+            None, AuditLog.Action.UPDATE, 'ESignEvent',
+            object_id=signature_request.id, object_repr=f'event:{event_id}',
+            organization_id=_esign_org_id, actor_type='webhook',
+            event_type='signature.webhook_reconciled',
+            changes={'event': 'signature.webhook_reconciled', **(change_payload or {})},
         )
 
     if not should_apply:

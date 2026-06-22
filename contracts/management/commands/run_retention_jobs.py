@@ -5,6 +5,7 @@ from datetime import timedelta
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
+from contracts.middleware import log_action
 from contracts.models import AuditLog, Contract, Organization, RetentionPolicy
 from contracts.services.job_runs import record_job_run
 
@@ -80,12 +81,13 @@ class Command(BaseCommand):
                         if not dry_run:
                             contract.lifecycle_stage = 'ARCHIVED'
                             contract.save(update_fields=['lifecycle_stage', 'updated_at'])
-                            AuditLog.objects.create(
-                                action=AuditLog.Action.UPDATE,
-                                model_name='RetentionExecution',
-                                object_id=contract.id,
-                                object_repr=contract.title[:300],
-                                changes=action_payload,
+                            log_action(
+                                None, AuditLog.Action.UPDATE, 'RetentionExecution',
+                                object_id=contract.id, object_repr=contract.title[:300],
+                                organization=organization, actor_type='scheduled_job',
+                                event_type='retention.contract_archived',
+                                job_run_id=run.run_id,
+                                changes={'event': 'retention.contract_archived', **action_payload},
                             )
                             summary['contracts_archived'] += 1
                             summary['audit_entries_created'] += 1
