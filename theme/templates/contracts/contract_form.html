@@ -173,20 +173,20 @@
                 <div class="flex items-center gap-3">
                   <button type="button" class="draft-drag-handle" title="Drag to reorder" data-draft-drag-handle aria-label="Drag section to reorder">⋮⋮</button>
                   <label class="draft-label">
-                    <input type="checkbox" name="draft_section_{{ section.index }}_include" value="on" {% if section.include %}checked{% endif %} class="h-4 w-4 rounded" data-draft-field="include">
+                    <input type="checkbox" name="draft_section_{{ section.index }}_include" value="on" {% if section.include %}checked{% endif %} class="h-4 w-4 rounded form-check-input" data-draft-field="include">
                     Include section
                   </label>
                 </div>
                 <div class="flex flex-wrap items-center gap-2 draft-order-row">
                   <span>Order</span>
-                  <input type="number" name="draft_section_{{ section.index }}_order" value="{{ section.order }}" min="1" class="draft-order-input" data-draft-field="order" data-draft-section-order>
+                  <input type="number" name="draft_section_{{ section.index }}_order" value="{{ section.order }}" min="1" class="draft-order-input form-control" data-draft-field="order" data-draft-section-order>
                   <button type="button" class="draft-btn-insert" data-draft-insert-below>Insert below</button>
                   <button type="button" class="draft-btn-remove" data-draft-remove-section>Remove</button>
                 </div>
               </div>
               <div class="space-y-2">
                 <label class="draft-field-label">Section title</label>
-                <input type="text" name="draft_section_{{ section.index }}_title" value="{{ section.title }}" class="draft-text-input" data-draft-field="title">
+                <input type="text" name="draft_section_{{ section.index }}_title" value="{{ section.title }}" class="draft-text-input form-control" data-draft-field="title">
               </div>
               {% if section.badges %}
               <div class="flex flex-wrap gap-2">
@@ -201,7 +201,7 @@
               </div>
               <div class="space-y-2">
                 <label class="draft-field-label">Section content</label>
-                <textarea name="draft_section_{{ section.index }}_content" rows="8" class="draft-textarea" data-draft-field="content">{{ section.content }}</textarea>
+                <textarea name="draft_section_{{ section.index }}_content" rows="8" class="draft-textarea form-control" data-draft-field="content">{{ section.content }}</textarea>
               </div>
               <p class="draft-source-label">Source: {{ section.source_label }}</p>
             </div>

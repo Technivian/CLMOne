@@ -23,7 +23,7 @@
             <form method="post" class="form-grid">
                 {% csrf_token %}
                 <label class="form-checkbox">
-                    <input type="checkbox" name="require_mfa" {% if organization.require_mfa %}checked{% endif %} class="mt-1">
+                    <input type="checkbox" name="require_mfa" {% if organization.require_mfa %}checked{% endif %} class="mt-1 form-check-input">
                     <span>
                         <span class="form-check-text">Require MFA for all members</span>
                         <span class="form-check-sub">When enabled, users without MFA are redirected until they enroll from their profile.</span>
