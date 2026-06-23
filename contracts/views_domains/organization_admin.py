@@ -130,12 +130,12 @@ def organization_team(request):
                 },
                 request=request,
             )
-            invite_url = _build_invite_url(request, invitation)
             from contracts.services.invitations import deliver_invitation
-            sent = deliver_invitation(invitation, invite_url, actor=request.user, request=request)
+            sent = deliver_invitation(invitation, actor=request.user, request=request)
             if sent:
                 messages.success(request, f'Invitation created and emailed to {email}.')
             else:
+                invite_url = _build_invite_url(request, invitation)
                 messages.warning(
                     request,
                     f'Invitation created for {email}, but email delivery failed. '
@@ -248,11 +248,11 @@ def resend_organization_invite(request, invite_id):
         changes={'organization_id': organization.id, 'event': 'invite_resent', 'role': new_invitation.role},
         request=request,
     )
-    invite_url = _build_invite_url(request, new_invitation)
     from contracts.services.invitations import deliver_invitation
-    if deliver_invitation(new_invitation, invite_url, actor=request.user, request=request):
+    if deliver_invitation(new_invitation, actor=request.user, request=request):
         messages.success(request, f'Invitation resent to {new_invitation.email}.')
     else:
+        invite_url = _build_invite_url(request, new_invitation)
         messages.warning(
             request,
             f'New invitation generated, but email delivery failed. '
@@ -275,10 +275,10 @@ def retry_organization_invite(request, invite_id):
         return redirect('contracts:organization_team')
 
     from contracts.services.invitations import deliver_invitation
-    invite_url = _build_invite_url(request, invitation)
-    if deliver_invitation(invitation, invite_url, actor=request.user, request=request):
+    if deliver_invitation(invitation, actor=request.user, request=request):
         messages.success(request, f'Delivery retried for {invitation.email}.')
     else:
+        invite_url = _build_invite_url(request, invitation)
         messages.warning(
             request,
             f'Delivery retry failed for {invitation.email}. '

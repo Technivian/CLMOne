@@ -204,25 +204,6 @@ def document_upload_api(request):
         _cleanup_orphaned_upload(document)
         return _error_response(request, 'File could not be stored. Please try again later.', 503)
 
-
-def _cleanup_orphaned_upload(document):
-    """Delete an object that was written to storage but never committed to the DB.
-
-    Called when Document.save() raises after the storage write succeeded.
-    On cleanup failure the error is logged — the original failure is NOT masked.
-    The orphan-detection command will surface any objects that slip through.
-    """
-    try:
-        name = getattr(document.file, 'name', None)
-        if name:
-            document.file.storage.delete(name)
-            logger.info('orphan_cleanup_ok key_suffix=%r', name.split('/')[-1])
-    except Exception:
-        logger.exception(
-            'orphan_cleanup_failed key_suffix=%r',
-            getattr(document.file, 'name', '?').split('/')[-1],
-        )
-
     ocr_status = 'unknown'
     confidence = None
     ocr_source = None
@@ -251,6 +232,25 @@ def _cleanup_orphaned_upload(document):
         },
         status=201,
     )
+
+
+def _cleanup_orphaned_upload(document):
+    """Delete an object that was written to storage but never committed to the DB.
+
+    Called when Document.save() raises after the storage write succeeded.
+    On cleanup failure the error is logged — the original failure is NOT masked.
+    The orphan-detection command will surface any objects that slip through.
+    """
+    try:
+        name = getattr(document.file, 'name', None)
+        if name:
+            document.file.storage.delete(name)
+            logger.info('orphan_cleanup_ok key_suffix=%r', name.split('/')[-1])
+    except Exception:
+        logger.exception(
+            'orphan_cleanup_failed key_suffix=%r',
+            getattr(document.file, 'name', '?').split('/')[-1],
+        )
 
 
 @login_required

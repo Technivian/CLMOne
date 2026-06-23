@@ -1,9 +1,11 @@
 """Phase 3 — audit integrity, immutability, completeness, and tenant safety."""
 from __future__ import annotations
 
+from contextlib import contextmanager
+
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError, connection, transaction
 from django.test import Client, TestCase
 from django.urls import reverse
 
@@ -26,6 +28,28 @@ from contracts.services.audit import (
 
 User = get_user_model()
 PW = 'StrongPw!123'
+
+
+@contextmanager
+def _tamper_permitted():
+    """Suppress the append-only triggers for the duration of the block.
+
+    Uses SET LOCAL session_replication_role = 'replica', which disables all
+    user-defined triggers for the current transaction only. Requires the test
+    DB user to have the REPLICATION attribute or superuser — always true for
+    the DocClad test database owner. This path is unavailable to the
+    production application role, which holds only DML privileges.
+    Use only in verifier tests that must simulate a tampered audit chain.
+    """
+    if connection.vendor != 'postgresql':
+        yield
+        return
+    with connection.cursor() as cur:
+        cur.execute("SET LOCAL session_replication_role = 'replica'")
+    try:
+        yield
+    finally:
+        pass  # SET LOCAL resets at transaction end automatically
 
 
 def _org(name, slug):
@@ -77,9 +101,12 @@ class HashChainTests(TestCase):
     def test_changed_protected_field_breaks_verification(self):
         rows = _append(self.org, 3)
         tampered = rows[1]
-        tampered._allow_audit_update = True
-        tampered.changes = {'event': 'tampered'}
-        tampered.save()
+        with _tamper_permitted():
+            with connection.cursor() as cur:
+                cur.execute(
+                    "UPDATE contracts_auditlog SET changes = %s WHERE id = %s",
+                    ['{"event": "tampered"}', tampered.pk],
+                )
         res = verify_chain(self.org.id)
         self.assertEqual(res['status'], VERDICT_HASH_MISMATCH)
         self.assertEqual(res['first_broken']['seq'], 2)
@@ -87,9 +114,12 @@ class HashChainTests(TestCase):
     def test_changed_prev_hash_breaks_link(self):
         rows = _append(self.org, 3)
         row = rows[2]
-        row._allow_audit_update = True
-        row.prev_hash = 'deadbeef'
-        row.save()
+        with _tamper_permitted():
+            with connection.cursor() as cur:
+                cur.execute(
+                    "UPDATE contracts_auditlog SET prev_hash = %s WHERE id = %s",
+                    ['deadbeef', row.pk],
+                )
         res = verify_chain(self.org.id)
         self.assertEqual(res['status'], VERDICT_BROKEN_LINK)
         self.assertEqual(res['first_broken']['seq'], 3)
@@ -97,8 +127,9 @@ class HashChainTests(TestCase):
     def test_missing_predecessor_detected(self):
         rows = _append(self.org, 4)
         middle = rows[1]  # seq 2
-        middle._allow_audit_delete = True
-        middle.delete()
+        with _tamper_permitted():
+            with connection.cursor() as cur:
+                cur.execute("DELETE FROM contracts_auditlog WHERE id = %s", [middle.pk])
         res = verify_chain(self.org.id)
         self.assertEqual(res['status'], VERDICT_MISSING_PREDECESSOR)
 
@@ -110,9 +141,12 @@ class HashChainTests(TestCase):
         self.assertEqual(verify_chain(org_b.id)['status'], VERDICT_VALID)
         # Tampering org A leaves org B valid.
         row = AuditLog.objects.filter(organization=self.org, seq=2).first()
-        row._allow_audit_update = True
-        row.outcome = 'failure'
-        row.save()
+        with _tamper_permitted():
+            with connection.cursor() as cur:
+                cur.execute(
+                    "UPDATE contracts_auditlog SET outcome = %s WHERE id = %s",
+                    ['failure', row.pk],
+                )
         self.assertNotEqual(verify_chain(self.org.id)['status'], VERDICT_VALID)
         self.assertEqual(verify_chain(org_b.id)['status'], VERDICT_VALID)
 
@@ -386,9 +420,12 @@ class VerifyCommandTests(TestCase):
         from django.core.management import call_command
         from django.core.management.base import CommandError
         row = AuditLog.objects.filter(organization=self.org, seq=2).first()
-        row._allow_audit_update = True
-        row.outcome = 'failure'
-        row.save()
+        with _tamper_permitted():
+            with connection.cursor() as cur:
+                cur.execute(
+                    "UPDATE contracts_auditlog SET outcome = %s WHERE id = %s",
+                    ['failure', row.pk],
+                )
         # Non-zero exit is surfaced as CommandError by Django's BaseCommand.
         with self.assertRaises(CommandError):
             call_command('verify_audit_chain', '--organization', 'verify-org')

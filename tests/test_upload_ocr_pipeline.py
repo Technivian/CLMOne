@@ -235,8 +235,8 @@ class TestDocumentUploadApiView(unittest.TestCase):
         mock_doc.ocr_review = mock_ocr
 
         with (
-            patch('contracts.api.views.get_user_organization', return_value=mock_org),
-            patch('contracts.api.views.Document') as MockDocument,
+            patch('contracts.api.documents_ai.get_user_organization', return_value=mock_org),
+            patch('contracts.api.documents_ai.Document') as MockDocument,
         ):
             MockDocument.DocType.OTHER = 'other'
             MockDocument.DocType.choices = [('other', 'Other')]
