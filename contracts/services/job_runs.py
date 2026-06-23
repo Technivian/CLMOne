@@ -137,6 +137,12 @@ def record_job_run(
             )
         except Exception:
             logger.exception('audit job.failed write failed for %s', job_name)
+        # Operator alert email — deduplicated (one alert per job per hour).
+        try:
+            from contracts.services.notifications import send_operator_job_failure_alert
+            send_operator_job_failure_alert(row)
+        except Exception:
+            logger.exception('operator job_alert failed for %s', job_name)
         raise
     else:
         row.status = ScheduledJobRun.Status.PARTIAL if acc.partial else ScheduledJobRun.Status.SUCCESS

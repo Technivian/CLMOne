@@ -1485,14 +1485,23 @@ class AuditLog(models.Model):
     def save(self, *args, **kwargs):
         # Append-only: once persisted, an audit row may not be modified through
         # ordinary code paths. A privileged repair tool must pass
-        # allow_audit_update=True explicitly (and should itself be audited).
+        # _allow_audit_update=True explicitly (and should itself be audited).
         if self.pk is not None and not getattr(self, '_allow_audit_update', False):
             raise AuditWriteError('AuditLog rows are append-only and cannot be modified.')
+        if getattr(self, '_allow_audit_update', False) and self.pk is not None:
+            # Set transaction-scoped bypass so the PostgreSQL trigger allows the
+            # UPDATE. Checked by contracts_auditlog_append_only(); resets at txn end.
+            from django.db import connection
+            with connection.cursor() as cur:
+                cur.execute("SET LOCAL cms.audit_bypass = 'true'")
         return super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
         if not getattr(self, '_allow_audit_delete', False):
             raise AuditWriteError('AuditLog rows are append-only and cannot be deleted.')
+        from django.db import connection
+        with connection.cursor() as cur:
+            cur.execute("SET LOCAL cms.audit_bypass = 'true'")
         return super().delete(*args, **kwargs)
 
     def compute_hash(self) -> str:
@@ -2825,6 +2834,11 @@ class ScheduledJobRun(models.Model):
     error_summary = models.TextField(blank=True)
     detail = models.JSONField(default=dict, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    alert_sent_at = models.DateTimeField(
+        null=True, blank=True,
+        help_text='Set when an operator failure-alert email was sent for this run. '
+                  'Used for deduplication (one alert per job_name per hour).',
+    )
 
     class Meta:
         ordering = ['-started_at']

@@ -153,18 +153,8 @@ def profile(request):
             form = UserProfileForm(request.POST, instance=profile_obj)
             if action == 'send_mfa_code':
                 enrollment_code = profile_obj.issue_mfa_enrollment_code()
-                subject = f'{getattr(organization, "name", "DocClad")} MFA verification code'
-                body = (
-                    f'Your MFA verification code is {enrollment_code}.\n\n'
-                    'Enter this code on your profile page to confirm enrollment.'
-                )
-                send_mail(
-                    subject=subject,
-                    message=body,
-                    from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', None),
-                    recipient_list=[request.user.email],
-                    fail_silently=False,
-                )
+                from contracts.services.notifications import send_mfa_code_email
+                send_mfa_code_email(request.user, enrollment_code)
                 messages.success(request, 'Verification code sent to your email address.')
                 return redirect('profile')
             if action == 'generate_mfa_recovery_codes':
@@ -179,6 +169,13 @@ def profile(request):
                     changes={'event': 'mfa_recovery_codes_generated', 'count': len(recovery_codes), 'organization_id': getattr(organization, 'id', None)},
                     request=request,
                 )
+                # Notify user that new codes were generated (no code values in email).
+                try:
+                    from contracts.services.notifications import send_mfa_recovery_codes_regenerated_notification
+                    send_mfa_recovery_codes_regenerated_notification(request.user)
+                except Exception:
+                    import logging
+                    logging.getLogger(__name__).exception('recovery_codes_regenerated_notification failed user=%s', request.user.pk)
                 messages.success(request, 'Recovery codes generated. Save them now; they will only be shown once.')
                 return redirect('profile')
             if form.is_valid():
@@ -191,24 +188,15 @@ def profile(request):
                 enable_mfa = bool(form.cleaned_data.get('mfa_enabled'))
                 if enable_mfa:
                     already_enrolled = bool(profile_obj.mfa_enabled and profile_obj.mfa_verified_at)
-                    if recovery_code and profile_obj.verify_mfa_recovery_code(recovery_code):
-                        profile_obj.mfa_enabled = True
-                        profile_obj.mfa_verified_at = timezone.now()
-                        profile_obj.save()
-                        request.user.save()
-                        # Proving a recovery code verifies this session.
-                        request.session['mfa_verified'] = True
-                        log_action(
-                            request.user,
-                            AuditLog.Action.UPDATE,
-                            'UserProfile',
-                            object_id=profile_obj.id,
-                            object_repr=str(profile_obj),
-                            changes={'event': 'mfa_recovery_code_used', 'organization_id': getattr(organization, 'id', None)},
-                            request=request,
-                        )
-                        messages.success(request, 'Recovery code accepted and MFA enrollment refreshed.')
-                        return redirect('profile')
+                    if recovery_code:
+                        from contracts.services.recovery_codes import consume_recovery_code
+                        if consume_recovery_code(profile_obj, recovery_code, request=request, organization=organization):
+                            profile_obj.mfa_enabled = True
+                            profile_obj.mfa_verified_at = timezone.now()
+                            profile_obj.save()
+                            request.user.save()
+                            messages.success(request, 'Recovery code accepted and MFA enrollment refreshed.')
+                            return redirect('profile')
                     if already_enrolled and not enrollment_code:
                         profile_obj.save()
                         request.user.save()
@@ -229,6 +217,12 @@ def profile(request):
                             changes={'event': 'mfa_enrolled', 'organization_id': getattr(organization, 'id', None)},
                             request=request,
                         )
+                        try:
+                            from contracts.services.notifications import send_mfa_enrolled_notification
+                            send_mfa_enrolled_notification(request.user)
+                        except Exception:
+                            import logging
+                            logging.getLogger(__name__).exception('mfa_enrolled_notification failed user=%s', request.user.pk)
                         messages.success(request, 'Profile updated successfully and MFA enrolled.')
                         return redirect('profile')
                 else:
@@ -249,6 +243,12 @@ def profile(request):
                         changes={'event': 'mfa_disabled', 'organization_id': getattr(organization, 'id', None)},
                         request=request,
                     )
+                    try:
+                        from contracts.services.notifications import send_mfa_disabled_notification
+                        send_mfa_disabled_notification(request.user)
+                    except Exception:
+                        import logging
+                        logging.getLogger(__name__).exception('mfa_disabled_notification failed user=%s', request.user.pk)
                     messages.success(request, 'Profile updated successfully.')
                     return redirect('profile')
         else:

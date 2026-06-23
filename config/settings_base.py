@@ -470,6 +470,16 @@ if not _redis_url:
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@docclad.local')
 SERVER_EMAIL = os.getenv('SERVER_EMAIL', DEFAULT_FROM_EMAIL)
 
+# Canonical base URL used by all outbound email links. Must be set in
+# production via the APP_BASE_URL environment variable (https, no trailing
+# slash). Defaults to localhost for development/test — url_builder.py and
+# DocCladPasswordResetForm both read this.
+APP_BASE_URL = os.getenv('APP_BASE_URL', 'http://localhost:8000').strip()
+
+# Operator alert email — if set, send_operator_job_failure_alert() sends a
+# failure notification to this address when a scheduled job run fails.
+OPERATOR_ALERT_EMAIL = os.getenv('OPERATOR_ALERT_EMAIL', '').strip()
+
 # SMTP — defaults to console backend in dev; set EMAIL_HOST to enable real sending.
 _email_host = os.getenv('EMAIL_HOST', '').strip()
 if _email_host:

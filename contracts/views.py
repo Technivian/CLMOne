@@ -196,6 +196,8 @@ from .views_domains.actions import (
 )
 from .views_domains.core import (
     csp_report,
+    DocCladPasswordResetConfirmView,
+    DocCladPasswordResetView,
     health_check,
     index,
     LoginView,

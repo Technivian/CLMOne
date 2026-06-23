@@ -1,21 +1,24 @@
+import hashlib
 import logging
 from datetime import date, timedelta
-
-from django.utils import timezone
+from urllib.parse import urlparse, urlencode
 
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.views import (
+    PasswordResetView,
+    PasswordResetConfirmView,
+)
 from django.conf import settings
 from django.core.cache import cache
 from django.core.mail import send_mail
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
-
-from urllib.parse import urlencode
-
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
+from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
@@ -280,19 +283,9 @@ def csp_report(request):
 # ---------------------------------------------------------------------------
 
 def _send_mfa_email(user, code: str) -> None:
-    try:
-        send_mail(
-            subject='Your DocClad verification code',
-            message=(
-                f'Your verification code is: {code}\n\n'
-                'This code expires in 10 minutes. Do not share it with anyone.'
-            ),
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[user.email],
-            fail_silently=True,
-        )
-    except Exception:
-        logger.exception('mfa_email_failed user=%s', user.pk)
+    """Thin wrapper kept for call-site compatibility; delegates to notifications service."""
+    from contracts.services.notifications import send_mfa_code_email
+    send_mfa_code_email(user, code)
 
 
 class MfaRequiredMixin:
@@ -320,12 +313,20 @@ def mfa_challenge(request):
     if request.method == 'POST':
         code = request.POST.get('code', '').strip()
         profile, _ = UserProfile.objects.get_or_create(user=request.user)
-        # Accept either the emailed OTP or a one-time recovery code. The recovery
-        # code is the explicit operator escape hatch if email delivery is broken,
-        # so a configuration defect cannot permanently lock everyone out.
-        if profile.check_mfa_code(code) or profile.verify_mfa_recovery_code(code):
+
+        if profile.check_mfa_code(code):
+            # Valid OTP — mark session verified.
             request.session['mfa_verified'] = True
             return redirect(next_url)
+
+        # Try as a recovery code via the canonical service (atomic consumption,
+        # audit event, replay prevention, suspicious-use notification).
+        from contracts.services.recovery_codes import consume_recovery_code
+        from contracts.tenancy import get_user_organization
+        org = get_user_organization(request.user)
+        if consume_recovery_code(profile, code, request=request, organization=org):
+            return redirect(next_url)
+
         error = 'Invalid or expired code. Request a new one below.'
 
     return render(request, 'contracts/mfa_challenge.html', {
@@ -364,6 +365,12 @@ def mfa_enroll(request):
         if profile.verify_mfa_enrollment_code(code):
             request.session['mfa_verified'] = True
             messages.success(request, 'MFA enabled. Your account is now protected.')
+            # Security notification: inform the user MFA was enabled on their account.
+            try:
+                from contracts.services.notifications import send_mfa_enrolled_notification
+                send_mfa_enrolled_notification(request.user)
+            except Exception:
+                logger.exception('mfa_enrolled_notification failed user=%s', request.user.pk)
             return redirect('dashboard')
         error = 'Invalid or expired code. Please try again.'
 
@@ -371,3 +378,72 @@ def mfa_enroll(request):
         'profile': profile,
         'error': error,
     })
+
+
+# ---------------------------------------------------------------------------
+# Password recovery (Phase 5L)
+# ---------------------------------------------------------------------------
+
+class DocCladPasswordResetForm(PasswordResetForm):
+    """Override domain/protocol so reset links use APP_BASE_URL, never request.get_host()."""
+
+    def save(self, *args, **kwargs):
+        base = getattr(settings, 'APP_BASE_URL', '') or 'http://localhost:8000'
+        parsed = urlparse(base)
+        kwargs['domain_override'] = parsed.netloc
+        kwargs['use_https'] = parsed.scheme == 'https'
+        return super().save(*args, **kwargs)
+
+
+class DocCladPasswordResetView(PasswordResetView):
+    """Password reset request view with rate limiting and canonical URL links."""
+
+    form_class = DocCladPasswordResetForm
+    template_name = 'registration/password_reset_form.html'
+    email_template_name = 'registration/password_reset_email.txt'
+    subject_template_name = 'registration/password_reset_subject.txt'
+    success_url = reverse_lazy('password_reset_done')
+
+    # Rate limit: 3 reset requests per email per hour.
+    _RATE_LIMIT = 3
+    _RATE_WINDOW = 3600
+
+    def form_valid(self, form):
+        email = form.cleaned_data.get('email', '').lower().strip()
+        # Hash the email for the cache key to avoid storing PII.
+        email_key = hashlib.sha256(email.encode()).hexdigest()[:20]
+        rl_key = f'pwd_reset_rl:{email_key}'
+        attempts = cache.get(rl_key, 0)
+        if attempts >= self._RATE_LIMIT:
+            # Generic redirect — does not reveal rate limiting to callers.
+            return redirect(self.get_success_url())
+        cache.set(rl_key, attempts + 1, timeout=self._RATE_WINDOW)
+        return super().form_valid(form)
+
+
+class DocCladPasswordResetConfirmView(PasswordResetConfirmView):
+    """Password reset confirmation view; audits on successful completion."""
+
+    template_name = 'registration/password_reset_confirm.html'
+    success_url = reverse_lazy('password_reset_complete')
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        # Audit password reset completion. Token/uid never stored.
+        try:
+            from contracts.services.audit import append_audit
+            append_audit(
+                action='UPDATE',
+                model_name='User',
+                organization=None,
+                user=form.user,
+                object_id=form.user.pk,
+                object_repr=form.user.username,
+                event_type='auth.password_reset_completed',
+                actor_type='human',
+                outcome='success',
+                changes={'event': 'auth.password_reset_completed'},
+            )
+        except Exception:
+            logger.exception('password_reset audit failed user=%s', getattr(form.user, 'pk', None))
+        return response

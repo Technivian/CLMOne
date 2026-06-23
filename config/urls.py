@@ -25,6 +25,7 @@ from django.views.generic import TemplateView # Import TemplateView
 from contracts import views as contract_views
 from contracts.api import views as contract_api_views
 from django.contrib.auth import views as auth_views
+from django.contrib.auth.views import PasswordResetDoneView, PasswordResetCompleteView
 
 logger = logging.getLogger(__name__)
 
@@ -58,6 +59,15 @@ urlpatterns = [
     path('register/', contract_views.SignUpView.as_view(), name='register'),
     path('login/', contract_views.LoginView.as_view(), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
+    # Password recovery (Phase 5L) — canonical APP_BASE_URL links, rate-limited.
+    path('forgot-password/', contract_views.DocCladPasswordResetView.as_view(), name='password_reset'),
+    path('forgot-password/sent/', PasswordResetDoneView.as_view(
+        template_name='registration/password_reset_done.html',
+    ), name='password_reset_done'),
+    path('reset-password/<uidb64>/<token>/', contract_views.DocCladPasswordResetConfirmView.as_view(), name='password_reset_confirm'),
+    path('reset-password/done/', PasswordResetCompleteView.as_view(
+        template_name='registration/password_reset_complete.html',
+    ), name='password_reset_complete'),
     path('toggle-redesign/', contract_views.toggle_redesign, name='toggle_redesign'),
     path('privacy/', TemplateView.as_view(template_name='privacy.html'), name='privacy'),
     path('terms/', TemplateView.as_view(template_name='terms.html'), name='terms'),
