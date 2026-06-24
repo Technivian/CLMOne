@@ -66,7 +66,7 @@
   .field-label { display: block; font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 4px; }
   .field-error { font-size: 0.75rem; color: #F87171; margin-top: 4px; }
   /* Buttons now use canonical token-backed classes from components.css
-     (btn-cta / btn-quiet / btn-soft-accent) — no page-local redefinitions. */
+     (btn-cta / btn-quiet / btn-soft-primary-accent) — no page-local redefinitions. */
   .text-muted-login { color: var(--text-secondary); }
   .space-y-4 > * + * { margin-top: 16px; }
 </style>
@@ -123,7 +123,7 @@
         </div>
         <div class="flex flex-wrap gap-3 pt-4">
             <button type="submit" name="action" value="send_mfa_code" class="btn-quiet">Send verification code</button>
-            <button type="submit" name="action" value="generate_mfa_recovery_codes" class="btn-soft-accent">Generate recovery codes</button>
+            <button type="submit" name="action" value="generate_mfa_recovery_codes" class="btn-soft-primary-accent">Generate recovery codes</button>
             <button type="submit" class="btn-cta">Save Changes</button>
         </div>
         {% else %}

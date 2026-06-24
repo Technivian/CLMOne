@@ -138,7 +138,7 @@
           {% else %}
           <div class="card-l2 text-center">
             <p class="text-sm c-muted">No negotiation notes yet.</p>
-            <a href="{% url 'contracts:add_negotiation_note' contract.pk %}" class="btn-soft mt-3 text-sm">Add first note</a>
+            <a href="{% url 'contracts:add_negotiation_note' contract.pk %}" class="btn-soft-primary mt-3 text-sm">Add first note</a>
           </div>
           {% endif %}
 
@@ -165,7 +165,7 @@
             <div class="mt-4 space-y-3">
               <textarea id="ai-assistant-prompt" class="input-base w-full rounded-lg border px-3 py-2 text-sm" rows="3" placeholder="Ask for risk, renewal, and action insights…"></textarea>
               <div class="flex items-center gap-3">
-                <button id="ai-assistant-submit" type="button" class="btn-soft text-sm">Analyze</button>
+                <button id="ai-assistant-submit" type="button" class="btn-soft-primary text-sm">Analyze</button>
                 <span id="ai-assistant-status" class="text-xs c-muted"></span>
               </div>
               <pre id="ai-assistant-output" class="hidden pre-output c-muted text-xs" aria-live="polite" aria-label="AI assistant response"></pre>
@@ -204,7 +204,7 @@
           {% else %}
           <div class="py-12 text-center">
             <p class="text-sm c-muted mb-3">No documents attached yet.</p>
-            <a href="{% url 'contracts:document_create' %}" class="btn-soft text-sm">Attach first document</a>
+            <a href="{% url 'contracts:document_create' %}" class="btn-soft-primary text-sm">Attach first document</a>
           </div>
           {% endif %}
         </div>

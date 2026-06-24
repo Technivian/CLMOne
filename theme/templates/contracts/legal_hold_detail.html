@@ -10,8 +10,8 @@
 .back-link { font-size: 13px; color: var(--text-secondary); text-decoration: none; }
 .back-link:hover { color: var(--text-primary); }
 .page-title { font-size: 22px; font-weight: 700; color: var(--text-primary); margin-top: 6px; }
-.btn-primary { display: inline-block; padding: 8px 16px; background: var(--primary); color: #fff; font-size: 13px; font-weight: 600; border-radius: 8px; text-decoration: none; transition: background 0.15s; }
-.btn-primary:hover { background: var(--primary-hover); }
+.btn-primary-grad { display: inline-block; padding: 8px 16px; background: var(--primary); color: #fff; font-size: 13px; font-weight: 600; border-radius: 8px; text-decoration: none; transition: background 0.15s; }
+.btn-primary-grad:hover { background: var(--primary-hover); }
 </style>
 <div class="max-w-3xl mx-auto">
     <div class="flex items-center justify-between mb-6">
@@ -19,7 +19,7 @@
             <a href="{% url 'contracts:legal_hold_list' %}" class="back-link">&larr; Back to list</a>
             <h1 class="page-title">{{ object }}</h1>
         </div>
-        <a href="{% url 'contracts:legal_hold_update' object.pk %}" class="btn-primary">Edit</a>
+        <a href="{% url 'contracts:legal_hold_update' object.pk %}" class="btn-primary-grad">Edit</a>
     </div>
     <div class="detail-card">
         <div class="detail-row"><span class="detail-label">Status</span><p class="detail-value">{{ object.get_status_display }}</p></div>

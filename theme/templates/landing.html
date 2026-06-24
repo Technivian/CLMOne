@@ -110,9 +110,9 @@
     .icon-color-cyan  { color: #60A5FA; }
     .gradient-text-primary { background: linear-gradient(135deg, #2563EB, #60A5FA); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
     .gradient-bg-primary   { background: linear-gradient(135deg, rgba(37,99,235,0.08), rgba(34,197,94,0.04)); }
-    .btn-glow-blue { background: #2563EB; box-shadow: 0 4px 16px rgba(37,99,235,0.4); }
-    .btn-glow-blue-lg { background: #2563EB; box-shadow: 0 8px 32px rgba(37,99,235,0.4), 0 2px 4px rgba(0,0,0,0.2); }
-    .btn-glow-blue:hover, .btn-glow-blue-lg:hover { background: #1d4ed8; }
+    .btn-primary-grad { background: #2563EB; box-shadow: 0 4px 16px rgba(37,99,235,0.4); }
+    .btn-primary-grad-lg { background: #2563EB; box-shadow: 0 8px 32px rgba(37,99,235,0.4), 0 2px 4px rgba(0,0,0,0.2); }
+    .btn-primary-grad:hover, .btn-primary-grad-lg:hover { background: #1d4ed8; }
     .avatar-blue { background: #2563EB; }
     .avatar-green { background: #059669; }
     .avatar-purple { background: #7C3AED; }
@@ -150,7 +150,7 @@
                         <svg class="w-4 h-4 icon-moon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
                     </button>
                     <a href="{% url 'login' %}" class="landing-link text-sm px-3 py-2 font-medium">Sign in</a>
-                    <a href="{% url 'register' %}" class="glow-btn btn-glow-blue text-sm text-white px-5 py-2 rounded-lg font-semibold transition-all duration-200">Get Started</a>
+                    <a href="{% url 'register' %}" class="glow-btn btn-primary-grad text-sm text-white px-5 py-2 rounded-lg font-semibold transition-all duration-200">Get Started</a>
                 </div>
             </div>
         </div>
@@ -172,7 +172,7 @@
                 The only CLM with IOLTA-compliant trust accounts built in. Stop stitching together contract tools and billing software — DocClad handles everything from first draft to renewal.
             </p>
             <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <a href="{% url 'register' %}" class="glow-btn w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-3.5 text-white rounded-xl font-semibold text-[15px] transition-all duration-200 btn-glow-blue-lg">
+                <a href="{% url 'register' %}" class="glow-btn w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-3.5 text-white rounded-xl font-semibold text-[15px] transition-all duration-200 btn-primary-grad-lg">
                     Start free trial
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
                 </a>
@@ -570,7 +570,7 @@
                 <h2 class="landing-title text-2xl sm:text-3xl font-extrabold tracking-tight mb-3">Your next contract breach starts with a missed deadline.</h2>
                 <p class="landing-muted-strong text-base mb-10">DocClad closes that gap. No credit card required.</p>
                 <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-                    <a href="{% url 'register' %}" class="glow-btn w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-3.5 text-white rounded-xl font-semibold text-[15px] transition-all duration-200 btn-glow-blue-lg">
+                    <a href="{% url 'register' %}" class="glow-btn w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-3.5 text-white rounded-xl font-semibold text-[15px] transition-all duration-200 btn-primary-grad-lg">
                         Get started free
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
                     </a>
@@ -584,7 +584,7 @@
         <div class="landing-edge-line"></div>
         <div class="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 pt-6">
             <div class="flex items-center gap-2.5">
-                <div class="w-6 h-6 rounded-md flex items-center justify-center btn-glow-blue">
+                <div class="w-6 h-6 rounded-md flex items-center justify-center btn-primary-grad">
                     <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
                 </div>
                 <span class="landing-muted-soft text-xs font-bold">DocClad</span>
