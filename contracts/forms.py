@@ -359,6 +359,13 @@ class ContractForm(forms.ModelForm):
         clause_queryset = scope_queryset_for_organization(ClauseTemplate.objects.select_related('category'), organization).order_by('title')
         self.fields['clause_templates'].queryset = clause_queryset
         self.fields['clause_templates'].label_from_instance = self._clause_template_label
+        # client/matter are tenant-owned relations exposed on this form; an
+        # unscoped queryset would both render other orgs' records as choices
+        # and accept them on submit (ModelChoiceField validates against
+        # whatever queryset it was given, so scoping here also rejects a
+        # forged cross-org id server-side).
+        self.fields['client'].queryset = scope_queryset_for_organization(Client.objects.all(), organization).order_by('name')
+        self.fields['matter'].queryset = scope_queryset_for_organization(Matter.objects.all(), organization).order_by('title')
 
     @staticmethod
     def _clause_template_label(clause_template):
@@ -1222,6 +1229,16 @@ class ApprovalRequestForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.actor = kwargs.pop('actor', None)
         super().__init__(*args, **kwargs)
+        if not self.instance.pk:
+            # A new approval request always starts PENDING. The outcome is
+            # decided later through the approval service (approve/reject/
+            # delegate), never chosen by the requester at creation time.
+            # `disabled=True` is the Django-native way to make this
+            # tamper-proof: a disabled field's cleaned value always comes
+            # from `initial`, never from submitted POST data, so a crafted
+            # POST cannot smuggle a different status in.
+            self.initial['status'] = ApprovalRequest.Status.PENDING
+            self.fields['status'].disabled = True
 
     class Meta:
         model = ApprovalRequest
@@ -1238,8 +1255,16 @@ class ApprovalRequestForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
+
+        if not self.instance.pk:
+            # Belt-and-suspenders: even if 'status' were somehow present in
+            # cleaned_data (e.g. a future refactor re-adds the field), a new
+            # request is always forced to PENDING here.
+            cleaned_data['status'] = self.instance.status = ApprovalRequest.Status.PENDING
+            return cleaned_data
+
         new_status = cleaned_data.get('status')
-        if not self.instance.pk or not new_status:
+        if not new_status:
             return cleaned_data
 
         if not self.instance.can_transition_to(new_status):

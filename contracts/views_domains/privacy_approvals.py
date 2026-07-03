@@ -663,7 +663,11 @@ class ApprovalRequestCreateView(TenantScopedFormMixin, TenantAssignCreateMixin, 
     form_class = ApprovalRequestForm
     template_name = 'contracts/approval_request_form.html'
     success_url = reverse_lazy('contracts:approval_request_list')
-    scoped_form_fields = {'contract': Contract, 'assigned_to': _organization_user_queryset}
+    scoped_form_fields = {
+        'contract': Contract,
+        'assigned_to': _organization_user_queryset,
+        'delegated_to': _organization_user_queryset,
+    }
 
 
 class ApprovalRequestUpdateView(TenantScopedFormMixin, TenantScopedQuerysetMixin, LoginRequiredMixin, UpdateView):
@@ -671,7 +675,11 @@ class ApprovalRequestUpdateView(TenantScopedFormMixin, TenantScopedQuerysetMixin
     form_class = ApprovalRequestForm
     template_name = 'contracts/approval_request_form.html'
     success_url = reverse_lazy('contracts:approval_request_list')
-    scoped_form_fields = {'contract': Contract, 'assigned_to': _organization_user_queryset}
+    scoped_form_fields = {
+        'contract': Contract,
+        'assigned_to': _organization_user_queryset,
+        'delegated_to': _organization_user_queryset,
+    }
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()

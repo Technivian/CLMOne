@@ -12,10 +12,15 @@ from django.views.generic import CreateView, ListView, UpdateView
 
 from contracts.forms import DeadlineForm
 from contracts.middleware import log_action
-from contracts.models import Deadline
+from contracts.models import Contract, Deadline, Matter
 from contracts.permissions import ContractAction, can_access_contract_action
 from contracts.tenancy import get_user_organization
-from contracts.view_support import TenantAssignCreateMixin, TenantScopedQuerysetMixin
+from contracts.view_support import (
+    TenantAssignCreateMixin,
+    TenantScopedFormMixin,
+    TenantScopedQuerysetMixin,
+    organization_user_queryset,
+)
 
 
 class DeadlineListView(LoginRequiredMixin, ListView):
@@ -51,11 +56,16 @@ class DeadlineListView(LoginRequiredMixin, ListView):
         return context
 
 
-class DeadlineCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView):
+class DeadlineCreateView(TenantScopedFormMixin, TenantAssignCreateMixin, LoginRequiredMixin, CreateView):
     model = Deadline
     form_class = DeadlineForm
     template_name = 'contracts/deadline_form.html'
     success_url = reverse_lazy('contracts:deadline_list')
+    scoped_form_fields = {
+        'matter': Matter,
+        'contract': Contract,
+        'assigned_to': organization_user_queryset,
+    }
 
     def form_valid(self, form):
         if form.instance.contract and not can_access_contract_action(self.request.user, form.instance.contract, ContractAction.EDIT):
@@ -66,11 +76,16 @@ class DeadlineCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView
         return response
 
 
-class DeadlineUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin, UpdateView):
+class DeadlineUpdateView(TenantScopedFormMixin, TenantScopedQuerysetMixin, LoginRequiredMixin, UpdateView):
     model = Deadline
     form_class = DeadlineForm
     template_name = 'contracts/deadline_form.html'
     success_url = reverse_lazy('contracts:deadline_list')
+    scoped_form_fields = {
+        'matter': Matter,
+        'contract': Contract,
+        'assigned_to': organization_user_queryset,
+    }
 
     def get_queryset(self):
         org = self.get_organization()

@@ -13,10 +13,15 @@ from django.views.generic import CreateView, DeleteView, DetailView, ListView, U
 
 from contracts.forms import ClientForm, DocumentForm, DocumentOCRReviewForm, MatterForm
 from contracts.middleware import log_action
-from contracts.models import AuditLog, Client, Document, DocumentOCRReview, Matter
+from contracts.models import AuditLog, Client, Contract, Document, DocumentOCRReview, Matter
 from contracts.permissions import ContractAction, can_access_contract_action
 from contracts.tenancy import get_user_organization, scope_queryset_for_organization, set_organization_on_instance
-from contracts.view_support import TenantAssignCreateMixin, TenantScopedQuerysetMixin
+from contracts.view_support import (
+    TenantAssignCreateMixin,
+    TenantScopedFormMixin,
+    TenantScopedQuerysetMixin,
+    organization_user_queryset,
+)
 from contracts.services.document_versions import compare_document_versions
 from contracts.services.document_ocr import queue_document_ocr_review
 
@@ -73,11 +78,15 @@ class ClientDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailView
         return ctx
 
 
-class ClientCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView):
+class ClientCreateView(TenantScopedFormMixin, TenantAssignCreateMixin, LoginRequiredMixin, CreateView):
     model = Client
     form_class = ClientForm
     template_name = 'contracts/client_form.html'
     success_url = reverse_lazy('contracts:client_list')
+    scoped_form_fields = {
+        'responsible_attorney': organization_user_queryset,
+        'originating_attorney': organization_user_queryset,
+    }
 
     def form_valid(self, form):
         set_organization_on_instance(form.instance, get_user_organization(self.request.user))
@@ -88,11 +97,15 @@ class ClientCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView):
         return response
 
 
-class ClientUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin, UpdateView):
+class ClientUpdateView(TenantScopedFormMixin, TenantScopedQuerysetMixin, LoginRequiredMixin, UpdateView):
     model = Client
     form_class = ClientForm
     template_name = 'contracts/client_form.html'
     success_url = reverse_lazy('contracts:client_list')
+    scoped_form_fields = {
+        'responsible_attorney': organization_user_queryset,
+        'originating_attorney': organization_user_queryset,
+    }
 
     def get_queryset(self):
         org = get_user_organization(self.request.user)
@@ -159,10 +172,15 @@ class MatterDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailView
         return ctx
 
 
-class MatterCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView):
+class MatterCreateView(TenantScopedFormMixin, TenantAssignCreateMixin, LoginRequiredMixin, CreateView):
     model = Matter
     form_class = MatterForm
     template_name = 'contracts/matter_form.html'
+    scoped_form_fields = {
+        'client': Client,
+        'responsible_attorney': organization_user_queryset,
+        'originating_attorney': organization_user_queryset,
+    }
 
     def get_success_url(self):
         return reverse('contracts:matter_detail', kwargs={'pk': self.object.pk})
@@ -176,10 +194,15 @@ class MatterCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView):
         return response
 
 
-class MatterUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin, UpdateView):
+class MatterUpdateView(TenantScopedFormMixin, TenantScopedQuerysetMixin, LoginRequiredMixin, UpdateView):
     model = Matter
     form_class = MatterForm
     template_name = 'contracts/matter_form.html'
+    scoped_form_fields = {
+        'client': Client,
+        'responsible_attorney': organization_user_queryset,
+        'originating_attorney': organization_user_queryset,
+    }
 
     def get_success_url(self):
         return reverse('contracts:matter_detail', kwargs={'pk': self.object.pk})
@@ -257,11 +280,12 @@ class DocumentCompareView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailV
         return context
 
 
-class DocumentCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView):
+class DocumentCreateView(TenantScopedFormMixin, TenantAssignCreateMixin, LoginRequiredMixin, CreateView):
     model = Document
     form_class = DocumentForm
     template_name = 'contracts/document_form.html'
     success_url = reverse_lazy('contracts:document_list')
+    scoped_form_fields = {'contract': Contract, 'matter': Matter, 'client': Client}
 
     def form_valid(self, form):
         set_organization_on_instance(form.instance, get_user_organization(self.request.user))
@@ -287,11 +311,12 @@ class DocumentCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView
         return response
 
 
-class DocumentUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin, UpdateView):
+class DocumentUpdateView(TenantScopedFormMixin, TenantScopedQuerysetMixin, LoginRequiredMixin, UpdateView):
     model = Document
     form_class = DocumentForm
     template_name = 'contracts/document_form.html'
     success_url = reverse_lazy('contracts:document_list')
+    scoped_form_fields = {'contract': Contract, 'matter': Matter, 'client': Client}
 
     def get_queryset(self):
         org = self.get_organization()

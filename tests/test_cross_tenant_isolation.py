@@ -20,6 +20,7 @@ Run:
 """
 
 import datetime
+from decimal import Decimal
 from io import StringIO
 
 from django.core.management import call_command
@@ -34,9 +35,13 @@ from contracts.models import (
     Client,
     Matter,
     Contract,
+    ConflictCheck,
     Document,
     Deadline,
+    Invoice,
     LegalTask,
+    TimeEntry,
+    TrustAccount,
     RiskLog,
     TrademarkRequest,
     Budget,
@@ -1214,6 +1219,259 @@ class ScopedFormIsolationTest(CrossTenantFixtureMixin, TestCase):
         for url_name, obj, data, field_name, expected_value in cases:
             with self.subTest(url_name=url_name):
                 self.assert_invalid_update(url_name, obj, data, field_name, expected_value)
+
+
+class SweptTenantFormIsolationTest(ScopedFormIsolationTest):
+    """
+    Sub-block A regression coverage ("Safe to Demo" security remediation).
+
+    ScopedFormIsolationTest above already covered a set of forms. This class
+    adds the forms the audit found unscoped and that were NOT already in that
+    list: ContractForm (client/matter), ClientForm, MatterForm, DocumentForm,
+    TimeEntryForm, InvoiceForm, TrustAccountForm, ConflictCheckForm,
+    DeadlineForm, and ApprovalRequestForm's `delegated_to` field.
+
+    Reuses ScopedFormIsolationTest's fixtures/login and its
+    assert_invalid_create / assert_invalid_update helpers.
+    """
+
+    def setUp(self):
+        super().setUp()
+        # Org-B "b" instances needed only for update-path cross-org cases.
+        self.time_entry_b = TimeEntry.objects.create(
+            organization=self.org_b, matter=self.matter_b, user=self.user_b,
+            date=datetime.date.today(), hours=Decimal('1.5'), description='Beta time entry',
+        )
+        self.invoice_b = Invoice.objects.create(
+            organization=self.org_b, invoice_number='INV-BETA-SWEEP-001', client=self.client_b,
+            due_date=self.future, created_by=self.user_b,
+        )
+        self.conflict_check_b = ConflictCheck.objects.create(
+            client=self.client_b, checked_party='Beta Party',
+        )
+
+    def test_create_forms_reject_cross_org_foreign_keys(self):
+        cases = [
+            (
+                'contracts:contract_create',
+                {
+                    'title': 'Bad Contract', 'contract_type': 'OTHER', 'content': '',
+                    'status': 'DRAFT', 'counterparty': 'X', 'value': '0', 'currency': 'USD',
+                    'risk_level': 'LOW', 'lifecycle_stage': 'DRAFTING',
+                    'client': self.client_a.pk, 'matter': self.matter_a.pk,
+                },
+                Contract,
+            ),
+            (
+                'contracts:client_create',
+                {
+                    'name': 'Bad Client', 'client_type': 'CORPORATION', 'status': 'ACTIVE',
+                    'country': 'United States', 'responsible_attorney': self.user_a.pk,
+                },
+                Client,
+            ),
+            (
+                'contracts:matter_create',
+                {
+                    'title': 'Bad Matter', 'client': self.client_a.pk, 'practice_area': 'CORPORATE',
+                    'status': 'ACTIVE', 'billing_type': 'HOURLY', 'open_date': self.today,
+                },
+                Matter,
+            ),
+            (
+                'contracts:document_create',
+                {'title': 'Bad Document', 'document_type': 'OTHER', 'status': 'DRAFT', 'contract': self.contract_a.pk},
+                Document,
+            ),
+            (
+                'contracts:time_entry_create',
+                {
+                    'matter': self.matter_a.pk, 'date': self.today, 'hours': '1.0',
+                    'description': 'bad', 'activity_type': 'OTHER',
+                },
+                TimeEntry,
+            ),
+            (
+                'contracts:invoice_create',
+                {'client': self.client_a.pk, 'issue_date': self.today, 'due_date': self.future, 'subtotal': '0', 'tax_rate': '0'},
+                Invoice,
+            ),
+            (
+                'contracts:trust_account_create',
+                {'client': self.client_a.pk, 'account_name': 'Bad Trust', 'balance': '0'},
+                TrustAccount,
+            ),
+            (
+                'contracts:conflict_check_create',
+                {'client': self.client_a.pk, 'checked_party': 'Bad Party', 'status': 'PENDING'},
+                ConflictCheck,
+            ),
+            (
+                'contracts:deadline_create',
+                {
+                    'title': 'Bad Deadline', 'deadline_type': 'OTHER', 'priority': 'LOW',
+                    'due_date': self.future, 'matter': self.matter_a.pk,
+                },
+                Deadline,
+            ),
+            (
+                'contracts:approval_request_create',
+                {
+                    'contract': self.contract_b.pk, 'approval_step': 'LEGAL',
+                    'assigned_to': self.user_b.pk, 'delegated_to': self.user_a.pk,
+                    'comments': 'bad delegate',
+                },
+                ApprovalRequest,
+            ),
+        ]
+
+        for url_name, data, model in cases:
+            with self.subTest(url_name=url_name):
+                self.assert_invalid_create(url_name, data, model)
+
+    def test_update_forms_reject_cross_org_foreign_keys(self):
+        cases = [
+            (
+                'contracts:client_update', self.client_b,
+                {
+                    'name': self.client_b.name, 'client_type': 'CORPORATION', 'status': 'ACTIVE',
+                    'country': 'United States', 'responsible_attorney': self.user_a.pk,
+                },
+                'responsible_attorney_id', None,
+            ),
+            (
+                'contracts:matter_update', self.matter_b,
+                {
+                    'title': self.matter_b.title, 'client': self.client_a.pk, 'practice_area': 'CORPORATE',
+                    'status': 'ACTIVE', 'billing_type': 'HOURLY', 'open_date': self.today,
+                },
+                'client_id', self.client_b.id,
+            ),
+            (
+                'contracts:document_update', self.document_b,
+                {'title': self.document_b.title, 'document_type': 'OTHER', 'status': 'DRAFT', 'contract': self.contract_a.pk},
+                'contract_id', None,
+            ),
+            (
+                'contracts:time_entry_update', self.time_entry_b,
+                {
+                    'matter': self.matter_a.pk, 'date': self.today, 'hours': '1.0',
+                    'description': 'bad', 'activity_type': 'OTHER',
+                },
+                'matter_id', self.matter_b.id,
+            ),
+            (
+                'contracts:invoice_update', self.invoice_b,
+                {'client': self.client_a.pk, 'issue_date': self.today, 'due_date': self.future, 'subtotal': '0', 'tax_rate': '0'},
+                'client_id', self.client_b.id,
+            ),
+            (
+                'contracts:conflict_check_update', self.conflict_check_b,
+                {'client': self.client_a.pk, 'checked_party': 'Bad Party', 'status': 'PENDING'},
+                'client_id', self.client_b.id,
+            ),
+            (
+                'contracts:deadline_update', self.deadline_b,
+                {
+                    'title': self.deadline_b.title, 'deadline_type': 'OTHER', 'priority': 'LOW',
+                    'due_date': self.future, 'matter': self.matter_a.pk,
+                },
+                'matter_id', None,
+            ),
+            (
+                'contracts:approval_request_update', self.approval_request_b,
+                {
+                    'contract': self.contract_b.pk, 'approval_step': self.approval_request_b.approval_step,
+                    'assigned_to': self.user_b.pk, 'delegated_to': self.user_a.pk,
+                    'comments': 'bad delegate',
+                },
+                'delegated_to_id', None,
+            ),
+        ]
+
+        for url_name, obj, data, field_name, expected_value in cases:
+            with self.subTest(url_name=url_name):
+                self.assert_invalid_update(url_name, obj, data, field_name, expected_value)
+
+
+class ApprovalCreationIsForcedPendingTest(CrossTenantFixtureMixin, TestCase):
+    """
+    Sub-block A: an approval request must always be created PENDING —
+    the creator must not be able to choose the outcome, even by submitting
+    a `status` value the create form no longer renders.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.client.login(username='user_a', password='passA1234!')
+
+    def test_status_field_is_disabled_on_create_form(self):
+        # The field stays present (so ModelForm's construct_instance keeps
+        # working) but Django's `disabled=True` means its cleaned value is
+        # always taken from `initial`, never from submitted POST data.
+        response = self.client.get(reverse('contracts:approval_request_create'))
+        self.assertEqual(response.status_code, 200)
+        status_field = response.context['form'].fields['status']
+        self.assertTrue(status_field.disabled)
+        self.assertEqual(response.context['form'].initial.get('status'), ApprovalRequest.Status.PENDING)
+
+    def test_crafted_post_cannot_set_approved_at_creation(self):
+        before = ApprovalRequest.objects.count()
+        response = self.client.post(reverse('contracts:approval_request_create'), {
+            'contract': self.contract_a.pk,
+            'approval_step': 'LEGAL',
+            'status': 'APPROVED',  # crafted: this field is not rendered by the form
+            'assigned_to': self.user_a.pk,
+            'comments': 'trying to self-approve at creation',
+        })
+        self.assertIn(response.status_code, (200, 302))
+        self.assertEqual(ApprovalRequest.objects.count(), before + 1)
+        created = ApprovalRequest.objects.filter(contract=self.contract_a, comments='trying to self-approve at creation').first()
+        self.assertIsNotNone(created)
+        self.assertEqual(created.status, ApprovalRequest.Status.PENDING)
+        self.assertIsNone(created.decided_by_id)
+        self.assertIsNone(created.decided_at)
+
+    def test_crafted_post_cannot_set_rejected_at_creation(self):
+        response = self.client.post(reverse('contracts:approval_request_create'), {
+            'contract': self.contract_a.pk,
+            'approval_step': 'LEGAL',
+            'status': 'REJECTED',
+            'assigned_to': self.user_a.pk,
+            'comments': 'trying to reject at creation',
+        })
+        self.assertIn(response.status_code, (200, 302))
+        created = ApprovalRequest.objects.filter(contract=self.contract_a, comments='trying to reject at creation').first()
+        self.assertIsNotNone(created)
+        self.assertEqual(created.status, ApprovalRequest.Status.PENDING)
+
+    def test_crafted_post_cannot_set_escalated_at_creation(self):
+        response = self.client.post(reverse('contracts:approval_request_create'), {
+            'contract': self.contract_a.pk,
+            'approval_step': 'LEGAL',
+            'status': 'ESCALATED',
+            'assigned_to': self.user_a.pk,
+            'comments': 'trying to escalate at creation',
+        })
+        self.assertIn(response.status_code, (200, 302))
+        created = ApprovalRequest.objects.filter(contract=self.contract_a, comments='trying to escalate at creation').first()
+        self.assertIsNotNone(created)
+        self.assertEqual(created.status, ApprovalRequest.Status.PENDING)
+
+    def test_no_audit_approve_event_fires_for_forced_pending_creation(self):
+        """Creation is not a decision: it must not emit an approve/reject audit event."""
+        from contracts.models import AuditLog
+
+        before = AuditLog.objects.filter(action__in=[AuditLog.Action.APPROVE, AuditLog.Action.REJECT]).count()
+        self.client.post(reverse('contracts:approval_request_create'), {
+            'contract': self.contract_a.pk,
+            'approval_step': 'LEGAL',
+            'status': 'APPROVED',
+            'assigned_to': self.user_a.pk,
+            'comments': 'no decision audit expected',
+        })
+        after = AuditLog.objects.filter(action__in=[AuditLog.Action.APPROVE, AuditLog.Action.REJECT]).count()
+        self.assertEqual(before, after, 'Creating a request must never itself record an approve/reject decision')
 
 
 class DueDiligenceActionIsolationTest(CrossTenantFixtureMixin, TestCase):

@@ -7,8 +7,8 @@ from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
 from contracts.forms import ConflictCheckForm, TrustAccountForm, TrustTransactionForm
 from contracts.middleware import log_action
-from contracts.models import ConflictCheck, TrustAccount, TrustTransaction
-from contracts.view_support import TenantAssignCreateMixin, TenantScopedQuerysetMixin
+from contracts.models import Client, ConflictCheck, Matter, TrustAccount, TrustTransaction
+from contracts.view_support import TenantAssignCreateMixin, TenantScopedFormMixin, TenantScopedQuerysetMixin
 
 
 class TrustAccountListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
@@ -34,11 +34,12 @@ class TrustAccountDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, Deta
         return ctx
 
 
-class TrustAccountCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView):
+class TrustAccountCreateView(TenantScopedFormMixin, TenantAssignCreateMixin, LoginRequiredMixin, CreateView):
     model = TrustAccount
     form_class = TrustAccountForm
     template_name = 'contracts/trust_account_form.html'
     success_url = reverse_lazy('contracts:trust_account_list')
+    scoped_form_fields = {'client': Client, 'matter': Matter}
 
     def form_valid(self, form):
         form.instance.created_by = self.request.user
@@ -70,11 +71,12 @@ class ConflictCheckListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListV
     paginate_by = 25
 
 
-class ConflictCheckCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView):
+class ConflictCheckCreateView(TenantScopedFormMixin, TenantAssignCreateMixin, LoginRequiredMixin, CreateView):
     model = ConflictCheck
     form_class = ConflictCheckForm
     template_name = 'contracts/conflict_check_form.html'
     success_url = reverse_lazy('contracts:conflict_check_list')
+    scoped_form_fields = {'client': Client, 'matter': Matter}
 
     def form_valid(self, form):
         form.instance.checked_by = self.request.user
@@ -83,8 +85,9 @@ class ConflictCheckCreateView(TenantAssignCreateMixin, LoginRequiredMixin, Creat
         return response
 
 
-class ConflictCheckUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin, UpdateView):
+class ConflictCheckUpdateView(TenantScopedFormMixin, TenantScopedQuerysetMixin, LoginRequiredMixin, UpdateView):
     model = ConflictCheck
     form_class = ConflictCheckForm
     template_name = 'contracts/conflict_check_form.html'
     success_url = reverse_lazy('contracts:conflict_check_list')
+    scoped_form_fields = {'client': Client, 'matter': Matter}

@@ -9,9 +9,9 @@ from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
 from contracts.forms import InvoiceForm, TimeEntryForm
 from contracts.middleware import log_action
-from contracts.models import Invoice, TimeEntry
+from contracts.models import Client, Invoice, Matter, TimeEntry
 from contracts.tenancy import get_user_organization, scope_queryset_for_organization, set_organization_on_instance
-from contracts.view_support import TenantAssignCreateMixin, TenantScopedQuerysetMixin
+from contracts.view_support import TenantAssignCreateMixin, TenantScopedFormMixin, TenantScopedQuerysetMixin
 
 
 class TimeEntryListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
@@ -48,11 +48,12 @@ class TimeEntryListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView)
         return ctx
 
 
-class TimeEntryCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView):
+class TimeEntryCreateView(TenantScopedFormMixin, TenantAssignCreateMixin, LoginRequiredMixin, CreateView):
     model = TimeEntry
     form_class = TimeEntryForm
     template_name = 'contracts/time_entry_form.html'
     success_url = reverse_lazy('contracts:time_entry_list')
+    scoped_form_fields = {'matter': Matter}
 
     def form_valid(self, form):
         set_organization_on_instance(form.instance, get_user_organization(self.request.user))
@@ -63,11 +64,12 @@ class TimeEntryCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateVie
         return response
 
 
-class TimeEntryUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin, UpdateView):
+class TimeEntryUpdateView(TenantScopedFormMixin, TenantScopedQuerysetMixin, LoginRequiredMixin, UpdateView):
     model = TimeEntry
     form_class = TimeEntryForm
     template_name = 'contracts/time_entry_form.html'
     success_url = reverse_lazy('contracts:time_entry_list')
+    scoped_form_fields = {'matter': Matter}
 
     def get_queryset(self):
         org = self.get_organization()
@@ -115,10 +117,11 @@ class InvoiceDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVie
         return scope_queryset_for_organization(Invoice.objects.all(), org)
 
 
-class InvoiceCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView):
+class InvoiceCreateView(TenantScopedFormMixin, TenantAssignCreateMixin, LoginRequiredMixin, CreateView):
     model = Invoice
     form_class = InvoiceForm
     template_name = 'contracts/invoice_form.html'
+    scoped_form_fields = {'client': Client, 'matter': Matter}
 
     def get_success_url(self):
         return reverse('contracts:invoice_detail', kwargs={'pk': self.object.pk})
@@ -132,10 +135,11 @@ class InvoiceCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView)
         return response
 
 
-class InvoiceUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin, UpdateView):
+class InvoiceUpdateView(TenantScopedFormMixin, TenantScopedQuerysetMixin, LoginRequiredMixin, UpdateView):
     model = Invoice
     form_class = InvoiceForm
     template_name = 'contracts/invoice_form.html'
+    scoped_form_fields = {'client': Client, 'matter': Matter}
 
     def get_success_url(self):
         return reverse('contracts:invoice_detail', kwargs={'pk': self.object.pk})
