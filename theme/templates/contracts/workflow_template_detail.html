@@ -42,9 +42,17 @@
                 </form>
                 <form method="post" action="{% url 'contracts:workflow_template_publish_toggle' workflow_template.pk %}">
                     {% csrf_token %}
+                    {% if not workflow_template.is_active and not steps %}
+                    {# Server-side enforced too (workflow_template_publish_toggle rejects this
+                       even if the disabled attribute were bypassed) — this is a UI hint, not the guard. #}
+                    <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border btn-ghost opacity-50 cursor-not-allowed" disabled title="Add at least one step before publishing this template.">
+                        Publish
+                    </button>
+                    {% else %}
                     <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border btn-ghost">
                         {% if workflow_template.is_active %}Unpublish{% else %}Publish{% endif %}
                     </button>
+                    {% endif %}
                 </form>
             </div>
         </div>

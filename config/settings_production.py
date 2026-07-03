@@ -1,5 +1,6 @@
 import logging
 import os
+import sys as _sys
 import warnings
 
 from django.core.exceptions import ImproperlyConfigured
@@ -48,14 +49,19 @@ if len(SECRET_KEY) < 32 or any(m in SECRET_KEY.lower() for m in _INSECURE_SECRET
     )
 
 ALLOW_SQLITE_IN_PRODUCTION = base._bool_env('ALLOW_SQLITE_IN_PRODUCTION', default=False)
-if not ALLOW_SQLITE_IN_PRODUCTION:
+# `manage.py test` forces sqlite in settings_base.py regardless of DATABASE_URL
+# (Sub-block D: a local checkout's .env can set DJANGO_ENV=production, which
+# routes test runs through this very module) — that is the intended safety
+# override, not a misconfiguration, so it must not trip this guard.
+_IS_TEST_RUN = len(_sys.argv) > 1 and _sys.argv[1] == 'test'
+if not ALLOW_SQLITE_IN_PRODUCTION and not _IS_TEST_RUN:
     db_engine = DATABASES.get('default', {}).get('ENGINE', '')
     if db_engine != 'django.db.backends.postgresql':
         raise ImproperlyConfigured(
             'Production requires PostgreSQL. Set DATABASE_URL=postgresql://... '
             'or explicitly set ALLOW_SQLITE_IN_PRODUCTION=true for temporary emergency use.'
         )
-else:
+elif ALLOW_SQLITE_IN_PRODUCTION:
     _emergency_bypass_warning('ALLOW_SQLITE_IN_PRODUCTION')
 
 # Media storage: warn if using filesystem in production (files lost on redeploy)

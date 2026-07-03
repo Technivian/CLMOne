@@ -31,6 +31,11 @@ _VALID_ENV = {
     'AWS_STORAGE_BUCKET_NAME': 'docclad-pilot-bucket',
     'GEMINI_API_KEY': '',
     'STRIPE_SECRET_KEY': '',
+    # Sub-block D: a real deployed instance always has this set (Render sets
+    # it automatically); a "valid production config" that boots must model
+    # that accurately, or contracts/apps.py's local-database safety guard
+    # (correctly) refuses to start against this remote-looking DATABASE_URL.
+    'RENDER': 'true',
 }
 
 

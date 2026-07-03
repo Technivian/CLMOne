@@ -211,6 +211,50 @@ class WorkflowTemplateVersioningTests(TestCase):
         self.template.refresh_from_db()
         self.assertTrue(self.template.is_active)
 
+    def test_new_template_is_created_unpublished_even_though_model_default_is_active(self):
+        """Sub-block D4: WorkflowTemplate.is_active defaults to True at the
+        model level (used by 15+ other call sites that assume an
+        immediately-usable template, e.g. cloning one that already has
+        steps) — but a template created through this form always has zero
+        steps, so this specific path must not inherit that default."""
+        self.client.force_login(self.user)
+        response = self.client.post(reverse('contracts:workflow_template_create'), {
+            'name': 'Freshly Created Template',
+            'description': 'Has no steps yet',
+            'category': WorkflowTemplate.Category.GENERAL,
+        })
+        self.assertEqual(response.status_code, 302)
+        created = WorkflowTemplate.objects.get(name='Freshly Created Template')
+        self.assertFalse(created.is_active)
+        self.assertEqual(created.steps.count(), 0)
+
+    def test_crafted_post_cannot_publish_a_stepless_template_bypassing_the_disabled_button(self):
+        """The UI disables the Publish button when there are no steps, but a
+        crafted POST (bypassing the disabled attribute entirely) must still
+        be rejected server-side — this is the actual D4 requirement, not the
+        disabled attribute, which is cosmetic."""
+        self.client.force_login(self.user)
+        stepless = WorkflowTemplate.objects.create(
+            name='Stepless', description='', organization=self.org,
+            category=WorkflowTemplate.Category.GENERAL, version=1, is_active=False,
+        )
+        response = self.client.post(reverse('contracts:workflow_template_publish_toggle', args=[stepless.pk]))
+        self.assertEqual(response.status_code, 302)
+        stepless.refresh_from_db()
+        self.assertFalse(stepless.is_active, 'a stepless template must never become published, even via a direct POST')
+
+    def test_template_becomes_publishable_once_a_step_exists(self):
+        self.client.force_login(self.user)
+        template = WorkflowTemplate.objects.create(
+            name='Gains A Step', description='', organization=self.org,
+            category=WorkflowTemplate.Category.GENERAL, version=1, is_active=False,
+        )
+        WorkflowTemplateStep.objects.create(template=template, name='Only step', order=1)
+        response = self.client.post(reverse('contracts:workflow_template_publish_toggle', args=[template.pk]))
+        self.assertEqual(response.status_code, 302)
+        template.refresh_from_db()
+        self.assertTrue(template.is_active)
+
     def test_condition_expression_validation(self):
         valid_form = WorkflowTemplateStepForm(
             data={

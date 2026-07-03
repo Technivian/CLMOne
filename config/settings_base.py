@@ -213,6 +213,18 @@ def _database_config_from_env() -> dict:
 
 DATABASES = {'default': _database_config_from_env()}
 
+# Sub-block D: `manage.py test` must never touch a database on whatever host
+# DATABASE_URL happens to resolve to. This lives here (not in
+# settings_development.py) so it applies no matter which of
+# settings_development / settings_production ends up loaded — a local
+# checkout's .env can set DJANGO_ENV=production (this repo's does, mirroring
+# the real Render deployment's config for convenience), which would otherwise
+# route test runs through settings_production.py with the real DATABASE_URL.
+# Opt out with ALLOW_REMOTE_TEST_DB=true (should not be needed).
+import sys as _sys  # noqa: E402
+if len(_sys.argv) > 1 and _sys.argv[1] == 'test' and not _bool_env('ALLOW_REMOTE_TEST_DB'):
+    DATABASES = {'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': ':memory:'}}
+
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},

@@ -574,8 +574,22 @@ def workflow_template_create(request):
         if form.is_valid():
             template = form.save(commit=False)
             set_organization_on_instance(template, organization)
+            # Sub-block D4: a template created through this form has zero
+            # steps by definition (WorkflowTemplateForm doesn't expose
+            # is_active, but the model's own default is True — see
+            # WorkflowTemplate.is_active — which let a template be
+            # "Published" with 0 steps the moment it was created, before its
+            # first step was ever added). Force it unpublished at creation;
+            # workflow_template_publish_toggle already refuses to publish a
+            # stepless template, so the only way to reach "published" is to
+            # add at least one step first, then explicitly publish.
+            template.is_active = False
             template.save()
             log_workflow_template_created(template, request.user, request=request)
+            messages.info(
+                request,
+                f'"{template.name}" was created unpublished. Add at least one step, then publish it.',
+            )
             return redirect('contracts:workflow_template_detail', pk=template.pk)
     else:
         form = WorkflowTemplateForm()

@@ -8,7 +8,8 @@
       "port": 8060,
       "env": {
         "DJANGO_ENV": "development",
-        "DJANGO_DEBUG": "true"
+        "DJANGO_DEBUG": "true",
+        "DATABASE_URL": ""
       }
     }
   ]
