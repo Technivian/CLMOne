@@ -177,5 +177,10 @@ class UIButtonAndFlowIntegrityTests(TestCase):
 
         search_response = self.client.get(reverse('contracts:global_search'), {'q': 'UI Integrity'})
         self.assertEqual(search_response.status_code, 200)
-        self.assertContains(search_response, 'Search across cases, case matters, documents, and task signals')
+        # Sub-block C: removed a redundant sr-only duplicate of this
+        # description that had drifted out of sync with the visible copy
+        # (it still said "cases, case matters" after the visible text was
+        # updated to "contracts, matters") — asserting on the one remaining,
+        # accurate copy instead of the stale hidden duplicate.
+        self.assertContains(search_response, 'Search across contracts, matters, documents, and task signals')
         self.assertContains(search_response, 'Cases (1)')

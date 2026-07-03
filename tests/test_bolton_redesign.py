@@ -46,10 +46,10 @@ class BoltonRedesignTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
 
         self.assertContains(response, 'title="Search"')
-        self.assertContains(response, 'title="Thema wisselen"')
-        self.assertContains(response, 'title="Meldingen"')
+        self.assertContains(response, 'title="Toggle theme"')
+        self.assertContains(response, 'title="Notifications"')
         self.assertContains(response, 'New Contract')
-        self.assertContains(response, 'Uitloggen')
+        self.assertContains(response, 'Sign out')
 
     def test_dashboard_panels(self):
         response = self.client.get(reverse('dashboard'))
@@ -91,7 +91,7 @@ class BoltonRedesignTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
 
         self.assertContains(response, 'title="Search"')
-        self.assertContains(response, 'title="Thema wisselen"')
+        self.assertContains(response, 'title="Toggle theme"')
         self.assertContains(response, 'title="Search"')
         self.assertContains(response, 'type="submit"')
 

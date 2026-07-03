@@ -83,9 +83,12 @@
                         class="login-input form-control"
                         placeholder="Enter your password">
                 </div>
-                <div class="flex items-center gap-2">
-                    <input id="remember" name="remember" type="checkbox" class="h-4 w-4 rounded checkbox-primary form-check-input">
-                    <label for="remember" class="text-sm login-subtitle">Remember me</label>
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <input id="remember" name="remember" type="checkbox" class="h-4 w-4 rounded checkbox-primary form-check-input">
+                        <label for="remember" class="text-sm login-subtitle">Remember me</label>
+                    </div>
+                    <a href="{% url 'password_reset' %}" class="text-sm font-semibold c-brand">Forgot password?</a>
                 </div>
                 <button type="submit" class="glow-btn glow-btn-primary-grad w-full py-3.5 text-white rounded-xl font-semibold text-sm transition-all duration-200">
                     Sign in

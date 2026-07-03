@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load docclad_format %}
 {% block title %}Signature Workspace – DocClad{% endblock %}
 {% block content %}
 <style nonce="{{ csp_nonce }}">
@@ -117,8 +118,8 @@
                         </span>
                         <div class="text-[11px] c-muted mt-1">{{ packet.completion_percent }}% complete</div>
                     </td>
-                    <td class="px-5 py-3 tbl-td">{{ packet.sent_at|default:"—" }}</td>
-                    <td class="px-5 py-3 tbl-td">{{ packet.due_at|default:"—" }}</td>
+                    <td class="px-5 py-3 tbl-td">{{ packet.sent_at|iso_datetime|default:"—" }}</td>
+                    <td class="px-5 py-3 tbl-td">{{ packet.due_at|iso_datetime|default:"—" }}</td>
                     <td class="px-5 py-3 tbl-td">{{ packet.signer_count }} total · {{ packet.completed_count }} signed</td>
                     <td class="px-5 py-3 text-right">
                         <div class="flex items-center justify-end gap-2 flex-wrap">

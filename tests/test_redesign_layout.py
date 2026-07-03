@@ -38,9 +38,11 @@ class RedesignLayoutTests(TestCase):
 
     def test_topbar_actions(self):
         response = self.client.get(reverse('dashboard'))
-        self.assertContains(response, 'title="Meldingen"')
+        # Sub-block C: hardcoded Dutch chrome replaced with English
+        # (LANGUAGE_CODE is 'en-us' — see contracts/templatetags no i18n gate).
+        self.assertContains(response, 'title="Notifications"')
         self.assertContains(response, 'New Contract')
-        self.assertContains(response, 'Uitloggen')
+        self.assertContains(response, 'Sign out')
         self.assertContains(response, '/profile/')
 
     def test_dashboard_kpis_and_panels(self):

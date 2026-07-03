@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load docclad_format %}
 {% block title %}Operations Dashboard – DocClad{% endblock %}
 {% block content %}
 <style nonce="{{ csp_nonce }}">
@@ -19,7 +20,7 @@
     <div class="kpi-card">
       <div class="kpi-label">Scheduler</div>
       <div class="kpi-value">{{ scheduler.status|default:"unknown"|title }}</div>
-      <div class="kpi-sub">Heartbeat: {{ scheduler.seconds_since_success|default:"n/a" }}s</div>
+      <div class="kpi-sub">Heartbeat: {{ scheduler.seconds_since_success|humanduration|default:"n/a" }} ago</div>
     </div>
     <div class="kpi-card">
       <div class="kpi-label">Database</div>

@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load humanize %}
+{% load docclad_format %}
 {% block title %}Dashboard — DocClad{% endblock %}
 
 {% block content %}
@@ -629,7 +630,7 @@
             <div class="ad-act-desc">
               <strong>{% if log.user %}{{ log.user.get_full_name|default:log.user.username }}{% else %}System{% endif %}</strong>
               <span class="ad-act-verb"> {{ log.get_action_display|lower }} </span>
-              <span class="ad-act-model">{{ log.model_name }}</span>
+              <span class="ad-act-model">{{ log.model_name|object_type_label }}</span>
             </div>
             <div class="ad-act-time">{{ log.timestamp|timesince }} ago</div>
           </div>

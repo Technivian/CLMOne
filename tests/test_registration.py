@@ -43,3 +43,36 @@ class RegistrationFlowTests(TestCase):
         dashboard_response = self.client.get(reverse('dashboard'))
         self.assertEqual(dashboard_response.status_code, 200)
         self.assertTrue(OrganizationMembership.objects.filter(user=user, is_active=True).exists())
+
+
+class LoginPagePasswordRecoveryTests(TestCase):
+    """Sub-block C4: the login page must link to password recovery, and the
+    complete flow (link -> request -> generic confirmation) must work without
+    revealing whether the submitted account exists."""
+
+    def test_login_page_links_to_password_reset(self):
+        response = self.client.get(reverse('login'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, reverse('password_reset'))
+        self.assertContains(response, 'Forgot password?')
+
+    def test_full_flow_for_existing_account(self):
+        User.objects.create_user(username='hasaccount', email='hasaccount@example.com', password='OldPass123!')
+
+        login_response = self.client.get(reverse('login'))
+        self.assertContains(login_response, reverse('password_reset'))
+
+        reset_page = self.client.get(reverse('password_reset'))
+        self.assertEqual(reset_page.status_code, 200)
+
+        submit_response = self.client.post(reverse('password_reset'), {'email': 'hasaccount@example.com'}, follow=True)
+        self.assertRedirects(submit_response, reverse('password_reset_done'))
+        self.assertContains(submit_response, 'If an account exists for that address')
+
+    def test_full_flow_for_nonexistent_account_gives_identical_response(self):
+        submit_response = self.client.post(reverse('password_reset'), {'email': 'nobody-here@example.com'}, follow=True)
+        self.assertRedirects(submit_response, reverse('password_reset_done'))
+        self.assertContains(submit_response, 'If an account exists for that address')
+        # The confirmation page must not say anything different for a real
+        # vs. fake email — verified by both flows landing on the identical URL
+        # with the identical generic copy above.

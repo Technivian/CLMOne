@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load docclad_format %}
 {% block title %}Reports & Analytics – DocClad{% endblock %}
 
 {% block extra_css %}
@@ -41,20 +42,20 @@
     </div>
     <div class="kpi-card">
         <div class="kpi-label">YTD Revenue</div>
-        <div class="kpi-value c-success-soft">${{ yearly_revenue|floatformat:0 }}</div>
+        <div class="kpi-value c-success-soft">{{ yearly_revenue|money }}</div>
     </div>
 </div>
 
 {# ── KPI row 2: Contracts / A/R / Deadlines / Risk ────────────────────────── #}
 <div class="dash-grid dash-grid-4 mb-6">
     <div class="kpi-card">
-        <div class="kpi-label">Active Contracts<span class="sr-only">Active Contracts</span></div>
+        <div class="kpi-label">Active Contracts</div>
         <div class="kpi-value">{{ active_cases }}</div>
-        <div class="kpi-sub">${{ total_case_value|floatformat:0 }} total value</div>
+        <div class="kpi-sub">{{ total_case_value|money }} total value</div>
     </div>
     <div class="kpi-card stat-card-amber">
         <div class="kpi-label">Outstanding A/R</div>
-        <div class="kpi-value c-warning">${{ outstanding|floatformat:0 }}</div>
+        <div class="kpi-value c-warning">{{ outstanding|money }}</div>
     </div>
     <div class="kpi-card stat-card-red">
         <div class="kpi-label">Overdue Deadlines</div>

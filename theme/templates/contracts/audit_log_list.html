@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load docclad_format %}
 {% block title %}Audit Log – DocClad{% endblock %}
 {% block content %}
 <style nonce="{{ csp_nonce }}">
@@ -75,7 +76,7 @@
                     <td class="px-5 py-3">
                         <span class="badge-sm {% if log.action == 'CREATE' %}badge-green{% elif log.action == 'UPDATE' %}badge-blue{% elif log.action == 'DELETE' %}badge-red{% else %}badge-gray{% endif %}">{{ log.get_action_display }}</span>
                     </td>
-                    <td class="px-5 py-3 tbl-td">{{ log.model_name }}</td>
+                    <td class="px-5 py-3 tbl-td">{{ log.model_name|object_type_label }}</td>
                     <td class="px-5 py-3 tbl-td">{{ log.object_repr|truncatechars:50 }}</td>
                     <td class="px-5 py-3 tbl-td font-mono text-xs">{{ log.ip_address|default:"—" }}</td>
                 </tr>

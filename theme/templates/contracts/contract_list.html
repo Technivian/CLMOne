@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load docclad_format %}
 {% block title %}Contracts – DocClad{% endblock %}
 {% block content %}
 
@@ -61,7 +62,7 @@
       <svg class="w-3.5 h-3.5" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/>
       </svg>
-      Sort: {{ sort|default:'-created_at' }}
+      Sort: {{ sort|default:'-created_at'|sort_label }}
     </span>
 
     {# Clear filters #}
@@ -170,7 +171,7 @@
             <td class="px-5 py-3.5 tbl-td">{{ contract.client.name|default:contract.counterparty|default:"—" }}</td>
 
             <td class="px-5 py-3.5 font-medium tabular-nums c-primary">
-              {% if contract.value %}{{ contract.value|floatformat:0 }}{% else %}<span class="c-dim">—</span>{% endif %}
+              {% if contract.value %}{{ contract.value|money:contract.currency }}{% else %}<span class="c-dim">—</span>{% endif %}
             </td>
 
             <td class="px-5 py-3.5">

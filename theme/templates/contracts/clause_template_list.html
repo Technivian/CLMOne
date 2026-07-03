@@ -57,7 +57,12 @@
         </tr>
         {% empty %}
         <tr>
-          <td colspan="7"><div class="empty-state">No clause library found</div></td>
+          <td colspan="7">
+            <div class="empty-state text-center py-8">
+              <p class="text-sm c-muted mb-3">No clauses in the library yet.</p>
+              <a href="{% url 'contracts:clause_template_create' %}" class="btn-soft-primary text-sm">Add first clause</a>
+            </div>
+          </td>
         </tr>
         {% endfor %}
       </tbody>
