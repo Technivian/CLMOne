@@ -216,6 +216,50 @@ class MentionsAiAndReminderTests(TestCase):
         self.assertTrue(payload['response']['output_policy']['grounded_to_contract_fields'])
         self.assertIn('action_plan', payload)
 
+    def test_internal_ai_assistant_phrases_overdue_dates_as_overdue_not_negative(self):
+        """Sub-block B: 'End date is in -22 day(s)...' must read as '...22 days overdue'."""
+        overdue_contract = Contract.objects.create(
+            organization=self.organization,
+            title='Overdue MSA',
+            contract_type=Contract.ContractType.MSA,
+            status=Contract.Status.ACTIVE,
+            risk_level=Contract.RiskLevel.LOW,
+            created_by=self.owner,
+            end_date=timezone.localdate() - timedelta(days=22),
+            renewal_date=timezone.localdate() - timedelta(days=25),
+        )
+        self.client.login(username='owner', password='testpass123')
+
+        response = self.client.post(
+            reverse('contracts:contract_ai_assistant', kwargs={'pk': overdue_contract.id}),
+            data=json.dumps({'prompt': 'renewal status'}),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        timeline = response.json()['response']['timeline']
+        timeline_text = ' '.join(timeline)
+        self.assertIn('22 days overdue', timeline_text)
+        self.assertIn('25 days overdue', timeline_text)
+        self.assertNotIn('-22', timeline_text)
+        self.assertNotIn('-25', timeline_text)
+        self.assertNotIn('day(s)', timeline_text)
+
+    def test_internal_ai_assistant_phrases_future_dates_in_days(self):
+        self.client.login(username='owner', password='testpass123')
+
+        response = self.client.post(
+            reverse('contracts:contract_ai_assistant', kwargs={'pk': self.contract.id}),
+            data=json.dumps({'prompt': 'renewal status'}),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        timeline_text = ' '.join(response.json()['response']['timeline'])
+        self.assertIn('in 7 days', timeline_text)
+        self.assertIn('in 14 days', timeline_text)
+        self.assertNotIn('day(s)', timeline_text)
+
     def test_internal_ai_assistant_is_scoped_by_tenant(self):
         self.client.login(username='outsider', password='testpass123')
 

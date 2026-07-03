@@ -153,22 +153,23 @@
             </div>
           </div>
 
-          {# AI assistant — collapsed by default #}
+          {# Contract field review — a grounded rules-engine check, not generative AI; collapsed by default. #}
           <details class="card-l2">
             <summary class="cursor-pointer list-none flex items-center gap-2 font-medium text-sm c-primary select-none">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
               </svg>
-              AI contract review
-              <span class="ml-auto text-xs font-normal c-muted">Closed-server, stays in your tenant</span>
+              Contract field review
+              <span class="ml-auto text-xs font-normal c-muted">Grounded checks on this record — no external AI model</span>
             </summary>
             <div class="mt-4 space-y-3">
               <textarea id="ai-assistant-prompt" class="input-base w-full rounded-lg border px-3 py-2 text-sm" rows="3" placeholder="Ask for risk, renewal, and action insights…"></textarea>
               <div class="flex items-center gap-3">
-                <button id="ai-assistant-submit" type="button" class="btn-soft-primary text-sm">Analyze</button>
-                <span id="ai-assistant-status" class="text-xs c-muted"></span>
+                <button id="ai-assistant-submit" type="button" class="btn-soft-primary text-sm">Run review</button>
+                <span id="ai-assistant-status" class="text-xs c-muted" role="status" aria-live="polite"></span>
               </div>
-              <pre id="ai-assistant-output" class="hidden pre-output c-muted text-xs" aria-live="polite" aria-label="AI assistant response"></pre>
+              <div id="ai-assistant-error" class="hidden text-xs c-danger" role="alert"></div>
+              <div id="ai-assistant-output" class="hidden space-y-3" aria-live="polite" aria-label="Contract field review result"></div>
             </div>
           </details>
 
@@ -311,32 +312,118 @@
 })();
 </script>
 
-{# ── AI assistant JS ─────────────────────────────────────── #}
+{# ── Contract field review JS ────────────────────────────── #}
 <script nonce="{{ csp_nonce }}">
 (() => {
-    const prompt = document.getElementById('ai-assistant-prompt');
+    const promptField = document.getElementById('ai-assistant-prompt');
     const submit = document.getElementById('ai-assistant-submit');
     const status = document.getElementById('ai-assistant-status');
+    const errorBox = document.getElementById('ai-assistant-error');
     const output = document.getElementById('ai-assistant-output');
-    if (!prompt || !submit || !status || !output) return;
+    if (!promptField || !submit || !status || !errorBox || !output) return;
+
+    let inFlight = false;
+
+    function clearNode(node) {
+        while (node.firstChild) node.removeChild(node.firstChild);
+    }
+
+    function section(labelText) {
+        const wrap = document.createElement('div');
+        const label = document.createElement('div');
+        label.className = 'arch-section-label';
+        label.textContent = labelText;
+        wrap.appendChild(label);
+        return wrap;
+    }
+
+    function bulletList(items) {
+        const list = document.createElement('ul');
+        list.className = 'space-y-1 text-sm c-muted list-disc pl-4 mt-1';
+        items.forEach((item) => {
+            const li = document.createElement('li');
+            li.textContent = item;
+            list.appendChild(li);
+        });
+        return list;
+    }
+
+    function renderResult(result) {
+        clearNode(output);
+
+        const summary = result.summary || {};
+        const summaryWrap = section('Summary');
+        const summaryLine = document.createElement('p');
+        summaryLine.className = 'text-sm c-primary font-medium';
+        const summaryParts = [summary.contract_type, summary.status, summary.counterparty].filter(Boolean);
+        summaryLine.textContent = summaryParts.length ? summaryParts.join(' · ') : 'No summary available.';
+        summaryWrap.appendChild(summaryLine);
+        output.appendChild(summaryWrap);
+
+        if (Array.isArray(result.timeline) && result.timeline.length) {
+            const wrap = section('Key dates');
+            wrap.appendChild(bulletList(result.timeline));
+            output.appendChild(wrap);
+        }
+
+        if (Array.isArray(result.risks) && result.risks.length) {
+            const wrap = section('Risks');
+            wrap.appendChild(bulletList(result.risks));
+            output.appendChild(wrap);
+        }
+
+        if (Array.isArray(result.recommendations) && result.recommendations.length) {
+            const wrap = section('Recommendations');
+            wrap.appendChild(bulletList(result.recommendations));
+            output.appendChild(wrap);
+        }
+
+        if (Array.isArray(result.citations) && result.citations.length) {
+            const wrap = section('Evidence (fields checked)');
+            const list = bulletList(
+                result.citations
+                    .filter((c) => c && c.field)
+                    .map((c) => `${c.field}: ${c.value === null || c.value === undefined || c.value === '' ? '—' : c.value}`)
+            );
+            list.className += ' font-mono';
+            wrap.appendChild(list);
+            output.appendChild(wrap);
+        }
+
+        output.classList.remove('hidden');
+    }
+
     submit.addEventListener('click', async () => {
-        status.textContent = 'Analyzing…';
+        if (inFlight) return;
+        inFlight = true;
+        status.textContent = 'Reviewing…';
+        errorBox.classList.add('hidden');
+        errorBox.textContent = '';
+        output.classList.add('hidden');
         submit.disabled = true;
         try {
             const response = await fetch("{% url 'contracts:contract_ai_assistant' contract.pk %}", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
-                body: JSON.stringify({ prompt: prompt.value })
+                body: JSON.stringify({ prompt: promptField.value })
             });
-            if (!response.ok) throw new Error('Request failed');
-            const data = await response.json();
-            output.textContent = JSON.stringify(data.response, null, 2);
-            output.classList.remove('hidden');
+            const data = await response.json().catch(() => null);
+            if (!response.ok || !data || data.ok === false) {
+                const message = (data && data.error) || 'Unable to run the review right now.';
+                errorBox.textContent = message;
+                errorBox.classList.remove('hidden');
+                status.textContent = '';
+                return;
+            }
+            renderResult(data.response || {});
             status.textContent = 'Done';
-        } catch {
-            status.textContent = 'Unable to run assistant right now.';
+        } catch (err) {
+            errorBox.textContent = 'Unable to reach the review service. Check your connection and try again.';
+            errorBox.classList.remove('hidden');
+            status.textContent = '';
         } finally {
             submit.disabled = false;
+            inFlight = false;
         }
     });
 })();

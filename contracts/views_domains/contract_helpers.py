@@ -30,6 +30,22 @@ def _extract_valid_mentions(raw_text, organization, author_user_id):
     return valid_users
 
 
+def _format_relative_days(delta_days):
+    """Human phrasing for a signed day offset: 'in 22 days', '22 days overdue', or 'today'."""
+    if delta_days == 0:
+        return 'today'
+    plural = '' if abs(delta_days) == 1 else 's'
+    if delta_days > 0:
+        return f'in {delta_days} day{plural}'
+    return f'{abs(delta_days)} day{plural} overdue'
+
+
+def _format_day_count(days):
+    """Human phrasing for an unsigned day count: '1 day', '30 days'."""
+    plural = '' if days == 1 else 's'
+    return f'{days} day{plural}'
+
+
 def _build_contract_ai_response(contract, prompt):
     today = timezone.localdate()
     normalized_prompt = (prompt or '').strip().lower()
@@ -45,12 +61,12 @@ def _build_contract_ai_response(contract, prompt):
     timeline = []
     if contract.end_date:
         days_to_end = (contract.end_date - today).days
-        timeline.append(f'End date is in {days_to_end} day(s) on {contract.end_date.isoformat()}.')
+        timeline.append(f'End date is {_format_relative_days(days_to_end)} ({contract.end_date.isoformat()}).')
     if contract.renewal_date:
         days_to_renewal = (contract.renewal_date - today).days
-        timeline.append(f'Renewal date is in {days_to_renewal} day(s) on {contract.renewal_date.isoformat()}.')
+        timeline.append(f'Renewal date is {_format_relative_days(days_to_renewal)} ({contract.renewal_date.isoformat()}).')
     if contract.notice_period_days and contract.end_date:
-        timeline.append(f'Notice period is {contract.notice_period_days} day(s).')
+        timeline.append(f'Notice period is {_format_day_count(contract.notice_period_days)}.')
 
     recommendations = [
         'Verify business owner and legal owner are assigned for renewal decisions.',
