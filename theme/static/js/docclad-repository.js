@@ -242,7 +242,7 @@ class DoccladRepository {
                 </td>
                 <td class="px-3 py-2">
                     <span class="status-badge status-${contract.status.toLowerCase()}">
-                        ${contract.status}
+                        ${contract.status_display || contract.status}
                     </span>
                 </td>
                 <td class="px-3 py-2 text-muted">
@@ -405,7 +405,7 @@ class DoccladRepository {
                 <div class="space-y-4">
                     <div>
                         <label class="text-sm text-muted">Status</label>
-                        <div><span class="status-badge status-${contract.status.toLowerCase()}">${contract.status}</span></div>
+                        <div><span class="status-badge status-${contract.status.toLowerCase()}">${contract.status_display || contract.status}</span></div>
                     </div>
                     
                     <div>

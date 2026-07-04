@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
-from contracts.models import Organization, OrganizationMembership
+from contracts.models import Contract, Organization, OrganizationMembership
 
 User = get_user_model()
 
@@ -80,3 +80,18 @@ class NamedCopyDefectTests(TestCase):
         content = response.content.decode()
         self.assertNotIn('No clause library found', content)
         self.assertIn('Add first clause', content)
+
+    def test_contract_detail_target_stage_is_not_a_raw_enum_key(self):
+        contract = Contract.objects.create(
+            organization=self.org,
+            title='Underscore Regression Contract',
+            content='Test content',
+            status=Contract.Status.IN_REVIEW,
+            lifecycle_stage='INTERNAL_REVIEW',
+            created_by=self.user,
+        )
+        response = self.client.get(reverse('contracts:contract_detail', args=[contract.pk]))
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertNotIn('Internal_Review', content)
+        self.assertIn('Internal Review', content)

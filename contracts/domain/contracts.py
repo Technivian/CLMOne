@@ -35,6 +35,7 @@ class ContractData:
     id: str
     title: str
     status: str
+    status_display: str = ""
     counterparty: str = ""
     value: Optional[float] = None
     start_date: Optional[str] = None

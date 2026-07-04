@@ -51,11 +51,22 @@ class DoccladFeaturesTests(TestCase):
         self.assertIn('contracts', payload)
         self.assertIn('total_count', payload)
 
+    def test_contracts_api_returns_human_readable_status_label(self):
+        self.contract.status = Contract.Status.IN_REVIEW
+        self.contract.save(update_fields=['status'])
+        response = self.client.get(reverse('contracts:contracts_api'))
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        row = next(c for c in payload['contracts'] if c['id'] == str(self.contract.pk))
+        self.assertEqual(row['status'], 'IN_REVIEW')
+        self.assertEqual(row['status_display'], 'In Review')
+
     def test_contract_detail_api_existing_contract(self):
         response = self.client.get(reverse('contracts:contract_detail_api', args=[str(self.contract.pk)]))
         self.assertEqual(response.status_code, 200)
         payload = response.json()
         self.assertEqual(payload.get('id'), str(self.contract.pk))
+        self.assertEqual(payload.get('status_display'), 'Active')
 
     def test_contract_detail_api_missing_contract(self):
         response = self.client.get(reverse('contracts:contract_detail_api', args=['999999']))
