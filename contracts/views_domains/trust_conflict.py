@@ -2,16 +2,31 @@ from decimal import Decimal
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Sum
+from django.http import HttpResponseForbidden
 from django.urls import reverse_lazy, reverse
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
 from contracts.forms import ConflictCheckForm, TrustAccountForm, TrustTransactionForm
 from contracts.middleware import log_action
 from contracts.models import Client, ConflictCheck, Matter, TrustAccount, TrustTransaction
+from contracts.permissions import can_manage_organization
 from contracts.view_support import TenantAssignCreateMixin, TenantScopedFormMixin, TenantScopedQuerysetMixin
 
 
-class TrustAccountListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
+class TrustAccountingPermissionMixin:
+    """IOLTA trust accounting (client funds) is restricted to organization
+    owners/admins, matching the bar-compliance expectation that support
+    staff (e.g. paralegals) don't have standing access to trust balances or
+    transactions. Requires an OrganizationContextMixin-derived get_organization()
+    elsewhere in the MRO (already true everywhere this is used)."""
+
+    def dispatch(self, request, *args, **kwargs):
+        if not can_manage_organization(request.user, self.get_organization()):
+            return HttpResponseForbidden('Only organization owners/admins can manage trust accounts.')
+        return super().dispatch(request, *args, **kwargs)
+
+
+class TrustAccountListView(TenantScopedQuerysetMixin, LoginRequiredMixin, TrustAccountingPermissionMixin, ListView):
     model = TrustAccount
     template_name = 'contracts/trust_account_list.html'
     context_object_name = 'accounts'
@@ -22,7 +37,7 @@ class TrustAccountListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListVi
         return ctx
 
 
-class TrustAccountDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailView):
+class TrustAccountDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, TrustAccountingPermissionMixin, DetailView):
     model = TrustAccount
     template_name = 'contracts/trust_account_detail.html'
     context_object_name = 'account'
@@ -34,7 +49,7 @@ class TrustAccountDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, Deta
         return ctx
 
 
-class TrustAccountCreateView(TenantScopedFormMixin, TenantAssignCreateMixin, LoginRequiredMixin, CreateView):
+class TrustAccountCreateView(TenantScopedFormMixin, TenantAssignCreateMixin, LoginRequiredMixin, TrustAccountingPermissionMixin, CreateView):
     model = TrustAccount
     form_class = TrustAccountForm
     template_name = 'contracts/trust_account_form.html'
@@ -48,7 +63,7 @@ class TrustAccountCreateView(TenantScopedFormMixin, TenantAssignCreateMixin, Log
         return response
 
 
-class AddTrustTransactionView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView):
+class AddTrustTransactionView(TenantAssignCreateMixin, LoginRequiredMixin, TrustAccountingPermissionMixin, CreateView):
     model = TrustTransaction
     form_class = TrustTransactionForm
     template_name = 'contracts/trust_transaction_form.html'
