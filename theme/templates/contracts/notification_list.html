@@ -3,7 +3,7 @@
 {% block content %}
 <style nonce="{{ csp_nonce }}">
   .notif-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .notif-icon-deadline { background: rgba(239,68,68,0.12); color: #F87171; }
+  .notif-icon-deadline { background: var(--msg-error-bg); color: var(--msg-error-text); }
   .notif-icon-task     { background: rgba(37,99,235,0.12);  color: var(--primary-light); }
   .notif-icon-system   { background: rgba(107,114,128,0.12); color: #9CA3AF; }
   .notif-icon svg      { width: 16px; height: 16px; }

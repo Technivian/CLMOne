@@ -43,6 +43,8 @@ from contracts.models import (
     ApprovalRequest,
 )
 from contracts.permissions import ContractAction, can_access_contract_action, can_manage_organization
+from contracts.services.queue_rows import TERMINAL_STATUSES, assignee_map_for_contracts, latest_activity_map
+from contracts.templatetags.docclad_format import status_badge_class
 from contracts.tenancy import get_user_organization, scope_queryset_for_organization, set_organization_on_instance
 from contracts.view_support import TenantAssignCreateMixin, TenantScopedQuerysetMixin
 from contracts.services.contract_lifecycle import build_contract_audit_changes
@@ -590,8 +592,13 @@ def dashboard(request):
     recent_cases = list(case_qs.select_related('client', 'created_by').order_by('-created_at')[:6])
     upcoming_deadlines = list(deadlines_qs.select_related('contract', 'matter', 'assigned_to').filter(is_completed=False, due_date__gte=today).order_by('due_date')[:6])
     upcoming_tasks = list(legal_tasks_qs.select_related('contract', 'matter', 'assigned_to').filter(status='PENDING', due_date__gte=today).order_by('due_date')[:5])
-    recent_audit = list(AuditLog.objects.select_related('user').filter(changes__organization_id=org.id).order_by('-timestamp')[:8]) if org else []
-    my_work_items = []
+    recent_audit = list(AuditLog.objects.select_related('user').filter(organization_id=org.id).order_by('-timestamp')[:8]) if org else []
+
+    # ── "Waiting on Me" queue rows — heterogeneous items assigned to the
+    # current user, normalized (via _finalize_waiting_on_me below) to the
+    # same row shape as the contract-based queues so one WorkQueueTable
+    # component can render every tab.
+    waiting_on_me_raw = []
     if org:
         my_legal_tasks = list(
             CaseSignal.objects.for_organization(org)
@@ -600,14 +607,15 @@ def dashboard(request):
             .order_by('due_date', 'created_at')[:4]
         )
         for task in my_legal_tasks:
-            due_text = task.due_date.isoformat() if task.due_date else 'No due date'
-            my_work_items.append({
+            waiting_on_me_raw.append({
                 'title': task.title,
-                'meta': f'Legal task · {task.get_status_display()} · Due {due_text}',
-                'badge': 'Task',
-                'badge_class': 'badge-blue',
-                'dot': 'blue',
+                'meta': f'Legal task · {task.get_status_display()}',
                 'href': reverse('contracts:legal_task_update', kwargs={'pk': task.pk}),
+                'contract': task.contract,
+                'assignee': request.user,
+                'due_date': task.due_date,
+                'status_label': 'In progress' if task.status == 'IN_PROGRESS' else 'Pending',
+                'status_badge_class': 'badge-blue',
                 'sort_key': (_normalize_sort_date(task.due_date), 10, task.pk),
             })
 
@@ -617,13 +625,15 @@ def dashboard(request):
             .filter(assigned_to=request.user, is_completed=False)
             .order_by('due_date')[:4]
         ):
-            my_work_items.append({
+            waiting_on_me_raw.append({
                 'title': deadline.title,
-                'meta': f"Deadline · {deadline.contract.title if deadline.contract else deadline.matter.title if deadline.matter else 'Unlinked'} · Due {deadline.due_date.isoformat()}",
-                'badge': 'Deadline',
-                'badge_class': 'badge-red',
-                'dot': 'red',
+                'meta': f"Deadline · {deadline.contract.title if deadline.contract else deadline.matter.title if deadline.matter else 'Unlinked'}",
                 'href': reverse('contracts:deadline_update', kwargs={'pk': deadline.pk}),
+                'contract': deadline.contract,
+                'assignee': request.user,
+                'due_date': deadline.due_date,
+                'status_label': 'Overdue' if deadline.due_date and deadline.due_date < today else 'Upcoming',
+                'status_badge_class': 'badge-red' if deadline.due_date and deadline.due_date < today else 'badge-yellow',
                 'sort_key': (_normalize_sort_date(deadline.due_date), 20, deadline.pk),
             })
 
@@ -632,13 +642,15 @@ def dashboard(request):
             .filter(assigned_to=request.user, status='PENDING')
             .order_by('due_date', 'created_at')[:4]
         ):
-            my_work_items.append({
+            waiting_on_me_raw.append({
                 'title': approval.contract.title,
-                'meta': f"Approval · {approval.approval_step} · {approval.get_status_display()}",
-                'badge': 'Approval',
-                'badge_class': 'badge-amber',
-                'dot': 'yellow',
+                'meta': f"Approval · {approval.approval_step}",
                 'href': reverse('contracts:approval_request_update', kwargs={'pk': approval.pk}),
+                'contract': approval.contract,
+                'assignee': request.user,
+                'due_date': approval.due_date.date() if approval.due_date else None,
+                'status_label': approval.get_status_display(),
+                'status_badge_class': 'badge-yellow',
                 'sort_key': (_normalize_sort_date(approval.due_date), 30, approval.pk),
             })
 
@@ -648,14 +660,15 @@ def dashboard(request):
             .order_by('due_date', 'received_date')[:4]
         ):
             client_name = dsar.client.name if dsar.client else 'Unlinked'
-            due_text = dsar.due_date.isoformat() if dsar.due_date else 'No due date'
-            my_work_items.append({
+            waiting_on_me_raw.append({
                 'title': dsar.requester_name,
-                'meta': f"DSAR · {client_name} · Due {due_text}",
-                'badge': dsar.get_status_display(),
-                'badge_class': 'badge-purple',
-                'dot': 'purple',
+                'meta': f"Data subject request · {client_name}",
                 'href': reverse('contracts:dsar_update', kwargs={'pk': dsar.pk}),
+                'contract': None,
+                'assignee': request.user,
+                'due_date': dsar.due_date,
+                'status_label': dsar.get_status_display(),
+                'status_badge_class': 'badge-purple',
                 'sort_key': (_normalize_sort_date(dsar.due_date or dsar.received_date), 40, dsar.pk),
             })
 
@@ -664,13 +677,15 @@ def dashboard(request):
             .filter(workflow__organization=org, assigned_to=request.user, status='PENDING')
             .order_by('order', 'pk')[:4]
         ):
-            my_work_items.append({
+            waiting_on_me_raw.append({
                 'title': step.name,
                 'meta': f"Workflow · {step.workflow.title}",
-                'badge': 'Workflow',
-                'badge_class': 'badge-green',
-                'dot': 'green',
                 'href': reverse('contracts:workflow_step_update', kwargs={'pk': step.pk}),
+                'contract': step.workflow.contract,
+                'assignee': request.user,
+                'due_date': step.due_date.date() if step.due_date else None,
+                'status_label': 'Waiting on you',
+                'status_badge_class': 'badge-yellow',
                 'sort_key': (_normalize_sort_date(step.due_date), 50, step.order, step.pk),
             })
 
@@ -679,17 +694,19 @@ def dashboard(request):
                 .filter(signer_email__iexact=request.user.email, status__in=['PENDING', 'SENT', 'VIEWED'])
                 .order_by('order', 'created_at')[:4]
         ):
-            my_work_items.append({
+            waiting_on_me_raw.append({
                 'title': signature.contract.title,
                 'meta': f"Signature · {signature.signer_name} · {signature.get_status_display()}",
-                'badge': 'Sign',
-                'badge_class': 'badge-blue',
-                'dot': 'blue',
                 'href': reverse('contracts:signature_request_detail', kwargs={'pk': signature.pk}),
+                'contract': signature.contract,
+                'assignee': request.user,
+                'due_date': None,
+                'status_label': signature.get_status_display(),
+                'status_badge_class': 'badge-blue',
                 'sort_key': (_normalize_sort_date(signature.created_at), 60, signature.order, signature.pk),
             })
 
-    my_work_items = sorted(my_work_items, key=lambda item: item['sort_key'])[:8]
+    waiting_on_me_raw = sorted(waiting_on_me_raw, key=lambda item: item['sort_key'])[:10]
 
     case_status_data = []
     status_mapping = [('ACTIVE', 'Active'), ('DRAFT', 'Draft'), ('PENDING', 'In Review'), ('EXPIRED', 'Expired'), ('TERMINATED', 'Terminated')]
@@ -708,13 +725,98 @@ def dashboard(request):
         status='ACTIVE', end_date__lte=thirty_days, end_date__gte=today
     ).order_by('end_date')[:5])
 
+    # ── Workflow queue tabs (Dashboard/work-queue conversion) ───────────
+    # Every tab renders through the same WorkQueueTable component, so each
+    # row — whether it started life as a Contract or a LegalTask/Deadline/
+    # ApprovalRequest/WorkflowStep/SignatureRequest — is normalized to one
+    # shape: title, href, contract (for StageDots; may be None), assignee
+    # (for AssigneeChip; may be None), activity (for ActivityLine; may be
+    # None), due_date, status_label, status_badge_class.
+    #
+    # assignee/activity resolution lives in contracts.services.queue_rows,
+    # shared with the Repository table so the same contract never shows a
+    # different assignee or "latest activity" depending on which screen
+    # you're looking at.
+    def _assignee_map_for_contracts(contract_ids):
+        return assignee_map_for_contracts(org, contract_ids)
+
+    def _latest_activity_map(contract_ids):
+        return latest_activity_map(org, contract_ids)
+
+    def _build_contract_queue(queryset, due_field='end_date', limit=10):
+        contracts = list(queryset[:limit])
+        ids = [c.pk for c in contracts]
+        assignee_map = _assignee_map_for_contracts(ids)
+        activity_map = _latest_activity_map(ids)
+        rows = []
+        for contract in contracts:
+            due = getattr(contract, due_field, None)
+            rows.append({
+                'title': contract.title,
+                'href': reverse('contracts:contract_detail', kwargs={'pk': contract.pk}),
+                'meta': contract.client.name if contract.client_id else None,
+                'contract': contract,
+                'assignee': assignee_map.get(contract.pk),
+                'activity': activity_map.get(contract.pk),
+                'due_date': due,
+                'due_overdue': bool(due and due < today and contract.status not in TERMINAL_STATUSES),
+                'status_label': contract.get_status_display(),
+                'status_badge_class': status_badge_class(contract.status),
+            })
+        return rows
+
+    def _finalize_waiting_on_me(raw_rows):
+        contract_ids = [r['contract'].pk for r in raw_rows if r['contract']]
+        activity_map = _latest_activity_map(contract_ids)
+        rows = []
+        for r in raw_rows:
+            rows.append({
+                'title': r['title'],
+                'href': r['href'],
+                'meta': r['meta'],
+                'contract': r['contract'],
+                'assignee': r['assignee'],
+                'activity': activity_map.get(r['contract'].pk) if r['contract'] else None,
+                'due_date': r['due_date'],
+                'due_overdue': bool(r['due_date'] and r['due_date'] < today),
+                'status_label': r['status_label'],
+                'status_badge_class': r['status_badge_class'],
+            })
+        return rows
+
+    queue_in_progress = _build_contract_queue(
+        case_qs.select_related('client').filter(status__in=['PENDING', 'IN_REVIEW', 'APPROVED', 'ACTIVE']).order_by('-updated_at')
+    )
+    queue_needs_review = _build_contract_queue(
+        case_qs.select_related('client').filter(status__in=['PENDING', 'IN_REVIEW']).order_by('-created_at')
+    )
+    queue_renewals = _build_contract_queue(
+        case_qs.select_related('client').filter(status='ACTIVE', end_date__lte=thirty_days, end_date__gte=today).order_by('end_date'),
+        due_field='end_date',
+    )
+    for row in queue_renewals:
+        row['due_overdue'] = False  # a renewal window is upcoming attention, not a missed deadline
+    queue_completed = _build_contract_queue(
+        case_qs.select_related('client').filter(status='COMPLETED').order_by('-updated_at')
+    )
+    queue_waiting_on_me = _finalize_waiting_on_me(waiting_on_me_raw)
+
+    queue_tabs = [
+        {'key': 'in_progress', 'label': 'In Progress', 'rows': queue_in_progress, 'empty_message': 'No contracts currently in progress.'},
+        {'key': 'waiting_on_me', 'label': 'Waiting on Me', 'rows': queue_waiting_on_me, 'empty_message': 'Nothing is waiting on you right now.'},
+        {'key': 'needs_review', 'label': 'Needs Review', 'rows': queue_needs_review, 'empty_message': 'Nothing awaiting review.'},
+        {'key': 'renewals', 'label': 'Renewals', 'rows': queue_renewals, 'empty_message': 'No renewals due in the next 30 days.'},
+        {'key': 'completed', 'label': 'Completed', 'rows': queue_completed, 'empty_message': 'No completed contracts yet.'},
+    ]
+    dashboard_has_data = bool(total_documents) or any(tab['rows'] for tab in queue_tabs) or (case_stats['total'] or 0) > 0
+
     lifecycle_chart = []
     status_colors = {
-        'ACTIVE': '#2563EB',
-        'PENDING': '#F59E0B',
-        'DRAFT': '#374151',
-        'EXPIRED': '#6B7280',
-        'TERMINATED': '#9CA3AF',
+        'ACTIVE': '#3F569B',
+        'PENDING': '#8A5A14',
+        'DRAFT': '#5F6B85',
+        'EXPIRED': '#A63A2B',
+        'TERMINATED': '#AAB2C2',
     }
     for status_code, label in [('ACTIVE', 'Active'), ('PENDING', 'Pending Approval'), ('DRAFT', 'Draft'), ('EXPIRED', 'Expired'), ('TERMINATED', 'Terminated')]:
         count = status_counts_dict.get(status_code, 0)
@@ -722,7 +824,7 @@ def dashboard(request):
             lifecycle_chart.append({
                 'label': label,
                 'count': count,
-                'color': status_colors.get(status_code, '#6B7280'),
+                'color': status_colors.get(status_code, '#5F6B85'),
             })
 
     from django.shortcuts import render
@@ -744,7 +846,8 @@ def dashboard(request):
         'upcoming_deadlines': upcoming_deadlines,
         'upcoming_tasks': upcoming_tasks,
         'recent_audit': recent_audit,
-        'my_work_items': my_work_items,
+        'queue_tabs': queue_tabs,
+        'dashboard_has_data': dashboard_has_data,
         'case_status_data': case_status_data,
         'billable_hours': billable_hours,
         'trust_balance': trust_balance,

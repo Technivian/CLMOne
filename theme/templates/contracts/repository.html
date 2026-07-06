@@ -4,7 +4,97 @@
 {% block title %}Repository – DocClad{% endblock %}
 
 {% block content %}
-<div class="page-wrap">
+<style nonce="{{ csp_nonce }}">
+  /* ── Ironclad table conventions, scoped to this page ─────────── */
+
+  /* Flat surfaces: hairline borders only, no ambient shadows */
+  .repo-page .panel,
+  [data-theme="light"] .repo-page .panel { box-shadow: none; }
+
+  /* Column headers: 10.5px/700 uppercase, banded fill — same header
+     treatment as the Dashboard's .wq-table so the two tables read as one
+     component family even though Repository's rows are JS-rendered into
+     its own #contracts-table rather than the shared .wq-table markup. */
+  .repo-page .tbl-head { background: var(--surface); border-bottom: 1px solid var(--card-border); }
+  .repo-page #contracts-table thead th { padding: 10px 16px; }
+  .repo-page .tbl-th {
+    font-size: 10.5px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.07em; color: var(--text-muted);
+  }
+  /* Sticky header needs an opaque fill so rows don't bleed through */
+  .repo-page .table-sticky .tbl-head th { background: var(--card-bg); }
+  /* 8 columns don't fit under ~1550px; scroll horizontally instead of
+     silently clipping the Value/Status columns (the plain overflow-hidden
+     utility on .panel would otherwise just cut them off). Sticky header
+     positioning still works — position:sticky only needs a scroll
+     container, which overflow-x:auto still provides. */
+  .repo-page .table-sticky { overflow-x: auto; overflow-y: hidden; }
+
+  /* Rows (JS-rendered): ~52px, hairline separators, quiet hover fill */
+  .repo-page #contracts-table tbody td {
+    padding: 12px 16px; height: 52px; font-size: 13px;
+    color: var(--text-secondary); border-bottom: 1px solid var(--card-border);
+  }
+  .repo-page #contracts-table tbody tr:last-child td { border-bottom: 0; }
+  .repo-page #contracts-table tbody tr:hover td { background: var(--sidebar-hover); transition: background 0.12s; }
+  .repo-page #contracts-table tbody td[colspan] { height: auto; padding: 48px 16px; }
+  /* Selected rows stay visible after the pointer moves away — same
+     treatment/token as the Dashboard's .wq-table selected-row state. */
+  .repo-page #contracts-table tbody tr.wq-row-selected td,
+  .repo-page #contracts-table tbody tr.wq-row-selected:hover td { background: var(--primary-subtle); }
+  /* Numeric/date columns (Key date, Value) — same convention as .wq-col-num. */
+  .repo-page #contracts-table .wq-col-num { text-align: right; font-variant-numeric: tabular-nums; }
+
+  /* Document cell: strong ink title + muted 11px meta line */
+  .repo-page #contracts-table tbody td .font-medium {
+    font-size: 13px; font-weight: 700; color: var(--text-primary);
+  }
+  .repo-page #contracts-table tbody td .text-sm {
+    font-size: 11px; color: var(--text-muted); margin-top: 2px;
+  }
+
+  /* JS-rendered muted text (pagination count, empty saved-views state) —
+     a class, not inline style="", so dynamically-injected HTML stays
+     CSP-clean (inline style attributes can't carry a nonce). */
+  .repo-page .repo-muted-text { color: var(--text-muted); }
+
+  /* Status filter + saved-view chips: hairline pills, active = ink fill
+     (one active-chip language for the whole views rail) */
+  .repo-page .repo-status-filter,
+  .repo-page .repo-saved-view {
+    border-radius: 9999px; background: transparent; border: 1px solid var(--border);
+    color: var(--text-secondary); padding: 5px 12px; font-size: 12px; font-weight: 600;
+  }
+  .repo-page .repo-status-filter:hover,
+  .repo-page .repo-saved-view:hover { border-color: var(--text-muted); color: var(--text-primary); }
+  .repo-page .repo-status-filter.chip-active,
+  .repo-page .repo-status-filter.chip-active:hover,
+  .repo-page .repo-saved-view.chip-active,
+  .repo-page .repo-saved-view.chip-active:hover {
+    background: var(--text-primary); border-color: var(--text-primary); color: var(--card-bg);
+  }
+
+  /* Secondary toolbar links: quiet outlined 8px chips */
+  .repo-page .workspace-toolbar .btn-ghost {
+    border-radius: 8px; background: transparent;
+    border: 1px solid var(--border); color: var(--text-secondary);
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .repo-page .workspace-toolbar .btn-ghost:hover {
+    border-color: var(--text-muted); color: var(--text-primary);
+  }
+
+  /* Bulk-bar / pagination mini buttons: 8px radius controls */
+  .repo-page .repo-mini-btn { border-radius: 8px; }
+
+  /* Search + sort controls stay flat */
+  .repo-page .input-base, .repo-page .select-base { box-shadow: none; }
+
+  /* KPI numbers: ink unless the color carries meaning (amber = expiring) */
+  .repo-page .kpi-value.c-accent,
+  .repo-page .kpi-value.c-primary-brand { color: var(--text-primary); }
+</style>
+<div class="page-wrap repo-page">
     <div class="workspace-split">
         <aside class="views-rail">
             <div class="views-rail-head">
@@ -12,10 +102,10 @@
                 <button type="button" data-action="save-view" class="btn-ghost text-xs px-2 py-1">Save view</button>
             </div>
             <div class="views-rail-list">
-                <a href="#" class="views-rail-link active"><span>All documents</span><span class="views-rail-count">{{ total_documents }}</span></a>
-                <a href="#" class="views-rail-link"><span>Active paper</span><span class="views-rail-count">{{ active_documents }}</span></a>
-                <a href="#" class="views-rail-link"><span>Draft paper</span><span class="views-rail-count">{{ draft_documents }}</span></a>
-                <a href="#" class="views-rail-link"><span>30d attention</span><span class="views-rail-count">{{ expiring_documents }}</span></a>
+                <button type="button" class="views-rail-link active" data-rail-view="all"><span>All documents</span><span class="views-rail-count">{{ total_documents }}</span></button>
+                <button type="button" class="views-rail-link" data-rail-view="active"><span>Active paper</span><span class="views-rail-count">{{ active_documents }}</span></button>
+                <button type="button" class="views-rail-link" data-rail-view="draft"><span>Draft paper</span><span class="views-rail-count">{{ draft_documents }}</span></button>
+                <button type="button" class="views-rail-link" data-rail-view="expiring_30d"><span>30d attention</span><span class="views-rail-count">{{ expiring_documents }}</span></button>
             </div>
             <div class="panel mt-4">
                 <div class="panel-head">
@@ -109,7 +199,7 @@
                     <div class="font-medium c-primary" id="selected-count" aria-live="polite">0 selected</div>
                     <div class="flex items-center gap-2 flex-wrap">
                         <button id="repo-bulk-status" class="repo-mini-btn">Change Status</button>
-                        <button id="repo-bulk-assign" class="repo-mini-btn">Assign to Me</button>
+                        <button id="repo-bulk-assign" class="repo-mini-btn" disabled title="Coming soon — contract-level assignment isn't available yet.">Assign to Me</button>
                         <button id="repo-bulk-export" class="repo-mini-btn">Export CSV</button>
                         <button data-action="clear-selection" class="repo-mini-btn">Clear</button>
                     </div>
@@ -121,14 +211,16 @@
                             <tr>
                                 <th class="tbl-th px-5 py-3 text-left"><input type="checkbox" id="select-all" aria-label="Select all"></th>
                                 <th class="tbl-th px-5 py-3 text-left text-xs uppercase tracking-wide">Document</th>
+                                <th class="tbl-th px-5 py-3 text-left text-xs uppercase tracking-wide">Stage</th>
+                                <th class="tbl-th px-5 py-3 text-left text-xs uppercase tracking-wide">Assigned to</th>
+                                <th class="tbl-th px-5 py-3 text-left text-xs uppercase tracking-wide">Latest activity</th>
+                                <th class="tbl-th px-5 py-3 text-left text-xs uppercase tracking-wide wq-col-num">Key date</th>
+                                <th class="tbl-th px-5 py-3 text-left text-xs uppercase tracking-wide wq-col-num">Value</th>
                                 <th class="tbl-th px-5 py-3 text-left text-xs uppercase tracking-wide">Status</th>
-                                <th class="tbl-th px-5 py-3 text-left text-xs uppercase tracking-wide">Value</th>
-                                <th class="tbl-th px-5 py-3 text-left text-xs uppercase tracking-wide">Owner</th>
-                                <th class="tbl-th px-5 py-3 text-left text-xs uppercase tracking-wide">Updated</th>
                             </tr>
                         </thead>
                         <tbody id="contracts-tbody">
-                            <tr><td colspan="6" class="px-5 py-20 text-center c-muted">Loading...</td></tr>
+                            <tr><td colspan="8" class="px-5 py-20 text-center c-muted">Loading...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -141,5 +233,5 @@
     <div id="details-drawer" class="repo-drawer"></div>
 </div>
 
-<script src="{% static 'js/docclad-repository.js' %}"></script>
+<script src="{% static 'js/docclad-repository.js' %}{% if ASSET_VERSION %}?v={{ ASSET_VERSION }}{% endif %}"></script>
 {% endblock %}

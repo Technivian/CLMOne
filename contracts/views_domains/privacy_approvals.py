@@ -657,6 +657,111 @@ class ApprovalRequestListView(TenantScopedQuerysetMixin, LoginRequiredMixin, Lis
             qs = qs.filter(status=status)
         return qs
 
+    def get_context_data(self, **kwargs):
+        """Approvals inbox: saved-view tabs backing the WorkQueue table.
+
+        `approvals` (from context_object_name above) is left completely
+        untouched — existing callers (incl. the cross-tenant isolation test)
+        keep reading the plain org-scoped/optionally status-filtered
+        queryset exactly as before. `queue_tabs` is additive.
+        """
+        context = super().get_context_data(**kwargs)
+        context['queue_tabs'] = self._build_queue_tabs()
+        return context
+
+    def _build_queue_tabs(self):
+        from django.urls import reverse
+
+        from contracts.services.approval_workflow import actor_can_decide
+        from contracts.services.queue_rows import latest_activity_map
+        from contracts.templatetags.docclad_format import (
+            approval_status_badge_class,
+            approval_step_label,
+            money,
+        )
+
+        org = self.get_organization()
+        user = self.request.user
+        now = timezone.now()
+
+        if not org:
+            empty_tabs = [
+                ('waiting_on_me', 'Waiting on Me', 'No approvals waiting on you.'),
+                ('requested_by_me', 'Requested by Me', 'No approvals requested by you.'),
+                ('all_open', 'All Open', 'No open approvals.'),
+                ('approved', 'Approved', 'No approved approvals yet.'),
+                ('rejected', 'Rejected', 'No rejected approvals.'),
+                ('escalated_overdue', 'Escalated / Overdue', 'Nothing escalated or overdue.'),
+            ]
+            return [{'key': k, 'label': label, 'rows': [], 'empty_message': msg} for k, label, msg in empty_tabs]
+
+        base_qs = scope_queryset_for_organization(
+            ApprovalRequest.objects.select_related(
+                'contract', 'contract__created_by', 'assigned_to', 'delegated_to',
+            ),
+            org,
+        )
+
+        def _to_rows(qs, limit=25):
+            items = list(qs.order_by('-created_at')[:limit])
+            ids = [a.pk for a in items]
+            activity_map = latest_activity_map(org, ids, model_name='ApprovalRequest')
+            rows = []
+            for approval in items:
+                contract = approval.contract
+                effective_assignee = approval.delegated_to or approval.assigned_to
+                due = approval.due_date
+                overdue = bool(due and due < now and approval.status in ('PENDING', 'ESCALATED'))
+                meta_parts = [p for p in (
+                    contract.counterparty if contract and contract.counterparty else None,
+                    approval_step_label(approval.approval_step),
+                ) if p]
+                if contract and contract.value:
+                    meta_parts.append(money(contract.value, contract.currency))
+                rows.append({
+                    'id': approval.pk,
+                    'title': contract.title if contract else f'Approval #{approval.pk}',
+                    'href': reverse('contracts:contract_detail', kwargs={'pk': contract.pk}) if contract else '',
+                    'meta': ' · '.join(meta_parts),
+                    'contract': contract,
+                    'requester': contract.created_by if contract else None,
+                    'assignee': effective_assignee,
+                    'activity': activity_map.get(approval.pk),
+                    'due_date': due,
+                    'due_overdue': overdue,
+                    'status_label': approval.get_status_display(),
+                    'status_badge_class': approval_status_badge_class(approval.status),
+                    'can_decide': actor_can_decide(approval, user, 'approve'),
+                    'approve_url': reverse('contracts:approval_approve_api', kwargs={'approval_id': approval.pk}),
+                    'reject_url': reverse('contracts:approval_reject_api', kwargs={'approval_id': approval.pk}),
+                    'edit_url': reverse('contracts:approval_request_update', kwargs={'pk': approval.pk}),
+                })
+            return rows
+
+        waiting_qs = base_qs.filter(
+            Q(assigned_to=user) | Q(delegated_to=user), status__in=['PENDING', 'ESCALATED'],
+        )
+        requested_qs = base_qs.filter(contract__created_by=user)
+        all_open_qs = base_qs.filter(status__in=['PENDING', 'ESCALATED'])
+        approved_qs = base_qs.filter(status='APPROVED')
+        rejected_qs = base_qs.filter(status='REJECTED')
+        escalated_overdue_qs = base_qs.filter(Q(status='ESCALATED') | Q(status='PENDING', due_date__lt=now))
+
+        return [
+            {'key': 'waiting_on_me', 'label': 'Waiting on Me', 'rows': _to_rows(waiting_qs),
+             'empty_message': 'No approvals waiting on you.'},
+            {'key': 'requested_by_me', 'label': 'Requested by Me', 'rows': _to_rows(requested_qs),
+             'empty_message': 'No approvals requested by you.'},
+            {'key': 'all_open', 'label': 'All Open', 'rows': _to_rows(all_open_qs),
+             'empty_message': 'No open approvals.'},
+            {'key': 'approved', 'label': 'Approved', 'rows': _to_rows(approved_qs),
+             'empty_message': 'No approved approvals yet.'},
+            {'key': 'rejected', 'label': 'Rejected', 'rows': _to_rows(rejected_qs),
+             'empty_message': 'No rejected approvals.'},
+            {'key': 'escalated_overdue', 'label': 'Escalated / Overdue', 'rows': _to_rows(escalated_overdue_qs),
+             'empty_message': 'Nothing escalated or overdue.'},
+        ]
+
 
 class ApprovalRequestCreateView(TenantScopedFormMixin, TenantAssignCreateMixin, LoginRequiredMixin, CreateView):
     model = ApprovalRequest

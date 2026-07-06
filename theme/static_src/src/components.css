@@ -3,7 +3,7 @@
 
 /* Button Components */
 .btn {
-  @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md border;
+  @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg border;
   @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
   @apply transition-colors duration-150;
 }
@@ -56,9 +56,10 @@
   @apply bg-gray-100 text-gray-800;
 }
 
-/* Card Components */
+/* Card Components — flat: hairline border only, no drop shadow */
 .card {
-  @apply bg-white border border-stroke rounded-lg shadow-sm;
+  @apply bg-white border border-stroke rounded-lg;
+  box-shadow: none;
 }
 
 .card-header {
@@ -115,11 +116,21 @@
   @apply px-6 py-3 font-medium;
 }
 
-/* Form Components */
+/* Form Components — token-backed: hairline border, 8px radius, primary focus ring */
 .input {
-  @apply block w-full px-3 py-2 text-sm border border-stroke rounded-md;
-  @apply focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent;
-  @apply placeholder-muted;
+  @apply block w-full px-3 py-2 text-sm;
+  color: var(--text-primary);
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.input::placeholder { color: var(--text-muted); }
+.input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-subtle);
 }
 
 .input-error {
@@ -278,21 +289,22 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 24px;
+  flex-wrap: wrap;
+  gap: 12px 24px;
   margin-bottom: 32px;
 }
-.arch-header-left  { flex: 1 1 0; min-width: 0; }
-.arch-header-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; padding-top: 4px; }
+.arch-header-left  { flex: 1 1 220px; min-width: 0; }
+.arch-header-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; flex-wrap: wrap; padding-top: 4px; }
 .arch-title-row    { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
 .arch-title {
-  font-size: 28px;
-  font-weight: 800;
+  font-size: 20px;
+  font-weight: 700;
   color: var(--text-primary);
   margin: 0;
   line-height: 1.15;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
 }
-.arch-subtitle { font-size: 14px; color: var(--text-secondary); margin: 0; line-height: 1.5; }
+.arch-subtitle { font-size: 13px; color: var(--text-muted); margin: 0; line-height: 1.5; }
 
 /* ── Shared: card levels ───────────────────────────────── */
 /* Level 1 — forms, tables, primary content */
@@ -312,7 +324,7 @@
 /* Level 3 — inline notices, status blocks */
 .card-l3 {
   background: var(--primary-subtle);
-  border: 1px solid rgba(37,99,235,0.18);
+  border: 1px solid var(--primary-bg);
   border-radius: 8px;
   padding: 12px;
 }
@@ -402,16 +414,16 @@
   padding: 8px 14px;
   font-size: 14px;
   font-weight: 500;
-  color: #F87171;
+  color: var(--msg-error-text);
   background: none;
-  border: 1px solid rgba(239,68,68,0.25);
+  border: 1px solid var(--msg-error-border);
   border-radius: 8px;
   cursor: pointer;
   transition: background 0.15s;
   text-decoration: none;
   white-space: nowrap;
 }
-.btn-danger-soft:hover { background: rgba(239,68,68,0.08); }
+.btn-danger-soft:hover { background: var(--msg-error-bg); }
 
 /* Soft accent — safe "generate / create" secondary actions (token-backed green) */
 .btn-soft-accent {
@@ -540,7 +552,7 @@ textarea.form-control { min-height: 90px; resize: vertical; }
   flex-shrink: 0;
 }
 .arch-step.step-active .arch-step-num { background: var(--primary); border-color: var(--primary); color: #fff; }
-.arch-step.step-done   .arch-step-num { background: #059669; border-color: #059669; color: #fff; }
+.arch-step.step-done   .arch-step-num { background: var(--primary); border-color: var(--primary); color: #fff; }
 .arch-step-arrow { color: var(--text-dim); margin: 0 14px; font-size: 12px; }
 
 /* 8 + 4 content grid */

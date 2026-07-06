@@ -3,13 +3,23 @@
 Repository service layer for contracts
 Provides abstraction between UI and data layer
 """
+from datetime import date, timedelta
+
 from django.contrib.auth.models import User
 from contracts.models import Contract
 from contracts.domain.contracts import ListParams, ContractData, ListResult
 from django.core.paginator import Paginator
 from django.db.models import Q, Case, When, Value, IntegerField
+from django.template.defaultfilters import date as date_filter
 from typing import List, Optional
 from contracts.tenancy import get_user_organization, scope_queryset_for_organization
+from contracts.services.queue_rows import (
+    TERMINAL_STATUSES,
+    activity_line_parts,
+    assignee_map_for_contracts,
+    latest_activity_map,
+)
+from contracts.templatetags.docclad_format import lifecycle_steps, money, status_badge_class as status_badge_class_for
 
 
 class BulkUpdateValidationError(Exception):
@@ -27,7 +37,51 @@ class DjangoRepositoryService:
     def __init__(self, user: User):
         self.user = user
         self.organization = get_user_organization(user)
-    
+
+    def _to_contract_data(self, contract, assignee_map, activity_map, *, content=None):
+        """Build a ContractData row, enriched with the same WorkQueue fields
+        (stage/assignee/activity/status color) the Dashboard queue uses, so
+        the JS-rendered Repository table draws from server-computed data
+        instead of reimplementing stage ordering or status colors in JS."""
+        assignee = assignee_map.get(contract.pk)
+        assignee_name = None
+        assignee_initial = None
+        if assignee:
+            assignee_name = assignee.get_full_name() or assignee.username
+            assignee_initial = (assignee.first_name or assignee.username or '?')[:1].upper()
+
+        activity_text, activity_time, activity_initial = activity_line_parts(activity_map.get(contract.pk))
+
+        end_date = getattr(contract, 'end_date', None)
+        due_overdue = bool(end_date and end_date < date.today() and contract.status not in TERMINAL_STATUSES)
+
+        kwargs = dict(
+            id=str(contract.id),
+            title=contract.title,
+            status=contract.status,
+            status_display=contract.get_status_display(),
+            counterparty=getattr(contract, 'counterparty', ''),
+            value=float(contract.value) if hasattr(contract, 'value') and contract.value else None,
+            start_date=contract.start_date.isoformat() if hasattr(contract, 'start_date') and contract.start_date else None,
+            end_date=end_date.isoformat() if end_date else None,
+            owner=contract.created_by.get_full_name() if contract.created_by else 'System',
+            updated_at=contract.updated_at.isoformat() if hasattr(contract, 'updated_at') and contract.updated_at else None,
+            created_at=contract.created_at.isoformat() if contract.created_at else None,
+            status_badge_class=status_badge_class_for(contract.status),
+            stage_steps=lifecycle_steps(contract),
+            assignee_name=assignee_name,
+            assignee_initial=assignee_initial,
+            latest_activity_text=activity_text,
+            latest_activity_time=activity_time,
+            latest_activity_initial=activity_initial,
+            value_display=money(contract.value, getattr(contract, 'currency', 'USD') or 'USD'),
+            end_date_display=date_filter(end_date, 'd M Y') if end_date else None,
+            due_overdue=due_overdue,
+        )
+        if content is not None:
+            kwargs['content'] = content
+        return ContractData(**kwargs)
+
     def list(self, params: ListParams) -> ListResult:
         """List contracts with filtering and pagination"""
         queryset = scope_queryset_for_organization(
@@ -54,7 +108,19 @@ class DjangoRepositoryService:
         # Apply status filter
         if params.status:
             queryset = queryset.filter(status__in=params.status)
-            
+
+        # Apply the "30d attention" saved-view window — same ACTIVE +
+        # end_date-within-N-days definition as the Dashboard Renewals queue
+        # and the Repository "Expiring 30d" KPI, so the count and the rows
+        # never disagree with each other.
+        if params.expiring_within_days:
+            today = date.today()
+            queryset = queryset.filter(
+                status='ACTIVE',
+                end_date__gte=today,
+                end_date__lte=today + timedelta(days=params.expiring_within_days),
+            )
+
         # Apply type filter (if we had a contract_type field)
         if params.contract_type:
             if hasattr(Contract, 'contract_type'):
@@ -75,24 +141,20 @@ class DjangoRepositoryService:
         # Paginate
         paginator = Paginator(queryset, params.page_size)
         page_obj = paginator.get_page(params.page)
-        
+        page_contracts = list(page_obj)
+
+        # Batch-resolve assignee/activity for just this page (mirrors the
+        # Dashboard queue's per-tab batching) rather than one query per row.
+        contract_ids = [c.pk for c in page_contracts]
+        assignee_map = assignee_map_for_contracts(self.organization, contract_ids)
+        activity_map = latest_activity_map(self.organization, contract_ids)
+
         # Convert to domain objects
-        contracts = []
-        for contract in page_obj:
-            contracts.append(ContractData(
-                id=str(contract.id),
-                title=contract.title,
-                status=contract.status,
-                status_display=contract.get_status_display(),
-                counterparty=getattr(contract, 'counterparty', ''),
-                value=float(contract.value) if hasattr(contract, 'value') and contract.value else None,
-                start_date=contract.start_date.isoformat() if hasattr(contract, 'start_date') and contract.start_date else None,
-                end_date=contract.end_date.isoformat() if hasattr(contract, 'end_date') and contract.end_date else None,
-                owner=contract.created_by.get_full_name() if contract.created_by else 'System',
-                updated_at=contract.updated_at.isoformat() if hasattr(contract, 'updated_at') and contract.updated_at else None,
-                created_at=contract.created_at.isoformat() if contract.created_at else None
-            ))
-        
+        contracts = [
+            self._to_contract_data(contract, assignee_map, activity_map)
+            for contract in page_contracts
+        ]
+
         return ListResult(
             contracts=contracts,
             total_count=paginator.count,
@@ -106,20 +168,9 @@ class DjangoRepositoryService:
         try:
             queryset = scope_queryset_for_organization(Contract.objects.all(), self.organization)
             contract = queryset.get(id=contract_id)
-            return ContractData(
-                id=str(contract.id),
-                title=contract.title,
-                status=contract.status,
-                status_display=contract.get_status_display(),
-                counterparty=getattr(contract, 'counterparty', ''),
-                value=float(contract.value) if hasattr(contract, 'value') and contract.value else None,
-                start_date=contract.start_date.isoformat() if hasattr(contract, 'start_date') and contract.start_date else None,
-                end_date=contract.end_date.isoformat() if hasattr(contract, 'end_date') and contract.end_date else None,
-                owner=contract.created_by.get_full_name() if contract.created_by else 'System',
-                updated_at=contract.updated_at.isoformat() if hasattr(contract, 'updated_at') and contract.updated_at else None,
-                created_at=contract.created_at.isoformat() if contract.created_at else None,
-                content=contract.content
-            )
+            assignee_map = assignee_map_for_contracts(self.organization, [contract.pk])
+            activity_map = latest_activity_map(self.organization, [contract.pk])
+            return self._to_contract_data(contract, assignee_map, activity_map, content=contract.content)
         except Contract.DoesNotExist:
             return None
     

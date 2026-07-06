@@ -59,6 +59,71 @@ _OBJECT_TYPE_LABELS = {
 _ACRONYMS = {'ai', 'mfa', 'sso', 'saml', 'scim', 'dsar', 'api', 'id', 'url', 'crm', 'dpa', 'scc', 'ip'}
 _PASCAL_SPLIT_RE = re.compile(r'(?<!^)(?=[A-Z])')
 
+# Complete Contract.Status → badge variant map. Color is semantic, never
+# decorative: green = healthy/terminal-good, yellow = waiting on someone,
+# blue = in-flight process, red = expired/terminated, gray = neutral/inert.
+# Every status must have an entry — an unmapped status rendering gray is a
+# defect, not a fallback.
+_STATUS_BADGES = {
+    'DRAFT': 'badge-gray',
+    'PENDING': 'badge-yellow',
+    'IN_REVIEW': 'badge-blue',
+    'APPROVED': 'badge-blue',
+    'ACTIVE': 'badge-green',
+    'COMPLETED': 'badge-green',
+    'EXPIRED': 'badge-red',
+    'TERMINATED': 'badge-red',
+    'CANCELLED': 'badge-gray',
+}
+
+_PHASE_BADGES = {
+    'intake': 'badge-gray',
+    'beoordeling': 'badge-yellow',
+    'matching': 'badge-purple',
+    'plaatsing': 'badge-blue',
+    'actief': 'badge-green',
+    'afgerond': 'badge-green',
+}
+
+# ApprovalRequest.status -> badge variant. A separate map from
+# _STATUS_BADGES (Contract) on purpose: the two fields use an overlapping
+# vocabulary ('APPROVED') with different semantics — a Contract in
+# APPROVED status is still mid-flight (blue), but an ApprovalRequest
+# decision of APPROVED is a positive, terminal outcome (green).
+_APPROVAL_STATUS_BADGES = {
+    'PENDING': 'badge-yellow',
+    'APPROVED': 'badge-green',
+    'REJECTED': 'badge-red',
+    'ESCALATED': 'badge-purple',
+}
+
+# ApprovalRequest.approval_step is a free CharField copied from whichever
+# ApprovalRule triggered it — it has no Django choices of its own, so
+# without this map the raw rule code (e.g. 'LEGAL') would leak into the UI.
+# Mirrors ApprovalRule.approval_step's choices verbatim.
+_APPROVAL_STEP_LABELS = {
+    'LEGAL': 'Legal Review',
+    'FINANCE': 'Finance Review',
+    'PRIVACY': 'Privacy Review',
+    'EXECUTIVE': 'Executive Approval',
+    'COMPLIANCE': 'Compliance Review',
+}
+
+# Canonical lifecycle path shown on the contract detail page. Order matters:
+# it is the position of contract.lifecycle_stage in this list that decides
+# which steps render as done/current/upcoming.
+_LIFECYCLE_PATH = [
+    ('DRAFTING', 'Drafting'),
+    ('INTERNAL_REVIEW', 'Internal Review'),
+    ('NEGOTIATION', 'Negotiation'),
+    ('APPROVAL', 'Approval'),
+    ('SIGNATURE', 'Signature'),
+    ('EXECUTED', 'Executed'),
+    ('OBLIGATION_TRACKING', 'Obligation Tracking'),
+    ('RENEWAL', 'Renewal'),
+    ('ARCHIVED', 'Archived'),
+]
+
 
 @register.filter
 def money(value, currency='USD'):
@@ -118,6 +183,58 @@ def event_label(value):
         return ''
     words = [w for w in re.split(r'[_.]+', str(value)) if w]
     return ' '.join(w.upper() if w.lower() in _ACRONYMS else w.capitalize() for w in words)
+
+
+@register.filter
+def status_badge_class(status):
+    """Contract status key -> canonical badge class ('ACTIVE' -> 'badge-green')."""
+    return _STATUS_BADGES.get(status, 'badge-gray')
+
+
+@register.filter
+def phase_badge_class(phase):
+    """Case phase key -> canonical badge class ('actief' -> 'badge-green')."""
+    return _PHASE_BADGES.get(phase, 'badge-gray')
+
+
+@register.filter
+def approval_status_badge_class(status):
+    """ApprovalRequest status key -> canonical badge class."""
+    return _APPROVAL_STATUS_BADGES.get(status, 'badge-gray')
+
+
+@register.filter
+def approval_step_label(step):
+    """ApprovalRequest.approval_step raw code -> human label ('LEGAL' -> 'Legal Review')."""
+    if not step:
+        return ''
+    return _APPROVAL_STEP_LABELS.get(step, step.replace('_', ' ').title())
+
+
+@register.simple_tag
+def lifecycle_steps(contract):
+    """Lifecycle path for the detail-page stepper.
+
+    Returns [{'key', 'label', 'state'}] where state is 'done', 'current', or
+    'upcoming', derived from contract.lifecycle_stage's position in the
+    canonical path. An unknown stage marks every step upcoming rather than
+    guessing progress.
+    """
+    keys = [key for key, _ in _LIFECYCLE_PATH]
+    try:
+        current = keys.index(contract.lifecycle_stage)
+    except ValueError:
+        current = -1
+    steps = []
+    for index, (key, label) in enumerate(_LIFECYCLE_PATH):
+        if current == -1 or index > current:
+            state = 'upcoming'
+        elif index == current:
+            state = 'current'
+        else:
+            state = 'done'
+        steps.append({'key': key, 'label': label, 'state': state})
+    return steps
 
 
 @register.filter

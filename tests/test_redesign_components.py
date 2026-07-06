@@ -27,14 +27,25 @@ class RedesignComponentsTestCase(TestCase):
         os.environ['FEATURE_REDESIGN'] = 'true'
 
     def test_dashboard_component_labels(self):
+        # KPI strip and the workflow queue render on the populated dashboard;
+        # empty workspaces get the onboarding checklist instead. The queue
+        # tabs (In Progress / Waiting on Me / Needs Review / Renewals /
+        # Completed) are the primary object on the page.
+        Contract.objects.create(
+            organization=self.organization,
+            title='Component Label Contract',
+            content='Seed so the dashboard renders its normal state.',
+            status='ACTIVE',
+            created_by=self.user,
+        )
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Active contracts')
-        self.assertContains(response, 'Recent Contracts')
-        self.assertContains(response, 'Case Portfolio')
-        self.assertContains(response, 'Workflow recommendations open')
+        self.assertContains(response, 'Component Label Contract')
+        self.assertContains(response, 'Needs Review')
+        self.assertContains(response, 'Renewals')
         self.assertContains(response, 'Task Signals')
-        self.assertContains(response, 'Governance activity')
+        self.assertContains(response, 'Recent activity')
 
     def test_contracts_list_core_components(self):
         Contract.objects.create(

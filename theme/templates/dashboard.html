@@ -1,12 +1,13 @@
 {% extends "base.html" %}
 {% load humanize %}
 {% load docclad_format %}
+{% load docclad_components %}
 {% block title %}Dashboard — DocClad{% endblock %}
 
 {% block content %}
 <style nonce="{{ csp_nonce }}">
 /* ═══════════════════════════════════════════════════════════
-   DocCladDashboard v2 — action-first layout
+   DocCladDashboard v3 — workflow queue first
    ═══════════════════════════════════════════════════════════ */
 
 .DocCladDashboard {
@@ -60,6 +61,16 @@
 }
 .ad-page-date { font-size: 12px; color: var(--text-muted); }
 
+/* Small structural overrides — CSS classes, not inline style="", so they
+   comply with the page's CSP (style-src allows the nonced block below but
+   not unsafe-inline attributes). */
+.ad-header-row   { margin-bottom: 16px; }
+.ad-h1-lg        { font-size: 20px; }
+.ad-subtitle-sm  { font-size: 13px; }
+.ad-links-card   { margin-top: 16px; padding: 16px 20px; }
+.ad-links-title  { margin-bottom: 12px; }
+.ad-links-row    { display: flex; flex-wrap: wrap; gap: 8px; }
+
 /* ═══════════════════════════════════════════════════════════
    ONBOARDING STATE
    ═══════════════════════════════════════════════════════════ */
@@ -96,7 +107,7 @@
   display: flex; align-items: center; justify-content: center;
   border: 2px solid var(--card-border);
 }
-.ad-onboard-check.done { background: #059669; border-color: #059669; }
+.ad-onboard-check.done { background: var(--primary); border-color: var(--primary); }
 .ad-onboard-check.done svg { width: 12px; height: 12px; color: #fff; }
 .ad-onboard-check.todo { border-color: rgba(255,255,255,0.15); }
 .ad-onboard-step-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
@@ -105,141 +116,50 @@
 .ad-onboard-step-chev svg { width: 14px; height: 14px; }
 
 /* ═══════════════════════════════════════════════════════════
-   NORMAL DASHBOARD
+   NORMAL DASHBOARD — the queue is the primary object
    ═══════════════════════════════════════════════════════════ */
 
-/* ── 1. Primary grid: Attention | Work Queue ────────────── */
-.ad-top {
-  display: grid;
-  grid-template-columns: 520px minmax(0, 1fr);
-  gap: 16px;
-  height: 310px;
-  margin-bottom: 14px;
-}
-.ad-top > .ad-card {
-  height: 310px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
+/* ── 1. Workflow queue (primary) ────────────────────────── */
+.ad-queue-card { margin-bottom: 16px; }
+.ad-queue-tabs-wrap { padding: 6px 12px 0; }
+.ad-queue-body { overflow-x: auto; }
 
-/* Attention card */
-.ad-attn-body {
-  flex: 1; min-height: 0; overflow: hidden;
-  display: flex; flex-direction: column;
-  padding: 0 20px;
-}
-.ad-attn-row {
-  flex: 1; min-height: 0;
-  display: flex; align-items: center; gap: 12px;
-  border-bottom: 1px solid var(--card-border);
-  text-decoration: none; color: inherit;
-  transition: opacity 0.12s;
-}
-.ad-attn-row:last-of-type { border-bottom: none; }
-.ad-attn-row:hover { opacity: 0.75; }
-.ad-attn-badge {
-  width: 36px; height: 36px; border-radius: 9px;
-  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-}
-.ad-attn-badge svg { width: 16px; height: 16px; }
-.ad-attn-badge.c-red    { background: rgba(239,68,68,0.12);  color: #ef4444; }
-.ad-attn-badge.c-orange { background: rgba(249,115,22,0.12); color: #f97316; }
-.ad-attn-badge.c-yellow { background: rgba(234,179,8,0.12);  color: #eab308; }
-.ad-attn-badge.c-purple { background: rgba(168,85,247,0.12); color: #a855f7; }
-.ad-attn-txt { flex: 1; min-width: 0; }
-.ad-attn-lbl { font-size: 13px; font-weight: 500; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ad-attn-meta { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
-.ad-attn-chev { color: var(--text-muted); flex-shrink: 0; line-height: 0; }
-.ad-attn-chev svg { width: 13px; height: 13px; }
-.ad-attn-foot {
-  height: 46px; flex-shrink: 0;
-  display: flex; align-items: center; padding: 0 20px;
-  border-top: 1px solid var(--card-border); box-sizing: border-box;
-}
-.ad-attn-foot a {
-  font-size: 12px; font-weight: 600; color: var(--primary-light);
-  text-decoration: none; white-space: nowrap;
-  display: inline-flex; align-items: center; gap: 5px;
-}
-.ad-attn-foot a:hover { text-decoration: underline; }
-.ad-attn-foot a svg { width: 11px; height: 11px; }
-
-/* Work queue */
-.ad-wq-body { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
-.ad-wq-table { width: 100%; border-collapse: collapse; }
-.ad-wq-table th {
-  padding: 7px 14px;
-  font-size: 10px; font-weight: 700;
-  text-transform: uppercase; letter-spacing: 0.07em;
-  color: var(--text-muted); text-align: left;
-  border-bottom: 1px solid var(--card-border);
-}
-.ad-wq-table td {
-  padding: 9px 14px;
-  font-size: 12.5px; color: var(--text-primary);
-  border-bottom: 1px solid var(--card-border);
-  vertical-align: middle;
-}
-.ad-wq-table tr:last-child td { border-bottom: none; }
-.ad-wq-table tr:hover td { background: var(--sidebar-hover); }
-.ad-wq-table a { color: var(--text-primary); text-decoration: none; font-weight: 500; }
-.ad-wq-table a:hover { color: var(--primary-light); }
-.ad-wq-td-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-.ad-wq-type { color: var(--text-secondary); font-size: 12px; }
-.ad-wq-due  { color: var(--text-muted); font-size: 11px; white-space: nowrap; }
-
-/* Badges */
-.ad-badge { display: inline-block; font-size: 10px; font-weight: 700; border-radius: 6px; padding: 3px 8px; white-space: nowrap; }
-.ad-badge.blue   { background: rgba(59,130,246,0.12);  color: #60a5fa; }
-.ad-badge.red    { background: rgba(239,68,68,0.12);   color: #f87171; }
-.ad-badge.amber  { background: rgba(245,158,11,0.12);  color: #fbbf24; }
-.ad-badge.green  { background: rgba(34,197,94,0.12);   color: #4ade80; }
-.ad-badge.purple { background: rgba(168,85,247,0.12);  color: #c084fc; }
-.ad-badge.gray   { background: rgba(107,114,128,0.12); color: #9ca3af; }
-
-/* Empty fallback */
-.ad-empty { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 13px; color: var(--text-muted); }
-
-/* ── 2. KPI strip ───────────────────────────────────────── */
+/* ── 2. KPI strip — compact, secondary ──────────────────── */
+/* Reuses the shared .kpi-card component (same one Repository uses) instead
+   of a competing bespoke tile style, so the two screens' "summary numbers"
+   finally look like the same component. Padding/type scale are tightened
+   ONLY inside .ad-kpis — the shared .kpi-card rule itself is untouched, so
+   other pages that use it are unaffected. */
 .ad-kpis {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
   margin-bottom: 14px;
 }
-.ad-kpi {
-  height: 88px;
-  padding: 14px 18px;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
-}
-.ad-kpi:hover { border-color: var(--primary-bg); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,0.10); }
-.ad-kpi-num { font-size: 28px; font-weight: 900; line-height: 1; letter-spacing: -0.5px; }
-.ad-kpi-num.kc-blue   { color: #3b82f6; }
-.ad-kpi-num.kc-amber  { color: #f59e0b; }
-.ad-kpi-num.kc-purple { color: #a855f7; }
-.ad-kpi-num.kc-orange { color: #f97316; }
-.ad-kpi-num.kc-red    { color: #ef4444; }
-.ad-kpi-label { font-size: 11px; color: var(--text-secondary); line-height: 1.3; }
+.ad-kpis .kpi-card { padding: 12px 14px; }
+.ad-kpis .kpi-value { font-size: 20px; }
+.ad-kpis .kpi-label { font-size: 10.5px; margin-top: 2px; }
 
-/* ── 3. Bottom row ──────────────────────────────────────── */
+/* ── 3. Secondary row: lifecycle chart + activity feed ──── */
 .ad-bottom {
   display: grid;
-  grid-template-columns: 1.05fr 0.95fr 1.05fr;
+  grid-template-columns: 1fr 1.15fr;
   gap: 14px;
   margin-bottom: 14px;
 }
 .ad-bottom > .ad-card {
-  height: 256px;
+  height: 240px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
 }
-.ad-bot-body { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+.ad-bot-body { flex: 1; min-height: 0; overflow: hidden auto; display: flex; flex-direction: column; }
+
+/* Secondary panels (lifecycle/activity/quick actions/quick links) are
+   support material, not the hero — a touch quieter than the queue card:
+   smaller radius, shorter header, so the eye keeps landing on the table. */
+.ad-card-quiet { border-radius: 10px; }
+.ad-card-quiet .ad-head { height: 44px; padding: 0 16px; }
 
 /* Donut */
 .ad-donut-wrap {
@@ -254,75 +174,32 @@
 .ad-legend-lbl { color: var(--text-secondary); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ad-legend-cnt { color: var(--text-primary); font-weight: 600; min-width: 22px; text-align: right; }
 
-/* Expiring soon */
-.ad-exp-item {
-  display: flex; align-items: center; gap: 11px;
-  padding: 7px 20px;
-  border-bottom: 1px solid var(--card-border);
-  text-decoration: none; color: inherit;
-}
-.ad-exp-item:last-child { border-bottom: none; }
-.ad-exp-item:hover { background: var(--sidebar-hover); }
-.ad-exp-icon {
-  width: 30px; height: 30px; border-radius: 7px;
-  background: rgba(249,115,22,0.1); color: #f97316;
-  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-}
-.ad-exp-icon svg { width: 14px; height: 14px; }
-.ad-exp-info { flex: 1; min-width: 0; }
-.ad-exp-name   { font-size: 12px; font-weight: 500; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ad-exp-client { font-size: 11px; color: var(--text-muted); }
-.ad-exp-tag { font-size: 10px; font-weight: 700; border-radius: 5px; padding: 2px 7px; white-space: nowrap; flex-shrink: 0; }
-.ad-exp-tag.urgent { background: rgba(239,68,68,0.12); color: #f87171; }
-.ad-exp-tag.soon   { background: rgba(249,115,22,0.12); color: #fb923c; }
+/* Activity feed — each row is an ActivityLine component */
+.ad-activity-row { padding: 8px 20px; border-bottom: 1px solid var(--card-border); }
+.ad-activity-row:last-child { border-bottom: none; }
 
-/* Activity */
-.ad-act-item {
-  display: flex; align-items: flex-start; gap: 10px;
-  padding: 7px 20px;
-  border-bottom: 1px solid var(--card-border);
-}
-.ad-act-item:last-child { border-bottom: none; }
-.ad-act-avatar {
-  width: 28px; height: 28px; border-radius: 50%;
-  background: var(--avatar-gradient);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 10px; font-weight: 700; color: #fff; flex-shrink: 0; margin-top: 1px;
-}
-.ad-act-body { flex: 1; min-width: 0; }
-.ad-act-desc  { font-size: 12px; color: var(--text-primary); line-height: 1.4; }
-.ad-act-desc strong { font-weight: 600; }
-.ad-act-verb  { color: var(--text-secondary); font-weight: 400; }
-.ad-act-model { color: var(--text-muted); }
-.ad-act-time  { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-.ad-act-badge { font-size: 10px; font-weight: 700; border-radius: 5px; padding: 2px 7px; white-space: nowrap; flex-shrink: 0; margin-top: 2px; }
-.ad-act-badge.CREATE { background: rgba(34,197,94,0.12);   color: #4ade80; }
-.ad-act-badge.UPDATE { background: rgba(59,130,246,0.12);  color: #60a5fa; }
-.ad-act-badge.DELETE { background: rgba(239,68,68,0.12);   color: #f87171; }
-.ad-act-badge.VIEW   { background: rgba(107,114,128,0.12); color: #9ca3af; }
+/* Empty fallback */
+.ad-empty { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 13px; color: var(--text-muted); padding: 20px; }
 
-/* ── 4. Quick actions ───────────────────────────────────── */
-.ad-quick { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+/* ── 4. Quick actions — de-emphasized ───────────────────── */
+.ad-quick { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
 .ad-qa {
-  padding: 16px; text-decoration: none; color: inherit;
-  display: flex; flex-direction: column; gap: 10px;
-  transition: border-color 0.15s, background 0.15s, transform 0.12s;
+  padding: 13px 14px; text-decoration: none; color: inherit;
+  display: flex; align-items: center; gap: 10px;
+  transition: border-color 0.15s, background 0.15s;
 }
-.ad-qa:hover { border-color: var(--primary-glow); background: var(--primary-subtle); transform: translateY(-1px); }
+.ad-qa:hover { border-color: var(--primary-glow); background: var(--primary-subtle); }
 .ad-qa-icon {
-  width: 34px; height: 34px; border-radius: 9px;
+  width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0;
   background: var(--primary-subtle); color: var(--primary-light);
   display: flex; align-items: center; justify-content: center;
   border: 1px solid var(--primary-bg);
 }
-.ad-qa-icon svg { width: 15px; height: 15px; }
-.ad-qa-title { font-size: 13px; font-weight: 700; color: var(--text-primary); }
-.ad-qa-sub   { font-size: 11px; color: var(--text-muted); line-height: 1.5; }
+.ad-qa-icon svg { width: 13px; height: 13px; }
+.ad-qa-title { font-size: 12px; font-weight: 700; color: var(--text-primary); }
 
 /* ── Responsive ─────────────────────────────────────────── */
 @media (max-width: 1200px) {
-  .ad-top    { grid-template-columns: 1fr 1fr; height: auto; }
-  .ad-top > .ad-card { height: auto; }
   .ad-bottom { grid-template-columns: 1fr 1fr; }
   .ad-bottom > .ad-card { height: auto; }
   .ad-kpis   { grid-template-columns: repeat(3, 1fr); }
@@ -330,7 +207,6 @@
 }
 @media (max-width: 800px) {
   .DocCladDashboard { padding: 0 0 24px; }
-  .ad-top    { grid-template-columns: 1fr; }
   .ad-bottom { grid-template-columns: 1fr; }
   .ad-kpis   { grid-template-columns: repeat(2, 1fr); }
   .ad-quick  { grid-template-columns: repeat(2, 1fr); }
@@ -339,13 +215,13 @@
 
 <div class="DocCladDashboard">
 
-  {# ── Page header ─────────────────────────────────────── #}
-  <div class="arch-header" style="margin-bottom:20px">
+  {# ── Page header: title + primary action ─────────────── #}
+  <div class="arch-header ad-header-row">
     <div class="arch-header-left">
       <div class="arch-title-row">
-        <h1 class="arch-title" style="font-size:20px">Dashboard</h1>
+        <h1 class="arch-title ad-h1-lg">Dashboard</h1>
       </div>
-      <p class="arch-subtitle" id="adPageDate" style="font-size:13px"></p>
+      <p class="arch-subtitle ad-subtitle-sm" id="adPageDate"></p>
     </div>
     <div class="arch-header-right">
       <a href="{% url 'contracts:contract_list' %}" class="arch-chip">
@@ -360,42 +236,14 @@
         </svg>
         Reports
       </a>
-      <a href="{% url 'contracts:contract_create' %}" class="btn-cta">
-        <svg class="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-        </svg>
+      <a href="{% url 'contracts:contract_create' %}" class="btn-primary-grad">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
         New Contract
       </a>
     </div>
   </div>
 
-  {# ── KPI strip (always visible) ──────────────────────── #}
-  <div class="ad-kpis" style="margin-bottom:16px">
-    <div class="ad-card ad-kpi kpi-card">
-      <div class="ad-kpi-num kc-blue">{{ active_cases|default:0 }}</div>
-      <div class="ad-kpi-label">Active contracts</div>
-    </div>
-    <div class="ad-card ad-kpi kpi-card">
-      <div class="ad-kpi-num kc-amber">{{ approval_stats.pending|default:0 }}</div>
-      <div class="ad-kpi-label">Pending approval</div>
-    </div>
-    <div class="ad-card ad-kpi kpi-card">
-      <div class="ad-kpi-num kc-orange">{{ expiring_case_count|default:0 }}</div>
-      <div class="ad-kpi-label">Expiring soon</div>
-    </div>
-    <div class="ad-card ad-kpi kpi-card">
-      <div class="ad-kpi-num kc-red">{{ risk_stats.high_critical|default:0 }}</div>
-      <div class="ad-kpi-label">High risk</div>
-    </div>
-    <div class="ad-card ad-kpi kpi-card">
-      <div class="ad-kpi-num kc-purple">{{ task_signal_stats.pending|default:0 }}</div>
-      <div class="ad-kpi-label">Task Signals</div>
-    </div>
-  </div>
-  {# sr-only anchors for semantic labels always present in the page #}
-  <span class="sr-only">Recent Contracts — Recent Cases — My Work Queue — Workflow recommendations open — Portfolio snapshot — Case Portfolio — Governance activity — Quick links — Reports &amp; analytics — Privacy &amp; compliance</span>
-
-  {% if not total_contracts and not my_work_items %}
+  {% if not dashboard_has_data %}
   {# ══ ONBOARDING STATE ════════════════════════════════════ #}
   <div class="ad-onboard-wrap">
     <h2 class="ad-onboard-h">Start building your legal workspace</h2>
@@ -449,132 +297,62 @@
   </div>
 
   {% else %}
-  {# ══ NORMAL DASHBOARD ════════════════════════════════════ #}
+  {# ══ NORMAL DASHBOARD — workflow queue first ═══════════════ #}
 
-  {# ── 1. Needs your attention + My work queue ─────────── #}
-  <div class="ad-top">
-
-    <div class="ad-card">
-      <div class="ad-head">
-        <span class="ad-head-title">Needs your attention</span>
-      </div>
-      <div class="ad-attn-body">
-
-        <a href="{% url 'contracts:approval_request_list' %}" class="ad-attn-row">
-          <div class="ad-attn-badge c-red">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
-          </div>
-          <div class="ad-attn-txt">
-            <div class="ad-attn-lbl">{{ approval_stats.pending|default:0 }} pending approval{{ approval_stats.pending|default:0|pluralize }}</div>
-            <div class="ad-attn-meta">Waiting for your approval</div>
-          </div>
-          <div class="ad-attn-chev"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></div>
-        </a>
-
-        <a href="{% url 'contracts:contract_list' %}" class="ad-attn-row">
-          <div class="ad-attn-badge c-orange">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          </div>
-          <div class="ad-attn-txt">
-            <div class="ad-attn-lbl">{{ expiring_case_count|default:0 }} contract{{ expiring_case_count|default:0|pluralize }} expiring within 30 days</div>
-            <div class="ad-attn-meta">Requires renewal or action</div>
-          </div>
-          <div class="ad-attn-chev"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></div>
-        </a>
-
-        <a href="{% url 'contracts:deadline_list' %}" class="ad-attn-row">
-          <div class="ad-attn-badge c-yellow">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-          </div>
-          <div class="ad-attn-txt">
-            <div class="ad-attn-lbl">{{ deadline_stats.overdue|default:0 }} overdue deadline{{ deadline_stats.overdue|default:0|pluralize }}</div>
-            <div class="ad-attn-meta">Past due — immediate action needed</div>
-          </div>
-          <div class="ad-attn-chev"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></div>
-        </a>
-
-        <a href="{% url 'contracts:risk_log_list' %}" class="ad-attn-row">
-          <div class="ad-attn-badge c-purple">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-          </div>
-          <div class="ad-attn-txt">
-            <div class="ad-attn-lbl">{{ risk_stats.high_critical|default:0 }} high-risk contract{{ risk_stats.high_critical|default:0|pluralize }}</div>
-            <div class="ad-attn-meta">Require risk review</div>
-          </div>
-          <div class="ad-attn-chev"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></div>
-        </a>
-
-      </div>
-      <div class="ad-attn-foot">
-        <a href="{% url 'contracts:contract_list' %}">
-          Go to contract list
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
-        </a>
-      </div>
+  {# ── 1. Workflow queue (primary object) ───────────────── #}
+  <div class="ad-card ad-queue-card">
+    <div class="ad-queue-tabs-wrap">
+      <nav class="wq-tabs" role="tablist" aria-label="Workflow queue views">
+        {% for tab in queue_tabs %}
+        <button type="button"
+                class="wq-tab{% if forloop.first %} wq-tab-active{% endif %}"
+                data-queue-tab="{{ tab.key }}"
+                role="tab"
+                aria-selected="{% if forloop.first %}true{% else %}false{% endif %}">
+          {{ tab.label }} <span class="wq-tab-count">{{ tab.rows|length }}</span>
+        </button>
+        {% endfor %}
+      </nav>
     </div>
-
-    <div class="ad-card">
-      <div class="ad-head">
-        <span class="ad-head-title">My Work Queue</span>
-        <div class="ad-head-meta">
-          <span class="ad-head-count">{{ my_work_items|length }} item{{ my_work_items|length|pluralize }}</span>
-          <a href="{% url 'contracts:contract_list' %}" class="ad-head-link">View all</a>
-        </div>
-      </div>
-      <div class="ad-wq-body">
-        {% if my_work_items %}
-        <table class="ad-wq-table">
-          <thead><tr><th>ITEM</th><th>TYPE</th><th>STATUS</th><th>DUE</th></tr></thead>
-          <tbody>
-            {% for item in my_work_items %}
-            <tr>
-              <td>
-                <a href="{{ item.href }}">{{ item.title|truncatechars:36 }}</a>
-                <div class="ad-wq-td-meta">{{ item.meta|truncatechars:38 }}</div>
-              </td>
-              <td class="ad-wq-type">{{ item.type|default:item.badge }}</td>
-              <td><span class="ad-badge {{ item.badge_class }}">{{ item.badge }}</span></td>
-              <td class="ad-wq-due">—</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-        {% else %}
-        <div class="ad-empty">No items currently assigned to you.</div>
-        {% endif %}
-      </div>
+    <div class="ad-queue-body">
+      {% for tab in queue_tabs %}
+        {% work_queue_table tab.key tab.rows tab.empty_message forloop.first %}
+      {% endfor %}
     </div>
+  </div>
 
-  </div>{# /ad-top #}
-
-  {# ── 2. KPI strip ────────────────────────────────────── #}
+  {# ── 2. KPI strip (compact, secondary) ────────────────── #}
   <div class="ad-kpis">
-    <div class="ad-card ad-kpi kpi-card">
-      <div class="ad-kpi-num kc-blue">{{ active_cases|default:0 }}</div>
-      <div class="ad-kpi-label">Active contracts</div>
+    <div class="kpi-card">
+      <div class="kpi-label">Active contracts</div>
+      <div class="kpi-value c-primary">{{ active_cases|default:0 }}</div>
     </div>
-    <div class="ad-card ad-kpi kpi-card">
-      <div class="ad-kpi-num kc-amber">{{ approval_stats.pending|default:0 }}</div>
-      <div class="ad-kpi-label">Pending approval</div>
+    <div class="kpi-card">
+      <div class="kpi-label">Pending approval</div>
+      <div class="kpi-value {% if approval_stats.pending %}c-amber{% else %}c-muted{% endif %}">{{ approval_stats.pending|default:0 }}</div>
     </div>
-    <div class="ad-card ad-kpi kpi-card">
-      <div class="ad-kpi-num kc-purple">{{ signature_stats.pending|default:0 }}</div>
-      <div class="ad-kpi-label">Pending signatures</div>
+    <div class="kpi-card">
+      <div class="kpi-label">Pending signatures</div>
+      <div class="kpi-value {% if signature_stats.pending %}c-purple{% else %}c-muted{% endif %}">{{ signature_stats.pending|default:0 }}</div>
     </div>
-    <div class="ad-card ad-kpi kpi-card">
-      <div class="ad-kpi-num kc-orange">{{ expiring_case_count|default:0 }}</div>
-      <div class="ad-kpi-label">Expiring soon</div>
+    <div class="kpi-card{% if expiring_case_count %} stat-card-amber{% endif %}">
+      <div class="kpi-label{% if expiring_case_count %} c-amber-soft{% endif %}">Expiring soon</div>
+      <div class="kpi-value {% if expiring_case_count %}c-amber{% else %}c-muted{% endif %}">{{ expiring_case_count|default:0 }}</div>
     </div>
-    <div class="ad-card ad-kpi kpi-card">
-      <div class="ad-kpi-num kc-red">{{ risk_stats.high_critical|default:0 }}</div>
-      <div class="ad-kpi-label">High risk</div>
+    <div class="kpi-card">
+      <div class="kpi-label">High risk</div>
+      <div class="kpi-value {% if risk_stats.high_critical %}c-red{% else %}c-muted{% endif %}">{{ risk_stats.high_critical|default:0 }}</div>
     </div>
-  </div>{# /ad-kpis #}
+    <div class="kpi-card">
+      <div class="kpi-label">Task Signals</div>
+      <div class="kpi-value c-primary">{{ task_signal_stats.pending|default:0 }}</div>
+    </div>
+  </div>
 
-  {# ── 3. Bottom row ───────────────────────────────────── #}
+  {# ── 3. Secondary row: lifecycle chart + activity feed ─── #}
   <div class="ad-bottom">
 
-    <div class="ad-card">
+    <div class="ad-card ad-card-quiet">
       <div class="ad-head"><span class="ad-head-title">Contract lifecycle</span></div>
       <div class="ad-donut-wrap">
         <canvas id="adLifecycleChart" width="130" height="130"></canvas>
@@ -586,56 +364,24 @@
             <span class="ad-legend-cnt">{{ item.count }}</span>
           </div>
           {% empty %}
-          <div class="ad-legend-row"><span class="ad-legend-dot" data-color="#3b82f6"></span><span class="ad-legend-lbl">Active</span><span class="ad-legend-cnt">—</span></div>
-          <div class="ad-legend-row"><span class="ad-legend-dot" data-color="#f59e0b"></span><span class="ad-legend-lbl">In review</span><span class="ad-legend-cnt">—</span></div>
-          <div class="ad-legend-row"><span class="ad-legend-dot" data-color="#a855f7"></span><span class="ad-legend-lbl">Pending signature</span><span class="ad-legend-cnt">—</span></div>
-          <div class="ad-legend-row"><span class="ad-legend-dot" data-color="#10b981"></span><span class="ad-legend-lbl">Executed</span><span class="ad-legend-cnt">—</span></div>
-          <div class="ad-legend-row"><span class="ad-legend-dot" data-color="#6b7280"></span><span class="ad-legend-lbl">Expired</span><span class="ad-legend-cnt">—</span></div>
+          <div class="ad-legend-row"><span class="ad-legend-dot" data-color="#3F569B"></span><span class="ad-legend-lbl">Active</span><span class="ad-legend-cnt">—</span></div>
+          <div class="ad-legend-row"><span class="ad-legend-dot" data-color="#8A5A14"></span><span class="ad-legend-lbl">In review</span><span class="ad-legend-cnt">—</span></div>
+          <div class="ad-legend-row"><span class="ad-legend-dot" data-color="#6D4E8E"></span><span class="ad-legend-lbl">Pending signature</span><span class="ad-legend-cnt">—</span></div>
+          <div class="ad-legend-row"><span class="ad-legend-dot" data-color="#0A7264"></span><span class="ad-legend-lbl">Executed</span><span class="ad-legend-cnt">—</span></div>
+          <div class="ad-legend-row"><span class="ad-legend-dot" data-color="#5F6B85"></span><span class="ad-legend-lbl">Expired</span><span class="ad-legend-cnt">—</span></div>
           {% endfor %}
         </div>
       </div>
     </div>
 
-    <div class="ad-card">
-      <div class="ad-head">
-        <span class="ad-head-title">Expiring contracts</span>
-        <a href="{% url 'contracts:contract_list' %}" class="ad-head-link">View all</a>
-      </div>
-      <div class="ad-bot-body">
-        {% for contract in expiring_contracts %}
-        <a href="{% url 'contracts:contract_detail' contract.pk %}" class="ad-exp-item">
-          <div class="ad-exp-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></div>
-          <div class="ad-exp-info">
-            <div class="ad-exp-name">{{ contract.title|truncatechars:32 }}</div>
-            <div class="ad-exp-client">{{ contract.client.name|default:"No client" }}</div>
-          </div>
-          <span class="ad-exp-tag soon">{{ contract.end_date|timeuntil }} left</span>
-        </a>
-        {% empty %}
-        <div class="ad-empty">No contracts expiring soon.</div>
-        {% endfor %}
-      </div>
-    </div>
-
-    <div class="ad-card">
+    <div class="ad-card ad-card-quiet">
       <div class="ad-head">
         <span class="ad-head-title">Recent activity</span>
         <a href="{% url 'contracts:audit_log_list' %}" class="ad-head-link">View all</a>
       </div>
       <div class="ad-bot-body">
-        {% for log in recent_audit|slice:":4" %}
-        <div class="ad-act-item">
-          <div class="ad-act-avatar">{% if log.user %}{{ log.user.first_name|default:log.user.username|slice:":1"|upper }}{% else %}S{% endif %}</div>
-          <div class="ad-act-body">
-            <div class="ad-act-desc">
-              <strong>{% if log.user %}{{ log.user.get_full_name|default:log.user.username }}{% else %}System{% endif %}</strong>
-              <span class="ad-act-verb"> {{ log.get_action_display|lower }} </span>
-              <span class="ad-act-model">{{ log.model_name|object_type_label }}</span>
-            </div>
-            <div class="ad-act-time">{{ log.timestamp|timesince }} ago</div>
-          </div>
-          <span class="ad-act-badge {{ log.action }}">{{ log.get_action_display }}</span>
-        </div>
+        {% for log in recent_audit|slice:":5" %}
+        <div class="ad-activity-row">{% activity_line log %}</div>
         {% empty %}
         <div class="ad-empty">No recent activity.</div>
         {% endfor %}
@@ -644,65 +390,34 @@
 
   </div>{# /ad-bottom #}
 
-  {# ── 4. Portfolio panels ──────────────────────────────── #}
-  <div class="ad-bottom" style="margin-top:16px">
-    <div class="ad-card">
-      <div class="ad-head">
-        <span class="ad-head-title">Recent Contracts</span>
-        <a href="{% url 'contracts:contract_list' %}" class="ad-head-link">View all</a>
-      </div>
-      <div class="ad-bot-body">
-        <p class="ad-empty">Recent Cases &amp; Recent Contracts from your portfolio.</p>
-        <p class="ad-empty" style="display:none">Recent Cases</p>
-      </div>
-    </div>
-    <div class="ad-card">
-      <div class="ad-head">
-        <span class="ad-head-title">Task Signals</span>
-        <a href="{% url 'contracts:legal_task_kanban' %}" class="ad-head-link">View all</a>
-      </div>
-      <div class="ad-bot-body">
-        <p class="ad-empty">Workflow recommendations open — {{ task_signal_stats.pending|default:0 }} pending signals.</p>
-      </div>
-    </div>
-    <div class="ad-card">
-      <div class="ad-head">
-        <span class="ad-head-title">Case Portfolio</span>
-      </div>
-      <div class="ad-bot-body">
-        <p class="ad-empty">Portfolio snapshot &amp; Governance activity overview.</p>
-      </div>
-    </div>
-  </div>
-
-  {# ── 5. Quick actions ────────────────────────────────── #}
+  {# ── 4. Quick actions (de-emphasized) ─────────────────── #}
   <div class="ad-quick">
-    <a href="{% url 'contracts:contract_create' %}" class="ad-card ad-qa">
+    <a href="{% url 'contracts:contract_create' %}" class="ad-card ad-card-quiet ad-qa">
       <div class="ad-qa-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg></div>
-      <div><div class="ad-qa-title">Create contract</div><div class="ad-qa-sub">New contract from template or scratch</div></div>
+      <div class="ad-qa-title">Create contract</div>
     </a>
-    <a href="{% url 'contracts:contract_create' %}" class="ad-card ad-qa">
+    <a href="{% url 'contracts:contract_create' %}" class="ad-card ad-card-quiet ad-qa">
       <div class="ad-qa-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg></div>
-      <div><div class="ad-qa-title">Upload contract</div><div class="ad-qa-sub">Add existing contract to repository</div></div>
+      <div class="ad-qa-title">Upload contract</div>
     </a>
-    <a href="{% url 'contracts:workflow_dashboard' %}" class="ad-card ad-qa">
+    <a href="{% url 'contracts:workflow_dashboard' %}" class="ad-card ad-card-quiet ad-qa">
       <div class="ad-qa-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg></div>
-      <div><div class="ad-qa-title">Start workflow</div><div class="ad-qa-sub">Trigger approval or review workflow</div></div>
+      <div class="ad-qa-title">Start workflow</div>
     </a>
-    <a href="{% url 'contracts:counterparty_create' %}" class="ad-card ad-qa">
+    <a href="{% url 'contracts:counterparty_create' %}" class="ad-card ad-card-quiet ad-qa">
       <div class="ad-qa-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg></div>
-      <div><div class="ad-qa-title">Add counterparty</div><div class="ad-qa-sub">Register a new counterparty</div></div>
+      <div class="ad-qa-title">Add counterparty</div>
     </a>
-    <a href="{% url 'contracts:reports_dashboard' %}" class="ad-card ad-qa">
+    <a href="{% url 'contracts:reports_dashboard' %}" class="ad-card ad-card-quiet ad-qa">
       <div class="ad-qa-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg></div>
-      <div><div class="ad-qa-title">Run report</div><div class="ad-qa-sub">Generate reports and insights</div></div>
+      <div class="ad-qa-title">Run report</div>
     </a>
   </div>
 
-  {# ── 6. Quick links ──────────────────────────────────── #}
-  <div class="ad-card" style="margin-top:16px;padding:16px 20px">
-    <div class="ad-head-title" style="margin-bottom:12px">Quick links</div>
-    <div style="display:flex;flex-wrap:wrap;gap:8px">
+  {# ── 5. Quick links ────────────────────────────────────── #}
+  <div class="ad-card ad-card-quiet ad-links-card">
+    <div class="ad-head-title ad-links-title">Quick links</div>
+    <div class="ad-links-row">
       <a href="{% url 'contracts:reports_dashboard' %}" class="arch-chip">Reports &amp; analytics</a>
       <a href="{% url 'contracts:privacy_dashboard' %}" class="arch-chip">Privacy &amp; compliance</a>
       <a href="{% url 'contracts:contract_list' %}" class="arch-chip">Contracts</a>
@@ -729,6 +444,23 @@
   /* Legend dot colors (JS inline style — not blocked by CSP style-src) */
   document.querySelectorAll('.ad-legend-dot[data-color]').forEach(function (el) {
     el.style.background = el.getAttribute('data-color');
+  });
+
+  /* Workflow queue tabs — client-side switch, no page reload */
+  var tabs  = document.querySelectorAll('.wq-tab[data-queue-tab]');
+  var panels = document.querySelectorAll('table.wq-table[data-queue-panel]');
+  tabs.forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      var key = tab.getAttribute('data-queue-tab');
+      tabs.forEach(function (t) {
+        var active = t === tab;
+        t.classList.toggle('wq-tab-active', active);
+        t.setAttribute('aria-selected', active ? 'true' : 'false');
+      });
+      panels.forEach(function (panel) {
+        panel.hidden = panel.getAttribute('data-queue-panel') !== key;
+      });
+    });
   });
 
   /* Donut chart */

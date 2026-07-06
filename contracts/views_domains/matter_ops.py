@@ -306,6 +306,14 @@ class DueDiligenceUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin, Upda
     success_url = reverse_lazy('contracts:due_diligence_list')
 
 
+# Departmental capacity budgets are firm-operations data (allocations, spend,
+# department/quarter), not client funds — deliberately open to any active org
+# member (MEMBER/ADMIN/OWNER), same policy as Invoice and the reports
+# dashboard. This is a policy decision, not an oversight: contrast with
+# TrustAccount (contracts/views_domains/trust_conflict.py), which holds client
+# funds and is restricted to OWNER/ADMIN for bar-compliance reasons that don't
+# apply here. Tenant scoping (TenantScopedQuerysetMixin / TenantAssignCreateMixin)
+# still applies — see tests/test_budget_access_policy.py.
 class BudgetListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
     model = Budget
     template_name = 'contracts/budget_list.html'
@@ -338,6 +346,8 @@ class BudgetListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
         return ctx
 
 
+# Same policy as BudgetListView above: any active org member may create a
+# department budget.
 class BudgetCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView):
     model = Budget
     form_class = BudgetForm
@@ -345,12 +355,16 @@ class BudgetCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView):
     success_url = reverse_lazy('contracts:budget_list')
 
 
+# Same policy as BudgetListView above: any active org member may view a
+# department budget's detail.
 class BudgetDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailView):
     model = Budget
     template_name = 'contracts/budget_detail.html'
     context_object_name = 'budget'
 
 
+# Same policy as BudgetListView above: any active org member may edit a
+# department budget.
 class BudgetUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin, UpdateView):
     model = Budget
     form_class = BudgetForm

@@ -11,6 +11,17 @@
         "DJANGO_DEBUG": "true",
         "DATABASE_URL": ""
       }
+    },
+    {
+      "name": "django-alt",
+      "runtimeExecutable": ".venv/bin/python",
+      "runtimeArgs": ["manage.py", "runserver", "8061", "--noreload"],
+      "port": 8061,
+      "env": {
+        "DJANGO_ENV": "development",
+        "DJANGO_DEBUG": "true",
+        "DATABASE_URL": ""
+      }
     }
   ]
 }

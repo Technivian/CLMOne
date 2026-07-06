@@ -161,13 +161,16 @@ class UIButtonAndFlowIntegrityTests(TestCase):
         self.assertEqual(dashboard_response.status_code, 200)
         self.assertContains(dashboard_response, 'Active contracts')
         self.assertContains(dashboard_response, 'Task Signals')
-        self.assertContains(dashboard_response, 'Recent Cases')
+        self.assertContains(dashboard_response, 'Waiting on Me')
 
         list_response = self.client.get(reverse('contracts:contract_list'))
         self.assertEqual(list_response.status_code, 200)
         self.assertContains(list_response, 'Cases')
         self.assertContains(list_response, 'Search contracts...')
-        self.assertContains(list_response, 'New Case')
+        # The page header no longer duplicates the create CTA ("New Case"
+        # pointed at the same route); the top bar carries the single
+        # "New Contract" entry point on every page.
+        self.assertContains(list_response, 'New Contract')
 
         detail_response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': Contract.objects.first().pk}))
         self.assertEqual(detail_response.status_code, 200)

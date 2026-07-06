@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 {% load static %}
 <head>
     <meta charset="UTF-8">
@@ -26,69 +26,69 @@
     <script nonce="{{ csp_nonce }}">
         // Apply persisted theme before paint to avoid a flash.
         (function() {
-            var t = localStorage.getItem('docclad-theme') || localStorage.getItem('cms-aegis-theme') || 'dark';
+            var t = localStorage.getItem('docclad-theme') || localStorage.getItem('cms-aegis-theme') || 'light';
             document.documentElement.setAttribute('data-theme', t);
         })();
     </script>
     <style nonce="{{ csp_nonce }}">
         * { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
 
-        :root, [data-theme="dark"] {
-            --bg: #0B0F19;
-            --surface: #111827;
-            --surface-alt: #0B0F19;
-            --primary: #2563EB;
-            --primary-hover: #3B82F6;
-            --primary-light: #60A5FA;
-            --accent: #22C55E;
-            --text-primary: #F9FAFB;
-            --text-secondary: #9CA3AF;
-            --text-muted: #6B7280;
-            --text-dim: #4B5563;
-            --border: #1F2937;
-            --nav-bg: rgba(11,15,25,0.92);
-            --primary-glow: rgba(37,99,235,0.3);
-            --primary-subtle: rgba(37,99,235,0.1);
-            --primary-bg: rgba(37,99,235,0.15);
-            --primary-bg-light: rgba(37,99,235,0.06);
-            --accent-bg: rgba(34,197,94,0.12);
-            --accent-bg-light: rgba(34,197,94,0.06);
-            --amber-color: #F59E0B;
-            --amber-bg: rgba(245,158,11,0.12);
-            --error: #F87171;
-            --error-bg: rgba(239,68,68,0.08);
-            --error-border: rgba(239,68,68,0.2);
-            --input-bg: #111827;
-            --hover-overlay: rgba(255,255,255,0.05);
+        :root, [data-theme="light"] {
+            --bg: #F3F5F7;
+            --surface: #EDF0F4;
+            --surface-alt: #FFFFFF;
+            --primary: #B5502E;
+            --primary-hover: #8A3A1E;
+            --primary-light: #C96A3E;
+            --accent: #B5502E;
+            --text-primary: #0B1330;
+            --text-secondary: #5F6B85;
+            --text-muted: #838DA3;
+            --text-dim: #AAB2C2;
+            --border: #DEE2EA;
+            --nav-bg: rgba(255,255,255,0.92);
+            --primary-glow: rgba(181,80,46,0.16);
+            --primary-subtle: rgba(181,80,46,0.08);
+            --primary-bg: rgba(181,80,46,0.12);
+            --primary-bg-light: rgba(181,80,46,0.05);
+            --accent-bg: rgba(181,80,46,0.10);
+            --accent-bg-light: rgba(181,80,46,0.05);
+            --amber-color: #8A5A14;
+            --amber-bg: #F6EDD8;
+            --error: #A63A2B;
+            --error-bg: #F8E8E3;
+            --error-border: #EFCCC1;
+            --input-bg: #FFFFFF;
+            --hover-overlay: rgba(11,19,48,0.03);
         }
 
-        [data-theme="light"] {
-            --bg: #FFFFFF;
-            --surface: #F1F5F9;
-            --surface-alt: #FFFFFF;
-            --primary: #2563EB;
-            --primary-hover: #1D4ED8;
-            --primary-light: #2563EB;
-            --accent: #16A34A;
-            --text-primary: #0F172A;
-            --text-secondary: #64748B;
-            --text-muted: #94A3B8;
-            --text-dim: #CBD5E1;
-            --border: #E2E8F0;
-            --nav-bg: rgba(255,255,255,0.92);
-            --primary-glow: rgba(37,99,235,0.15);
-            --primary-subtle: rgba(37,99,235,0.06);
-            --primary-bg: rgba(37,99,235,0.08);
-            --primary-bg-light: rgba(37,99,235,0.04);
-            --accent-bg: rgba(22,163,74,0.08);
-            --accent-bg-light: rgba(22,163,74,0.04);
-            --amber-color: #D97706;
-            --amber-bg: rgba(217,119,6,0.08);
-            --error: #DC2626;
-            --error-bg: #FEF2F2;
-            --error-border: #FECACA;
-            --input-bg: #FFFFFF;
-            --hover-overlay: rgba(0,0,0,0.03);
+        [data-theme="dark"] {
+            --bg: #070D20;
+            --surface: #101A38;
+            --surface-alt: #0B1330;
+            --primary: #CF7248;
+            --primary-hover: #E29368;
+            --primary-light: #E29368;
+            --accent: #CF7248;
+            --text-primary: #EDF0F6;
+            --text-secondary: #A9B2C8;
+            --text-muted: #78839E;
+            --text-dim: #4E5A78;
+            --border: #1C2842;
+            --nav-bg: rgba(7,13,32,0.92);
+            --primary-glow: rgba(207,114,72,0.22);
+            --primary-subtle: rgba(207,114,72,0.12);
+            --primary-bg: rgba(207,114,72,0.16);
+            --primary-bg-light: rgba(207,114,72,0.07);
+            --accent-bg: rgba(207,114,72,0.14);
+            --accent-bg-light: rgba(207,114,72,0.07);
+            --amber-color: #D9A75B;
+            --amber-bg: rgba(196,145,51,0.15);
+            --error: #E08A78;
+            --error-bg: rgba(196,82,61,0.14);
+            --error-border: rgba(196,82,61,0.3);
+            --input-bg: #070D20;
+            --hover-overlay: rgba(255,255,255,0.05);
         }
 
         .theme-toggle { cursor: pointer; background: var(--surface); border: 1px solid var(--border); border-radius: 0.5rem; padding: 0.5rem; color: var(--text-secondary); transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
@@ -135,8 +135,8 @@
         .bg-page             { background: var(--bg); }
         .glow-blob-primary   { background: radial-gradient(circle, var(--primary-subtle) 0%, transparent 70%); }
         .glow-blob-accent    { background: radial-gradient(circle, var(--accent-bg-light) 0%, transparent 70%); }
-        .icon-box-primary    { background: var(--primary-bg); border: 1px solid rgba(37,99,235,0.15); }
-        .icon-box-accent     { background: var(--accent-bg); border: 1px solid rgba(34,197,94,0.15); }
+        .icon-box-primary    { background: var(--primary-bg); border: 1px solid var(--primary-subtle); }
+        .icon-box-accent     { background: var(--accent-bg); border: 1px solid var(--primary-subtle); }
         .icon-primary-filled { background: var(--primary); box-shadow: 0 2px 8px var(--primary-glow); }
         .icon-soft-primary   { background: var(--primary-bg); }
         .c-brand             { color: var(--primary); }
@@ -147,8 +147,8 @@
         .msg-box             { background: var(--surface); border: 1px solid var(--border); }
         .surface-link        { background: var(--surface); border: 1px solid var(--border); text-decoration: none; }
         .chip-primary-soft   { background: var(--primary-subtle); color: var(--primary); }
-        .stat-tile-primary   { background: var(--primary-bg-light); border: 1px solid rgba(37,99,235,0.12); }
-        .stat-tile-accent    { background: var(--accent-bg-light); border: 1px solid rgba(34,197,94,0.12); }
+        .stat-tile-primary   { background: var(--primary-bg-light); border: 1px solid var(--primary-subtle); }
+        .stat-tile-accent    { background: var(--accent-bg-light); border: 1px solid var(--primary-subtle); }
         .alert-error         { background: var(--error-bg); border: 1px solid var(--error-border); }
         .checkbox-primary    { accent-color: var(--primary); }
         .glow-btn-primary-grad    { background: var(--primary); box-shadow: 0 8px 32px var(--primary-glow), 0 2px 4px rgba(0,0,0,0.2); }

@@ -1,7 +1,37 @@
 {% extends "base.html" %}
+{% load docclad_format %}
 {% block title %}{% if form.instance.pk %}Edit Contract{% else %}New Contract{% endif %} – DocClad{% endblock %}
 {% block content %}
 <style nonce="{{ csp_nonce }}">
+/* editor-page header: compact 20px title (Ironclad designer convention) */
+.arch-header .arch-title { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
+.arch-header { margin-bottom: 20px; }
+/* lifecycle stepper strip above the form body */
+.cform-stepper {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 10px 16px 6px;
+  margin-bottom: 24px;
+}
+/* flat right-rail cards: hairline border, 12px radius, no shadow */
+.arch-workspace-sidebar .card-l2 {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  box-shadow: none;
+}
+/* "what happens next" numerals: neutral hairline circles */
+.next-step-num {
+  flex-shrink: 0;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  color: var(--text-muted);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 600;
+}
 /* draft section cards */
 .draft-section-card {
   border: 1px solid var(--card-border);
@@ -43,7 +73,7 @@
 .draft-btn-remove {
   padding: 5px 11px; border-radius: 7px;
   border: 1px solid rgba(239,68,68,0.25); background: var(--surface);
-  color: #F87171; font-size: 12px; font-weight: 500; cursor: pointer;
+  color: var(--msg-error-text); font-size: 12px; font-weight: 500; cursor: pointer;
 }
 .draft-btn-remove:hover { background: rgba(239,68,68,0.08); }
 .draft-add-btn {
@@ -55,6 +85,14 @@
 
 <div class="page-wrap">
 
+  {% comment %}
+  The form wraps the page header so the header submit buttons are native
+  form controls (no reliance on the form="…" attribute).
+  {% endcomment %}
+  <form method="post" action="{{ form_action|default:request.path }}" id="contract-form">
+    {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+    {% csrf_token %}
+
   {# ── Page header ──────────────────────────────────────────── #}
   <div class="arch-header">
     <div class="arch-header-left">
@@ -62,7 +100,11 @@
         <h1 class="arch-title">
           {% if form.instance.pk %}Edit Contract{% else %}New Contract Request{% endif %}
         </h1>
+        {% if form.instance.pk %}
+        <span class="badge-sm {{ form.instance.status|status_badge_class }}">{{ form.instance.get_status_display }}</span>
+        {% else %}
         <span class="badge-sm badge-gray">Draft</span>
+        {% endif %}
       </div>
       <p class="arch-subtitle">
         {% if form.instance.pk %}
@@ -74,14 +116,52 @@
     </div>
     <div class="arch-header-right">
       <a href="{% url 'contracts:contract_list' %}" class="btn-link">Cancel</a>
+      <button type="submit" name="preview_draft" value="1" class="btn-quiet">Preview draft</button>
+      <button type="submit" class="btn-cta">
+        {% if form.instance.pk %}Update Contract{% else %}Create Contract{% endif %}
+      </button>
     </div>
   </div>
 
-  {# ── Workspace form ───────────────────────────────────────── #}
-  <form method="post" action="{{ form_action|default:request.path }}" id="contract-form">
-    {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
-    {% csrf_token %}
+  {# ── Lifecycle stepper — real stages for edits, canonical path for new #}
+  <div class="cform-stepper">
+    {% if form.instance.pk %}
+    {% lifecycle_steps form.instance as lc_steps %}
+    <div class="lc-track" role="list" aria-label="Contract lifecycle: currently {{ form.instance.get_lifecycle_stage_display }}">
+      {% for step in lc_steps %}
+      <div class="lc-step lc-{{ step.state }}" role="listitem" {% if step.state == 'current' %}aria-current="step"{% endif %}>
+        <span class="lc-dot" aria-hidden="true"></span>
+        <span class="lc-label">{{ step.label }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="lc-track" role="list" aria-label="Contract lifecycle: currently Draft">
+      <div class="lc-step lc-current" role="listitem" aria-current="step">
+        <span class="lc-dot" aria-hidden="true"></span>
+        <span class="lc-label">Draft</span>
+      </div>
+      <div class="lc-step lc-upcoming" role="listitem">
+        <span class="lc-dot" aria-hidden="true"></span>
+        <span class="lc-label">Internal Review</span>
+      </div>
+      <div class="lc-step lc-upcoming" role="listitem">
+        <span class="lc-dot" aria-hidden="true"></span>
+        <span class="lc-label">Approval</span>
+      </div>
+      <div class="lc-step lc-upcoming" role="listitem">
+        <span class="lc-dot" aria-hidden="true"></span>
+        <span class="lc-label">Signature</span>
+      </div>
+      <div class="lc-step lc-upcoming" role="listitem">
+        <span class="lc-dot" aria-hidden="true"></span>
+        <span class="lc-label">Executed</span>
+      </div>
+    </div>
+    {% endif %}
+  </div>
 
+  {# ── Workspace form body ──────────────────────────────────── #}
     <div class="arch-workspace-grid">
 
       {# ── Main content ──────────────────────────────────────── #}
@@ -102,7 +182,7 @@
 
         {# Metadata fields — 2-column grid #}
         <div class="card-l1">
-          <div class="text-xs font-semibold uppercase tracking-[0.12em] c-muted mb-4">Contract details</div>
+          <div class="arch-section-label">Contract details</div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {% for field in form.visible_fields %}
             {% if field.name != 'title' and field.name != 'content' and field.name != 'clause_templates' %}
@@ -230,15 +310,15 @@
           <div class="arch-section-label">What happens next</div>
           <div class="space-y-3 text-sm">
             <div class="flex gap-2">
-              <span class="flex-shrink-0 w-5 h-5 rounded-full bg-[var(--primary-subtle)] text-[var(--primary-light)] flex items-center justify-center text-xs font-bold">1</span>
+              <span class="next-step-num">1</span>
               <span class="c-secondary">Draft is saved with your details.</span>
             </div>
             <div class="flex gap-2">
-              <span class="flex-shrink-0 w-5 h-5 rounded-full bg-[var(--surface)] text-[var(--text-muted)] border border-[var(--border)] flex items-center justify-center text-xs font-bold">2</span>
+              <span class="next-step-num">2</span>
               <span class="c-muted">Route to legal review or launch approval.</span>
             </div>
             <div class="flex gap-2">
-              <span class="flex-shrink-0 w-5 h-5 rounded-full bg-[var(--surface)] text-[var(--text-muted)] border border-[var(--border)] flex items-center justify-center text-xs font-bold">3</span>
+              <span class="next-step-num">3</span>
               <span class="c-muted">Signature, execution, and lifecycle tracking.</span>
             </div>
           </div>
@@ -246,16 +326,6 @@
       </div>
 
     </div>{# /arch-workspace-grid #}
-
-    {# ── Sticky footer actions ─────────────────────────────── #}
-    <div class="arch-sticky-footer">
-      <a href="{% url 'contracts:contract_list' %}" class="btn-link">Cancel</a>
-      <div class="flex-1"></div>
-      <button type="submit" name="preview_draft" value="1" class="btn-quiet">Preview draft</button>
-      <button type="submit" class="btn-cta">
-        {% if form.instance.pk %}Update Contract{% else %}Create Contract{% endif %}
-      </button>
-    </div>
 
   </form>
 
@@ -392,7 +462,7 @@
         barEl.style.width      = pct + '%';
 
         if (missing.length === 0) {
-            listEl.innerHTML = '<div class="flex items-center gap-2 text-xs" style="color:#4ade80"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>All required fields complete</div>';
+            listEl.innerHTML = '<div class="flex items-center gap-2 text-xs" style="color:var(--msg-success-text)"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>All required fields complete</div>';
         } else {
             listEl.innerHTML = missing.map(el =>
                 '<div class="arch-missing-item"><div class="arch-missing-dot"></div>' + getLabelFor(el) + '</div>'

@@ -1,12 +1,160 @@
+/* ═══════════════════════════════════════════════════════════════════
+   DOCCLAD DESIGN TOKENS — "Ledger" design language, v1.0
+   ───────────────────────────────────────────────────────────────────
+   Authority: docclad_agent_brand_kit/docs/docclad-approved-brand-board.png
+   Spec + rationale: DOCCLAD_DESIGN_SYSTEM.md
+   Governance: DESIGN_CONSTITUTION.md §14
+
+   Identity in one line: cool paper, navy ink, teal seal, ledger
+   precision. Every color below derives from the approved brand palette
+   (Deep Navy #0B1330 · Teal #11B39A · White · Light Gray #F3F5F7) or is
+   a desaturated archival status hue tuned to sit beside navy ink.
+   No raw Tailwind palette values. Inter is the only product typeface.
+   ═══════════════════════════════════════════════════════════════════ */
+
 :root {
+  /* ── Brand primitives (approved brand board — do not alter) ──── */
   --docclad-deep-navy: #0B1330;
   --docclad-navy: #0B1330;
   --docclad-teal: #11B39A;
   --docclad-white: #FFFFFF;
-  --docclad-light-gray: #F2F4F7;
+  --docclad-light-gray: #F3F5F7;
   --docclad-font: "Inter", "Segoe UI", system-ui, sans-serif;
 
+  /* Logo sizing (existing, unchanged) */
   --docclad-logo-header-height: 40px;
   --docclad-logo-mobile-height: 32px;
   --docclad-mark-size: 36px;
+
+  /* ── Ink ramp — navy-undertoned text & line colors.
+        Replaces every gray-* / slate-* usage. ─────────────────────── */
+  --ink-900: #0B1330;  /* headings, primary text (the brand navy IS the ink) */
+  --ink-700: #2E3A57;  /* strong body, active nav text */
+  --ink-600: #46536F;  /* body on paper */
+  --ink-500: #5F6B85;  /* secondary text */
+  --ink-400: #838DA3;  /* metadata, placeholders */
+  --ink-300: #AAB2C2;  /* disabled text, faint icons */
+  --line-strong: #C9CFDB; /* emphasized rules (table header underline) */
+  --line: #DEE2EA;        /* standard borders */
+  --hairline: #EBEEF3;    /* row separators, dividers */
+  --paper: #F3F5F7;       /* app canvas (brand light gray) */
+  --card: #FFFFFF;        /* raised working surfaces */
+  --well: #EDF0F4;        /* inset surfaces: input wells, code, table heads */
+
+  /* ── Copper ramp — the ONE action accent (v1.1). Rationed: primary
+        actions, links, active/selected states, focus rings. A ledger-ink
+        red with no incumbent among the seven competitors audited —
+        see DOCCLAD_DESIGN_SYSTEM.md v1.1 changelog for why this replaced
+        a teal accent that read as Ironclad-adjacent. ─────────────────── */
+  --copper-600: #C96A3E;
+  --copper-700: #B5502E;  /* default action, light theme (5.1:1 on white) */
+  --copper-800: #8A3A1E;  /* pressed, light theme */
+  --copper-500: #CF7248;  /* default action, dark theme (5.4:1 on navy card) */
+  --copper-400: #E29368;  /* hover, dark theme */
+  --copper-tint: #F3DACB;       /* selected row / active chip background */
+  --copper-tint-dark: rgba(207,114,72,0.14);
+  --focus-ring: rgba(181, 80, 46, 0.35);
+
+  /* ── Seal — brand teal, narrowed to a trust/verification signal only:
+        the logo, and any surface showing or moving client funds. Not a
+        general accent — copper owns "click me," teal owns "this is
+        verified/protected." ───────────────────────────────────────────── */
+  --seal: #0A7264;            /* light theme */
+  --seal-dark: #17BFA5;       /* dark theme */
+  --seal-bg: #DFF4EE;         /* fiduciary surface wash, light theme */
+  --seal-bg-dark: rgba(17,179,154,0.14);
+
+  /* ── Status vocabulary — archival, desaturated, tinted-pill pairs.
+        (bg = tint, fg = text) Never raw saturated hues. ───────────── */
+  --status-positive-fg: #0A7264;  /* active / executed / paid — seal family */
+  --status-positive-bg: #DBF2EC;
+  --status-pending-fg: #8A5A14;   /* waiting on someone — manila amber */
+  --status-pending-bg: #F6EDD8;
+  --status-progress-fg: #3F569B;  /* in-flight process — docket slate */
+  --status-progress-bg: #E8EDF8;
+  --status-danger-fg: #A63A2B;    /* overdue / expired / debit — oxide red */
+  --status-danger-bg: #F8E8E3;
+  --status-neutral-fg: #5F6B85;   /* draft / inactive / archived */
+  --status-neutral-bg: #ECEFF4;
+  --status-special-fg: #6D4E8E;   /* rare: matching/escalated — archival plum */
+  --status-special-bg: #F0EAF7;
+
+  /* ── Ledger layer — the signature. Fiduciary-grade numerics. ────── */
+  --money-font-feature: "tnum" 1, "lnum" 1;    /* tabular numerals, always */
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  --ledger-rule: var(--ink-300);        /* single rule above totals */
+  --ledger-rule-final: var(--ink-400);  /* double rule under final totals */
+  --debit: var(--status-danger-fg);
+  --credit: var(--status-positive-fg);
+
+  /* ── Type scale — Inter only. Weights 400/500/600, display 650.
+        No 700+ in product chrome; authority comes from spacing and
+        ink, not boldness. ─────────────────────────────────────────── */
+  --font-sans: var(--docclad-font);
+  --text-display: 600 28px/34px var(--font-sans);   /* letter-spacing -0.02em */
+  --text-title: 600 22px/28px var(--font-sans);     /* page titles, -0.02em */
+  --text-heading: 600 16px/24px var(--font-sans);   /* panel titles */
+  --text-subheading: 600 14px/20px var(--font-sans);
+  --text-body: 400 14px/22px var(--font-sans);
+  --text-small: 400 13px/18px var(--font-sans);
+  --text-meta: 400 12px/16px var(--font-sans);      /* letter-spacing -0.01em */
+  --text-eyebrow: 600 11px/16px var(--mono);        /* uppercase, +0.14em */
+  --text-data: 400 13px/20px var(--font-sans);      /* table cells, tnum */
+
+  /* ── Shape — borders over shadows; precision over softness. ─────── */
+  --radius-control: 6px;   /* buttons, inputs, selects */
+  --radius-card: 10px;     /* cards, panels */
+  --radius-panel: 12px;    /* modals, drawers */
+  --radius-pill: 999px;    /* status pills and people chips ONLY */
+
+  /* ── Elevation — ink-tinted, overlays only. Working surfaces use
+        1px borders, never drop shadows. ──────────────────────────── */
+  --shadow-overlay: 0 12px 32px rgba(11, 19, 48, 0.14), 0 2px 8px rgba(11, 19, 48, 0.08);
+  --shadow-drawer: -16px 0 40px rgba(11, 19, 48, 0.12);
+
+  /* ── Motion ──────────────────────────────────────────────────── */
+  --transition-fast: 120ms ease;
+  --transition-base: 180ms ease;
+}
+
+/* ═══ Dark theme — "navy night". The brand navy becomes the surface;
+       teal carries. Secondary theme: the product is light-first. ═══ */
+[data-theme="dark"] {
+  --ink-900: #EDF0F6;
+  --ink-700: #C6CDDD;
+  --ink-600: #A9B2C8;
+  --ink-500: #8A94AD;
+  --ink-400: #6C7893;
+  --ink-300: #4E5A78;
+  --line-strong: #33415F;
+  --line: #26334F;
+  --hairline: #1C2842;
+  --paper: #070D20;
+  --card: #0B1330;      /* brand navy as the card surface */
+  --well: #101A38;
+
+  --copper-700: #CF7248;  /* default action, dark theme */
+  --copper-800: #E29368;  /* hover — brighten on dark, per convention */
+  --copper-tint: rgba(207, 114, 72, 0.16);
+  --focus-ring: rgba(207, 114, 72, 0.35);
+  --seal: #17BFA5;
+  --seal-bg: rgba(17, 179, 154, 0.14);
+
+  --status-positive-fg: #55CDB7;
+  --status-positive-bg: rgba(17, 179, 154, 0.14);
+  --status-pending-fg: #D9A75B;
+  --status-pending-bg: rgba(196, 145, 51, 0.14);
+  --status-progress-fg: #8FA6E3;
+  --status-progress-bg: rgba(96, 125, 204, 0.16);
+  --status-danger-fg: #E08A78;
+  --status-danger-bg: rgba(196, 82, 61, 0.15);
+  --status-neutral-fg: #8A94AD;
+  --status-neutral-bg: rgba(138, 148, 173, 0.13);
+  --status-special-fg: #B79BD8;
+  --status-special-bg: rgba(148, 111, 190, 0.15);
+
+  --debit: #E08A78;
+  --credit: #55CDB7;
+  --shadow-overlay: 0 12px 32px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.35);
+  --shadow-drawer: -16px 0 40px rgba(0, 0, 0, 0.45);
 }

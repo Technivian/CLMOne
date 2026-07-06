@@ -5,26 +5,34 @@
   .ta-heading { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); }
   .ta-subtext  { font-size: 0.875rem; color: var(--text-secondary); }
   .ta-balance-label { font-size: 0.875rem; color: var(--text-secondary); }
-  .ta-balance-pos   { font-size: 1.5rem; font-weight: 700; color: #4ADE80; }
+  .ta-balance-pos   { font-size: 1.5rem; font-weight: 700; color: var(--msg-success-text); }
   .ta-balance-neu   { font-size: 1.5rem; font-weight: 700; color: var(--text-secondary); }
   .ta-form-label    { display: block; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 4px; }
   .ta-form-title    { font-size: 0.9375rem; font-weight: 600; color: var(--text-primary); margin-bottom: 12px; }
   .ta-txn-desc      { font-size: 0.875rem; color: var(--text-primary); }
   .ta-txn-meta      { font-size: 0.75rem; color: var(--text-secondary); }
-  .ta-amount-pos    { font-size: 0.875rem; font-weight: 500; color: #4ADE80; }
-  .ta-amount-neg    { font-size: 0.875rem; font-weight: 500; color: #F87171; }
+  .ta-amount-pos    { font-size: 0.875rem; font-weight: 500; color: var(--msg-success-text); }
+  .ta-amount-neg    { font-size: 0.875rem; font-weight: 500; color: var(--msg-error-text); }
   .ta-btn           { padding: 8px 16px; background: var(--primary); color: #fff; font-size: 0.875rem; border-radius: 8px; border: none; cursor: pointer; width: 100%; transition: background 0.15s; }
   .ta-btn:hover     { background: var(--primary-hover); }
+  /* Client funds carry the trust/verification signal (teal "seal"), distinct
+     from the copper action accent used everywhere else — see
+     DOCCLAD_DESIGN_SYSTEM.md §5.2 (fiduciary grammar). */
+  .ta-seal-panel    { border-top: 2px solid var(--seal); background: var(--seal-bg); border-radius: 0 0 12px 12px; padding: 16px 20px; margin-bottom: 24px; }
+  .ta-seal-eyebrow  { font: 600 11px/16px ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: 0.12em; text-transform: uppercase; color: var(--seal); display: block; margin-bottom: 10px; }
 </style>
 <div class="max-w-3xl">
-    <div class="flex items-center justify-between mb-6">
-        <div>
-            <h1 class="ta-heading">{{ account.account_name }}</h1>
-            <p class="ta-subtext">{{ account.client.name }} {% if account.matter %}&middot; {{ account.matter.matter_number }}{% endif %}</p>
-        </div>
-        <div class="text-right">
-            <div class="ta-balance-label">Current Balance</div>
-            <div class="{% if account.balance > 0 %}ta-balance-pos{% else %}ta-balance-neu{% endif %}">${{ account.balance|floatformat:2 }}</div>
+    <div class="ta-seal-panel">
+        <span class="ta-seal-eyebrow">Client funds &middot; IOLTA</span>
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="ta-heading">{{ account.account_name }}</h1>
+                <p class="ta-subtext">{{ account.client.name }} {% if account.matter %}&middot; {{ account.matter.matter_number }}{% endif %}</p>
+            </div>
+            <div class="text-right">
+                <div class="ta-balance-label">Current Balance</div>
+                <div class="{% if account.balance > 0 %}ta-balance-pos{% else %}ta-balance-neu{% endif %}">${{ account.balance|floatformat:2 }}</div>
+            </div>
         </div>
     </div>
     <div class="panel mb-6 p-5">

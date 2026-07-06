@@ -5,6 +5,9 @@ from django.contrib.auth.models import User
 from django.test import Client, TestCase
 from django.urls import reverse
 
+from contracts.models import Contract
+from contracts.tenancy import get_user_organization
+
 
 class RedesignLayoutTests(TestCase):
     def setUp(self):
@@ -46,16 +49,38 @@ class RedesignLayoutTests(TestCase):
         self.assertContains(response, '/profile/')
 
     def test_dashboard_kpis_and_panels(self):
+        # KPI strip and the workflow queue render on the populated dashboard;
+        # empty workspaces get the onboarding checklist instead. Seed a
+        # contract in the organization the login flow auto-provisioned for
+        # this user.
+        organization = get_user_organization(self.user)
+        Contract.objects.create(
+            organization=organization,
+            title='Layout Contract',
+            content='Seed so the dashboard renders its normal state.',
+            status='ACTIVE',
+            created_by=self.user,
+        )
         response = self.client.get(reverse('dashboard'))
         self.assertContains(response, 'Active contracts')
         self.assertContains(response, 'Pending approval')
         self.assertContains(response, 'Expiring soon')
         self.assertContains(response, 'Task Signals')
-        self.assertContains(response, 'My Work Queue')
-        self.assertContains(response, 'Recent Contracts')
-        self.assertContains(response, 'Workflow recommendations open')
+        self.assertContains(response, 'Waiting on Me')
+        self.assertContains(response, 'In Progress')
+        self.assertContains(response, 'Layout Contract')
 
     def test_dashboard_quick_actions(self):
+        # Quick actions/links only render on the populated dashboard; an
+        # empty workspace gets the onboarding checklist instead.
+        organization = get_user_organization(self.user)
+        Contract.objects.create(
+            organization=organization,
+            title='Quick Actions Contract',
+            content='Seed so the dashboard renders its normal state.',
+            status='ACTIVE',
+            created_by=self.user,
+        )
         response = self.client.get(reverse('dashboard'))
         self.assertContains(response, 'New Contract')
         self.assertContains(response, 'Quick links')

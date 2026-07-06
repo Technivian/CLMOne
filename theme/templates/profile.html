@@ -25,7 +25,7 @@
     padding: 16px;
     color: var(--text-primary);
   }
-  .alert-amber h2 { font-size: 0.875rem; font-weight: 600; color: #FBBF24; }
+  .alert-amber h2 { font-size: 0.875rem; font-weight: 600; color: var(--msg-warning-text); }
   .alert-amber p  { font-size: 0.875rem; color: #D97706; margin-top: 4px; }
   .alert-blue {
     background: rgba(37,99,235,0.08);
@@ -38,12 +38,12 @@
   .alert-blue p  { font-size: 0.875rem; color: var(--text-secondary); margin-top: 4px; }
   .alert-green {
     background: rgba(34,197,94,0.08);
-    border: 1px solid rgba(34,197,94,0.15);
+    border: 1px solid var(--msg-success-bg);
     border-radius: 10px;
     padding: 16px;
     color: var(--text-primary);
   }
-  .alert-green h2 { font-size: 0.875rem; font-weight: 600; color: #4ADE80; }
+  .alert-green h2 { font-size: 0.875rem; font-weight: 600; color: var(--msg-success-text); }
   .alert-green p  { font-size: 0.875rem; color: var(--text-secondary); margin-top: 4px; }
   .recovery-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
   .recovery-code {
@@ -53,7 +53,7 @@
     padding: 8px 12px;
     font-size: 0.875rem;
     font-family: monospace;
-    color: #4ADE80;
+    color: var(--msg-success-text);
   }
   .security-info {
     background: var(--surface);
@@ -64,7 +64,7 @@
   .security-info h2 { font-size: 0.875rem; font-weight: 600; color: var(--text-primary); }
   .security-info p  { font-size: 0.875rem; color: var(--text-secondary); margin-top: 4px; }
   .field-label { display: block; font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 4px; }
-  .field-error { font-size: 0.75rem; color: #F87171; margin-top: 4px; }
+  .field-error { font-size: 0.75rem; color: var(--msg-error-text); margin-top: 4px; }
   /* Buttons now use canonical token-backed classes from components.css
      (btn-cta / btn-quiet / btn-soft-primary-accent) — no page-local redefinitions. */
   .text-muted-login { color: var(--text-secondary); }

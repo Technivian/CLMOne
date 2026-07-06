@@ -3,7 +3,7 @@
 Domain classes for contract repository
 These classes define the data structures independent of Django models
 """
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 from typing import List, Optional
 from enum import Enum
 
@@ -22,7 +22,12 @@ class ListParams:
     sort: str = "updated_desc"
     page: int = 1
     page_size: int = 25
-    
+    # Backs the Repository saved-view rail's "30d attention" view — active
+    # contracts whose end_date falls within the next N days. Separate from
+    # `status` since it's a date-window filter, not a status filter, and the
+    # UI never needs to combine it with an explicit status choice.
+    expiring_within_days: Optional[int] = None
+
     def __post_init__(self):
         if self.status is None:
             self.status = []
@@ -44,7 +49,22 @@ class ContractData:
     updated_at: Optional[str] = None
     created_at: Optional[str] = None
     content: str = ""
-    
+
+    # WorkQueue-aligned fields (Repository consolidation) — reuse the same
+    # StageDots/AssigneeChip/ActivityLine visual contract as the Dashboard
+    # queue, computed server-side so the JS-rendered table never invents its
+    # own status colors, stage ordering, or activity phrasing.
+    status_badge_class: str = ""
+    stage_steps: list = field(default_factory=list)
+    assignee_name: Optional[str] = None
+    assignee_initial: Optional[str] = None
+    latest_activity_text: Optional[str] = None
+    latest_activity_time: Optional[str] = None
+    latest_activity_initial: Optional[str] = None
+    value_display: str = ""
+    end_date_display: Optional[str] = None
+    due_overdue: bool = False
+
     def to_dict(self):
         """Convert to dictionary for JSON serialization"""
         return asdict(self)

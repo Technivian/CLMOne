@@ -1,0 +1,1 @@
+{% if steps %}<span class="stage-dots" title="{{ current_label }}"><span class="sr-only">{{ current_label }}</span>{% for step in steps %}<i class="stage-dot stage-dot-{{ step.state }}" aria-hidden="true"></i>{% endfor %}</span>{% else %}<span class="c-dim">—</span>{% endif %}

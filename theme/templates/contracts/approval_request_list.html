@@ -1,48 +1,134 @@
 {% extends "base.html" %}
-{% block title %}Approval Requests – DocClad{% endblock %}
+{% load docclad_components %}
+{% block title %}Approvals — DocClad{% endblock %}
 {% block content %}
-<div class="page-wrap">
-  <div class="page-header">
-    <div>
-      <h1 class="page-title">Approval Requests</h1>
-      <p class="page-subtitle">Manage approval requests</p>
+<style nonce="{{ csp_nonce }}">
+  .approvals-page { max-width: 1480px; margin: 0 auto; padding: 0 4px 24px; box-sizing: border-box; }
+  .approvals-header-row { margin-bottom: 16px; }
+  .approvals-h1 { font-size: 20px; }
+  .approvals-queue-card {
+    background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px;
+    overflow: hidden; box-sizing: border-box;
+  }
+  .approvals-tabs-wrap { padding: 6px 12px 0; }
+  .approvals-queue-body { overflow-x: auto; }
+</style>
+
+<div class="approvals-page">
+
+  {# ── Page header: title + primary action ─────────────── #}
+  <div class="arch-header approvals-header-row">
+    <div class="arch-header-left">
+      <div class="arch-title-row">
+        <h1 class="arch-title approvals-h1">Approvals</h1>
+      </div>
+      <p class="arch-subtitle">What needs a decision from you or your team right now</p>
     </div>
-    <div class="page-actions">
-      <a href="{% url 'contracts:approval_request_create' %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white border border-transparent btn-primary-grad">
-        <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-        Add New
+    <div class="arch-header-right">
+      <a href="{% url 'contracts:approval_request_create' %}" class="btn-primary-grad">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+        New Approval Request
       </a>
     </div>
   </div>
-  <div class="panel">
-    <table class="w-full">
-      <thead class="tbl-head">
-        <tr>
-          <th class="tbl-th">Contract</th>
-          <th class="tbl-th">Step</th>
-          <th class="tbl-th">Assigned To</th>
-          <th class="tbl-th">Delegated To</th>
-          <th class="tbl-th">Status</th>
-          <th class="tbl-th">Created</th>
-          <th class="tbl-th text-right">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for item in approvals %}
-        <tr class="tbl-row">
-          <td class="tbl-td">{{ item.contract.title }}</td>
-          <td class="tbl-td">{{ item.approval_step }}</td>
-          <td class="tbl-td c-muted">{{ item.assigned_to|default:"-" }}</td>
-          <td class="tbl-td c-muted">{{ item.delegated_to|default:"-" }}</td>
-          <td class="tbl-td"><span class="badge-sm {% if item.status == 'APPROVED' %}badge-green{% elif item.status == 'PENDING' %}badge-yellow{% elif item.status == 'REJECTED' %}badge-red{% else %}badge-blue{% endif %}">{{ item.get_status_display }}</span></td>
-          <td class="tbl-td c-muted">{{ item.created_at|date:"M d, Y" }}</td>
-          <td class="tbl-td text-right"><a href="{% url 'contracts:approval_request_update' item.pk %}" class="btn-ghost px-3 py-1 text-sm rounded-lg">Edit</a></td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="7"><div class="empty-state">No approval requests found</div></td></tr>
+
+  {# ── Workflow queue (primary object) ───────────────────── #}
+  <div class="approvals-queue-card">
+    <div class="approvals-tabs-wrap">
+      <nav class="wq-tabs" role="tablist" aria-label="Approval queue views">
+        {% for tab in queue_tabs %}
+        <button type="button"
+                class="wq-tab{% if forloop.first %} wq-tab-active{% endif %}"
+                data-queue-tab="{{ tab.key }}"
+                role="tab"
+                aria-selected="{% if forloop.first %}true{% else %}false{% endif %}">
+          {{ tab.label }} <span class="wq-tab-count">{{ tab.rows|length }}</span>
+        </button>
         {% endfor %}
-      </tbody>
-    </table>
+      </nav>
+    </div>
+    <div class="approvals-queue-body">
+      {% for tab in queue_tabs %}
+        {% approval_queue_table tab.key tab.rows tab.empty_message forloop.first %}
+      {% endfor %}
+    </div>
   </div>
-</div>
+
+</div>{# /approvals-page #}
+
+<script nonce="{{ csp_nonce }}">
+(function () {
+  /* Saved-view tabs — same client-side switch as Dashboard/Repository, no page reload. */
+  var tabs = document.querySelectorAll('.wq-tab[data-queue-tab]');
+  var panels = document.querySelectorAll('table.wq-table[data-queue-panel]');
+  tabs.forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      var key = tab.getAttribute('data-queue-tab');
+      tabs.forEach(function (t) {
+        var active = t === tab;
+        t.classList.toggle('wq-tab-active', active);
+        t.setAttribute('aria-selected', active ? 'true' : 'false');
+      });
+      panels.forEach(function (panel) {
+        panel.hidden = panel.getAttribute('data-queue-panel') !== key;
+      });
+    });
+  });
+
+  function getCsrfToken() {
+    return document.cookie
+      .split('; ')
+      .find(function (row) { return row.startsWith('csrftoken='); })
+      ?.split('=')[1] || '';
+  }
+
+  /* Approve/Reject — POST to the existing, already-authorized/audited
+     approval_approve_api / approval_reject_api endpoints (see
+     contracts/services/approval_workflow.py). This page only decides
+     whether to SHOW the buttons (server-computed row.can_decide); the real
+     authorization boundary is those endpoints, unchanged by this page. */
+  document.querySelectorAll('[data-approval-action]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var action = btn.getAttribute('data-approval-action');
+      var url = action === 'approve' ? btn.getAttribute('data-approve-url') : btn.getAttribute('data-reject-url');
+      var errorEl = btn.parentElement.querySelector('.wq-action-error');
+      var comments = '';
+      if (action === 'reject') {
+        comments = window.prompt('Add a comment for this rejection (optional):', '') || '';
+        if (comments === null) return;
+      }
+      var buttons = btn.parentElement.querySelectorAll('.wq-approve-btn, .wq-reject-btn');
+      buttons.forEach(function (b) { b.disabled = true; });
+      if (errorEl) { errorEl.hidden = true; errorEl.textContent = ''; }
+
+      fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+        body: JSON.stringify({ comments: comments }),
+      })
+        .then(function (res) {
+          return res.json().then(function (data) { return { ok: res.ok, data: data }; });
+        })
+        .then(function (result) {
+          if (result.ok) {
+            window.location.reload();
+            return;
+          }
+          buttons.forEach(function (b) { b.disabled = false; });
+          if (errorEl) {
+            errorEl.textContent = (result.data && result.data.error) || 'That action failed. Please try again.';
+            errorEl.hidden = false;
+          }
+        })
+        .catch(function () {
+          buttons.forEach(function (b) { b.disabled = false; });
+          if (errorEl) {
+            errorEl.textContent = 'Network error — please try again.';
+            errorEl.hidden = false;
+          }
+        });
+    });
+  });
+})();
+</script>
 {% endblock %}

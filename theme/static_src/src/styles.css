@@ -43,14 +43,15 @@
   --radius-xl: 16px;
 }
 
-@utility card { @apply bg-card rounded-xl shadow-sm; }
-@utility btn-primary { @apply inline-flex items-center justify-center rounded-full bg-primary-700 px-6 py-3 text-white shadow-[0_1px_2px_0_rgb(0_0_0_/_0.08)] hover:bg-primary-800 focus:outline-none focus:ring-2 focus:ring-primary-700/40 transition font-medium; }
-@utility btn-secondary { @apply inline-flex items-center justify-center rounded-full bg-secondary px-6 py-3 text-white shadow-[0_1px_2px_0_rgb(0_0_0_/_0.08)] hover:bg-secondary/90 focus:outline-none focus:ring-2 focus:ring-primary-700/40 transition font-medium; }
-@utility btn-ghost { @apply inline-flex items-center justify-center rounded-full px-4 py-2 text-primary-700 hover:bg-border focus:outline-none focus:ring-2 focus:ring-primary-700/40 transition font-medium; }
-@utility btn-accent { @apply inline-flex items-center justify-center rounded-full bg-accent px-6 py-3 text-primary-700 shadow-[0_1px_2px_0_rgb(0_0_0_/_0.08)] hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-primary-700/40 transition font-medium; }
+/* Flat, hairline-bordered surfaces — borders over shadows (IRONCLAD_DESIGN_AUDIT.md).
+   The legacy btn-primary/btn-secondary/btn-accent pill utilities were removed:
+   no template used them, and the product's primary buttons are the flat
+   copper .btn-primary-grad / .btn-cta classes in base.html/components.css. */
+@utility card { @apply bg-card rounded-xl; }
+@utility btn-ghost { @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-primary-700 hover:bg-border focus:outline-none focus:ring-2 focus:ring-primary-700/40 transition font-medium; }
 
 /* Bolton CLM UI helpers */
-@utility input { @apply w-full rounded-xl border border-border bg-card px-4 py-2 shadow-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-500/40 focus:outline-none; }
+@utility input { @apply w-full rounded-lg border border-border bg-card px-4 py-2 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/40 focus:outline-none; }
 @utility badge { @apply inline-flex items-center rounded-xl px-2 py-1 text-xs font-semibold whitespace-nowrap; }
 @utility badge-success { @apply bg-green-100 text-green-700; }
 @utility badge-warning { @apply bg-yellow-100 text-yellow-700; }
@@ -60,12 +61,12 @@
 @utility table-head { @apply text-xs uppercase bg-border text-muted sticky top-0; }
 @utility table-row { @apply bg-card border-b border-border hover:bg-border/50; }
 
-@utility table-container { @apply overflow-x-auto rounded-xl border border-border shadow-sm; }
+@utility table-container { @apply overflow-x-auto rounded-xl border border-border; }
 
 /* Bolton CLM utilities */
 @utility chip { @apply inline-flex items-center rounded-xl border border-border bg-card px-3 py-1 text-sm text-primary-700 hover:bg-border focus:outline-none focus:ring-2 focus:ring-primary-500/40; }
 @utility chip-active { @apply bg-border; }
-@utility light-aside { @apply bg-card rounded-xl border border-border shadow-sm p-3; }
+@utility light-aside { @apply bg-card rounded-xl border border-border p-3; }
 @utility top-tabs { @apply flex items-center gap-6 text-sm text-muted border-b border-border; }
 @utility top-tab { @apply inline-flex items-center gap-2 py-3 px-1 hover:text-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500/40 rounded-t-xl; }
 @utility top-tab-active { @apply text-primary-700 border-b-2 border-primary-600; }

@@ -14,7 +14,8 @@ class DoccladRepository {
             contract_type: [],
             sort: 'updated_desc',
             page: 1,
-            page_size: 25
+            page_size: 25,
+            expiring_within_days: null
         };
         this.savedViews = this.loadSavedViews();
         this.activeSavedViewName = '';
@@ -67,7 +68,11 @@ class DoccladRepository {
         document.querySelectorAll('[data-status-filter]').forEach((button) => {
             button.addEventListener('click', () => this.applyStatusFilter(button.dataset.statusFilter || ''));
         });
-        
+
+        document.querySelectorAll('[data-rail-view]').forEach((button) => {
+            button.addEventListener('click', () => this.applyRailView(button.dataset.railView || 'all'));
+        });
+
         // Select all checkbox
         const selectAllCheckbox = document.getElementById('select-all');
         if (selectAllCheckbox) {
@@ -80,6 +85,8 @@ class DoccladRepository {
                     } else {
                         this.selectedContracts.delete(cb.value);
                     }
+                    const row = cb.closest('tr');
+                    if (row) row.classList.toggle('wq-row-selected', e.target.checked);
                 });
                 this.updateBulkActionBar();
             });
@@ -90,12 +97,10 @@ class DoccladRepository {
             bulkStatusButton.addEventListener('click', () => this.bulkChangeStatus());
         }
 
-        const bulkAssignButton = document.getElementById('repo-bulk-assign');
-        if (bulkAssignButton) {
-            bulkAssignButton.addEventListener('click', () => {
-                window.alert('Bulk assignment will follow the status update path.');
-            });
-        }
+        // "Assign to Me" is disabled in the template (no assignment target
+        // exists at the Contract level yet — see AssigneeChip's resolution
+        // through Task/Approval/Deadline/WorkflowStep) — no click wiring
+        // here, so there is no placeholder alert action.
 
         const bulkExportButton = document.getElementById('repo-bulk-export');
         if (bulkExportButton) {
@@ -138,6 +143,7 @@ class DoccladRepository {
         if (params.getAll('status').length) this.filters.status = params.getAll('status');
         if (params.get('sort')) this.filters.sort = params.get('sort');
         if (params.get('page')) this.filters.page = parseInt(params.get('page'));
+        if (params.get('expiring_within_days')) this.filters.expiring_within_days = parseInt(params.get('expiring_within_days'));
         
         // Load contract detail if specified
         const contractId = params.get('contractId');
@@ -160,6 +166,7 @@ class DoccladRepository {
 
     applyStatusFilter(status) {
         this.filters.status = status ? [status] : [];
+        this.filters.expiring_within_days = null;
         this.filters.page = 1;
         this.renderFilterChips();
         this.updateQuickFilterState();
@@ -167,14 +174,53 @@ class DoccladRepository {
         this.loadContracts();
     }
 
+    // The saved-view rail (All documents / Active paper / Draft paper /
+    // 30d attention) is just a friendlier front for the same status and
+    // expiring_within_days filters the Status filters panel uses — one
+    // filter state, two entry points, kept in sync by
+    // updateQuickFilterState() so neither ever shows a stale active state.
+    applyRailView(key) {
+        if (key === 'active') {
+            this.filters.status = ['ACTIVE'];
+            this.filters.expiring_within_days = null;
+        } else if (key === 'draft') {
+            this.filters.status = ['DRAFT'];
+            this.filters.expiring_within_days = null;
+        } else if (key === 'expiring_30d') {
+            this.filters.status = [];
+            this.filters.expiring_within_days = 30;
+        } else {
+            this.filters.status = [];
+            this.filters.expiring_within_days = null;
+        }
+        this.filters.page = 1;
+        this.renderFilterChips();
+        this.updateQuickFilterState();
+        this.updateURL();
+        this.loadContracts();
+    }
+
+    computeActiveRailKey() {
+        if (this.filters.expiring_within_days) return 'expiring_30d';
+        if (this.filters.status.length === 1 && this.filters.status[0] === 'ACTIVE') return 'active';
+        if (this.filters.status.length === 1 && this.filters.status[0] === 'DRAFT') return 'draft';
+        if (this.filters.status.length === 0) return 'all';
+        return null;
+    }
+
     updateQuickFilterState() {
         const activeStatus = this.filters.status.length === 1 ? this.filters.status[0] : '';
         document.querySelectorAll('[data-status-filter]').forEach((button) => {
-            const isActive = (button.dataset.statusFilter || '') === activeStatus;
+            const isActive = !this.filters.expiring_within_days && (button.dataset.statusFilter || '') === activeStatus;
             button.classList.toggle('chip-active', isActive);
         });
+
+        const activeRailKey = this.computeActiveRailKey();
+        document.querySelectorAll('[data-rail-view]').forEach((button) => {
+            button.classList.toggle('active', (button.dataset.railView || 'all') === activeRailKey);
+        });
     }
-    
+
     updateURL() {
         const params = new URLSearchParams();
         
@@ -182,7 +228,8 @@ class DoccladRepository {
         this.filters.status.forEach(s => params.append('status', s));
         if (this.filters.sort !== 'updated_desc') params.set('sort', this.filters.sort);
         if (this.filters.page !== 1) params.set('page', this.filters.page.toString());
-        
+        if (this.filters.expiring_within_days) params.set('expiring_within_days', this.filters.expiring_within_days.toString());
+
         const newURL = window.location.pathname + '?' + params.toString();
         window.history.replaceState({}, '', newURL);
     }
@@ -198,7 +245,8 @@ class DoccladRepository {
             params.set('sort', this.filters.sort);
             params.set('page', this.filters.page.toString());
             params.set('page_size', this.filters.page_size.toString());
-            
+            if (this.filters.expiring_within_days) params.set('expiring_within_days', this.filters.expiring_within_days.toString());
+
             const response = await fetch(`/contracts/api/contracts/?${params.toString()}`);
             const result = await response.json();
             
@@ -218,41 +266,81 @@ class DoccladRepository {
         }
     }
     
+    escapeHtml(value) {
+        const div = document.createElement('div');
+        div.textContent = value === null || value === undefined ? '' : String(value);
+        return div.innerHTML;
+    }
+
+    // Same markup/CSS contract as components/_stage_dots.html — a
+    // JS-side renderer, not a competing visual, so Repository rows look
+    // identical to Dashboard queue rows.
+    renderStageDots(steps) {
+        if (!steps || !steps.length) return '<span class="c-dim">—</span>';
+        const current = steps.find((s) => s.state === 'current')
+            || [...steps].reverse().find((s) => s.state === 'done');
+        const label = current ? current.label : 'Not started';
+        const dots = steps.map((s) => `<i class="stage-dot stage-dot-${s.state}" aria-hidden="true"></i>`).join('');
+        return `<span class="stage-dots" title="${this.escapeHtml(label)}"><span class="sr-only">${this.escapeHtml(label)}</span>${dots}</span>`;
+    }
+
+    // Same markup/CSS contract as components/_assignee_chip.html.
+    renderAssigneeChip(name, initial) {
+        if (!name) {
+            return '<span class="assignee-chip assignee-chip-empty"><span class="assignee-chip-avatar assignee-chip-avatar-empty" aria-hidden="true"></span><span class="assignee-chip-name">Unassigned</span></span>';
+        }
+        const shownInitial = initial || name.slice(0, 1).toUpperCase();
+        return `<span class="assignee-chip"><span class="assignee-chip-avatar avatar-gradient-bg">${this.escapeHtml(shownInitial)}</span><span class="assignee-chip-name">${this.escapeHtml(name)}</span></span>`;
+    }
+
+    // Same markup/CSS contract as components/_activity_line.html.
+    renderActivityLine(text, time, initial) {
+        if (!text) return '<span class="c-dim">No recent activity</span>';
+        const shownInitial = initial || 'S';
+        return `<div class="activity-line"><span class="activity-line-avatar avatar-gradient-bg">${this.escapeHtml(shownInitial)}</span><div class="activity-line-body"><div class="activity-line-desc">${this.escapeHtml(text)}</div><div class="activity-line-time">${this.escapeHtml(time || '')}</div></div></div>`;
+    }
+
     renderContracts(result) {
         const tbody = document.getElementById('contracts-tbody');
         if (!tbody) return;
-        
+
         if (result.contracts.length === 0) {
             tbody.innerHTML = `
-                <tr><td colspan="6" class="text-center py-8 text-muted">
+                <tr><td colspan="8" class="text-center py-8 text-muted">
                     No contracts found. <a href="/contracts/create/" class="link">Create your first contract</a>
                 </td></tr>
             `;
             return;
         }
-        
+
         tbody.innerHTML = result.contracts.map(contract => `
             <tr class="contract-row hover:bg-hover cursor-pointer" data-contract-id="${contract.id}">
                 <td class="px-3 py-2">
                     <input type="checkbox" class="contract-checkbox" value="${contract.id}">
                 </td>
                 <td class="px-3 py-2">
-                    <div class="font-medium">${contract.title}</div>
-                    <div class="text-sm text-muted">${contract.counterparty || 'No counterparty'}</div>
+                    <div class="font-medium">${this.escapeHtml(contract.title)}</div>
+                    <div class="text-sm text-muted">${this.escapeHtml(contract.counterparty || 'No counterparty')}</div>
                 </td>
                 <td class="px-3 py-2">
-                    <span class="status-badge status-${contract.status.toLowerCase()}">
-                        ${contract.status_display || contract.status}
+                    ${this.renderStageDots(contract.stage_steps)}
+                </td>
+                <td class="px-3 py-2">
+                    ${this.renderAssigneeChip(contract.assignee_name, contract.assignee_initial)}
+                </td>
+                <td class="px-3 py-2">
+                    ${this.renderActivityLine(contract.latest_activity_text, contract.latest_activity_time, contract.latest_activity_initial)}
+                </td>
+                <td class="px-3 py-2 text-muted wq-col-num${contract.due_overdue ? ' wq-due-overdue' : ''}">
+                    ${contract.end_date_display ? this.escapeHtml(contract.end_date_display) : '<span class="c-dim">—</span>'}
+                </td>
+                <td class="px-3 py-2 text-muted wq-col-num">
+                    ${contract.value_display || '—'}
+                </td>
+                <td class="px-3 py-2">
+                    <span class="badge-sm ${contract.status_badge_class || 'badge-gray'}">
+                        ${this.escapeHtml(contract.status_display || contract.status)}
                     </span>
-                </td>
-                <td class="px-3 py-2 text-muted">
-                    ${contract.value ? '$' + contract.value.toLocaleString() : '-'}
-                </td>
-                <td class="px-3 py-2 text-muted">
-                    ${contract.owner}
-                </td>
-                <td class="px-3 py-2 text-muted">
-                    ${contract.updated_at ? new Date(contract.updated_at).toLocaleDateString() : '-'}
                 </td>
             </tr>
         `).join('');
@@ -275,6 +363,11 @@ class DoccladRepository {
                 } else {
                     this.selectedContracts.delete(e.target.value);
                 }
+                // Keep the row visibly selected even after the pointer
+                // moves away — a checked checkbox alone is easy to lose
+                // track of in a dense table.
+                const row = e.target.closest('tr');
+                if (row) row.classList.toggle('wq-row-selected', e.target.checked);
                 this.updateBulkActionBar();
             });
         });
@@ -304,6 +397,8 @@ class DoccladRepository {
 
         document.querySelectorAll('.contract-checkbox').forEach(cb => {
             cb.checked = false;
+            const row = cb.closest('tr');
+            if (row) row.classList.remove('wq-row-selected');
         });
 
         this.updateBulkActionBar();
@@ -319,7 +414,7 @@ class DoccladRepository {
 
         if (totalPages <= 1) {
             container.innerHTML = `
-                <div class="text-sm" style="color:var(--text-muted)">
+                <div class="text-sm repo-muted-text">
                     ${totalCount} result${totalCount === 1 ? '' : 's'}
                 </div>
             `;
@@ -331,7 +426,7 @@ class DoccladRepository {
 
         container.innerHTML = `
             <div class="flex items-center justify-between gap-3 flex-wrap">
-                <div class="text-sm" style="color:var(--text-muted)">
+                <div class="text-sm repo-muted-text">
                     ${totalCount} result${totalCount === 1 ? '' : 's'} · Page ${currentPage} of ${totalPages}
                 </div>
                 <div class="flex items-center gap-2">
@@ -394,41 +489,46 @@ class DoccladRepository {
         drawer.innerHTML = `
             <div class="p-6">
                 <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-xl font-semibold">${contract.title}</h2>
+                    <h2 class="text-xl font-semibold">${this.escapeHtml(contract.title)}</h2>
                     <button onclick="window.doccladRepository.closeDetailsDrawer()" class="btn-ghost">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
                     </button>
                 </div>
-                
+
                 <div class="space-y-4">
                     <div>
                         <label class="text-sm text-muted">Status</label>
-                        <div><span class="status-badge status-${contract.status.toLowerCase()}">${contract.status_display || contract.status}</span></div>
+                        <div><span class="badge-sm ${contract.status_badge_class || 'badge-gray'}">${this.escapeHtml(contract.status_display || contract.status)}</span></div>
                     </div>
-                    
+
+                    <div>
+                        <label class="text-sm text-muted">Assigned to</label>
+                        <div>${this.renderAssigneeChip(contract.assignee_name, contract.assignee_initial)}</div>
+                    </div>
+
                     <div>
                         <label class="text-sm text-muted">Counterparty</label>
-                        <div>${contract.counterparty || '-'}</div>
+                        <div>${this.escapeHtml(contract.counterparty || '-')}</div>
                     </div>
-                    
+
                     <div>
                         <label class="text-sm text-muted">Value</label>
-                        <div>${contract.value ? '$' + contract.value.toLocaleString() : '-'}</div>
+                        <div>${contract.value_display || '-'}</div>
                     </div>
-                    
+
                     <div>
                         <label class="text-sm text-muted">Owner</label>
-                        <div>${contract.owner}</div>
+                        <div>${this.escapeHtml(contract.owner)}</div>
                     </div>
-                    
+
                     <div>
                         <label class="text-sm text-muted">Content</label>
-                        <div class="mt-1 p-3 bg-hover rounded text-sm">${contract.content || 'No content'}</div>
+                        <div class="mt-1 p-3 bg-hover rounded text-sm">${this.escapeHtml(contract.content || 'No content')}</div>
                     </div>
                 </div>
-                
+
                 <div class="mt-6 pt-4 border-t flex space-x-2">
                     <a href="/contracts/${contract.id}/" class="btn-primary">Edit Contract</a>
                     <button onclick="window.doccladRepository.duplicateContract('${contract.id}')" class="btn-outline">Duplicate</button>
@@ -459,6 +559,20 @@ class DoccladRepository {
                     this.filters.q = '';
                     this.filters.page = 1;
                     this.syncControlsToFilters();
+                    this.renderFilterChips();
+                    this.updateQuickFilterState();
+                    this.updateURL();
+                    this.loadContracts();
+                }
+            });
+        }
+
+        if (this.filters.expiring_within_days) {
+            chips.push({
+                label: `Expiring within ${this.filters.expiring_within_days}d`,
+                onClick: () => {
+                    this.filters.expiring_within_days = null;
+                    this.filters.page = 1;
                     this.renderFilterChips();
                     this.updateQuickFilterState();
                     this.updateURL();
@@ -539,7 +653,7 @@ class DoccladRepository {
 
         if (!this.savedViews.length) {
             container.innerHTML = `
-                <div class="text-sm" style="color:var(--text-muted)">
+                <div class="text-sm repo-muted-text">
                     No saved views yet.
                 </div>
             `;
@@ -618,10 +732,12 @@ class DoccladRepository {
             sort: savedView.filters.sort || 'updated_desc',
             page: 1,
             page_size: savedView.filters.page_size || 25,
+            expiring_within_days: savedView.filters.expiring_within_days || null,
         };
 
         this.syncControlsToFilters();
         this.renderFilterChips();
+        this.updateQuickFilterState();
         this.updateURL();
         this.loadContracts();
         this.activeSavedViewName = savedView.name;

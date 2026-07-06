@@ -2,8 +2,96 @@
 {% load docclad_format %}
 {% block title %}Contracts – DocClad{% endblock %}
 {% block content %}
+<style nonce="{{ csp_nonce }}">
+  /* ── Ironclad table conventions, scoped to this page ─────────── */
 
-<div class="page-wrap reveal-stagger">
+  /* Canonical-view notice linking to Repository */
+  .cl-page .cl-migration-banner { margin-bottom: 16px; }
+  .cl-page .cl-migration-banner a { text-decoration: underline; font-weight: 700; }
+
+  /* Filter tabs → pill chips: active = ink fill, inactive = hairline outline */
+  .cl-page .arch-status-tabs {
+    border: 0; border-radius: 0; background: transparent; overflow: visible;
+    gap: 6px; flex-wrap: wrap;
+  }
+  .cl-page .arch-status-tab {
+    border: 1px solid var(--border); border-radius: 9999px;
+    padding: 5px 13px; font-size: 12.5px; font-weight: 500;
+    color: var(--text-secondary); background: transparent;
+  }
+  .cl-page .arch-status-tab:hover {
+    border-color: var(--text-muted); color: var(--text-primary); background: transparent;
+  }
+  .cl-page .arch-status-tab.tab-active,
+  .cl-page .arch-status-tab.tab-active:hover {
+    background: var(--text-primary); border-color: var(--text-primary);
+    color: var(--card-bg); font-weight: 600;
+  }
+
+  /* Secondary chips: quiet hairline outline, 8px radius, no accent fill */
+  .cl-page .arch-chip { border-radius: 8px; background: transparent; }
+  .cl-page .arch-chip.chip-active {
+    color: var(--text-primary); border-color: var(--text-muted); background: transparent;
+  }
+
+  /* Table surface stays flat */
+  .cl-page .card-l1 { box-shadow: none; }
+
+  /* Column headers: 10.5px/700 uppercase, hairline bottom border only */
+  .cl-page .tbl-head { background: transparent; border-bottom: 1px solid var(--card-border); }
+  .cl-page thead th { padding: 10px 16px; }
+  .cl-page .tbl-th {
+    font-size: 10.5px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.07em; color: var(--text-muted);
+  }
+
+  /* Rows: ~52px min height, hairline separators, quiet hover fill */
+  .cl-page tbody td { padding: 12px 16px; height: 52px; font-size: 13px; }
+  .cl-page .tbl-row { border-color: var(--card-border); }
+  .cl-page .tbl-row:hover { background: var(--sidebar-hover); }
+  .cl-page tbody td[colspan] { height: auto; }
+
+  /* Title cell: strong ink link + muted meta line */
+  .cl-page .cl-title {
+    font-size: 13px; font-weight: 600; color: var(--text-primary); text-decoration: none;
+  }
+  .cl-page .cl-title:hover { text-decoration: underline; }
+  .cl-page .cl-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+  /* Actions: quiet text links separated by a middot */
+  .cl-page .cl-action {
+    font-size: 12.5px; font-weight: 600; color: var(--text-secondary);
+    text-decoration: none; transition: color 0.15s;
+  }
+  .cl-page .cl-action:hover { color: var(--text-primary); }
+  .cl-page .cl-action-sep { color: var(--text-dim); margin: 0 6px; }
+
+  /* Stage cell: compact lifecycle dot strip above the tinted pill */
+  .cl-page .cl-stage { display: inline-flex; flex-direction: column; gap: 5px; align-items: flex-start; }
+  .cl-page .cl-dots { display: inline-flex; align-items: center; gap: 3px; }
+  .cl-page .cl-dot {
+    display: inline-block; width: 5px; height: 5px; border-radius: 9999px;
+    border: 1px solid var(--border); background: transparent;
+  }
+  .cl-page .cl-dot-done, .cl-page .cl-dot-current {
+    background: var(--primary); border-color: var(--primary);
+  }
+
+  /* Pagination current page: ink pill, not a second accent */
+  .cl-page .page-pill-active { background: var(--text-primary); color: var(--card-bg); }
+</style>
+
+<div class="page-wrap reveal-stagger cl-page">
+
+  {# ── Canonical-view notice ───────────────────────────────────
+     Repository is now the canonical contract list (saved views,
+     stage/assignee/activity columns, bulk actions). This view is kept for
+     its own working sort/filter columns until those migrate over; see
+     DOCCLAD_DESIGN_SYSTEM.md migration notes. #}
+  <div class="alert-banner alert-banner-yellow cl-migration-banner">
+    <svg aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    <span>Repository is now the canonical contract list. <a href="{% url 'contracts:repository' %}">Go to Repository →</a></span>
+  </div>
 
   {# ── Page header ──────────────────────────────────────────── #}
   <div class="arch-header">
@@ -15,15 +103,8 @@
       <p class="arch-subtitle">Contracts Workspace — Cases &amp; agreements across your organization</p>
     </div>
     <div class="arch-header-right">
+      {# The global "+ New Contract" CTA lives in the top bar — no duplicate here #}
       <a href="{% url 'contracts:repository' %}" class="btn-quiet">Repository</a>
-      <a href="{% url 'contracts:contract_create' %}" class="btn-quiet">New Case</a>
-      <a href="{% url 'contracts:contract_create' %}"
-         class="btn-cta">
-        <svg class="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-        </svg>
-        New Contract
-      </a>
     </div>
   </div>
 
@@ -86,7 +167,7 @@
   {# ── Table ────────────────────────────────────────────────── #}
   <div class="card-l1 p-0 overflow-hidden">
     <div class="overflow-x-auto">
-      <table class="w-full text-sm table-compact">
+      <table class="w-full text-sm">
         <thead class="tbl-head">
           <tr>
             {% with qs=search_query ph=request.GET.phase %}
@@ -147,9 +228,9 @@
 
             <td class="px-5 py-3.5">
               <a href="{% url 'contracts:contract_detail' contract.pk %}"
-                 class="font-medium hover:underline c-link">{{ contract.title|truncatechars:44 }}</a>
+                 class="cl-title">{{ contract.title|truncatechars:44 }}</a>
               {% if contract.client %}
-              <p class="text-xs mt-0.5 c-muted">{{ contract.client.name }}</p>
+              <p class="cl-meta">{{ contract.client.name }}</p>
               {% endif %}
             </td>
 
@@ -157,15 +238,15 @@
             <td class="px-5 py-3.5 tbl-td">{{ contract.complexity|default:"—" }}</td>
 
             <td class="px-5 py-3.5">
-              <span class="badge-sm
-                {% if contract.case_phase == 'afgerond' %}badge-green
-                {% elif contract.case_phase == 'actief' %}badge-green
-                {% elif contract.case_phase == 'plaatsing' %}badge-blue
-                {% elif contract.case_phase == 'matching' %}badge-purple
-                {% elif contract.case_phase == 'beoordeling' %}badge-yellow
-                {% else %}badge-gray{% endif %}">
-                {{ contract.get_case_phase_display }}
-              </span>
+              {% lifecycle_steps contract as cl_steps %}
+              <div class="cl-stage">
+                <span class="cl-dots" aria-hidden="true">
+                  {% for step in cl_steps %}<i class="cl-dot cl-dot-{{ step.state }}" title="{{ step.label }}"></i>{% endfor %}
+                </span>
+                <span class="badge-sm {{ contract.case_phase|phase_badge_class }}">
+                  {{ contract.get_case_phase_display }}
+                </span>
+              </div>
             </td>
 
             <td class="px-5 py-3.5 tbl-td">{{ contract.client.name|default:contract.counterparty|default:"—" }}</td>
@@ -191,13 +272,10 @@
               {% endif %}
             </td>
 
-            <td class="px-5 py-3.5 text-right">
-              <div class="inline-flex items-center gap-2">
-                <a href="{% url 'contracts:contract_detail' contract.pk %}"
-                   class="text-xs font-medium px-2.5 py-1 rounded-md border transition-opacity hover:opacity-80 btn-soft-primary-primary">View</a>
-                <a href="{% url 'contracts:contract_update' contract.pk %}"
-                   class="text-xs font-medium px-2.5 py-1 rounded-md border transition-opacity hover:opacity-80 btn-ghost">Edit</a>
-              </div>
+            <td class="px-5 py-3.5 text-right whitespace-nowrap">
+              <a href="{% url 'contracts:contract_detail' contract.pk %}"
+                 class="cl-action">View</a><span class="cl-action-sep" aria-hidden="true">&middot;</span><a href="{% url 'contracts:contract_update' contract.pk %}"
+                 class="cl-action">Edit</a>
             </td>
 
           </tr>

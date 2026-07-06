@@ -6,6 +6,8 @@ from django.template import Context, Template
 from django.test import Client, TestCase
 from django.urls import reverse
 
+from contracts.models import Contract, Organization, OrganizationMembership
+
 
 class DesignSystemTests(TestCase):
     def setUp(self):
@@ -18,6 +20,22 @@ class DesignSystemTests(TestCase):
 
     def test_dashboard_loads_with_feature_flag_enabled(self):
         os.environ['FEATURE_REDESIGN'] = 'true'
+        # The KPI strip only renders on a populated dashboard; empty
+        # workspaces get the onboarding checklist instead.
+        organization = Organization.objects.create(name='DS Firm', slug='ds-firm')
+        OrganizationMembership.objects.create(
+            organization=organization,
+            user=self.user,
+            role=OrganizationMembership.Role.OWNER,
+            is_active=True,
+        )
+        Contract.objects.create(
+            organization=organization,
+            title='DS Contract',
+            content='Seed so the dashboard renders its normal state.',
+            status='ACTIVE',
+            created_by=self.user,
+        )
         self.client.login(username='testuser', password='testpass123')
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)

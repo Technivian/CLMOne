@@ -26,7 +26,19 @@ class BoltonRedesignTestCase(TestCase):
         # Set feature flag
         os.environ['FEATURE_REDESIGN'] = 'true'
 
+    def _seed_contract(self):
+        """The KPI strip and portfolio panels only render once the workspace
+        has data; empty workspaces get the onboarding checklist instead."""
+        return Contract.objects.create(
+            organization=self.organization,
+            title='Seeded Contract',
+            content='Seeded content',
+            status='ACTIVE',
+            created_by=self.user,
+        )
+
     def test_dashboard_kpi_cards(self):
+        self._seed_contract()
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
 
@@ -35,6 +47,15 @@ class BoltonRedesignTestCase(TestCase):
         self.assertContains(response, 'Expiring soon')
         self.assertContains(response, 'High risk')
         self.assertContains(response, 'kpi-card')
+
+    def test_dashboard_empty_state_hides_kpis(self):
+        response = self.client.get(reverse('dashboard'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Start building your legal workspace')
+        # The CSS definitions always mention the kpi classes; assert on the
+        # rendered markup instead: no KPI tile labels in the onboarding state.
+        self.assertNotContains(response, 'Active contracts')
+        self.assertNotContains(response, 'Pending signatures')
 
     def test_dashboard_container_constraint(self):
         response = self.client.get(reverse('dashboard'))
@@ -52,12 +73,20 @@ class BoltonRedesignTestCase(TestCase):
         self.assertContains(response, 'Sign out')
 
     def test_dashboard_panels(self):
+        # The dashboard is a workflow queue first: saved-view tabs + a single
+        # queue table, with the KPI strip and activity feed as secondary
+        # panels. The old placeholder-only "Recent Contracts" / "Case
+        # Portfolio" panels were removed as part of that conversion.
+        self._seed_contract()
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Recent Contracts')
-        self.assertContains(response, 'Workflow recommendations open')
+        self.assertContains(response, 'In Progress')
+        self.assertContains(response, 'Waiting on Me')
+        self.assertContains(response, 'Needs Review')
+        self.assertContains(response, 'Renewals')
+        self.assertContains(response, 'Completed')
         self.assertContains(response, 'Task Signals')
-        self.assertContains(response, 'Portfolio snapshot')
+        self.assertContains(response, 'Recent activity')
 
     def test_contracts_table_structure(self):
         Contract.objects.create(
@@ -98,7 +127,11 @@ class BoltonRedesignTestCase(TestCase):
     def test_typography_and_spacing(self):
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "font-family: 'Manrope'")
+        # Inter is the sole product typeface per the approved brand kit and
+        # the "Ledger" design system (DOCCLAD_DESIGN_SYSTEM.md) — Manrope/Sora
+        # were retired in the 2026-07-05 rebrand.
+        self.assertContains(response, "font-family: 'Inter'")
+        self.assertNotContains(response, "font-family: 'Manrope'")
         self.assertContains(response, 'dash-grid')
         self.assertContains(response, 'gap: 20px')
 

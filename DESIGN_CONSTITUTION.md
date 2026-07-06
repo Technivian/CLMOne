@@ -1,8 +1,8 @@
 # DESIGN CONSTITUTION - CMS Aegis
 
-Version: 1.1
+Version: 1.3
 Status: Mandatory
-Last amended: 2026-05-18 (Batch 3 pre-migration decisions)
+Last amended: 2026-07-05 (§14 — "Ledger" design language adopted as token authority)
 Purpose: enforce one coherent enterprise-grade product language across all pages
 
 ## 1) Non-Negotiable Principles
@@ -294,6 +294,58 @@ For JS-rendered chart containers (bar charts, ring charts, etc.):
 - The label should describe: chart type, metric shown, and time/data range if applicable.
 - Example: `aria-label="Monthly billing bar chart, last 6 months"`.
 - JavaScript className strings (e.g., `element.className = 'text-gray-500'`) are exempt from canonical class rules — CSS classes cannot be referenced in JS strings without a build pipeline.
+
+## 13) Ironclad Audit Amendments (added 2026-07-04, v1.2)
+
+Rationale and source findings: `IRONCLAD_DESIGN_AUDIT.md`.
+
+### Status badges are pills with canonical mapping
+
+- `badge-sm` is fully rounded (`border-radius: 9999px`). Tinted background +
+  same-hue text in both themes (unchanged).
+- Status→color mapping is code, not template markup. Templates MUST use the
+  `status_badge_class` / `phase_badge_class` filters from `docclad_format`:
+  `<span class="badge-sm {{ contract.status|status_badge_class }}">`.
+  Hand-rolled `{% if status == … %}badge-…{% endif %}` chains are retired — they
+  caused 5 of 9 statuses to silently render gray.
+- Every enum value must have a mapping entry. Semantics: green = healthy or
+  terminal-good, yellow = waiting on someone, blue = in-flight process,
+  red = expired/terminated, gray = neutral/inert. Color is semantic, never
+  decorative.
+
+### Lifecycle stepper primitive (`lc-*`)
+
+- Detail pages show lifecycle as a stepper driven by `contract.lifecycle_stage`
+  via the `{% lifecycle_steps contract %}` tag — never a hardcoded badge chain.
+- Classes: `lc-track` (container, `role="list"`), `lc-step` + state modifier
+  (`lc-done`, `lc-current`, `lc-upcoming`), `lc-dot`, `lc-label`.
+- The current step carries `aria-current="step"`; the track carries an
+  `aria-label` naming the current stage. Dots are `aria-hidden`.
+
+### Decoration reduction (color = meaning)
+
+- Background orbs and scanline overlays are retired from the app shell.
+- `status-dot` variants no longer carry glow `box-shadow`s.
+- Do not add glows, decorative gradients, or ambient color washes to
+  authenticated app surfaces. Marketing/landing surfaces are exempt.
+- Duplicate KPI strips on a single page are a defect: one metric renders once.
+
+## 14) Token Authority — "Ledger" Design Language (added 2026-07-05, v1.3)
+
+- `theme/static/css/docclad-tokens.css` is the canonical token layer;
+  `DOCCLAD_DESIGN_SYSTEM.md` is the spec and rationale. Both derive from the
+  approved brand board (`docclad_agent_brand_kit/docs/`).
+- New/updated UI must consume `--ink-*`, `--seal-*`, `--status-*`, `--paper/--card/
+  --well`, `--line/--hairline` tokens. The legacy `--primary #2563EB` / `--accent
+  #22C55E` values and raw Tailwind palette literals are deprecated: do not introduce
+  new usages; migrate on touch.
+- Product typeface is Inter only (weights 400–650). Manrope and Sora are retired;
+  remove on touch.
+- The product is light-first; dark theme derives from the same tokens ("navy night").
+- Fiduciary surfaces (anything displaying or moving client funds) must use the
+  fiduciary grammar of DOCCLAD_DESIGN_SYSTEM.md §5: seal-wash background, seal top
+  rule, mono eyebrow. Money values are always tabular-numeral and right-aligned;
+  totals carry ledger rules.
 
 ### aria-live Guidance
 

@@ -135,13 +135,15 @@ def contracts_api(request):
     """
     try:
         # Parse filters from request
+        expiring_within_days = request.GET.get('expiring_within_days')
         params = ListParams(
             q=request.GET.get('q', ''),
             status=[s for s in request.GET.getlist('status') if s],
             contract_type=[t for t in request.GET.getlist('contract_type') if t],
             sort=request.GET.get('sort', 'updated_desc'),
             page=int(request.GET.get('page', 1)),
-            page_size=int(request.GET.get('page_size', 25))
+            page_size=int(request.GET.get('page_size', 25)),
+            expiring_within_days=int(expiring_within_days) if expiring_within_days else None,
         )
 
         service = get_repository_service(request.user)

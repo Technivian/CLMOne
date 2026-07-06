@@ -17,7 +17,7 @@
     <div class="arch-header-left">
       <div class="arch-title-row">
         <h1 class="arch-title">{{ contract.title }}</h1>
-        <span class="badge-sm {% if contract.status == 'ACTIVE' %}badge-green{% elif contract.status == 'PENDING' %}badge-blue{% elif contract.status == 'EXPIRED' %}badge-red{% else %}badge-gray{% endif %}">
+        <span class="badge-sm {{ contract.status|status_badge_class }}">
           {{ contract.get_status_display }}
         </span>
       </div>
@@ -74,18 +74,14 @@
           {# Lifecycle stage strip #}
           <div class="card-l2">
             <div class="arch-section-label">Lifecycle</div>
-            <div class="flex items-center gap-2 flex-wrap">
-              <span class="badge-sm {% if contract.case_phase == 'plaatsing' %}badge-blue{% else %}badge-gray{% endif %}">Draft</span>
-              <span class="c-dim text-xs">→</span>
-              <span class="badge-sm {% if contract.case_phase == 'beoordeling' %}badge-yellow{% else %}badge-gray{% endif %}">Review</span>
-              <span class="c-dim text-xs">→</span>
-              <span class="badge-sm {% if contract.case_phase == 'matching' %}badge-purple{% else %}badge-gray{% endif %}">Approval</span>
-              <span class="c-dim text-xs">→</span>
-              <span class="badge-sm {% if contract.status == 'PENDING' %}badge-blue{% elif contract.status == 'ACTIVE' %}badge-green{% else %}badge-gray{% endif %}">Signature</span>
-              <span class="c-dim text-xs">→</span>
-              <span class="badge-sm {% if contract.status == 'ACTIVE' %}badge-green{% else %}badge-gray{% endif %}">Active</span>
-              <span class="c-dim text-xs">→</span>
-              <span class="badge-sm {% if contract.status == 'EXPIRED' %}badge-red{% else %}badge-gray{% endif %}">Archive</span>
+            {% lifecycle_steps contract as lc_steps %}
+            <div class="lc-track" role="list" aria-label="Contract lifecycle: currently {{ contract.get_lifecycle_stage_display }}">
+              {% for step in lc_steps %}
+              <div class="lc-step lc-{{ step.state }}" role="listitem" {% if step.state == 'current' %}aria-current="step"{% endif %}>
+                <span class="lc-dot" aria-hidden="true"></span>
+                <span class="lc-label">{{ step.label }}</span>
+              </div>
+              {% endfor %}
             </div>
             {% if lifecycle_guidance %}
             <div class="mt-3 pt-3 border-t border-[var(--border)] flex flex-wrap gap-4 text-sm">
@@ -243,7 +239,7 @@
         <div class="detail-stack">
           <div class="detail-row">
             <span class="detail-label">Status</span>
-            <span class="badge-sm {% if contract.status == 'ACTIVE' %}badge-green{% elif contract.status == 'PENDING' %}badge-blue{% elif contract.status == 'EXPIRED' %}badge-red{% else %}badge-gray{% endif %}">{{ contract.get_status_display }}</span>
+            <span class="badge-sm {{ contract.status|status_badge_class }}">{{ contract.get_status_display }}</span>
           </div>
           <div class="detail-row"><span class="detail-label">Type</span><span class="detail-value">{{ contract.get_contract_type_display }}</span></div>
           <div class="detail-row"><span class="detail-label">Counterparty</span><span class="detail-value">{{ contract.counterparty|default:"—" }}</span></div>
