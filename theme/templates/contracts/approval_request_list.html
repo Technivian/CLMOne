@@ -3,9 +3,11 @@
 {% block title %}Approvals — DocClad{% endblock %}
 {% block content %}
 <style nonce="{{ csp_nonce }}">
-  .approvals-page { max-width: 1480px; margin: 0 auto; padding: 0 4px 24px; box-sizing: border-box; }
+  {# .approvals-page itself carries no layout now — it is a marker class only
+     (kept for test/selector stability). Shell width/padding come from the
+     shared .page-wrap / .page-wrap-fluid, same as Dashboard/Repository/
+     Privacy, instead of a fourth private recipe. #}
   .approvals-header-row { margin-bottom: 16px; }
-  .approvals-h1 { font-size: 20px; }
   .approvals-queue-card {
     background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px;
     overflow: hidden; box-sizing: border-box;
@@ -14,13 +16,13 @@
   .approvals-queue-body { overflow-x: auto; }
 </style>
 
-<div class="approvals-page">
+<div id="approvals-root" class="page-wrap page-wrap-fluid approvals-page">
 
   {# ── Page header: title + primary action ─────────────── #}
   <div class="arch-header approvals-header-row">
     <div class="arch-header-left">
       <div class="arch-title-row">
-        <h1 class="arch-title approvals-h1">Approvals</h1>
+        <h1 class="arch-title">Approvals</h1>
       </div>
       <p class="arch-subtitle">What needs a decision from you or your team right now</p>
     </div>

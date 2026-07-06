@@ -33,8 +33,13 @@ def approvals_body(html):
     and Django Debug Toolbar's panels (DEBUG=True dumps the full template
     context, so raw values can appear there even when the real page body
     never renders them).
+
+    Anchored on the stable `id="approvals-root"` marker rather than a class
+    string — the class list on that element (.page-wrap/.page-wrap-fluid/
+    .approvals-page) is exactly what the shell-convergence tests exercise,
+    so this helper must not depend on its exact contents or order.
     """
-    start = html.find('class="approvals-page"')
+    start = html.find('id="approvals-root"')
     end = html.find('id="djDebug"')
     if start == -1:
         return html
@@ -224,6 +229,23 @@ class ApprovalsActionEligibilityTests(TestCase):
         self.assertIn('data-approval-action="approve"', body)
         self.assertIn('data-approval-action="reject"', body)
 
+    def test_already_decided_row_never_shows_decide_buttons_even_for_eligible_actor(self):
+        """An eligible actor (assignee or admin) must not see live Approve/Reject
+        buttons on a row that can no longer be decided — the API's own status
+        guard would reject the attempt, so showing the buttons would be a
+        control that always fails."""
+        self.ar.status = 'APPROVED'
+        self.ar.save(update_fields=['status'])
+        client = Client()
+        client.login(username='action_assignee', password='testpass123')
+        response = client.get(reverse('contracts:approval_request_list'))
+        tabs = response.context['queue_tabs']
+        row = next(r for t in tabs for r in t['rows'] if r['id'] == self.ar.id)
+        self.assertFalse(row['can_decide'])
+        body = approvals_body(response.content.decode())
+        self.assertNotIn('data-approval-action="approve"', body)
+        self.assertNotIn('data-approval-action="reject"', body)
+
     def test_contract_creator_does_not_see_decide_buttons_segregation_of_duties(self):
         client = Client()
         client.login(username='action_creator', password='testpass123')
@@ -410,3 +432,36 @@ class ApprovalsCopyQualityTests(TestCase):
         self.assertIn('No approved approvals yet.', body)
         self.assertIn('No rejected approvals.', body)
         self.assertIn('Nothing escalated or overdue.', body)
+
+
+class ApprovalsShellConvergenceTests(TestCase):
+    """Approvals must use the shared shell (.page-wrap/.page-wrap-fluid), not
+    a fourth private page-recipe alongside .DocCladDashboard/.page-wrap/the
+    former Privacy grid — the whole point of this convergence block."""
+
+    def setUp(self):
+        self.organization = Organization.objects.create(name='Shell Firm', slug='approvals-shell-firm')
+        self.user = User.objects.create_user(username='shell_user', password='testpass123', email='shell@example.com')
+        OrganizationMembership.objects.create(organization=self.organization, user=self.user, role=OrganizationMembership.Role.MEMBER, is_active=True)
+        self.client = Client()
+        self.client.login(username='shell_user', password='testpass123')
+
+    def test_uses_shared_page_wrap_shell(self):
+        response = self.client.get(reverse('contracts:approval_request_list'))
+        html = response.content.decode()
+        self.assertIn('page-wrap page-wrap-fluid approvals-page', html)
+
+    def test_no_longer_defines_its_own_private_shell_dimensions(self):
+        response = self.client.get(reverse('contracts:approval_request_list'))
+        html = response.content.decode()
+        # The old duplicate shell hardcoded these exact values locally —
+        # asserting they're gone proves the page no longer competes with
+        # .page-wrap/.DocCladDashboard for "what is the page shell".
+        self.assertNotIn('.approvals-page { max-width', html)
+        self.assertNotIn('max-width: 1480px', html)
+
+    def test_uses_shared_page_header_pattern(self):
+        response = self.client.get(reverse('contracts:approval_request_list'))
+        html = response.content.decode()
+        self.assertIn('arch-header', html)
+        self.assertIn('arch-title', html)

@@ -732,7 +732,17 @@ class ApprovalRequestListView(TenantScopedQuerysetMixin, LoginRequiredMixin, Lis
                     'due_overdue': overdue,
                     'status_label': approval.get_status_display(),
                     'status_badge_class': approval_status_badge_class(approval.status),
-                    'can_decide': actor_can_decide(approval, user, 'approve'),
+                    # actor_can_decide() checks authorization only; a decision on an
+                    # already-APPROVED/REJECTED row would still be rejected by the
+                    # API's own status guard (ApprovalWorkflowService._decide), but
+                    # showing live-looking buttons that can only ever fail reads as a
+                    # fake control. Gate the UI on the same PENDING/ESCALATED
+                    # condition the API enforces, so a button only appears when the
+                    # action can actually succeed.
+                    'can_decide': (
+                        approval.status in ('PENDING', 'ESCALATED')
+                        and actor_can_decide(approval, user, 'approve')
+                    ),
                     'approve_url': reverse('contracts:approval_approve_api', kwargs={'approval_id': approval.pk}),
                     'reject_url': reverse('contracts:approval_reject_api', kwargs={'approval_id': approval.pk}),
                     'edit_url': reverse('contracts:approval_request_update', kwargs={'pk': approval.pk}),
