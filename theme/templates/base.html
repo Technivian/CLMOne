@@ -467,6 +467,17 @@
         }
         .kpi-card:hover .kpi-glow { opacity: 0.12; }
 
+        /* Compact metric strip — dense variant of the KPI card, for operational
+           dashboards where a row of numbers is a header, not the hero (Dashboard,
+           Repository, Privacy). Pair with .dash-grid + a column-count class for
+           layout; this only tightens type/padding of nested .kpi-card. Extracted
+           from Dashboard's former page-local .ad-kpis override so every page
+           reads from the same recipe instead of re-tuning its own. */
+        .kpi-strip { gap: 10px; margin-bottom: 16px; }
+        .kpi-strip .kpi-card { padding: 12px 14px; }
+        .kpi-strip .kpi-value { font-size: 20px; }
+        .kpi-strip .kpi-label { font-size: 10.5px; margin-top: 2px; }
+
         /* Content panels (titled card containers) */
         .panel {
             background: var(--card-bg);
@@ -655,8 +666,18 @@
             border: 0; cursor: pointer;
         }
 
-            /* ── Page layout ─────────────────────────────────────────────────────── */
-            .page-wrap    { padding: 28px 32px; max-width: 1400px; margin: 0 auto; }
+            /* ── Page layout ─────────────────────────────────────────────────────────
+             * .page-wrap sits inside .main-content-pad (24px on every side, see
+             * below), which already supplies the shell's inset. Its own padding
+             * used to add a second 28px/32px gutter on top of that — doubling the
+             * distance between the app shell and page content on every page that
+             * uses it (~100 templates). Matched to .DocCladDashboard's recipe
+             * (0 4px 24px) so Dashboard/Repository/Privacy/legacy pages share one
+             * rhythm instead of three. max-width stays 1400px by default (safe for
+             * forms/detail reading width); operational pages that should use the
+             * full viewport (tables, saved-view rails) opt in via .page-wrap-fluid. */
+            .page-wrap    { padding: 0 4px 24px; max-width: 1400px; margin: 0 auto; }
+            .page-wrap-fluid { max-width: none; }
             .page-header  { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 28px; }
             .page-actions { display: flex; gap: 8px; }
             .page-title   { font-size: 24px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.03em; margin: 0; }

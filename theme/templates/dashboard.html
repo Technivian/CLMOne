@@ -125,20 +125,10 @@
 .ad-queue-body { overflow-x: auto; }
 
 /* ── 2. KPI strip — compact, secondary ──────────────────── */
-/* Reuses the shared .kpi-card component (same one Repository uses) instead
-   of a competing bespoke tile style, so the two screens' "summary numbers"
-   finally look like the same component. Padding/type scale are tightened
-   ONLY inside .ad-kpis — the shared .kpi-card rule itself is untouched, so
-   other pages that use it are unaffected. */
-.ad-kpis {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 10px;
-  margin-bottom: 14px;
-}
-.ad-kpis .kpi-card { padding: 12px 14px; }
-.ad-kpis .kpi-value { font-size: 20px; }
-.ad-kpis .kpi-label { font-size: 10.5px; margin-top: 2px; }
+/* Column count only — density (padding/type scale) now comes from the
+   shared .kpi-strip class (base.html) so Dashboard/Repository/Privacy tune
+   from one recipe instead of three. Markup: class="dash-grid ad-kpis kpi-strip". */
+.ad-kpis { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 
 /* ── 3. Secondary row: lifecycle chart + activity feed ──── */
 .ad-bottom {
@@ -322,7 +312,7 @@
   </div>
 
   {# ── 2. KPI strip (compact, secondary) ────────────────── #}
-  <div class="ad-kpis">
+  <div class="dash-grid ad-kpis kpi-strip">
     <div class="kpi-card">
       <div class="kpi-label">Active contracts</div>
       <div class="kpi-value c-primary">{{ active_cases|default:0 }}</div>

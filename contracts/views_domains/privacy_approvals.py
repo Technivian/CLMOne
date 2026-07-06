@@ -32,6 +32,7 @@ from contracts.models import (
     DSARRequest,
     DataInventoryRecord,
     Document,
+    EthicalWall,
     LegalHold,
     Matter,
     OrgPolicy,
@@ -856,6 +857,7 @@ def privacy_dashboard(request):
     subprocessor_qs = get_scoped_queryset_for_request(request, Subprocessor)
     retention_qs = get_scoped_queryset_for_request(request, RetentionPolicy)
     legal_hold_qs = get_scoped_queryset_for_request(request, LegalHold)
+    ethical_wall_qs = get_scoped_queryset_for_request(request, EthicalWall)
 
     data_inventory_count = data_inventory_qs.count()
     dsar_pending = dsar_qs.filter(status__in=['RECEIVED', 'VERIFIED', 'IN_PROGRESS']).count()
@@ -867,6 +869,7 @@ def privacy_dashboard(request):
     transfer_count = transfer_qs.filter(is_active=True).count()
     retention_count = retention_qs.filter(is_active=True).count()
     legal_hold_count = legal_hold_qs.filter(status='ACTIVE').count()
+    ethical_wall_count = ethical_wall_qs.filter(is_active=True).count()
     recent_dsars = dsar_qs.order_by('-received_date')[:5]
     context = {
         'data_inventory_count': data_inventory_count,
@@ -876,6 +879,7 @@ def privacy_dashboard(request):
         'transfer_count': transfer_count,
         'retention_count': retention_count,
         'legal_hold_count': legal_hold_count,
+        'ethical_wall_count': ethical_wall_count,
         'recent_dsars': recent_dsars,
     }
     return render(request, 'contracts/privacy_dashboard.html', context)
