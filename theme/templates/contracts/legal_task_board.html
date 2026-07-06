@@ -1,136 +1,125 @@
-{% extends 'base.html' %}
-{% load static %}
-
-{% block title %}Legal Task Board – DocClad{% endblock %}
-
+{% extends "base.html" %}
+{% load docclad_components %}
+{% block title %}Tasks — DocClad{% endblock %}
 {% block content %}
-<div class="page-wrap">
-    <!-- Page Header -->
-    <div class="page-header">
-        <div>
-            <h1 class="page-title">Legal Task Board</h1>
-            <p class="page-subtitle">Track and manage legal tasks across all workflow stages.</p>
-        </div>
-        <div class="page-actions">
-            <a href="{% url 'contracts:legal_task_create' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 btn-primary-grad">
-                New Task
-            </a>
-        </div>
-    </div>
+<style nonce="{{ csp_nonce }}">
+  .tasks-header-row { margin-bottom: 16px; }
+  .tasks-queue-card {
+    background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px;
+    overflow: hidden; box-sizing: border-box;
+  }
+  .tasks-tabs-wrap { padding: 6px 12px 0; }
+  .tasks-queue-body { overflow-x: auto; }
+</style>
 
-    <!-- Filter bar -->
-    <div class="panel mb-6">
-        <div class="panel-inner">
-            <div class="flex items-center gap-4 flex-wrap">
-                <span class="text-sm font-medium c-muted">Filter by:</span>
-                <label for="priority-filter" class="sr-only">Priority</label>
-                <select id="priority-filter" class="chip chip-inactive text-sm">
-                    <option value="">All Priorities</option>
-                    <option value="HIGH">High</option>
-                    <option value="MEDIUM">Medium</option>
-                    <option value="LOW">Low</option>
-                </select>
-                <label for="task-search" class="sr-only">Search tasks</label>
-                <input type="search" id="task-search" placeholder="Search tasks…" class="w-64 text-sm input-base">
-            </div>
-        </div>
-    </div>
+<div id="tasks-root" class="page-wrap page-wrap-fluid">
 
-    <!-- Kanban Board -->
-    <div class="board-track" role="list" aria-label="Legal task board">
-        {% for status_display, tasks in tasks_by_status %}
-        <div class="board-col" role="region" aria-label="{{ status_display }} column" data-status="{{ tasks.0.status }}">
-            <div class="board-col-head">
-                <h3 class="text-sm font-bold c-primary">{{ status_display }}</h3>
-                <span class="badge-sm badge-gray">{{ tasks|length }}</span>
-            </div>
-            {% for task in tasks %}
-            <div class="board-card" role="article" data-task-id="{{ task.id }}" data-priority="{{ task.priority }}">
-                <div class="flex items-start justify-between mb-2">
-                    <h4 class="font-medium c-primary text-sm">{{ task.title }}</h4>
-                    <span class="badge-sm {% if task.priority == 'HIGH' %}badge-red{% elif task.priority == 'MEDIUM' %}badge-yellow{% else %}badge-green{% endif %}">
-                        {{ task.get_priority_display }}
-                    </span>
-                </div>
-                {% if task.subject %}
-                <p class="item-meta mb-3">{{ task.subject|truncatewords:15 }}</p>
-                {% endif %}
-                <div class="flex items-center justify-between item-meta mb-3">
-                    <span>{{ task.assigned_to.username|default:"Unassigned" }}</span>
-                    {% if task.due_date %}
-                    <span class="{% if task.due_date < today %}c-danger{% endif %}">Due {{ task.due_date|date:"M d" }}</span>
-                    {% endif %}
-                </div>
-                <div class="flex items-center gap-3">
-                    <a href="{% url 'contracts:legal_task_update' task.pk %}" class="c-link text-xs">Edit</a>
-                    <button type="button"
-                            data-action="complete-task"
-                            data-task-id="{{ task.id }}"
-                            class="text-xs c-link">Complete</button>
-                </div>
-            </div>
-            {% empty %}
-            <div class="empty-state">
-                <p class="italic">No tasks in this column.</p>
-                {% if status_display == 'To Do' %}
-                <a href="{% url 'contracts:legal_task_create' %}" class="c-link mt-2 inline-block text-sm">Add a task</a>
-                {% endif %}
-            </div>
-            {% endfor %}
-        </div>
+  {# ── Page header: title + primary action ─────────────── #}
+  <div class="arch-header tasks-header-row">
+    <div class="arch-header-left">
+      <div class="arch-title-row">
+        <h1 class="arch-title">Tasks</h1>
+      </div>
+      <p class="arch-subtitle">What needs attention across your legal work</p>
+    </div>
+    <div class="arch-header-right">
+      <a href="{% url 'contracts:legal_task_create' %}" class="btn-primary-grad">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+        New Task
+      </a>
+    </div>
+  </div>
+
+  {# ── Workflow queue (primary object) ───────────────────── #}
+  <div class="tasks-queue-card">
+    <div class="tasks-tabs-wrap">
+      <nav class="wq-tabs" role="tablist" aria-label="Task queue views">
+        {% for tab in queue_tabs %}
+        <button type="button"
+                class="wq-tab{% if forloop.first %} wq-tab-active{% endif %}"
+                data-queue-tab="{{ tab.key }}"
+                role="tab"
+                aria-selected="{% if forloop.first %}true{% else %}false{% endif %}">
+          {{ tab.label }} <span class="wq-tab-count">{{ tab.rows|length }}</span>
+        </button>
         {% endfor %}
+      </nav>
     </div>
-</div>
+    <div class="tasks-queue-body">
+      {% for tab in queue_tabs %}
+        {% task_queue_table tab.key tab.rows tab.empty_message forloop.first %}
+      {% endfor %}
+    </div>
+  </div>
+
+</div>{# /tasks-root #}
 
 <script nonce="{{ csp_nonce }}">
 (function () {
-    // Status update via AJAX
-    document.querySelectorAll('[data-action="complete-task"]').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            var taskId = btn.dataset.taskId;
-            updateTaskStatus(taskId, 'DONE');
+  /* Saved-view tabs — same client-side switch as Dashboard/Repository/Approvals, no page reload. */
+  var tabs = document.querySelectorAll('.wq-tab[data-queue-tab]');
+  var panels = document.querySelectorAll('table.wq-table[data-queue-panel]');
+  tabs.forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      var key = tab.getAttribute('data-queue-tab');
+      tabs.forEach(function (t) {
+        var active = t === tab;
+        t.classList.toggle('wq-tab-active', active);
+        t.setAttribute('aria-selected', active ? 'true' : 'false');
+      });
+      panels.forEach(function (panel) {
+        panel.hidden = panel.getAttribute('data-queue-panel') !== key;
+      });
+    });
+  });
+
+  function getCsrfToken() {
+    return document.cookie
+      .split('; ')
+      .find(function (row) { return row.startsWith('csrftoken='); })
+      ?.split('=')[1] || '';
+  }
+
+  /* Complete — POST to the existing, already-authorized/audited
+     legal_task_complete endpoint (see contracts/views_domains/matter_ops.py
+     and its shared _can_actor_complete_task rule). This page only decides
+     whether to SHOW the button (server-computed row.can_complete); the real
+     authorization boundary is that endpoint, unchanged by this page. */
+  document.querySelectorAll('[data-task-action]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var url = btn.getAttribute('data-complete-url');
+      var errorEl = btn.parentElement.querySelector('.wq-action-error');
+      btn.disabled = true;
+      if (errorEl) { errorEl.hidden = true; errorEl.textContent = ''; }
+
+      fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+        body: JSON.stringify({}),
+      })
+        .then(function (res) {
+          return res.json().then(function (data) { return { ok: res.ok, data: data }; });
+        })
+        .then(function (result) {
+          if (result.ok) {
+            window.location.reload();
+            return;
+          }
+          btn.disabled = false;
+          if (errorEl) {
+            errorEl.textContent = (result.data && result.data.error) || 'That action failed. Please try again.';
+            errorEl.hidden = false;
+          }
+        })
+        .catch(function () {
+          btn.disabled = false;
+          if (errorEl) {
+            errorEl.textContent = 'Network error — please try again.';
+            errorEl.hidden = false;
+          }
         });
     });
-
-    function updateTaskStatus(taskId, newStatus) {
-        var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
-        fetch('/contracts/legal-tasks/' + taskId + '/update-status/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken ? csrfToken.value : ''
-            },
-            body: JSON.stringify({ status: newStatus })
-        })
-        .then(function (response) { return response.json(); })
-        .then(function (data) {
-            if (data.success) { location.reload(); }
-        })
-        .catch(function (error) { console.error('Error:', error); });
-    }
-
-    // Filter functionality
-    document.getElementById('priority-filter').addEventListener('change', filterTasks);
-    document.getElementById('task-search').addEventListener('input', filterTasks);
-
-    function filterTasks() {
-        var priorityFilter = document.getElementById('priority-filter').value;
-        var searchTerm = document.getElementById('task-search').value.toLowerCase();
-        var taskCards = document.querySelectorAll('[data-task-id]');
-
-        taskCards.forEach(function (card) {
-            var priority = card.getAttribute('data-priority');
-            var titleEl = card.querySelector('h4');
-            var subjectEl = card.querySelector('p');
-            var title = titleEl ? titleEl.textContent.toLowerCase() : '';
-            var subject = subjectEl ? subjectEl.textContent.toLowerCase() : '';
-
-            var matchesPriority = !priorityFilter || priority === priorityFilter;
-            var matchesSearch = !searchTerm || title.includes(searchTerm) || subject.includes(searchTerm);
-
-            card.style.display = (matchesPriority && matchesSearch) ? '' : 'none';
-        });
-    }
-}());
+  });
+})();
 </script>
 {% endblock %}

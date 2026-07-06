@@ -72,6 +72,28 @@ def latest_activity_map(org, object_ids, model_name='Contract'):
     return result
 
 
+def creator_map(org, object_ids, model_name):
+    """Best-known "created by" user for each object id, resolved from the
+    earliest CREATE AuditLog entry for that model/object — the only reliable
+    signal for models (like LegalTask) that have no created_by field of
+    their own. Objects created before creation-logging existed simply have
+    no entry here; that is a graceful gap, not a fabricated value."""
+    if not org or not object_ids:
+        return {}
+    logs = (
+        AuditLog.objects.filter(
+            organization_id=org.id, model_name=model_name, object_id__in=object_ids,
+            action=AuditLog.Action.CREATE,
+        )
+        .select_related('user')
+        .order_by('timestamp')
+    )
+    result = {}
+    for log in logs:
+        result.setdefault(log.object_id, log.user)
+    return result
+
+
 def activity_line_parts(log):
     """(text, time_text, actor_initial) for one AuditLog entry, matching the
     exact sentence shape rendered by components/_activity_line.html — so a

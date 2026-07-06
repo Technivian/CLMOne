@@ -165,6 +165,7 @@ from .views_domains.matter_ops import (
     LegalTaskCreateView,
     LegalTaskKanbanView,
     LegalTaskUpdateView,
+    legal_task_complete,
     BudgetCreateView,
     BudgetDetailView,
     BudgetListView,

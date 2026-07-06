@@ -64,3 +64,16 @@ def approval_queue_table(panel_key, rows, empty_message, is_active=False):
         'empty_message': empty_message,
         'is_active': is_active,
     }
+
+
+@register.inclusion_tag('components/_task_queue_table.html')
+def task_queue_table(panel_key, rows, empty_message, is_active=False):
+    """Tasks-inbox queue table — same visual system as work_queue_table/
+    approval_queue_table, with a priority badge on the item cell and a
+    single-action (Complete) Actions column instead of approve/reject."""
+    return {
+        'panel_key': panel_key,
+        'rows': rows,
+        'empty_message': empty_message,
+        'is_active': is_active,
+    }

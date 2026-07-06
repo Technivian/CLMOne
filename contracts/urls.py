@@ -204,6 +204,7 @@ urlpatterns = [
     path('legal-tasks/', views.LegalTaskKanbanView.as_view(), name='legal_task_kanban'),
     path('legal-tasks/new/', views.LegalTaskCreateView.as_view(), name='legal_task_create'),
     path('legal-tasks/<int:pk>/edit/', views.LegalTaskUpdateView.as_view(), name='legal_task_update'),
+    path('legal-tasks/<int:pk>/complete/', views.legal_task_complete, name='legal_task_complete'),
 
     # Trademarks
     path('trademarks/', views.TrademarkRequestListView.as_view(), name='trademark_request_list'),

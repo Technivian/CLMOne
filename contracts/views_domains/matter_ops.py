@@ -4,10 +4,11 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import models
 from django.db.models import Q, Sum, Count
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
 from contracts.forms import (
@@ -23,6 +24,7 @@ from contracts.forms import (
     TrademarkRequestForm,
 )
 from contracts.models import (
+    AuditLog,
     Budget,
     BudgetExpense,
     ChecklistItem,
@@ -36,9 +38,26 @@ from contracts.models import (
     RiskLog,
     TrademarkRequest,
 )
+from contracts.middleware import log_action
 from contracts.permissions import ContractAction, can_access_contract_action
 from contracts.tenancy import get_user_organization, scope_queryset_for_organization
 from contracts.view_support import TenantAssignCreateMixin, TenantScopedFormMixin, TenantScopedQuerysetMixin
+
+
+def _can_actor_complete_task(task, user, org):
+    """Single source of truth for "can this actor complete this task" —
+    used by both the Tasks queue (to decide whether to show a live Complete
+    button) and the legal_task_complete endpoint (the real enforcement
+    boundary), so the UI can never claim an action is available that the
+    API would then refuse. Mirrors the exact rule LegalTaskUpdateView.dispatch
+    already applies to editing: contract-linked tasks require contract-edit
+    access; matter-linked tasks require the matter to belong to the actor's
+    organization. A task with neither link has nothing further to check."""
+    if task.contract_id and not can_access_contract_action(user, task.contract, ContractAction.EDIT):
+        return False
+    if task.matter_id and (not org or task.matter.organization_id != org.id):
+        return False
+    return True
 
 
 class LegalTaskKanbanView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
@@ -55,10 +74,125 @@ class LegalTaskKanbanView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListVie
         ).order_by('-updated_at', '-created_at')
 
     def get_context_data(self, **kwargs):
+        """Tasks queue: saved-view tabs backing the shared WorkQueue table.
+
+        `legal_tasks`/`task_signals`/`open_task_signal_count` (from
+        context_object_name above) are left completely untouched — existing
+        callers keep reading the plain org-scoped queryset exactly as
+        before. `queue_tabs` is additive.
+        """
         context = super().get_context_data(**kwargs)
         context['task_signals'] = context['legal_tasks']
         context['open_task_signal_count'] = context['legal_tasks'].filter(status='PENDING').count()
+        context['queue_tabs'] = self._build_queue_tabs()
         return context
+
+    def _build_queue_tabs(self):
+        from datetime import timedelta
+
+        from contracts.services.queue_rows import creator_map, latest_activity_map
+        from contracts.templatetags.docclad_format import task_priority_badge_class, task_status_badge_class
+
+        user = self.request.user
+        org = get_user_organization(user)
+        today = timezone.localdate()
+
+        empty_tabs_spec = [
+            ('assigned_to_me', 'Assigned to Me', 'No tasks assigned to you.'),
+            ('created_by_me', 'Created by Me', 'No tasks created by you.'),
+            ('due_soon', 'Due Soon', 'Nothing due soon.'),
+            ('overdue', 'Overdue', 'No overdue tasks.'),
+            ('completed', 'Completed', 'No completed tasks yet.'),
+            ('all_open', 'All Open', 'No open tasks.'),
+        ]
+        if not org:
+            return [{'key': k, 'label': label, 'rows': [], 'empty_message': msg} for k, label, msg in empty_tabs_spec]
+
+        base_qs = LegalTask.objects.select_related(
+            'contract', 'matter', 'matter__client', 'assigned_to',
+        ).filter(Q(contract__organization=org) | Q(matter__organization=org))
+        open_statuses = (LegalTask.Status.PENDING, LegalTask.Status.IN_PROGRESS)
+
+        def _to_rows(qs, limit=25):
+            items = list(qs.order_by('due_date', '-updated_at')[:limit])
+            ids = [t.pk for t in items]
+            activity_map = latest_activity_map(org, ids, model_name='LegalTask')
+            rows = []
+            for task in items:
+                contract = task.contract
+                matter = task.matter
+                due = task.due_date
+                overdue = bool(due and due < today and task.status in open_statuses)
+
+                edit_url = reverse('contracts:legal_task_update', kwargs={'pk': task.pk})
+                href = edit_url
+                meta_parts = []
+                if contract:
+                    href = reverse('contracts:contract_detail', kwargs={'pk': contract.pk})
+                    meta_parts.append(contract.title)
+                    if contract.counterparty:
+                        meta_parts.append(contract.counterparty)
+                elif matter:
+                    href = reverse('contracts:matter_detail', kwargs={'pk': matter.pk})
+                    meta_parts.append(matter.title)
+                    if matter.client_id:
+                        meta_parts.append(matter.client.name)
+
+                rows.append({
+                    'id': task.pk,
+                    'title': task.title,
+                    'edit_url': edit_url,
+                    'href': href,
+                    'meta': ' · '.join(meta_parts),
+                    'contract': contract,
+                    'assignee': task.assigned_to,
+                    'activity': activity_map.get(task.pk),
+                    'due_date': due,
+                    'due_overdue': overdue,
+                    'status_label': task.get_status_display(),
+                    'status_badge_class': task_status_badge_class(task.status),
+                    'priority_label': task.get_priority_display(),
+                    'priority_badge_class': task_priority_badge_class(task.priority),
+                    # Gate on BOTH "is this actor eligible" and "is this task
+                    # still open" — an eligible admin must not see a live
+                    # Complete button on an already-completed/cancelled task,
+                    # since that action can only ever fail (see the same
+                    # rule applied to Approvals' can_decide).
+                    'can_complete': (
+                        task.status in open_statuses
+                        and _can_actor_complete_task(task, user, org)
+                    ),
+                    'complete_url': reverse('contracts:legal_task_complete', kwargs={'pk': task.pk}),
+                })
+            return rows
+
+        assigned_qs = base_qs.filter(assigned_to=user, status__in=open_statuses)
+        due_soon_qs = base_qs.filter(
+            status__in=open_statuses, due_date__gte=today, due_date__lte=today + timedelta(days=7),
+        )
+        overdue_qs = base_qs.filter(status__in=open_statuses, due_date__lt=today)
+        completed_qs = base_qs.filter(status=LegalTask.Status.COMPLETED)
+        all_open_qs = base_qs.filter(status__in=open_statuses)
+
+        all_ids = list(base_qs.values_list('pk', flat=True))
+        creators = creator_map(org, all_ids, model_name='LegalTask')
+        created_ids = [task_id for task_id, creator in creators.items() if creator and creator.id == user.id]
+        created_qs = base_qs.filter(pk__in=created_ids)
+
+        return [
+            {'key': 'assigned_to_me', 'label': 'Assigned to Me', 'rows': _to_rows(assigned_qs),
+             'empty_message': 'No tasks assigned to you.'},
+            {'key': 'created_by_me', 'label': 'Created by Me', 'rows': _to_rows(created_qs),
+             'empty_message': 'No tasks created by you.'},
+            {'key': 'due_soon', 'label': 'Due Soon', 'rows': _to_rows(due_soon_qs),
+             'empty_message': 'Nothing due soon.'},
+            {'key': 'overdue', 'label': 'Overdue', 'rows': _to_rows(overdue_qs),
+             'empty_message': 'No overdue tasks.'},
+            {'key': 'completed', 'label': 'Completed', 'rows': _to_rows(completed_qs),
+             'empty_message': 'No completed tasks yet.'},
+            {'key': 'all_open', 'label': 'All Open', 'rows': _to_rows(all_open_qs),
+             'empty_message': 'No open tasks.'},
+        ]
 
 
 class LegalTaskCreateView(TenantScopedFormMixin, TenantAssignCreateMixin, LoginRequiredMixin, CreateView):
@@ -74,7 +208,19 @@ class LegalTaskCreateView(TenantScopedFormMixin, TenantAssignCreateMixin, LoginR
             return HttpResponseForbidden('You do not have permission to create tasks for this contract.')
         if form.instance.matter and org and form.instance.matter.organization_id != org.id:
             return HttpResponseForbidden('You do not have permission to create tasks for this matter.')
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        # LegalTask has no created_by field of its own — this CREATE entry is
+        # the only signal the Tasks queue's "Created by Me" tab can use to
+        # attribute a task to its creator (see queue_rows.creator_map).
+        task = self.object
+        task_org = task.contract.organization if task.contract_id else (task.matter.organization if task.matter_id else org)
+        log_action(
+            self.request.user, AuditLog.Action.CREATE, 'LegalTask',
+            object_id=task.pk, object_repr=str(task), organization=task_org,
+            changes={'event': 'legal_task_created'},
+            request=self.request,
+        )
+        return response
 
 
 class LegalTaskUpdateView(TenantScopedFormMixin, TenantScopedQuerysetMixin, LoginRequiredMixin, UpdateView):
@@ -92,12 +238,54 @@ class LegalTaskUpdateView(TenantScopedFormMixin, TenantScopedQuerysetMixin, Logi
 
     def dispatch(self, request, *args, **kwargs):
         task = self.get_object()
-        if task.contract and not can_access_contract_action(request.user, task.contract, ContractAction.EDIT):
-            return HttpResponseForbidden('You do not have permission to edit tasks for this contract.')
         org = get_user_organization(request.user)
-        if task.matter and org and task.matter.organization_id != org.id:
-            return HttpResponseForbidden('You do not have permission to edit tasks for this matter.')
+        if not _can_actor_complete_task(task, request.user, org):
+            return HttpResponseForbidden('You do not have permission to edit tasks for this contract or matter.')
         return super().dispatch(request, *args, **kwargs)
+
+
+@login_required
+@require_POST
+def legal_task_complete(request, pk):
+    """Mark a task complete from the Tasks queue.
+
+    Reuses the exact same authorization LegalTaskUpdateView already enforces
+    (contract-edit access, or matching matter organization) — this action
+    does not introduce a new permission model, just a faster path to a
+    status change the edit form already allows implicitly via the object
+    queryset scoping. Cross-tenant tasks 404 (excluded by the queryset,
+    mirroring the approval API's cross-tenant behaviour); same-tenant but
+    unauthorized is 403; an already-decided task is a safe 400, never a
+    silent no-op.
+    """
+    org = get_user_organization(request.user)
+    if not org:
+        return JsonResponse({'error': 'No active organization found.'}, status=403)
+
+    queryset = LegalTask.objects.select_related('contract', 'matter').filter(
+        Q(contract__organization=org) | Q(matter__organization=org)
+    )
+    task = get_object_or_404(queryset, pk=pk)
+
+    if not _can_actor_complete_task(task, request.user, org):
+        return JsonResponse({'error': 'You do not have permission to complete this task.'}, status=403)
+
+    if task.status not in (LegalTask.Status.PENDING, LegalTask.Status.IN_PROGRESS):
+        return JsonResponse(
+            {'error': f'Cannot complete a task with status {task.get_status_display()}.'}, status=400,
+        )
+
+    task.status = LegalTask.Status.COMPLETED
+    task.save(update_fields=['status', 'updated_at'])
+
+    task_org = task.contract.organization if task.contract_id else (task.matter.organization if task.matter_id else org)
+    log_action(
+        request.user, AuditLog.Action.UPDATE, 'LegalTask',
+        object_id=task.pk, object_repr=str(task), organization=task_org,
+        changes={'event': 'legal_task_completed'},
+        request=request,
+    )
+    return JsonResponse({'ok': True})
 
 
 class TrademarkRequestListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):

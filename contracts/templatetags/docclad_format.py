@@ -97,6 +97,23 @@ _APPROVAL_STATUS_BADGES = {
     'ESCALATED': 'badge-purple',
 }
 
+# LegalTask.status -> badge variant.
+_TASK_STATUS_BADGES = {
+    'PENDING': 'badge-yellow',
+    'IN_PROGRESS': 'badge-blue',
+    'COMPLETED': 'badge-green',
+    'CANCELLED': 'badge-gray',
+}
+
+# LegalTask.priority -> badge variant (URGENT/HIGH share the most severe
+# treatment; there is no separate "critical" tier on the model).
+_TASK_PRIORITY_BADGES = {
+    'URGENT': 'badge-red',
+    'HIGH': 'badge-red',
+    'MEDIUM': 'badge-yellow',
+    'LOW': 'badge-green',
+}
+
 # ApprovalRequest.approval_step is a free CharField copied from whichever
 # ApprovalRule triggered it — it has no Django choices of its own, so
 # without this map the raw rule code (e.g. 'LEGAL') would leak into the UI.
@@ -201,6 +218,18 @@ def phase_badge_class(phase):
 def approval_status_badge_class(status):
     """ApprovalRequest status key -> canonical badge class."""
     return _APPROVAL_STATUS_BADGES.get(status, 'badge-gray')
+
+
+@register.filter
+def task_status_badge_class(status):
+    """LegalTask status key -> canonical badge class."""
+    return _TASK_STATUS_BADGES.get(status, 'badge-gray')
+
+
+@register.filter
+def task_priority_badge_class(priority):
+    """LegalTask priority key -> canonical badge class."""
+    return _TASK_PRIORITY_BADGES.get(priority, 'badge-gray')
 
 
 @register.filter
