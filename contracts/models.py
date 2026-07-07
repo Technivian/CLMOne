@@ -2705,6 +2705,13 @@ class DPAReviewPack(models.Model):
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, null=True, blank=True, related_name='dpa_review_packs')
     contract = models.ForeignKey(Contract, on_delete=models.CASCADE, related_name='dpa_review_packs')
     counterparty = models.ForeignKey(Counterparty, on_delete=models.SET_NULL, null=True, blank=True, related_name='dpa_review_packs')
+    matter = models.ForeignKey(Matter, on_delete=models.SET_NULL, null=True, blank=True, related_name='dpa_review_packs')
+    # The MSA/SOW (or any other contract in the same engagement) this DPA is
+    # reviewed against for cross-document conflicts (services.dpa_conflict).
+    # There is no "ContractPack" grouping model in this codebase — linking
+    # directly to the related Contract rows is the real equivalent.
+    related_contracts = models.ManyToManyField(Contract, blank=True, related_name='dpa_review_packs_as_related')
+    documents = models.ManyToManyField(Document, blank=True, related_name='dpa_review_packs')
 
     # 1. Role qualification
     role_qualification = models.CharField(max_length=25, choices=RoleQualification.choices, default=RoleQualification.AMBIGUOUS)
@@ -2797,6 +2804,7 @@ class DPAReviewPack(models.Model):
 
     # 13. Output / review memo
     review_memo = models.TextField(blank=True)
+    review_memo_generated_at = models.DateTimeField(null=True, blank=True)
     last_analyzed_at = models.DateTimeField(null=True, blank=True)
 
     # Human-controlled approval — never set by the analyzer.
@@ -2823,6 +2831,7 @@ class DPARiskItem(models.Model):
 
     class Owner(models.TextChoices):
         LEGAL = 'LEGAL', 'Legal'
+        HEAD_LEGAL = 'HEAD_LEGAL', 'Head of Legal'
         DPO_SECURITY = 'DPO_SECURITY', 'DPO/Security'
         BUSINESS = 'BUSINESS', 'Business'
         FINANCE = 'FINANCE', 'Finance'
@@ -2846,19 +2855,38 @@ class DPARiskItem(models.Model):
         HIGH = 'HIGH', 'High'
         CRITICAL = 'CRITICAL', 'Critical'
 
+    class Confidence(models.TextChoices):
+        HIGH = 'HIGH', 'High'
+        MEDIUM = 'MEDIUM', 'Medium'
+        NEEDS_HUMAN_CHECK = 'NEEDS_HUMAN_CHECK', 'Needs human check'
+
     class Status(models.TextChoices):
         OPEN = 'OPEN', 'Open'
-        ACKNOWLEDGED = 'ACKNOWLEDGED', 'Acknowledged'
+        IN_REVIEW = 'IN_REVIEW', 'In Review'
         RESOLVED = 'RESOLVED', 'Resolved'
+        ACCEPTED_RISK = 'ACCEPTED_RISK', 'Accepted Risk'
+        FALSE_POSITIVE = 'FALSE_POSITIVE', 'False Positive'
+        NEEDS_BUSINESS_INPUT = 'NEEDS_BUSINESS_INPUT', 'Needs Business Input'
+        NEEDS_DPO_SECURITY_INPUT = 'NEEDS_DPO_SECURITY_INPUT', 'Needs DPO/Security Input'
+        ESCALATED = 'ESCALATED', 'Escalated'
 
     review_pack = models.ForeignKey(DPAReviewPack, on_delete=models.CASCADE, related_name='risk_items')
     category = models.CharField(max_length=25, choices=Category.choices)
     title = models.CharField(max_length=200)
     description = models.TextField()
     severity = models.CharField(max_length=10, choices=Severity.choices, default=Severity.MEDIUM)
+    confidence = models.CharField(max_length=25, choices=Confidence.choices, default=Confidence.MEDIUM)
     owners = models.CharField(max_length=100, help_text='Comma-separated Owner codes, e.g. "LEGAL,DPO_SECURITY"')
     fallback_recommendation = models.TextField(blank=True)
-    status = models.CharField(max_length=15, choices=Status.choices, default=Status.OPEN)
+    evidence_text = models.TextField(blank=True, help_text='Verbatim snippet or concise detected excerpt that triggered this finding')
+    source_section = models.CharField(max_length=120, blank=True)
+    source_field = models.CharField(max_length=120, blank=True)
+    detection_rule = models.CharField(max_length=120, blank=True)
+    conflict_type = models.CharField(max_length=80, blank=True)
+    related_contract_evidence_text = models.TextField(blank=True, help_text='Verbatim snippet or concise detected excerpt from linked MSA/SOW')
+    is_cross_document_conflict = models.BooleanField(default=False, help_text='True if this finding compares the DPA against a linked MSA/SOW rather than the DPA alone')
+    reviewer_notes = models.TextField(blank=True)
+    status = models.CharField(max_length=30, choices=Status.choices, default=Status.OPEN)
     detected_automatically = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -2871,6 +2899,51 @@ class DPARiskItem(models.Model):
 
     def __str__(self):
         return f'{self.title} ({self.get_severity_display()})'
+
+
+class DPARiskItemNote(models.Model):
+    """Timestamped human reviewer note for one DPA risk item.
+
+    Kept as a child table instead of a mutable TextField so review comments
+    preserve actor/time context and can be included in memo export without
+    losing history.
+    """
+
+    risk_item = models.ForeignKey(DPARiskItem, on_delete=models.CASCADE, related_name='notes')
+    author = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='dpa_risk_item_notes')
+    note = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f'Note on {self.risk_item_id}'
+
+
+class DPAApprovalHistoryEntry(models.Model):
+    """Structured, DPA-scoped log of every approval_status change — distinct
+    from the generic AuditLog (which also records these events for
+    org-wide audit purposes). This one exists so the review pack's own
+    "Approval History" section can be rendered without filtering the
+    generic audit trail by model_name/object_id. Append-only in practice:
+    nothing in this module updates or deletes a row once written."""
+
+    review_pack = models.ForeignKey(DPAReviewPack, on_delete=models.CASCADE, related_name='approval_history')
+    from_status = models.CharField(max_length=15, choices=DPAReviewPack.ApprovalStatus.choices, blank=True)
+    to_status = models.CharField(max_length=15, choices=DPAReviewPack.ApprovalStatus.choices)
+    changed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='dpa_approval_history_entries')
+    comment = models.TextField(blank=True)
+    risk_counts_by_severity = models.JSONField(default=dict, blank=True)
+    unresolved_blocker_count = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name_plural = 'DPA approval history entries'
+
+    def __str__(self):
+        return f'{self.from_status or "—"} → {self.to_status}'
 
 
 class DPAPlaybookPosition(models.Model):

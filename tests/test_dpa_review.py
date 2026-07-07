@@ -21,9 +21,11 @@ from django.urls import reverse
 from contracts.models import (
     AuditLog,
     Contract,
+    DPAApprovalHistoryEntry,
     DPAPlaybookPosition,
     DPAReviewPack,
     DPARiskItem,
+    DPARiskItemNote,
     Organization,
     OrganizationMembership,
 )
@@ -115,6 +117,17 @@ def _make_org_and_contract(text=RISKY_DPA_TEXT, org_slug='dpa-test-firm'):
     return organization, user, contract
 
 
+def _make_msa(organization, user, text=None, title='Payrollminds MSA'):
+    return Contract.objects.create(
+        organization=organization,
+        title=title,
+        content=text or 'MASTER SERVICE AGREEMENT. Limitation of liability: each party aggregate liability shall not exceed the fees paid in the twelve months before the claim.',
+        contract_type=Contract.ContractType.MSA,
+        status='IN_REVIEW',
+        created_by=user,
+    )
+
+
 class DPAReviewPackModelTests(TestCase):
     def test_review_pack_creation_defaults_to_draft_and_ambiguous(self):
         organization, user, contract = _make_org_and_contract()
@@ -155,10 +168,17 @@ class DPAAnalyzerDetectionTests(TestCase):
         self.assertFalse(self.review_pack.transfer_mechanism_present)
         critical_transfer = [s for s in suggestions if s.category == DPARiskItem.Category.TRANSFER and s.severity == DPARiskItem.Severity.CRITICAL]
         self.assertEqual(len(critical_transfer), 1)
+        self.assertIn('united states', critical_transfer[0].evidence_text.lower())
+        self.assertEqual(critical_transfer[0].confidence, DPARiskItem.Confidence.HIGH)
+        self.assertEqual(critical_transfer[0].detection_rule, 'non_eea_transfer_missing_mechanism')
 
     def test_detects_vague_security_measures(self):
-        run_dpa_analysis(self.review_pack)
+        suggestions = run_dpa_analysis(self.review_pack)
         self.assertFalse(self.review_pack.security_measures_specific)
+        vague_security = [s for s in suggestions if s.detection_rule == 'security_measures_vague_or_incomplete']
+        self.assertEqual(len(vague_security), 1)
+        self.assertEqual(vague_security[0].evidence_text, 'Evidence requires manual verification')
+        self.assertEqual(vague_security[0].confidence, DPARiskItem.Confidence.MEDIUM)
 
     def test_specific_security_measures_do_not_flag_as_vague(self):
         organization, user, contract = _make_org_and_contract(text=CLEAN_DPA_TEXT, org_slug='dpa-clean-firm')
@@ -167,9 +187,12 @@ class DPAAnalyzerDetectionTests(TestCase):
         self.assertTrue(review_pack.security_measures_specific)
 
     def test_detects_unrealistic_breach_notification_deadline(self):
-        run_dpa_analysis(self.review_pack)
+        suggestions = run_dpa_analysis(self.review_pack)
         self.assertEqual(self.review_pack.breach_notification_deadline_hours, 4)
         self.assertFalse(self.review_pack.breach_notification_realistic)
+        breach = [s for s in suggestions if s.detection_rule == 'breach_notification_short_deadline'][0]
+        self.assertIn('within 4 hours', breach.evidence_text.lower())
+        self.assertEqual(breach.confidence, DPARiskItem.Confidence.HIGH)
 
     def test_realistic_breach_deadline_not_flagged(self):
         organization, user, contract = _make_org_and_contract(text=CLEAN_DPA_TEXT, org_slug='dpa-clean-firm2')
@@ -183,19 +206,62 @@ class DPAAnalyzerDetectionTests(TestCase):
         self.assertTrue(self.review_pack.dsar_assistance_chargeable)
 
     def test_detects_onsite_audit_and_unbounded_frequency(self):
-        run_dpa_analysis(self.review_pack)
+        suggestions = run_dpa_analysis(self.review_pack)
         self.assertTrue(self.review_pack.audit_rights_onsite_allowed)
         self.assertFalse(self.review_pack.audit_rights_frequency_limited)
+        onsite = [s for s in suggestions if s.detection_rule == 'audit_rights_onsite_allowed'][0]
+        self.assertIn('on-site audit', onsite.evidence_text.lower())
+        frequency = [s for s in suggestions if s.detection_rule == 'audit_frequency_not_limited'][0]
+        self.assertEqual(frequency.confidence, DPARiskItem.Confidence.NEEDS_HUMAN_CHECK)
 
     def test_detects_deletion_deadline_conflict_with_statutory_retention(self):
-        run_dpa_analysis(self.review_pack)
+        suggestions = run_dpa_analysis(self.review_pack)
         self.assertEqual(self.review_pack.deletion_return_deadline_days, 30)
         self.assertTrue(self.review_pack.deletion_legal_retention_conflict)
+        deletion = [s for s in suggestions if s.detection_rule == 'deletion_deadline_statutory_retention_conflict'][0]
+        self.assertIn('30 days', deletion.evidence_text.lower())
+        self.assertIn('statutory', deletion.evidence_text.lower())
 
     def test_detects_uncapped_liability_and_msa_override(self):
-        run_dpa_analysis(self.review_pack)
+        suggestions = run_dpa_analysis(self.review_pack)
         self.assertTrue(self.review_pack.liability_uncapped)
         self.assertTrue(self.review_pack.liability_overrides_msa_cap)
+        liability = [s for s in suggestions if s.detection_rule == 'dpa_uncapped_liability'][0]
+        self.assertIn('uncapped', liability.evidence_text.lower())
+        self.assertEqual(liability.confidence, DPARiskItem.Confidence.HIGH)
+
+    def test_role_ambiguity_uses_human_check_confidence(self):
+        organization, user, contract = _make_org_and_contract(text='DATA PROCESSING AGREEMENT. Personal data will be processed.', org_slug='dpa-ambiguous-role')
+        review_pack = DPAReviewPack.objects.create(organization=organization, contract=contract, created_by=user)
+        suggestions = run_dpa_analysis(review_pack)
+        role = [s for s in suggestions if s.detection_rule == 'role_ambiguous_missing_controller_processor'][0]
+        self.assertEqual(role.confidence, DPARiskItem.Confidence.NEEDS_HUMAN_CHECK)
+        self.assertEqual(role.evidence_text, 'Evidence requires manual verification')
+
+    def test_detects_dpa_uncapped_liability_against_linked_msa_cap(self):
+        msa = _make_msa(self.organization, self.user)
+        self.review_pack.related_contracts.add(msa)
+        suggestions = run_dpa_analysis(self.review_pack)
+        conflict = [s for s in suggestions if s.conflict_type == 'dpa_liability_vs_msa_cap']
+        self.assertEqual(len(conflict), 1)
+        self.assertEqual(conflict[0].owners, 'LEGAL,HEAD_LEGAL')
+        self.assertTrue(conflict[0].is_cross_document_conflict)
+        self.assertIn('uncapped', conflict[0].evidence_text.lower())
+        self.assertIn('liability', conflict[0].related_contract_evidence_text.lower())
+
+    def test_no_dpa_msa_conflict_when_no_linked_msa_exists(self):
+        suggestions = run_dpa_analysis(self.review_pack)
+        self.assertFalse([s for s in suggestions if s.conflict_type == 'dpa_liability_vs_msa_cap'])
+
+    def test_no_dpa_msa_conflict_when_dpa_liability_is_capped_consistently(self):
+        organization, user, contract = _make_org_and_contract(
+            text=CLEAN_DPA_TEXT + '\nNothing in this DPA increases or removes the limitation of liability in the Agreement.',
+            org_slug='dpa-capped-consistent',
+        )
+        review_pack = DPAReviewPack.objects.create(organization=organization, contract=contract, created_by=user)
+        review_pack.related_contracts.add(_make_msa(organization, user))
+        suggestions = run_dpa_analysis(review_pack)
+        self.assertFalse([s for s in suggestions if s.conflict_type == 'dpa_liability_vs_msa_cap'])
 
     def test_analysis_never_touches_approval_status(self):
         """The analyzer must never approve a DPA — that is exclusively a
@@ -241,6 +307,11 @@ class DPAReviewPackViewTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertGreater(self.review_pack.risk_items.count(), 0)
+        risk = self.review_pack.risk_items.exclude(evidence_text='').first()
+        self.assertIsNotNone(risk)
+        self.assertTrue(risk.detection_rule)
+        self.assertTrue(risk.source_section)
+        self.assertIn(risk.confidence, {DPARiskItem.Confidence.HIGH, DPARiskItem.Confidence.MEDIUM, DPARiskItem.Confidence.NEEDS_HUMAN_CHECK})
 
     def test_rerunning_analysis_does_not_duplicate_open_auto_detected_items(self):
         client = TestClient()
@@ -284,9 +355,15 @@ class DPAReviewPackViewTests(TestCase):
         self.review_pack.refresh_from_db()
         self.assertEqual(self.review_pack.approval_status, DPAReviewPack.ApprovalStatus.APPROVED)
         self.assertEqual(self.review_pack.approved_by_id, self.admin.id)
+        history = DPAApprovalHistoryEntry.objects.get(review_pack=self.review_pack)
+        self.assertEqual(history.from_status, DPAReviewPack.ApprovalStatus.DRAFT)
+        self.assertEqual(history.to_status, DPAReviewPack.ApprovalStatus.APPROVED)
+        self.assertIsInstance(history.risk_counts_by_severity, dict)
+        self.assertGreaterEqual(history.unresolved_blocker_count, 0)
         entry = AuditLog.objects.filter(model_name='DPAReviewPack', object_id=self.review_pack.pk).order_by('-timestamp').first()
         self.assertIsNotNone(entry)
         self.assertEqual((entry.changes or {}).get('event'), 'dpa_approval_status_changed')
+        self.assertEqual((entry.changes or {}).get('new_status'), DPAReviewPack.ApprovalStatus.APPROVED)
 
     def test_invalid_approval_status_rejected(self):
         client = TestClient()
@@ -296,6 +373,56 @@ class DPAReviewPackViewTests(TestCase):
             data=json.dumps({'status': 'NOT_A_REAL_STATUS'}), content_type='application/json',
         )
         self.assertEqual(response.status_code, 400)
+
+    def test_risk_status_transition_is_logged_and_does_not_change_pack_approval(self):
+        risk = DPARiskItem.objects.create(
+            review_pack=self.review_pack,
+            category=DPARiskItem.Category.BREACH_NOTIFICATION,
+            title='Short breach notice',
+            description='Needs review',
+            severity=DPARiskItem.Severity.HIGH,
+            owners='LEGAL',
+        )
+        client = TestClient()
+        client.login(username=self.admin.username, password='testpass123')
+        response = client.post(
+            reverse('contracts:dpa_risk_item_set_status', kwargs={'pk': risk.pk}),
+            data=json.dumps({'status': DPARiskItem.Status.NEEDS_DPO_SECURITY_INPUT}),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 200)
+        risk.refresh_from_db()
+        self.review_pack.refresh_from_db()
+        self.assertEqual(risk.status, DPARiskItem.Status.NEEDS_DPO_SECURITY_INPUT)
+        self.assertEqual(self.review_pack.approval_status, DPAReviewPack.ApprovalStatus.DRAFT)
+        entry = AuditLog.objects.filter(model_name='DPARiskItem', object_id=risk.pk).order_by('-timestamp').first()
+        self.assertEqual((entry.changes or {}).get('event'), 'dpa_risk_item_status_changed')
+
+    def test_reviewer_note_is_timestamped_and_available_for_memo(self):
+        risk = DPARiskItem.objects.create(
+            review_pack=self.review_pack,
+            category=DPARiskItem.Category.SECURITY,
+            title='Vague security',
+            description='Needs DPO input',
+            severity=DPARiskItem.Severity.MEDIUM,
+            owners='DPO_SECURITY',
+        )
+        client = TestClient()
+        client.login(username=self.admin.username, password='testpass123')
+        response = client.post(
+            reverse('contracts:dpa_risk_item_add_note', kwargs={'pk': risk.pk}),
+            data=json.dumps({'note': 'Confirm TOM annex with security before approval.'}),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 200)
+        note = DPARiskItemNote.objects.get(risk_item=risk)
+        self.assertEqual(note.author, self.admin)
+        self.assertIsNotNone(note.created_at)
+
+        response = client.post(reverse('contracts:dpa_review_generate_memo', kwargs={'pk': self.review_pack.pk}))
+        self.assertEqual(response.status_code, 200)
+        self.review_pack.refresh_from_db()
+        self.assertIn('Confirm TOM annex with security before approval.', self.review_pack.review_memo)
 
 
 class DPACrossTenantIsolationTests(TestCase):
@@ -375,7 +502,8 @@ class DPACopyQualityTests(TestCase):
         client = TestClient()
         client.login(username=self.user.username, password='testpass123')
         response = client.get(reverse('contracts:dpa_review_pack_detail', kwargs={'pk': self.review_pack.pk}))
-        body = response.content.decode()
+        self.assertEqual(response.status_code, 200)
+        body = response.content.decode().split('<div id="djDebug"', 1)[0]
         self.assertNotIn('DPAReviewPack', body)
         self.assertNotIn('DPO_SECURITY', body)
         self.assertIn('DPO/Security', body)

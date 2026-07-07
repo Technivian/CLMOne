@@ -155,10 +155,15 @@ from .views_domains.contracts import (
 )
 from .views_domains.dpa_review import (
     DPAPlaybookListView,
+    DPAReviewMemoView,
     DPAReviewPackDetailView,
     DPAReviewPackListView,
+    dpa_review_generate_memo,
+    dpa_review_link_related_contract,
+    dpa_review_memo_export,
     dpa_review_run_analysis,
     dpa_review_set_approval_status,
+    dpa_risk_item_add_note,
     dpa_risk_item_set_status,
 )
 from .views_domains.matter_ops import (

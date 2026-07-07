@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}DPA Review Memo — {{ review_pack.contract.title }} – DocClad{% endblock %}
+{% block content %}
+<div class="page-wrap page-wrap-fluid">
+    <div class="arch-header">
+        <div class="arch-header-left">
+            <div class="arch-title-row">
+                <h1 class="arch-title">DPA Review Memo</h1>
+            </div>
+            <p class="arch-subtitle">{{ review_pack.contract.title }}</p>
+        </div>
+        <div class="arch-header-right">
+            <a href="{% url 'contracts:dpa_review_pack_detail' review_pack.pk %}" class="btn-ghost">Back to DPA Review</a>
+            <a href="{% url 'contracts:dpa_review_memo_export' review_pack.pk %}" class="btn-ghost">Export Memo</a>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-inner">
+            {% if review_pack.review_memo %}
+            <pre class="text-sm c-primary whitespace-pre-wrap">{{ review_pack.review_memo }}</pre>
+            {% else %}
+            <p class="text-sm c-muted">No memo generated yet. Generate the memo from the DPA Review Pack detail page.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

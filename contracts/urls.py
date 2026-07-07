@@ -225,6 +225,11 @@ urlpatterns = [
     path('dpa-reviews/<int:pk>/analyze/', views.dpa_review_run_analysis, name='dpa_review_run_analysis'),
     path('dpa-reviews/<int:pk>/approval-status/', views.dpa_review_set_approval_status, name='dpa_review_set_approval_status'),
     path('dpa-risk-items/<int:pk>/status/', views.dpa_risk_item_set_status, name='dpa_risk_item_set_status'),
+    path('dpa-risk-items/<int:pk>/notes/', views.dpa_risk_item_add_note, name='dpa_risk_item_add_note'),
+    path('dpa-reviews/<int:pk>/link-contract/', views.dpa_review_link_related_contract, name='dpa_review_link_related_contract'),
+    path('dpa-reviews/<int:pk>/generate-memo/', views.dpa_review_generate_memo, name='dpa_review_generate_memo'),
+    path('dpa-reviews/<int:pk>/memo/', views.DPAReviewMemoView.as_view(), name='dpa_review_pack_memo'),
+    path('dpa-reviews/<int:pk>/memo/export/', views.dpa_review_memo_export, name='dpa_review_memo_export'),
     path('dpa-playbook/', views.DPAPlaybookListView.as_view(), name='dpa_playbook_list'),
 
     # Compliance

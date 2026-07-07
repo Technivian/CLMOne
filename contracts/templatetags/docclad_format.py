@@ -136,6 +136,7 @@ _DPA_APPROVAL_BADGES = {
 # there is no get_owners_display() to call. Mirrors DPARiskItem.Owner.choices.
 _DPA_OWNER_LABELS = {
     'LEGAL': 'Legal',
+    'HEAD_LEGAL': 'Head of Legal',
     'DPO_SECURITY': 'DPO/Security',
     'BUSINESS': 'Business',
     'FINANCE': 'Finance',
@@ -157,6 +158,26 @@ _RISK_STATUS_LABELS = {
     'OPEN': 'Open',
     'IN_PROGRESS': 'In Progress',
     'RESOLVED': 'Resolved',
+}
+
+# SignatureRequest.status -> badge variant.
+_SIGNATURE_STATUS_BADGES = {
+    'PENDING': 'badge-gray',
+    'SENT': 'badge-yellow',
+    'VIEWED': 'badge-blue',
+    'SIGNED': 'badge-green',
+    'DECLINED': 'badge-red',
+    'EXPIRED': 'badge-red',
+    'CANCELLED': 'badge-gray',
+}
+
+# Contract.risk_level -> badge variant (same LOW/MEDIUM/HIGH/CRITICAL scale
+# already used elsewhere, kept as its own map since it's a distinct field).
+_CONTRACT_RISK_BADGES = {
+    'LOW': 'badge-green',
+    'MEDIUM': 'badge-yellow',
+    'HIGH': 'badge-red',
+    'CRITICAL': 'badge-red',
 }
 
 # ApprovalRequest.approval_step is a free CharField copied from whichever
@@ -288,6 +309,18 @@ def risk_status_label(status):
     """RiskLog status key -> English display label ('IN_PROGRESS' -> 'In Progress'),
     overriding the model's own Dutch-labeled get_status_display()."""
     return _RISK_STATUS_LABELS.get(status, status.replace('_', ' ').title() if status else '')
+
+
+@register.filter
+def signature_status_badge_class(status):
+    """SignatureRequest status key -> canonical badge class."""
+    return _SIGNATURE_STATUS_BADGES.get(status, 'badge-gray')
+
+
+@register.filter
+def contract_risk_badge_class(risk_level):
+    """Contract risk_level key -> canonical badge class."""
+    return _CONTRACT_RISK_BADGES.get(risk_level, 'badge-gray')
 
 
 @register.filter
