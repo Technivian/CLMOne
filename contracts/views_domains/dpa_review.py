@@ -219,10 +219,8 @@ def dpa_review_run_analysis(request, pk):
     review_pack.save()
 
     # Cross-document conflicts read the fields run_dpa_analysis just set on
-    # review_pack, so they must run after it, in the same pass. De-dupe by
-    # detection_rule: run_dpa_analysis and check_cross_document_conflicts
-    # can both legitimately flag the same MSA-liability-cap conflict from
-    # two different angles — collapse to one risk item, not two.
+    # review_pack, so they must run after it, in the same pass. Keep this
+    # de-dupe defensive in case a future DPA-only rule reuses a rule key.
     seen_rules = {s.detection_rule for s in suggestions if s.detection_rule}
     for s in check_cross_document_conflicts(review_pack):
         if s.detection_rule and s.detection_rule in seen_rules:

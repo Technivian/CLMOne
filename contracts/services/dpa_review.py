@@ -87,26 +87,6 @@ def snippet_for_any(text_lower: str, keywords: list[str], window: int = _SNIPPET
     return ''
 
 
-def _related_msa_liability_cap_evidence(review_pack) -> str:
-    cap_keywords = [
-        'limitation of liability',
-        'liability cap',
-        'aggregate liability',
-        'total liability',
-        'fees paid',
-        'fees payable',
-        'shall not exceed',
-    ]
-    for contract in review_pack.related_contracts.all():
-        title_lower = (contract.title or '').lower()
-        if contract.contract_type != contract.ContractType.MSA and 'msa' not in title_lower and 'master service' not in title_lower:
-            continue
-        text_lower = normalize(contract.content or '')
-        if _contains_any(text_lower, cap_keywords):
-            return snippet_for_any(text_lower, cap_keywords)
-    return ''
-
-
 def snippet_for_match(text_lower: str, match: re.Match, window: int = _SNIPPET_WINDOW) -> str:
     start = max(0, match.start() - window)
     end = min(len(text_lower), match.end() + window)
@@ -448,26 +428,6 @@ def run_dpa_analysis(review_pack) -> list[RiskSuggestion]:
             severity=DPARiskItem.Severity.HIGH, owners='LEGAL', confidence=DPARiskItem.Confidence.MEDIUM,
             source_section='Liability', source_field='liability_separate_indemnities', detection_rule='dpa_separate_indemnity',
             evidence_text=snippet_for(text_lower, 'indemnif'),
-        ))
-
-    msa_cap_evidence = _related_msa_liability_cap_evidence(review_pack)
-    if (review_pack.liability_uncapped or review_pack.liability_overrides_msa_cap) and msa_cap_evidence:
-        dpa_evidence = snippet_for_any(text_lower, uncapped_kws + override_kws) or MANUAL_EVIDENCE
-        suggestions.append(RiskSuggestion(
-            category=DPARiskItem.Category.LIABILITY,
-            title='DPA liability conflicts with linked MSA cap',
-            description='The DPA indicates uncapped or unlimited data-breach liability while a linked MSA appears to include a liability cap. Align the DPA liability language with the MSA cap or escalate to Head of Legal.',
-            severity=DPARiskItem.Severity.CRITICAL,
-            owners='LEGAL,HEAD_LEGAL',
-            confidence=DPARiskItem.Confidence.HIGH if dpa_evidence != MANUAL_EVIDENCE and msa_cap_evidence != MANUAL_EVIDENCE else DPARiskItem.Confidence.MEDIUM,
-            source_section='Liability',
-            source_field='liability_uncapped',
-            detection_rule='dpa_liability_vs_msa_cap',
-            evidence_text=dpa_evidence,
-            related_contract_evidence_text=msa_cap_evidence,
-            conflict_type='dpa_liability_vs_msa_cap',
-            is_cross_document_conflict=True,
-            fallback_recommendation='Align DPA liability with the MSA cap, or escalate any enhanced data-breach cap to Head of Legal before approval.',
         ))
 
     return suggestions

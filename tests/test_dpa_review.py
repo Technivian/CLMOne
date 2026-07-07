@@ -29,6 +29,7 @@ from contracts.models import (
     Organization,
     OrganizationMembership,
 )
+from contracts.services.dpa_conflict import check_cross_document_conflicts
 from contracts.services.dpa_review import run_dpa_analysis
 
 ISO_TIMESTAMP_RE = re.compile(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}')
@@ -126,6 +127,11 @@ def _make_msa(organization, user, text=None, title='Payrollminds MSA'):
         status='IN_REVIEW',
         created_by=user,
     )
+
+
+def _run_cross_document_conflicts(review_pack):
+    run_dpa_analysis(review_pack)
+    return check_cross_document_conflicts(review_pack)
 
 
 class DPAReviewPackModelTests(TestCase):
@@ -241,7 +247,7 @@ class DPAAnalyzerDetectionTests(TestCase):
     def test_detects_dpa_uncapped_liability_against_linked_msa_cap(self):
         msa = _make_msa(self.organization, self.user)
         self.review_pack.related_contracts.add(msa)
-        suggestions = run_dpa_analysis(self.review_pack)
+        suggestions = _run_cross_document_conflicts(self.review_pack)
         conflict = [s for s in suggestions if s.conflict_type == 'dpa_liability_vs_msa_cap']
         self.assertEqual(len(conflict), 1)
         self.assertEqual(conflict[0].owners, 'LEGAL,HEAD_LEGAL')
@@ -250,7 +256,7 @@ class DPAAnalyzerDetectionTests(TestCase):
         self.assertIn('liability', conflict[0].related_contract_evidence_text.lower())
 
     def test_no_dpa_msa_conflict_when_no_linked_msa_exists(self):
-        suggestions = run_dpa_analysis(self.review_pack)
+        suggestions = _run_cross_document_conflicts(self.review_pack)
         self.assertFalse([s for s in suggestions if s.conflict_type == 'dpa_liability_vs_msa_cap'])
 
     def test_no_dpa_msa_conflict_when_dpa_liability_is_capped_consistently(self):
@@ -260,8 +266,116 @@ class DPAAnalyzerDetectionTests(TestCase):
         )
         review_pack = DPAReviewPack.objects.create(organization=organization, contract=contract, created_by=user)
         review_pack.related_contracts.add(_make_msa(organization, user))
-        suggestions = run_dpa_analysis(review_pack)
+        suggestions = _run_cross_document_conflicts(review_pack)
         self.assertFalse([s for s in suggestions if s.conflict_type == 'dpa_liability_vs_msa_cap'])
+
+    def test_detects_dpa_audit_rights_against_linked_contract_audit_limits(self):
+        msa = _make_msa(
+            self.organization,
+            self.user,
+            text='Audit rights are limited to once per year upon 30 days prior notice. A current SOC 2 report shall satisfy audit obligations.',
+        )
+        self.review_pack.related_contracts.add(msa)
+        suggestions = _run_cross_document_conflicts(self.review_pack)
+        conflict = [s for s in suggestions if s.conflict_type == 'dpa_audit_vs_contract_audit_limit']
+        self.assertEqual(len(conflict), 1)
+        self.assertEqual(conflict[0].owners, 'LEGAL,DPO_SECURITY')
+        self.assertIn('on-site audit', conflict[0].evidence_text.lower())
+        self.assertIn('once per year', conflict[0].related_contract_evidence_text.lower())
+
+    def test_detects_dpa_breach_notice_against_linked_contract_notice_standard(self):
+        msa = _make_msa(
+            self.organization,
+            self.user,
+            text='Security incidents will be notified without undue delay and in any event within 72 hours following confirmation.',
+        )
+        self.review_pack.related_contracts.add(msa)
+        suggestions = _run_cross_document_conflicts(self.review_pack)
+        conflict = [s for s in suggestions if s.conflict_type == 'dpa_breach_notice_vs_contract_notice']
+        self.assertEqual(len(conflict), 1)
+        self.assertEqual(conflict[0].owners, 'LEGAL,DPO_SECURITY,DELIVERY')
+        self.assertIn('within 4 hours', conflict[0].evidence_text.lower())
+        self.assertIn('72 hours', conflict[0].related_contract_evidence_text.lower())
+
+    def test_detects_dpa_deletion_deadline_against_retention_obligation(self):
+        msa = _make_msa(
+            self.organization,
+            self.user,
+            text='Supplier may retain payroll records, tax records, and legal recordkeeping archives for the applicable statutory retention period.',
+        )
+        self.review_pack.related_contracts.add(msa)
+        suggestions = _run_cross_document_conflicts(self.review_pack)
+        conflict = [s for s in suggestions if s.conflict_type == 'dpa_deletion_vs_retention_obligation']
+        self.assertEqual(len(conflict), 1)
+        self.assertEqual(conflict[0].owners, 'LEGAL,DELIVERY')
+        self.assertIn('30 days', conflict[0].evidence_text.lower())
+        self.assertIn('retain payroll', conflict[0].related_contract_evidence_text.lower())
+
+    def test_detects_subprocessor_approval_against_delivery_model(self):
+        sow = _make_msa(
+            self.organization,
+            self.user,
+            title='Payrollminds SOW',
+            text='Services may use payroll vendors, SaaS tools, hosting providers, cloud providers, affiliates, and other third-party subprocessors.',
+        )
+        sow.contract_type = Contract.ContractType.SOW
+        sow.save()
+        self.review_pack.related_contracts.add(sow)
+        suggestions = _run_cross_document_conflicts(self.review_pack)
+        conflict = [s for s in suggestions if s.conflict_type == 'dpa_subprocessor_approval_vs_delivery_model']
+        self.assertEqual(len(conflict), 1)
+        self.assertEqual(conflict[0].owners, 'LEGAL,DPO_SECURITY,BUSINESS,DELIVERY')
+        self.assertIn('prior written approval', conflict[0].evidence_text.lower())
+        self.assertIn('payroll vendors', conflict[0].related_contract_evidence_text.lower())
+
+    def test_detects_assistance_obligations_against_scope_or_fees(self):
+        dpa_text = CLEAN_DPA_TEXT + '\nPayrollminds shall provide unlimited assistance with data subject requests, audits, investigations, and controller obligations at no cost.'
+        organization, user, contract = _make_org_and_contract(text=dpa_text, org_slug='dpa-assistance-conflict')
+        review_pack = DPAReviewPack.objects.create(organization=organization, contract=contract, created_by=user)
+        review_pack.related_contracts.add(_make_msa(
+            organization,
+            user,
+            text='Assistance beyond scope is chargeable, subject to additional fees and change control under the statement of work.',
+        ))
+        suggestions = _run_cross_document_conflicts(review_pack)
+        conflict = [s for s in suggestions if s.conflict_type == 'dpa_assistance_vs_scope_or_fees']
+        self.assertEqual(len(conflict), 1)
+        self.assertEqual(conflict[0].owners, 'LEGAL,BUSINESS,FINANCE')
+        self.assertIn('unlimited assistance', conflict[0].evidence_text.lower())
+        self.assertIn('chargeable', conflict[0].related_contract_evidence_text.lower())
+
+    def test_detects_specific_security_obligations_against_vague_contract_security(self):
+        organization, user, contract = _make_org_and_contract(text=CLEAN_DPA_TEXT, org_slug='dpa-security-conflict')
+        review_pack = DPAReviewPack.objects.create(organization=organization, contract=contract, created_by=user)
+        review_pack.related_contracts.add(_make_msa(
+            organization,
+            user,
+            text='Supplier will maintain commercially reasonable security measures and reasonable safeguards.',
+        ))
+        suggestions = _run_cross_document_conflicts(review_pack)
+        conflict = [s for s in suggestions if s.conflict_type == 'dpa_security_obligations_vs_contract_security']
+        self.assertEqual(len(conflict), 1)
+        self.assertEqual(conflict[0].owners, 'DPO_SECURITY,LEGAL')
+        self.assertIn('encryption', conflict[0].evidence_text.lower())
+        self.assertIn('commercially reasonable security', conflict[0].related_contract_evidence_text.lower())
+
+    def test_cross_document_conflicts_are_deduplicated_by_conflict_type(self):
+        self.review_pack.related_contracts.add(
+            _make_msa(self.organization, self.user, text='Audit no more than once per year with reasonable notice.', title='Payrollminds MSA 1'),
+            _make_msa(self.organization, self.user, text='Audit no more than once per year with reasonable notice.', title='Payrollminds MSA 2'),
+        )
+        suggestions = _run_cross_document_conflicts(self.review_pack)
+        conflicts = [s for s in suggestions if s.conflict_type == 'dpa_audit_vs_contract_audit_limit']
+        self.assertEqual(len(conflicts), 1)
+
+    def test_no_cross_document_conflict_without_linked_contract_evidence(self):
+        self.review_pack.related_contracts.add(_make_msa(
+            self.organization,
+            self.user,
+            text='This master services agreement governs payroll services.',
+        ))
+        suggestions = _run_cross_document_conflicts(self.review_pack)
+        self.assertFalse(suggestions)
 
     def test_analysis_never_touches_approval_status(self):
         """The analyzer must never approve a DPA — that is exclusively a
@@ -312,6 +426,27 @@ class DPAReviewPackViewTests(TestCase):
         self.assertTrue(risk.detection_rule)
         self.assertTrue(risk.source_section)
         self.assertIn(risk.confidence, {DPARiskItem.Confidence.HIGH, DPARiskItem.Confidence.MEDIUM, DPARiskItem.Confidence.NEEDS_HUMAN_CHECK})
+
+    def test_run_analysis_persists_cross_document_conflict_and_memo_evidence(self):
+        self.review_pack.related_contracts.add(_make_msa(self.organization, self.admin))
+        client = TestClient()
+        client.login(username=self.admin.username, password='testpass123')
+        response = client.post(
+            reverse('contracts:dpa_review_run_analysis', kwargs={'pk': self.review_pack.pk}),
+            data=json.dumps({}), content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 200)
+        conflict = self.review_pack.risk_items.get(conflict_type='dpa_liability_vs_msa_cap')
+        self.assertTrue(conflict.is_cross_document_conflict)
+        self.assertIn('uncapped', conflict.evidence_text.lower())
+        self.assertIn('liability', conflict.related_contract_evidence_text.lower())
+
+        response = client.post(reverse('contracts:dpa_review_generate_memo', kwargs={'pk': self.review_pack.pk}))
+        self.assertEqual(response.status_code, 200)
+        self.review_pack.refresh_from_db()
+        self.assertIn('[CROSS-DOCUMENT]', self.review_pack.review_memo)
+        self.assertIn('DPA liability conflicts with "Payrollminds MSA" liability cap', self.review_pack.review_memo)
+        self.assertIn('Linked MSA evidence:', self.review_pack.review_memo)
 
     def test_rerunning_analysis_does_not_duplicate_open_auto_detected_items(self):
         client = TestClient()
