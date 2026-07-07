@@ -4,7 +4,7 @@ from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Count, Q, Sum
+from django.db.models import Case, Count, IntegerField, Q, Sum, When
 from django.http import Http404, HttpResponseForbidden, HttpResponseRedirect
 from django.urls import reverse, reverse_lazy
 from django.shortcuts import get_object_or_404, redirect
@@ -13,7 +13,17 @@ from django.views.generic import CreateView, DeleteView, DetailView, ListView, U
 
 from contracts.forms import ClientForm, DocumentForm, DocumentOCRReviewForm, MatterForm
 from contracts.middleware import log_action
-from contracts.models import AuditLog, Client, Contract, Document, DocumentOCRReview, Matter
+from contracts.models import (
+    ApprovalRequest,
+    AuditLog,
+    Client,
+    Contract,
+    Document,
+    DocumentOCRReview,
+    DPARiskItem,
+    Matter,
+    RiskLog,
+)
 from contracts.permissions import ContractAction, can_access_contract_action
 from contracts.tenancy import get_user_organization, scope_queryset_for_organization, set_organization_on_instance
 from contracts.view_support import (
@@ -163,12 +173,135 @@ class MatterDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailView
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx['contracts'] = self.object.contracts.all()
-        ctx['documents'] = self.object.documents.all()[:10]
-        ctx['time_entries'] = self.object.time_entries.all()[:10]
-        ctx['tasks'] = self.object.tasks.all()[:10]
-        ctx['deadlines'] = self.object.deadlines.filter(is_completed=False)[:10]
-        ctx['risks'] = self.object.risks.all()[:10]
+        matter = self.object
+        org = self.get_organization()
+        workspace_mode = getattr(org, 'workspace_mode', 'law_firm_ops') if org else 'law_firm_ops'
+        is_in_house_clm = workspace_mode == 'in_house_clm'
+        ctx['is_in_house_clm'] = is_in_house_clm
+
+        ctx['contracts'] = matter.contracts.all().order_by('-updated_at')
+        ctx['documents'] = matter.documents.filter(is_deleted=False).order_by('-created_at')[:10]
+        ctx['time_entries'] = matter.time_entries.all()[:10]
+        ctx['tasks'] = matter.tasks.all()[:10]
+        ctx['deadlines'] = matter.deadlines.filter(is_completed=False).order_by('due_date')[:10]
+        ctx['risks'] = matter.risks.all()[:10]
+
+        if not is_in_house_clm:
+            return ctx
+
+        # ── Matter Workspace Spine (Phase 3) — in_house_clm only ────────
+        # Every figure below reads PERSISTED rows already attached to this
+        # matter (Contract/DPAReviewPack/DPARiskItem/RiskLog/Deadline/
+        # ApprovalRequest). Nothing here triggers DPA analysis, obligation
+        # extraction, or any AI call — that only happens from the DPA
+        # Review Pack's explicit "Run Analysis" action, unchanged here.
+        # All querysets below are reached through `matter`, which is
+        # already tenant-scoped by get_queryset(), so every row is
+        # implicitly organization-scoped through its FK chain to matter.
+        severity_rank = Case(
+            When(severity='CRITICAL', then=0),
+            When(severity='HIGH', then=1),
+            When(severity='MEDIUM', then=2),
+            When(severity='LOW', then=3),
+            default=4, output_field=IntegerField(),
+        )
+        risk_level_rank = Case(
+            When(risk_level='CRITICAL', then=0),
+            When(risk_level='HIGH', then=1),
+            When(risk_level='MEDIUM', then=2),
+            When(risk_level='LOW', then=3),
+            default=4, output_field=IntegerField(),
+        )
+
+        clm_contracts = list(
+            matter.contracts.all()
+            .prefetch_related('approval_requests', 'dpa_review_packs')
+            .order_by('-updated_at')
+        )
+        for contract in clm_contracts:
+            contract.clm_pending_approval_count = sum(
+                1 for a in contract.approval_requests.all() if a.status == ApprovalRequest.Status.PENDING
+            )
+            contract.clm_dpa_pack = next(iter(contract.dpa_review_packs.all()), None)
+        ctx['clm_contracts'] = clm_contracts
+
+        dpa_packs = list(
+            matter.dpa_review_packs
+            .select_related('contract', 'counterparty')
+            .prefetch_related('risk_items')
+            .order_by('-updated_at')
+        )
+        for pack in dpa_packs:
+            items = list(pack.risk_items.all())
+            pack.clm_high_risk_count = sum(
+                1 for i in items
+                if i.severity in ('HIGH', 'CRITICAL') and i.status not in ('RESOLVED', 'FALSE_POSITIVE')
+            )
+            pack.clm_conflict_count = sum(
+                1 for i in items
+                if i.is_cross_document_conflict and i.status not in ('RESOLVED', 'FALSE_POSITIVE')
+            )
+        ctx['clm_dpa_packs'] = dpa_packs
+        ctx['clm_memos'] = sorted(
+            (pack for pack in dpa_packs if pack.review_memo_generated_at),
+            key=lambda pack: pack.review_memo_generated_at, reverse=True,
+        )
+
+        risk_log_items = list(
+            matter.risks
+            .exclude(status=RiskLog.Status.RESOLVED)
+            .select_related('assigned_to')
+            .annotate(severity_rank=risk_level_rank)
+            .order_by('severity_rank', '-created_at')
+        )
+        dpa_risk_items = list(
+            DPARiskItem.objects
+            .filter(review_pack__matter=matter)
+            .exclude(status__in=['RESOLVED', 'FALSE_POSITIVE'])
+            .select_related('review_pack', 'review_pack__contract')
+            .annotate(severity_rank=severity_rank)
+            .order_by('severity_rank', '-created_at')
+        )
+        _severity_order = {'CRITICAL': 0, 'HIGH': 1, 'MEDIUM': 2, 'LOW': 3}
+        combined_risks = [
+            {
+                'source': 'Contract Risk',
+                'title': r.title or (r.description[:80] if r.description else 'Risk'),
+                'severity': r.risk_level,
+                'severity_display': r.get_risk_level_display(),
+                'owner': r.assigned_to,
+                'status_display': r.get_status_display(),
+                'detail_url': reverse('contracts:risk_log_update', kwargs={'pk': r.pk}),
+            }
+            for r in risk_log_items
+        ] + [
+            {
+                'source': 'DPA Risk',
+                'title': i.title,
+                'severity': i.severity,
+                'severity_display': i.get_severity_display(),
+                'owner': None,
+                'status_display': i.get_status_display(),
+                'detail_url': reverse('contracts:dpa_review_pack_detail', kwargs={'pk': i.review_pack_id}),
+            }
+            for i in dpa_risk_items
+        ]
+        combined_risks.sort(key=lambda entry: _severity_order.get(entry['severity'], 4))
+        ctx['clm_risks'] = combined_risks
+        ctx['clm_open_risk_count'] = len(combined_risks)
+
+        clm_approvals = list(
+            ApprovalRequest.objects
+            .filter(contract__matter=matter)
+            .exclude(status__in=[ApprovalRequest.Status.APPROVED, ApprovalRequest.Status.REJECTED])
+            .select_related('contract', 'assigned_to')
+            .order_by('due_date')
+        )
+        ctx['clm_approvals'] = clm_approvals[:10]
+        ctx['clm_open_approval_count'] = len(clm_approvals)
+
+        ctx['clm_upcoming_deadline_count'] = matter.deadlines.filter(is_completed=False).count()
+
         return ctx
 
 

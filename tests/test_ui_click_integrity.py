@@ -159,8 +159,8 @@ class UIButtonAndFlowIntegrityTests(TestCase):
     def test_case_flow_semantics_on_high_traffic_pages(self):
         dashboard_response = self.client.get(reverse('dashboard'))
         self.assertEqual(dashboard_response.status_code, 200)
-        self.assertContains(dashboard_response, 'Active contracts')
-        self.assertContains(dashboard_response, 'Task Signals')
+        self.assertContains(dashboard_response, 'Needs Legal Review')
+        self.assertContains(dashboard_response, 'Priority Work Queue')
         self.assertContains(dashboard_response, 'Waiting on Me')
 
         list_response = self.client.get(reverse('contracts:contract_list'))

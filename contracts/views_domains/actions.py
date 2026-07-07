@@ -13,7 +13,7 @@ from django.views.generic import CreateView
 from django.core.mail import send_mail
 
 from contracts.forms import BudgetExpenseForm, ChecklistItemForm, DueDiligenceRiskForm, DueDiligenceTaskForm, UserProfileForm
-from contracts.models import AuditLog, BudgetExpense, ChecklistItem, Contract, DueDiligenceRisk, DueDiligenceTask, NegotiationThread, Notification, OrganizationMembership, UserProfile
+from contracts.models import AuditLog, BudgetExpense, ChecklistItem, Contract, DueDiligenceRisk, DueDiligenceTask, NegotiationThread, Notification, Organization, OrganizationMembership, UserProfile
 from contracts.middleware import log_action
 from contracts.permissions import ContractAction, can_access_contract_action, can_manage_organization
 from contracts.session_security import get_organization_session_audit, revoke_organization_sessions, revoke_session_by_key
@@ -338,6 +338,34 @@ def organization_security_settings(request):
 
     if request.method == 'POST':
         action = request.POST.get('action', 'save')
+        if action == 'save_workspace_mode':
+            new_mode = request.POST.get('workspace_mode')
+            valid_modes = {choice for choice, _label in Organization.WorkspaceMode.choices}
+            if new_mode not in valid_modes:
+                messages.error(request, 'Unrecognized workspace mode.')
+                return redirect('organization_security_settings')
+            if organization.workspace_mode != new_mode:
+                previous_mode = organization.workspace_mode
+                organization.workspace_mode = new_mode
+                organization.save(update_fields=['workspace_mode', 'updated_at'])
+                log_action(
+                    request.user,
+                    AuditLog.Action.UPDATE,
+                    'Organization',
+                    object_id=organization.id,
+                    object_repr=organization.name,
+                    changes={
+                        'event': 'organization_workspace_mode_updated',
+                        'workspace_mode': new_mode,
+                        'previous_workspace_mode': previous_mode,
+                    },
+                    request=request,
+                )
+                messages.success(request, 'Workspace mode updated.')
+            else:
+                messages.info(request, 'Workspace mode is already set to that value.')
+            return redirect('organization_security_settings')
+
         if action == 'revoke_sessions':
             affected_users = revoke_organization_sessions(organization)
             log_action(

@@ -48,34 +48,35 @@
             letter-spacing: -0.02em;
         }
 
-        /* ── Ledger design language — see DOCCLAD_DESIGN_SYSTEM.md ──────
-              Accent is copper (ledger-ink red), not the brand teal. Teal
-              is reserved for the trust/verification signal — the seal
-              mark, fiduciary surfaces, --msg-success — and the logo. ── */
+        /* ── Ledger design language — see DOCCLAD_DESIGN_SYSTEM.md v1.2 ──
+              Accent is teal (the seal color): active nav, links, progress/
+              lifecycle, focus rings, "trusted/verified" status. Copper/
+              burnt-orange (--btn-gradient) is reserved for primary
+              creation/action CTAs only ("New Contract", "New Risk"). ── */
         :root, [data-theme="light"] {
             --bg: #F3F5F7;
             --surface: #EDF0F4;
             --surface-alt: #FFFFFF;
-            --primary: #B5502E;
-            --primary-hover: #8A3A1E;
-            --primary-light: #C96A3E;
-            --accent: #B5502E;
+            --primary: #0A7264;
+            --primary-hover: #085C51;
+            --primary-light: #11A08D;
+            --accent: #0A7264;
             --text-primary: #0B1330;
             --text-secondary: #5F6B85;
             --text-muted: #838DA3;
             --text-dim: #AAB2C2;
             --border: #DEE2EA;
-            --primary-glow: rgba(181,80,46,0.16);
-            --primary-subtle: rgba(181,80,46,0.08);
-            --primary-bg: rgba(181,80,46,0.12);
-            --accent-bg: rgba(181,80,46,0.10);
+            --primary-glow: rgba(10,114,100,0.16);
+            --primary-subtle: rgba(10,114,100,0.08);
+            --primary-bg: rgba(10,114,100,0.12);
+            --accent-bg: rgba(10,114,100,0.10);
             --seal: #0A7264;
             --seal-bg: #DFF4EE;
             --sidebar-bg: #FFFFFF;
             --sidebar-hover: #EDF0F4;
-            --sidebar-active-bg: #F3DACB;
-            --sidebar-active-border: #B5502E;
-            --sidebar-active-text: #B5502E;
+            --sidebar-active-bg: #DFF4EE;
+            --sidebar-active-border: #0A7264;
+            --sidebar-active-text: #0A7264;
             --topbar-bg: #FFFFFF;
             --topbar-border: #DEE2EA;
             --content-bg: #F3F5F7;
@@ -99,29 +100,46 @@
             --row-overdue-bg: #F8E8E3;
         }
 
+        /* ── Sidebar shell — fixed deep navy, independent of light/dark
+              content theme. A permanent dark rail is the "legal operating
+              system" signature; it must not follow --sidebar-bg (which
+              other components like list rows / views-rail / profile menu
+              also key off) or it would break those on the light theme. ── */
+        :root, [data-theme="light"], [data-theme="dark"] {
+            --sidebar-fixed-bg: #0B1330;
+            --sidebar-fixed-border: #1C2842;
+            --sidebar-fixed-text: #A9B2C8;
+            --sidebar-fixed-text-active: #FFFFFF;
+            --sidebar-fixed-icon: #8A94AD;
+            --sidebar-fixed-hover: rgba(255,255,255,0.06);
+            --sidebar-fixed-active-bg: rgba(23,191,165,0.16);
+            --sidebar-fixed-active-border: #17BFA5;
+            --sidebar-fixed-section-label: #6C7893;
+        }
+
         [data-theme="dark"] {
             --bg: #070D20;
             --surface: #101A38;
             --surface-alt: #0B1330;
-            --primary: #CF7248;
-            --primary-hover: #E29368;
-            --primary-light: #E29368;
-            --accent: #CF7248;
+            --primary: #17BFA5;
+            --primary-hover: #55CDB7;
+            --primary-light: #55CDB7;
+            --accent: #17BFA5;
             --text-primary: #EDF0F6;
             --text-secondary: #A9B2C8;
             --text-muted: #78839E;
             --text-dim: #4E5A78;
             --border: #1C2842;
-            --primary-glow: rgba(207,114,72,0.22);
-            --primary-subtle: rgba(207,114,72,0.12);
-            --primary-bg: rgba(207,114,72,0.16);
-            --accent-bg: rgba(207,114,72,0.14);
+            --primary-glow: rgba(17,191,165,0.22);
+            --primary-subtle: rgba(17,191,165,0.12);
+            --primary-bg: rgba(17,191,165,0.16);
+            --accent-bg: rgba(17,191,165,0.14);
             --seal: #17BFA5;
             --seal-bg: rgba(17,179,154,0.14);
             --sidebar-bg: #0B1330;
             --sidebar-hover: rgba(255,255,255,0.06);
-            --sidebar-active-bg: rgba(207,114,72,0.16);
-            --sidebar-active-border: #CF7248;
+            --sidebar-active-bg: rgba(17,191,165,0.16);
+            --sidebar-active-border: #17BFA5;
             --sidebar-active-text: #FFFFFF;
             --topbar-bg: #0B1330;
             --topbar-border: #1C2842;
@@ -252,13 +270,26 @@
         [data-theme="light"] .badge-purple { background: #F0EAF7; color: #6D4E8E; }
         [data-theme="light"] .badge-gray   { background: #ECEFF4; color: #5F6B85; }
 
-        .nav-section { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); padding: 14px 20px 8px; margin-top: 6px; }
-        .nav-link { display: flex; align-items: center; gap: 10px; padding: 9px 20px; font-size: 13px; color: var(--text-secondary); border-radius: 0; margin: 0; transition: all 0.2s; text-decoration: none; border-left: 3px solid transparent; }
-        .nav-link:hover { background: var(--sidebar-hover); color: var(--text-primary); }
-        .nav-link.active { background: var(--sidebar-hover); color: var(--text-primary); font-weight: 600; border-left-color: var(--primary); }
-        .nav-link svg { width: 18px; height: 18px; flex-shrink: 0; opacity: 0.7; }
-        .nav-link.active svg { opacity: 1; }
+        .nav-section { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--sidebar-fixed-section-label); padding: 14px 20px 8px; margin-top: 6px; }
+        .nav-link { display: flex; align-items: center; gap: 10px; padding: 9px 20px; font-size: 13px; color: var(--sidebar-fixed-text); border-radius: 0; margin: 0; transition: all 0.2s; text-decoration: none; border-left: 3px solid transparent; }
+        .nav-link:hover { background: var(--sidebar-fixed-hover); color: var(--sidebar-fixed-text-active); }
+        .nav-link.active { background: var(--sidebar-fixed-active-bg); color: var(--sidebar-fixed-text-active); font-weight: 600; border-left-color: var(--sidebar-fixed-active-border); }
+        .nav-link svg { width: 18px; height: 18px; flex-shrink: 0; opacity: 0.7; color: var(--sidebar-fixed-icon); }
+        .nav-link.active svg { opacity: 1; color: var(--sidebar-fixed-text-active); }
         .nav-badge { font-size: 10px; background: var(--badge-bg); color: white; border-radius: 9999px; padding: 0 6px; margin-left: auto; min-width: 18px; text-align: center; line-height: 18px; font-weight: 600; }
+        .sidebar-brand {
+            height: 78px;
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        .sidebar-brand .logo-wordmark {
+            display: block;
+            height: 42px;
+            width: auto;
+            object-fit: contain;
+        }
         html, body { height: 100%; }
         body {
             margin: 0;
@@ -268,10 +299,10 @@
         }
 
         .sidebar-container {
-            width: 252px;
-            height: calc(100vh - 56px);
-            border-right: 1px solid var(--border);
-            background: var(--sidebar-bg);
+            width: 248px;
+            height: 100vh;
+            border-right: 1px solid var(--sidebar-fixed-border);
+            background: var(--sidebar-fixed-bg);
             overflow-y: auto;
             overflow-x: hidden;
             overscroll-behavior: contain;
@@ -281,20 +312,30 @@
         }
         body.nav-collapsed .sidebar-container { width: 72px; }
         body.nav-collapsed .nav-link { justify-content: center; padding-left: 0; padding-right: 0; border-left-width: 0; border-bottom: 2px solid transparent; }
-        body.nav-collapsed .nav-link.active { border-bottom-color: var(--primary); }
+        body.nav-collapsed .nav-link.active { border-bottom-color: var(--sidebar-fixed-active-border); }
         body.nav-collapsed .nav-link > svg { margin-right: 0; }
         body.nav-collapsed .nav-link { font-size: 0; }
         body.nav-collapsed .nav-link .nav-badge { font-size: 10px; }
         body.nav-collapsed .nav-section { font-size: 0; padding-top: 8px; padding-bottom: 6px; }
+        body.nav-collapsed .sidebar-brand { justify-content: center; padding: 0; }
+        body.nav-collapsed .sidebar-brand .logo-wordmark { display: none; }
+        body.nav-collapsed .sidebar-brand .logo-mark { display: block; height: 34px; width: 34px; }
+        .sidebar-brand .logo-mark { display: none; }
+        .sidebar-footer { padding: 14px 20px 16px; border-top: 1px solid var(--sidebar-fixed-border); margin-top: 8px; }
+        .sidebar-footer-org { font-size: 12px; font-weight: 600; color: var(--sidebar-fixed-text-active); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 10px; }
+        .sidebar-footer-collapse { display: flex; align-items: center; gap: 8px; background: none; border: none; padding: 0; font-size: 12px; font-weight: 600; color: var(--sidebar-fixed-text); cursor: pointer; }
+        .sidebar-footer-collapse:hover { color: var(--sidebar-fixed-text-active); }
+        .sidebar-footer-collapse svg { width: 14px; height: 14px; }
+        body.nav-collapsed .sidebar-footer { display: none; }
         .main-layout {
             display: flex;
-            height: calc(100vh - 56px);
-            min-height: calc(100vh - 56px);
+            height: 100vh;
+            min-height: 100vh;
             overflow: hidden;
         }
         .main-area {
             flex: 1;
-            height: calc(100vh - 56px);
+            height: 100vh;
             overflow-y: auto;
             overflow-x: hidden;
             overscroll-behavior: contain;
@@ -305,7 +346,7 @@
             background: var(--topbar-bg);
             border-bottom: 1px solid var(--topbar-border);
             padding: 0 18px;
-            height: 56px;
+            height: 78px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -313,6 +354,13 @@
             position: sticky;
             top: 0;
             z-index: 60;
+        }
+        .main-area > .top-bar {
+            padding-left: 34px;
+            padding-right: max(18px, calc(100% - 1394px));
+        }
+        .main-area > .top-bar .global-search-form {
+            max-width: 528px;
         }
         .messages-container { padding: 16px 24px; animation: slideDown 0.3s ease-out; }
         @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
@@ -703,6 +751,21 @@
             .btn-primary-grad  { background: var(--btn-gradient); }
 
             /* ── Text color shorthands ────────────────────────────────────────────── */
+            /* Icon tone vocabulary — a small tinted-circle badge for a leading
+               icon (priority cards, aggregate tiles, activity feeds). Shared
+               across pages so the same tone always means the same thing:
+               progress = in-flight, pending = waiting on someone, special =
+               signature/legal-adjacent, danger = risk/expiry, positive =
+               healthy/complete, neutral = informational. */
+            .icon-badge { width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+            .icon-badge svg { width: 15px; height: 15px; }
+            .tone-progress { background: var(--status-progress-bg); color: var(--status-progress-fg); }
+            .tone-pending  { background: var(--status-pending-bg); color: var(--status-pending-fg); }
+            .tone-special  { background: var(--status-special-bg); color: var(--status-special-fg); }
+            .tone-danger   { background: var(--status-danger-bg); color: var(--status-danger-fg); }
+            .tone-positive { background: var(--status-positive-bg); color: var(--status-positive-fg); }
+            .tone-neutral  { background: var(--well); color: var(--text-muted); }
+
             .c-primary   { color: var(--text-primary); }
             .c-secondary { color: var(--text-secondary); }
             .c-muted     { color: var(--text-muted); }
@@ -901,7 +964,7 @@
                 background: var(--surface); border-bottom: 1px solid var(--card-border);
             }
             .wq-table td {
-                padding: 12px 16px; font-size: 13px; color: var(--text-primary);
+                padding: 15px 16px; font-size: 13px; color: var(--text-primary);
                 border-bottom: 1px solid var(--card-border); vertical-align: middle;
             }
             .wq-table tr:last-child td { border-bottom: none; }
@@ -916,10 +979,45 @@
             .wq-item-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
             .wq-empty { text-align: center; padding: 28px 16px; color: var(--text-muted); font-size: 13px; }
             .wq-due-overdue { color: var(--msg-error-text); font-weight: 600; }
+            .wq-due-today { color: var(--status-pending-fg, #8A5A14); font-weight: 600; }
             /* Numeric/date columns (Due, Key date, Value) read as a table,
                not a form, when right-aligned — matches Ironclad/Mochadocs
                column conventions. */
             .wq-col-num { text-align: right; font-variant-numeric: tabular-nums; }
+
+            /* Owner — avatar + name/role, one step richer than a bare
+               assignee chip when the row needs to show who owns it AND
+               what function they sit in (Legal/Finance/Procurement). */
+            .wq-owner { display: flex; align-items: center; gap: 8px; }
+            .wq-owner-avatar { width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 11px; font-weight: 700; }
+            .wq-owner-avatar-empty { background: var(--well); border: 1px dashed var(--border); }
+            .wq-owner-text { display: flex; flex-direction: column; min-width: 0; }
+            .wq-owner-name { font-size: 12.5px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .wq-owner-role { font-size: 11px; color: var(--text-muted); }
+            .wq-owner-empty .wq-owner-name { color: var(--text-muted); font-weight: 500; }
+
+            /* Risk — dot + label, same three-tier vocabulary as contract
+               risk_level everywhere else (never a fourth ad-hoc color). */
+            .wq-risk { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--text-secondary); }
+            .wq-risk-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: var(--text-dim); }
+            .wq-risk-high .wq-risk-dot, .wq-risk-critical .wq-risk-dot { background: var(--status-danger-fg); }
+            .wq-risk-high, .wq-risk-critical { color: var(--status-danger-fg); }
+            .wq-risk-medium .wq-risk-dot { background: var(--status-pending-fg); }
+            .wq-risk-medium { color: var(--status-pending-fg); }
+            .wq-risk-low .wq-risk-dot { background: var(--status-positive-fg); }
+            .wq-risk-low { color: var(--status-positive-fg); }
+
+            /* Action column — a per-stage verb button plus an overflow menu
+               for View/Edit, so the row always has one obvious next step. */
+            .wq-col-action { text-align: right; white-space: nowrap; }
+            .wq-col-action { display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
+            .wq-kebab { position: relative; }
+            .wq-kebab-trigger { list-style: none; cursor: pointer; width: 26px; height: 26px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 16px; line-height: 1; }
+            .wq-kebab-trigger::-webkit-details-marker { display: none; }
+            .wq-kebab-trigger:hover { background: var(--sidebar-hover); color: var(--text-primary); }
+            .wq-kebab-menu { position: absolute; right: 0; top: calc(100% + 4px); background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px; box-shadow: var(--shadow-overlay, 0 8px 24px rgba(0,0,0,0.12)); min-width: 120px; z-index: 20; padding: 4px; }
+            .wq-kebab-menu a { display: block; padding: 7px 10px; border-radius: 6px; font-size: 12.5px; font-weight: 500; color: var(--text-secondary); text-decoration: none; }
+            .wq-kebab-menu a:hover { background: var(--sidebar-hover); color: var(--text-primary); }
 
             /* Approve/Reject row actions (Approvals inbox) — token-backed
                success/danger tints, same shape language as .repo-mini-btn.
@@ -1288,6 +1386,9 @@
             .btn-primary-grad svg { width: 14px; height: 14px; }
             .sidebar-padding { padding: 12px 0; }
             .main-content-pad { padding: 24px; }
+            .app-footer { text-align: center; padding: 20px 24px 28px; font-size: 12px; color: var(--text-muted); }
+            .app-footer a { color: var(--text-muted); text-decoration: none; margin: 0 4px; }
+            .app-footer a:hover { color: var(--primary-light); text-decoration: underline; }
 
             @media (max-width: 1100px) {
                 .workspace-split { grid-template-columns: 1fr; }
@@ -1304,6 +1405,7 @@
         </style>
 </head>
 <body class="c-primary-text">
+    {% if not user.is_authenticated %}
     <div class="top-bar">
         <div class="topbar-flex topbar-gap-lg">
             {% if user.is_authenticated %}
@@ -1391,107 +1493,103 @@
             {% endif %}
         </div>
     </div>
+    {% endif %}
 
     {% if user.is_authenticated %}
     <div class="main-layout">
         <nav class="sidebar-container" id="sidebar">
+            <a href="{% url 'dashboard' %}" class="sidebar-brand" aria-label="DocClad — go to dashboard">
+                <img src="{% static 'img/brand/docclad-logo-white.svg' %}" alt="DocClad" class="logo-wordmark">
+                <img src="{% static 'img/brand/docclad-mark-white.svg' %}" alt="" aria-hidden="true" class="logo-mark">
+            </a>
             <div class="sidebar-padding">
-                <a href="{% url 'dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                    Dashboard
-                </a>
-
-                <div class="nav-section">EXECUTION</div>
-                <a href="{% url 'contracts:contract_create' %}" class="nav-link {% if request.resolver_match.url_name == 'contract_create' %}active{% endif %}">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                    New Contract
-                </a>
-                <a href="{% url 'contracts:contract_list' %}" class="nav-link {% if request.resolver_match.url_name == 'contract_list' or request.resolver_match.url_name == 'contract_detail' or request.resolver_match.url_name == 'contract_update' %}active{% endif %}">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    Contract Workspace
-                </a>
-                <a href="{% url 'contracts:repository' %}" class="nav-link {% if request.resolver_match.url_name == 'repository' %}active{% endif %}">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
-                    Repository
-                </a>
-                <a href="{% url 'contracts:legal_task_kanban' %}" class="nav-link {% if 'legal_task' in request.resolver_match.url_name %}active{% endif %}">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
-                    Tasks
-                </a>
-                <a href="{% url 'contracts:workflow_dashboard' %}" class="nav-link {% if 'workflow' in request.resolver_match.url_name or request.resolver_match.url_name == 'workflow_dashboard' %}active{% endif %}">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                    Workflows
-                </a>
-                <a href="{% url 'contracts:approval_request_list' %}" class="nav-link {% if 'approval_request' in request.resolver_match.url_name %}active{% endif %}">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h8m-8 5h8m-8 5h5M7 3h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z"></path></svg>
-                    Approvals
-                </a>
-                <a href="{% url 'contracts:signature_request_list' %}" class="nav-link {% if 'signature_request' in request.resolver_match.url_name %}active{% endif %}">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M7 19a8 8 0 1110 0l-5 2-5-2z"></path></svg>
-                    Signature Requests
-                </a>
-
-                <div class="nav-section">RISK &amp; COMPLIANCE</div>
-                <a href="{% url 'contracts:risk_log_list' %}" class="nav-link {% if 'risk' in request.resolver_match.url_name or request.resolver_match.url_name == 'risk_log_list' or request.resolver_match.url_name == 'risk_log_create' or request.resolver_match.url_name == 'risk_log_update' %}active{% endif %}">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                    Risk Register
-                </a>
-                <a href="{% url 'contracts:compliance_checklist_list' %}" class="nav-link {% if 'compliance' in request.resolver_match.url_name or 'checklist' in request.resolver_match.url_name %}active{% endif %}">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
-                    Compliance
-                </a>
-                <a href="{% url 'contracts:privacy_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'privacy_dashboard' %}active{% endif %}">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
-                    Privacy
-                </a>
-                <a href="{% url 'contracts:audit_log_list' %}" class="nav-link {% if 'audit' in request.resolver_match.url_name %}active{% endif %}">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
-                    Audit Trail
-                </a>
-                <a href="{% url 'contracts:dpa_review_pack_list' %}" class="nav-link {% if 'dpa_review' in request.resolver_match.url_name %}active{% endif %}">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    DPA Reviews
-                </a>
-
-                <div class="nav-section">REFERENCE</div>
-                <a href="{% url 'contracts:document_list' %}" class="nav-link {% if 'document' in request.resolver_match.url_name %}active{% endif %}">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                    Documents
-                </a>
-                <a href="{% url 'contracts:counterparty_list' %}" class="nav-link {% if 'counterparty' in request.resolver_match.url_name %}active{% endif %}">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                    Counterparties
-                </a>
-                <a href="{% url 'contracts:client_list' %}" class="nav-link {% if 'client' in request.resolver_match.url_name %}active{% endif %}">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-                    Clients
-                </a>
-                <a href="{% url 'contracts:reports_dashboard' %}" class="nav-link {% if 'report' in request.resolver_match.url_name %}active{% endif %}">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                    Reports
-                </a>
-
-                <div class="nav-section">PLANNING</div>
-                <a href="{% url 'contracts:budget_list' %}" class="nav-link {% if 'budget' in request.resolver_match.url_name %}active{% endif %}">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    Budget &amp; Capacity
-                </a>
-
-                <div class="nav-section">ADMIN</div>
-                {% if CAN_MANAGE_ORGANIZATION %}
-                <a href="{% url 'contracts:trust_account_list' %}" class="nav-link {% if 'trust' in request.resolver_match.url_name %}active{% endif %}">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
-                    Escrow
+                {% for entry in SIDEBAR_NAV %}
+                {% if entry.kind == 'section' %}
+                <div class="nav-section">{{ entry.label }}</div>
+                {% else %}
+                <a href="{% url entry.url_name %}" class="nav-link {% if entry.is_active %}active{% endif %}">
+                    {{ entry.icon }}
+                    {{ entry.label }}
                 </a>
                 {% endif %}
-                <a href="{% url 'settings_hub' %}" class="nav-link {% if request.resolver_match.url_name == 'settings_hub' %}active{% endif %}">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317a1 1 0 011.35-.936l.478.239a1 1 0 00.894 0l.478-.239a1 1 0 011.35.936l.067.53a1 1 0 00.611.822l.49.198a1 1 0 01.554 1.266l-.18.52a1 1 0 00.174.952l.325.44a1 1 0 010 1.19l-.325.44a1 1 0 00-.174.952l.18.52a1 1 0 01-.554 1.266l-.49.198a1 1 0 00-.611.822l-.067.53a1 1 0 01-1.35.936l-.478-.239a1 1 0 00-.894 0l-.478.239a1 1 0 01-1.35-.936l-.067-.53a1 1 0 00-.611-.822l-.49-.198a1 1 0 01-.554-1.266l.18-.52a1 1 0 00-.174-.952l-.325-.44a1 1 0 010-1.19l.325-.44a1 1 0 00.174-.952l-.18-.52a1 1 0 01.554-1.266l.49-.198a1 1 0 00.611-.822l.067-.53z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15a3 3 0 100-6 3 3 0 000 6z"></path></svg>
-                    Settings
-                </a>
+                {% endfor %}
             </div>
+            {% if CURRENT_ORGANIZATION %}
+            <div class="sidebar-footer">
+                <div class="sidebar-footer-org">{{ CURRENT_ORGANIZATION.name }}</div>
+                <button type="button" id="rail-toggle-footer" class="sidebar-footer-collapse">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/></svg>
+                    <span>Collapse</span>
+                </button>
+            </div>
+            {% endif %}
         </nav>
 
         <div class="main-area">
+            <div class="top-bar">
+                <div class="topbar-flex topbar-gap-lg">
+                    <form method="get" action="{% url 'contracts:global_search' %}" class="global-search-form">
+                        <div class="global-search-wrap">
+                            <svg class="global-search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                            <input type="search" name="q" class="global-search-input" placeholder="Search contracts, workflows, counterparties..." value="{{ request.GET.q|default:'' }}">
+                        </div>
+                    </form>
+                </div>
+                <div class="topbar-flex topbar-gap-sm">
+                    {% if USER_ORGANIZATION_MEMBERSHIPS|length > 1 %}
+                        <form method="post" action="{% url 'contracts:switch_organization' %}" class="org-form">
+                            {% csrf_token %}
+                            <select name="organization_id" data-autosubmit class="org-select">
+                                {% for membership in USER_ORGANIZATION_MEMBERSHIPS %}
+                                    <option value="{{ membership.organization.id }}" {% if CURRENT_ORGANIZATION and membership.organization.id == CURRENT_ORGANIZATION.id %}selected{% endif %}>{{ membership.organization.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </form>
+                    {% elif CURRENT_ORGANIZATION %}
+                        <span class="org-label">{{ CURRENT_ORGANIZATION.name }}</span>
+                    {% endif %}
+                    <a href="{% url 'contracts:global_search' %}" class="nav-icon-link nav-icon-search" title="Search">
+                        <svg class="nav-icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </a>
+                    <a href="{% url 'contracts:organization_team' %}" class="nav-icon-link" title="Team">
+                        <svg class="nav-icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    </a>
+                    <a href="{% url 'contracts:notification_list' %}" class="nav-icon-link" title="Notifications">
+                        <svg class="nav-icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                        {% if UNREAD_NOTIFICATIONS %}
+                        <span class="navbar-badge">{{ UNREAD_NOTIFICATIONS }}</span>
+                        {% endif %}
+                    </a>
+                    <a href="{% url 'settings_hub' %}" class="nav-icon-link" title="Settings">
+                        <svg class="nav-icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317a1 1 0 011.35-.936l.478.239a1 1 0 00.894 0l.478-.239a1 1 0 011.35.936l.067.53a1 1 0 00.611.822l.49.198a1 1 0 01.554 1.266l-.18.52a1 1 0 00.174.952l.325.44a1 1 0 010 1.19l-.325.44a1 1 0 00-.174.952l.18.52a1 1 0 01-.554 1.266l-.49.198a1 1 0 00-.611.822l-.067.53a1 1 0 01-1.35.936l-.478-.239a1 1 0 00-.894 0l-.478.239a1 1 0 01-1.35-.936l-.067-.53a1 1 0 00-.611-.822l-.49-.198a1 1 0 01-.554-1.266l.18-.52a1 1 0 00-.174-.952l-.325-.44a1 1 0 010-1.19l.325-.44a1 1 0 00.174-.952l-.18-.52a1 1 0 01.554-1.266l.49-.198a1 1 0 00.611-.822l.067-.53z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15a3 3 0 100-6 3 3 0 000 6z"></path></svg>
+                    </a>
+                    <button type="button" data-action="toggle-theme" class="theme-toggle-btn" title="Toggle theme">
+                        <svg class="icon-sun nav-icon-svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                        <svg class="icon-moon nav-icon-svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                    </button>
+                    <a href="{% url 'contracts:contract_create' %}" class="btn-primary-grad">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                        New Contract
+                    </a>
+                    <div class="profile-box" id="profileBox">
+                        <button type="button" class="profile-trigger" id="profileTrigger" aria-haspopup="true" aria-expanded="false">
+                            <div class="avatar-circle">
+                                {{ user.first_name|default:user.username|slice:":1"|upper }}
+                            </div>
+                            <span class="username-text">{{ user.first_name|default:user.username }}</span>
+                            <svg class="profile-caret" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div class="profile-menu" id="profileMenu" role="menu">
+                            <a href="{% url 'profile' %}" class="profile-menu-item" role="menuitem">Profile</a>
+                            <div class="profile-menu-sep"></div>
+                            <form method="post" action="{% url 'logout' %}" class="logout-form">
+                                {% csrf_token %}
+                                <button type="submit" class="profile-menu-item profile-menu-danger" role="menuitem">Sign out</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
             {% if messages %}
             <div class="messages-container">
                 {% for message in messages %}
@@ -1505,6 +1603,12 @@
             <div class="main-content-pad">
                 {% block content %}{% endblock %}
             </div>
+            <footer class="app-footer">
+                &copy; {% now "Y" %} DocClad B.V. All rights reserved.
+                <a href="{% url 'privacy' %}">Privacy Policy</a>
+                <span aria-hidden="true">&middot;</span>
+                <a href="{% url 'terms' %}">Terms of Service</a>
+            </footer>
         </div>
     </div>
     {% else %}
@@ -1516,17 +1620,20 @@
     <script nonce="{{ csp_nonce }}">
     (function () {
         var railToggle = document.getElementById('rail-toggle');
-        if (!railToggle) {
+        var railToggleFooter = document.getElementById('rail-toggle-footer');
+        if (!railToggle && !railToggleFooter) {
             return;
         }
         var STORAGE_KEY = 'docclad-rail-collapsed';
         if (localStorage.getItem(STORAGE_KEY) === '1') {
             document.body.classList.add('nav-collapsed');
         }
-        railToggle.addEventListener('click', function () {
+        function toggleRail() {
             document.body.classList.toggle('nav-collapsed');
             localStorage.setItem(STORAGE_KEY, document.body.classList.contains('nav-collapsed') ? '1' : '0');
-        });
+        }
+        if (railToggle) railToggle.addEventListener('click', toggleRail);
+        if (railToggleFooter) railToggleFooter.addEventListener('click', toggleRail);
     })();
 
     (function () {

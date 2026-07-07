@@ -76,6 +76,36 @@ _STATUS_BADGES = {
     'CANCELLED': 'badge-gray',
 }
 
+# Contract.lifecycle_stage -> a simplified 6-value chip vocabulary for
+# compact table contexts (the work queue's "Stage" column) — a per-row
+# lifecycle dot-track is legible in a dedicated lifecycle section but reads
+# as noise repeated down a table; a plain status chip reads faster there.
+# The full 9-stage detail (with dots) is still used on the contract detail
+# page via {% stage_dots %} — this is a compact-context alternative, not a
+# replacement of the richer view.
+_LIFECYCLE_STAGE_LABELS = {
+    'DRAFTING': 'Draft',
+    'INTERNAL_REVIEW': 'Legal Review',
+    'NEGOTIATION': 'Legal Review',
+    'APPROVAL': 'Approval',
+    'SIGNATURE': 'Signature',
+    'EXECUTED': 'Active',
+    'OBLIGATION_TRACKING': 'Active',
+    'RENEWAL': 'Renewal',
+    'ARCHIVED': 'Archived',
+}
+_LIFECYCLE_STAGE_BADGES = {
+    'DRAFTING': 'badge-gray',
+    'INTERNAL_REVIEW': 'badge-green',
+    'NEGOTIATION': 'badge-green',
+    'APPROVAL': 'badge-gray',
+    'SIGNATURE': 'badge-gray',
+    'EXECUTED': 'badge-green',
+    'OBLIGATION_TRACKING': 'badge-green',
+    'RENEWAL': 'badge-yellow',
+    'ARCHIVED': 'badge-gray',
+}
+
 _PHASE_BADGES = {
     'intake': 'badge-gray',
     'beoordeling': 'badge-yellow',
@@ -95,6 +125,23 @@ _APPROVAL_STATUS_BADGES = {
     'APPROVED': 'badge-green',
     'REJECTED': 'badge-red',
     'ESCALATED': 'badge-purple',
+}
+
+# Document.status -> badge variant.
+_DOCUMENT_STATUS_BADGES = {
+    'DRAFT': 'badge-gray',
+    'REVIEW': 'badge-yellow',
+    'APPROVED': 'badge-blue',
+    'FINAL': 'badge-green',
+    'ARCHIVED': 'badge-gray',
+}
+
+# Client.status -> badge variant.
+_CLIENT_STATUS_BADGES = {
+    'ACTIVE': 'badge-green',
+    'INACTIVE': 'badge-gray',
+    'PROSPECTIVE': 'badge-blue',
+    'FORMER': 'badge-gray',
 }
 
 # LegalTask.status -> badge variant.
@@ -235,6 +282,24 @@ def iso_datetime(value, fmt='M d, Y H:i'):
 
 
 @register.filter
+def due_countdown(value):
+    """Date -> 'Overdue' / 'Today' / 'N days' (<=30d out) / 'd M Y' further out."""
+    if not value:
+        return '—'
+    from datetime import date as date_cls
+    today = date_cls.today()
+    d = value.date() if hasattr(value, 'date') else value
+    delta = (d - today).days
+    if delta < 0:
+        return 'Overdue'
+    if delta == 0:
+        return 'Today'
+    if delta <= 30:
+        return f'{delta} day{"s" if delta != 1 else ""}'
+    return date_filter(d, 'd M Y')
+
+
+@register.filter
 def object_type_label(value):
     """'OrganizationMembership' -> 'team membership'; unmapped names get word-split."""
     if not value:
@@ -278,6 +343,30 @@ def status_badge_class(status):
 def phase_badge_class(phase):
     """Case phase key -> canonical badge class ('actief' -> 'badge-green')."""
     return _PHASE_BADGES.get(phase, 'badge-gray')
+
+
+@register.filter
+def lifecycle_stage_label(stage):
+    """Contract lifecycle_stage key -> simplified chip label ('NEGOTIATION' -> 'Legal Review')."""
+    return _LIFECYCLE_STAGE_LABELS.get(stage, stage.replace('_', ' ').title() if stage else '—')
+
+
+@register.filter
+def lifecycle_stage_badge_class(stage):
+    """Contract lifecycle_stage key -> canonical badge class for the simplified chip."""
+    return _LIFECYCLE_STAGE_BADGES.get(stage, 'badge-gray')
+
+
+@register.filter
+def document_status_badge_class(status):
+    """Document status key -> canonical badge class ('FINAL' -> 'badge-green')."""
+    return _DOCUMENT_STATUS_BADGES.get(status, 'badge-gray')
+
+
+@register.filter
+def client_status_badge_class(status):
+    """Client status key -> canonical badge class ('ACTIVE' -> 'badge-green')."""
+    return _CLIENT_STATUS_BADGES.get(status, 'badge-gray')
 
 
 @register.filter

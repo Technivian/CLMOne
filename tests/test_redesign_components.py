@@ -27,10 +27,10 @@ class RedesignComponentsTestCase(TestCase):
         os.environ['FEATURE_REDESIGN'] = 'true'
 
     def test_dashboard_component_labels(self):
-        # KPI strip and the workflow queue render on the populated dashboard;
-        # empty workspaces get the onboarding checklist instead. The queue
-        # tabs (In Progress / Waiting on Me / Needs Review / Renewals /
-        # Completed) are the primary object on the page.
+        # The priority action strip and the workflow queue render on the
+        # populated dashboard; empty workspaces get the onboarding checklist
+        # instead. The queue tabs (In Progress / Waiting on Me / Needs
+        # Review / Renewals / Completed) are the primary object on the page.
         Contract.objects.create(
             organization=self.organization,
             title='Component Label Contract',
@@ -40,12 +40,11 @@ class RedesignComponentsTestCase(TestCase):
         )
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Active contracts')
+        self.assertContains(response, 'Needs Legal Review')
         self.assertContains(response, 'Component Label Contract')
         self.assertContains(response, 'Needs Review')
         self.assertContains(response, 'Renewals')
-        self.assertContains(response, 'Task Signals')
-        self.assertContains(response, 'Recent activity')
+        self.assertContains(response, 'Recent Activity')
 
     def test_contracts_list_core_components(self):
         Contract.objects.create(
@@ -67,7 +66,7 @@ class RedesignComponentsTestCase(TestCase):
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Dashboard')
-        self.assertContains(response, 'Contracts')
+        self.assertContains(response, 'Contract Workspace')
         self.assertContains(response, 'Tasks')
         self.assertContains(response, 'Repository')
         self.assertContains(response, 'Workflows')

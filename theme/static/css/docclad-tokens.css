@@ -1,15 +1,19 @@
 /* ═══════════════════════════════════════════════════════════════════
-   DOCCLAD DESIGN TOKENS — "Ledger" design language, v1.0
+   DOCCLAD DESIGN TOKENS — "Ledger" design language, v1.2
    ───────────────────────────────────────────────────────────────────
    Authority: docclad_agent_brand_kit/docs/docclad-approved-brand-board.png
-   Spec + rationale: DOCCLAD_DESIGN_SYSTEM.md
+   Spec + rationale: DOCCLAD_DESIGN_SYSTEM.md (see v1.2 changelog)
    Governance: DESIGN_CONSTITUTION.md §14
 
-   Identity in one line: cool paper, navy ink, teal seal, ledger
-   precision. Every color below derives from the approved brand palette
-   (Deep Navy #0B1330 · Teal #11B39A · White · Light Gray #F3F5F7) or is
-   a desaturated archival status hue tuned to sit beside navy ink.
-   No raw Tailwind palette values. Inter is the only product typeface.
+   Identity in one line: cool paper, navy ink, teal accent, copper CTA,
+   ledger precision. Teal (--copper-tint's counterpart, the seal color)
+   is the general accent — active nav, links, focus, progress — and also
+   carries the fiduciary/trust signal on client-funds surfaces. Copper is
+   rationed to primary creation/action CTA buttons only. Every color below
+   derives from the approved brand palette (Deep Navy #0B1330 · Teal
+   #11B39A · White · Light Gray #F3F5F7) or is a desaturated archival
+   status hue tuned to sit beside navy ink. No raw Tailwind palette
+   values. Inter is the only product typeface.
    ═══════════════════════════════════════════════════════════════════ */
 
 :root {
@@ -41,27 +45,28 @@
   --card: #FFFFFF;        /* raised working surfaces */
   --well: #EDF0F4;        /* inset surfaces: input wells, code, table heads */
 
-  /* ── Copper ramp — the ONE action accent (v1.1). Rationed: primary
-        actions, links, active/selected states, focus rings. A ledger-ink
-        red with no incumbent among the seven competitors audited —
-        see DOCCLAD_DESIGN_SYSTEM.md v1.1 changelog for why this replaced
-        a teal accent that read as Ironclad-adjacent. ─────────────────── */
+  /* ── Copper ramp — CTA-only (v1.2). Rationed to primary creation/action
+        buttons ("New Contract", "New Risk") via --btn-gradient. Never used
+        for links, active/selected states, or focus rings — those are teal
+        now. See DOCCLAD_DESIGN_SYSTEM.md v1.2 changelog. ───────────────── */
   --copper-600: #C96A3E;
-  --copper-700: #B5502E;  /* default action, light theme (5.1:1 on white) */
+  --copper-700: #B5502E;  /* default CTA, light theme (5.1:1 on white) */
   --copper-800: #8A3A1E;  /* pressed, light theme */
-  --copper-500: #CF7248;  /* default action, dark theme (5.4:1 on navy card) */
+  --copper-500: #CF7248;  /* default CTA, dark theme (5.4:1 on navy card) */
   --copper-400: #E29368;  /* hover, dark theme */
-  --copper-tint: #F3DACB;       /* selected row / active chip background */
+  --copper-tint: #F3DACB;       /* CTA hover/pressed tint only */
   --copper-tint-dark: rgba(207,114,72,0.14);
-  --focus-ring: rgba(181, 80, 46, 0.35);
 
-  /* ── Seal — brand teal, narrowed to a trust/verification signal only:
-        the logo, and any surface showing or moving client funds. Not a
-        general accent — copper owns "click me," teal owns "this is
-        verified/protected." ───────────────────────────────────────────── */
+  /* ── Seal — brand teal, the general accent (v1.2): links, active/
+        selected states, focus rings, active nav, lifecycle/progress —
+        plus the trust/verification signal on any surface showing or
+        moving client funds (fiduciary surfaces layer on extra grammar,
+        see DOCCLAD_DESIGN_SYSTEM.md §5.2, rather than relying on teal
+        being exclusive to them). ───────────────────────────────────── */
   --seal: #0A7264;            /* light theme */
   --seal-dark: #17BFA5;       /* dark theme */
   --seal-bg: #DFF4EE;         /* fiduciary surface wash, light theme */
+  --focus-ring: rgba(10, 114, 100, 0.35);
   --seal-bg-dark: rgba(17,179,154,0.14);
 
   /* ── Status vocabulary — archival, desaturated, tinted-pill pairs.
@@ -133,12 +138,12 @@
   --card: #0B1330;      /* brand navy as the card surface */
   --well: #101A38;
 
-  --copper-700: #CF7248;  /* default action, dark theme */
+  --copper-700: #CF7248;  /* default CTA, dark theme */
   --copper-800: #E29368;  /* hover — brighten on dark, per convention */
   --copper-tint: rgba(207, 114, 72, 0.16);
-  --focus-ring: rgba(207, 114, 72, 0.35);
   --seal: #17BFA5;
   --seal-bg: rgba(17, 179, 154, 0.14);
+  --focus-ring: rgba(23, 191, 165, 0.35);
 
   --status-positive-fg: #55CDB7;
   --status-positive-bg: rgba(17, 179, 154, 0.14);

@@ -1,8 +1,8 @@
 # DESIGN CONSTITUTION - CMS Aegis
 
-Version: 1.3
+Version: 1.4
 Status: Mandatory
-Last amended: 2026-07-05 (§14 — "Ledger" design language adopted as token authority)
+Last amended: 2026-07-07 (§14 — "Ledger" v1.2: teal is the general accent, copper is CTA-only; see DOCCLAD_DESIGN_SYSTEM.md v1.2 changelog)
 Purpose: enforce one coherent enterprise-grade product language across all pages
 
 ## 1) Non-Negotiable Principles

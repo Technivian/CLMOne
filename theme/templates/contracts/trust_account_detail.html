@@ -15,9 +15,10 @@
   .ta-amount-neg    { font-size: 0.875rem; font-weight: 500; color: var(--msg-error-text); }
   .ta-btn           { padding: 8px 16px; background: var(--primary); color: #fff; font-size: 0.875rem; border-radius: 8px; border: none; cursor: pointer; width: 100%; transition: background 0.15s; }
   .ta-btn:hover     { background: var(--primary-hover); }
-  /* Client funds carry the trust/verification signal (teal "seal"), distinct
-     from the copper action accent used everywhere else — see
-     DOCCLAD_DESIGN_SYSTEM.md §5.2 (fiduciary grammar). */
+  /* Client funds carry the trust/verification signal (teal "seal") plus the
+     top-rule + mono-eyebrow fiduciary grammar, so they still read as distinct
+     from the general teal accent used elsewhere — see DOCCLAD_DESIGN_SYSTEM.md
+     §5.2. */
   .ta-seal-panel    { border-top: 2px solid var(--seal); background: var(--seal-bg); border-radius: 0 0 12px 12px; padding: 16px 20px; margin-bottom: 24px; }
   .ta-seal-eyebrow  { font: 600 11px/16px ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: 0.12em; text-transform: uppercase; color: var(--seal); display: block; margin-bottom: 10px; }
 </style>

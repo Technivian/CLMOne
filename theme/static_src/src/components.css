@@ -589,7 +589,7 @@ textarea.form-control { min-height: 90px; resize: vertical; }
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.07em;
-  color: var(--text-muted);
+  color: var(--primary);
   margin-bottom: 10px;
 }
 .arch-completion-count    { font-size: 22px; font-weight: 800; color: var(--text-primary); line-height: 1; letter-spacing: -0.02em; }
@@ -764,6 +764,6 @@ textarea.form-control { min-height: 90px; resize: vertical; }
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--text-muted);
+  color: var(--primary);
   margin-bottom: 12px;
 }

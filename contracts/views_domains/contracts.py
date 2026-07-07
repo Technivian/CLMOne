@@ -42,6 +42,8 @@ from contracts.models import (
     Deadline,
     DSARRequest,
     ApprovalRequest,
+    DPAReviewPack,
+    DPARiskItem,
 )
 from contracts.permissions import ContractAction, can_access_contract_action, can_manage_organization
 from contracts.services.queue_rows import TERMINAL_STATUSES, assignee_map_for_contracts, latest_activity_map
@@ -71,12 +73,23 @@ class ContractListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
         sort = self.request.GET.get('sort', '-created_at')
         if query:
             queryset = queryset.filter(Q(title__icontains=query) | Q(counterparty__icontains=query))
-        if status:
+        if status == 'BLOCKED':
+            queryset = queryset.filter(status__in=[
+                Contract.Status.EXPIRED,
+                Contract.Status.TERMINATED,
+                Contract.Status.CANCELLED,
+            ])
+        elif status:
             queryset = queryset.filter(status=status)
         if contract_type:
             queryset = queryset.filter(contract_type=contract_type)
 
-        allowed_sort_fields = {'title', '-title', 'status', '-status', 'end_date', '-end_date', 'created_at', '-created_at', 'value', '-value'}
+        allowed_sort_fields = {
+            'title', '-title', 'status', '-status', 'end_date', '-end_date',
+            'created_at', '-created_at', 'updated_at', '-updated_at',
+            'value', '-value', 'lifecycle_stage', '-lifecycle_stage',
+            'risk_level', '-risk_level',
+        }
         if sort not in allowed_sort_fields:
             sort = '-created_at'
         return queryset.order_by(sort)
@@ -91,6 +104,12 @@ class ContractListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
             total=Count('id'),
             active=Count('id', filter=Q(status='ACTIVE')),
             expiring_soon=Count('id', filter=Q(status='ACTIVE', end_date__lte=thirty_days_from_today, end_date__gte=today)),
+            draft=Count('id', filter=Q(status='DRAFT')),
+            legal_review=Count('id', filter=Q(status='IN_REVIEW')),
+            approval=Count('id', filter=Q(status='PENDING')),
+            signature=Count('id', filter=Q(status='APPROVED')),
+            blocked=Count('id', filter=Q(status__in=['EXPIRED', 'TERMINATED', 'CANCELLED'])),
+            high_risk=Count('id', filter=Q(risk_level__in=['HIGH', 'CRITICAL'])),
         )
         expiring_ids_qs = tenant_cases.filter(
             status='ACTIVE',
@@ -104,11 +123,11 @@ class ContractListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
         context['current_status'] = self.request.GET.get('status', '')
         context['status_tabs'] = [
             ('All', ''),
-            ('In progress', 'ACTIVE'),
-            ('Active', 'ACTIVE'),
             ('Draft', 'DRAFT'),
-            ('Pending', 'PENDING'),
-            ('Expired', 'EXPIRED'),
+            ('Legal Review', 'IN_REVIEW'),
+            ('Approval', 'PENDING'),
+            ('Signature', 'APPROVED'),
+            ('Blocked', 'BLOCKED'),
         ]
         context['total_cases'] = case_stats['total'] or 0
         context['active_cases'] = case_stats['active'] or 0
@@ -118,6 +137,14 @@ class ContractListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
         context['total_contracts'] = context['total_cases']
         context['active_contracts'] = context['active_cases']
         context['expiring_soon'] = context['expiring_case_count']
+        context['workspace_counts'] = {
+            'draft': case_stats['draft'] or 0,
+            'legal_review': case_stats['legal_review'] or 0,
+            'approval': case_stats['approval'] or 0,
+            'signature': case_stats['signature'] or 0,
+            'blocked': case_stats['blocked'] or 0,
+            'high_risk': case_stats['high_risk'] or 0,
+        }
 
         if context['FEATURE_REDESIGN']:
             case_payload = []
@@ -588,6 +615,9 @@ def dashboard(request):
         draft=Count('id', filter=Q(status='DRAFT')),
         pending=Count('id', filter=Q(status='PENDING')),
         expiring_soon=Count('id', filter=Q(status='ACTIVE', end_date__lte=thirty_days, end_date__gte=today)),
+        high_risk_active=Count('id', filter=Q(status='ACTIVE', risk_level__in=['HIGH', 'CRITICAL'])),
+        missing_dpa=Count('id', filter=Q(status='ACTIVE', dpa_attached=False)),
+        missing_governing_law=Count('id', filter=Q(status='ACTIVE', governing_law='')),
     )
     client_stats = clients_qs.aggregate(total=Count('id'))
     case_matter_stats = case_matter_qs.aggregate(total=Count('id'), active=Count('id', filter=Q(status='ACTIVE')))
@@ -612,6 +642,11 @@ def dashboard(request):
     upcoming_deadlines = list(deadlines_qs.select_related('contract', 'matter', 'assigned_to').filter(is_completed=False, due_date__gte=today).order_by('due_date')[:6])
     upcoming_tasks = list(legal_tasks_qs.select_related('contract', 'matter', 'assigned_to').filter(status='PENDING', due_date__gte=today).order_by('due_date')[:5])
     recent_audit = list(AuditLog.objects.select_related('user').filter(organization_id=org.id).order_by('-timestamp')[:8]) if org else []
+    top_risks = list(
+        risks_qs.select_related('contract', 'matter')
+        .filter(risk_level__in=['HIGH', 'CRITICAL'], status__in=['OPEN', 'IN_PROGRESS'])
+        .order_by('-risk_level', '-created_at')[:5]
+    )
 
     # ── "Waiting on Me" queue rows — heterogeneous items assigned to the
     # current user, normalized (via _finalize_waiting_on_me below) to the
@@ -762,6 +797,26 @@ def dashboard(request):
     def _latest_activity_map(contract_ids):
         return latest_activity_map(org, contract_ids)
 
+    def _role_for_user(user):
+        profile = getattr(user, 'profile', None) if user else None
+        return profile.get_role_display() if profile else ''
+
+    # Contract.lifecycle_stage -> the verb for the row-level action button.
+    # Deliberately a small, fixed vocabulary (not a routing engine) — every
+    # action still lands on the contract detail page, where the real
+    # review/approve/send workflow lives.
+    _QUEUE_ACTION_LABELS = {
+        'DRAFTING': 'Edit',
+        'INTERNAL_REVIEW': 'Review',
+        'NEGOTIATION': 'Review',
+        'APPROVAL': 'Approve',
+        'SIGNATURE': 'Send',
+        'EXECUTED': 'View',
+        'OBLIGATION_TRACKING': 'Track',
+        'RENEWAL': 'Track',
+        'ARCHIVED': 'View',
+    }
+
     def _build_contract_queue(queryset, due_field='end_date', limit=10):
         contracts = list(queryset[:limit])
         ids = [c.pk for c in contracts]
@@ -773,14 +828,18 @@ def dashboard(request):
             rows.append({
                 'title': contract.title,
                 'href': reverse('contracts:contract_detail', kwargs={'pk': contract.pk}),
+                'edit_href': reverse('contracts:contract_update', kwargs={'pk': contract.pk}),
                 'meta': contract.client.name if contract.client_id else None,
                 'contract': contract,
                 'assignee': assignee_map.get(contract.pk),
+                'owner_role': _role_for_user(assignee_map.get(contract.pk)),
                 'activity': activity_map.get(contract.pk),
                 'due_date': due,
                 'due_overdue': bool(due and due < today and contract.status not in TERMINAL_STATUSES),
+                'due_today': bool(due and due == today),
                 'status_label': contract.get_status_display(),
                 'status_badge_class': status_badge_class(contract.status),
+                'action_label': _QUEUE_ACTION_LABELS.get(contract.lifecycle_stage, 'View'),
             })
         return rows
 
@@ -792,14 +851,18 @@ def dashboard(request):
             rows.append({
                 'title': r['title'],
                 'href': r['href'],
+                'edit_href': r['href'],
                 'meta': r['meta'],
                 'contract': r['contract'],
                 'assignee': r['assignee'],
+                'owner_role': _role_for_user(r['assignee']),
                 'activity': activity_map.get(r['contract'].pk) if r['contract'] else None,
                 'due_date': r['due_date'],
                 'due_overdue': bool(r['due_date'] and r['due_date'] < today),
+                'due_today': bool(r['due_date'] and r['due_date'] == today),
                 'status_label': r['status_label'],
                 'status_badge_class': r['status_badge_class'],
+                'action_label': _QUEUE_ACTION_LABELS.get(r['contract'].lifecycle_stage, 'View') if r['contract'] else 'Open',
             })
         return rows
 
@@ -829,22 +892,126 @@ def dashboard(request):
     ]
     dashboard_has_data = bool(total_documents) or any(tab['rows'] for tab in queue_tabs) or (case_stats['total'] or 0) > 0
 
-    lifecycle_chart = []
-    status_colors = {
-        'ACTIVE': '#3F569B',
-        'PENDING': '#8A5A14',
-        'DRAFT': '#5F6B85',
-        'EXPIRED': '#A63A2B',
-        'TERMINATED': '#AAB2C2',
+    # Lifecycle Status Overview — buckets every contract into one of 7
+    # stages. EXPIRED/TERMINATED status overrides lifecycle_stage (a contract
+    # can be EXECUTED but have gone EXPIRED); everything else buckets off
+    # lifecycle_stage via the same simplified vocabulary as the queue table's
+    # Stage chip (RENEWAL/ARCHIVED fold into Active — this overview tracks
+    # the 7 headline stages, not the full 9-stage detail).
+    _LIFECYCLE_BUCKET_ORDER = ['Draft', 'Legal Review', 'Approval', 'Signature', 'Active', 'Expired', 'Terminated']
+    _LIFECYCLE_BUCKET_COLORS = {
+        'Draft': '#0B1330',
+        'Legal Review': '#0A7264',
+        'Approval': '#3F569B',
+        'Signature': '#6D4E8E',
+        'Active': '#17A76B',
+        'Expired': '#C96A3E',
+        'Terminated': '#AAB2C2',
     }
-    for status_code, label in [('ACTIVE', 'Active'), ('PENDING', 'Pending Approval'), ('DRAFT', 'Draft'), ('EXPIRED', 'Expired'), ('TERMINATED', 'Terminated')]:
-        count = status_counts_dict.get(status_code, 0)
-        if count > 0:
-            lifecycle_chart.append({
-                'label': label,
-                'count': count,
-                'color': status_colors.get(status_code, '#5F6B85'),
-            })
+    _STAGE_TO_BUCKET = {
+        'DRAFTING': 'Draft',
+        'INTERNAL_REVIEW': 'Legal Review',
+        'NEGOTIATION': 'Legal Review',
+        'APPROVAL': 'Approval',
+        'SIGNATURE': 'Signature',
+        'EXECUTED': 'Active',
+        'OBLIGATION_TRACKING': 'Active',
+        'RENEWAL': 'Active',
+        'ARCHIVED': 'Active',
+    }
+    lifecycle_buckets = {label: 0 for label in _LIFECYCLE_BUCKET_ORDER}
+    for row in case_qs.values('status', 'lifecycle_stage').annotate(count=Count('id')):
+        if row['status'] == 'EXPIRED':
+            bucket = 'Expired'
+        elif row['status'] == 'TERMINATED':
+            bucket = 'Terminated'
+        else:
+            bucket = _STAGE_TO_BUCKET.get(row['lifecycle_stage'], 'Draft')
+        lifecycle_buckets[bucket] += row['count']
+    lifecycle_chart = [
+        {'label': label, 'count': lifecycle_buckets[label], 'color': _LIFECYCLE_BUCKET_COLORS[label]}
+        for label in _LIFECYCLE_BUCKET_ORDER
+        if lifecycle_buckets[label] > 0
+    ]
+
+    # ── Command Center (Phase 2 of the Product Coherence Redesign) ──────
+    # in_house_clm-only data. Deliberately gated so law_firm_ops tenants pay
+    # zero extra queries and see the dashboard exactly as before. Every
+    # figure below reads PERSISTED rows (DPARiskItem, RiskLog, ApprovalRequest,
+    # Deadline, DPAReviewPack.review_memo*) — nothing here re-runs DPA
+    # analysis or cross-document conflict detection at render time; that
+    # only happens when a user explicitly re-runs the review
+    # (dpa_review_run_analysis), unchanged by this work.
+    workspace_mode = getattr(org, 'workspace_mode', 'law_firm_ops') if org else 'law_firm_ops'
+    is_in_house_clm = workspace_mode == 'in_house_clm'
+
+    clm_conflict_count = 0
+    clm_top_conflicts = []
+    clm_needs_review_count = 0
+    clm_my_approvals_count = 0
+    clm_renewals_count = 0
+    clm_high_severity_count = 0
+    clm_recent_memos = []
+    clm_recent_matters = []
+
+    if is_in_house_clm and org:
+        # Aliased on import — this module already has `Case` bound to
+        # contracts.models.Case; a same-named local import would shadow it
+        # for the whole function (UnboundLocalError on the case_qs line
+        # above, since Python scopes a name as local the moment any
+        # assignment to it appears anywhere in the function body).
+        from django.db.models import Case as DBCase
+        from django.db.models import IntegerField, When
+
+        severity_rank = DBCase(
+            When(severity='CRITICAL', then=0),
+            When(severity='HIGH', then=1),
+            When(severity='MEDIUM', then=2),
+            When(severity='LOW', then=3),
+            default=4, output_field=IntegerField(),
+        )
+        conflict_qs = (
+            DPARiskItem.objects
+            .filter(review_pack__organization=org, is_cross_document_conflict=True)
+            .exclude(status__in=['RESOLVED', 'FALSE_POSITIVE'])
+        )
+        clm_conflict_count = conflict_qs.count()
+        clm_top_conflicts = list(
+            conflict_qs.select_related('review_pack', 'review_pack__contract')
+            .annotate(severity_rank=severity_rank)
+            .order_by('severity_rank', '-created_at')[:5]
+        )
+
+        clm_needs_review_count = case_qs.filter(status__in=['PENDING', 'IN_REVIEW']).count()
+
+        clm_my_approvals_count = approvals_qs.filter(status='PENDING', assigned_to=request.user).count()
+
+        clm_deadlines_30d_count = deadlines_qs.filter(
+            is_completed=False, due_date__gte=today, due_date__lte=thirty_days,
+        ).count()
+        clm_renewals_count = clm_deadlines_30d_count + (case_stats['expiring_soon'] or 0)
+
+        clm_high_risk_log_count = risks_qs.filter(risk_level__in=['HIGH', 'CRITICAL']).exclude(status='RESOLVED').count()
+        clm_high_dpa_risk_count = (
+            DPARiskItem.objects
+            .filter(review_pack__organization=org, severity__in=['HIGH', 'CRITICAL'])
+            .exclude(status__in=['RESOLVED', 'FALSE_POSITIVE'])
+            .count()
+        )
+        clm_high_severity_count = clm_high_risk_log_count + clm_high_dpa_risk_count
+
+        clm_recent_memos = list(
+            DPAReviewPack.objects
+            .filter(organization=org, review_memo_generated_at__isnull=False)
+            .select_related('contract', 'counterparty')
+            .order_by('-review_memo_generated_at')[:5]
+        )
+
+        clm_recent_matters = list(
+            Matter.objects.filter(organization=org)
+            .select_related('client')
+            .order_by('-updated_at')[:5]
+        )
 
     from django.shortcuts import render
 
@@ -861,10 +1028,12 @@ def dashboard(request):
         'signature_stats': signature_stats,
         'dsar_stats': dsar_stats,
         'unread_notifications': unread_notifications,
+        'today': today,
         'recent_cases': recent_cases,
         'upcoming_deadlines': upcoming_deadlines,
         'upcoming_tasks': upcoming_tasks,
         'recent_audit': recent_audit,
+        'top_risks': top_risks,
         'queue_tabs': queue_tabs,
         'dashboard_has_data': dashboard_has_data,
         'case_status_data': case_status_data,
@@ -880,4 +1049,13 @@ def dashboard(request):
         'expiring_contracts': expiring_contracts,
         'lifecycle_chart': lifecycle_chart,
         'lifecycle_total': case_stats['total'] or 0,
+        'is_in_house_clm': is_in_house_clm,
+        'clm_conflict_count': clm_conflict_count,
+        'clm_top_conflicts': clm_top_conflicts,
+        'clm_needs_review_count': clm_needs_review_count,
+        'clm_my_approvals_count': clm_my_approvals_count,
+        'clm_renewals_count': clm_renewals_count,
+        'clm_high_severity_count': clm_high_severity_count,
+        'clm_recent_memos': clm_recent_memos,
+        'clm_recent_matters': clm_recent_matters,
     })

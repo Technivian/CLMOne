@@ -1,338 +1,491 @@
 {% extends "base.html" %}
-{% load docclad_format %}
-{% block title %}Contracts – DocClad{% endblock %}
+{% load docclad_format docclad_components %}
+{% block title %}Contract Workspace – DocClad{% endblock %}
 {% block content %}
 <style nonce="{{ csp_nonce }}">
-  /* ── Ironclad table conventions, scoped to this page ─────────── */
-
-  /* Canonical-view notice linking to Repository */
-  .cl-page .cl-migration-banner { margin-bottom: 16px; }
-  .cl-page .cl-migration-banner a { text-decoration: underline; font-weight: 700; }
-
-  /* Filter tabs → pill chips: active = ink fill, inactive = hairline outline */
-  .cl-page .arch-status-tabs {
-    border: 0; border-radius: 0; background: transparent; overflow: visible;
-    gap: 6px; flex-wrap: wrap;
+  .cw-page { padding-top: 10px; }
+  .cw-header { margin-bottom: 24px; }
+  .cw-kicker {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--primary);
+    margin-bottom: 8px;
   }
-  .cl-page .arch-status-tab {
-    border: 1px solid var(--border); border-radius: 9999px;
-    padding: 5px 13px; font-size: 12.5px; font-weight: 500;
-    color: var(--text-secondary); background: transparent;
+  .cw-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
   }
-  .cl-page .arch-status-tab:hover {
-    border-color: var(--text-muted); color: var(--text-primary); background: transparent;
+  .cw-tabs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
   }
-  .cl-page .arch-status-tab.tab-active,
-  .cl-page .arch-status-tab.tab-active:hover {
-    background: var(--text-primary); border-color: var(--text-primary);
-    color: var(--card-bg); font-weight: 600;
+  .cw-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 32px;
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--text-secondary);
+    background: var(--card-bg);
+    font-size: 12.5px;
+    font-weight: 600;
+    text-decoration: none;
   }
-
-  /* Secondary chips: quiet hairline outline, 8px radius, no accent fill */
-  .cl-page .arch-chip { border-radius: 8px; background: transparent; }
-  .cl-page .arch-chip.chip-active {
-    color: var(--text-primary); border-color: var(--text-muted); background: transparent;
+  .cw-tab:hover { border-color: var(--text-muted); color: var(--text-primary); }
+  .cw-tab-active,
+  .cw-tab-active:hover {
+    background: var(--text-primary);
+    border-color: var(--text-primary);
+    color: var(--card-bg);
   }
-
-  /* Table surface stays flat */
-  .cl-page .card-l1 { box-shadow: none; }
-
-  /* Column headers: 10.5px/700 uppercase, hairline bottom border only */
-  .cl-page .tbl-head { background: transparent; border-bottom: 1px solid var(--card-border); }
-  .cl-page thead th { padding: 10px 16px; }
-  .cl-page .tbl-th {
-    font-size: 10.5px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 0.07em; color: var(--text-muted);
+  .cw-tools {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
   }
-
-  /* Rows: ~52px min height, hairline separators, quiet hover fill */
-  .cl-page tbody td { padding: 12px 16px; height: 52px; font-size: 13px; }
-  .cl-page .tbl-row { border-color: var(--card-border); }
-  .cl-page .tbl-row:hover { background: var(--sidebar-hover); }
-  .cl-page tbody td[colspan] { height: auto; }
-
-  /* Title cell: strong ink link + muted meta line */
-  .cl-page .cl-title {
-    font-size: 13px; font-weight: 600; color: var(--text-primary); text-decoration: none;
+  .cw-search {
+    position: relative;
+    width: min(360px, 42vw);
+    min-width: 240px;
   }
-  .cl-page .cl-title:hover { text-decoration: underline; }
-  .cl-page .cl-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-
-  /* Actions: quiet text links separated by a middot */
-  .cl-page .cl-action {
-    font-size: 12.5px; font-weight: 600; color: var(--text-secondary);
-    text-decoration: none; transition: color 0.15s;
+  .cw-search svg {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 15px;
+    height: 15px;
+    color: var(--text-muted);
   }
-  .cl-page .cl-action:hover { color: var(--text-primary); }
-  .cl-page .cl-action-sep { color: var(--text-dim); margin: 0 6px; }
-
-  /* Stage cell: compact lifecycle dot strip above the tinted pill */
-  .cl-page .cl-stage { display: inline-flex; flex-direction: column; gap: 5px; align-items: flex-start; }
-  .cl-page .cl-dots { display: inline-flex; align-items: center; gap: 3px; }
-  .cl-page .cl-dot {
-    display: inline-block; width: 5px; height: 5px; border-radius: 9999px;
-    border: 1px solid var(--border); background: transparent;
+  .cw-search input {
+    width: 100%;
+    height: 38px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--input-bg);
+    color: var(--text-primary);
+    padding: 0 12px 0 36px;
+    font-size: 13px;
   }
-  .cl-page .cl-dot-done, .cl-page .cl-dot-current {
-    background: var(--primary); border-color: var(--primary);
+  .cw-search input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px var(--primary-subtle);
   }
-
-  /* Pagination current page: ink pill, not a second accent */
-  .cl-page .page-pill-active { background: var(--text-primary); color: var(--card-bg); }
+  .cw-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: 24px;
+    align-items: start;
+  }
+  .cw-main { min-width: 0; }
+  .cw-rail { position: sticky; top: 102px; }
+  .cw-table-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: none;
+  }
+  .cw-table-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--card-border);
+  }
+  .cw-table-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+  .cw-table-subtitle { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .cw-table { width: 100%; border-collapse: collapse; }
+  .cw-table th {
+    padding: 10px 16px;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    text-align: left;
+    border-bottom: 1px solid var(--card-border);
+    white-space: nowrap;
+  }
+  .cw-table td {
+    height: 58px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--card-border);
+    color: var(--text-secondary);
+    font-size: 13px;
+    vertical-align: middle;
+  }
+  .cw-table tbody tr:last-child td { border-bottom: 0; }
+  .cw-table tbody tr:hover td { background: var(--sidebar-hover); }
+  .cw-contract-link {
+    display: inline-flex;
+    max-width: 300px;
+    color: var(--text-primary);
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .cw-contract-link:hover { text-decoration: underline; }
+  .cw-row-meta { color: var(--text-muted); font-size: 11.5px; margin-top: 2px; }
+  .cw-owner {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+  .cw-owner-avatar {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--avatar-gradient);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .cw-owner-name {
+    max-width: 130px;
+    color: var(--text-primary);
+    font-size: 12.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .cw-empty-owner .cw-owner-avatar {
+    background: var(--well);
+    border: 1px dashed var(--border);
+  }
+  .cw-empty-owner .cw-owner-name { color: var(--text-muted); font-weight: 500; }
+  .cw-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 72px;
+    height: 30px;
+    padding: 0 10px;
+    border-radius: 7px;
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    background: var(--card-bg);
+    text-decoration: none;
+    font-size: 12.5px;
+    font-weight: 700;
+  }
+  .cw-action:hover { border-color: var(--text-muted); }
+  .cw-panel {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 18px;
+  }
+  .cw-panel + .cw-panel { margin-top: 16px; }
+  .cw-panel-title {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--primary);
+    margin-bottom: 14px;
+  }
+  .cw-stat-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--card-border);
+  }
+  .cw-stat-row:last-child { border-bottom: 0; }
+  .cw-stat-label { font-size: 13px; color: var(--text-secondary); }
+  .cw-stat-value {
+    font-size: 14px;
+    color: var(--text-primary);
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+  .cw-watch-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 0;
+  }
+  .cw-watch-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--primary);
+    margin-top: 6px;
+    flex-shrink: 0;
+  }
+  .cw-watch-dot-red { background: var(--msg-error-text); }
+  .cw-watch-dot-amber { background: #8A5A14; }
+  .cw-watch-title { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+  .cw-watch-copy { font-size: 12px; color: var(--text-muted); margin-top: 1px; line-height: 1.35; }
+  .cw-sort-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: inherit;
+    text-decoration: none;
+  }
+  .cw-sort-link:hover { color: var(--text-primary); }
+  @media (max-width: 1180px) {
+    .cw-grid { grid-template-columns: 1fr; }
+    .cw-rail { position: static; }
+    .cw-search { width: 100%; }
+  }
 </style>
 
-<div class="page-wrap reveal-stagger cl-page">
-
-  {# ── Canonical-view notice ───────────────────────────────────
-     Repository is now the canonical contract list (saved views,
-     stage/assignee/activity columns, bulk actions). This view is kept for
-     its own working sort/filter columns until those migrate over; see
-     DOCCLAD_DESIGN_SYSTEM.md migration notes. #}
-  <div class="alert-banner alert-banner-yellow cl-migration-banner">
-    <svg aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-    <span>Repository is now the canonical contract list. <a href="{% url 'contracts:repository' %}">Go to Repository →</a></span>
-  </div>
-
-  {# ── Page header ──────────────────────────────────────────── #}
-  <div class="arch-header">
+<div class="page-wrap page-wrap-fluid cw-page">
+  <div class="arch-header cw-header">
     <div class="arch-header-left">
+      <div class="cw-kicker">Workspace</div>
       <div class="arch-title-row">
-        <h1 class="arch-title">Contracts</h1>
+        <h1 class="arch-title">Contract Workspace</h1>
         <span class="arch-count">{{ total_contracts }}</span>
       </div>
-      <p class="arch-subtitle">Contracts Workspace — Cases &amp; agreements across your organization</p>
     </div>
     <div class="arch-header-right">
-      {# The global "+ New Contract" CTA lives in the top bar — no duplicate here #}
       <a href="{% url 'contracts:repository' %}" class="btn-quiet">Repository</a>
+      <a href="{% url 'contracts:contract_create' %}" class="btn-cta">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14m7-7H5"/>
+        </svg>
+        New Contract
+      </a>
     </div>
   </div>
 
-  {# ── Toolbar ──────────────────────────────────────────────── #}
-  <div class="arch-toolbar">
-
-    {# Status tabs #}
-    <div class="arch-status-tabs">
+  <div class="cw-toolbar">
+    <nav class="cw-tabs" aria-label="Contract workspace filters">
       {% with cur=current_status %}
       {% for tab_label, tab_status in status_tabs %}
       <a href="?{% if tab_status %}status={{ tab_status }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if sort and sort != '-created_at' %}&sort={{ sort|urlencode }}{% endif %}"
-         class="arch-status-tab {% if cur == tab_status or not cur and not tab_status %}tab-active{% endif %}">
+         class="cw-tab {% if cur == tab_status or not cur and not tab_status %}cw-tab-active{% endif %}">
         {{ tab_label }}
       </a>
       {% endfor %}
       {% endwith %}
+    </nav>
+    <div class="cw-tools">
+      <form method="get" class="cw-search" role="search">
+        <svg aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
+        </svg>
+        <input type="text" name="q" value="{{ search_query }}" placeholder="Search active contract work..." aria-label="Search contracts">
+        {% if current_status %}<input type="hidden" name="status" value="{{ current_status }}">{% endif %}
+        <input type="hidden" name="sort" value="{{ sort }}">
+      </form>
+      <span class="arch-chip">Sort: {{ sort|default:'-created_at'|sort_label }}</span>
+      {% if search_query or current_status %}
+      <a href="{% url 'contracts:contract_list' %}" class="arch-chip chip-active">Clear</a>
+      {% endif %}
     </div>
-
-    <div class="arch-toolbar-sep"></div>
-
-    {# Search #}
-    <form method="get" class="arch-search" role="search">
-      <svg class="arch-search-icon" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
-      </svg>
-      <input type="text" name="q" value="{{ search_query }}"
-             placeholder="Search contracts..."
-             aria-label="Search contracts"
-             class="arch-search-input">
-      <input type="hidden" name="sort" value="{{ sort }}">
-      {% if current_phase %}<input type="hidden" name="phase" value="{{ current_phase }}">{% endif %}
-    </form>
-
-    {# Sort chip #}
-    <span class="arch-chip">
-      <svg class="w-3.5 h-3.5" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/>
-      </svg>
-      Sort: {{ sort|default:'-created_at'|sort_label }}
-    </span>
-
-    {# Clear filters #}
-    {% if search_query or current_phase %}
-    <a href="{% url 'contracts:contract_list' %}" class="arch-chip chip-active">
-      <svg class="w-3 h-3" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-      </svg>
-      Clear
-    </a>
-    {% endif %}
-
-    <div class="arch-toolbar-sep"></div>
-
-    {# Secondary links #}
-    <a href="{% url 'contracts:workflow_dashboard' %}" class="arch-chip">Workflows</a>
-    <a href="{% url 'contracts:approval_request_list' %}" class="arch-chip">Approvals</a>
-
   </div>
 
-  {# ── Table ────────────────────────────────────────────────── #}
-  <div class="card-l1 p-0 overflow-hidden">
-    <div class="overflow-x-auto">
-      <table class="w-full text-sm">
-        <thead class="tbl-head">
-          <tr>
-            {% with qs=search_query ph=request.GET.phase %}
-            <th class="text-left px-5 py-3">
-              <a href="?sort={% if sort == 'title' %}-title{% else %}title{% endif %}{% if qs %}&q={{ qs|urlencode }}{% endif %}{% if ph %}&phase={{ ph|urlencode }}{% endif %}"
-                 class="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wide hover:opacity-80 transition-opacity tbl-th">
-                Title
-                <svg class="w-3 h-3" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  {% if sort == 'title' %}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/>
-                  {% elif sort == '-title' %}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
-                  {% else %}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 9l4-4 4 4M8 15l4 4 4-4" opacity="0.4"/>{% endif %}
-                </svg>
-              </a>
-            </th>
-            <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Contract type</th>
-            <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Complexity</th>
-            <th class="text-left px-5 py-3">
-              <a href="?sort={% if sort == 'case_phase' %}-case_phase{% else %}case_phase{% endif %}{% if qs %}&q={{ qs|urlencode }}{% endif %}{% if ph %}&phase={{ ph|urlencode }}{% endif %}"
-                 class="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wide hover:opacity-80 transition-opacity tbl-th">
-                Stage
-                <svg class="w-3 h-3" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  {% if sort == 'case_phase' %}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/>
-                  {% elif sort == '-case_phase' %}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
-                  {% else %}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 9l4-4 4 4M8 15l4 4 4-4" opacity="0.4"/>{% endif %}
-                </svg>
-              </a>
-            </th>
-            <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Counterparty</th>
-            <th class="text-left px-5 py-3">
-              <a href="?sort={% if sort == 'value' %}-value{% else %}value{% endif %}{% if qs %}&q={{ qs|urlencode }}{% endif %}{% if ph %}&phase={{ ph|urlencode }}{% endif %}"
-                 class="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wide hover:opacity-80 transition-opacity tbl-th">
-                Value
-                <svg class="w-3 h-3" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  {% if sort == 'value' %}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/>
-                  {% elif sort == '-value' %}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
-                  {% else %}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 9l4-4 4 4M8 15l4 4 4-4" opacity="0.4"/>{% endif %}
-                </svg>
-              </a>
-            </th>
-            <th class="text-left px-5 py-3">
-              <a href="?sort={% if sort == 'end_date' %}-end_date{% else %}end_date{% endif %}{% if qs %}&q={{ qs|urlencode }}{% endif %}{% if ph %}&phase={{ ph|urlencode }}{% endif %}"
-                 class="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wide hover:opacity-80 transition-opacity tbl-th">
-                Target date
-                <svg class="w-3 h-3" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  {% if sort == 'end_date' %}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/>
-                  {% elif sort == '-end_date' %}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
-                  {% else %}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 9l4-4 4 4M8 15l4 4 4-4" opacity="0.4"/>{% endif %}
-                </svg>
-              </a>
-            </th>
-            <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Actions</th>
-            {% endwith %}
-          </tr>
-        </thead>
-        <tbody>
-          {% for contract in contracts %}
-          <tr class="border-b transition-colors tbl-row {% if contract.pk in expiring_contract_ids %}row-expiring{% endif %}">
-
-            <td class="px-5 py-3.5">
-              <a href="{% url 'contracts:contract_detail' contract.pk %}"
-                 class="cl-title">{{ contract.title|truncatechars:44 }}</a>
-              {% if contract.client %}
-              <p class="cl-meta">{{ contract.client.name }}</p>
-              {% endif %}
-            </td>
-
-            <td class="px-5 py-3.5 tbl-td">{{ contract.get_contract_type_display }}</td>
-            <td class="px-5 py-3.5 tbl-td">{{ contract.complexity|default:"—" }}</td>
-
-            <td class="px-5 py-3.5">
-              {% lifecycle_steps contract as cl_steps %}
-              <div class="cl-stage">
-                <span class="cl-dots" aria-hidden="true">
-                  {% for step in cl_steps %}<i class="cl-dot cl-dot-{{ step.state }}" title="{{ step.label }}"></i>{% endfor %}
-                </span>
-                <span class="badge-sm {{ contract.case_phase|phase_badge_class }}">
-                  {{ contract.get_case_phase_display }}
-                </span>
-              </div>
-            </td>
-
-            <td class="px-5 py-3.5 tbl-td">{{ contract.client.name|default:contract.counterparty|default:"—" }}</td>
-
-            <td class="px-5 py-3.5 font-medium tabular-nums c-primary">
-              {% if contract.value %}{{ contract.value|money:contract.currency }}{% else %}<span class="c-dim">—</span>{% endif %}
-            </td>
-
-            <td class="px-5 py-3.5">
-              {% if contract.end_date %}
-                {% if contract.pk in expiring_contract_ids %}
-                  <span class="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-md badge-expiring">
-                    <svg class="w-3 h-3 flex-shrink-0" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                    </svg>
-                    {{ contract.end_date|date:"d M Y" }}
+  <div class="cw-grid">
+    <main class="cw-main">
+      <section class="cw-table-card" aria-labelledby="active-contracts-heading">
+        <div class="cw-table-header">
+          <div>
+            <h2 id="active-contracts-heading" class="cw-table-title">Active contracts</h2>
+            <p class="cw-table-subtitle">Contracts moving through review, approval, signature, and execution.</p>
+          </div>
+          <span class="badge-sm badge-gray">{{ page_obj.paginator.count|default:total_contracts }} shown</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="cw-table">
+            <thead>
+              <tr>
+                {% with qs=search_query st=current_status %}
+                <th>
+                  <a class="cw-sort-link" href="?sort={% if sort == 'title' %}-title{% else %}title{% endif %}{% if qs %}&q={{ qs|urlencode }}{% endif %}{% if st %}&status={{ st|urlencode }}{% endif %}">Contract</a>
+                </th>
+                <th>Counterparty</th>
+                <th>
+                  <a class="cw-sort-link" href="?sort={% if sort == 'lifecycle_stage' %}-lifecycle_stage{% else %}lifecycle_stage{% endif %}{% if qs %}&q={{ qs|urlencode }}{% endif %}{% if st %}&status={{ st|urlencode }}{% endif %}">Stage</a>
+                </th>
+                <th>Owner</th>
+                <th>
+                  <a class="cw-sort-link" href="?sort={% if sort == 'updated_at' %}-updated_at{% else %}updated_at{% endif %}{% if qs %}&q={{ qs|urlencode }}{% endif %}{% if st %}&status={{ st|urlencode }}{% endif %}">Last activity</a>
+                </th>
+                <th>
+                  <a class="cw-sort-link" href="?sort={% if sort == 'end_date' %}-end_date{% else %}end_date{% endif %}{% if qs %}&q={{ qs|urlencode }}{% endif %}{% if st %}&status={{ st|urlencode }}{% endif %}">Due</a>
+                </th>
+                <th>
+                  <a class="cw-sort-link" href="?sort={% if sort == 'risk_level' %}-risk_level{% else %}risk_level{% endif %}{% if qs %}&q={{ qs|urlencode }}{% endif %}{% if st %}&status={{ st|urlencode }}{% endif %}">Risk</a>
+                </th>
+                <th class="text-right">Action</th>
+                {% endwith %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for contract in contracts %}
+              <tr>
+                <td>
+                  <a href="{% url 'contracts:contract_detail' contract.pk %}" class="cw-contract-link">{{ contract.title }}</a>
+                  <div class="cw-row-meta">{{ contract.get_contract_type_display }}</div>
+                </td>
+                <td>
+                  <span class="c-primary">{{ contract.client.name|default:contract.counterparty|default:"—" }}</span>
+                  {% if contract.value %}
+                  <div class="cw-row-meta">{{ contract.value|money:contract.currency }}</div>
+                  {% endif %}
+                </td>
+                <td>
+                  {% stage_dots contract %}
+                </td>
+                <td>
+                  {% if contract.created_by %}
+                  <span class="cw-owner">
+                    <span class="cw-owner-avatar">{{ contract.created_by.first_name|default:contract.created_by.username|slice:":1"|upper }}</span>
+                    <span class="cw-owner-name">{{ contract.created_by.get_full_name|default:contract.created_by.username }}</span>
                   </span>
-                {% else %}
-                  <span class="tbl-td">{{ contract.end_date|date:"d M Y" }}</span>
-                {% endif %}
-              {% else %}
-                <span class="c-dim">—</span>
-              {% endif %}
-            </td>
+                  {% else %}
+                  <span class="cw-owner cw-empty-owner">
+                    <span class="cw-owner-avatar" aria-hidden="true"></span>
+                    <span class="cw-owner-name">Unassigned</span>
+                  </span>
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="c-primary">{{ contract.updated_at|date:"d M Y" }}</span>
+                  <div class="cw-row-meta">{{ contract.status|default:"DRAFT"|event_label }}</div>
+                </td>
+                <td>
+                  {% if contract.end_date %}
+                    <span class="{% if contract.pk in expiring_contract_ids %}c-warning font-semibold{% else %}c-primary{% endif %}">{{ contract.end_date|due_countdown }}</span>
+                    <div class="cw-row-meta">{{ contract.end_date|date:"d M Y" }}</div>
+                  {% else %}
+                    <span class="c-dim">—</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="badge-sm {{ contract.risk_level|contract_risk_badge_class }}">{{ contract.get_risk_level_display }}</span>
+                </td>
+                <td class="text-right">
+                  <a href="{% url 'contracts:contract_detail' contract.pk %}" class="cw-action">
+                    {% if contract.lifecycle_stage == 'APPROVAL' %}Approve{% elif contract.lifecycle_stage == 'SIGNATURE' %}Track{% elif contract.status == 'DRAFT' %}Review{% else %}Open{% endif %}
+                  </a>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="8" class="px-5 py-20 text-center">
+                  <div class="flex flex-col items-center gap-3">
+                    <div class="w-12 h-12 rounded-full flex items-center justify-center surface-bubble">
+                      <svg class="w-6 h-6 c-muted" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <p class="font-medium c-primary">No contract work found</p>
+                      <p class="text-sm mt-1 c-muted">
+                        {% if search_query or current_status %}
+                        Adjust your filters or <a href="{% url 'contracts:contract_list' %}" class="c-link">clear all</a>.
+                        {% else %}
+                        Start with <a href="{% url 'contracts:contract_create' %}" class="c-link">your first contract</a>.
+                        {% endif %}
+                      </p>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
 
-            <td class="px-5 py-3.5 text-right whitespace-nowrap">
-              <a href="{% url 'contracts:contract_detail' contract.pk %}"
-                 class="cl-action">View</a><span class="cl-action-sep" aria-hidden="true">&middot;</span><a href="{% url 'contracts:contract_update' contract.pk %}"
-                 class="cl-action">Edit</a>
-            </td>
-
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="8" class="px-5 py-20 text-center">
-              <div class="flex flex-col items-center gap-3">
-                <div class="w-12 h-12 rounded-full flex items-center justify-center surface-bubble">
-                  <svg class="w-6 h-6 c-muted" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                  </svg>
-                </div>
-                <div>
-                  <p class="font-medium c-primary">No contracts found</p>
-                  <p class="text-sm mt-1 c-muted">
-                    {% if search_query or request.GET.phase %}
-                    Adjust your filters or <a href="{% url 'contracts:contract_list' %}" class="c-link">clear all</a>.
-                    {% else %}
-                    Start with <a href="{% url 'contracts:contract_create' %}" class="c-link">your first contract</a>.
-                    {% endif %}
-                  </p>
-                </div>
-              </div>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  {# ── Pagination ───────────────────────────────────────────── #}
-  {% if is_paginated %}
-  <div class="mt-6 flex items-center justify-between">
-    <p class="text-sm c-muted">
-      Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
-      &middot; {{ page_obj.paginator.count }} contract{{ page_obj.paginator.count|pluralize }}
-    </p>
-    <div class="flex items-center gap-1">
-      {% if page_obj.has_previous %}
-      <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if request.GET.phase %}&phase={{ request.GET.phase|urlencode }}{% endif %}{% if sort %}&sort={{ sort|urlencode }}{% endif %}"
-         class="btn-quiet text-sm px-3 py-1.5 inline-flex items-center gap-1">
-        <svg class="w-3.5 h-3.5" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-        Previous
-      </a>
+      {% if is_paginated %}
+      <div class="mt-5 flex items-center justify-between">
+        <p class="text-sm c-muted">
+          Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+          &middot; {{ page_obj.paginator.count }} contract{{ page_obj.paginator.count|pluralize }}
+        </p>
+        <div class="flex items-center gap-1">
+          {% if page_obj.has_previous %}
+          <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if current_status %}&status={{ current_status|urlencode }}{% endif %}{% if sort %}&sort={{ sort|urlencode }}{% endif %}" class="btn-quiet text-sm px-3 py-1.5">Previous</a>
+          {% endif %}
+          <span class="px-3 py-1.5 text-sm rounded-lg font-semibold page-pill-active">{{ page_obj.number }}</span>
+          {% if page_obj.has_next %}
+          <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if current_status %}&status={{ current_status|urlencode }}{% endif %}{% if sort %}&sort={{ sort|urlencode }}{% endif %}" class="btn-quiet text-sm px-3 py-1.5">Next</a>
+          {% endif %}
+        </div>
+      </div>
       {% endif %}
-      <span class="px-3 py-1.5 text-sm rounded-lg font-semibold page-pill-active">{{ page_obj.number }}</span>
-      {% if page_obj.has_next %}
-      <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if request.GET.phase %}&phase={{ request.GET.phase|urlencode }}{% endif %}{% if sort %}&sort={{ sort|urlencode }}{% endif %}"
-         class="btn-quiet text-sm px-3 py-1.5 inline-flex items-center gap-1">
-        Next
-        <svg class="w-3.5 h-3.5" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-      </a>
-      {% endif %}
-    </div>
-  </div>
-  {% endif %}
+    </main>
 
+    <aside class="cw-rail" aria-label="Workspace context">
+      <section class="cw-panel">
+        <h2 class="cw-panel-title">Workload Summary</h2>
+        <div class="cw-stat-row">
+          <span class="cw-stat-label">Draft</span>
+          <span class="cw-stat-value">{{ workspace_counts.draft }}</span>
+        </div>
+        <div class="cw-stat-row">
+          <span class="cw-stat-label">Legal review</span>
+          <span class="cw-stat-value">{{ workspace_counts.legal_review }}</span>
+        </div>
+        <div class="cw-stat-row">
+          <span class="cw-stat-label">Approval</span>
+          <span class="cw-stat-value">{{ workspace_counts.approval }}</span>
+        </div>
+        <div class="cw-stat-row">
+          <span class="cw-stat-label">Signature</span>
+          <span class="cw-stat-value">{{ workspace_counts.signature }}</span>
+        </div>
+      </section>
+
+      <section class="cw-panel">
+        <h2 class="cw-panel-title">Blocked Items</h2>
+        <div class="cw-watch-item">
+          <span class="cw-watch-dot {% if workspace_counts.blocked %}cw-watch-dot-red{% endif %}" aria-hidden="true"></span>
+          <span>
+            <span class="cw-watch-title">{{ workspace_counts.blocked }} blocked</span>
+            <span class="cw-watch-copy">Expired, terminated, or cancelled items that need cleanup or archive action.</span>
+          </span>
+        </div>
+        <div class="cw-watch-item">
+          <span class="cw-watch-dot {% if workspace_counts.high_risk %}cw-watch-dot-amber{% endif %}" aria-hidden="true"></span>
+          <span>
+            <span class="cw-watch-title">{{ workspace_counts.high_risk }} high-risk</span>
+            <span class="cw-watch-copy">High and critical risk contracts visible in this workspace.</span>
+          </span>
+        </div>
+      </section>
+
+      <section class="cw-panel">
+        <h2 class="cw-panel-title">SLA / Deadline Watch</h2>
+        <div class="cw-watch-item">
+          <span class="cw-watch-dot {% if expiring_soon %}cw-watch-dot-amber{% endif %}" aria-hidden="true"></span>
+          <span>
+            <span class="cw-watch-title">{{ expiring_soon }} due soon</span>
+            <span class="cw-watch-copy">Active contracts with target dates in the next 30 days.</span>
+          </span>
+        </div>
+        <a href="{% url 'contracts:repository' %}" class="btn-quiet mt-3 w-full">Review repository record</a>
+      </section>
+    </aside>
+  </div>
 </div>
 {% endblock %}

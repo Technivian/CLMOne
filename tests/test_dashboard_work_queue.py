@@ -83,7 +83,7 @@ class DashboardEmptyStateTests(TestCase):
         self.assertEqual(response.status_code, 200)
         body = dashboard_body(response.content.decode())
         self.assertIn('Start building your legal workspace', body)
-        self.assertNotIn('Quick links', body)
+        self.assertNotIn('Priority Work Queue', body)
         self.assertNotIn('In Progress', body)
 
     def test_onboarding_checklist_hidden_once_a_contract_exists(self):
@@ -97,7 +97,7 @@ class DashboardEmptyStateTests(TestCase):
         )
         response = self.client.get(reverse('dashboard'))
         self.assertNotContains(response, 'Start building your legal workspace')
-        self.assertContains(response, 'Quick links')
+        self.assertContains(response, 'Priority Work Queue')
         self.assertContains(response, 'In Progress')
 
 
@@ -140,10 +140,13 @@ class DashboardQueueRowContentTests(TestCase):
         self.assertEqual(response.status_code, 200)
         html = dashboard_body(response.content.decode())
 
-        # Human-readable status labels only — never the raw TextChoices key.
+        # Human-readable stage labels only — never the raw TextChoices key.
+        # The queue's Stage column shows the simplified lifecycle_stage chip
+        # (NEGOTIATION -> "Legal Review"), not the Contract.status field.
         self.assertNotIn('IN_REVIEW', html)
         self.assertNotIn('IN_PROGRESS', html)
-        self.assertIn('In Review', html)
+        self.assertNotIn('NEGOTIATION', html)
+        self.assertIn('Legal Review', html)
 
         # No raw Python/ORM model class names leaking into the UI.
         for raw_name in ('ApprovalRequest', 'WorkflowStep', 'DSARRequest', 'CaseSignal'):

@@ -3,10 +3,12 @@
 {% block title %}Approvals — DocClad{% endblock %}
 {% block content %}
 <style nonce="{{ csp_nonce }}">
-  {# .approvals-page itself carries no layout now — it is a marker class only
-     (kept for test/selector stability). Shell width/padding come from the
-     shared .page-wrap / .page-wrap-fluid, same as Dashboard/Repository/
-     Privacy, instead of a fourth private recipe. #}
+  {% comment %}
+  .approvals-page itself carries no layout now — it is a marker class only
+  (kept for test/selector stability). Shell width/padding come from the
+  shared .page-wrap / .page-wrap-fluid, same as Dashboard/Repository/
+  Privacy, instead of a fourth private recipe.
+  {% endcomment %}
   .approvals-header-row { margin-bottom: 16px; }
   .approvals-queue-card {
     background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px;

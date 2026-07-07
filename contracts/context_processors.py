@@ -11,6 +11,7 @@ from config.feature_flags import (
     is_test_mode_enabled
 )
 from .models import Notification, OrganizationMembership
+from .nav_config import get_nav_for
 from .permissions import can_manage_organization
 
 _ASSET_VERSION_CACHE = None
@@ -44,13 +45,36 @@ def asset_version(request):
     return {'ASSET_VERSION': _ASSET_VERSION_CACHE}
 
 
+def _sidebar_nav_for_template(request, user, organization):
+    """Resolve contracts.nav_config.get_nav_for() into template-ready
+    entries: each item's `active` callable is evaluated here (against the
+    request's already-resolved url_name) into a plain `is_active` boolean,
+    since templates can't invoke a callable with an argument."""
+    current_url_name = getattr(getattr(request, 'resolver_match', None), 'url_name', None)
+    resolved = []
+    for entry in get_nav_for(organization, user):
+        if entry['kind'] == 'section':
+            resolved.append({'kind': 'section', 'label': entry['label']})
+            continue
+        resolved.append({
+            'kind': 'item',
+            'label': entry['label'],
+            'url_name': entry['url_name'],
+            'icon': entry['icon'],
+            'is_active': bool(current_url_name) and entry['active'](current_url_name),
+        })
+    return resolved
+
+
 def feature_flags(request):
     """Add feature flags to template context"""
     unread_notifications = 0
     can_manage_org = False
+    sidebar_nav = []
     if getattr(request, 'user', None) and request.user.is_authenticated:
         unread_notifications = Notification.objects.filter(recipient=request.user, is_read=False).count()
         can_manage_org = can_manage_organization(request.user, getattr(request, 'organization', None))
+        sidebar_nav = _sidebar_nav_for_template(request, request.user, getattr(request, 'organization', None))
     return {
         'FEATURE_REDESIGN': is_feature_redesign_enabled(),
         'DOCCLAD_MODE': is_docclad_mode_enabled(),
@@ -67,6 +91,7 @@ def feature_flags(request):
         'CURRENT_ORGANIZATION': getattr(request, 'organization', None),
         'UNREAD_NOTIFICATIONS': unread_notifications,
         'CAN_MANAGE_ORGANIZATION': can_manage_org,
+        'SIDEBAR_NAV': sidebar_nav,
         'USER_ORGANIZATION_MEMBERSHIPS': (
             OrganizationMembership.objects.filter(user=request.user, is_active=True).select_related('organization')
             if getattr(request, 'user', None) and request.user.is_authenticated

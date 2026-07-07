@@ -12,6 +12,34 @@
         <div class="settings-card-lg">
             <div class="flex-between mb-3">
                 <div>
+                    <h2 class="heading-lg mb-1">Workspace mode</h2>
+                    <p class="text-desc-sm mb-0">Controls sidebar emphasis only — every module stays reachable by direct URL regardless of mode.</p>
+                </div>
+                <div class="badge-sm {% if organization.workspace_mode == 'in_house_clm' %}badge-green{% else %}badge-gray{% endif %}">
+                    {{ organization.get_workspace_mode_display }}
+                </div>
+            </div>
+
+            <form method="post" class="form-grid">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="save_workspace_mode">
+                <label class="form-field">
+                    <span class="form-label">Sidebar experience</span>
+                    <select name="workspace_mode" class="input-base w-180 px-3 py-2 rounded-lg border">
+                        <option value="law_firm_ops" {% if organization.workspace_mode == 'law_firm_ops' %}selected{% endif %}>Law firm operations</option>
+                        <option value="in_house_clm" {% if organization.workspace_mode == 'in_house_clm' %}selected{% endif %}>In-house CLM</option>
+                    </select>
+                    <span class="text-desc-sm mb-0">"In-house CLM" shows a focused contract-control sidebar (Command Center, Contracts, Matters, Risk Review, DPA Reviews...). "Law firm operations" keeps the full practice-management sidebar.</span>
+                </label>
+                <div class="btn-group">
+                    <button type="submit" class="btn-primary-grad">Save workspace mode</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="settings-card-lg">
+            <div class="flex-between mb-3">
+                <div>
                     <h2 class="heading-lg mb-1">MFA policy</h2>
                     <p class="text-desc-sm mb-0">Require every active member to enroll MFA before accessing protected pages.</p>
                 </div>

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load docclad_format %}
 {% block title %}Clients – DocClad{% endblock %}
 {% block content %}
 <div class="page-wrap">
@@ -44,7 +45,7 @@
                 </td>
                 <td class="px-5 py-3.5 tbl-td">{{ client.get_client_type_display }}</td>
                 <td class="px-5 py-3.5">
-                    <span class="badge-sm {% if client.status == 'ACTIVE' %}badge-green{% elif client.status == 'PROSPECTIVE' %}badge-blue{% else %}badge-gray{% endif %}">{{ client.get_status_display }}</span>
+                    <span class="badge-sm {{ client.status|client_status_badge_class }}">{{ client.get_status_display }}</span>
                 </td>
                 <td class="px-5 py-3.5 tbl-td">{{ client.industry|default:"—" }}</td>
                 <td class="px-5 py-3.5 tbl-td">{{ client.email|default:"—" }}</td>

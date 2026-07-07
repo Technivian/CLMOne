@@ -1,6 +1,218 @@
 {% extends "base.html" %}
+{% load docclad_format %}
 {% block title %}{{ matter.matter_number }} – DocClad{% endblock %}
 {% block content %}
+{% if is_in_house_clm %}
+{# ══ MATTER WORKSPACE SPINE — in_house_clm (Payrollminds) framing ═══
+   Phase 3 of the Product Coherence Redesign. Reuses the same
+   arch-header/kpi-card/ad-card/ad-rail-item components as the Command
+   Center dashboard — no new visual language. Every figure below reads
+   PERSISTED rows only; nothing here triggers DPA analysis or approval
+   mutation. #}
+<div class="page-wrap page-wrap-fluid">
+  <div class="arch-header">
+    <div class="arch-header-left">
+      <div class="arch-title-row">
+        <h1 class="arch-title">{{ matter.title }}</h1>
+        <span class="badge-sm {% if matter.status == 'ACTIVE' %}badge-green{% elif matter.status == 'ON_HOLD' %}badge-yellow{% else %}badge-gray{% endif %}">{{ matter.get_status_display }}</span>
+      </div>
+      <p class="arch-subtitle">
+        {{ matter.matter_number }}
+        {% if matter.client %} &middot; {{ matter.client.name }}{% endif %}
+        {% if matter.responsible_team %} &middot; {{ matter.responsible_team }}{% elif matter.responsible_attorney %} &middot; {{ matter.responsible_attorney.get_full_name|default:matter.responsible_attorney.username }}{% endif %}
+      </p>
+    </div>
+    <div class="arch-header-right">
+      <a href="{% url 'contracts:matter_update' matter.pk %}" class="btn-ghost">Edit</a>
+    </div>
+  </div>
+
+  <div class="kpi-strip grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div class="kpi-card">
+      <div class="kpi-value{% if clm_open_risk_count %} c-danger{% endif %}">{{ clm_open_risk_count }}</div>
+      <div class="kpi-label">Open Risks</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value{% if clm_open_approval_count %} c-danger{% endif %}">{{ clm_open_approval_count }}</div>
+      <div class="kpi-label">Open Approvals</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value">{{ clm_upcoming_deadline_count }}</div>
+      <div class="kpi-label">Upcoming Deadlines</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value" style="font-size:16px;">{{ matter.updated_at|date:"M d, Y" }}</div>
+      <div class="kpi-label">Last Activity</div>
+    </div>
+  </div>
+
+  <div class="arch-workspace-grid">
+    <div class="arch-workspace-main">
+
+      {# ── Linked Contracts ──────────────────────────────────── #}
+      <div class="ad-card ad-queue-card mb-6">
+        <div class="ad-head">
+          <span class="ad-head-stack">
+            <span class="ad-head-title">Linked Contracts</span>
+            <span class="ad-head-subtitle">Contracts tied to this matter.</span>
+          </span>
+          <a href="{% url 'contracts:contract_list' %}" class="ad-head-link">View all &rarr;</a>
+        </div>
+        {% for c in clm_contracts %}
+        <a href="{% url 'contracts:contract_detail' c.pk %}" class="ad-rail-item">
+          <span>
+            <span class="ad-rail-item-title">
+              {{ c.title }}
+              {% if c.contract_type == 'MSA' or c.contract_type == 'SOW' or c.contract_type == 'DPA' %}<span class="badge-sm badge-blue">{{ c.get_contract_type_display }}</span>{% endif %}
+            </span>
+            <span class="ad-rail-item-meta">
+              {{ c.get_contract_type_display }}{% if c.counterparty %} &middot; {{ c.counterparty }}{% endif %}
+              {% if c.start_date or c.end_date %} &middot; {% if c.start_date %}{{ c.start_date|date:"M Y" }}{% endif %}–{% if c.end_date %}{{ c.end_date|date:"M Y" }}{% endif %}{% endif %}
+              {% if c.clm_dpa_pack %} &middot; DPA: {{ c.clm_dpa_pack.get_approval_status_display }}{% endif %}
+              {% if c.clm_pending_approval_count %} &middot; {{ c.clm_pending_approval_count }} pending approval{{ c.clm_pending_approval_count|pluralize }}{% endif %}
+            </span>
+          </span>
+          <span class="badge-sm {{ c.status|status_badge_class }}">{{ c.get_status_display }}</span>
+        </a>
+        {% empty %}
+        <div class="ad-empty">No contracts linked to this matter yet.</div>
+        {% endfor %}
+      </div>
+
+      {# ── DPA Review Packs ──────────────────────────────────── #}
+      <div class="ad-card ad-queue-card mb-6">
+        <div class="ad-head">
+          <span class="ad-head-stack">
+            <span class="ad-head-title">DPA Review Packs</span>
+            <span class="ad-head-subtitle">Data Processing Agreement reviews for this matter.</span>
+          </span>
+        </div>
+        {% for pack in clm_dpa_packs %}
+        <a href="{% url 'contracts:dpa_review_pack_detail' pk=pack.pk %}" class="ad-rail-item">
+          <span>
+            <span class="ad-rail-item-title">{{ pack.contract.title }}</span>
+            <span class="ad-rail-item-meta">
+              {% if pack.counterparty %}{{ pack.counterparty }} &middot; {% endif %}
+              {{ pack.clm_high_risk_count }} high/critical risk{{ pack.clm_high_risk_count|pluralize }}
+              &middot; {{ pack.clm_conflict_count }} cross-doc conflict{{ pack.clm_conflict_count|pluralize }}
+              {% if pack.review_memo_generated_at %} &middot; Memo generated {{ pack.review_memo_generated_at|date:"M j" }}{% endif %}
+            </span>
+          </span>
+          <span class="badge-sm {{ pack.approval_status|dpa_approval_badge_class }}">{{ pack.get_approval_status_display }}</span>
+        </a>
+        {% empty %}
+        <div class="ad-empty">No DPA review packs linked to this matter yet.</div>
+        {% endfor %}
+      </div>
+
+      {# ── Risks ──────────────────────────────────────────────── #}
+      <div class="ad-card ad-queue-card mb-6">
+        <div class="ad-head">
+          <span class="ad-head-stack">
+            <span class="ad-head-title">Risks</span>
+            <span class="ad-head-subtitle">Open Risk Register items and unresolved DPA findings, most severe first.</span>
+          </span>
+          <a href="{% url 'contracts:risk_log_list' %}" class="ad-head-link">View all &rarr;</a>
+        </div>
+        {% for risk in clm_risks %}
+        <a href="{{ risk.detail_url }}" class="ad-rail-item">
+          <span>
+            <span class="ad-rail-item-title">{{ risk.title }}</span>
+            <span class="ad-rail-item-meta">{{ risk.source }}{% if risk.owner %} &middot; {{ risk.owner.get_full_name|default:risk.owner.username }}{% endif %} &middot; {{ risk.status_display }}</span>
+          </span>
+          <span class="badge-sm {% if risk.source == 'DPA Risk' %}{{ risk.severity|dpa_severity_badge_class }}{% else %}{{ risk.severity|contract_risk_badge_class }}{% endif %}">{{ risk.severity_display }}</span>
+        </a>
+        {% empty %}
+        <div class="ad-empty">No open risks for this matter.</div>
+        {% endfor %}
+      </div>
+
+      {# ── Documents ──────────────────────────────────────────── #}
+      <div class="ad-card ad-card-quiet">
+        <div class="ad-head">
+          <span class="ad-head-title">Documents</span>
+          <a href="{% url 'contracts:document_list' %}" class="ad-head-link">Go to Repository</a>
+        </div>
+        {% for doc in documents %}
+        <a href="{% url 'contracts:document_detail' doc.pk %}" class="ad-rail-item">
+          <span>
+            <span class="ad-rail-item-title">{{ doc.title }}</span>
+            <span class="ad-rail-item-meta">{{ doc.get_document_type_display }} &middot; {{ doc.updated_at|date:"M d, Y" }}</span>
+          </span>
+          <span class="badge-sm {{ doc.status|document_status_badge_class }}">{{ doc.get_status_display }}</span>
+        </a>
+        {% empty %}
+        <div class="ad-empty">No documents linked to this matter yet.</div>
+        {% endfor %}
+      </div>
+
+    </div>{# /arch-workspace-main #}
+
+    <div class="arch-workspace-sidebar">
+
+      {# ── Approvals ──────────────────────────────────────────── #}
+      <div class="ad-card ad-card-quiet">
+        <div class="ad-head">
+          <span class="ad-head-title">Approvals</span>
+          <a href="{% url 'contracts:approval_request_list' %}" class="ad-head-link">View all</a>
+        </div>
+        {% for approval in clm_approvals %}
+        <a href="{% url 'contracts:approval_request_update' pk=approval.pk %}" class="ad-rail-item">
+          <span>
+            <span class="ad-rail-item-title">{{ approval.approval_step|approval_step_label }}</span>
+            <span class="ad-rail-item-meta">
+              {{ approval.contract.title }}
+              {% if approval.assigned_to %} &middot; {{ approval.assigned_to.get_full_name|default:approval.assigned_to.username }}{% endif %}
+            </span>
+          </span>
+          <span class="badge-sm {{ approval.status|approval_status_badge_class }}">{{ approval.get_status_display }}</span>
+        </a>
+        {% empty %}
+        <div class="ad-empty">No open approvals for this matter.</div>
+        {% endfor %}
+      </div>
+
+      {# ── Deadlines / Obligations ────────────────────────────── #}
+      <div class="ad-card ad-card-quiet">
+        <div class="ad-head">
+          <span class="ad-head-title">Deadlines &amp; Obligations</span>
+          <a href="{% url 'contracts:deadline_list' %}" class="ad-head-link">View all</a>
+        </div>
+        {% for dl in deadlines %}
+        <a href="{% url 'contracts:deadline_update' pk=dl.pk %}" class="ad-rail-item">
+          <span>
+            <span class="ad-rail-item-title">{{ dl.title }}</span>
+            <span class="ad-rail-item-meta">{% if dl.contract %}{{ dl.contract.title }}{% elif dl.matter %}Matter obligation{% endif %}</span>
+          </span>
+          <span class="ad-rail-item-due{% if dl.is_overdue %} is-overdue{% endif %}">{{ dl.due_date|due_countdown }}</span>
+        </a>
+        {% empty %}
+        <div class="ad-empty">No active deadlines. Obligation tracking will appear here once extracted.</div>
+        {% endfor %}
+      </div>
+
+      {# ── Review Memos ───────────────────────────────────────── #}
+      <div class="ad-card ad-card-quiet">
+        <div class="ad-head">
+          <span class="ad-head-title">Review Memos</span>
+        </div>
+        {% for pack in clm_memos %}
+        <a href="{% url 'contracts:dpa_review_pack_memo' pk=pack.pk %}" class="ad-rail-item">
+          <span>
+            <span class="ad-rail-item-title">{{ pack.contract.title }}</span>
+            <span class="ad-rail-item-meta">Generated {{ pack.review_memo_generated_at|date:"M j, Y" }}</span>
+          </span>
+          <span class="badge-sm {{ pack.approval_status|dpa_approval_badge_class }}">{{ pack.get_approval_status_display }}</span>
+        </a>
+        {% empty %}
+        <div class="ad-empty">No review memos generated yet.</div>
+        {% endfor %}
+      </div>
+
+    </div>{# /arch-workspace-sidebar #}
+  </div>{# /arch-workspace-grid #}
+</div>
+{% else %}
 <div class="page-wrap">
   <div class="page-header">
     <div>
@@ -92,4 +304,5 @@
 
   </div>
 </div>
+{% endif %}
 {% endblock %}

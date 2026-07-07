@@ -23,9 +23,21 @@ class Organization(models.Model):
         OIDC = 'OIDC', 'OpenID Connect'
         SAML = 'SAML', 'SAML'
 
+    class WorkspaceMode(models.TextChoices):
+        LAW_FIRM_OPS = 'law_firm_ops', 'Law firm operations'
+        IN_HOUSE_CLM = 'in_house_clm', 'In-house CLM'
+
     name = models.CharField(max_length=200, unique=True)
     slug = models.SlugField(max_length=120, unique=True)
     is_active = models.BooleanField(default=True)
+    # Per-tenant nav/dashboard emphasis (see contracts/nav_config.py). This is
+    # deliberately a DB field, not a global env feature flag — different
+    # tenants in the same deployment need different modes simultaneously.
+    # Never gates permissions or route availability, only what the sidebar
+    # renders by default; every route stays reachable directly regardless.
+    workspace_mode = models.CharField(
+        max_length=20, choices=WorkspaceMode.choices, default=WorkspaceMode.LAW_FIRM_OPS,
+    )
     require_mfa = models.BooleanField(default=False)
     session_idle_timeout_minutes = models.PositiveIntegerField(
         default=120,

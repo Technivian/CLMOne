@@ -28,8 +28,8 @@
         </div>
       </div>
       <span style="padding:0.25rem 0.75rem;border-radius:999px;font-size:0.8rem;font-weight:600;
-                   background:{% if policy.ai_features_enabled %}#dcfce7{% else %}#fee2e2{% endif %};
-                   color:{% if policy.ai_features_enabled %}#166534{% else %}#991b1b{% endif %}">
+                   background:{% if policy.ai_features_enabled %}var(--status-positive-bg){% else %}var(--status-danger-bg){% endif %};
+                   color:{% if policy.ai_features_enabled %}var(--status-positive-fg){% else %}var(--status-danger-fg){% endif %}">
         {% if policy.ai_features_enabled %}Enabled{% else %}Disabled{% endif %}
       </span>
     </div>

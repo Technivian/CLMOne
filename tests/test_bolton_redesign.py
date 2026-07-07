@@ -42,20 +42,21 @@ class BoltonRedesignTestCase(TestCase):
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
 
-        self.assertContains(response, 'Active contracts')
-        self.assertContains(response, 'Pending approval')
-        self.assertContains(response, 'Expiring soon')
-        self.assertContains(response, 'High risk')
-        self.assertContains(response, 'kpi-card')
+        self.assertContains(response, 'Needs Legal Review')
+        self.assertContains(response, 'Awaiting Approval')
+        self.assertContains(response, 'Signature Pending')
+        self.assertContains(response, 'Expiring Soon')
+        self.assertContains(response, 'ad-priority-card')
 
     def test_dashboard_empty_state_hides_kpis(self):
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Start building your legal workspace')
-        # The CSS definitions always mention the kpi classes; assert on the
-        # rendered markup instead: no KPI tile labels in the onboarding state.
-        self.assertNotContains(response, 'Active contracts')
-        self.assertNotContains(response, 'Pending signatures')
+        # The CSS definitions always mention the priority-strip classes;
+        # assert on the rendered markup instead: no priority card labels in
+        # the onboarding state.
+        self.assertNotContains(response, 'Needs Legal Review')
+        self.assertNotContains(response, 'Awaiting Approval')
 
     def test_dashboard_container_constraint(self):
         response = self.client.get(reverse('dashboard'))
@@ -73,10 +74,11 @@ class BoltonRedesignTestCase(TestCase):
         self.assertContains(response, 'Sign out')
 
     def test_dashboard_panels(self):
-        # The dashboard is a workflow queue first: saved-view tabs + a single
-        # queue table, with the KPI strip and activity feed as secondary
-        # panels. The old placeholder-only "Recent Contracts" / "Case
-        # Portfolio" panels were removed as part of that conversion.
+        # The dashboard is a legal-ops command desk: a priority action strip,
+        # a workflow queue (saved-view tabs + a single queue table), a
+        # restrained lifecycle status overview, and a right rail (deadlines/
+        # risk watch/activity). The old placeholder-only "Recent Contracts" /
+        # "Case Portfolio" panels were removed as part of that conversion.
         self._seed_contract()
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
@@ -85,8 +87,8 @@ class BoltonRedesignTestCase(TestCase):
         self.assertContains(response, 'Needs Review')
         self.assertContains(response, 'Renewals')
         self.assertContains(response, 'Completed')
-        self.assertContains(response, 'Task Signals')
-        self.assertContains(response, 'Recent activity')
+        self.assertContains(response, 'Upcoming Deadlines')
+        self.assertContains(response, 'Recent Activity')
 
     def test_contracts_table_structure(self):
         Contract.objects.create(

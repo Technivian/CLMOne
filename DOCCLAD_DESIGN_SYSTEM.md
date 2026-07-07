@@ -1,6 +1,6 @@
 # DocClad Design System — "Ledger"
 
-Version: 1.1 · 2026-07-05
+Version: 1.2 · 2026-07-07
 Tokens: `theme/static/css/docclad-tokens.css`
 Brand authority: `docclad_agent_brand_kit/docs/docclad-approved-brand-board.png`
 Governance: `DESIGN_CONSTITUTION.md` §14
@@ -8,17 +8,25 @@ Research basis: `IRONCLAD_DESIGN_AUDIT.md` (verified from Ironclad's shipped CSS
 verified seven-product sweep (Juro, LinkSquares, Evisort/Workday CLM, Icertis, Spellbook,
 Clio, Ironclad) — token-level, from fetched production CSS where available.
 
-**v1.1 changelog**: v1.0 made the product's action accent a desaturated teal
-(`#0A7264`). On review this read as adjacent to Ironclad even though the exact hex
-values differ (HSL check: hue ~171° vs Ironclad's ~163° — same teal-green family,
-but DocClad's is far more saturated, 84% vs 48%). The system-level resemblance came
-from stacking several Ironclad-derived choices — teal-green primary, near-black/navy
-ink, tinted pills, light paper, Inter, hairlines — that were all benchmarked most
-closely against Ironclad of the seven products audited. v1.1 keeps everything else
-(ink, paper, status pills, ledger signature) and **re-accents the product on
-copper** (`#B5502E`, a ledger-ink red), which is unclaimed among the seven
-competitors audited. Brand teal is not removed — it's demoted to a narrow,
-deliberate role: the logo, and the trust/verification "seal" (see §3, §5.2).
+**v1.2 changelog**: product direction settled on a two-accent system instead of
+v1.1's single rationed copper accent. **Teal reverts to the general accent** — active
+nav, links, focus rings, selected states, and lifecycle/progress — while **copper/
+burnt-orange becomes CTA-only**: reserved for primary creation/action buttons (e.g.
+"New Contract", "New Risk") the way the reference Contract Workspace screen uses it.
+This is a deliberate reversal of the v1.1 "copper is the only action accent, teal is
+a narrow seal" rule; v1.1's Ironclad-adjacency concern is addressed instead by the
+ledger signature (tabular numerals, ruled totals, mono record furniture) and copper
+CTA buttons carrying the differentiation, not by suppressing brand teal. Fiduciary
+surfaces (§5.2) keep their teal seal treatment but are now differentiated from
+general teal accents by the *combination* of signals (seal-bg wash + top rule + mono
+eyebrow), not by teal being exclusive to them.
+
+**v1.1 changelog** (superseded by v1.2, kept for history): v1.0 made the product's
+action accent a desaturated teal (`#0A7264`). On review this read as adjacent to
+Ironclad even though the exact hex values differ (HSL check: hue ~171° vs Ironclad's
+~163° — same teal-green family, but DocClad's is far more saturated, 84% vs 48%).
+v1.1 re-accented the product on copper (`#B5502E`) instead, demoting teal to a
+narrow seal role. v1.2 reverses this — see above.
 
 ---
 
@@ -61,29 +69,31 @@ exactly the visual territory no one occupies.
 
 ## 3) Identity thesis
 
-> **Cool paper. Navy ink. Copper action. Teal seal. Ledger precision.**
+> **Cool paper. Navy ink. Teal accent. Copper CTA. Ledger precision.**
 
 DocClad should look like the instrument a firm trusts with client money and the
 record of every decision: a modern ledger, not a dashboard. Where the category drifts
 warm-editorial (Ironclad, Icertis, Juro), DocClad is deliberately **cool and precise**
 — which is also exactly what the approved brand palette says (cool light gray, deep
-navy, teal). We differentiate by *discipline*, not decoration — and by an accent color
-(copper) that none of the seven audited competitors use.
+navy, teal). We differentiate by *discipline*, not decoration — and by a two-accent
+system (teal + copper) that none of the seven audited competitors use in this split.
 
 Five load-bearing ideas:
 
 1. **The ink is the brand.** Text is navy-derived (`--ink-*` ramp from `#0B1330`),
    never neutral gray. This single move makes every screen quietly branded — the same
    trick Ironclad uses (`#1C212B` ink = logo ink, 648 uses in their bundle).
-2. **Copper is the action color, not teal.** Buttons, links, focus rings,
-   active/selected states, and the active nav item all use `--primary` (copper,
-   `#B5502E` light / `#CF7248` dark) — a ledger-ink red with no incumbent in the
-   category. Rationed the same way Ironclad rations its own green: if it appears as
-   decoration rather than an action, it's a bug.
-3. **Teal is a seal, not a paint.** The brand teal is reserved narrowly for the
-   trust/verification signal: the logo, and any surface that shows or moves client
-   funds (fiduciary grammar, §5.2). It never competes with copper for "what do I
-   click." If teal appears as a general UI accent, that's a bug too.
+2. **Teal is the accent, copper is the CTA.** Links, focus rings, active/selected
+   states, the active nav item, and lifecycle/progress all use `--primary` (teal,
+   `#0A7264` light / `#17BFA5` dark) — the brand teal, restored to a general accent
+   role. Copper/burnt-orange (`--btn-gradient`) is rationed to primary creation/action
+   buttons only ("New Contract", "New Risk") — it never appears as a link, nav state,
+   or focus ring.
+3. **Teal also carries fiduciary trust.** Client-funds surfaces (trust accounts,
+   disbursements, IOLTA reconciliation) use the same teal family plus additional
+   fiduciary grammar — seal-bg wash, a top rule, and a mono eyebrow (§5.2) — so they
+   still read as visually distinct from a merely-active nav item or link, even though
+   the hue is shared with the general accent.
 4. **Numbers are fiduciary.** Tabular numerals everywhere data appears; currency
    right-aligned; accounting rules (single rule above totals, double rule under final
    totals); record IDs/hashes/timestamps in mono. This is the ownable signature.
@@ -99,16 +109,24 @@ Five load-bearing ideas:
 `--ink-300 #AAB2C2` disabled · `--line-strong #C9CFDB` · `--line #DEE2EA` ·
 `--hairline #EBEEF3` · `--paper #F3F5F7` canvas · `--card #FFFFFF` · `--well #EDF0F4`
 
-### Copper ramp (the action accent — buttons, links, focus, active states)
-`--copper-800 #8A3A1E` pressed (light theme) · `--copper-700 #B5502E` **default
-action color, light theme** (5.1:1 on white) · `--copper-600 #C96A3E` hover/borders ·
-`--copper-500 #CF7248` **default action color, dark theme** (5.4:1 on navy card) ·
-`--copper-400 #E29368` hover, dark theme · `--copper-tint #F3DACB` selected/pill bg
-(light) · `--copper-tint-dark rgba(207,114,72,0.14)` selected/pill bg (dark)
+### Teal ramp (the general accent — links, focus, active states, progress)
+`--primary #0A7264` **default accent, light theme** (5.1:1 on white) ·
+`--primary-hover #085C51` pressed · `--primary-light #11A08D` hover/borders (light) ·
+`--primary #17BFA5` **default accent, dark theme** · `--primary-subtle` /
+`--primary-bg` selected/pill tints. Same hue family as `--seal` — see below.
 
-### Seal (teal — trust/verification signal only, not a general accent)
+### Copper ramp (CTA-only — primary creation/action buttons)
+`--copper-800 #8A3A1E` pressed (light theme) · `--copper-700 #B5502E` **default CTA
+color, light theme** (5.1:1 on white) · `--copper-600 #C96A3E` hover/borders ·
+`--copper-500 #CF7248` **default CTA color, dark theme** (5.4:1 on navy card) ·
+`--copper-400 #E29368` hover, dark theme. Used only via `--btn-gradient` /
+`.btn-primary-grad` — never for links, nav state, or focus rings.
+
+### Seal (teal fiduciary treatment — same hue as the accent, plus extra grammar)
 `--seal #0A7264` (light) / `#17BFA5` (dark) · `--seal-bg #DFF4EE` (light) /
-`rgba(17,179,154,0.14)` (dark) fiduciary surfaces, verified/sealed marks, logo only.
+`rgba(17,179,154,0.14)` (dark). Client-funds surfaces pair this with a top rule and
+mono eyebrow (§5.2) so they stay legible as fiduciary even though teal is no longer
+exclusive to them.
 
 ### Status vocabulary (tinted pills — fg on bg)
 | Meaning | fg | bg | Replaces |
@@ -146,13 +164,15 @@ No glows, no gradients, no background orbs (constitution §13 already bans these
 2. **Fiduciary surface grammar** — any UI touching client funds (trust accounts,
    disbursements, IOLTA reconciliation) gets: `--seal-bg` background/top accent, 2px
    `--seal` top rule, and a mono eyebrow (`CLIENT FUNDS · IOLTA`). Client money must
-   be *visibly different* from firm money everywhere it appears — and it's the one
-   place teal shows up outside the logo. No competitor does this. Implemented on
-   `trust_account_detail.html` / `trust_account_list.html`.
+   be *visibly different* from firm money everywhere it appears — the top rule +
+   eyebrow combination, not the color alone, is what marks it fiduciary now that teal
+   is the general accent too. Implemented on `trust_account_detail.html` /
+   `trust_account_list.html`.
 3. **The seal mark** — audit-verified states (hash-chain verified, executed,
    reconciled) render a teal circled-check chip labeled in mono (`SEALED`, `VERIFIED`).
    Echoes the brand board's teal check. Copper is never used for this — verification
-   is specifically a teal signal, action is specifically a copper one.
+   and general navigation/action state are both teal signals; creation CTAs are the
+   copper one.
 4. **Record furniture in mono** — IDs, hashes, timestamps, clause refs set in
    `--mono` at meta size. The audit trail should *look like evidence*.
 5. **The fold** — the logo's folded document corner, reused as a corner detail on
@@ -160,8 +180,9 @@ No glows, no gradients, no background orbs (constitution §13 already bans these
 
 ## 6) Component recipes (core set)
 
-- **Button / primary**: `--primary` (copper) bg, white text, radius 6, 8×16 padding,
-  hover `--primary-hover`, focus 3px ring in `--primary-glow`. No gradients.
+- **Button / primary (CTA)**: `--btn-gradient` (copper) bg, white text, radius 6,
+  8×16 padding. Reserved for primary creation/action buttons ("New Contract", "New
+  Risk"). No gradients beyond the solid copper fill.
 - **Button / secondary**: `--card` bg, 1px `--line`, `--ink-700` text; hover border
   `--ink-400`.
 - **Button / quiet**: transparent, `--ink-500` text; hover `--well` bg.
@@ -171,21 +192,22 @@ No glows, no gradients, no background orbs (constitution §13 already bans these
   convention, not a brand statement). Countdown numbers inside pills use tabular nums.
 - **Table**: header 11px mono uppercase `--ink-400` on `--well` with `--line-strong`
   bottom rule; 44px rows (52px comfortable); `--hairline` separators; no zebra;
-  hover `--well`; selected copper tint + 2px `--primary` left rule; money columns
+  hover `--well`; selected teal tint + 2px `--primary` left rule; money columns
   right-aligned tabular.
 - **Card/panel**: `--card`, 1px `--line`, radius 10; header row with `--hairline`
   underline; no shadow.
-- **Inputs**: `--card` bg, 1px `--line`, radius 6, focus border `--primary` +
+- **Inputs**: `--card` bg, 1px `--line`, radius 6, focus border `--primary` (teal) +
   3px focus ring; error border `--msg-error-text`.
 - **Nav (sidebar)**: follows the page theme (white rail on paper / navy rail on navy
   night) — not fixed to one color, since `--sidebar-hover`/`--sidebar-active-*` are
   shared with other card-level components (views-rail, arch-status-tab) and can't be
-  hardcoded to a single surface without breaking those. Active item = copper left
-  rule + copper text/tint.
+  hardcoded to a single surface without breaking those. Active item = teal left
+  rule + teal text/tint.
 - **Lifecycle stepper** (`lc-*`): done/current dots and track use `--primary`
-  (copper) — matches every other "this is the active/actionable thing" signal.
-- **Fiduciary surfaces** (trust accounts): the one place teal (`--seal`/`--seal-bg`)
-  appears outside the logo — see §5.2.
+  (teal) — matches every other "this is the active/actionable thing" signal.
+- **Fiduciary surfaces** (trust accounts): teal (`--seal`/`--seal-bg`) plus the top
+  rule + mono eyebrow grammar from §5.2 — see there for why the combination, not
+  color alone, marks it fiduciary now that teal is the general accent.
 
 ## 7) Migration map (apply across the app)
 
@@ -194,16 +216,16 @@ migration is mostly *re-pointing those vars at tokens*, not rewriting templates:
 
 | base.html var (today) | becomes |
 |---|---|
-| `--primary: #2563EB` | `#B5502E` copper (light) / `#CF7248` copper (dark) |
-| `--accent: #22C55E` | same copper as `--primary` — retire the separate hue |
+| `--primary: #2563EB` | `#0A7264` teal (light) / `#17BFA5` teal (dark) |
+| `--accent: #22C55E` | same teal as `--primary` — retire the separate hue |
 | `--bg / --surface / --card-bg` grays | `--paper / --well / --card` |
 | `--text-primary/secondary/muted/dim` | `--ink-900/500/400/300` |
 | `--border / --card-border` | `--line / --hairline` |
-| `--btn-gradient` | solid copper (kill gradients) |
+| `--btn-gradient` | solid copper, CTA buttons only (kill gradients) |
 | badge-green/yellow/red/blue/purple/gray | the six status pairs (unchanged by the accent pivot) |
 | Manrope/Sora font rules | Inter + scale tokens |
 | default `data-theme="dark"` | `data-theme="light"` default; dark = navy night |
-| brand teal (`#11B39A` family) | narrowed to `--seal`/`--seal-bg` — logo + fiduciary surfaces only |
+| brand teal (`#11B39A` family) | general accent (`--primary`) plus fiduciary surfaces (§5.2) |
 
 Suggested rollout order (each a reviewable slice): ① re-point base.html vars +
 fonts + light-first default → instantly rebrands ~90% of chrome; ② status pills +
@@ -215,10 +237,10 @@ overrides) — the constitution's existing rules already forbid new ones.
 
 1. No Tailwind palette literals (`#2563EB`, `#22C55E`, `#6B7280`…) in any template
    or stylesheet. Grep-testable.
-2. Copper (`--primary`) is the only action accent: buttons, links, active/selected
-   states, focus rings, active nav item. Teal is not a substitute for it.
-3. Teal (`--seal`) only for: the logo, and client-funds/fiduciary surfaces (§5.2).
-   If teal shows up as a button or a generic UI accent, that's a bug.
+2. Teal (`--primary`) is the general accent: links, active/selected states, focus
+   rings, active nav item, lifecycle/progress. Copper is not a substitute for it.
+3. Copper (`--btn-gradient`) only for: primary creation/action CTA buttons. If
+   copper shows up as a link, nav state, or focus ring, that's a bug.
 4. Every money value: tabular numerals + right alignment. Every total: ledger rules.
 5. Every client-funds surface: fiduciary grammar (§5.2).
 6. One typeface in product (Inter, 400–650). No 700+ chrome, no second sans.

@@ -37,22 +37,25 @@
             --bg: #F3F5F7;
             --surface: #EDF0F4;
             --surface-alt: #FFFFFF;
-            --primary: #B5502E;
-            --primary-hover: #8A3A1E;
-            --primary-light: #C96A3E;
-            --accent: #B5502E;
+            --primary: #0A7264;
+            --primary-hover: #085C51;
+            --primary-light: #11A08D;
+            --accent: #0A7264;
+            --cta: #B5502E;
+            --cta-hover: #8A3A1E;
+            --cta-glow: rgba(181,80,46,0.16);
             --text-primary: #0B1330;
             --text-secondary: #5F6B85;
             --text-muted: #838DA3;
             --text-dim: #AAB2C2;
             --border: #DEE2EA;
             --nav-bg: rgba(255,255,255,0.92);
-            --primary-glow: rgba(181,80,46,0.16);
-            --primary-subtle: rgba(181,80,46,0.08);
-            --primary-bg: rgba(181,80,46,0.12);
-            --primary-bg-light: rgba(181,80,46,0.05);
-            --accent-bg: rgba(181,80,46,0.10);
-            --accent-bg-light: rgba(181,80,46,0.05);
+            --primary-glow: rgba(10,114,100,0.16);
+            --primary-subtle: rgba(10,114,100,0.08);
+            --primary-bg: rgba(10,114,100,0.12);
+            --primary-bg-light: rgba(10,114,100,0.05);
+            --accent-bg: rgba(10,114,100,0.10);
+            --accent-bg-light: rgba(10,114,100,0.05);
             --amber-color: #8A5A14;
             --amber-bg: #F6EDD8;
             --error: #A63A2B;
@@ -66,22 +69,25 @@
             --bg: #070D20;
             --surface: #101A38;
             --surface-alt: #0B1330;
-            --primary: #CF7248;
-            --primary-hover: #E29368;
-            --primary-light: #E29368;
-            --accent: #CF7248;
+            --primary: #17BFA5;
+            --primary-hover: #55CDB7;
+            --primary-light: #55CDB7;
+            --accent: #17BFA5;
+            --cta: #CF7248;
+            --cta-hover: #E29368;
+            --cta-glow: rgba(207,114,72,0.22);
             --text-primary: #EDF0F6;
             --text-secondary: #A9B2C8;
             --text-muted: #78839E;
             --text-dim: #4E5A78;
             --border: #1C2842;
             --nav-bg: rgba(7,13,32,0.92);
-            --primary-glow: rgba(207,114,72,0.22);
-            --primary-subtle: rgba(207,114,72,0.12);
-            --primary-bg: rgba(207,114,72,0.16);
-            --primary-bg-light: rgba(207,114,72,0.07);
-            --accent-bg: rgba(207,114,72,0.14);
-            --accent-bg-light: rgba(207,114,72,0.07);
+            --primary-glow: rgba(23,191,165,0.22);
+            --primary-subtle: rgba(23,191,165,0.12);
+            --primary-bg: rgba(23,191,165,0.16);
+            --primary-bg-light: rgba(23,191,165,0.07);
+            --accent-bg: rgba(23,191,165,0.14);
+            --accent-bg-light: rgba(23,191,165,0.07);
             --amber-color: #D9A75B;
             --amber-bg: rgba(196,145,51,0.15);
             --error: #E08A78;
@@ -151,8 +157,8 @@
         .stat-tile-accent    { background: var(--accent-bg-light); border: 1px solid var(--primary-subtle); }
         .alert-error         { background: var(--error-bg); border: 1px solid var(--error-border); }
         .checkbox-primary    { accent-color: var(--primary); }
-        .glow-btn-primary-grad    { background: var(--primary); box-shadow: 0 8px 32px var(--primary-glow), 0 2px 4px rgba(0,0,0,0.2); }
-        .glow-btn-primary-grad-soft { background: var(--primary); box-shadow: 0 8px 24px var(--primary-glow); }
+        .glow-btn-primary-grad    { background: var(--cta); box-shadow: 0 8px 32px var(--cta-glow), 0 2px 4px rgba(0,0,0,0.2); }
+        .glow-btn-primary-grad-soft { background: var(--cta); box-shadow: 0 8px 24px var(--cta-glow); }
         .divider-line        { background: var(--border); }
         .btn-quiet-surface { border-color: var(--border); color: var(--text-primary); background: var(--surface); }
     </style>

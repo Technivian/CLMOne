@@ -1,13 +1,14 @@
 {% load docclad_components %}
+{% load docclad_format %}
 <table class="wq-table" data-queue-panel="{{ panel_key }}"{% if not is_active %} hidden{% endif %}>
   <thead>
     <tr>
-      <th>Item</th>
+      <th>Contract</th>
       <th>Stage</th>
-      <th>Assigned to</th>
-      <th>Latest activity</th>
+      <th>Owner</th>
+      <th>Risk</th>
       <th class="wq-col-num">Due</th>
-      <th>Status</th>
+      <th class="wq-col-action">Action</th>
     </tr>
   </thead>
   <tbody>
@@ -17,11 +18,35 @@
         <a href="{{ row.href }}" class="wq-item-link">{{ row.title|truncatechars:44 }}</a>
         {% if row.meta %}<div class="wq-item-meta">{{ row.meta }}</div>{% endif %}
       </td>
-      <td>{% stage_dots row.contract %}</td>
-      <td>{% assignee_chip row.assignee %}</td>
-      <td>{% activity_line row.activity %}</td>
-      <td class="wq-col-num{% if row.due_overdue %} wq-due-overdue{% endif %}">{% if row.due_date %}{{ row.due_date|date:"d M Y" }}{% else %}<span class="c-dim">—</span>{% endif %}</td>
-      <td><span class="badge-sm {{ row.status_badge_class }}">{{ row.status_label }}</span></td>
+      <td>{% if row.contract %}<span class="badge-sm {{ row.contract.lifecycle_stage|lifecycle_stage_badge_class }}">{{ row.contract.lifecycle_stage|lifecycle_stage_label }}</span>{% else %}<span class="c-dim">—</span>{% endif %}</td>
+      <td>
+        {% if row.assignee %}
+        <span class="wq-owner">
+          <span class="wq-owner-avatar avatar-gradient-bg">{{ row.assignee.first_name|default:row.assignee.username|slice:":1"|upper }}</span>
+          <span class="wq-owner-text">
+            <span class="wq-owner-name">{{ row.assignee.get_full_name|default:row.assignee.username }}</span>
+            {% if row.owner_role %}<span class="wq-owner-role">{{ row.owner_role }}</span>{% endif %}
+          </span>
+        </span>
+        {% else %}
+        <span class="wq-owner wq-owner-empty">
+          <span class="wq-owner-avatar wq-owner-avatar-empty" aria-hidden="true"></span>
+          <span class="wq-owner-text"><span class="wq-owner-name">Unassigned</span></span>
+        </span>
+        {% endif %}
+      </td>
+      <td>{% if row.contract %}<span class="wq-risk wq-risk-{{ row.contract.risk_level|lower }}"><i class="wq-risk-dot" aria-hidden="true"></i>{{ row.contract.get_risk_level_display }}</span>{% else %}<span class="c-dim">—</span>{% endif %}</td>
+      <td class="wq-col-num{% if row.due_overdue %} wq-due-overdue{% elif row.due_today %} wq-due-today{% endif %}">{{ row.due_date|due_countdown }}</td>
+      <td class="wq-col-action">
+        <a href="{{ row.href }}" class="text-xs font-semibold px-2.5 py-1.5 rounded-md border transition-opacity hover:opacity-80 btn-ghost">{{ row.action_label|default:"View" }}</a>
+        <details class="wq-kebab">
+          <summary aria-label="More actions" class="wq-kebab-trigger">&#8942;</summary>
+          <div class="wq-kebab-menu">
+            <a href="{{ row.href }}">View</a>
+            {% if row.edit_href %}<a href="{{ row.edit_href }}">Edit</a>{% endif %}
+          </div>
+        </details>
+      </td>
     </tr>
     {% empty %}
     <tr><td colspan="6" class="wq-empty">{{ empty_message|default:"Nothing here right now." }}</td></tr>

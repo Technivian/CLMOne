@@ -40,7 +40,7 @@ class DesignSystemTests(TestCase):
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'DocClad')
-        self.assertContains(response, 'Active contracts')
+        self.assertContains(response, 'Needs Legal Review')
 
     def test_dashboard_loads_with_feature_flag_disabled(self):
         os.environ['FEATURE_REDESIGN'] = 'false'

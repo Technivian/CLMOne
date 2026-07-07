@@ -1,0 +1,143 @@
+:root {
+  /* Core brand */
+  --dc-navy-950: #07162c;
+  --dc-navy-900: #0b1d36;
+  --dc-navy-850: #102744;
+  --dc-navy-800: #173250;
+
+  --dc-teal-700: #087f78;
+  --dc-teal-600: #0b948b;
+  --dc-teal-500: #17a79d;
+  --dc-teal-100: #dff5f2;
+  --dc-teal-050: #effbf9;
+
+  --dc-orange-700: #a8441f;
+  --dc-orange-600: #bf4f27;
+  --dc-orange-500: #d65a2c;
+  --dc-orange-100: #fde8dc;
+
+  /* Neutrals */
+  --dc-bg: #f5f7fa;
+  --dc-surface: #ffffff;
+  --dc-surface-soft: #fafbfc;
+  --dc-border: #dbe3ee;
+  --dc-border-soft: #e8edf4;
+  --dc-line: #edf1f6;
+
+  --dc-text: #07162c;
+  --dc-text-muted: #53627a;
+  --dc-text-subtle: #7a879c;
+  --dc-text-inverse: #f8fbff;
+
+  --dc-danger-600: #c24132;
+  --dc-danger-100: #fde4df;
+  --dc-warning-600: #9a5b13;
+  --dc-warning-100: #fff1d6;
+  --dc-success-600: var(--dc-teal-700);
+  --dc-success-100: var(--dc-teal-100);
+
+  /* Radius */
+  --dc-radius-xs: 6px;
+  --dc-radius-sm: 8px;
+  --dc-radius-md: 10px;
+  --dc-radius-lg: 14px;
+
+  /* Shadow: deliberately restrained */
+  --dc-shadow-card: 0 1px 2px rgba(7, 22, 44, 0.04);
+  --dc-shadow-popover: 0 12px 28px rgba(7, 22, 44, 0.12);
+
+  /* Layout */
+  --dc-sidebar-width: 276px;
+  --dc-topbar-height: 72px;
+  --dc-page-gutter: 24px;
+  --dc-card-padding: 20px;
+  --dc-input-height: 44px;
+  --dc-button-height: 44px;
+
+  /* Typography */
+  --dc-font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --dc-font-size-xs: 12px;
+  --dc-font-size-sm: 14px;
+  --dc-font-size-md: 15px;
+  --dc-font-size-lg: 18px;
+  --dc-font-size-xl: 24px;
+  --dc-font-size-2xl: 30px;
+
+  --dc-font-weight-regular: 400;
+  --dc-font-weight-medium: 500;
+  --dc-font-weight-semibold: 600;
+  --dc-font-weight-bold: 700;
+}
+
+.dc-app {
+  background: var(--dc-bg);
+  color: var(--dc-text);
+  font-family: var(--dc-font-sans);
+}
+
+.dc-card {
+  background: var(--dc-surface);
+  border: 1px solid var(--dc-border);
+  border-radius: var(--dc-radius-lg);
+  box-shadow: var(--dc-shadow-card);
+}
+
+.dc-section-title {
+  color: var(--dc-teal-700);
+  font-size: var(--dc-font-size-xs);
+  font-weight: var(--dc-font-weight-bold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dc-input {
+  height: var(--dc-input-height);
+  border: 1px solid var(--dc-border);
+  border-radius: var(--dc-radius-sm);
+  background: var(--dc-surface);
+  color: var(--dc-text);
+}
+
+.dc-input:focus {
+  border-color: var(--dc-teal-600);
+  box-shadow: 0 0 0 3px rgba(11, 148, 139, 0.12);
+  outline: none;
+}
+
+.dc-button-primary {
+  height: var(--dc-button-height);
+  background: var(--dc-orange-600);
+  color: white;
+  border: 1px solid var(--dc-orange-700);
+  border-radius: var(--dc-radius-sm);
+  font-weight: var(--dc-font-weight-semibold);
+}
+
+.dc-button-primary:hover {
+  background: var(--dc-orange-700);
+}
+
+.dc-button-secondary {
+  height: var(--dc-button-height);
+  background: var(--dc-surface);
+  color: var(--dc-text);
+  border: 1px solid var(--dc-border);
+  border-radius: var(--dc-radius-sm);
+  font-weight: var(--dc-font-weight-semibold);
+}
+
+.dc-chip-draft,
+.dc-chip-progress,
+.dc-chip-complete {
+  border-radius: 999px;
+  font-size: var(--dc-font-size-xs);
+  font-weight: var(--dc-font-weight-semibold);
+  padding: 4px 10px;
+}
+
+.dc-chip-draft,
+.dc-chip-progress {
+  background: var(--dc-teal-050);
+  border: 1px solid var(--dc-teal-100);
+  color: var(--dc-teal-700);
+}

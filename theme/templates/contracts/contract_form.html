@@ -5,14 +5,314 @@
 <style nonce="{{ csp_nonce }}">
 /* editor-page header: compact 20px title (Ironclad designer convention) */
 .arch-header .arch-title { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
-.arch-header { margin-bottom: 20px; }
-/* lifecycle stepper strip above the form body */
+.arch-header { margin-bottom: 22px; }
+.page-wrap.contract-form-page { padding: 10px 4px 24px 10px; }
+/* CLM command strip: workflow-first, restrained Ironclad-style density */
 .cform-stepper {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
-  border-radius: 12px;
-  padding: 10px 16px 6px;
-  margin-bottom: 24px;
+  border-radius: 6px;
+  padding: 0;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+.cform-stepper-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--card-border);
+}
+.cform-kicker {
+  color: var(--primary);
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.cform-command-title {
+  margin-top: 5px;
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.25;
+  font-weight: 800;
+}
+.cform-command-copy {
+  margin-top: 2px;
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.35;
+}
+.cform-command-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(112px, 1fr));
+  border: 1px solid var(--card-border);
+  border-radius: 5px;
+  overflow: hidden;
+}
+.cform-command-stat {
+  min-width: 0;
+  padding: 8px 10px;
+  background: var(--surface-alt);
+  border-left: 1px solid var(--card-border);
+}
+.cform-command-stat:first-child { border-left: 0; }
+.cform-stat-label {
+  color: var(--text-muted);
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.cform-stat-value {
+  display: block;
+  margin-top: 5px;
+  color: var(--text-primary);
+  font-size: 11px;
+  line-height: 1.2;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.cform-path {
+  padding: 12px 24px 11px;
+}
+.cform-stepper .lc-track {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: start;
+  gap: 0;
+  padding: 0;
+  overflow: visible;
+}
+.cform-stepper .lc-track::before,
+.cform-stepper .lc-track::after {
+  content: "";
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  top: 8px;
+  height: 2px;
+  border-radius: 999px;
+}
+.cform-stepper .lc-track::before { background: var(--border); }
+.cform-stepper .lc-track::after {
+  right: auto;
+  width: 9.5%;
+  background: var(--primary);
+}
+.cform-stepper .lc-step {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.cform-stepper .lc-step::before { display: none; }
+.cform-stepper .lc-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 2px solid var(--border);
+  background: var(--card-bg);
+  box-shadow: 0 0 0 5px var(--card-bg);
+}
+.cform-stepper .lc-current .lc-dot {
+  border-color: var(--primary);
+  background:
+    radial-gradient(circle at center, var(--primary) 0 48%, transparent 50%),
+    var(--card-bg);
+  box-shadow: 0 0 0 4px var(--card-bg);
+}
+.cform-stepper .lc-done .lc-dot {
+  border-color: var(--primary);
+  background: var(--primary);
+}
+.cform-stepper .lc-label {
+  color: var(--text-muted);
+  font-size: 10px;
+  line-height: 1.2;
+  font-weight: 800;
+  text-align: center;
+  letter-spacing: 0;
+  padding: 0;
+}
+.cform-stepper .lc-sub {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-dim);
+  font-size: 9px;
+  line-height: 1.2;
+  font-weight: 700;
+}
+.cform-stepper .lc-current .lc-label {
+  color: var(--text-primary);
+  font-weight: 800;
+}
+.cform-stepper .lc-current .lc-sub { color: var(--primary); }
+.cform-intake-panel {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.cform-panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--card-border);
+  background: var(--card-bg);
+}
+.cform-panel-title {
+  color: var(--text-primary);
+  font-size: 13px;
+  line-height: 1.25;
+  font-weight: 800;
+}
+.cform-panel-copy {
+  margin-top: 3px;
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+.cform-panel-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 800;
+}
+.cform-panel-body { padding: 14px 16px 16px; }
+.cform-section-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: 14px;
+  row-gap: 12px;
+}
+.cform-field { grid-column: span 6; min-width: 0; }
+.cform-field-full { grid-column: 1 / -1; }
+.cform-field-third { grid-column: span 4; }
+.cform-field .form-label {
+  color: var(--text-primary);
+  font-size: 11px;
+  font-weight: 700;
+}
+.cform-field .text-xs.c-muted { color: var(--text-muted); }
+.cform-field input:not([type="checkbox"]),
+.cform-field select,
+.cform-field textarea {
+  min-height: 42px;
+  border-radius: 4px;
+  font-size: 13px;
+  padding-top: 7px;
+  padding-bottom: 7px;
+}
+.cform-checkbox-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.cform-checkbox-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-height: 48px;
+  padding: 9px 10px;
+  border: 1px solid var(--card-border);
+  border-radius: 4px;
+  background: var(--card-bg);
+}
+.cform-checkbox-card .form-label {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.25;
+}
+.cform-checkbox-card .text-xs { margin-top: 4px; line-height: 1.25; }
+.cform-rail-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  box-shadow: none;
+}
+.cform-rail-card + .cform-rail-card { margin-top: 10px; }
+.cform-rail-head {
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid var(--card-border);
+}
+.cform-rail-body { padding: 11px 14px 14px; }
+.cform-route-row {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr);
+  gap: 9px;
+  align-items: start;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--card-border);
+}
+.cform-route-row:last-child { border-bottom: 0; }
+.cform-route-dot {
+  width: 14px;
+  height: 14px;
+  margin-top: 1px;
+  border-radius: 999px;
+  border: 2px solid var(--border);
+  background: var(--card-bg);
+}
+.cform-route-row.is-active .cform-route-dot {
+  border-color: var(--primary);
+  background: radial-gradient(circle at center, var(--primary) 0 45%, transparent 48%), var(--card-bg);
+}
+.cform-route-title {
+  color: var(--text-primary);
+  font-size: 11px;
+  line-height: 1.25;
+  font-weight: 800;
+}
+.cform-route-copy {
+  display: block;
+  margin-top: 3px;
+  color: var(--text-muted);
+  font-size: 10px;
+  line-height: 1.3;
+}
+@media (max-width: 1200px) {
+  .page-wrap.contract-form-page { min-width: 1120px; }
+  .cform-stepper-head { grid-template-columns: 1fr; }
+  .cform-command-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+/* Ironclad-like density overrides for this workspace */
+.contract-form-page .arch-workspace-main > * + * { margin-top: 12px !important; }
+.contract-form-page .arch-workspace-grid { gap: 18px; }
+.contract-form-page .arch-section-label,
+.contract-form-page .arch-completion-label {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+.contract-form-page .arch-completion-count {
+  font-size: 24px;
+  line-height: 1.05;
+}
+.contract-form-page .arch-completion-track {
+  height: 4px;
+  border-radius: 0;
+}
+@media (max-width: 760px) {
+  .cform-command-stats,
+  .cform-checkbox-row { grid-template-columns: 1fr; }
+  .cform-section-grid { grid-template-columns: 1fr; }
+  .cform-field,
+  .cform-field-third,
+  .cform-field-full { grid-column: 1 / -1; }
+  .cform-path { padding: 16px 18px 14px; overflow-x: auto; }
+  .cform-stepper .lc-track { min-width: 720px; }
 }
 /* flat right-rail cards: hairline border, 12px radius, no shadow */
 .arch-workspace-sidebar .card-l2 {
@@ -72,10 +372,10 @@
 .draft-btn-insert:hover { background: var(--sidebar-hover); }
 .draft-btn-remove {
   padding: 5px 11px; border-radius: 7px;
-  border: 1px solid rgba(239,68,68,0.25); background: var(--surface);
+  border: 1px solid var(--msg-error-border); background: var(--surface);
   color: var(--msg-error-text); font-size: 12px; font-weight: 500; cursor: pointer;
 }
-.draft-btn-remove:hover { background: rgba(239,68,68,0.08); }
+.draft-btn-remove:hover { background: var(--msg-error-bg); }
 .draft-add-btn {
   padding: 7px 14px; background: var(--primary); color: #fff;
   font-size: 12px; font-weight: 600; border-radius: 8px; border: none; cursor: pointer;
@@ -83,7 +383,7 @@
 .draft-add-btn:hover { background: var(--primary-hover); }
 </style>
 
-<div class="page-wrap">
+<div class="page-wrap page-wrap-fluid contract-form-page">
 
   {% comment %}
   The form wraps the page header so the header submit buttons are native
@@ -103,16 +403,9 @@
         {% if form.instance.pk %}
         <span class="badge-sm {{ form.instance.status|status_badge_class }}">{{ form.instance.get_status_display }}</span>
         {% else %}
-        <span class="badge-sm badge-gray">Draft</span>
+        <span class="badge-sm badge-green">Draft</span>
         {% endif %}
       </div>
-      <p class="arch-subtitle">
-        {% if form.instance.pk %}
-          Update the details for this legal request.
-        {% else %}
-          Create a new legal request with the essential details.
-        {% endif %}
-      </p>
     </div>
     <div class="arch-header-right">
       <a href="{% url 'contracts:contract_list' %}" class="btn-link">Cancel</a>
@@ -125,13 +418,35 @@
 
   {# ── Lifecycle stepper — real stages for edits, canonical path for new #}
   <div class="cform-stepper">
+    <div class="cform-stepper-head">
+      <div>
+        <div class="cform-kicker">Workflow</div>
+        <div class="cform-command-title">Contract intake</div>
+        <div class="cform-command-copy">Ownership, review path, approval readiness, and lifecycle controls.</div>
+      </div>
+      <div class="cform-command-stats" aria-label="Contract request status">
+        <div class="cform-command-stat">
+          <span class="cform-stat-label">Owner</span>
+          <span class="cform-stat-value">Requester</span>
+        </div>
+        <div class="cform-command-stat">
+          <span class="cform-stat-label">Next action</span>
+          <span class="cform-stat-value" id="command-next-action">Complete intake</span>
+        </div>
+        <div class="cform-command-stat">
+          <span class="cform-stat-label">Blocker</span>
+          <span class="cform-stat-value" id="command-blocker">Title required</span>
+        </div>
+      </div>
+    </div>
+    <div class="cform-path">
     {% if form.instance.pk %}
     {% lifecycle_steps form.instance as lc_steps %}
     <div class="lc-track" role="list" aria-label="Contract lifecycle: currently {{ form.instance.get_lifecycle_stage_display }}">
       {% for step in lc_steps %}
       <div class="lc-step lc-{{ step.state }}" role="listitem" {% if step.state == 'current' %}aria-current="step"{% endif %}>
         <span class="lc-dot" aria-hidden="true"></span>
-        <span class="lc-label">{{ step.label }}</span>
+        <span class="lc-label">{{ step.label }}<span class="lc-sub">{% if step.label == 'Draft' %}Intake{% elif step.label == 'Legal Review' %}Counsel review{% elif step.label == 'Business Approval' %}Business OK{% elif step.label == 'Signature' %}Send / track{% else %}Record closed{% endif %}</span></span>
       </div>
       {% endfor %}
     </div>
@@ -139,26 +454,27 @@
     <div class="lc-track" role="list" aria-label="Contract lifecycle: currently Draft">
       <div class="lc-step lc-current" role="listitem" aria-current="step">
         <span class="lc-dot" aria-hidden="true"></span>
-        <span class="lc-label">Draft</span>
+        <span class="lc-label">Draft<span class="lc-sub">Intake</span></span>
       </div>
       <div class="lc-step lc-upcoming" role="listitem">
         <span class="lc-dot" aria-hidden="true"></span>
-        <span class="lc-label">Internal Review</span>
+        <span class="lc-label">Legal Review<span class="lc-sub">Counsel review</span></span>
       </div>
       <div class="lc-step lc-upcoming" role="listitem">
         <span class="lc-dot" aria-hidden="true"></span>
-        <span class="lc-label">Approval</span>
+        <span class="lc-label">Business Approval<span class="lc-sub">Business OK</span></span>
       </div>
       <div class="lc-step lc-upcoming" role="listitem">
         <span class="lc-dot" aria-hidden="true"></span>
-        <span class="lc-label">Signature</span>
+        <span class="lc-label">Signature<span class="lc-sub">Send / track</span></span>
       </div>
       <div class="lc-step lc-upcoming" role="listitem">
         <span class="lc-dot" aria-hidden="true"></span>
-        <span class="lc-label">Executed</span>
+        <span class="lc-label">Executed<span class="lc-sub">Record closed</span></span>
       </div>
     </div>
     {% endif %}
+    </div>
   </div>
 
   {# ── Workspace form body ──────────────────────────────────── #}
@@ -167,50 +483,190 @@
       {# ── Main content ──────────────────────────────────────── #}
       <div class="arch-workspace-main space-y-6">
 
-        {# Title field — full-width, always first #}
-        {% for field in form.visible_fields %}{% if field.name == 'title' %}
-        <div class="card-l1">
-          <label class="form-label">
-            {{ field.label }}
-            {% if field.field.required %}<span class="text-red-400 ml-0.5" aria-hidden="true">*</span>{% endif %}
-          </label>
-          {% if field.help_text %}<p class="text-xs c-muted mb-2">{{ field.help_text }}</p>{% endif %}
-          {{ field }}
-          {% if field.errors %}<p class="text-xs c-danger mt-1">{{ field.errors.0 }}</p>{% endif %}
-        </div>
-        {% endif %}{% endfor %}
+        {# Contract identity: the minimum useful request record #}
+        <section class="cform-intake-panel" aria-labelledby="contract-identity-heading">
+          <div class="cform-panel-head">
+            <div>
+              <div class="arch-section-label">Request intake</div>
+              <h2 id="contract-identity-heading" class="cform-panel-title">Contract identity</h2>
+              <p class="cform-panel-copy">Name the work, set the request type, and identify who this contract is with.</p>
+            </div>
+            <span class="cform-panel-meta">Required to create</span>
+          </div>
+          <div class="cform-panel-body">
+            <div class="cform-section-grid">
+              {% for field in form.visible_fields %}{% if field.name == 'title' %}
+              <div class="cform-field cform-field-full">
+                <label class="form-label">
+                  {{ field.label }}
+                  {% if field.field.required %}<span class="text-red-400 ml-0.5" aria-hidden="true">*</span>{% endif %}
+                </label>
+                {% if field.help_text %}<p class="text-xs c-muted mb-2">{{ field.help_text }}</p>{% endif %}
+                {{ field }}
+                {% if field.errors %}<p class="text-xs c-danger mt-1">{{ field.errors.0 }}</p>{% endif %}
+              </div>
+              {% endif %}{% endfor %}
 
-        {# Metadata fields — 2-column grid #}
-        <div class="card-l1">
-          <div class="arch-section-label">Contract details</div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {% for field in form.visible_fields %}
-            {% if field.name != 'title' and field.name != 'content' and field.name != 'clause_templates' %}
-            <div class="{% if field.name == 'counterparty' or field.name == 'description' %}sm:col-span-2{% endif %}">
+              {% for field in form.visible_fields %}
+              {% if field.name == 'contract_type' or field.name == 'status' %}
+              <div class="cform-field">
+                <label class="form-label">
+                  {{ field.label }}
+                  {% if field.field.required %}<span class="text-red-400 ml-0.5" aria-hidden="true">*</span>{% endif %}
+                </label>
+                {% if field.help_text %}<p class="text-xs c-muted mb-1">{{ field.help_text }}</p>{% endif %}
+                {{ field }}
+                {% if field.errors %}<p class="text-xs c-danger mt-1">{{ field.errors.0 }}</p>{% endif %}
+              </div>
+              {% endif %}
+              {% endfor %}
+
+              {% for field in form.visible_fields %}{% if field.name == 'counterparty' %}
+              <div class="cform-field cform-field-full">
+                <label class="form-label">
+                  {{ field.label }}
+                  {% if field.field.required %}<span class="text-red-400 ml-0.5" aria-hidden="true">*</span>{% endif %}
+                </label>
+                {% if field.help_text %}<p class="text-xs c-muted mb-1">{{ field.help_text }}</p>{% endif %}
+                {{ field }}
+                {% if field.errors %}<p class="text-xs c-danger mt-1">{{ field.errors.0 }}</p>{% endif %}
+              </div>
+              {% endif %}{% endfor %}
+
+              {% for field in form.visible_fields %}
+              {% if field.name == 'client' or field.name == 'matter' %}
+              <div class="cform-field">
+                <label class="form-label">
+                  {{ field.label }}
+                  {% if field.field.required %}<span class="text-red-400 ml-0.5" aria-hidden="true">*</span>{% endif %}
+                </label>
+                {% if field.help_text %}<p class="text-xs c-muted mb-1">{{ field.help_text }}</p>{% endif %}
+                {{ field }}
+                {% if field.errors %}<p class="text-xs c-danger mt-1">{{ field.errors.0 }}</p>{% endif %}
+              </div>
+              {% endif %}
+              {% endfor %}
+            </div>
+          </div>
+        </section>
+
+        <section class="cform-intake-panel" aria-labelledby="commercial-terms-heading">
+          <div class="cform-panel-head">
+            <div>
+              <div class="arch-section-label">Legal posture</div>
+              <h2 id="commercial-terms-heading" class="cform-panel-title">Commercial terms and jurisdiction</h2>
+              <p class="cform-panel-copy">Capture the economics and legal routing signals that determine review path.</p>
+            </div>
+            <span class="cform-panel-meta">Routes review</span>
+          </div>
+          <div class="cform-panel-body">
+            <div class="cform-section-grid">
+              {% for field in form.visible_fields %}
+              {% if field.name == 'value' or field.name == 'currency' or field.name == 'governing_law' or field.name == 'jurisdiction' or field.name == 'language' or field.name == 'risk_level' %}
+              <div class="cform-field {% if field.name == 'language' or field.name == 'risk_level' %}cform-field{% endif %}">
+                <label class="form-label">
+                  {{ field.label }}
+                  {% if field.field.required %}<span class="text-red-400 ml-0.5" aria-hidden="true">*</span>{% endif %}
+                </label>
+                {% if field.help_text %}<p class="text-xs c-muted mb-1">{{ field.help_text }}</p>{% endif %}
+                {{ field }}
+                {% if field.errors %}<p class="text-xs c-danger mt-1">{{ field.errors.0 }}</p>{% endif %}
+              </div>
+              {% endif %}
+              {% endfor %}
+            </div>
+          </div>
+        </section>
+
+        <section class="cform-intake-panel" aria-labelledby="risk-signals-heading">
+          <div class="cform-panel-head">
+            <div>
+              <div class="arch-section-label">Privacy & risk</div>
+              <h2 id="risk-signals-heading" class="cform-panel-title">Review triggers</h2>
+              <p class="cform-panel-copy">Flag data-transfer, DPA, and SCC signals before the request enters legal review.</p>
+            </div>
+            <span class="cform-panel-meta">Controls routing</span>
+          </div>
+          <div class="cform-panel-body">
+            <div class="cform-checkbox-row">
+              {% for field in form.visible_fields %}
+              {% if field.name == 'data_transfer_flag' or field.name == 'dpa_attached' or field.name == 'scc_attached' %}
+              <label class="cform-checkbox-card">
+                {{ field }}
+                <span>
+                  <span class="form-label">{{ field.label }}</span>
+                  {% if field.help_text %}<span class="text-xs c-muted block">{{ field.help_text }}</span>{% endif %}
+                  {% if field.errors %}<span class="text-xs c-danger mt-1 block">{{ field.errors.0 }}</span>{% endif %}
+                </span>
+              </label>
+              {% endif %}
+              {% endfor %}
+            </div>
+          </div>
+        </section>
+
+        <section class="cform-intake-panel" aria-labelledby="lifecycle-timing-heading">
+          <div class="cform-panel-head">
+            <div>
+              <div class="arch-section-label">Lifecycle control</div>
+              <h2 id="lifecycle-timing-heading" class="cform-panel-title">Dates and lifecycle management</h2>
+              <p class="cform-panel-copy">Set the stage, term, renewal posture, and notice deadlines that drive reminders.</p>
+            </div>
+            <span class="cform-panel-meta">Creates obligations</span>
+          </div>
+          <div class="cform-panel-body">
+            <div class="cform-section-grid">
+              {% for field in form.visible_fields %}
+              {% if field.name == 'lifecycle_stage' or field.name == 'start_date' or field.name == 'end_date' or field.name == 'renewal_date' or field.name == 'notice_period_days' or field.name == 'termination_notice_date' %}
+              <div class="cform-field {% if field.name == 'lifecycle_stage' %}cform-field-full{% endif %}">
+                <label class="form-label">
+                  {{ field.label }}
+                  {% if field.field.required %}<span class="text-red-400 ml-0.5" aria-hidden="true">*</span>{% endif %}
+                </label>
+                {% if field.help_text %}<p class="text-xs c-muted mb-1">{{ field.help_text }}</p>{% endif %}
+                {{ field }}
+                {% if field.errors %}<p class="text-xs c-danger mt-1">{{ field.errors.0 }}</p>{% endif %}
+              </div>
+              {% endif %}
+              {% endfor %}
+
+              {% for field in form.visible_fields %}{% if field.name == 'auto_renew' %}
+              <label class="cform-checkbox-card cform-field cform-field-full">
+                {{ field }}
+                <span>
+                  <span class="form-label">{{ field.label }}</span>
+                  {% if field.help_text %}<span class="text-xs c-muted block">{{ field.help_text }}</span>{% endif %}
+                  {% if field.errors %}<span class="text-xs c-danger mt-1 block">{{ field.errors.0 }}</span>{% endif %}
+                </span>
+              </label>
+              {% endif %}{% endfor %}
+            </div>
+          </div>
+        </section>
+
+        {# Content textarea — full-width #}
+        {% for field in form.visible_fields %}{% if field.name == 'content' %}
+        <section class="cform-intake-panel" aria-labelledby="draft-brief-heading">
+          <div class="cform-panel-head">
+            <div>
+              <div class="arch-section-label">Draft brief</div>
+              <h2 id="draft-brief-heading" class="cform-panel-title">Source text and drafting instructions</h2>
+              <p class="cform-panel-copy">Paste source language or leave this blank when clause templates should generate the first draft.</p>
+            </div>
+            <span class="cform-panel-meta">Optional</span>
+          </div>
+          <div class="cform-panel-body">
+            <div class="cform-field cform-field-full">
               <label class="form-label">
                 {{ field.label }}
                 {% if field.field.required %}<span class="text-red-400 ml-0.5" aria-hidden="true">*</span>{% endif %}
               </label>
-              {% if field.help_text %}<p class="text-xs c-muted mb-1">{{ field.help_text }}</p>{% endif %}
+              {% if field.help_text %}<p class="text-xs c-muted mb-2">{{ field.help_text }}</p>{% endif %}
               {{ field }}
               {% if field.errors %}<p class="text-xs c-danger mt-1">{{ field.errors.0 }}</p>{% endif %}
             </div>
-            {% endif %}
-            {% endfor %}
           </div>
-        </div>
-
-        {# Content textarea — full-width #}
-        {% for field in form.visible_fields %}{% if field.name == 'content' %}
-        <div class="card-l1">
-          <label class="form-label">
-            {{ field.label }}
-            {% if field.field.required %}<span class="text-red-400 ml-0.5" aria-hidden="true">*</span>{% endif %}
-          </label>
-          {% if field.help_text %}<p class="text-xs c-muted mb-2">{{ field.help_text }}</p>{% endif %}
-          {{ field }}
-          {% if field.errors %}<p class="text-xs c-danger mt-1">{{ field.errors.0 }}</p>{% endif %}
-        </div>
+        </section>
         {% endif %}{% endfor %}
 
         {# Advanced options — collapsed by default #}
@@ -294,32 +750,69 @@
 
       {# ── Context sidebar ───────────────────────────────────── #}
       <div class="arch-workspace-sidebar">
-        <div class="card-l2">
-          <div class="arch-completion-label">Request completion</div>
-          <div class="arch-completion-count" id="completion-count">—</div>
-          <div class="arch-completion-sublabel" id="completion-sublabel">required fields completed</div>
-          <div class="arch-completion-track">
-            <div class="arch-completion-fill" id="completion-bar" style="width:0%"></div>
+        <div class="cform-rail-card">
+          <div class="cform-rail-head">
+            <div class="arch-completion-label">Readiness</div>
+            <div class="arch-completion-count" id="completion-count">—</div>
+            <div class="arch-completion-sublabel" id="completion-sublabel">required fields completed</div>
+            <div class="arch-completion-track">
+              <div class="arch-completion-fill" id="completion-bar" style="width:0%"></div>
+            </div>
           </div>
-          <div class="arch-missing-list" id="missing-fields-list">
-            <div class="text-xs c-muted">Fill in the form to track completion.</div>
+          <div class="cform-rail-body">
+            <div class="arch-section-label">Required now</div>
+            <div class="arch-missing-list" id="missing-fields-list">
+              <div class="text-xs c-muted">Fill in the form to track completion.</div>
+            </div>
           </div>
         </div>
 
-        <div class="card-l2 mt-4">
-          <div class="arch-section-label">What happens next</div>
-          <div class="space-y-3 text-sm">
+        <div class="cform-rail-card">
+          <div class="cform-rail-head">
+            <div class="arch-section-label">Route preview</div>
+            <p class="text-xs c-muted mt-1">What DocClad will prepare after creation.</p>
+          </div>
+          <div class="cform-rail-body">
+            <div class="cform-route-row is-active" data-route-row="draft">
+              <span class="cform-route-dot" aria-hidden="true"></span>
+              <span>
+                <span class="cform-route-title">Draft intake</span>
+                <span class="cform-route-copy" data-route-copy="draft">Create the contract record and attach request metadata.</span>
+              </span>
+            </div>
+            <div class="cform-route-row" data-route-row="legal">
+              <span class="cform-route-dot" aria-hidden="true"></span>
+              <span>
+                <span class="cform-route-title" data-route-title="legal">Legal review</span>
+                <span class="cform-route-copy" data-route-copy="legal">Counsel queue is determined by type, jurisdiction, and risk.</span>
+              </span>
+            </div>
+            <div class="cform-route-row" data-route-row="approval">
+              <span class="cform-route-dot" aria-hidden="true"></span>
+              <span>
+                <span class="cform-route-title" data-route-title="approval">Approval and signature</span>
+                <span class="cform-route-copy" data-route-copy="approval">Approval owners and signature method are selected after review.</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="cform-rail-card">
+          <div class="cform-rail-head">
+            <div class="arch-section-label">After create</div>
+          </div>
+          <div class="cform-rail-body space-y-3 text-sm">
             <div class="flex gap-2">
               <span class="next-step-num">1</span>
-              <span class="c-secondary">Draft is saved with your details.</span>
+              <span class="c-secondary">Draft is saved with intake details.</span>
             </div>
             <div class="flex gap-2">
               <span class="next-step-num">2</span>
-              <span class="c-muted">Route to legal review or launch approval.</span>
+              <span class="c-muted">Review path is prepared from risk and contract type.</span>
             </div>
             <div class="flex gap-2">
               <span class="next-step-num">3</span>
-              <span class="c-muted">Signature, execution, and lifecycle tracking.</span>
+              <span class="c-muted">Lifecycle dates drive reminders and repository controls.</span>
             </div>
           </div>
         </div>
@@ -430,7 +923,38 @@
     const sublabelEl = document.getElementById('completion-sublabel');
     const barEl      = document.getElementById('completion-bar');
     const listEl     = document.getElementById('missing-fields-list');
+    const blockerEl  = document.getElementById('command-blocker');
+    const nextActionEl = document.getElementById('command-next-action');
+    const routeRows = {
+        draft: document.querySelector('[data-route-row="draft"]'),
+        legal: document.querySelector('[data-route-row="legal"]'),
+        approval: document.querySelector('[data-route-row="approval"]'),
+    };
+    const routeTitles = {
+        legal: document.querySelector('[data-route-title="legal"]'),
+        approval: document.querySelector('[data-route-title="approval"]'),
+    };
+    const routeCopies = {
+        draft: document.querySelector('[data-route-copy="draft"]'),
+        legal: document.querySelector('[data-route-copy="legal"]'),
+        approval: document.querySelector('[data-route-copy="approval"]'),
+    };
     if (!form || !countEl || !barEl || !listEl) return;
+
+    function field(name) {
+        return form.querySelector('[name="' + name + '"]');
+    }
+
+    function selectedLabel(el) {
+        if (!el) return '';
+        if (el.tagName === 'SELECT') return el.options[el.selectedIndex]?.textContent.trim() || '';
+        return el.value || '';
+    }
+
+    function isChecked(name) {
+        const el = field(name);
+        return Boolean(el && el.checked);
+    }
 
     function getRequiredFields() {
         return Array.from(form.querySelectorAll('input[required], select[required], textarea[required]'))
@@ -449,10 +973,83 @@
         return el.name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
     }
 
+    function updateRouting(missing) {
+        const typeEl = field('contract_type');
+        const riskEl = field('risk_level');
+        const valueEl = field('value');
+        const endDateEl = field('end_date');
+        const renewalEl = field('renewal_date');
+        const type = typeEl?.value || 'OTHER';
+        const risk = riskEl?.value || 'LOW';
+        const value = Number(valueEl?.value || 0);
+        const privacyFlag = type === 'DPA' || isChecked('data_transfer_flag') || isChecked('dpa_attached') || isChecked('scc_attached');
+        const highRisk = risk === 'HIGH' || risk === 'CRITICAL';
+        const monetaryReview = value >= 100000;
+        const hasLifecycleDates = Boolean(endDateEl?.value || renewalEl?.value);
+
+        let nextAction = missing.length ? 'Complete intake' : 'Create contract';
+        let legalTitle = 'Legal review';
+        let legalCopy = 'Counsel queue is determined by type, jurisdiction, and risk.';
+        let approvalTitle = 'Approval and signature';
+        let approvalCopy = 'Approval owners and signature method are selected after review.';
+
+        if (type === 'NDA' && !highRisk && !privacyFlag) {
+            legalTitle = 'Streamlined legal review';
+            legalCopy = 'NDA request can use a lighter counsel check unless terms or risk change.';
+            approvalCopy = 'Business approval is usually optional for low-risk NDA intake.';
+        } else if (privacyFlag) {
+            legalTitle = 'Privacy-led legal review';
+            legalCopy = 'DPA, SCC, or data-transfer signals will prepare privacy review before standard routing.';
+            approvalTitle = 'Privacy approval and signature';
+            approvalCopy = 'Approval path should confirm data-transfer posture before signature launch.';
+        } else if (type === 'MSA' || type === 'SOW' || type === 'VENDOR') {
+            legalTitle = 'Commercial counsel review';
+            legalCopy = selectedLabel(typeEl) + ' will route through commercial terms, liability, and operational review.';
+        } else if (type === 'SETTLEMENT') {
+            legalTitle = 'Dispute counsel review';
+            legalCopy = 'Settlement intake should route to counsel for authority, release, and payment checks.';
+        }
+
+        if (highRisk) {
+            approvalTitle = 'Escalated approval';
+            approvalCopy = 'High-risk posture should prepare senior approval before signature.';
+            nextAction = missing.length ? nextAction : 'Create and flag review';
+        } else if (monetaryReview) {
+            approvalTitle = 'Commercial approval';
+            approvalCopy = 'Contract value suggests finance or business-owner approval before signature.';
+        }
+
+        if (routeTitles.legal) routeTitles.legal.textContent = legalTitle;
+        if (routeTitles.approval) routeTitles.approval.textContent = approvalTitle;
+        if (routeCopies.legal) routeCopies.legal.textContent = legalCopy;
+        if (routeCopies.approval) routeCopies.approval.textContent = approvalCopy;
+        if (routeCopies.draft) {
+            routeCopies.draft.textContent = hasLifecycleDates
+                ? 'Create the contract record and attach lifecycle dates for reminders.'
+                : 'Create the contract record and attach request metadata.';
+        }
+        if (nextActionEl) nextActionEl.textContent = nextAction;
+
+        Object.values(routeRows).forEach(row => row?.classList.remove('is-active'));
+        if (missing.length) {
+            routeRows.draft?.classList.add('is-active');
+        } else if (privacyFlag || highRisk || type !== 'OTHER') {
+            routeRows.legal?.classList.add('is-active');
+        } else {
+            routeRows.approval?.classList.add('is-active');
+        }
+    }
+
     function update() {
         const required = getRequiredFields();
         const total    = required.length;
-        if (total === 0) { countEl.textContent = '—'; sublabelEl.textContent = 'No required fields detected'; listEl.innerHTML = ''; return; }
+        if (total === 0) {
+            countEl.textContent = '—';
+            sublabelEl.textContent = 'No required fields detected';
+            listEl.innerHTML = '';
+            if (blockerEl) blockerEl.textContent = 'None';
+            return;
+        }
         const filled  = required.filter(isFilled);
         const missing = required.filter(el => !isFilled(el));
         const pct     = Math.round((filled.length / total) * 100);
@@ -463,11 +1060,14 @@
 
         if (missing.length === 0) {
             listEl.innerHTML = '<div class="flex items-center gap-2 text-xs" style="color:var(--msg-success-text)"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>All required fields complete</div>';
+            if (blockerEl) blockerEl.textContent = 'None';
         } else {
             listEl.innerHTML = missing.map(el =>
                 '<div class="arch-missing-item"><div class="arch-missing-dot"></div>' + getLabelFor(el) + '</div>'
             ).join('');
+            if (blockerEl) blockerEl.textContent = getLabelFor(missing[0]) + ' required';
         }
+        updateRouting(missing);
     }
 
     form.addEventListener('input', update);
