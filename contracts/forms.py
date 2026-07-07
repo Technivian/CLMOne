@@ -890,6 +890,18 @@ class LegalTaskForm(forms.ModelForm):
             'matter': forms.Select(attrs={'class': TAILWIND_SELECT}),
         }
 
+    def clean(self):
+        """LegalTask carries no organization of its own — the Tasks queue
+        scopes every task through contract__organization or
+        matter__organization. A task with neither link can never match that
+        filter, so it would save successfully and then be permanently
+        invisible in the queue. Reject that combination here, at the form
+        boundary, instead of letting it become silently-lost data."""
+        cleaned_data = super().clean()
+        if not cleaned_data.get('contract') and not cleaned_data.get('matter'):
+            raise ValidationError('Select a contract or a matter so this task can be found later.')
+        return cleaned_data
+
 
 class RiskLogForm(forms.ModelForm):
     class Meta:
