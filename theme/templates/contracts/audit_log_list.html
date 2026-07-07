@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% load docclad_format %}
-{% block title %}Audit Log – DocClad{% endblock %}
+{% block title %}Audit Trail – DocClad{% endblock %}
 {% block content %}
 <style nonce="{{ csp_nonce }}">
   .filter-select {
@@ -19,23 +19,31 @@
     background: var(--sidebar-hover);
   }
 </style>
-<div class="page-wrap">
-    <div class="page-header">
-        <div>
-            <h1 class="page-title">Audit Log</h1>
-            <p class="page-subtitle c-muted">Complete history of all actions in your organization.</p>
+<div id="audit-trail-root" class="page-wrap page-wrap-fluid">
+    <div class="arch-header">
+        <div class="arch-header-left">
+            <div class="arch-title-row">
+                <h1 class="arch-title">Audit Trail</h1>
+            </div>
+            <p class="arch-subtitle">Evidence and traceability for every action in your organization</p>
         </div>
-        {% if chain_status %}
-        <div>
-            {% if chain_status.status == 'valid' %}
-            <span class="badge-sm badge-green">Chain verified · {{ chain_status.checked }} entries</span>
-            {% elif chain_status.status == 'empty' %}
-            <span class="badge-sm badge-gray">No chained entries yet</span>
-            {% else %}
-            <span class="badge-sm badge-red">Chain integrity FAILED ({{ chain_status.status }})</span>
-            {% endif %}
+    </div>
+
+    <div class="dash-grid dash-grid-3 kpi-strip mb-6">
+        <div class="kpi-card">
+            <div class="kpi-label">Events</div>
+            <div class="kpi-value c-primary">{{ event_count }}</div>
         </div>
-        {% endif %}
+        <div class="kpi-card">
+            <div class="kpi-label">Verified Chain</div>
+            <div class="kpi-value {% if chain_status.status == 'valid' %}c-primary-brand{% elif chain_status.status == 'empty' %}c-muted{% else %}c-red{% endif %}">
+                {% if chain_status.status == 'valid' %}Verified{% elif chain_status.status == 'empty' %}No entries{% else %}Failed{% endif %}
+            </div>
+        </div>
+        <div class="kpi-card {% if failed_flagged_count %}stat-card-red{% endif %}">
+            <div class="kpi-label {% if failed_flagged_count %}c-red-soft{% endif %}">Failed / Flagged</div>
+            <div class="kpi-value {% if failed_flagged_count %}c-red{% else %}c-primary{% endif %}">{{ failed_flagged_count }}</div>
+        </div>
     </div>
 
     <form method="get" class="mb-4 flex gap-2">

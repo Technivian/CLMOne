@@ -114,6 +114,23 @@ _TASK_PRIORITY_BADGES = {
     'LOW': 'badge-green',
 }
 
+# RiskLog.status was modeled with Dutch display labels ('In opvolging',
+# 'Afgerond') from an earlier localized build — the model's own
+# get_status_display() cannot be used in the UI without leaking that Dutch
+# chrome. This map (and risk_status_label below) is the English override;
+# changing the model's TextChoices labels is out of scope here, so the raw
+# key is translated at the presentation layer instead.
+_RISK_STATUS_BADGES = {
+    'OPEN': 'badge-yellow',
+    'IN_PROGRESS': 'badge-blue',
+    'RESOLVED': 'badge-green',
+}
+_RISK_STATUS_LABELS = {
+    'OPEN': 'Open',
+    'IN_PROGRESS': 'In Progress',
+    'RESOLVED': 'Resolved',
+}
+
 # ApprovalRequest.approval_step is a free CharField copied from whichever
 # ApprovalRule triggered it — it has no Django choices of its own, so
 # without this map the raw rule code (e.g. 'LEGAL') would leak into the UI.
@@ -230,6 +247,19 @@ def task_status_badge_class(status):
 def task_priority_badge_class(priority):
     """LegalTask priority key -> canonical badge class."""
     return _TASK_PRIORITY_BADGES.get(priority, 'badge-gray')
+
+
+@register.filter
+def risk_status_badge_class(status):
+    """RiskLog status key -> canonical badge class."""
+    return _RISK_STATUS_BADGES.get(status, 'badge-gray')
+
+
+@register.filter
+def risk_status_label(status):
+    """RiskLog status key -> English display label ('IN_PROGRESS' -> 'In Progress'),
+    overriding the model's own Dutch-labeled get_status_display()."""
+    return _RISK_STATUS_LABELS.get(status, status.replace('_', ' ').title() if status else '')
 
 
 @register.filter

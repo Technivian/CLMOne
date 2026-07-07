@@ -60,6 +60,16 @@ class AuditLogListView(LoginRequiredMixin, ListView):
             # on-demand check.
             from contracts.services.audit import verify_chain_cached
             ctx['chain_status'] = verify_chain_cached(org.id)
+            # Governance KPI strip: unfiltered org totals, independent of the
+            # current action/model filter on get_queryset() — same pattern as
+            # RiskLogListView's tenant_risks recomputation.
+            tenant_logs = AuditLog.objects.filter(
+                Q(organization=org) | Q(organization__isnull=True, changes__organization_id=org.id)
+            )
+            ctx['event_count'] = tenant_logs.count()
+            ctx['failed_flagged_count'] = tenant_logs.filter(
+                outcome__in=[AuditLog.Outcome.FAILURE, AuditLog.Outcome.BLOCKED]
+            ).count()
         return ctx
 
 

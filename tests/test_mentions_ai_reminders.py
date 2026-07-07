@@ -608,7 +608,7 @@ class MentionsAiAndReminderTests(TestCase):
         response = self.client.get(reverse('contracts:risk_log_list'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Risk Log')
+        self.assertContains(response, 'Risk Register')
         self.assertContains(response, 'Data transfer compliance risk')
         self.assertContains(response, 'Master Services Agreement')
         self.assertContains(response, 'No mitigation plan recorded')

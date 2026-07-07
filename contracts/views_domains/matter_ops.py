@@ -395,6 +395,16 @@ class RiskLogListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
         ctx['high_risk_count'] = tenant_risks.filter(risk_level=RiskLog.RiskLevel.HIGH).count()
         ctx['critical_risk_count'] = tenant_risks.filter(risk_level=RiskLog.RiskLevel.CRITICAL).count()
         ctx['risk_tabs'] = [('All Risks', ''), ('High Risk', RiskLog.RiskLevel.HIGH), ('Critical Risk', RiskLog.RiskLevel.CRITICAL)]
+        # Governance KPI strip (Risk Register convergence block): real,
+        # existing fields only — status and risk_level are the only severity/
+        # progress signals RiskLog actually carries. High severity bundles
+        # HIGH+CRITICAL since the strip has one severity slot, not two.
+        ctx['open_risk_count'] = tenant_risks.filter(status=RiskLog.Status.OPEN).count()
+        ctx['in_progress_risk_count'] = tenant_risks.filter(status=RiskLog.Status.IN_PROGRESS).count()
+        ctx['resolved_risk_count'] = tenant_risks.filter(status=RiskLog.Status.RESOLVED).count()
+        ctx['high_severity_count'] = tenant_risks.filter(
+            risk_level__in=[RiskLog.RiskLevel.HIGH, RiskLog.RiskLevel.CRITICAL]
+        ).count()
         return ctx
 
 

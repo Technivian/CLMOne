@@ -1,38 +1,42 @@
 {% extends 'base.html' %}
+{% load docclad_components %}
+{% load docclad_format %}
 
-{% block title %}Risk Log – DocClad{% endblock %}
+{% block title %}Risk Register – DocClad{% endblock %}
 
 {% block content %}
-<div class="page-wrap">
-<div class="page-header">
-    <div>
-        <h1 class="page-title">Risk Log</h1>
-        <p class="page-subtitle">Track contract and matter risks across your organization.</p>
+<div id="risk-register-root" class="page-wrap page-wrap-fluid">
+<div class="arch-header">
+    <div class="arch-header-left">
+        <div class="arch-title-row">
+            <h1 class="arch-title">Risk Register</h1>
+        </div>
+        <p class="arch-subtitle">Contract and compliance risk across your organization</p>
     </div>
-    <a href="{% url 'contracts:risk_log_create' %}"
-       class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 btn-primary-grad">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-        </svg>
-        New Risk
-    </a>
+    <div class="arch-header-right">
+        <a href="{% url 'contracts:risk_log_create' %}" class="btn-primary-grad">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+            New Risk
+        </a>
+    </div>
 </div>
 
-<div class="dash-grid dash-grid-3 mb-6">
-    <div class="rounded-xl p-5 border stat-card">
-        <p class="text-xs font-semibold uppercase tracking-widest mb-2 c-muted">Total Risks</p>
-        <p class="text-3xl font-bold c-primary">{{ total_risks }}</p>
-        <p class="text-xs mt-1 c-muted">open entries</p>
+<div class="dash-grid dash-grid-4 kpi-strip mb-6">
+    <div class="kpi-card">
+        <div class="kpi-label">Open</div>
+        <div class="kpi-value c-primary">{{ open_risk_count }}</div>
     </div>
-    <div class="rounded-xl p-5 border stat-card-amber">
-        <p class="text-xs font-semibold uppercase tracking-widest mb-2 c-amber-soft">High Risk</p>
-        <p class="text-3xl font-bold c-amber">{{ high_risk_count }}</p>
-        <p class="text-xs mt-1 c-muted">high-priority items</p>
+    <div class="kpi-card">
+        <div class="kpi-label">High Severity</div>
+        <div class="kpi-value c-amber">{{ high_severity_count }}</div>
     </div>
-    <div class="rounded-xl p-5 border stat-card-red">
-        <p class="text-xs font-semibold uppercase tracking-widest mb-2 c-red-soft">Critical Risk</p>
-        <p class="text-3xl font-bold c-red">{{ critical_risk_count }}</p>
-        <p class="text-xs mt-1 c-muted">needs immediate action</p>
+    <div class="kpi-card">
+        <div class="kpi-label">In Progress</div>
+        <div class="kpi-value c-accent">{{ in_progress_risk_count }}</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-label">Resolved</div>
+        <div class="kpi-value c-primary-brand">{{ resolved_risk_count }}</div>
     </div>
 </div>
 
@@ -80,11 +84,12 @@
     <table class="w-full text-sm">
         <thead class="tbl-head">
             <tr>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Title</th>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Risk Level</th>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Linked Record</th>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Mitigation Plan</th>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Created By</th>
+                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Risk</th>
+                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Related Contract/Record</th>
+                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Severity</th>
+                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Owner</th>
+                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Status</th>
+                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Updated</th>
                 <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Actions</th>
             </tr>
         </thead>
@@ -94,15 +99,11 @@
                 <td class="px-5 py-3.5">
                     <div class="font-medium c-primary">{{ risk.title }}</div>
                     <p class="text-xs mt-0.5 c-muted">{{ risk.description|truncatechars:88 }}</p>
-                </td>
-                <td class="px-5 py-3.5">
-                    <span class="badge-sm
-                        {% if risk.risk_level == 'CRITICAL' %}badge-red
-                        {% elif risk.risk_level == 'HIGH' %}badge-yellow
-                        {% elif risk.risk_level == 'MEDIUM' %}badge-blue
-                        {% else %}badge-green{% endif %}">
-                        {{ risk.get_risk_level_display }}
-                    </span>
+                    {% if risk.mitigation_plan %}
+                    <p class="text-xs mt-0.5 c-dim">Mitigation: {{ risk.mitigation_plan|truncatechars:72 }}</p>
+                    {% else %}
+                    <p class="text-xs mt-0.5 c-dim">No mitigation plan recorded</p>
+                    {% endif %}
                 </td>
                 <td class="px-5 py-3.5 tbl-td">
                     {% if risk.contract %}
@@ -113,14 +114,20 @@
                     <span class="c-dim">Unlinked</span>
                     {% endif %}
                 </td>
-                <td class="px-5 py-3.5 tbl-td">
-                    {% if risk.mitigation_plan %}
-                    {{ risk.mitigation_plan|truncatechars:72 }}
-                    {% else %}
-                    <span class="c-dim">No mitigation plan recorded</span>
-                    {% endif %}
+                <td class="px-5 py-3.5">
+                    <span class="badge-sm
+                        {% if risk.risk_level == 'CRITICAL' %}badge-red
+                        {% elif risk.risk_level == 'HIGH' %}badge-yellow
+                        {% elif risk.risk_level == 'MEDIUM' %}badge-blue
+                        {% else %}badge-green{% endif %}">
+                        {{ risk.get_risk_level_display }}
+                    </span>
                 </td>
-                <td class="px-5 py-3.5 tbl-td">{{ risk.created_by.username|default:'—' }}</td>
+                <td class="px-5 py-3.5">{% assignee_chip risk.assigned_to %}</td>
+                <td class="px-5 py-3.5">
+                    <span class="badge-sm {{ risk.status|risk_status_badge_class }}">{{ risk.status|risk_status_label }}</span>
+                </td>
+                <td class="px-5 py-3.5 tbl-td">{{ risk.updated_at|date:"d M Y" }}</td>
                 <td class="px-5 py-3.5 text-right">
                     <a href="{% url 'contracts:risk_log_update' risk.pk %}"
                        class="text-xs font-medium px-2.5 py-1 rounded-md border transition-opacity hover:opacity-80 btn-ghost">Edit</a>
@@ -128,7 +135,7 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="6" class="px-5 py-20 text-center">
+                <td colspan="7" class="px-5 py-20 text-center">
                     <div class="flex flex-col items-center gap-3">
                         <div class="w-12 h-12 rounded-full flex items-center justify-center surface-bubble">
                             <svg class="w-6 h-6 c-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
