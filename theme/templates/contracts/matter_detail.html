@@ -3,12 +3,13 @@
 {% block title %}{{ matter.matter_number }} – DocClad{% endblock %}
 {% block content %}
 {% if is_in_house_clm %}
-{# ══ MATTER WORKSPACE SPINE — in_house_clm (Payrollminds) framing ═══
-   Phase 3 of the Product Coherence Redesign. Reuses the same
-   arch-header/kpi-card/ad-card/ad-rail-item components as the Command
-   Center dashboard — no new visual language. Every figure below reads
-   PERSISTED rows only; nothing here triggers DPA analysis or approval
-   mutation. #}
+{% comment %}
+Matter Workspace Spine — in_house_clm (Payrollminds) framing. Phase 3 of
+the Product Coherence Redesign. Reuses the same arch-header/kpi-card/
+ad-card/ad-rail-item components as the Command Center dashboard — no new
+visual language. Every figure below reads PERSISTED rows only; nothing
+here triggers DPA analysis or approval mutation.
+{% endcomment %}
 <div class="page-wrap page-wrap-fluid">
   <div class="arch-header">
     <div class="arch-header-left">
