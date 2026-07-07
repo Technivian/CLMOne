@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+{% load docclad_components %}
+{% load docclad_format %}
+
+{% block title %}Legal Intelligence Hub – DocClad{% endblock %}
+
+{% block content %}
+<div id="legal-intelligence-hub-root" class="page-wrap page-wrap-fluid">
+<div class="arch-header">
+    <div class="arch-header-left">
+        <div class="arch-title-row">
+            <h1 class="arch-title">Legal Intelligence Hub</h1>
+        </div>
+        <p class="arch-subtitle">Contract risks, DPA findings, approvals, and deadlines across every matter — one view, most urgent first.</p>
+    </div>
+</div>
+
+<div class="dash-grid dash-grid-4 kpi-strip mb-6">
+    <div class="kpi-card">
+        <div class="kpi-label">Critical/High Signals</div>
+        <div class="kpi-value{% if legal_signal_counts.critical_high_count %} c-amber{% else %} c-primary{% endif %}">{{ legal_signal_counts.critical_high_count }}</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-label">Cross-Document Conflicts</div>
+        <div class="kpi-value{% if legal_signal_counts.conflict_count %} c-amber{% else %} c-primary{% endif %}">{{ legal_signal_counts.conflict_count }}</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-label">Pending Approvals/Blockers</div>
+        <div class="kpi-value c-accent">{{ legal_signal_counts.pending_approval_count }}</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-label">Upcoming Deadlines</div>
+        <div class="kpi-value c-primary-brand">{{ legal_signal_counts.upcoming_deadline_count }}</div>
+    </div>
+</div>
+
+<div class="flex items-center gap-3 mb-4 flex-wrap">
+    <div class="flex items-center rounded-lg p-1 border flex-shrink-0 tabs-shell">
+        {% for tab_label, tab_value, tab_count in signal_tabs %}
+        <a href="?{% if tab_value != 'all' %}type={{ tab_value }}{% endif %}"
+           class="px-3 py-1.5 text-xs font-medium rounded-md transition-all whitespace-nowrap {% if selected_signal_type == tab_value %}tab-pill-active{% else %}tab-pill-idle{% endif %}">
+            {{ tab_label }} ({{ tab_count }})
+        </a>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="panel overflow-hidden">
+    <table class="w-full text-sm">
+        <thead class="tbl-head">
+            <tr>
+                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Severity</th>
+                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Signal</th>
+                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Source</th>
+                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Matter/Client</th>
+                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Owner</th>
+                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Status</th>
+                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Due/Age</th>
+                <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for signal in legal_signals %}
+            <tr class="border-b transition-colors tbl-row">
+                <td class="px-5 py-3.5">
+                    {% if signal.severity %}
+                    <span class="badge-sm
+                        {% if signal.severity == 'CRITICAL' %}badge-red
+                        {% elif signal.severity == 'HIGH' %}badge-yellow
+                        {% elif signal.severity == 'MEDIUM' %}badge-blue
+                        {% else %}badge-green{% endif %}">
+                        {{ signal.severity_display }}
+                    </span>
+                    {% else %}
+                    <span class="c-dim">—</span>
+                    {% endif %}
+                </td>
+                <td class="px-5 py-3.5">
+                    <div class="font-medium c-primary">
+                        {{ signal.title }}
+                        {% if signal.is_conflict %}<span class="badge-sm badge-red">Cross-doc conflict</span>{% endif %}
+                    </div>
+                    {% if signal.summary %}<p class="text-xs mt-0.5 c-muted">{{ signal.summary|truncatechars:88 }}</p>{% endif %}
+                </td>
+                <td class="px-5 py-3.5 tbl-td">
+                    {% if signal.source_type == 'contract_risk' %}Contract Risk
+                    {% elif signal.source_type == 'dpa_risk' %}DPA Risk
+                    {% elif signal.source_type == 'approval' %}Approval
+                    {% elif signal.source_type == 'deadline' %}Deadline{% endif %}
+                </td>
+                <td class="px-5 py-3.5 tbl-td">
+                    {% if signal.matter %}
+                    <a href="{% url 'contracts:matter_detail' signal.matter.pk %}" class="c-link">{{ signal.matter.title }}</a>
+                    {% elif signal.counterparty %}
+                    <span>{{ signal.counterparty }}</span>
+                    {% else %}
+                    <span class="c-dim">Unlinked</span>
+                    {% endif %}
+                </td>
+                <td class="px-5 py-3.5">
+                    {% if signal.owner %}
+                    {% assignee_chip signal.owner %}
+                    {% elif signal.owners_csv %}
+                    <span class="text-xs c-muted">{{ signal.owners_csv|dpa_owner_chips|join:", " }}</span>
+                    {% else %}
+                    <span class="c-dim">Unassigned</span>
+                    {% endif %}
+                </td>
+                <td class="px-5 py-3.5">
+                    <span class="badge-sm badge-gray">{{ signal.status_display }}</span>
+                </td>
+                <td class="px-5 py-3.5 tbl-td">
+                    {% if signal.due_date %}{{ signal.due_date|due_countdown }}{% else %}{{ signal.updated_at|date:"d M Y" }}{% endif %}
+                </td>
+                <td class="px-5 py-3.5 text-right">
+                    <a href="{{ signal.source_url }}"
+                       class="text-xs font-medium px-2.5 py-1 rounded-md border transition-opacity hover:opacity-80 btn-ghost">View</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8" class="px-5 py-20 text-center">
+                    <div class="flex flex-col items-center gap-3">
+                        <div class="w-12 h-12 rounded-full flex items-center justify-center surface-bubble">
+                            <svg class="w-6 h-6 c-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="font-medium c-primary">No open legal signals</p>
+                            <p class="text-sm mt-1 c-muted">
+                                {% if selected_signal_type != 'all' %}
+                                Nothing matches this filter right now — try <a href="?" class="c-link">viewing all signals</a>.
+                                {% else %}
+                                Contract risks, DPA findings, pending approvals, and upcoming deadlines will appear here as they're recorded.
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+</div>
+{% endblock %}

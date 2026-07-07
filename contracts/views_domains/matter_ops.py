@@ -8,6 +8,7 @@ from django.http import HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
+from django.utils.functional import cached_property
 from django.views.decorators.http import require_POST
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
@@ -40,6 +41,7 @@ from contracts.models import (
 )
 from contracts.middleware import log_action
 from contracts.permissions import ContractAction, can_access_contract_action
+from contracts.services.legal_signals import get_legal_signal_counts_for_org, get_legal_signals_for_org
 from contracts.tenancy import get_user_organization, scope_queryset_for_organization
 from contracts.view_support import TenantAssignCreateMixin, TenantScopedFormMixin, TenantScopedQuerysetMixin
 
@@ -357,12 +359,36 @@ class TrademarkRequestUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin, 
 
 
 class RiskLogListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
+    """Risk Review.
+
+    law_firm_ops keeps the original Risk Register (RiskLog-only, unchanged
+    below). in_house_clm renders the Phase 4 Legal Intelligence Hub instead —
+    the same route/URL names, gated by workspace_mode so law_firm_ops
+    behavior and queries are untouched (`is_in_house_clm` short-circuits the
+    RiskLog queryset/context building entirely rather than computing it and
+    discarding it).
+    """
     model = RiskLog
-    template_name = 'contracts/risk_log_list.html'
     context_object_name = 'risk_logs'
 
+    @cached_property
+    def organization(self):
+        return get_user_organization(self.request.user)
+
+    @cached_property
+    def is_in_house_clm(self):
+        mode = getattr(self.organization, 'workspace_mode', 'law_firm_ops') if self.organization else 'law_firm_ops'
+        return mode == 'in_house_clm'
+
+    def get_template_names(self):
+        if self.is_in_house_clm:
+            return ['contracts/legal_intelligence_hub.html']
+        return ['contracts/risk_log_list.html']
+
     def get_queryset(self):
-        org = get_user_organization(self.request.user)
+        if self.is_in_house_clm:
+            return RiskLog.objects.none()
+        org = self.organization
         if org:
             qs = RiskLog.objects.select_related('contract', 'matter', 'created_by').filter(Q(contract__organization=org) | Q(matter__organization=org))
         else:
@@ -384,7 +410,25 @@ class RiskLogListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        org = get_user_organization(self.request.user)
+        ctx['is_in_house_clm'] = self.is_in_house_clm
+        if self.is_in_house_clm:
+            signal_type = (self.request.GET.get('type') or 'all').strip()
+            filters = {'type': signal_type} if signal_type != 'all' else None
+            counts = get_legal_signal_counts_for_org(self.organization)
+            ctx['legal_signals'] = get_legal_signals_for_org(self.organization, user=self.request.user, filters=filters)
+            ctx['legal_signal_counts'] = counts
+            ctx['selected_signal_type'] = signal_type
+            ctx['signal_tabs'] = [
+                ('All', 'all', counts['total_count']),
+                ('Conflicts', 'conflicts', counts['conflict_count']),
+                ('DPA Risks', 'dpa_risk', counts['by_type']['dpa_risk']),
+                ('Contract Risks', 'contract_risk', counts['by_type']['contract_risk']),
+                ('Approvals', 'approval', counts['by_type']['approval']),
+                ('Deadlines', 'deadline', counts['by_type']['deadline']),
+            ]
+            return ctx
+
+        org = self.organization
         if org:
             tenant_risks = RiskLog.objects.filter(Q(contract__organization=org) | Q(matter__organization=org))
         else:
