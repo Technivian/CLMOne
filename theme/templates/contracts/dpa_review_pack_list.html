@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% load docclad_format %}
+{% block title %}DPA Reviews – DocClad{% endblock %}
+{% block content %}
+<div id="dpa-review-root" class="page-wrap page-wrap-fluid">
+    <div class="arch-header">
+        <div class="arch-header-left">
+            <div class="arch-title-row">
+                <h1 class="arch-title">DPA Reviews</h1>
+            </div>
+            <p class="arch-subtitle">Role qualification, transfer, subprocessor, and liability risk across every Data Processing Agreement</p>
+        </div>
+        <div class="arch-header-right">
+            <a href="{% url 'contracts:dpa_playbook_list' %}" class="btn-ghost">Playbook</a>
+        </div>
+    </div>
+
+    <div class="dash-grid dash-grid-3 kpi-strip mb-6">
+        <div class="kpi-card">
+            <div class="kpi-label">DPA Review Packs</div>
+            <div class="kpi-value c-primary">{{ total_packs }}</div>
+        </div>
+        <div class="kpi-card {% if pending_approval_count %}stat-card-amber{% endif %}">
+            <div class="kpi-label {% if pending_approval_count %}c-amber-soft{% endif %}">Pending Approval</div>
+            <div class="kpi-value {% if pending_approval_count %}c-amber{% else %}c-primary{% endif %}">{{ pending_approval_count }}</div>
+        </div>
+        <div class="kpi-card {% if open_critical_risk_count %}stat-card-red{% endif %}">
+            <div class="kpi-label {% if open_critical_risk_count %}c-red-soft{% endif %}">Open Critical Risks</div>
+            <div class="kpi-value {% if open_critical_risk_count %}c-red{% else %}c-primary{% endif %}">{{ open_critical_risk_count }}</div>
+        </div>
+    </div>
+
+    <div class="panel overflow-hidden">
+        <table class="w-full text-sm">
+            <thead class="tbl-head">
+                <tr>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">DPA / Contract</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Counterparty</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Role Qualification</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Open Risks</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Approval Status</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Updated</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pack in review_packs %}
+                <tr class="border-b transition-colors tbl-row">
+                    <td class="px-5 py-3.5">
+                        <a href="{% url 'contracts:dpa_review_pack_detail' pack.pk %}" class="font-medium c-link">{{ pack.contract.title }}</a>
+                    </td>
+                    <td class="px-5 py-3.5 tbl-td">{{ pack.counterparty.name|default:'—' }}</td>
+                    <td class="px-5 py-3.5 tbl-td">{{ pack.get_role_qualification_display }}</td>
+                    <td class="px-5 py-3.5 tbl-td">{{ pack.risk_items.all|length }}</td>
+                    <td class="px-5 py-3.5">
+                        <span class="badge-sm {{ pack.approval_status|dpa_approval_badge_class }}">{{ pack.get_approval_status_display }}</span>
+                    </td>
+                    <td class="px-5 py-3.5 tbl-td">{{ pack.updated_at|date:"d M Y" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="px-5 py-20 text-center">
+                        <p class="font-medium c-primary">No DPA review packs yet</p>
+                        <p class="text-sm mt-1 c-muted">DPA review packs are created for contracts that carry a Data Processing Agreement.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

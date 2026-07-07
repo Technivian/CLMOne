@@ -114,6 +114,34 @@ _TASK_PRIORITY_BADGES = {
     'LOW': 'badge-green',
 }
 
+# DPARiskItem.severity -> badge variant.
+_DPA_SEVERITY_BADGES = {
+    'CRITICAL': 'badge-red',
+    'HIGH': 'badge-red',
+    'MEDIUM': 'badge-yellow',
+    'LOW': 'badge-green',
+}
+
+# DPAReviewPack.approval_status -> badge variant.
+_DPA_APPROVAL_BADGES = {
+    'DRAFT': 'badge-gray',
+    'UNDER_REVIEW': 'badge-blue',
+    'ESCALATED': 'badge-purple',
+    'APPROVED': 'badge-green',
+    'REJECTED': 'badge-red',
+}
+
+# DPARiskItem.owners is a comma-separated list of Owner codes (a risk can be
+# jointly owned, e.g. "LEGAL,DPO_SECURITY") — not a Django choice field, so
+# there is no get_owners_display() to call. Mirrors DPARiskItem.Owner.choices.
+_DPA_OWNER_LABELS = {
+    'LEGAL': 'Legal',
+    'DPO_SECURITY': 'DPO/Security',
+    'BUSINESS': 'Business',
+    'FINANCE': 'Finance',
+    'DELIVERY': 'Delivery',
+}
+
 # RiskLog.status was modeled with Dutch display labels ('In opvolging',
 # 'Afgerond') from an earlier localized build — the model's own
 # get_status_display() cannot be used in the UI without leaking that Dutch
@@ -260,6 +288,26 @@ def risk_status_label(status):
     """RiskLog status key -> English display label ('IN_PROGRESS' -> 'In Progress'),
     overriding the model's own Dutch-labeled get_status_display()."""
     return _RISK_STATUS_LABELS.get(status, status.replace('_', ' ').title() if status else '')
+
+
+@register.filter
+def dpa_severity_badge_class(severity):
+    """DPARiskItem severity key -> canonical badge class."""
+    return _DPA_SEVERITY_BADGES.get(severity, 'badge-gray')
+
+
+@register.filter
+def dpa_approval_badge_class(status):
+    """DPAReviewPack approval_status key -> canonical badge class."""
+    return _DPA_APPROVAL_BADGES.get(status, 'badge-gray')
+
+
+@register.filter
+def dpa_owner_chips(owners_csv):
+    """'LEGAL,DPO_SECURITY' -> ['Legal', 'DPO/Security'] for badge rendering."""
+    if not owners_csv:
+        return []
+    return [_DPA_OWNER_LABELS.get(code, code.replace('_', ' ').title()) for code in owners_csv.split(',') if code]
 
 
 @register.filter

@@ -760,6 +760,7 @@ class Contract(models.Model):
         PARTNERSHIP = 'PARTNERSHIP', 'Partnership Agreement'
         SETTLEMENT = 'SETTLEMENT', 'Settlement Agreement'
         AMENDMENT = 'AMENDMENT', 'Amendment'
+        DPA = 'DPA', 'Data Processing Agreement'
         OTHER = 'OTHER', 'Other'
 
     class RiskLevel(models.TextChoices):
@@ -2672,6 +2673,242 @@ class LegalHold(models.Model):
 
     def __str__(self):
         return f'{self.title} ({self.get_status_display()})'
+
+
+class DPAReviewPack(models.Model):
+    """First-class review record for a Data Processing Agreement.
+
+    Deliberately denormalized (one model, many boolean/text fields grouped
+    by review section) rather than split across a dozen tables — every
+    field maps to one literal item on the DPA review checklist, so the
+    detail page can render the whole checklist from one row without a web
+    of joins. Findings on this record can come from the heuristic scanner
+    (services.dpa_review.run_dpa_analysis, marked as suggestions) or from a
+    human reviewer editing the record directly — either way, approval_status
+    only ever moves via an explicit human action (see DPAReviewPackApproveView),
+    never automatically.
+    """
+
+    class RoleQualification(models.TextChoices):
+        CONTROLLER_PROCESSOR = 'CONTROLLER_PROCESSOR', 'Client Controller / Processor'
+        JOINT_CONTROLLER = 'JOINT_CONTROLLER', 'Joint-Controller Risk'
+        INDEPENDENT_CONTROLLER = 'INDEPENDENT_CONTROLLER', 'Independent-Controller Risk'
+        AMBIGUOUS = 'AMBIGUOUS', 'Ambiguous / Undetermined'
+
+    class ApprovalStatus(models.TextChoices):
+        DRAFT = 'DRAFT', 'Draft'
+        UNDER_REVIEW = 'UNDER_REVIEW', 'Under Review'
+        ESCALATED = 'ESCALATED', 'Escalated'
+        APPROVED = 'APPROVED', 'Approved'
+        REJECTED = 'REJECTED', 'Rejected'
+
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, null=True, blank=True, related_name='dpa_review_packs')
+    contract = models.ForeignKey(Contract, on_delete=models.CASCADE, related_name='dpa_review_packs')
+    counterparty = models.ForeignKey(Counterparty, on_delete=models.SET_NULL, null=True, blank=True, related_name='dpa_review_packs')
+
+    # 1. Role qualification
+    role_qualification = models.CharField(max_length=25, choices=RoleQualification.choices, default=RoleQualification.AMBIGUOUS)
+    role_qualification_notes = models.TextField(blank=True)
+    subprocessors_involved = models.BooleanField(default=False)
+
+    # 2. Processing description
+    data_subject_categories = models.TextField(blank=True, help_text='Categories of data subjects (e.g. employees, contractors)')
+    personal_data_categories = models.TextField(blank=True)
+    special_category_data = models.TextField(blank=True)
+    processing_purposes = models.TextField(blank=True)
+    processing_duration = models.CharField(max_length=200, blank=True)
+    retention_obligations = models.TextField(blank=True)
+    systems_tools_vendors = models.TextField(blank=True)
+
+    # 3. Payroll-specific data categories (Payrollminds-driven checklist)
+    has_employee_identity_data = models.BooleanField(default=False)
+    has_salary_wage_data = models.BooleanField(default=False)
+    has_tax_data = models.BooleanField(default=False)
+    has_social_security_data = models.BooleanField(default=False)
+    has_bank_account_data = models.BooleanField(default=False)
+    has_pension_benefits_data = models.BooleanField(default=False)
+    has_absence_leave_data = models.BooleanField(default=False)
+    has_employment_contract_data = models.BooleanField(default=False)
+    has_national_identifiers = models.BooleanField(default=False)
+    has_payroll_corrections = models.BooleanField(default=False)
+    has_payslip_data = models.BooleanField(default=False)
+    has_cross_border_payroll_data = models.BooleanField(default=False)
+
+    # 4. Subprocessor / vendor review — cross-referenced against the
+    # existing Subprocessor model rather than duplicating vendor data.
+    subprocessors = models.ManyToManyField(Subprocessor, blank=True, related_name='dpa_review_packs')
+    subprocessor_prior_approval_required = models.BooleanField(default=False)
+    subprocessor_general_authorization_allowed = models.BooleanField(default=False)
+    subprocessor_notification_period_days = models.PositiveIntegerField(null=True, blank=True)
+    subprocessor_model_conflict_notes = models.TextField(blank=True)
+
+    # 5. International transfer review — cross-referenced against the
+    # existing TransferRecord model.
+    transfer_records = models.ManyToManyField(TransferRecord, blank=True, related_name='dpa_review_packs')
+    transfers_outside_eea = models.BooleanField(default=False)
+    transfer_mechanism_present = models.BooleanField(default=False)
+    transfer_escalation_required = models.BooleanField(default=False)
+    transfer_notes = models.TextField(blank=True)
+
+    # 6. Security measures review
+    security_encryption = models.BooleanField(default=False)
+    security_access_control = models.BooleanField(default=False)
+    security_mfa = models.BooleanField(default=False)
+    security_logging = models.BooleanField(default=False)
+    security_backup = models.BooleanField(default=False)
+    security_incident_response = models.BooleanField(default=False)
+    security_data_segregation = models.BooleanField(default=False)
+    security_measures_specific = models.BooleanField(default=False, help_text='False = measures described in vague/generic terms')
+    security_notes = models.TextField(blank=True)
+
+    # 7. Breach notification review
+    breach_notification_deadline_hours = models.PositiveIntegerField(null=True, blank=True)
+    breach_notification_realistic = models.BooleanField(default=True)
+    breach_notification_conflicts_msa = models.BooleanField(default=False)
+    breach_notification_notes = models.TextField(blank=True)
+
+    # 8. Data subject request assistance
+    dsar_assistance_required = models.BooleanField(default=False)
+    dsar_assistance_deadline_days = models.PositiveIntegerField(null=True, blank=True)
+    dsar_assistance_chargeable = models.BooleanField(default=False)
+    dsar_business_confirmation_needed = models.BooleanField(default=False)
+
+    # 9. Audit rights
+    audit_rights_onsite_allowed = models.BooleanField(default=False)
+    audit_rights_frequency_limited = models.BooleanField(default=False)
+    audit_third_party_reports_accepted = models.BooleanField(default=False)
+    audit_costs_addressed = models.BooleanField(default=False)
+    audit_conflicts_msa = models.BooleanField(default=False)
+    audit_notes = models.TextField(blank=True)
+
+    # 10. Deletion and return
+    deletion_return_deadline_days = models.PositiveIntegerField(null=True, blank=True)
+    deletion_legal_retention_conflict = models.BooleanField(default=False)
+    deletion_backup_addressed = models.BooleanField(default=False)
+    deletion_certification_required = models.BooleanField(default=False)
+    deletion_notes = models.TextField(blank=True)
+
+    # 11. Liability conflict detection (DPA vs MSA/SOW)
+    liability_uncapped = models.BooleanField(default=False)
+    liability_overrides_msa_cap = models.BooleanField(default=False)
+    liability_separate_indemnities = models.BooleanField(default=False)
+    liability_conflicts_standard_position = models.BooleanField(default=False)
+    liability_notes = models.TextField(blank=True)
+
+    # 13. Output / review memo
+    review_memo = models.TextField(blank=True)
+    last_analyzed_at = models.DateTimeField(null=True, blank=True)
+
+    # Human-controlled approval — never set by the analyzer.
+    approval_status = models.CharField(max_length=15, choices=ApprovalStatus.choices, default=ApprovalStatus.DRAFT)
+    approved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='dpa_review_packs_approved')
+    approved_at = models.DateTimeField(null=True, blank=True)
+
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='dpa_review_packs_created')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f'DPA Review Pack — {self.contract.title}'
+
+
+class DPARiskItem(models.Model):
+    """One identified risk on a DPA review, owned by whichever function
+    (Legal, DPO/Security, Business, Finance, Delivery) needs to act on it.
+    `owners` is a comma-separated list of Owner codes rather than a single
+    choice — several of the module's own examples (e.g. an unrealistic
+    breach notification deadline) are jointly owned by Legal and
+    Operations/Business, and a single-owner field can't represent that.
+    """
+
+    class Owner(models.TextChoices):
+        LEGAL = 'LEGAL', 'Legal'
+        DPO_SECURITY = 'DPO_SECURITY', 'DPO/Security'
+        BUSINESS = 'BUSINESS', 'Business'
+        FINANCE = 'FINANCE', 'Finance'
+        DELIVERY = 'DELIVERY', 'Delivery'
+
+    class Category(models.TextChoices):
+        ROLE_QUALIFICATION = 'ROLE_QUALIFICATION', 'Role Qualification'
+        PROCESSING_SCOPE = 'PROCESSING_SCOPE', 'Processing Scope'
+        SUBPROCESSOR = 'SUBPROCESSOR', 'Subprocessor / Vendor'
+        TRANSFER = 'TRANSFER', 'International Transfer'
+        SECURITY = 'SECURITY', 'Security Measures'
+        BREACH_NOTIFICATION = 'BREACH_NOTIFICATION', 'Breach Notification'
+        DSAR = 'DSAR', 'Data Subject Request Assistance'
+        AUDIT = 'AUDIT', 'Audit Rights'
+        DELETION = 'DELETION', 'Deletion and Return'
+        LIABILITY = 'LIABILITY', 'Liability Conflict'
+
+    class Severity(models.TextChoices):
+        LOW = 'LOW', 'Low'
+        MEDIUM = 'MEDIUM', 'Medium'
+        HIGH = 'HIGH', 'High'
+        CRITICAL = 'CRITICAL', 'Critical'
+
+    class Status(models.TextChoices):
+        OPEN = 'OPEN', 'Open'
+        ACKNOWLEDGED = 'ACKNOWLEDGED', 'Acknowledged'
+        RESOLVED = 'RESOLVED', 'Resolved'
+
+    review_pack = models.ForeignKey(DPAReviewPack, on_delete=models.CASCADE, related_name='risk_items')
+    category = models.CharField(max_length=25, choices=Category.choices)
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    severity = models.CharField(max_length=10, choices=Severity.choices, default=Severity.MEDIUM)
+    owners = models.CharField(max_length=100, help_text='Comma-separated Owner codes, e.g. "LEGAL,DPO_SECURITY"')
+    fallback_recommendation = models.TextField(blank=True)
+    status = models.CharField(max_length=15, choices=Status.choices, default=Status.OPEN)
+    detected_automatically = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-severity', 'category']
+
+    def owner_list(self):
+        return [o for o in self.owners.split(',') if o]
+
+    def __str__(self):
+        return f'{self.title} ({self.get_severity_display()})'
+
+
+class DPAPlaybookPosition(models.Model):
+    """Standing negotiation position for one DPA topic — the fallback
+    language and risk note a reviewer is pointed to instead of drafting
+    from scratch each time. Org-scoped with a global default (organization
+    IS NULL) so a firm can override a topic without duplicating the rest."""
+
+    class Topic(models.TextChoices):
+        PROCESSOR_ROLE_WORDING = 'PROCESSOR_ROLE_WORDING', 'Processor Role Wording'
+        CONTROLLER_INSTRUCTIONS = 'CONTROLLER_INSTRUCTIONS', 'Controller Instructions'
+        SUBPROCESSOR_AUTHORIZATION = 'SUBPROCESSOR_AUTHORIZATION', 'Subprocessor Authorization'
+        INTERNATIONAL_TRANSFERS = 'INTERNATIONAL_TRANSFERS', 'International Transfers'
+        SCC = 'SCC', 'Standard Contractual Clauses'
+        BREACH_NOTIFICATION = 'BREACH_NOTIFICATION', 'Breach Notification'
+        AUDIT_RIGHTS = 'AUDIT_RIGHTS', 'Audit Rights'
+        DELETION_RETURN = 'DELETION_RETURN', 'Deletion and Return'
+        DSAR_ASSISTANCE = 'DSAR_ASSISTANCE', 'DSAR Assistance'
+        SECURITY_MEASURES = 'SECURITY_MEASURES', 'Security Measures'
+        LIABILITY = 'LIABILITY', 'Liability Under DPA'
+        CLIENT_DATA_ACCURACY = 'CLIENT_DATA_ACCURACY', 'Client Data Accuracy Responsibility'
+
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, null=True, blank=True, related_name='dpa_playbook_positions')
+    topic = models.CharField(max_length=30, choices=Topic.choices)
+    our_position = models.TextField()
+    fallback_language = models.TextField(blank=True)
+    risk_if_deviated = models.TextField(blank=True)
+    owner = models.CharField(max_length=15, choices=DPARiskItem.Owner.choices, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['topic']
+        constraints = [
+            models.UniqueConstraint(fields=['organization', 'topic'], name='unique_dpa_playbook_topic_per_org'),
+        ]
+
+    def __str__(self):
+        return self.get_topic_display()
 
 
 class ApprovalRule(models.Model):

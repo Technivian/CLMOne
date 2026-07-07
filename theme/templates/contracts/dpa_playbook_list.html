@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block title %}DPA Playbook – DocClad{% endblock %}
+{% block content %}
+<div id="dpa-playbook-root" class="page-wrap page-wrap-fluid">
+    <div class="arch-header">
+        <div class="arch-header-left">
+            <div class="arch-title-row">
+                <h1 class="arch-title">DPA Playbook</h1>
+            </div>
+            <p class="arch-subtitle">Standing negotiation positions for Data Processing Agreements</p>
+        </div>
+        <div class="arch-header-right">
+            <a href="{% url 'contracts:dpa_review_pack_list' %}" class="btn-ghost">DPA Reviews</a>
+        </div>
+    </div>
+
+    <div class="panel overflow-hidden">
+        <table class="w-full text-sm">
+            <thead class="tbl-head">
+                <tr>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Topic</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Our Position</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Fallback Language</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Owner</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for position in positions %}
+                <tr class="border-b transition-colors tbl-row">
+                    <td class="px-5 py-3.5 font-medium c-primary">{{ position.get_topic_display }}</td>
+                    <td class="px-5 py-3.5 tbl-td">{{ position.our_position }}</td>
+                    <td class="px-5 py-3.5 tbl-td">{{ position.fallback_language|default:"—" }}</td>
+                    <td class="px-5 py-3.5 tbl-td">{{ position.get_owner_display|default:"—" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="px-5 py-16 text-center c-muted">No playbook positions configured yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

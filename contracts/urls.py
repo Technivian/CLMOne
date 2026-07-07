@@ -219,6 +219,14 @@ urlpatterns = [
     path('risks/new/', views.RiskLogCreateView.as_view(), name='risk_log_create'),
     path('risks/<int:pk>/edit/', views.RiskLogUpdateView.as_view(), name='risk_log_update'),
 
+    # DPA Review Pack
+    path('dpa-reviews/', views.DPAReviewPackListView.as_view(), name='dpa_review_pack_list'),
+    path('dpa-reviews/<int:pk>/', views.DPAReviewPackDetailView.as_view(), name='dpa_review_pack_detail'),
+    path('dpa-reviews/<int:pk>/analyze/', views.dpa_review_run_analysis, name='dpa_review_run_analysis'),
+    path('dpa-reviews/<int:pk>/approval-status/', views.dpa_review_set_approval_status, name='dpa_review_set_approval_status'),
+    path('dpa-risk-items/<int:pk>/status/', views.dpa_risk_item_set_status, name='dpa_risk_item_set_status'),
+    path('dpa-playbook/', views.DPAPlaybookListView.as_view(), name='dpa_playbook_list'),
+
     # Compliance
     path('compliance/', views.ComplianceChecklistListView.as_view(), name='compliance_checklist_list'),
     path('compliance/new/', views.ComplianceChecklistCreateView.as_view(), name='compliance_checklist_create'),

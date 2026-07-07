@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+{% load docclad_format %}
+{% block title %}DPA Review — {{ review_pack.contract.title }} – DocClad{% endblock %}
+{% block content %}
+<style nonce="{{ csp_nonce }}">
+  .dpa-section { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 18px 20px; margin-bottom: 16px; }
+  .dpa-section h3 { font-size: 13px; font-weight: 700; color: var(--text-primary); margin: 0 0 10px; }
+  .dpa-checklist { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px 16px; }
+  .dpa-check-row { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-secondary); }
+  .dpa-check-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .dpa-check-dot.on { background: var(--primary); }
+  .dpa-check-dot.off { background: var(--border); }
+  .dpa-owner-chip { display: inline-block; font-size: 11px; padding: 2px 7px; border-radius: 999px; background: var(--surface); border: 1px solid var(--border); color: var(--text-secondary); margin-right: 4px; }
+</style>
+
+<div id="dpa-review-detail-root" class="page-wrap page-wrap-fluid">
+    <div class="arch-header">
+        <div class="arch-header-left">
+            <div class="arch-title-row">
+                <h1 class="arch-title">{{ review_pack.contract.title }}</h1>
+                <span class="badge-sm {{ review_pack.approval_status|dpa_approval_badge_class }}">{{ review_pack.get_approval_status_display }}</span>
+            </div>
+            <p class="arch-subtitle">DPA Review Pack{% if review_pack.counterparty %} · {{ review_pack.counterparty.name }}{% endif %}</p>
+        </div>
+        <div class="arch-header-right">
+            {% if can_edit %}
+            <button type="button" id="dpa-run-analysis-btn" class="btn-ghost" data-analyze-url="{% url 'contracts:dpa_review_run_analysis' review_pack.pk %}">Run Analysis</button>
+            {% endif %}
+            <a href="{% url 'contracts:contract_detail' review_pack.contract.pk %}" class="btn-ghost">View Contract</a>
+        </div>
+    </div>
+    <div id="dpa-analysis-error" class="msg-error rounded-lg p-3 mb-4 text-sm" hidden></div>
+
+    {% if review_pack.last_analyzed_at %}
+    <p class="text-xs c-muted mb-4">Last analyzed {{ review_pack.last_analyzed_at|date:"d M Y H:i" }} — heuristic keyword scan; findings are suggestions for human review, not automatic determinations.</p>
+    {% endif %}
+
+    <div class="dpa-section">
+        <h3>1. Role Qualification</h3>
+        <p class="text-sm c-primary">{{ review_pack.get_role_qualification_display }}</p>
+        {% if review_pack.role_qualification_notes %}<p class="text-xs c-muted mt-1">{{ review_pack.role_qualification_notes }}</p>{% endif %}
+        <p class="text-xs c-muted mt-2">Subprocessors involved: {% if review_pack.subprocessors_involved %}Yes{% else %}No{% endif %}</p>
+    </div>
+
+    <div class="dpa-section">
+        <h3>3. Payroll-Specific Data Categories</h3>
+        <div class="dpa-checklist">
+            {% for label, is_present in payroll_data_fields %}
+            <div class="dpa-check-row"><span class="dpa-check-dot {% if is_present %}on{% else %}off{% endif %}"></span>{{ label }}</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="dpa-section">
+        <h3>4. Subprocessor / Vendor Review</h3>
+        <p class="text-sm c-muted">Prior approval required: {% if review_pack.subprocessor_prior_approval_required %}Yes{% else %}No{% endif %} · General authorization allowed: {% if review_pack.subprocessor_general_authorization_allowed %}Yes{% else %}No{% endif %} · Notification period: {% if review_pack.subprocessor_notification_period_days %}{{ review_pack.subprocessor_notification_period_days }} days{% else %}<span class="c-dim">Not specified</span>{% endif %}</p>
+        {% if review_pack.subprocessors.all %}
+        <p class="text-xs c-muted mt-2">Linked subprocessors: {% for sp in review_pack.subprocessors.all %}{{ sp.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</p>
+        {% endif %}
+    </div>
+
+    <div class="dpa-section">
+        <h3>5. International Transfer Review</h3>
+        <p class="text-sm c-muted">Transfers outside EEA: {% if review_pack.transfers_outside_eea %}Yes{% else %}No{% endif %} · Transfer mechanism present: {% if review_pack.transfer_mechanism_present %}Yes{% else %}No{% endif %} · DPO/Security escalation required: {% if review_pack.transfer_escalation_required %}Yes{% else %}No{% endif %}</p>
+    </div>
+
+    <div class="dpa-section">
+        <h3>6. Security Measures</h3>
+        <div class="dpa-checklist">
+            {% for label, is_present in security_fields %}
+            <div class="dpa-check-row"><span class="dpa-check-dot {% if is_present %}on{% else %}off{% endif %}"></span>{{ label }}</div>
+            {% endfor %}
+        </div>
+        <p class="text-xs c-muted mt-2">Measures are {% if review_pack.security_measures_specific %}described specifically{% else %}described in vague/generic terms{% endif %}.</p>
+    </div>
+
+    <div class="dpa-section">
+        <h3>7. Breach Notification</h3>
+        <p class="text-sm c-muted">Deadline: {% if review_pack.breach_notification_deadline_hours %}{{ review_pack.breach_notification_deadline_hours }} hours{% else %}<span class="c-dim">Not specified</span>{% endif %} · Realistic: {% if review_pack.breach_notification_realistic %}Yes{% else %}No{% endif %}</p>
+    </div>
+
+    <div class="dpa-section">
+        <h3>8. Data Subject Request Assistance</h3>
+        <p class="text-sm c-muted">Assistance required: {% if review_pack.dsar_assistance_required %}Yes{% else %}No{% endif %} · Deadline: {% if review_pack.dsar_assistance_deadline_days %}{{ review_pack.dsar_assistance_deadline_days }} days{% else %}<span class="c-dim">Not specified</span>{% endif %} · Chargeable: {% if review_pack.dsar_assistance_chargeable %}Yes{% else %}No{% endif %}</p>
+    </div>
+
+    <div class="dpa-section">
+        <h3>9. Audit Rights</h3>
+        <p class="text-sm c-muted">On-site allowed: {% if review_pack.audit_rights_onsite_allowed %}Yes{% else %}No{% endif %} · Frequency limited: {% if review_pack.audit_rights_frequency_limited %}Yes{% else %}No{% endif %} · Third-party reports accepted: {% if review_pack.audit_third_party_reports_accepted %}Yes{% else %}No{% endif %}</p>
+    </div>
+
+    <div class="dpa-section">
+        <h3>10. Deletion and Return</h3>
+        <p class="text-sm c-muted">Deadline: {% if review_pack.deletion_return_deadline_days %}{{ review_pack.deletion_return_deadline_days }} days{% else %}<span class="c-dim">Not specified</span>{% endif %} · Statutory retention conflict: {% if review_pack.deletion_legal_retention_conflict %}Yes{% else %}No{% endif %} · Certification required: {% if review_pack.deletion_certification_required %}Yes{% else %}No{% endif %}</p>
+    </div>
+
+    <div class="dpa-section">
+        <h3>11. Liability Conflict Detection</h3>
+        <p class="text-sm c-muted">Uncapped: {% if review_pack.liability_uncapped %}Yes{% else %}No{% endif %} · Overrides MSA cap: {% if review_pack.liability_overrides_msa_cap %}Yes{% else %}No{% endif %} · Separate indemnities: {% if review_pack.liability_separate_indemnities %}Yes{% else %}No{% endif %}</p>
+    </div>
+
+    <div class="panel overflow-hidden mb-6">
+        <div class="panel-inner" style="padding-bottom: 0;">
+            <h3 class="text-sm font-bold c-primary mb-2">Risk Items ({{ risk_items|length }})</h3>
+        </div>
+        <table class="w-full text-sm">
+            <thead class="tbl-head">
+                <tr>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Risk</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Category</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Severity</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Owner</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for risk in risk_items %}
+                <tr class="border-b transition-colors tbl-row">
+                    <td class="px-5 py-3.5">
+                        <div class="font-medium c-primary">{{ risk.title }}</div>
+                        <p class="text-xs mt-0.5 c-muted">{{ risk.description|truncatechars:140 }}</p>
+                        {% if risk.fallback_recommendation %}<p class="text-xs mt-0.5 c-dim">Fallback: {{ risk.fallback_recommendation|truncatechars:120 }}</p>{% endif %}
+                    </td>
+                    <td class="px-5 py-3.5 tbl-td">{{ risk.get_category_display }}</td>
+                    <td class="px-5 py-3.5"><span class="badge-sm {{ risk.severity|dpa_severity_badge_class }}">{{ risk.get_severity_display }}</span></td>
+                    <td class="px-5 py-3.5">{% for chip in risk.owners|dpa_owner_chips %}<span class="dpa-owner-chip">{{ chip }}</span>{% endfor %}</td>
+                    <td class="px-5 py-3.5">{{ risk.get_status_display }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="px-5 py-16 text-center c-muted">No risk items yet — run analysis or add findings manually.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if can_approve %}
+    <div class="panel">
+        <div class="panel-inner flex items-center justify-between flex-wrap gap-3">
+            <div>
+                <h3 class="text-sm font-bold c-primary">Approval Routing</h3>
+                <p class="text-xs c-muted mt-1">Setting this to Approved is a final, human decision — it is never set automatically by analysis.</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <select id="dpa-approval-select" class="select-base text-sm" data-set-status-url="{% url 'contracts:dpa_review_set_approval_status' review_pack.pk %}">
+                    {% for value, label in review_pack.ApprovalStatus.choices %}
+                    <option value="{{ value }}" {% if review_pack.approval_status == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+                <button type="button" id="dpa-approval-submit" class="btn-primary-grad text-white">Update Status</button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script nonce="{{ csp_nonce }}">
+(function () {
+  function getCsrfToken() {
+    return document.cookie.split('; ').find(function (row) { return row.startsWith('csrftoken='); })?.split('=')[1] || '';
+  }
+
+  var analyzeBtn = document.getElementById('dpa-run-analysis-btn');
+  if (analyzeBtn) {
+    analyzeBtn.addEventListener('click', function () {
+      var url = analyzeBtn.getAttribute('data-analyze-url');
+      var errorEl = document.getElementById('dpa-analysis-error');
+      analyzeBtn.disabled = true;
+      errorEl.hidden = true;
+      fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() }, body: '{}' })
+        .then(function (res) { return res.json().then(function (data) { return { ok: res.ok, data: data }; }); })
+        .then(function (result) {
+          if (result.ok) { window.location.reload(); return; }
+          analyzeBtn.disabled = false;
+          errorEl.textContent = (result.data && result.data.error) || 'Analysis failed. Please try again.';
+          errorEl.hidden = false;
+        })
+        .catch(function () {
+          analyzeBtn.disabled = false;
+          errorEl.textContent = 'Network error — please try again.';
+          errorEl.hidden = false;
+        });
+    });
+  }
+
+  var approvalBtn = document.getElementById('dpa-approval-submit');
+  if (approvalBtn) {
+    approvalBtn.addEventListener('click', function () {
+      var select = document.getElementById('dpa-approval-select');
+      var url = select.getAttribute('data-set-status-url');
+      approvalBtn.disabled = true;
+      fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+        body: JSON.stringify({ status: select.value }),
+      })
+        .then(function (res) { return res.json().then(function (data) { return { ok: res.ok, data: data }; }); })
+        .then(function (result) {
+          approvalBtn.disabled = false;
+          if (result.ok) { window.location.reload(); }
+        })
+        .catch(function () { approvalBtn.disabled = false; });
+    });
+  }
+})();
+</script>
+{% endblock %}

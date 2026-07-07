@@ -153,6 +153,14 @@ from .views_domains.contracts import (
     contract_ai_assistant,
     dashboard,
 )
+from .views_domains.dpa_review import (
+    DPAPlaybookListView,
+    DPAReviewPackDetailView,
+    DPAReviewPackListView,
+    dpa_review_run_analysis,
+    dpa_review_set_approval_status,
+    dpa_risk_item_set_status,
+)
 from .views_domains.matter_ops import (
     ComplianceChecklistCreateView,
     ComplianceChecklistDetailView,
