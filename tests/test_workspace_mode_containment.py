@@ -14,11 +14,13 @@ Three buckets, matching the architecture note:
 2. Shared / mode-neutral routes (Repository, Counterparties, DPA Reviews,
    Approvals, Reports) — reachable and organization-scoped for both modes,
    with no mode-conditional branching at all.
-3. Documented stopgap routes (Obligations -> deadline_list, Playbooks ->
-   dpa_playbook_list) — nav_config's mapping is a deliberate, temporary
-   placeholder, not a dedicated page. These tests pin that mapping and the
-   pages' generic (unbranched) shape so any future change to either side
-   must be a deliberate edit here, not silent drift.
+3. Documented stopgap routes (Playbooks -> dpa_playbook_list) — nav_config's
+   mapping is a deliberate, temporary placeholder, not a dedicated page.
+   These tests pin that mapping and the page's generic (unbranched) shape
+   so any future change must be a deliberate edit here, not silent drift.
+   Obligations was a stopgap through Phase 3 but now has a dedicated view
+   (contracts:obligations_workspace, Phase 4) — see
+   tests/test_obligations_workspace.py for its own coverage.
 """
 from django.contrib.auth import get_user_model
 from django.test import Client as TestClient
@@ -242,11 +244,13 @@ class StopgapRouteContractTests(_ContainmentFixtureMixin, TestCase):
             None, 'Containment Firm Stopgap', 'containment_firm_stopgap_user',
         )
 
-    def test_in_house_clm_obligations_nav_item_points_at_deadline_list(self):
+    def test_in_house_clm_obligations_nav_item_points_at_dedicated_workspace(self):
+        """Phase 4 replaced the deadline_list stopgap with a dedicated
+        ObligationsWorkspaceView — see tests/test_obligations_workspace.py."""
         nav = get_nav_for(self.clm_org, self.clm_user)
         obligations_items = [e for e in nav if e.get('kind') == 'item' and e.get('label') == 'Obligations']
         self.assertEqual(len(obligations_items), 1)
-        self.assertEqual(obligations_items[0]['url_name'], 'contracts:deadline_list')
+        self.assertEqual(obligations_items[0]['url_name'], 'contracts:obligations_workspace')
 
     def test_in_house_clm_playbooks_nav_item_points_at_dpa_playbook_list(self):
         nav = get_nav_for(self.clm_org, self.clm_user)
