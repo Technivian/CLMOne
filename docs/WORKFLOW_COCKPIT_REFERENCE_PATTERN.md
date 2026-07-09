@@ -1,9 +1,10 @@
 # Workflow Cockpit Reference Pattern
 
-DocClad now has two reference workflow-first contract creation paths:
+DocClad now has three reference workflow-first contract creation paths:
 
 - DPA cockpit route: `/contracts/new/dpa/`
 - MSA cockpit route: `/contracts/new/msa/`
+- NDA cockpit route: `/contracts/new/nda/`
 
 These are the baseline implementation pattern for governed drafting before more contract types are added.
 
@@ -23,7 +24,7 @@ Both routes follow the same lifecycle:
 
 ## Created records
 
-The governed draft create step writes the same core record set for both DPA and MSA:
+The governed draft create step writes the same core record set for DPA, MSA, and NDA:
 
 - `Contract`
 - `Workflow`
@@ -38,10 +39,11 @@ The governed draft create step writes the same core record set for both DPA and 
 
 ## Risk signal pattern
 
-Both implementations use rule-based risk creation in their service module:
+All three implementations use rule-based risk creation in their service module:
 
 - DPA: `contracts/services/dpa_workflow.py`
 - MSA: `contracts/services/msa_workflow.py`
+- NDA: `contracts/services/nda_workflow.py`
 
 The pattern is the same:
 
@@ -52,7 +54,7 @@ The pattern is the same:
 
 ## Approval route pattern
 
-Both cockpits:
+All three cockpits:
 
 - read seeded `ApprovalRoute` rows from the workflow template
 - render approval routing in the cockpit right rail
@@ -63,10 +65,11 @@ Conditional approvals are field/risk driven, but the source of truth remains the
 
 ## Workspace pattern
 
-Both generated workspaces use the workflow detail route and switch to a contract-type-specific command room view:
+Generated workspaces use the workflow detail route and switch to a contract-type-specific command room view:
 
 - DPA workspace include: `theme/templates/contracts/dpa_contract_workspace.html`
 - MSA workspace include: `theme/templates/contracts/msa_contract_workspace.html`
+- NDA workspace include: `theme/templates/contracts/nda_contract_workspace.html`
 
 Shared workspace pattern:
 
@@ -82,7 +85,7 @@ Shared workspace pattern:
 
 ## Command Center work item pattern
 
-Both service modules persist a `CommandCenterWorkItem` with:
+All three service modules persist a `CommandCenterWorkItem` with:
 
 - workflow title
 - contract type flag
@@ -93,7 +96,7 @@ Both service modules persist a `CommandCenterWorkItem` with:
 - next action
 - `action_path` to `/contracts/workflows/<id>/`
 
-Dashboard rendering should treat DPA and MSA as the same governed workflow family, differing only in type-specific risk and approval copy.
+Dashboard rendering should treat DPA, MSA, and NDA as one workflow-first operating model, differing in risk personality, approval routing, and self-serve eligibility.
 
 ## Clause id / source label pattern
 
@@ -123,4 +126,8 @@ Avoidable divergence to watch without forcing a broad refactor:
 - workspace header, governance rail, audit preview, and action placement
 - Command Center workflow row fields and workspace linking
 
-The current code intentionally keeps DPA and MSA in separate modules, but they should continue to behave as one reference pattern.
+The current code intentionally keeps DPA, MSA, and NDA in separate modules, but they should continue to behave as one reference pattern.
+
+## E2E note
+
+Parallel Playwright runs against the SQLite E2E database can emit non-fatal `database is locked` warnings during login audit writes. Current mitigation is to keep the smoke green and deterministic through seeded startup; a fuller stabilization pass should consider serializing the affected auth path, using a separate test database per worker, or reducing worker concurrency for the impacted specs.
