@@ -11,7 +11,19 @@ from django.views import View
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
 from contracts.forms import WorkflowForm, WorkflowStepForm, WorkflowTemplateForm, WorkflowTemplatePreviewForm, WorkflowTemplateStepForm
-from contracts.models import ApprovalRequest, ApprovalRule, Contract, Workflow, WorkflowStep, WorkflowTemplate, WorkflowTemplateStep
+from contracts.models import (
+    ApprovalRequest,
+    ApprovalRoute,
+    ApprovalRule,
+    Contract,
+    DraftDocument,
+    FieldValue,
+    RiskSignal,
+    Workflow,
+    WorkflowStep,
+    WorkflowTemplate,
+    WorkflowTemplateStep,
+)
 from contracts.permissions import ContractAction, can_access_contract_action
 from contracts.tenancy import get_user_organization, scope_queryset_for_organization, set_organization_on_instance
 from contracts.services.workflow_routing import build_approval_request_plan_for_contract, suggest_workflow_template_for_contract
@@ -718,6 +730,222 @@ def _build_template_step_controls(steps):
     return controls
 
 
+def _workflow_is_dpa(workflow):
+    return bool(
+        workflow
+        and workflow.contract
+        and workflow.contract.contract_type == Contract.ContractType.DPA
+        and workflow.template
+        and workflow.template.name == 'DPA Privacy Review Workflow'
+    )
+
+
+def _field_values_by_key(workflow):
+    values = {}
+    qs = FieldValue.objects.filter(workflow=workflow).select_related('field_definition')
+    for field_value in qs:
+        values[field_value.field_definition.key] = field_value.value
+    return values
+
+
+def _risk_level_for_signals(signals):
+    rank = {
+        RiskSignal.Severity.LOW: 1,
+        RiskSignal.Severity.MEDIUM: 2,
+        RiskSignal.Severity.HIGH: 3,
+        RiskSignal.Severity.CRITICAL: 4,
+    }
+    if not signals:
+        return 'Low'
+    return max(signals, key=lambda s: rank.get(s.severity, 0)).get_severity_display()
+
+
+def _risk_detail_for_signal(signal):
+    details = {
+        'dpa_review_required': {
+            'title': 'Personal data processing review',
+            'source': 'AI Smart Questions · Personal data involved',
+            'recommended_action': 'Confirm processing purpose, categories of data, and controller/processor posture.',
+            'approval_impact': 'Legal review required; DPO visibility retained.',
+        },
+        'scc_transfer_review': {
+            'title': 'EEA/SCC risk',
+            'source': 'AI Smart Questions · Data leaves EEA',
+            'recommended_action': 'Insert or confirm approved SCC transfer fallback and transfer mechanism.',
+            'approval_impact': 'DPO approval required before signature.',
+        },
+        'cross_border_no_mechanism': {
+            'title': 'Missing transfer mechanism',
+            'source': 'Risk checks · Cross-border transfer mechanism',
+            'recommended_action': 'Select SCC, BCR, adequacy decision, or document accepted risk.',
+            'approval_impact': 'DPO approval required; Legal cannot clear signature until resolved.',
+        },
+        'subprocessor_review': {
+            'title': 'Subprocessor review',
+            'source': 'AI Smart Questions · Subprocessors involved',
+            'recommended_action': 'Review approved subprocessor flow-down clause and notice position.',
+            'approval_impact': 'Legal review required; DPO informed if transfer posture changes.',
+        },
+        'subprocessors_undisclosed': {
+            'title': 'Subprocessor fallback missing',
+            'source': 'Legal Position · Fallback liability position',
+            'recommended_action': 'Capture fallback liability and subprocessor notice position.',
+            'approval_impact': 'Legal review required before approval route can advance.',
+        },
+        'missing_dpo_contact': {
+            'title': 'Missing DPO contact',
+            'source': 'AI Smart Questions · DPO contact',
+            'recommended_action': 'Add the privacy contact or confirm no named DPO is required.',
+            'approval_impact': 'DPO approval may be delayed until ownership is clear.',
+        },
+        'breach_window_too_long': {
+            'title': 'Breach notice window review',
+            'source': 'AI Smart Questions · Breach notification window',
+            'recommended_action': 'Align breach notification timing to the approved DPA playbook.',
+            'approval_impact': 'Legal review required for any non-standard window.',
+        },
+    }
+    fallback = {
+        'title': signal.description,
+        'source': 'DPA risk checks',
+        'recommended_action': 'Review against the approved DPA playbook.',
+        'approval_impact': 'Legal review required.',
+    }
+    data = details.get(signal.code, fallback)
+    return {
+        'title': data['title'],
+        'severity': signal.get_severity_display(),
+        'severity_code': signal.severity.lower(),
+        'reason': signal.description,
+        'source': data['source'],
+        'recommended_action': data['recommended_action'],
+        'approval_impact': data['approval_impact'],
+        'status': 'Open' if not signal.is_resolved else 'Resolved',
+    }
+
+
+def _dpa_approval_cards(workflow, values, risk_codes):
+    cards = [
+        {
+            'name': 'Contract owner',
+            'status': 'Active',
+            'reason': 'Owns field completeness and business context for the generated DPA draft.',
+            'trigger': 'Workflow instance created',
+        },
+        {
+            'name': 'Legal',
+            'status': 'Triggered',
+            'reason': 'Personal data processing and approved DPA playbook checks require legal control.',
+            'trigger': 'Personal data processing review',
+        },
+    ]
+    if values.get('personal_data_involved') or values.get('cross_border_transfer') or 'scc_transfer_review' in risk_codes:
+        cards.append({
+            'name': 'DPO',
+            'status': 'Triggered',
+            'reason': 'DPO review is required because personal data processing and EEA/SCC posture are in scope.',
+            'trigger': 'Privacy and transfer risk rules',
+        })
+    return cards
+
+
+def _dpa_document_sections(draft_content, values):
+    content = draft_content or ''
+    paragraphs = [p.strip() for p in content.split('\n\n') if p.strip()]
+    sections = []
+    for index, paragraph in enumerate(paragraphs):
+        title = 'Generated DPA draft' if index == 0 else 'DPA clause'
+        source = 'Approved template'
+        source_detail = 'GDPR Processor DPA · Netherlands · B2B'
+        tone = 'template'
+        if 'Subject Matter' in paragraph or 'Categories of Data' in paragraph:
+            title = 'Processing scope'
+            source = 'AI-assisted suggestion'
+            source_detail = 'Field values mapped into approved playbook language'
+            tone = 'ai'
+            fields = ['Processing purpose', 'Personal data categories', 'Data subjects']
+        elif 'Sub-processors' in paragraph:
+            title = 'Subprocessor clause'
+            source = 'Approved clause library' if values.get('subprocessors_used') else 'Approved template'
+            source_detail = 'Subprocessor flow-down position'
+            tone = 'library'
+            fields = ['Subprocessor position']
+        elif 'International Transfers' in paragraph:
+            title = 'Transfer clause'
+            source = 'Risk-triggered fallback' if values.get('cross_border_transfer') else 'Approved template'
+            source_detail = 'SCC / EEA transfer rule'
+            tone = 'risk' if values.get('cross_border_transfer') else 'template'
+            fields = ['Data transfer position', 'Transfer mechanism']
+        elif 'Security' in paragraph:
+            title = 'Security clause'
+            source = 'Approved clause library'
+            source_detail = 'Standard TOMs obligation'
+            tone = 'library'
+            fields = []
+        elif 'Breach Notification' in paragraph:
+            title = 'Breach notice clause'
+            source = 'Approved template'
+            source_detail = 'GDPR Processor DPA playbook'
+            tone = 'template'
+            fields = ['Breach notification window']
+        elif 'Governing Law' in paragraph:
+            title = 'Governing law'
+            source = 'Approved template'
+            source_detail = 'Legal position field'
+            tone = 'template'
+            fields = ['Governing law']
+        else:
+            fields = ['Counterparty name', 'Effective date'] if index == 0 else []
+        sections.append({
+            'title': title,
+            'content': paragraph,
+            'source': source,
+            'source_detail': source_detail,
+            'tone': tone,
+            'fields': fields,
+        })
+    return sections
+
+
+def _dpa_audit_preview(workflow):
+    timestamp = workflow.created_at
+    return [
+        {'event': 'Workflow created', 'meta': 'DPA Privacy Review Workflow instance opened', 'timestamp': timestamp},
+        {'event': 'Approved template applied', 'meta': 'GDPR Processor DPA · Netherlands · B2B', 'timestamp': timestamp},
+        {'event': 'Field values captured', 'meta': 'Required DPA fields and smart privacy questions stored', 'timestamp': timestamp},
+        {'event': 'Risk checks run', 'meta': 'Personal data, EEA/SCC, subprocessor, breach-window, and DPO checks evaluated', 'timestamp': timestamp},
+        {'event': 'Approval route generated', 'meta': 'Contract owner, Legal, and conditional DPO routing prepared', 'timestamp': timestamp},
+    ]
+
+
+def _dpa_workspace_context(workflow):
+    values = _field_values_by_key(workflow)
+    risk_signals = list(RiskSignal.objects.filter(workflow=workflow).order_by('-severity', 'detected_at'))
+    risk_codes = {signal.code for signal in risk_signals}
+    draft_document = DraftDocument.objects.filter(workflow=workflow, is_current=True).order_by('-version').first()
+    template_routes = list(ApprovalRoute.objects.filter(workflow_template=workflow.template).order_by('order')) if workflow.template_id else []
+    current_step = WorkflowStep.objects.filter(workflow=workflow, status=WorkflowStep.Status.IN_PROGRESS).order_by('order').first()
+    if current_step is None:
+        current_step = WorkflowStep.objects.filter(workflow=workflow, status=WorkflowStep.Status.PENDING).order_by('order').first()
+
+    return {
+        'values': values,
+        'current_stage': current_step.name if current_step else 'AI Draft',
+        'owner': workflow.created_by.get_full_name() or workflow.created_by.username if workflow.created_by else 'Unassigned',
+        'risk_level': _risk_level_for_signals(risk_signals),
+        'next_action': 'Review DPA risk signals',
+        'timeline': ['Intake', 'AI Draft', 'Privacy Review', 'Legal Review', 'DPO Approval', 'Signature', 'Repository'],
+        'active_timeline_index': 2 if risk_signals else 1,
+        'draft_document': draft_document,
+        'document_sections': _dpa_document_sections(draft_document.content if draft_document else '', values),
+        'risk_cards': [_risk_detail_for_signal(signal) for signal in risk_signals],
+        'approval_cards': _dpa_approval_cards(workflow, values, risk_codes),
+        'template_routes': template_routes,
+        'audit_preview': _dpa_audit_preview(workflow),
+        'field_count': FieldValue.objects.filter(workflow=workflow).count(),
+    }
+
+
 def _workflow_detail_context(workflow, add_step_form=None):
     organization = workflow.organization
     steps = WorkflowStep.objects.filter(workflow=workflow).order_by('order')
@@ -726,7 +954,7 @@ def _workflow_detail_context(workflow, add_step_form=None):
     max_order = steps.aggregate(max_order=Max('order'))['max_order'] or 0
     form = add_step_form or WorkflowStepForm(initial={'order': max_order + 1})
     form = apply_form_queryset_scopes(form, organization, {'assigned_to': organization_user_queryset})
-    return {
+    context = {
         'workflow': workflow,
         'workflow_steps': steps,
         'add_step_form': form,
@@ -737,6 +965,10 @@ def _workflow_detail_context(workflow, add_step_form=None):
         'workflow_audit_feed': get_workflow_audit_feed(workflow, limit=6),
         'workflow_activity_url': reverse_lazy('contracts:workflow_activity', kwargs={'pk': workflow.pk}),
     }
+    if _workflow_is_dpa(workflow):
+        context['is_dpa_workspace'] = True
+        context['dpa_workspace'] = _dpa_workspace_context(workflow)
+    return context
 
 
 def _workflow_template_detail_context(template, organization, step_form=None):
