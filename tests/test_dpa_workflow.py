@@ -76,8 +76,41 @@ class SeedDataTests(TestCase):
                           'personal_data_categories', 'data_subjects', 'governing_law',
                           'liability_position', 'personal_data_involved', 'cross_border_transfer',
                           'subprocessors_used', 'transfer_mechanism', 'breach_notification_hours',
-                          'dpo_contact'):
+                          'dpo_contact', 'special_categories_data', 'include_scc_fallback'):
             self.assertIn(expected, keys)
+
+    def test_smart_question_toggles_are_consolidated_in_privacy_questions_section(self):
+        """The five yes/no risk-routing toggles (AI Smart Questions) all live
+        in one section so the cockpit can render them together, per
+        contracts/migrations/0074_dpa_smart_questions_expansion.py."""
+        wt = WorkflowTemplate.objects.get(name='DPA Privacy Review Workflow')
+        toggle_keys = {'personal_data_involved', 'cross_border_transfer', 'subprocessors_used',
+                       'special_categories_data', 'include_scc_fallback'}
+        sections = {
+            f.key: f.section
+            for f in FieldDefinition.objects.filter(workflow_template=wt, key__in=toggle_keys)
+        }
+        self.assertEqual(set(sections.values()), {FieldDefinition.Section.PRIVACY_QUESTIONS})
+        for key in toggle_keys:
+            self.assertEqual(FieldDefinition.objects.get(workflow_template=wt, key=key).field_type, FieldDefinition.FieldType.BOOLEAN)
+
+    def test_smart_question_help_text_explains_why_it_matters(self):
+        wt = WorkflowTemplate.objects.get(name='DPA Privacy Review Workflow')
+        help_text_by_key = {
+            'personal_data_involved': 'Required for GDPR routing and DPO approval.',
+            'cross_border_transfer': 'Triggers SCC review and international transfer language.',
+            'subprocessors_used': 'Adds subprocessor review and approval checks.',
+        }
+        for key, expected_help in help_text_by_key.items():
+            self.assertEqual(FieldDefinition.objects.get(workflow_template=wt, key=key).help_text, expected_help)
+
+    def test_cross_border_transfer_still_maps_to_contract_field(self):
+        """Moving the field into PRIVACY_QUESTIONS must not disturb its
+        Contract.data_transfer_flag mapping (relied on by the workflow
+        step condition_expression 'data_transfer=true')."""
+        wt = WorkflowTemplate.objects.get(name='DPA Privacy Review Workflow')
+        field = FieldDefinition.objects.get(workflow_template=wt, key='cross_border_transfer')
+        self.assertEqual(field.maps_to_contract_field, 'data_transfer_flag')
 
     def test_approval_route_seeded_in_order_with_conditionals(self):
         wt = WorkflowTemplate.objects.get(name='DPA Privacy Review Workflow')
@@ -98,7 +131,15 @@ class GetFieldDefinitionsBySectionTests(TestCase):
     def test_returns_non_empty_ordered_sections(self):
         wt = get_dpa_workflow_template()
         grouped = get_field_definitions_by_section(wt)
-        self.assertEqual(list(grouped.keys()), list(FieldDefinition.Section))
+        self.assertEqual(
+            list(grouped.keys()),
+            [
+                FieldDefinition.Section.BASIC_DETAILS,
+                FieldDefinition.Section.PRIVACY_DETAILS,
+                FieldDefinition.Section.LEGAL_POSITION,
+                FieldDefinition.Section.PRIVACY_QUESTIONS,
+            ],
+        )
         self.assertTrue(grouped[FieldDefinition.Section.BASIC_DETAILS])
         self.assertTrue(grouped[FieldDefinition.Section.PRIVACY_QUESTIONS])
         for fields in grouped.values():
@@ -125,6 +166,13 @@ class RenderDpaLivePreviewTests(TestCase):
 
     def test_blank_body_returns_blank(self):
         self.assertEqual(render_dpa_live_preview(None, {}), '')
+
+    def test_scc_fallback_toggle_changes_transfer_position_copy(self):
+        with_fallback = render_dpa_live_preview('{{data_transfer_position}}', {'cross_border_transfer': True, 'include_scc_fallback': True})
+        without_fallback = render_dpa_live_preview('{{data_transfer_position}}', {'cross_border_transfer': True, 'include_scc_fallback': False})
+        self.assertIn('SCC', with_fallback)
+        self.assertIn('fallback language', with_fallback)
+        self.assertNotIn('fallback language', without_fallback)
 
 
 class DetectDpaRiskSignalsTests(TestCase):
@@ -155,6 +203,29 @@ class DetectDpaRiskSignalsTests(TestCase):
         created = detect_dpa_risk_signals(self.workflow, {'cross_border_transfer': False, 'dpo_contact': '', 'breach_notification_hours': 24})
         self.assertEqual(RiskSignal.objects.filter(workflow=self.workflow).count(), len(created))
         self.assertGreater(len(created), 0)
+
+    def test_special_categories_data_creates_high_signal(self):
+        detect_dpa_risk_signals(self.workflow, {
+            'special_categories_data': True, 'dpo_contact': 'x@y.com', 'breach_notification_hours': 24,
+        })
+        signal = RiskSignal.objects.get(workflow=self.workflow, code='special_categories_risk')
+        self.assertEqual(signal.severity, RiskSignal.Severity.HIGH)
+        self.assertIn('Legal and DPO review', signal.description)
+
+    def test_scc_fallback_included_creates_low_signal(self):
+        detect_dpa_risk_signals(self.workflow, {
+            'include_scc_fallback': True, 'dpo_contact': 'x@y.com', 'breach_notification_hours': 24,
+        })
+        signal = RiskSignal.objects.get(workflow=self.workflow, code='scc_fallback_included')
+        self.assertEqual(signal.severity, RiskSignal.Severity.LOW)
+
+    def test_no_special_categories_or_scc_fallback_signals_when_unset(self):
+        detect_dpa_risk_signals(self.workflow, {
+            'personal_data_involved': False, 'special_categories_data': False, 'include_scc_fallback': False,
+            'dpo_contact': 'x@y.com', 'breach_notification_hours': 24,
+        })
+        self.assertFalse(RiskSignal.objects.filter(workflow=self.workflow, code='special_categories_risk').exists())
+        self.assertFalse(RiskSignal.objects.filter(workflow=self.workflow, code='scc_fallback_included').exists())
 
 
 class CreateDpaWorkflowInstanceTests(TestCase):
@@ -224,6 +295,18 @@ class CreateDpaWorkflowInstanceTests(TestCase):
         self.assertEqual(item.contract, workflow.contract)
         self.assertEqual(item.action_path, reverse('contracts:workflow_detail', kwargs={'pk': workflow.pk}))
 
+    def test_special_categories_and_scc_fallback_field_values_and_signals_created(self):
+        workflow = create_dpa_workflow_instance(
+            organization=self.org, user=self.user,
+            cleaned_values=self._cleaned_values(special_categories_data=True, include_scc_fallback=True),
+        )
+        special_categories_value = FieldValue.objects.get(workflow=workflow, field_definition__key='special_categories_data')
+        scc_fallback_value = FieldValue.objects.get(workflow=workflow, field_definition__key='include_scc_fallback')
+        self.assertTrue(special_categories_value.value)
+        self.assertTrue(scc_fallback_value.value)
+        self.assertTrue(RiskSignal.objects.filter(workflow=workflow, code='special_categories_risk').exists())
+        self.assertTrue(RiskSignal.objects.filter(workflow=workflow, code='scc_fallback_included').exists())
+
 
 class DPAWorkflowBuilderViewIntegrationTests(TestCase):
     def setUp(self):
@@ -257,6 +340,52 @@ class DPAWorkflowBuilderViewIntegrationTests(TestCase):
                       'Data Protection Officer contact', 'Cross-border transfer mechanism', 'Breach notification window'):
             self.assertIn(label, content)
         self.assertIn('AI-assisted drafting from approved templates and playbooks.', content)
+
+    def test_get_renders_ai_smart_questions_with_why_it_matters_copy(self):
+        response = self.client_.get(reverse('contracts:dpa_workflow_builder'))
+        content = response.content.decode()
+        self.assertContains(response, 'AI Smart Questions')
+        self.assertContains(response, 'DocClad is checking whether this DPA requires SCC language, subprocessor review, Legal approval, or DPO approval.')
+        for question in (
+            'Will the counterparty process personal data?',
+            'Will data leave the EEA?',
+            'Are subprocessors involved?',
+            'Are special categories of personal data processed?',
+            'Should SCC fallback language be included?',
+        ):
+            self.assertIn(question, content)
+        for why in (
+            'Required for GDPR routing and DPO approval.',
+            'Triggers SCC review and international transfer language.',
+            'Adds subprocessor review and approval checks.',
+            'Elevates privacy risk',
+            'Adds the approved SCC fallback clause',
+        ):
+            self.assertIn(why, content)
+
+    def test_get_renders_header_progress_and_readiness_markup(self):
+        response = self.client_.get(reverse('contracts:dpa_workflow_builder'))
+        self.assertContains(response, 'id="dpa-progress-pct"')
+        self.assertContains(response, 'id="dpa-progress-copy"')
+        self.assertContains(response, 'id="dpa-header-progress-fill"')
+        self.assertContains(response, 'Draft Readiness')
+        self.assertContains(response, 'Required fields completed')
+        self.assertContains(response, 'Missing required fields')
+        self.assertContains(response, 'Active risk signals')
+        self.assertContains(response, 'Required approvals')
+        self.assertContains(response, 'Blocking errors')
+        self.assertContains(response, 'Audit trail')
+        self.assertContains(response, 'Activates on generate')
+        self.assertContains(response, 'id="dpa-gov-approval-reasons"')
+
+    def test_get_renders_governed_ai_action_bar_copy(self):
+        response = self.client_.get(reverse('contracts:dpa_workflow_builder'))
+        for label in ('Suggest missing values', 'Suggest fallback clause', 'Explain clause',
+                      'Generate DPA summary', 'Compare to playbook'):
+            self.assertContains(response, label)
+        # Guards against AI-decides framing that oversells drafting autonomy.
+        self.assertNotContains(response, 'AI wrote this')
+        self.assertNotContains(response, 'Let AI decide')
 
     def test_post_valid_redirects_to_workflow_detail_and_creates_rows(self):
         before = Workflow.objects.count()
@@ -306,6 +435,22 @@ class DPAWorkflowBuilderViewIntegrationTests(TestCase):
         self.assertContains(response, 'Approval impact')
         self.assertContains(response, 'Open')
 
+    def test_contract_workspace_displays_special_categories_risk_and_dpo_trigger(self):
+        """special_categories_data alone (no personal_data_involved or
+        cross_border_transfer) must still trigger DPO — the elevated-risk
+        routing rule added alongside the AI Smart Questions expansion."""
+        payload = self._valid_payload()
+        ids = self._field_ids()
+        del payload[f'field_{ids["personal_data_involved"]}']
+        del payload[f'field_{ids["cross_border_transfer"]}']
+        payload[f'field_{ids["special_categories_data"]}'] = 'on'
+        self.client_.post(reverse('contracts:dpa_workflow_builder'), payload)
+        workflow = Workflow.objects.latest('id')
+
+        response = self.client_.get(reverse('contracts:workflow_detail', kwargs={'pk': workflow.pk}))
+        self.assertContains(response, 'Special categories risk')
+        self.assertContains(response, 'DPO')
+
     def test_contract_workspace_displays_approval_route_reasons(self):
         self.client_.post(reverse('contracts:dpa_workflow_builder'), self._valid_payload())
         workflow = Workflow.objects.latest('id')
@@ -332,6 +477,23 @@ class DPAWorkflowBuilderViewIntegrationTests(TestCase):
         ):
             self.assertContains(response, event)
 
+    def test_contract_workspace_renders_actions_and_risk_clause_links(self):
+        payload = self._valid_payload()
+        ids = self._field_ids()
+        payload[f'field_{ids["subprocessors_used"]}'] = 'on'
+        self.client_.post(reverse('contracts:dpa_workflow_builder'), payload)
+        workflow = Workflow.objects.latest('id')
+
+        response = self.client_.get(reverse('contracts:workflow_detail', kwargs={'pk': workflow.pk}))
+        self.assertContains(response, 'Send to Legal Review')
+        self.assertContains(response, 'Send to DPO')
+        self.assertContains(response, 'Generate DPA review memo')
+        self.assertContains(response, 'Export Word')
+        self.assertContains(response, 'Open related draft section')
+        self.assertContains(response, 'id="processing-details"', html=False)
+        self.assertContains(response, 'id="international-transfers"', html=False)
+        self.assertContains(response, 'id="subprocessors"', html=False)
+
 
 class StageOneRoutingTests(TestCase):
     def setUp(self):
@@ -345,7 +507,9 @@ class StageOneRoutingTests(TestCase):
     def test_other_cards_still_point_at_contract_create(self):
         response = self.client_.get(reverse('contracts:contract_template_picker'))
         content = response.content.decode()
-        self.assertIn(f"{reverse('contracts:contract_create')}?type=MSA", content)
+        self.assertIn(reverse('contracts:msa_workflow_builder'), content)
+        self.assertIn(reverse('contracts:nda_workflow_builder'), content)
+        self.assertIn(f"{reverse('contracts:contract_create')}?type=SOW", content)
 
 
 class CommandCenterKanbanProjectionTests(TestCase):
@@ -362,3 +526,22 @@ class CommandCenterKanbanProjectionTests(TestCase):
         })
         response = self.client_.get(reverse('dashboard'))
         self.assertContains(response, workflow.title)
+
+    def test_generated_dpa_workflow_row_renders_workspace_operational_fields(self):
+        workflow = create_dpa_workflow_instance(organization=self.org, user=self.user, cleaned_values={
+            'counterparty': 'Queue Test Co.', 'start_date': '2026-09-01', 'governing_law': 'Delaware',
+            'contract_owner': 'Avery Brooks', 'processing_purpose': 'Support services',
+            'personal_data_categories': 'Business contact details', 'data_subjects': 'Customer users',
+            'transfer_mechanism': 'None', 'breach_notification_hours': 24,
+            'personal_data_involved': True, 'cross_border_transfer': True, 'subprocessors_used': True,
+        })
+
+        response = self.client_.get(reverse('dashboard'))
+
+        self.assertContains(response, workflow.title)
+        self.assertContains(response, 'DPA')
+        self.assertContains(response, 'Draft')
+        self.assertContains(response, self.user.username)
+        self.assertContains(response, 'Data may leave the EEA; SCC transfer position and DPO approval are required.')
+        self.assertContains(response, 'Review SCC position and DPO route')
+        self.assertContains(response, reverse('contracts:workflow_detail', kwargs={'pk': workflow.pk}))

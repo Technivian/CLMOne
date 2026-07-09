@@ -115,7 +115,7 @@
       </div>
       <div class="ctp-entry-meta">
         <div class="ctp-entry-meta-row"><span>Template</span><b>{{ card.template_name|default:"Approved template route" }}</b></div>
-        <div class="ctp-entry-meta-row"><span>Workflow</span><b>{% if card.contract_type == "DPA" %}DPA Privacy Review{% else %}Governed drafting{% endif %}</b></div>
+        <div class="ctp-entry-meta-row"><span>Workflow</span><b>{% if card.contract_type == "DPA" %}DPA Privacy Review{% elif card.contract_type == "MSA" %}MSA Commercial Review{% elif card.contract_type == "NDA" %}NDA Self-Serve{% else %}Governed drafting{% endif %}</b></div>
         <div class="ctp-entry-meta-row"><span>Draft time</span><b>~{{ card.draft_minutes }} min</b></div>
         <div class="ctp-entry-meta-row"><span>Typical approvals</span><b>{{ card.typical_approvals }}</b></div>
       </div>

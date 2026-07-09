@@ -53,6 +53,7 @@ from contracts.services.command_center import (
     get_command_center_saved_views,
     get_persisted_command_center_rows,
     get_recent_review_memos,
+    get_workflow_type_summary,
 )
 from contracts.services.contract_launch_setup import get_entry_cards, get_launch_setup_map
 from contracts.services.draft_cockpit import get_governance_panel
@@ -240,12 +241,14 @@ def contract_template_picker(request):
         context['selected_type_label'] = dict(Contract.ContractType.choices).get(contract_type, contract_type)
         context['templates'] = ContractTemplate.objects.filter(contract_type=contract_type, is_active=True)
     else:
-        # DPA is the first "workflow-first" flagship flow — its card starts
-        # the governed DPA Privacy Review Workflow builder instead of the
-        # plain contract form. Every other curated card is unchanged.
+        # DPA, MSA, and NDA are the governed drafting reference flows — their
+        # cards start dedicated workflow builders instead of the legacy
+        # generic intake form. Other curated cards stay unchanged.
         context['entry_cards'] = get_entry_cards(
             start_url_for=lambda ct: (
                 reverse('contracts:dpa_workflow_builder') if ct == Contract.ContractType.DPA
+                else reverse('contracts:msa_workflow_builder') if ct == Contract.ContractType.MSA
+                else reverse('contracts:nda_workflow_builder') if ct == Contract.ContractType.NDA
                 else f"{reverse('contracts:contract_create')}?type={ct}"
             )
         )
@@ -1130,6 +1133,7 @@ def dashboard(request):
         attention_summary = f"{', '.join(attention_parts[:-1])}, and {attention_parts[-1]}"
 
     priority_queue_rows = persisted_command_center_rows or queue_in_progress
+    workflow_type_summary = get_workflow_type_summary(persisted_command_center_rows)
     command_center_rail_items = get_command_center_rail_items(org, {
         'approvals': clm_my_approvals_count,
         'deadlines': clm_renewals_count,
@@ -1141,6 +1145,8 @@ def dashboard(request):
         'attention_total': attention_total,
         'attention_summary': attention_summary,
         'priority_queue_rows': priority_queue_rows,
+        'workflow_type_summary': workflow_type_summary,
+        'persisted_command_center_rows': persisted_command_center_rows,
         'command_center_saved_views': command_center_saved_views,
         'command_center_rail_items': command_center_rail_items,
         'risk_level_counts': risk_level_counts,

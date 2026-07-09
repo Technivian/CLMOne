@@ -501,6 +501,57 @@
   color: #071b3f;
   box-shadow: 0 1px 2px rgba(16,24,40,0.08);
 }
+.dc-summary-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e6ebf2;
+  background: #fff;
+}
+.dc-summary-pill {
+  display: grid;
+  gap: 4px;
+  padding: 11px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+.dc-summary-pill-label {
+  color: #52607a;
+  font-size: 11px;
+  font-weight: 730;
+}
+.dc-summary-pill-value {
+  color: #101936;
+  font-size: 18px;
+  font-weight: 780;
+}
+.dc-summary-pill-note {
+  color: #0a7264;
+  font-size: 11px;
+  font-weight: 730;
+}
+.dc-personality {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: #e8f5f2;
+  color: #0a7264;
+  font-size: 11px;
+  font-weight: 760;
+}
+.dc-personality.commercial {
+  background: #f8ede2;
+  color: #8b4d14;
+}
+.dc-personality.self-serve {
+  background: #e6f7f0;
+  color: #0a7264;
+}
 .dc-view-link {
   display: inline-flex;
   align-items: center;
@@ -1154,10 +1205,56 @@ aside .dc-card + .dc-card { margin-top: 0; }
           </span>
         </div>
       </div>
+      <div class="dc-summary-strip" aria-label="Workflow summary">
+        <div class="dc-summary-pill">
+          <span class="dc-summary-pill-label">Privacy reviews</span>
+          <strong class="dc-summary-pill-value">{{ workflow_type_summary.privacy_reviews|default:0 }}</strong>
+          <span class="dc-summary-pill-note">Privacy-governed workflows</span>
+        </div>
+        <div class="dc-summary-pill">
+          <span class="dc-summary-pill-label">Commercial reviews</span>
+          <strong class="dc-summary-pill-value">{{ workflow_type_summary.commercial_reviews|default:0 }}</strong>
+          <span class="dc-summary-pill-note">Commercial fallback review</span>
+        </div>
+        <div class="dc-summary-pill">
+          <span class="dc-summary-pill-label">Self-serve ready</span>
+          <strong class="dc-summary-pill-value">{{ workflow_type_summary.self_serve_ready|default:0 }}</strong>
+          <span class="dc-summary-pill-note">Governed low-risk signature flow</span>
+        </div>
+        <div class="dc-summary-pill">
+          <span class="dc-summary-pill-label">Blocking approvals</span>
+          <strong class="dc-summary-pill-value">{{ workflow_type_summary.blocking_approvals|default:0 }}</strong>
+          <span class="dc-summary-pill-note">Queued approval bottlenecks</span>
+        </div>
+      </div>
       <div class="dc-workbench-view is-active" data-workbench-panel="table">
         <table class="dc-table">
-          <thead><tr><th>Item</th><th>Owner</th><th>Counterparty</th><th>Stage</th><th>Risk</th><th>Due / Notice</th><th>Action</th></tr></thead>
+          <thead><tr><th>Item</th><th>Owner</th><th>Type</th><th>Stage</th><th>Risk Personality</th><th>Highest Risk</th><th>Due / Notice</th><th>Action</th></tr></thead>
           <tbody>
+            {% if persisted_command_center_rows %}
+            {% for row in priority_queue_rows %}
+            <tr data-queue-row data-workflow-title="{{ row.title }}" data-filter-all="true" data-filter-mine="{% if row.filter_mine %}true{% else %}false{% endif %}" data-filter-high-risk="{% if row.filter_high_risk %}true{% else %}false{% endif %}" data-filter-renewals="{% if row.filter_renewals %}true{% else %}false{% endif %}" data-filter-waiting="{% if row.filter_waiting %}true{% else %}false{% endif %}" data-filter-dpa="{% if row.filter_dpa %}true{% else %}false{% endif %}">
+              <td class="dc-item-cell">
+                <span class="dc-row-stripe{% if row.filter_dpa %} orange{% elif row.filter_high_risk %}{% else %} teal{% endif %}"></span>
+                <div class="dc-item-title"><a href="{{ row.href }}" class="dc-row-action">{{ row.title }}</a></div>
+                <div class="dc-item-sub">{{ row.contract_type|default:row.item_type }}{% if row.counterparty %} · {{ row.counterparty }}{% else %} · No counterparty{% endif %}</div>
+              </td>
+              <td>
+                {% if row.assignee %}
+                <span class="dc-owner-chip"><span class="dc-owner-avatar">{{ row.assignee.get_full_name|default:row.assignee.username|slice:":1"|upper }}</span><span class="dc-owner-name">{{ row.assignee.get_full_name|default:row.assignee.username }}</span></span>
+                {% else %}
+                <span class="dc-muted">Unassigned</span>
+                {% endif %}
+              </td>
+              <td class="dc-muted">{{ row.contract_type|default:row.item_type }}</td>
+              <td><span class="dc-status{% if row.filter_dpa %} negotiation{% elif row.filter_waiting %} approval{% endif %}">{{ row.current_stage|default:row.stage }}</span></td>
+              <td><span class="dc-personality{% if row.risk_personality == 'Commercial risk' %} commercial{% elif row.risk_personality == 'Self-serve eligible' %} self-serve{% endif %}">{{ row.risk_personality|default:"Review required" }}</span></td>
+              <td><span class="dc-risk-dots"><span class="dc-dot{% if row.risk_level == 'MEDIUM' %} orange{% elif row.risk_level == 'LOW' %} teal{% endif %}"></span>{{ row.highest_risk_signal|default:row.risk_level }}</span><div class="dc-item-sub">{{ row.blocking_issue|default:"No blocking issue" }}</div></td>
+              <td>{% if row.due_date %}{% if row.due_overdue %}<span class="dc-due-red">{{ row.due_date|date:"M d" }}</span>{% else %}{{ row.due_date|date:"M d" }}{% endif %}<div class="dc-item-sub">{{ row.current_stage|default:row.stage }}</div>{% else %}<span class="dc-muted">No due date</span>{% endif %}</td>
+              <td>{% if row.is_workflow %}<a class="dc-row-action" href="{{ row.workspace_href }}">Open workspace</a><div class="dc-item-sub">{{ row.next_action|default:row.action_label }}</div>{% else %}<a class="dc-row-action" href="{{ row.href }}">{{ row.next_action|default:row.action_label }}</a>{% endif %}</td>
+            </tr>
+            {% endfor %}
+            {% else %}
             <tr data-queue-row data-filter-all="true" data-filter-mine="true" data-filter-high-risk="true" data-filter-renewals="true" data-filter-waiting="false" data-filter-dpa="false">
               <td class="dc-item-cell">
                 <span class="dc-row-stripe"></span>
@@ -1209,6 +1306,7 @@ aside .dc-card + .dc-card { margin-top: 0; }
               <td><span class="dc-due-red">Overdue</span><div class="dc-item-sub">Owner blocked</div></td>
               <td><a class="dc-row-action" href="{% url 'contracts:approval_request_list' %}">Nudge owner</a></td>
             </tr>
+            {% endif %}
           </tbody>
         </table>
       </div>
@@ -1298,10 +1396,9 @@ aside .dc-card + .dc-card { margin-top: 0; }
       <section class="dc-card">
         <div class="dc-card-head"><div class="dc-card-title-wrap"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16M4 12h10M4 17h7"/></svg><span class="dc-card-title">Command Rail</span></div></div>
         <div class="dc-rail-list">
-          <a class="dc-rail-row" href="{% url 'contracts:approval_request_list' %}"><span class="dc-rail-title">Blocking approvals</span><span class="dc-rail-badge">4</span></a>
-          <a class="dc-rail-row" href="{% url 'contracts:deadline_list' %}"><span class="dc-rail-title">Upcoming notice dates</span><span class="dc-rail-badge">18</span></a>
-          <a class="dc-rail-row" href="{% url 'contracts:dpa_review_pack_list' %}"><span class="dc-rail-title">DPA / MSA conflicts</span><span class="dc-rail-badge">3</span></a>
-          <a class="dc-rail-row" href="{% url 'contracts:dpa_review_pack_list' %}"><span class="dc-rail-title">Recent review memos</span><span class="dc-rail-badge">6</span></a>
+          {% for item in command_center_rail_items %}
+          <a class="dc-rail-row" href="{{ item.action_path }}"><span class="dc-rail-title">{{ item.title }}</span><span class="dc-rail-badge">{{ item.count }}</span></a>
+          {% endfor %}
         </div>
         <a class="dc-footer-link" href="{% url 'contracts:legal_task_kanban' %}">Open task control&nbsp; →</a>
       </section>

@@ -2233,9 +2233,13 @@ class FieldDefinition(models.Model):
     and "smart questions" as data, not hardcoded form fields."""
     class Section(models.TextChoices):
         BASIC_DETAILS = 'BASIC_DETAILS', 'Basic details'
+        NDA_TERMS = 'NDA_TERMS', 'NDA terms'
+        COMMERCIAL_TERMS = 'COMMERCIAL_TERMS', 'Commercial terms'
+        SERVICES_SCOPE = 'SERVICES_SCOPE', 'Services & scope'
         PRIVACY_DETAILS = 'PRIVACY_DETAILS', 'Privacy details'
         LEGAL_POSITION = 'LEGAL_POSITION', 'Legal position'
         PRIVACY_QUESTIONS = 'PRIVACY_QUESTIONS', 'Smart privacy questions'
+        SMART_QUESTIONS = 'SMART_QUESTIONS', 'AI smart questions'
 
     class FieldType(models.TextChoices):
         TEXT = 'TEXT', 'Text'

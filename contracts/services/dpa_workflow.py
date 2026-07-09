@@ -33,6 +33,7 @@ from contracts.models import (
     FieldValue,
     RiskSignal,
     Workflow,
+    WorkflowStep,
     WorkflowTemplate,
 )
 from contracts.services.contract_templates import MERGE_FIELDS, _format_value
@@ -114,12 +115,16 @@ def render_dpa_live_preview(template_body: Optional[str], field_values_by_key: d
         return ''
 
     values = dict(field_values_by_key or {})
-    values.setdefault(
-        'data_transfer_position',
-        'Data leaves the EEA; SCCs or an approved transfer mechanism must be included'
-        if values.get('cross_border_transfer')
-        else 'No transfer outside the EEA is currently selected'
-    )
+    if values.get('cross_border_transfer'):
+        transfer_default = (
+            'Data leaves the EEA; the parties incorporate the approved Standard Contractual '
+            'Clauses (SCC) fallback language as the transfer mechanism'
+            if values.get('include_scc_fallback')
+            else 'Data leaves the EEA; SCCs or an approved transfer mechanism must be included'
+        )
+    else:
+        transfer_default = 'No transfer outside the EEA is currently selected'
+    values.setdefault('data_transfer_position', transfer_default)
     values.setdefault(
         'subprocessor_position',
         'Subprocessors are involved; approved flow-down obligations apply'
@@ -177,6 +182,12 @@ def detect_dpa_risk_signals(workflow: Workflow, field_values_by_key: dict) -> Li
         if not field_values_by_key.get('liability_position'):
             signals.append(('subprocessors_undisclosed', 'Subprocessors are involved but no fallback/liability position was captured.', RiskSignal.Severity.MEDIUM))
 
+    if field_values_by_key.get('special_categories_data'):
+        signals.append(('special_categories_risk', 'Special categories of personal data are processed; elevated privacy risk requires Legal and DPO review.', RiskSignal.Severity.HIGH))
+
+    if field_values_by_key.get('include_scc_fallback'):
+        signals.append(('scc_fallback_included', 'Approved SCC fallback clause language will be included in the draft.', RiskSignal.Severity.LOW))
+
     breach_hours = field_values_by_key.get('breach_notification_hours')
     try:
         breach_hours_val = float(breach_hours) if breach_hours not in (None, '') else None
@@ -200,6 +211,28 @@ def sync_command_center_work_item_for_workflow(workflow: Workflow) -> CommandCen
     there; dashboard.html's Kanban "Draft" column already matches
     stage == 'Drafting', so no template change is needed either."""
     contract = workflow.contract
+    current_step = (
+        workflow.steps.filter(status=WorkflowStep.Status.IN_PROGRESS).order_by('order').first()
+        or workflow.steps.filter(status=WorkflowStep.Status.PENDING).order_by('order').first()
+    )
+    risk_signals = list(workflow.risk_signals.order_by('-severity', 'detected_at'))
+    highest_risk = risk_signals[0] if risk_signals else None
+    severity_rank = {
+        RiskSignal.Severity.CRITICAL: 4,
+        RiskSignal.Severity.HIGH: 3,
+        RiskSignal.Severity.MEDIUM: 2,
+        RiskSignal.Severity.LOW: 1,
+    }
+    top_signal = max(risk_signals, key=lambda signal: severity_rank.get(signal.severity, 0)) if risk_signals else None
+    current_stage = current_step.name if current_step else 'Intake'
+    next_action = (
+        'Review SCC position and DPO route'
+        if top_signal and top_signal.code in {'scc_transfer_review', 'cross_border_no_mechanism'}
+        else 'Review DPA risk signals'
+        if top_signal
+        else 'Open generated DPA workspace'
+    )
+    blocking_issue = top_signal.description if top_signal else 'Field capture complete; ready for governed review.'
     item, _ = CommandCenterWorkItem.objects.update_or_create(
         organization=workflow.organization,
         source_type=CommandCenterWorkItem.SourceType.WORKFLOW,
@@ -207,16 +240,33 @@ def sync_command_center_work_item_for_workflow(workflow: Workflow) -> CommandCen
         source_object_id=workflow.pk,
         defaults={
             'title': workflow.title,
-            'subtitle': contract.counterparty if contract else '',
+            'subtitle': blocking_issue,
             'item_type': 'DPA workflow',
-            'stage': 'Drafting',
-            'status': CommandCenterWorkItem.Status.OPEN,
-            'risk_level': contract.risk_level if contract else Contract.RiskLevel.LOW,
-            'priority': CommandCenterWorkItem.Priority.MEDIUM,
+            'stage': current_stage,
+            'status': CommandCenterWorkItem.Status.BLOCKED if top_signal and top_signal.severity in {RiskSignal.Severity.HIGH, RiskSignal.Severity.CRITICAL} else CommandCenterWorkItem.Status.OPEN,
+            'risk_level': top_signal.severity if top_signal else (contract.risk_level if contract else Contract.RiskLevel.LOW),
+            'priority': (
+                CommandCenterWorkItem.Priority.HIGH
+                if top_signal and top_signal.severity in {RiskSignal.Severity.HIGH, RiskSignal.Severity.CRITICAL}
+                else CommandCenterWorkItem.Priority.MEDIUM
+            ),
+            'owner': workflow.created_by,
             'contract': contract,
             'workflow': workflow,
-            'action_label': 'Continue draft',
+            'due_at': current_step.due_date if current_step else None,
+            'action_label': 'Open workspace',
             'action_path': reverse('contracts:workflow_detail', kwargs={'pk': workflow.pk}),
+            'flags': {
+                'contract_type': 'DPA',
+                'current_stage': current_stage,
+                'owner_label': (
+                    workflow.created_by.get_full_name() or workflow.created_by.username
+                    if workflow.created_by else 'Unassigned'
+                ),
+                'highest_risk_signal': top_signal.description if top_signal else 'No active risk signal',
+                'blocking_issue': blocking_issue,
+                'next_action': next_action,
+            },
             'last_source_synced_at': timezone.now(),
         },
     )

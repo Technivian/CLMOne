@@ -97,6 +97,7 @@ class GetClauseLibraryCountTests(TestCase):
         self.org = Organization.objects.create(name='Clause Org', slug='clause-org')
 
     def test_counts_approved_clauses_applicable_to_type(self):
+        baseline = get_clause_library_count(self.org, Contract.ContractType.NDA)
         ClauseTemplate.objects.create(
             organization=self.org, title='Confidentiality', content='x', is_approved=True,
             applicable_contract_types='NDA,MSA',
@@ -105,15 +106,17 @@ class GetClauseLibraryCountTests(TestCase):
             organization=self.org, title='Unrelated', content='x', is_approved=True,
             applicable_contract_types='DPA',
         )
-        self.assertEqual(get_clause_library_count(self.org, Contract.ContractType.NDA), 1)
+        self.assertEqual(get_clause_library_count(self.org, Contract.ContractType.NDA), baseline + 1)
 
     def test_blank_applicable_types_means_applies_to_all(self):
+        baseline = get_clause_library_count(self.org, Contract.ContractType.NDA)
         ClauseTemplate.objects.create(organization=self.org, title='Universal', content='x', is_approved=True)
-        self.assertEqual(get_clause_library_count(self.org, Contract.ContractType.NDA), 1)
+        self.assertEqual(get_clause_library_count(self.org, Contract.ContractType.NDA), baseline + 1)
 
     def test_excludes_unapproved_clauses(self):
+        baseline = get_clause_library_count(self.org, Contract.ContractType.NDA)
         ClauseTemplate.objects.create(organization=self.org, title='Draft clause', content='x', is_approved=False)
-        self.assertEqual(get_clause_library_count(self.org, Contract.ContractType.NDA), 0)
+        self.assertEqual(get_clause_library_count(self.org, Contract.ContractType.NDA), baseline)
 
     def test_returns_zero_for_blank_contract_type(self):
         self.assertEqual(get_clause_library_count(self.org, ''), 0)

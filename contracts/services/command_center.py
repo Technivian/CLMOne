@@ -145,6 +145,11 @@ def command_center_work_item_to_row(item, current_user=None, today=None):
     today = today or date.today()
     contract = item.contract
     flags = item.flags or {}
+    contract_type = flags.get('contract_type') or (contract.contract_type if contract else '')
+    risk_personality = flags.get('risk_personality', '')
+    highest_risk_signal = flags.get('highest_risk_signal', '')
+    blocking_issue = flags.get('blocking_issue', item.subtitle)
+    next_action = flags.get('next_action', item.action_label)
     if item.stage:
         stage = item.stage
     elif contract:
@@ -157,13 +162,30 @@ def command_center_work_item_to_row(item, current_user=None, today=None):
     elif item.dpa_review_pack and item.dpa_review_pack.counterparty:
         counterparty = item.dpa_review_pack.counterparty.name
 
+    if not risk_personality:
+        if flags.get('self_serve_eligible'):
+            risk_personality = 'Self-serve eligible'
+        elif contract_type == 'DPA':
+            risk_personality = 'Privacy risk'
+        elif contract_type == 'MSA':
+            risk_personality = 'Commercial risk'
+        elif contract_type == 'NDA' and (highest_risk_signal or '').lower() == 'self-serve eligible':
+            risk_personality = 'Self-serve eligible'
+
+    if not highest_risk_signal and risk_personality == 'Self-serve eligible':
+        highest_risk_signal = 'No legal risk detected'
+
     return {
         'title': item.title,
         'href': _work_item_href(item),
+        'workspace_href': _work_item_href(item),
         'edit_href': _work_item_href(item),
         'meta': item.subtitle,
         'contract': contract,
         'assignee': item.owner,
+        'owner_label': flags.get('owner_label') or (
+            item.owner.get_full_name() or item.owner.username if item.owner else 'Unassigned'
+        ),
         'owner_role': '',
         'activity': None,
         'due_date': due_date,
@@ -173,9 +195,17 @@ def command_center_work_item_to_row(item, current_user=None, today=None):
         'status_badge_class': 'badge-red' if item.status == CommandCenterWorkItem.Status.BLOCKED else 'badge-blue',
         'action_label': item.action_label,
         'item_type': item.item_type or item.get_source_type_display(),
+        'contract_type': contract_type,
         'stage': stage,
+        'current_stage': flags.get('current_stage', stage),
         'risk_level': item.risk_level,
+        'risk_personality': risk_personality,
+        'highest_risk_signal': highest_risk_signal,
+        'blocking_issue': blocking_issue,
+        'next_action': next_action,
+        'approval_route': flags.get('approval_route', ''),
         'counterparty': counterparty,
+        'is_workflow': item.source_type == CommandCenterWorkItem.SourceType.WORKFLOW,
         'filter_mine': bool(current_user and item.owner_id == current_user.id),
         'filter_dpa': item.source_type == CommandCenterWorkItem.SourceType.DPA_CONFLICT or (contract and contract.contract_type == 'DPA'),
         'filter_high_risk': item.risk_level in ('HIGH', 'CRITICAL'),
@@ -207,6 +237,16 @@ def get_persisted_command_center_rows(organization, current_user=None, limit=50,
         .order_by('-priority', 'due_at', '-updated_at')[:limit]
     )
     return [command_center_work_item_to_row(item, current_user=current_user, today=today) for item in items]
+
+
+def get_workflow_type_summary(rows):
+    workflow_rows = [row for row in (rows or []) if row.get('is_workflow')]
+    return {
+        'privacy_reviews': sum(1 for row in workflow_rows if row.get('risk_personality') == 'Privacy risk'),
+        'commercial_reviews': sum(1 for row in workflow_rows if row.get('risk_personality') == 'Commercial risk'),
+        'self_serve_ready': sum(1 for row in workflow_rows if row.get('risk_personality') == 'Self-serve eligible'),
+        'blocking_approvals': sum(1 for row in workflow_rows if row.get('status_label') == 'Blocked'),
+    }
 
 
 def get_command_center_rail_items(organization, counts):

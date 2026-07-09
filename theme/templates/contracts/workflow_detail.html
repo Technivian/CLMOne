@@ -13,6 +13,10 @@
 </style>
 {% if is_dpa_workspace %}
 {% include "contracts/dpa_contract_workspace.html" %}
+{% elif is_msa_workspace %}
+{% include "contracts/msa_contract_workspace.html" %}
+{% elif is_nda_workspace %}
+{% include "contracts/nda_contract_workspace.html" %}
 {% else %}
 <div class="page-wrap reveal-stagger">
     <div class="workspace-main hero-shell mb-6">

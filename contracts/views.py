@@ -156,6 +156,8 @@ from .views_domains.contracts import (
     dashboard,
 )
 from .views_domains.dpa_workflow import DPAWorkflowBuilderView
+from .views_domains.msa_workflow import MSAWorkflowBuilderView
+from .views_domains.nda_workflow import NDAWorkflowBuilderView
 from .views_domains.dpa_review import (
     DPAPlaybookListView,
     DPAReviewMemoView,
