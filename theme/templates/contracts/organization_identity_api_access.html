@@ -1,0 +1,21 @@
+<p class="text-desc-sm">Versioned REST access uses scoped bearer tokens. Read access defaults to `contracts:read`.</p>
+<div class="flex-between">
+  <div class="text-subtitle">
+    <div>Versioned endpoint: <strong class="c-primary">{{ api_v1_contracts_url }}</strong></div>
+    {% if organization.api_tokens.exists %}
+      <div class="mt-1">Latest token: <strong class="c-primary">{{ organization.api_tokens.first.token_last4 }}</strong></div>
+    {% endif %}
+  </div>
+  <form method="post" data-confirm="Rotate the API token? This will invalidate the existing token value.">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="rotate_api_token">
+    <button type="submit" class="dc-ds-button dc-ds-button--ghost">Rotate API token</button>
+  </form>
+</div>
+{% if api_token_preview %}
+<div class="info-box">
+  <p class="info-box-text">Copy this API token now. It will not be shown again.</p>
+  <code class="code-block">{{ api_token_preview.token }}</code>
+  <p class="mt-2 text-subtitle">Scopes: {{ api_token_preview.scopes|join:", " }}</p>
+</div>
+{% endif %}

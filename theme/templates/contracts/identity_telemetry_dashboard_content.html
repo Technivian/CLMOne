@@ -1,0 +1,16 @@
+{% with identity_subtitle="SAML, SCIM, MFA, and recovery-code activity for "|add:organization.name %}
+  {% include "design_system/page_hero.html" with eyebrow="Security telemetry" title="Identity Telemetry" subtitle=identity_subtitle actions_template="contracts/identity_telemetry_dashboard_actions.html" %}
+{% endwith %}
+
+<div class="dc-ds-metric-grid">
+  {% for metric in telemetry_events %}
+    <article class="dc-ds-metric" data-metric="{{ metric.key }}">
+      <div class="dc-ds-metric__label">{{ metric.label }}</div>
+      <div class="dc-ds-metric__value">{{ metric.value }}</div>
+    </article>
+  {% endfor %}
+</div>
+
+{% include "design_system/surface_card.html" with title="Recovery code inventory" labelledby="identity-recovery-code-inventory" meta_template="contracts/identity_telemetry_recovery_meta.html" body_template="contracts/identity_telemetry_recovery_body.html" %}
+
+{% include "design_system/surface_card.html" with title="Recent identity events" labelledby="identity-recent-events" body_template="contracts/identity_telemetry_recent_logs.html" %}

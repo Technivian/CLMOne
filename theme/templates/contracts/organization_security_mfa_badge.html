@@ -1,0 +1,5 @@
+{% if organization.require_mfa %}
+  {% include "design_system/status_badge.html" with label="Enabled" tone="success" %}
+{% else %}
+  {% include "design_system/status_badge.html" with label="Disabled" %}
+{% endif %}

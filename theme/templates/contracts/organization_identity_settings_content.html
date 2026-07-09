@@ -1,0 +1,13 @@
+{% include "design_system/page_hero.html" with eyebrow="Organization settings" title="Identity Provider" subtitle="Configure enterprise SAML metadata and SCIM provisioning for this organization." %}
+
+{% include "design_system/surface_card.html" with title="Identity settings" labelledby="organization-identity-settings-form" body_template="contracts/organization_identity_settings_form.html" %}
+
+{% include "design_system/surface_card.html" with title="SAML endpoints" labelledby="organization-identity-saml-endpoints" body_template="contracts/organization_identity_saml_endpoints.html" %}
+
+{% include "design_system/surface_card.html" with title="SCIM provisioning" labelledby="organization-identity-scim" body_template="contracts/organization_identity_scim.html" %}
+
+{% include "design_system/surface_card.html" with title="API access" labelledby="organization-identity-api-access" body_template="contracts/organization_identity_api_access.html" %}
+
+{% include "design_system/surface_card.html" with title="Salesforce sync" labelledby="organization-identity-salesforce" body_template="contracts/organization_identity_salesforce.html" %}
+
+{% include "design_system/surface_card.html" with title="Webhook deliveries" labelledby="organization-identity-webhooks" body_template="contracts/organization_identity_webhooks.html" %}

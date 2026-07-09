@@ -1,48 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Approval Rules – DocClad{% endblock %}
+
 {% block content %}
-<div class="page-wrap">
-  <div class="page-header">
-    <div>
-      <h1 class="page-title">Approval Rules</h1>
-      <p class="page-subtitle">Manage approval rules</p>
-    </div>
-    <div class="page-actions">
-      <a href="{% url 'contracts:approval_rule_create' %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white border border-transparent btn-primary-grad">
-        <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-        Add New
-      </a>
-    </div>
-  </div>
-  <div class="panel">
-    <table class="w-full">
-      <thead class="tbl-head">
-        <tr>
-          <th class="tbl-th">Name</th>
-          <th class="tbl-th">Trigger</th>
-          <th class="tbl-th">Value</th>
-          <th class="tbl-th">Step</th>
-          <th class="tbl-th">SLA (hrs)</th>
-          <th class="tbl-th">Active</th>
-          <th class="tbl-th text-right">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for item in rules %}
-        <tr class="tbl-row">
-          <td class="tbl-td">{{ item.name }}</td>
-          <td class="tbl-td">{{ item.get_trigger_type_display }}</td>
-          <td class="tbl-td c-muted">{{ item.trigger_value }}</td>
-          <td class="tbl-td">{{ item.get_approval_step_display }}</td>
-          <td class="tbl-td c-muted">{{ item.sla_hours }}</td>
-          <td class="tbl-td">{% if item.is_active %}<span class="badge-sm badge-green">Yes</span>{% else %}<span class="c-muted">No</span>{% endif %}</td>
-          <td class="tbl-td text-right"><a href="{% url 'contracts:approval_rule_update' item.pk %}" class="btn-ghost px-3 py-1 text-sm rounded-lg">Edit</a></td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="7"><div class="empty-state">No approval rules found</div></td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
+{% include "design_system/page_scaffold.html" with main_template="contracts/approval_rule_list_content.html" wide=True %}
 {% endblock %}

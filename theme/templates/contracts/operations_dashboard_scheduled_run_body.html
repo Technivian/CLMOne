@@ -1,0 +1,6 @@
+<div>
+  {{ item.started_at }} · examined {{ item.records_examined }} · changed {{ item.records_changed }} · notified {{ item.notifications_created }}
+</div>
+{% if item.error_summary %}
+<p class="text-sm c-danger mt-1">{{ item.error_summary }}</p>
+{% endif %}

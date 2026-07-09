@@ -1,0 +1,11 @@
+<div class="dc-ds-dense-list{% if class_name %} {{ class_name }}{% endif %}">
+  {% if items %}
+    {% for item in items %}
+      {% if row_template %}
+        {% include row_template with item=item %}
+      {% endif %}
+    {% endfor %}
+  {% else %}
+    {% include "design_system/empty_state.html" with title=empty_title|default:"No records found." copy=empty_copy %}
+  {% endif %}
+</div>

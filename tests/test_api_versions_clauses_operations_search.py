@@ -433,3 +433,17 @@ class ApiVersionsClausesOperationsSearchTests(TestCase):
 
         call_command('run_operational_drill')
         self.assertIsNotNone(cache.get('operations_drill.last_run_iso'))
+
+    def test_operations_dashboard_renders_dense_admin_list(self):
+        BackgroundJob.objects.create(
+            organization=self.organization,
+            job_type='send_contract_reminders',
+            payload={},
+        )
+
+        response = self.client.get(reverse('operations_dashboard'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Operations Dashboard', html=False)
+        self.assertContains(response, 'send_contract_reminders', html=False)
+        self.assertContains(response, 'dc-ds-dense-row', html=False)

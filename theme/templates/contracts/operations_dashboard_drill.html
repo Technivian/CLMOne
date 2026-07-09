@@ -1,0 +1,6 @@
+<p class="text-sm c-muted mb-4">Use the drill command to queue work, process reminders/text-extraction jobs, and capture operational evidence.</p>
+<pre class="code-block text-xs rounded-lg p-4 overflow-x-auto" role="region" aria-label="Drill command">./.venv/bin/python manage.py run_operational_drill</pre>
+{% if drill_state.last_run_iso %}
+<p class="item-meta mt-4">Last drill: {{ drill_state.last_run_iso }}</p>
+<p class="text-sm c-muted mt-1">{{ drill_state.last_summary }}</p>
+{% endif %}

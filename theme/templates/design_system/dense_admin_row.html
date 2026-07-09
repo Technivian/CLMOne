@@ -1,0 +1,18 @@
+<div class="dc-ds-dense-row{% if class_name %} {{ class_name }}{% endif %}">
+  <div class="dc-ds-dense-row__main">
+    <div class="dc-ds-dense-row__title">{{ title }}</div>
+    {% if metadata %}<div class="dc-ds-dense-row__meta">{{ metadata }}</div>{% endif %}
+    {% if timestamp %}<div class="dc-ds-dense-row__timestamp">{{ timestamp }}</div>{% endif %}
+    {% if body_template %}<div class="dc-ds-dense-row__body">{% include body_template %}</div>{% endif %}
+  </div>
+  {% if badge_label %}
+    <div class="dc-ds-dense-row__badge">
+      {% include "design_system/status_badge.html" with label=badge_label tone=badge_tone %}
+    </div>
+  {% endif %}
+  {% if actions_template %}
+    <div class="dc-ds-dense-row__actions">
+      {% include actions_template %}
+    </div>
+  {% endif %}
+</div>

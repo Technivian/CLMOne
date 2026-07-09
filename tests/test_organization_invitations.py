@@ -373,6 +373,8 @@ class OrganizationInvitationTests(TestCase):
         response = self.client.get(reverse('contracts:organization_activity'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'OrganizationInvitation')
+        self.assertContains(response, 'dc-ds-dense-list')
+        self.assertContains(response, 'dc-ds-dense-row')
 
     def test_admin_can_view_organization_activity(self):
         self.client.login(username='admin', password='testpass123')

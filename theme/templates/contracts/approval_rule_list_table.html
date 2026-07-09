@@ -1,0 +1,40 @@
+{% if rules %}
+<div class="overflow-x-auto">
+  <table class="w-full text-sm">
+    <thead>
+      <tr>
+        <th class="text-left px-4 py-2 text-xs font-semibold uppercase tracking-wide">Name</th>
+        <th class="text-left px-4 py-2 text-xs font-semibold uppercase tracking-wide">Trigger</th>
+        <th class="text-left px-4 py-2 text-xs font-semibold uppercase tracking-wide">Value</th>
+        <th class="text-left px-4 py-2 text-xs font-semibold uppercase tracking-wide">Step</th>
+        <th class="text-left px-4 py-2 text-xs font-semibold uppercase tracking-wide">SLA (hrs)</th>
+        <th class="text-left px-4 py-2 text-xs font-semibold uppercase tracking-wide">Active</th>
+        <th class="text-right px-4 py-2 text-xs font-semibold uppercase tracking-wide">Actions</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-100">
+      {% for item in rules %}
+      <tr>
+        <td class="px-4 py-3">{{ item.name }}</td>
+        <td class="px-4 py-3">{{ item.get_trigger_type_display }}</td>
+        <td class="px-4 py-3 c-muted">{{ item.trigger_value }}</td>
+        <td class="px-4 py-3">{{ item.get_approval_step_display }}</td>
+        <td class="px-4 py-3 c-muted">{{ item.sla_hours }}</td>
+        <td class="px-4 py-3">
+          {% if item.is_active %}
+            {% include "design_system/status_badge.html" with label="Yes" tone="success" %}
+          {% else %}
+            <span class="c-muted">No</span>
+          {% endif %}
+        </td>
+        <td class="px-4 py-3 text-right">
+          <a href="{% url 'contracts:approval_rule_update' item.pk %}" class="dc-ds-button">Edit</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+  {% include "design_system/empty_state.html" with title="No approval rules found" %}
+{% endif %}

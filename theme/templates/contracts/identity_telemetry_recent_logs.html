@@ -1,0 +1,10 @@
+<div class="dc-ds-timeline">
+  {% for log in recent_logs %}
+    {% include "design_system/audit_timeline_item.html" with title=log.changes.event|default:log.action meta=log.timestamp %}
+    <div class="dc-ds-actions">
+      {% include "design_system/status_badge.html" with label=log.model_name %}
+    </div>
+  {% empty %}
+    <p class="text-sm c-muted">No recent identity events.</p>
+  {% endfor %}
+</div>

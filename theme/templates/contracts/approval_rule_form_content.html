@@ -1,0 +1,5 @@
+{% with page_title=object|yesno:"Edit,New"|add:" Approval Rule" %}
+  {% include "design_system/page_hero.html" with title=page_title subtitle="Configure conditional approval routing for governed workflows." %}
+{% endwith %}
+
+{% include "design_system/surface_card.html" with title="Rule details" labelledby="approval-rule-form" body_template="contracts/approval_rule_form_body.html" %}

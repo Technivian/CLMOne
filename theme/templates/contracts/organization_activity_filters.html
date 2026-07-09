@@ -1,0 +1,23 @@
+<form method="get" class="dc-ds-filterbar">
+  <label for="filter-action" class="sr-only">Filter by action</label>
+  <select id="filter-action" name="action" class="px-3 py-2 rounded-lg border text-sm select-base" data-autosubmit>
+    <option value="">All Actions</option>
+    <option value="CREATE" {% if request.GET.action == 'CREATE' %}selected{% endif %}>Created</option>
+    <option value="UPDATE" {% if request.GET.action == 'UPDATE' %}selected{% endif %}>Updated</option>
+    <option value="DELETE" {% if request.GET.action == 'DELETE' %}selected{% endif %}>Deleted</option>
+    <option value="APPROVE" {% if request.GET.action == 'APPROVE' %}selected{% endif %}>Approved</option>
+    <option value="REJECT" {% if request.GET.action == 'REJECT' %}selected{% endif %}>Rejected</option>
+  </select>
+  <label for="filter-model" class="sr-only">Filter by type</label>
+  <select id="filter-model" name="model" class="px-3 py-2 rounded-lg border text-sm select-base" data-autosubmit>
+    <option value="">All Types</option>
+    <option value="OrganizationInvitation" {% if request.GET.model == 'OrganizationInvitation' %}selected{% endif %}>Team invitations</option>
+    <option value="OrganizationMembership" {% if request.GET.model == 'OrganizationMembership' %}selected{% endif %}>Team memberships</option>
+  </select>
+  <label for="filter-start" class="sr-only">Start date</label>
+  <input id="filter-start" type="date" name="start_date" value="{{ request.GET.start_date }}" class="px-3 py-2 rounded-lg border text-sm input-base">
+  <label for="filter-end" class="sr-only">End date</label>
+  <input id="filter-end" type="date" name="end_date" value="{{ request.GET.end_date }}" class="px-3 py-2 rounded-lg border text-sm input-base">
+  <button type="submit" class="dc-ds-button dc-ds-button--primary">Apply</button>
+  <a href="{% url 'contracts:organization_activity_export' %}{% if query_string %}?{{ query_string }}{% endif %}" class="dc-ds-button dc-ds-button--ghost">Export CSV</a>
+</form>

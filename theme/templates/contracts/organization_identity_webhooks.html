@@ -1,0 +1,31 @@
+<p class="text-desc-sm">Diagnostics for outbound integration events, including retries and dead-letter items.</p>
+<div class="table-wrapper">
+  <table class="table-base">
+    <thead>
+      <tr class="table-head-row">
+        <th class="table-cell-pad">Created</th>
+        <th class="table-cell-pad">Endpoint</th>
+        <th class="table-cell-pad">Event</th>
+        <th class="table-cell-pad">Status</th>
+        <th class="table-cell-pad">Attempts</th>
+        <th class="table-cell-pad">Response</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for delivery in webhook_deliveries %}
+      <tr class="table-body-row">
+        <td class="table-cell-pad table-cell-primary">{{ delivery.created_at|date:"Y-m-d H:i" }}</td>
+        <td class="table-cell-pad c-muted">{{ delivery.endpoint.name }}</td>
+        <td class="table-cell-pad c-muted">{{ delivery.event_type }}</td>
+        <td class="table-cell-pad table-cell-primary">{{ delivery.status }}</td>
+        <td class="table-cell-pad c-muted">{{ delivery.attempt_count }}/{{ delivery.max_attempts }}</td>
+        <td class="table-cell-pad c-muted">{{ delivery.response_status|default:"-" }}</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="6" class="table-cell-pad c-muted">No webhook deliveries yet.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

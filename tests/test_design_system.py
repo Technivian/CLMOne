@@ -71,6 +71,19 @@ class DesignSystemTests(TestCase):
         self.assertIn('card-header', rendered)
         self.assertIn('card-content', rendered)
 
+    def test_dense_admin_row_adapter_renders_core_slots(self):
+        template = Template(
+            '{% include "design_system/dense_admin_row.html" with '
+            'title="Session owner" metadata="owner@example.com · Admin" '
+            'timestamp="Last activity: 2026-07-09" badge_label="Active" badge_tone="success" %}'
+        )
+        rendered = template.render(Context({}))
+        self.assertIn('dc-ds-dense-row', rendered)
+        self.assertIn('Session owner', rendered)
+        self.assertIn('owner@example.com · Admin', rendered)
+        self.assertIn('Last activity: 2026-07-09', rendered)
+        self.assertIn('Active', rendered)
+
     def test_public_pages_expose_build_metadata(self):
         landing = self.client.get(reverse('index'))
         login_page = self.client.get(reverse('login'))

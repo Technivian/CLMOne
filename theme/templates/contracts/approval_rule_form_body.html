@@ -1,0 +1,15 @@
+<form method="post" enctype="multipart/form-data" class="space-y-4">
+  {% csrf_token %}
+  {% for field in form %}
+  <div>
+    <label for="{{ field.id_for_label }}" class="form-label block mb-1">{{ field.label }}</label>
+    {{ field }}
+    {% if field.help_text %}<p class="c-muted text-xs mt-1">{{ field.help_text }}</p>{% endif %}
+    {% if field.errors %}<p class="c-danger text-xs mt-1">{{ field.errors|join:", " }}</p>{% endif %}
+  </div>
+  {% endfor %}
+  <div class="dc-ds-actions pt-2">
+    <button type="submit" class="dc-ds-button dc-ds-button--primary">Save</button>
+    <a href="{% url 'contracts:approval_rule_list' %}" class="dc-ds-button dc-ds-button--ghost">Cancel</a>
+  </div>
+</form>

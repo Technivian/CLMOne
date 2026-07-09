@@ -1,0 +1,14 @@
+{% with subtitle="Queue health, request metrics, scheduler status, and drills for "|add:organization.name %}
+  {% include "design_system/page_hero.html" with eyebrow="Operations" title="Operations Dashboard" subtitle=subtitle actions_template="contracts/operations_dashboard_actions.html" %}
+{% endwith %}
+
+{% include "contracts/operations_dashboard_kpis.html" %}
+
+<div class="dash-grid dash-grid-2 mb-6">
+  {% include "design_system/surface_card.html" with title="Background jobs" meta_template="contracts/operations_dashboard_job_counts_meta.html" body_template="contracts/operations_dashboard_job_counts.html" %}
+  {% include "design_system/surface_card.html" with title="Drill automation" meta_template="contracts/operations_dashboard_drill_meta.html" body_template="contracts/operations_dashboard_drill.html" %}
+</div>
+
+{% include "design_system/surface_card.html" with title="Recent jobs" meta_template="contracts/operations_dashboard_recent_jobs_meta.html" body_template="contracts/operations_dashboard_recent_jobs.html" %}
+
+{% include "design_system/surface_card.html" with title="Scheduled job runs" meta_template="contracts/operations_dashboard_scheduled_runs_meta.html" body_template="contracts/operations_dashboard_scheduled_runs.html" %}

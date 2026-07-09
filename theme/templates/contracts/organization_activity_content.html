@@ -1,0 +1,9 @@
+{% with subtitle="Administrative and membership events for "|add:organization.name|add:"." %}
+  {% include "design_system/page_hero.html" with eyebrow="Organization audit" title="Organization Activity" subtitle=subtitle actions_template="contracts/organization_activity_actions.html" %}
+{% endwith %}
+
+{% include "design_system/surface_card.html" with title="Activity filters" labelledby="organization-activity-filters" body_template="contracts/organization_activity_filters.html" %}
+
+{% include "design_system/surface_card.html" with title="Audit entries" labelledby="organization-activity-entries" body_template="contracts/organization_activity_list.html" %}
+
+{% include "contracts/organization_activity_pagination.html" %}

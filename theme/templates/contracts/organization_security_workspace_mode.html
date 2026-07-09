@@ -1,0 +1,17 @@
+<p class="text-desc-sm mb-0">Controls sidebar emphasis only — every module stays reachable by direct URL regardless of mode.</p>
+
+<form method="post" class="form-grid">
+  {% csrf_token %}
+  <input type="hidden" name="action" value="save_workspace_mode">
+  <label class="form-field">
+    <span class="form-label">Sidebar experience</span>
+    <select name="workspace_mode" class="input-base w-180 px-3 py-2 rounded-lg border">
+      <option value="law_firm_ops" {% if organization.workspace_mode == 'law_firm_ops' %}selected{% endif %}>Law firm operations</option>
+      <option value="in_house_clm" {% if organization.workspace_mode == 'in_house_clm' %}selected{% endif %}>In-house CLM</option>
+    </select>
+    <span class="text-desc-sm mb-0">"In-house CLM" shows a focused contract-control sidebar (Command Center, Contracts, Matters, Risk Review, DPA Reviews...). "Law firm operations" keeps the full practice-management sidebar.</span>
+  </label>
+  <div class="dc-ds-actions">
+    <button type="submit" class="dc-ds-button dc-ds-button--primary">Save workspace mode</button>
+  </div>
+</form>

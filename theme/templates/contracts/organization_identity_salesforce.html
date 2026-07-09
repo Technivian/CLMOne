@@ -1,0 +1,42 @@
+<p class="text-desc-sm">Connection state and recent sync run outcomes for CRM reconciliation.</p>
+<div class="text-desc-sm">
+  Connected:
+  <strong class="c-primary">
+    {% if salesforce_connection and salesforce_connection.is_active %}Yes{% else %}No{% endif %}
+  </strong>
+  {% if salesforce_connection and salesforce_connection.last_sync_at %}
+    · Last sync: <strong class="c-primary">{{ salesforce_connection.last_sync_at|date:"Y-m-d H:i" }}</strong>
+  {% endif %}
+</div>
+<div class="table-wrapper">
+  <table class="table-base">
+    <thead>
+      <tr class="table-head-row">
+        <th class="table-cell-pad">Started</th>
+        <th class="table-cell-pad">Status</th>
+        <th class="table-cell-pad">Source</th>
+        <th class="table-cell-pad">Fetched</th>
+        <th class="table-cell-pad">Created</th>
+        <th class="table-cell-pad">Updated</th>
+        <th class="table-cell-pad">Errors</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for run in salesforce_sync_runs %}
+      <tr class="table-body-row">
+        <td class="table-cell-pad table-cell-primary">{{ run.started_at|date:"Y-m-d H:i" }}</td>
+        <td class="table-cell-pad table-cell-primary">{{ run.status }}</td>
+        <td class="table-cell-pad c-muted">{{ run.trigger_source }}</td>
+        <td class="table-cell-pad c-muted">{{ run.fetched_records }}</td>
+        <td class="table-cell-pad c-muted">{{ run.created_count }}</td>
+        <td class="table-cell-pad c-muted">{{ run.updated_count }}</td>
+        <td class="table-cell-pad c-muted">{{ run.error_count }}</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="7" class="table-cell-pad c-muted">No Salesforce sync runs yet.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

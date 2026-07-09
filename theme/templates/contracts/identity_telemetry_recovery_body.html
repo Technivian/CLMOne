@@ -1,0 +1,24 @@
+<div class="overflow-x-auto">
+  <table class="w-full text-sm">
+    <thead>
+      <tr>
+        <th class="text-left px-4 py-2 text-xs font-semibold uppercase tracking-wide">User</th>
+        <th class="text-left px-4 py-2 text-xs font-semibold uppercase tracking-wide">Recovery codes</th>
+        <th class="text-left px-4 py-2 text-xs font-semibold uppercase tracking-wide">MFA enabled</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-100">
+      {% for profile in recovery_code_counts %}
+      <tr>
+        <td class="px-4 py-3">{{ profile.user.get_full_name|default:profile.user.username }}</td>
+        <td class="px-4 py-3">{{ profile.mfa_recovery_code_count }}</td>
+        <td class="px-4 py-3">{% if profile.mfa_enabled %}Yes{% else %}No{% endif %}</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="3" class="px-4 py-6 text-center c-muted">No active members found.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
