@@ -14,7 +14,7 @@ export DATABASE_URL="${DATABASE_URL:-sqlite:///$ROOT_DIR/e2e.sqlite3}"
 "$PY" "$ROOT_DIR/manage.py" migrate --noinput
 "$PY" "$ROOT_DIR/manage.py" shell -c "
 from django.contrib.auth import get_user_model
-from contracts.models import Organization, OrganizationMembership
+from contracts.models import Client, Matter, Organization, OrganizationMembership
 
 User = get_user_model()
 user, _ = User.objects.get_or_create(
@@ -43,6 +43,19 @@ if not membership.is_active or membership.role != OrganizationMembership.Role.OW
     membership.is_active = True
     membership.role = OrganizationMembership.Role.OWNER
     membership.save(update_fields=['is_active', 'role', 'updated_at'])
+
+# Fixture data for the invoice/time-entry e2e flow, which needs an existing
+# Client and Matter to select from — nothing else in this setup creates one.
+client, _ = Client.objects.get_or_create(
+    organization=org,
+    name='E2E Fixture Client',
+    defaults={'created_by': user},
+)
+Matter.objects.get_or_create(
+    organization=org,
+    matter_number='E2E-0001',
+    defaults={'title': 'E2E Fixture Matter', 'client': client, 'created_by': user},
+)
 "
 
 "$PY" "$ROOT_DIR/manage.py" seed_demo_command_center \
