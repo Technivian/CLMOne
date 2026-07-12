@@ -1,133 +1,80 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Profile – DocClad{% endblock %}
+{% block page_css %}
+<link rel="stylesheet" href="{% static 'css/profile.css' %}{% if ASSET_VERSION %}?v={{ ASSET_VERSION }}{% endif %}">
+{% endblock %}
 {% block content %}
-<style nonce="{{ csp_nonce }}">
-  .avatar-circle {
-    width: 64px; height: 64px;
-    background: var(--avatar-gradient);
-    border-radius: 12px;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-  }
-  .avatar-initial { font-size: 1.25rem; font-weight: 700; color: #fff; }
-  .profile-name { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); }
-  .profile-meta { font-size: 0.875rem; color: var(--text-secondary); }
-  .profile-form {
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: 12px;
-    padding: 24px;
-  }
-  .alert-amber {
-    background: rgba(245,158,11,0.08);
-    border: 1px solid rgba(245,158,11,0.15);
-    border-radius: 10px;
-    padding: 16px;
-    color: var(--text-primary);
-  }
-  .alert-amber h2 { font-size: 0.875rem; font-weight: 600; color: var(--msg-warning-text); }
-  .alert-amber p  { font-size: 0.875rem; color: #D97706; margin-top: 4px; }
-  .alert-blue {
-    background: rgba(37,99,235,0.08);
-    border: 1px solid rgba(37,99,235,0.15);
-    border-radius: 10px;
-    padding: 16px;
-    color: var(--text-primary);
-  }
-  .alert-blue h2 { font-size: 0.875rem; font-weight: 600; color: var(--primary-light); }
-  .alert-blue p  { font-size: 0.875rem; color: var(--text-secondary); margin-top: 4px; }
-  .alert-green {
-    background: rgba(34,197,94,0.08);
-    border: 1px solid var(--msg-success-bg);
-    border-radius: 10px;
-    padding: 16px;
-    color: var(--text-primary);
-  }
-  .alert-green h2 { font-size: 0.875rem; font-weight: 600; color: var(--msg-success-text); }
-  .alert-green p  { font-size: 0.875rem; color: var(--text-secondary); margin-top: 4px; }
-  .recovery-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
-  .recovery-code {
-    border-radius: 6px;
-    background: var(--surface);
-    border: 1px solid rgba(34,197,94,0.2);
-    padding: 8px 12px;
-    font-size: 0.875rem;
-    font-family: monospace;
-    color: var(--msg-success-text);
-  }
-  .security-info {
-    background: var(--surface);
-    border: 1px solid var(--card-border);
-    border-radius: 10px;
-    padding: 16px;
-  }
-  .security-info h2 { font-size: 0.875rem; font-weight: 600; color: var(--text-primary); }
-  .security-info p  { font-size: 0.875rem; color: var(--text-secondary); margin-top: 4px; }
-  .field-label { display: block; font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 4px; }
-  .field-error { font-size: 0.75rem; color: var(--msg-error-text); margin-top: 4px; }
-  /* Buttons now use canonical token-backed classes from components.css
-     (btn-cta / btn-quiet / btn-soft-primary-accent) — no page-local redefinitions. */
-  .text-muted-login { color: var(--text-secondary); }
-  .space-y-4 > * + * { margin-top: 16px; }
-</style>
 <div class="max-w-2xl">
     <div class="mb-6">
-        <div class="flex items-center gap-4 mb-4">
-            <div class="avatar-circle">
-                <span class="avatar-initial">{{ user.first_name.0|default:user.username.0|upper }}</span>
-            </div>
-            <div>
-                <h1 class="profile-name">{{ user.get_full_name|default:user.username }}</h1>
-                <p class="profile-meta">{{ user.email }} &middot; Member since {{ user.date_joined|date:"F Y" }}</p>
+        <div class="dc-ds-page-hero">
+            <div class="flex items-center gap-4">
+                <div class="profile-page-avatar">
+                    <span class="profile-page-avatar__initial">{{ user.first_name.0|default:user.username.0|upper }}</span>
+                </div>
+                <div>
+                    <h1 class="dc-ds-title">{{ user.get_full_name|default:user.username }}</h1>
+                    <p class="dc-ds-subtitle">{{ user.email }} &middot; Member since {{ user.date_joined|date:"F Y" }}</p>
+                </div>
             </div>
         </div>
     </div>
-    <form method="post" class="profile-form space-y-4">
+    <form method="post" class="dc-ds-surface">
         {% csrf_token %}
         {% if form %}
+        <div class="dc-ds-surface__body space-y-4">
         {% if mfa_required and not profile.mfa_enabled %}
-        <div class="alert-amber">
-            <h2>MFA required</h2>
-            <p>Your organization requires MFA. Request a verification code, then confirm enrollment from this page before returning to other areas of the app.</p>
+        <div class="dc-ds-alert dc-ds-alert--attention">
+            <div>
+                <strong>MFA required</strong>
+                <div>Your organization requires MFA. Request a verification code, then confirm enrollment from this page before returning to other areas of the app.</div>
+            </div>
         </div>
         {% endif %}
         {% if mfa_admin_user %}
-        <div class="alert-blue">
-            <h2>Admin MFA enrollment</h2>
-            <p>Use the verification code flow below to confirm MFA before changing protected organization settings.</p>
+        <div class="dc-ds-alert">
+            <div>
+                <strong>Admin MFA enrollment</strong>
+                <div>Use the verification code flow below to confirm MFA before changing protected organization settings.</div>
+            </div>
         </div>
         {% endif %}
         {% if recovery_codes_preview %}
-        <div class="alert-green">
-            <h2>Recovery codes</h2>
-            <p>Save these now. They will not be shown again.</p>
-            <div class="recovery-grid">
-                {% for code in recovery_codes_preview %}
-                <div class="recovery-code">{{ code }}</div>
-                {% endfor %}
+        <div class="dc-ds-alert dc-ds-alert--success">
+            <div>
+                <strong>Recovery codes</strong>
+                <div>Save these now. They will not be shown again.</div>
+                <div class="profile-recovery-grid">
+                    {% for code in recovery_codes_preview %}
+                    <div class="profile-recovery-code">{{ code }}</div>
+                    {% endfor %}
+                </div>
             </div>
         </div>
         {% endif %}
-        <div class="security-info">
-            <h2>Security</h2>
-            <p>Request a one-time code, optionally generate recovery codes, and then enter the verification code to confirm MFA enrollment.</p>
+        <div class="dc-ds-alert">
+            <div>
+                <strong>Security</strong>
+                <div>Request a one-time code, optionally generate recovery codes, and then enter the verification code to confirm MFA enrollment.</div>
+            </div>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             {% for field in form %}
-            <div class="{% if field.name == 'bio' or field.name == 'mfa_enrollment_code' or field.name == 'mfa_recovery_code' %}md:col-span-2{% endif %}">
-                <label class="field-label">{{ field.label }}</label>
-                {{ field }}
-                {% if field.errors %}<p class="field-error">{{ field.errors.0 }}</p>{% endif %}
-            </div>
+            {% if field.name == 'bio' or field.name == 'mfa_enrollment_code' or field.name == 'mfa_recovery_code' %}
+              {% include "design_system/form_field.html" with field=field class_name="md:col-span-2" %}
+            {% else %}
+              {% include "design_system/form_field.html" with field=field %}
+            {% endif %}
             {% endfor %}
         </div>
         <div class="flex flex-wrap gap-3 pt-4">
             <button type="submit" name="action" value="send_mfa_code" class="btn-quiet">Send verification code</button>
-            <button type="submit" name="action" value="generate_mfa_recovery_codes" class="btn-soft-primary-accent">Generate recovery codes</button>
+            <button type="submit" name="action" value="generate_mfa_recovery_codes" class="btn-soft">Generate recovery codes</button>
             <button type="submit" class="btn-cta">Save Changes</button>
         </div>
+        </div>
         {% else %}
-        <p class="text-muted-login">Please log in to view your profile.</p>
+        <p class="dc-ds-surface__body c-muted">Please log in to view your profile.</p>
         {% endif %}
     </form>
 </div>

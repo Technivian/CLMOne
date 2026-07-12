@@ -8,33 +8,33 @@
     · Last sync: <strong class="c-primary">{{ salesforce_connection.last_sync_at|date:"Y-m-d H:i" }}</strong>
   {% endif %}
 </div>
-<div class="table-wrapper">
-  <table class="table-base">
+<div class="dc-ds-table-wrap">
+  <table class="dc-ds-table">
     <thead>
-      <tr class="table-head-row">
-        <th class="table-cell-pad">Started</th>
-        <th class="table-cell-pad">Status</th>
-        <th class="table-cell-pad">Source</th>
-        <th class="table-cell-pad">Fetched</th>
-        <th class="table-cell-pad">Created</th>
-        <th class="table-cell-pad">Updated</th>
-        <th class="table-cell-pad">Errors</th>
+      <tr>
+        <th scope="col">Started</th>
+        <th scope="col">Status</th>
+        <th scope="col">Source</th>
+        <th scope="col">Fetched</th>
+        <th scope="col">Created</th>
+        <th scope="col">Updated</th>
+        <th scope="col">Errors</th>
       </tr>
     </thead>
     <tbody>
       {% for run in salesforce_sync_runs %}
-      <tr class="table-body-row">
-        <td class="table-cell-pad table-cell-primary">{{ run.started_at|date:"Y-m-d H:i" }}</td>
-        <td class="table-cell-pad table-cell-primary">{{ run.status }}</td>
-        <td class="table-cell-pad c-muted">{{ run.trigger_source }}</td>
-        <td class="table-cell-pad c-muted">{{ run.fetched_records }}</td>
-        <td class="table-cell-pad c-muted">{{ run.created_count }}</td>
-        <td class="table-cell-pad c-muted">{{ run.updated_count }}</td>
-        <td class="table-cell-pad c-muted">{{ run.error_count }}</td>
+      <tr>
+        <td>{{ run.started_at|date:"Y-m-d H:i" }}</td>
+        <td>{{ run.status }}</td>
+        <td class="c-muted">{{ run.trigger_source }}</td>
+        <td class="c-muted">{{ run.fetched_records }}</td>
+        <td class="c-muted">{{ run.created_count }}</td>
+        <td class="c-muted">{{ run.updated_count }}</td>
+        <td class="c-muted">{{ run.error_count }}</td>
       </tr>
       {% empty %}
       <tr>
-        <td colspan="7" class="table-cell-pad c-muted">No Salesforce sync runs yet.</td>
+        <td colspan="7">{% include "design_system/empty_state.html" with title="No Salesforce sync runs yet." %}</td>
       </tr>
       {% endfor %}
     </tbody>
