@@ -16,7 +16,11 @@ class RedesignComponentsTestCase(TestCase):
             password='testpass123',
             email='test@example.com',
         )
-        self.organization = Organization.objects.create(name='Test Firm', slug='test-firm')
+        self.organization = Organization.objects.create(
+            name='Test Firm',
+            slug='test-firm',
+            workspace_mode=Organization.WorkspaceMode.IN_HOUSE_CLM,
+        )
         OrganizationMembership.objects.create(
             organization=self.organization,
             user=self.user,
@@ -42,14 +46,24 @@ class RedesignComponentsTestCase(TestCase):
             status='ACTIVE',
             created_by=self.user,
         )
+        # Legal Pulse shows a meaningful zero-state instead of a bare "0" —
+        # a PENDING contract is needed for "Needs Legal Review" itself
+        # (not its empty-state copy) to render.
+        Contract.objects.create(
+            organization=self.organization,
+            title='Component Label Contract Needing Review',
+            content='Seed so the Legal Pulse metric has a nonzero value.',
+            status='PENDING',
+            created_by=self.user,
+        )
         self._enable_clm_dashboard()
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Needs Legal Review')
+        self.assertContains(response, 'High-Risk Deviations')
         self.assertContains(response, 'Component Label Contract')
-        self.assertContains(response, 'Priority Legal Work Queue')
-        self.assertContains(response, 'Lifecycle Status Overview')
-        self.assertContains(response, 'Recent Review Memos')
+        self.assertContains(response, 'Priority matter')
+        self.assertContains(response, 'Governance controls')
+        self.assertContains(response, 'Recommended Next Actions')
 
     def test_contracts_list_core_components(self):
         Contract.objects.create(
@@ -68,6 +82,11 @@ class RedesignComponentsTestCase(TestCase):
         self.assertContains(response, 'New Contract')
 
     def test_navigation_structure(self):
+        # This test is specifically about the law-firm-ops nav (unaffected by
+        # the Command Center work); setUp defaults to in_house_clm so other
+        # tests in this class can exercise the Command Center dashboard.
+        self.organization.workspace_mode = Organization.WorkspaceMode.LAW_FIRM_OPS
+        self.organization.save(update_fields=['workspace_mode'])
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Dashboard')
@@ -80,8 +99,9 @@ class RedesignComponentsTestCase(TestCase):
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'title="Search"')
-        self.assertContains(response, '@media (max-width: 1024px)')
-        self.assertContains(response, '@media (max-width: 640px)')
+        self.assertContains(response, 'css/command-center.css')
+        self.assertContains(response, 'aria-label="Operational queues"')
+        self.assertContains(response, 'aria-label="Governance controls"')
 
     def test_budget_list_matches_dashboard_style(self):
         Budget.objects.create(

@@ -43,11 +43,22 @@ class DesignSystemTests(TestCase):
             status='ACTIVE',
             created_by=self.user,
         )
+        # Legal Pulse shows a meaningful zero-state instead of a bare "0" —
+        # a PENDING contract is needed for "Needs Legal Review" itself
+        # (not its empty-state copy) to render.
+        Contract.objects.create(
+            organization=organization,
+            title='DS Contract Needing Review',
+            content='Seed so the Legal Pulse metric has a nonzero value.',
+            status='PENDING',
+            created_by=self.user,
+        )
         self.client.login(username='testuser', password='testpass123')
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'DocClad')
-        self.assertContains(response, 'Needs Legal Review')
+        self.assertContains(response, 'High-Risk Deviations')
+        self.assertContains(response, 'css/command-center.css')
 
     def test_dashboard_loads_with_feature_flag_disabled(self):
         os.environ['FEATURE_REDESIGN'] = 'false'

@@ -158,13 +158,21 @@ class DesignSystemPhaseTwoTests(SimpleTestCase):
         self.assertIn('Escalated', rendered)
         self.assertIn('dc-ds-badge--danger', rendered)
 
-    def test_cc_v3_namespace_absent_from_current_tree(self):
-        # Command Center redesign referencing .cc-v3-* is uncommitted/stashed
-        # work; this phase must not have introduced or touched it.
+    def test_cc_v3_namespace_stays_command_center_scoped(self):
+        # .cc-v3-* is the Command Center's own namespace (integrated after
+        # this phase landed) — it must stay confined to the dashboard route
+        # and must not leak into any other page or shared component.
+        allowed = {
+            'theme/static/css/command-center.css',
+            'theme/templates/dashboard.html',
+        }
+        offenders = []
         for path in self.theme.rglob('*'):
             if not path.is_file() or path.suffix not in {'.css', '.html', '.js'}:
                 continue
-            self.assertNotIn(
-                'cc-v3-', path.read_text(errors='ignore'),
-                f'unexpected .cc-v3-* reference in {path}',
-            )
+            if 'cc-v3-' not in path.read_text(errors='ignore'):
+                continue
+            rel = str(path.relative_to(self.root))
+            if rel not in allowed:
+                offenders.append(rel)
+        self.assertEqual(offenders, [])

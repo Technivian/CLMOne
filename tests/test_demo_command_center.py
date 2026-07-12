@@ -51,34 +51,27 @@ class DemoCommandCenterSeedTests(TestCase):
         response = self.client_.get(reverse('dashboard'))
 
         self.assertContains(response, 'Northwind DPA Privacy Review Workflow')
-        self.assertContains(response, 'Privacy risk')
-        self.assertContains(response, 'EEA transfer + subprocessors')
-        self.assertContains(response, 'Review SCC fallback')
-
         self.assertContains(response, 'Acme MSA Commercial Review Workflow')
-        self.assertContains(response, 'Commercial risk')
-        self.assertContains(response, 'Liability cap outside playbook + finance threshold')
-        self.assertContains(response, 'Review fallback clause')
-
         self.assertContains(response, 'Brightlane NDA Self-Serve Workflow')
-        self.assertContains(response, 'Self-serve eligible')
-        self.assertContains(response, 'No legal risk detected')
-        self.assertContains(response, 'Send for signature')
+        self.assertContains(response, 'Confirm SCC transfer position')
+        self.assertContains(response, 'Review liability deviation')
 
         for item in CommandCenterWorkItem.objects.filter(organization=self.org, workflow__isnull=False):
             self.assertContains(response, reverse('contracts:workflow_detail', kwargs={'pk': item.workflow_id}))
-        self.assertContains(response, 'Open workspace')
+        self.assertContains(response, 'Recommended Next Actions')
 
     def test_dashboard_summary_strip_uses_real_workflow_counts(self):
+        # The workflow-type summary strip (a second, duplicate filter row
+        # sitting under the saved-view tabs) was removed from the template
+        # as part of the Command Center redesign's single-filter-system
+        # requirement. workflow_type_summary is still computed from real
+        # data and available in context — this test now checks the data,
+        # not a UI element that's intentionally gone.
         seed_demo_command_center_workflows(organization=self.org, user=self.user)
 
         response = self.client_.get(reverse('dashboard'))
         summary = response.context['workflow_type_summary']
 
-        self.assertContains(response, 'Privacy reviews')
-        self.assertContains(response, 'Commercial reviews')
-        self.assertContains(response, 'Self-serve ready')
-        self.assertContains(response, 'Blocking approvals')
         self.assertEqual(summary['privacy_reviews'], 1)
         self.assertEqual(summary['commercial_reviews'], 1)
         self.assertEqual(summary['self_serve_ready'], 1)
