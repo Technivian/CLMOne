@@ -301,6 +301,29 @@
     });
   }
 
+  var generateMemoBtn = document.getElementById('dpa-generate-memo-btn');
+  if (generateMemoBtn) {
+    generateMemoBtn.addEventListener('click', function () {
+      var url = generateMemoBtn.getAttribute('data-memo-url');
+      var errorEl = document.getElementById('dpa-analysis-error');
+      generateMemoBtn.disabled = true;
+      errorEl.hidden = true;
+      fetch(url, { method: 'POST', headers: { 'X-CSRFToken': getCsrfToken() } })
+        .then(function (res) { return res.json().then(function (data) { return { ok: res.ok, data: data }; }); })
+        .then(function (result) {
+          if (result.ok) { window.location.reload(); return; }
+          generateMemoBtn.disabled = false;
+          errorEl.textContent = (result.data && result.data.error) || 'Generating the memo failed. Please try again.';
+          errorEl.hidden = false;
+        })
+        .catch(function () {
+          generateMemoBtn.disabled = false;
+          errorEl.textContent = 'Network error — please try again.';
+          errorEl.hidden = false;
+        });
+    });
+  }
+
   var linkContractBtn = document.getElementById('dpa-link-contract-btn');
   if (linkContractBtn) {
     linkContractBtn.addEventListener('click', function () {

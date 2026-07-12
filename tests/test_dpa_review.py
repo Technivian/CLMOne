@@ -476,6 +476,14 @@ class DPAReviewPackViewTests(TestCase):
         self.assertEqual(response.status_code, 403)
         self.assertNotIn(msa, self.review_pack.related_contracts.all())
 
+    def test_generate_memo_requires_edit_permission(self):
+        client = TestClient()
+        client.login(username='dpa_member', password='testpass123')
+        response = client.post(reverse('contracts:dpa_review_generate_memo', kwargs={'pk': self.review_pack.pk}))
+        self.assertEqual(response.status_code, 403)
+        self.review_pack.refresh_from_db()
+        self.assertEqual(self.review_pack.review_memo, '')
+
     def test_rerunning_analysis_does_not_duplicate_open_auto_detected_items(self):
         client = TestClient()
         client.login(username=self.admin.username, password='testpass123')
@@ -632,6 +640,12 @@ class DPACrossTenantIsolationTests(TestCase):
             reverse('contracts:dpa_review_link_related_contract', kwargs={'pk': self.review_pack_a.pk}),
             data=json.dumps({'contract_id': self.contract_a.pk}), content_type='application/json',
         )
+        self.assertEqual(response.status_code, 404)
+
+    def test_other_org_member_cannot_generate_memo(self):
+        client = TestClient()
+        client.login(username=self.user_b.username, password='testpass123')
+        response = client.post(reverse('contracts:dpa_review_generate_memo', kwargs={'pk': self.review_pack_a.pk}))
         self.assertEqual(response.status_code, 404)
 
 
