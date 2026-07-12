@@ -171,14 +171,13 @@ class DesignSystemTests(TestCase):
 
     def test_casefile_spacing_scale_uses_distinct_four_pixel_steps(self):
         root = Path(settings.BASE_DIR)
-        tokens = (
-            root / 'theme' / 'static_src' / 'src' / 'design-system' / 'tokens.css'
-        ).read_text()
+        tokens = (root / 'theme' / 'static' / 'css' / 'docclad-tokens.css').read_text()
         for token in (
-            '--ds-space-3: 12px',
-            '--ds-space-4: 16px',
-            '--ds-space-5: 20px',
-            '--ds-space-6: 24px',
+            '--space-12: 12px',
+            '--space-16: 16px',
+            '--space-20: 20px',
+            '--space-24: 24px',
+            '--ds-space-3: var(--space-12)',
         ):
             self.assertIn(token, tokens)
 
@@ -190,13 +189,15 @@ class DesignSystemTests(TestCase):
         premium = (
             root / 'theme' / 'static_src' / 'src' / 'design-system' / 'premium.css'
         ).read_text()
+        tokens = (root / 'theme' / 'static' / 'css' / 'docclad-tokens.css').read_text()
         picker = (
             root / 'theme' / 'templates' / 'contracts' / 'contract_template_picker.html'
         ).read_text()
 
         self.assertIn('@import "./premium.css"', index)
-        self.assertIn('--ds-page-x: 32px', premium)
-        self.assertIn('--ds-page-top: 32px', premium)
+        self.assertIn('--page-padding-x: var(--space-32)', tokens)
+        self.assertIn('--page-padding-top: var(--space-32)', tokens)
+        self.assertIn('--ds-page-x: var(--page-padding-x)', tokens)
         self.assertIn('.page-wrap', premium)
         self.assertIn('.dc-ds-page', premium)
         self.assertIn('ctp-page', picker)

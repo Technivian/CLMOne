@@ -10,11 +10,11 @@
 
 .btn-primary {
   color: #fff;
-  background: #1B7F5A;
-  border-color: #1B7F5A;
+  background: var(--primary);
+  border-color: var(--primary);
 }
-.btn-primary:hover { background: #176B4D; border-color: #176B4D; }
-.btn-primary:focus-visible { box-shadow: 0 0 0 3px rgba(27, 127, 90, .16); }
+.btn-primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+.btn-primary:focus-visible { box-shadow: 0 0 0 3px var(--focus-ring); }
 
 .btn-secondary {
   @apply bg-white text-ink border-stroke hover:bg-surface;
@@ -40,23 +40,23 @@
 }
 
 .badge-success {
-  background: #EFF9F4;
-  color: #176B4D;
+  background: var(--status-positive-bg);
+  color: var(--status-positive-fg);
 }
 
 .badge-warning {
-  background: #FBF3E3;
-  color: #85540F;
+  background: var(--status-pending-bg);
+  color: var(--status-pending-fg);
 }
 
 .badge-danger {
-  background: #FBECEA;
-  color: #913A35;
+  background: var(--status-danger-bg);
+  color: var(--status-danger-fg);
 }
 
 .badge-info {
-  background: #EEF3FA;
-  color: #34548A;
+  background: var(--status-progress-bg);
+  color: var(--status-progress-fg);
 }
 
 .badge-neutral {
@@ -167,7 +167,7 @@
 
 .progress-bar {
   @apply h-2 rounded-full transition-all duration-300;
-  background: #1B7F5A;
+  background: var(--seal);
 }
 
 /* Stepper Components */
@@ -189,8 +189,8 @@
 
 .step-completed .step-number {
   color: #fff;
-  background: #1B7F5A;
-  border-color: #1B7F5A;
+  background: var(--seal);
+  border-color: var(--seal);
 }
 
 .step-inactive .step-number {
@@ -225,19 +225,19 @@
 }
 
 .toast-success {
-  border-left: 4px solid #1B7F5A;
+  border-left: 4px solid var(--color-status-success);
 }
 
 .toast-error {
-  border-left: 4px solid #A7463F;
+  border-left: 4px solid var(--color-status-error);
 }
 
 .toast-warning {
-  border-left: 4px solid #9A6517;
+  border-left: 4px solid var(--color-status-warning);
 }
 
 .toast-info {
-  border-left: 4px solid #4568A6;
+  border-left: 4px solid var(--color-status-info);
 }
 
 /* Skeleton Loader */

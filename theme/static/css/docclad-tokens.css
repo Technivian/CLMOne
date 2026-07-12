@@ -1,31 +1,63 @@
-/* DocClad "Casefile" design system. Light, precise, and optimized for
-   contract operations: graphite neutrals, forest trust, docket blue,
-   renewal amber, exception red, and specialist plum. */
+/* DocClad "Casefile" design system. Precise, authoritative, and optimized
+   for contract operations: deep-navy foundation, cobalt action, teal
+   support, warm-neutral workspace, and archival status pills. */
 
 :root {
+  /* ── Brand palette — the source of truth for the rebrand. Everything
+        below (forest/copper/seal aliases, ds-* tokens, inline base.html
+        vars) resolves back to these. Deep navy foundation, cobalt action,
+        teal support. ──────────────────────────────────────────────── */
+  --color-brand-foundation: #0B1728;       /* Deep Navy — shell, nav, top-level headers */
+  --color-brand-foundation-raised: #14213A; /* hover/raised panels within the navy shell */
+  --color-brand-foundation-border: rgba(255, 255, 255, 0.08);
+  --color-brand-primary: #168C8C;          /* Teal-green — primary action */
+  --color-brand-primary-hover: #12706F;
+  --color-brand-primary-pressed: #0E5B5A;
+  --color-brand-primary-subtle: #E3F5F4;   /* light selected background */
+  --color-brand-primary-disabled: #8AC6C4; /* desaturated teal, reduced contrast by design */
+  --color-interaction-secondary: #168C8C;  /* Teal — secondary interaction & navigation */
+  --color-interaction-secondary-hover: #12706F;
+  --color-interaction-secondary-subtle: #E3F5F4;
+  --color-surface-page: #F6F5F1;           /* Warm Off-White — workspace background */
+  --color-surface-card: #FFFFFF;           /* cards, modals, form panels, tables */
+  --color-text-secondary: #667085;         /* Slate Text */
+  --color-border-default: #DCE2E8;         /* Border Grey */
+  --color-status-success: #27865B;
+  --color-status-warning: #D99A2B;
+  --color-status-error: #C4423D;
+  --color-status-info: #3478C7;
+
   /* Brand and semantic primitives. */
-  --docclad-deep-navy: #171A1F;
-  --docclad-navy: #242830;
-  --docclad-teal: #1B7F5A;
+  --docclad-deep-navy: #0B1728;
+  --docclad-navy: #14213A;
+  --docclad-teal: #168C8C;
   --docclad-white: #FFFFFF;
-  --docclad-light-gray: #F5F7F8;
+  --docclad-light-gray: #F6F5F1;
   --docclad-font: "Inter", "Segoe UI", system-ui, sans-serif;
 
-  --casefile-forest-700: #176B4D;
-  --casefile-forest-600: #1B7F5A;
-  --casefile-forest-500: #26966B;
-  --casefile-forest-100: #DDF3E9;
-  --casefile-forest-50: #EFF9F4;
-  --casefile-blue-700: #34548A;
-  --casefile-blue-600: #4568A6;
-  --casefile-blue-100: #DCE6F4;
-  --casefile-blue-50: #EEF3FA;
-  --casefile-amber-700: #85540F;
-  --casefile-amber-600: #9A6517;
-  --casefile-amber-50: #FBF3E3;
-  --casefile-red-700: #913A35;
-  --casefile-red-600: #A7463F;
-  --casefile-red-50: #FBECEA;
+  /* Teal-green is the primary action, selection, progress, and trust signal.
+     Named "forest" for template-compatibility. */
+  --casefile-forest-700: var(--color-brand-primary-hover);
+  --casefile-forest-600: var(--color-brand-primary);
+  --casefile-forest-500: var(--color-brand-primary);
+  --casefile-forest-100: #C6E9E8;
+  --casefile-forest-50: var(--color-brand-primary-subtle);
+  --casefile-teal-700: var(--color-interaction-secondary-hover);
+  --casefile-teal-600: var(--color-interaction-secondary);
+  --casefile-teal-50: var(--color-interaction-secondary-subtle);
+  --casefile-blue-700: #2A5FA0;
+  --casefile-blue-600: var(--color-status-info);
+  --casefile-blue-100: #D3E3F5;
+  --casefile-blue-50: #E9F1FB;
+  --casefile-amber-700: #8A5B14;
+  --casefile-amber-600: var(--color-status-warning);
+  --casefile-amber-50: #FBF1DE;
+  --casefile-red-700: #A8342F;
+  --casefile-red-600: var(--color-status-error);
+  --casefile-red-50: #FBEAE9;
+  --casefile-success-700: #1F6E49;
+  --casefile-success-600: var(--color-status-success);
+  --casefile-success-50: #E7F4EE;
   --casefile-plum-700: #654978;
   --casefile-plum-600: #765B8C;
   --casefile-plum-50: #F3EFF7;
@@ -40,36 +72,38 @@
   --ink-900: #171A1F;
   --ink-700: #353A42;
   --ink-600: #4B525C;
-  --ink-500: #69717C;
+  --ink-500: var(--color-text-secondary);
   --ink-400: #8B929C;
   --ink-300: #B4BAC1;
   --line-strong: #CDD2D8;
-  --line: #DFE3E7;
+  --line: var(--color-border-default);
   --hairline: #ECEEF0;
-  --paper: #F5F7F8;
-  --card: #FFFFFF;        /* raised working surfaces */
+  --paper: var(--color-surface-page);
+  --card: var(--color-surface-card); /* raised working surfaces */
   --well: #F0F2F3;
+  --shell: #FAFBFB;
 
   /* Legacy CTA aliases retained for template compatibility. */
-  --copper-600: var(--casefile-forest-500);
-  --copper-700: var(--casefile-forest-600);
-  --copper-800: var(--casefile-forest-700);
-  --copper-500: var(--casefile-forest-500);
-  --copper-400: #48A984;
-  --copper-tint: var(--casefile-forest-50);
-  --copper-tint-dark: rgba(27,127,90,0.14);
+  --copper-600: var(--color-brand-primary);
+  --copper-700: var(--color-brand-primary);
+  --copper-800: var(--color-brand-primary-hover);
+  --copper-500: var(--color-brand-primary);
+  --copper-400: #42A5A5;
+  --copper-tint: var(--color-brand-primary-subtle);
+  --copper-tint-dark: rgba(22, 140, 140, 0.14);
 
-  /* Forest is the primary action, selection, progress, and trust signal. */
-  --seal: var(--casefile-forest-600);
-  --seal-dark: var(--casefile-forest-500);
-  --seal-bg: var(--casefile-forest-50);
-  --focus-ring: rgba(27, 127, 90, 0.22);
-  --seal-bg-dark: rgba(17,179,154,0.14);
+  /* Teal-green is the primary action, selection, progress, and trust signal. */
+  --seal: var(--color-brand-primary);
+  --seal-dark: var(--color-brand-primary-hover);
+  --seal-bg: var(--color-brand-primary-subtle);
+  --focus-ring: rgba(22, 140, 140, 0.28);
+  --seal-bg-dark: rgba(22, 140, 140, 0.14);
 
   /* ── Status vocabulary — archival, desaturated, tinted-pill pairs.
-        (bg = tint, fg = text) Never raw saturated hues. ───────────── */
-  --status-positive-fg: var(--casefile-forest-700);
-  --status-positive-bg: var(--casefile-forest-50);
+        (bg = tint, fg = text) Never raw saturated hues. Semantic only:
+        never reused for brand/decorative purposes. ───────────────── */
+  --status-positive-fg: var(--casefile-success-700);
+  --status-positive-bg: var(--casefile-success-50);
   --status-pending-fg: var(--casefile-amber-700);
   --status-pending-bg: var(--casefile-amber-50);
   --status-progress-fg: var(--casefile-blue-700);
@@ -104,13 +138,30 @@
   --text-eyebrow: 600 11px/16px var(--mono);        /* uppercase, +0.14em */
   --text-data: 400 13px/20px var(--font-sans);      /* table cells, tnum */
 
+  /* Atomic typography values for compatibility APIs and CSS properties that
+     cannot consume the font shorthand tokens above. */
+  --font-size-eyebrow: 11px;
+  --font-size-meta: 12px;
+  --font-size-small: 13px;
+  --font-size-body: 14px;
+  --font-size-heading: 16px;
+  --font-size-section: 20px;
+  --font-size-title: 24px;
+  --font-size-display: 28px;
+  --line-height-tight: 1.2;
+  --line-height-base: 1.45;
+
   /* Canonical spacing scale from the CMS case-study foundation. */
   --space-4: 4px;
   --space-8: 8px;
+  --space-12: 12px;
   --space-16: 16px;
+  --space-20: 20px;
   --space-24: 24px;
   --space-32: 32px;
   --space-40: 40px;
+  --space-48: 48px;
+  --space-56: 56px;
   --space-64: 64px;
   --space-80: 80px;
   --space-96: 96px;
@@ -119,8 +170,14 @@
   --grid-columns: 12;
   --grid-margin: 24px;
   --grid-gutter: 24px;
+  --page-max-width: 1480px;
+  --page-padding-x: var(--space-32);
+  --page-padding-top: var(--space-32);
+  --page-padding-bottom: var(--space-56);
+  --control-height: 38px;
 
   /* ── Shape — borders over shadows; precision over softness. ─────── */
+  --radius-sm: 4px;
   --radius-control: 8px;   /* buttons, inputs, selects */
   --radius-card: 10px;
   --radius-panel: 12px;
@@ -129,10 +186,106 @@
   /* ── Elevation — ink-tinted, overlays only. Working surfaces use
         1px borders, never drop shadows. ──────────────────────────── */
   --shadow-card: 0 1px 2px rgba(23, 26, 31, 0.05), 0 5px 14px rgba(23, 26, 31, 0.035);
+  --shadow-card-hover: 0 2px 4px rgba(23, 26, 31, 0.055), 0 14px 34px rgba(23, 26, 31, 0.055);
   --shadow-overlay: 0 12px 32px rgba(23, 26, 31, 0.12), 0 2px 8px rgba(23, 26, 31, 0.06);
   --shadow-drawer: -16px 0 40px rgba(11, 19, 48, 0.12);
 
   /* ── Motion ──────────────────────────────────────────────────── */
-  --transition-fast: 120ms ease;
-  --transition-base: 180ms ease;
+  --duration-fast: 120ms;
+  --duration-base: 180ms;
+  --duration-slow: 240ms;
+  --ease-standard: cubic-bezier(.2, 0, 0, 1);
+  --transition-fast: var(--duration-fast) var(--ease-standard);
+  --transition-base: var(--duration-base) var(--ease-standard);
+
+  /* Data visualization palette. Charts are semantic consumers of the same
+     brand and status vocabulary, not a separate colour system. */
+  --chart-1: var(--seal);
+  --chart-2: var(--color-status-info);
+  --chart-3: var(--color-status-warning);
+  --chart-4: var(--casefile-plum-600);
+  --chart-5: var(--color-status-error);
+  --chart-grid: var(--line);
+  --chart-axis: var(--ink-500);
+
+  /* ── Deprecated design-system adapter aliases ───────────────────
+     Existing .dc-ds-* and compatibility consumers still use --ds-* names.
+     These aliases remain functional until repository-wide usage reaches
+     zero. New code must use the canonical token named on each line. */
+  --ds-color-shell: var(--shell); /* deprecated: use --shell */
+  --ds-color-shell-border: var(--line); /* deprecated: use --line */
+  --ds-color-canvas: var(--paper); /* deprecated: use --paper */
+  --ds-color-surface: var(--card); /* deprecated: use --card */
+  --ds-color-surface-muted: var(--well); /* deprecated: use --well */
+  --ds-color-surface-raised: var(--card); /* deprecated: use --card */
+  --ds-color-border: var(--line); /* deprecated: use --line */
+  --ds-color-border-strong: var(--line-strong); /* deprecated: use --line-strong */
+  --ds-color-text: var(--ink-900); /* deprecated: use --ink-900 */
+  --ds-color-text-secondary: var(--ink-500); /* deprecated: use --ink-500 */
+  --ds-color-text-muted: var(--ink-400); /* deprecated: use --ink-400 */
+  --ds-color-trust: var(--seal); /* deprecated: use --seal */
+  --ds-color-trust-hover: var(--seal-dark); /* deprecated: use --seal-dark */
+  --ds-color-trust-soft: var(--seal-bg); /* deprecated: use --seal-bg */
+  --ds-color-action: var(--seal); /* deprecated: use --seal */
+  --ds-color-action-hover: var(--seal-dark); /* deprecated: use --seal-dark */
+  --ds-color-action-soft: var(--seal-bg); /* deprecated: use --seal-bg */
+  --ds-color-progress: var(--status-progress-fg); /* deprecated: use --status-progress-fg */
+  --ds-color-progress-soft: var(--status-progress-bg); /* deprecated: use --status-progress-bg */
+  --ds-color-attention: var(--status-pending-fg); /* deprecated: use --status-pending-fg */
+  --ds-color-attention-soft: var(--status-pending-bg); /* deprecated: use --status-pending-bg */
+  --ds-color-danger: var(--status-danger-fg); /* deprecated: use --status-danger-fg */
+  --ds-color-danger-soft: var(--status-danger-bg); /* deprecated: use --status-danger-bg */
+  --ds-color-special: var(--status-special-fg); /* deprecated: use --status-special-fg */
+  --ds-color-special-soft: var(--status-special-bg); /* deprecated: use --status-special-bg */
+  --ds-color-success: var(--status-positive-fg); /* deprecated: use --status-positive-fg */
+  --ds-color-success-soft: var(--status-positive-bg); /* deprecated: use --status-positive-bg */
+  --ds-font-sans: var(--font-sans); /* deprecated: use --font-sans */
+  --ds-font-serif: var(--font-sans); /* deprecated: product UI uses --font-sans */
+  --ds-text-xs: var(--font-size-eyebrow); /* deprecated: use --font-size-eyebrow */
+  --ds-text-sm: var(--font-size-meta); /* deprecated: use --font-size-meta */
+  --ds-text-md: var(--font-size-body); /* deprecated: use --font-size-body */
+  --ds-text-lg: var(--font-size-heading); /* deprecated: use --font-size-heading */
+  --ds-text-xl: var(--font-size-section); /* deprecated: use --font-size-section */
+  --ds-text-title: var(--font-size-display); /* deprecated: use --font-size-display */
+  --ds-line-tight: var(--line-height-tight); /* deprecated: use --line-height-tight */
+  --ds-line-base: var(--line-height-base); /* deprecated: use --line-height-base */
+  --ds-space-1: var(--space-4); /* deprecated: use --space-4 */
+  --ds-space-2: var(--space-8); /* deprecated: use --space-8 */
+  --ds-space-3: var(--space-12); /* deprecated: use --space-12 */
+  --ds-space-4: var(--space-16); /* deprecated: use --space-16 */
+  --ds-space-5: var(--space-20); /* deprecated: use --space-20 */
+  --ds-space-6: var(--space-24); /* deprecated: use --space-24 */
+  --ds-space-8: var(--space-32); /* deprecated: use --space-32 */
+  --ds-space-10: var(--space-40); /* deprecated: use --space-40 */
+  --ds-space-16: var(--space-64); /* deprecated: use --space-64 */
+  --ds-space-20: var(--space-80); /* deprecated: use --space-80 */
+  --ds-space-24: var(--space-96); /* deprecated: use --space-96 */
+  --ds-space-30: var(--space-120); /* deprecated: use --space-120 */
+  --ds-grid-columns: var(--grid-columns); /* deprecated: use --grid-columns */
+  --ds-grid-margin: var(--grid-margin); /* deprecated: use --grid-margin */
+  --ds-grid-gutter: var(--grid-gutter); /* deprecated: use --grid-gutter */
+  --ds-radius-sm: var(--radius-sm); /* deprecated: use --radius-sm */
+  --ds-radius-md: var(--radius-control); /* deprecated: use --radius-control */
+  --ds-radius-lg: var(--radius-card); /* deprecated: use --radius-card */
+  --ds-radius-pill: var(--radius-pill); /* deprecated: use --radius-pill */
+  --ds-shadow-hairline: var(--shadow-card); /* deprecated: use --shadow-card */
+  --ds-focus-ring: 0 0 0 3px var(--focus-ring); /* deprecated: use --focus-ring */
+  --ds-motion-fast: var(--duration-fast); /* deprecated: use --duration-fast */
+  --ds-motion-base: var(--duration-base); /* deprecated: use --duration-base */
+  --ds-motion-slow: var(--duration-slow); /* deprecated: use --duration-slow */
+  --ds-ease-standard: var(--ease-standard); /* deprecated: use --ease-standard */
+  --ds-chart-1: var(--chart-1); /* deprecated: use --chart-1 */
+  --ds-chart-2: var(--chart-2); /* deprecated: use --chart-2 */
+  --ds-chart-3: var(--chart-3); /* deprecated: use --chart-3 */
+  --ds-chart-4: var(--chart-4); /* deprecated: use --chart-4 */
+  --ds-chart-5: var(--chart-5); /* deprecated: use --chart-5 */
+  --ds-chart-grid: var(--chart-grid); /* deprecated: use --chart-grid */
+  --ds-chart-axis: var(--chart-axis); /* deprecated: use --chart-axis */
+  --ds-page-max: var(--page-max-width); /* deprecated: use --page-max-width */
+  --ds-page-x: var(--page-padding-x); /* deprecated: use --page-padding-x */
+  --ds-page-top: var(--page-padding-top); /* deprecated: use --page-padding-top */
+  --ds-page-bottom: var(--page-padding-bottom); /* deprecated: use --page-padding-bottom */
+  --ds-control-height: var(--control-height); /* deprecated: use --control-height */
+  --ds-surface-shadow: var(--shadow-card); /* deprecated: use --shadow-card */
+  --ds-surface-shadow-hover: var(--shadow-card-hover); /* deprecated: use --shadow-card-hover */
 }

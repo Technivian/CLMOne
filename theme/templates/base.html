@@ -19,6 +19,7 @@
     <meta name="twitter:image" content="{% static 'img/brand/og-image.png' %}">
     <link href="{% static 'css/docclad-tokens.css' %}{% if ASSET_VERSION %}?v={{ ASSET_VERSION }}{% endif %}" rel="stylesheet">
     <link href="{% static 'css/dist/styles.css' %}{% if ASSET_VERSION %}?v={{ ASSET_VERSION }}{% endif %}" rel="stylesheet">
+    {% block page_css %}{% endblock %}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700&display=swap" rel="stylesheet">
@@ -52,63 +53,63 @@
         /* Casefile light system: graphite structure, forest actions, and
            semantic blue, amber, oxide, and plum workflow states. */
         :root, [data-theme="light"] {
-            --bg: #F5F7F8;
-            --surface: #F0F2F3;
-            --surface-alt: #FFFFFF;
-            --primary: #1B7F5A;
-            --primary-hover: #176B4D;
-            --primary-light: #26966B;
-            --accent: #1B7F5A;
-            --text-primary: #171A1F;
-            --text-secondary: #69717C;
-            --text-muted: #8B929C;
-            --text-dim: #B4BAC1;
-            --border: #DFE3E7;
-            --primary-glow: rgba(27,127,90,0.16);
-            --primary-subtle: rgba(27,127,90,0.08);
-            --primary-bg: rgba(27,127,90,0.12);
-            --accent-bg: rgba(27,127,90,0.10);
-            --seal: #1B7F5A;
-            --seal-bg: #EFF9F4;
-            --sidebar-bg: #FFFFFF;
-            --sidebar-hover: #F0F2F3;
-            --sidebar-active-bg: #EFF9F4;
-            --sidebar-active-border: #1B7F5A;
-            --sidebar-active-text: #1B7F5A;
-            --topbar-bg: #FFFFFF;
-            --topbar-border: #DFE3E7;
-            --content-bg: #F5F7F8;
-            --card-bg: #FFFFFF;
-            --card-border: #DFE3E7;
-            --input-bg: #FFFFFF;
+            --bg: var(--paper);
+            --surface: var(--well);
+            --surface-alt: var(--card);
+            --primary: var(--color-brand-primary);
+            --primary-hover: var(--color-brand-primary-hover);
+            --primary-light: var(--color-brand-primary);
+            --accent: var(--color-interaction-secondary);
+            --text-primary: var(--ink-900);
+            --text-secondary: var(--ink-500);
+            --text-muted: var(--ink-400);
+            --text-dim: var(--ink-300);
+            --border: var(--line);
+            --primary-glow: var(--focus-ring);
+            --primary-subtle: var(--color-brand-primary-subtle);
+            --primary-bg: var(--casefile-forest-100);
+            --accent-bg: var(--color-interaction-secondary-subtle);
+            --seal: var(--color-brand-primary);
+            --seal-bg: var(--color-brand-primary-subtle);
+            --sidebar-bg: var(--card);
+            --sidebar-hover: var(--well);
+            --sidebar-active-bg: var(--color-brand-primary-subtle);
+            --sidebar-active-border: var(--color-brand-primary);
+            --sidebar-active-text: var(--color-brand-primary);
+            --topbar-bg: var(--card);
+            --topbar-border: var(--line);
+            --content-bg: var(--paper);
+            --card-bg: var(--card);
+            --card-border: var(--line);
+            --input-bg: var(--card);
             --badge-bg: #913A35;
-            --msg-success-bg: #EFF9F4;
-            --msg-success-text: #1B7F5A;
+            --msg-success-bg: var(--status-positive-bg);
+            --msg-success-text: var(--status-positive-fg);
             --msg-success-border: #B9DFCE;
-            --msg-error-bg: #FBECEA;
-            --msg-error-text: #913A35;
+            --msg-error-bg: var(--status-danger-bg);
+            --msg-error-text: var(--status-danger-fg);
             --msg-error-border: #EACAC7;
-            --msg-warning-bg: #FBF3E3;
-            --msg-warning-text: #85540F;
+            --msg-warning-bg: var(--status-pending-bg);
+            --msg-warning-text: var(--status-pending-fg);
             --msg-warning-border: #ECD8B3;
             --avatar-gradient: #232428;
-            --btn-gradient: #1B7F5A;
-            --logo-gradient: #1B7F5A;
+            --btn-gradient: var(--color-brand-primary);
+            --logo-gradient: var(--color-brand-primary);
             --row-unread-bg: #F3DACB;
             --row-overdue-bg: #FBECEA;
         }
 
         /* Light operational shell, shared by every authenticated workspace. */
         :root, [data-theme="light"] {
-            --sidebar-fixed-bg: #FAFAFB;
-            --sidebar-fixed-border: #DFE3E7;
-            --sidebar-fixed-text: #5F6166;
-            --sidebar-fixed-text-active: #1B7F5A;
-            --sidebar-fixed-icon: #69717C;
-            --sidebar-fixed-hover: #F0F2F3;
-            --sidebar-fixed-active-bg: #FFFFFF;
-            --sidebar-fixed-active-border: #CDD2D8;
-            --sidebar-fixed-section-label: #69717C;
+            --sidebar-fixed-bg: var(--shell);
+            --sidebar-fixed-border: var(--line);
+            --sidebar-fixed-text: var(--ink-600);
+            --sidebar-fixed-text-active: var(--color-brand-primary);
+            --sidebar-fixed-icon: var(--ink-500);
+            --sidebar-fixed-hover: var(--well);
+            --sidebar-fixed-active-bg: var(--card);
+            --sidebar-fixed-active-border: var(--line-strong);
+            --sidebar-fixed-section-label: var(--ink-500);
         }
 
         /* Panels and the top bar stay flat — hairline borders carry separation, no ambient shadows. */
@@ -188,11 +189,11 @@
         [data-theme="light"] textarea::placeholder {
             color: #8B929C !important;
         }
-        [data-theme="light"] input:focus,
-        [data-theme="light"] select:focus,
-        [data-theme="light"] textarea:focus {
-            border-color: var(--primary) !important;
-            box-shadow: 0 0 0 2px var(--primary-subtle) !important;
+        [data-theme="light"] input:focus-visible,
+        [data-theme="light"] select:focus-visible,
+        [data-theme="light"] textarea:focus-visible {
+            border-color: var(--seal) !important;
+            box-shadow: 0 0 0 3px var(--focus-ring) !important;
         }
 
         [data-theme="light"] table {
@@ -1183,7 +1184,7 @@
             .global-search-wrap { position: relative; width: 100%; }
             .global-search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; color: var(--text-muted); pointer-events: none; }
             .global-search-input { width: 100%; border: 1px solid var(--border); background: var(--input-bg); color: var(--text-primary); border-radius: 8px; padding: 8px 10px 8px 32px; font-size: 12px; }
-            .global-search-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-subtle); }
+            .global-search-input:focus-visible { outline: none; border-color: var(--seal); box-shadow: 0 0 0 3px var(--focus-ring); }
             .logo-link        { display: flex; align-items: center; text-decoration: none; overflow: hidden; }
             .logo-wordmark    { height: var(--docclad-logo-header-height, 38px); width: auto; object-fit: contain; display: block; }
             .logo-mark        { width: var(--docclad-mark-size, 34px); height: var(--docclad-mark-size, 34px); object-fit: contain; display: none; }

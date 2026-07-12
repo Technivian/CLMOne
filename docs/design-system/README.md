@@ -19,14 +19,17 @@ generic document store, a marketing site, or an AI demonstration.
 
 When sources disagree, use this order:
 
-1. This directory and the code tokens it references.
-2. Live components under `theme/templates/design_system/`.
-3. `theme/static/css/docclad-tokens.css` and `theme/static_src/src/design-system/`.
-4. Older redesign plans and screenshots as historical context only.
+1. `DESIGN_CONSTITUTION.md` (the DocClad Governance Charter).
+2. [Frontend Architecture](ARCHITECTURE.md).
+3. `theme/static/css/docclad-tokens.css`.
+4. Live components under `theme/templates/design_system/` and canonical
+   `.dc-ds-*` CSS under `theme/static_src/src/design-system/components.css`.
+5. Older redesign plans, audits, and screenshots as historical context only.
 
 ## Contents
 
 - [Foundations](FOUNDATIONS.md)
+- [Frontend Architecture](ARCHITECTURE.md)
 - [Components](COMPONENTS.md)
 - [Domain Patterns](DOMAIN_PATTERNS.md)
 - [Interactions](INTERACTIONS.md)

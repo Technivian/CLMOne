@@ -1,19 +1,18 @@
-/* Design System Foundation */
+/* Legacy Tailwind adapter. Canonical values live in docclad-tokens.css. */
 :root {
-  --ink: #171A1F;
-  --bg: #F5F7F8;
-  --stroke: #DFE3E7;
-  --accent: #1B7F5A;
-  --warn: #9A6517;
-  --danger: #A7463F;
-  --muted: #69717C;
-  --surface: #F0F2F3;
-  --border: #DFE3E7;
+  --ink: var(--ink-900);
+  --bg: var(--paper);
+  --stroke: var(--line);
+  --accent: var(--seal);
+  --warn: var(--status-pending-fg);
+  --danger: var(--status-danger-fg);
+  --muted: var(--ink-500);
+  --surface: var(--well);
+  --border: var(--line);
 
   /* Typography */
-  --font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-size-base: 14px;
-  --line-height-base: 20px;
+  --font-family: var(--font-sans);
+  --font-size-base: var(--font-size-body);
   --font-size-lg: 16px;
   --line-height-lg: 24px;
   --font-size-xl: 20px;
@@ -46,12 +45,16 @@ body {
 }
 
 /* Focus States for A11y */
-button:focus-visible,
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible,
-a:focus-visible {
-  outline: 2px solid #1B7F5A;
+:where(
+  button:not(:disabled):not([aria-disabled="true"]),
+  input:not(:disabled):not([aria-disabled="true"]),
+  select:not(:disabled):not([aria-disabled="true"]),
+  textarea:not(:disabled):not([aria-disabled="true"]),
+  a[href]:not([aria-disabled="true"]),
+  [role="button"]:not([aria-disabled="true"]),
+  [tabindex]:not([tabindex="-1"]):not([aria-disabled="true"])
+):focus-visible {
+  outline: 3px solid var(--focus-ring);
   outline-offset: 2px;
 }
 

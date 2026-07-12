@@ -13,7 +13,7 @@ same Casefile contracts without changing product semantics.
 ## File Ownership
 
 - Tokens: `theme/static/css/docclad-tokens.css`
-- Adapter tokens: `theme/static_src/src/design-system/tokens.css`
+- Deprecated token adapter entry point: `theme/static_src/src/design-system/tokens.css`
 - Components: `theme/static_src/src/design-system/components.css`
 - Django primitives: `theme/templates/design_system/`
 - Interaction runtime: `theme/static/js/docclad-ui.js`
@@ -24,6 +24,8 @@ same Casefile contracts without changing product semantics.
 
 - Use semantic custom properties, not page-local hex values.
 - Shared classes use the `dc-ds-` prefix.
+- Use canonical properties from `docclad-tokens.css`; do not add new `--ds-*`
+  aliases or define token values in the adapter entry point.
 - Page CSS may compose layout but may not redefine primitive anatomy.
 - Support 1536px desktop and 390px mobile without horizontal page overflow.
 - Respect reduced motion and visible focus.
