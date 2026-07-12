@@ -2,6 +2,8 @@
 from django.test import SimpleTestCase
 
 from contracts.templatetags.docclad_format import (
+    dpa_approval_badge_tone,
+    dpa_severity_badge_tone,
     event_label,
     humanduration,
     iso_datetime,
@@ -118,3 +120,44 @@ class HumanDurationFilterTests(SimpleTestCase):
 
     def test_non_numeric_passes_through(self):
         self.assertEqual(humanduration('unknown'), 'unknown')
+
+
+class DPABadgeToneFilterTests(SimpleTestCase):
+    """Direct coverage for the design-system Phase 4 tone filters added
+    alongside the DPA Reviews migration — every persisted enum value must
+    map to a real tone, since an unmapped value silently rendering neutral
+    is a defect (see DESIGN_CONSTITUTION.md's badge-mapping rule), not an
+    acceptable fallback."""
+
+    def test_every_dpa_review_pack_approval_status_maps_to_a_tone(self):
+        from contracts.models import DPAReviewPack
+
+        expected = {
+            'DRAFT': 'neutral',
+            'UNDER_REVIEW': 'progress',
+            'ESCALATED': 'special',
+            'APPROVED': 'success',
+            'REJECTED': 'danger',
+        }
+        choices = {value for value, _ in DPAReviewPack.ApprovalStatus.choices}
+        self.assertEqual(choices, set(expected.keys()))
+        for status, tone in expected.items():
+            self.assertEqual(dpa_approval_badge_tone(status), tone)
+
+    def test_every_dpa_risk_item_severity_maps_to_a_tone(self):
+        from contracts.models import DPARiskItem
+
+        expected = {
+            'CRITICAL': 'danger',
+            'HIGH': 'danger',
+            'MEDIUM': 'attention',
+            'LOW': 'success',
+        }
+        choices = {value for value, _ in DPARiskItem.Severity.choices}
+        self.assertEqual(choices, set(expected.keys()))
+        for severity, tone in expected.items():
+            self.assertEqual(dpa_severity_badge_tone(severity), tone)
+
+    def test_unknown_value_falls_back_to_neutral_not_a_crash(self):
+        self.assertEqual(dpa_approval_badge_tone('NOT_A_REAL_STATUS'), 'neutral')
+        self.assertEqual(dpa_severity_badge_tone('NOT_A_REAL_SEVERITY'), 'neutral')
