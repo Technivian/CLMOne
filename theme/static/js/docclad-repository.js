@@ -306,8 +306,14 @@ class DoccladRepository {
 
         if (result.contracts.length === 0) {
             tbody.innerHTML = `
-                <tr><td colspan="8" class="text-center py-8 text-muted">
-                    No contracts found. <a href="/contracts/create/" class="link">Create your first contract</a>
+                <tr><td colspan="8">
+                    <div class="dc-ds-empty">
+                        <h2 class="dc-ds-empty__title">No contracts found</h2>
+                        <p class="dc-ds-empty__copy">Try a different search or filter, or create your first contract.</p>
+                        <div class="dc-ds-actions dc-ds-empty__actions">
+                            <a href="/contracts/create/" class="dc-ds-button dc-ds-button--primary">Create contract</a>
+                        </div>
+                    </div>
                 </td></tr>
             `;
             return;
@@ -761,7 +767,9 @@ class DoccladRepository {
     
     showError(message) {
         console.error('Repository error:', message);
-        // Could show toast notification here
+        if (window.DocClad && typeof window.DocClad.toast === 'function') {
+            window.DocClad.toast(message, { tone: 'danger' });
+        }
     }
     
     async duplicateContract(contractId) {
