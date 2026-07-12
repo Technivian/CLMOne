@@ -50,6 +50,7 @@ test('critical contract create and edit flow works', async ({ page }) => {
   await page.goto('/contracts/new/');
   await page.fill('input[name="title"]', title);
   await page.selectOption('select[name="contract_type"]', 'MSA');
+  await page.click('details[data-collapsible="draft-brief"] summary');
   await page.fill('textarea[name="content"]', 'Automated E2E contract body');
   await page.selectOption('select[name="status"]', 'DRAFT');
   await page.fill('input[name="counterparty"]', 'E2E Counterparty');
