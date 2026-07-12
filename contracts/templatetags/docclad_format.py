@@ -59,6 +59,38 @@ _OBJECT_TYPE_LABELS = {
 _ACRONYMS = {'ai', 'mfa', 'sso', 'saml', 'scim', 'dsar', 'api', 'id', 'url', 'crm', 'dpa', 'scc', 'ip'}
 _PASCAL_SPLIT_RE = re.compile(r'(?<!^)(?=[A-Z])')
 
+# Canonical semantic vocabulary (design-system Phase 2 — badges, status,
+# empty states). This is the single source of truth for "what does each
+# status word mean, visually" — every *_BADGES map below must resolve to one
+# of these eight names. Values are the legacy `badge-*` class this semantic
+# name currently renders as; CANONICAL_BADGE_TONE gives the .dc-ds-badge--*
+# tone a future migration should use instead. Both point at the same
+# underlying --status-*-fg/--status-*-bg tokens in docclad-tokens.css, so
+# switching a template from one to the other is a pure markup change with no
+# colour drift. Not wired into any *_BADGES map yet — this documents and
+# tests the mapping ahead of any page migration, it does not perform one.
+LEGACY_BADGE_CLASS = {
+    'success': 'badge-green',
+    'information': 'badge-blue',
+    'warning': 'badge-yellow',
+    'danger': 'badge-red',
+    'neutral': 'badge-gray',
+    'pending': 'badge-yellow',
+    'inactive': 'badge-gray',
+    'not_applicable': 'badge-gray',
+}
+CANONICAL_BADGE_TONE = {
+    'success': 'dc-ds-badge--success',
+    'information': 'dc-ds-badge--progress',
+    'warning': 'dc-ds-badge--attention',
+    'danger': 'dc-ds-badge--danger',
+    'neutral': 'dc-ds-badge--neutral',
+    'pending': 'dc-ds-badge--attention',
+    'inactive': 'dc-ds-badge--neutral',
+    'not_applicable': 'dc-ds-badge--neutral',
+}
+assert LEGACY_BADGE_CLASS.keys() == CANONICAL_BADGE_TONE.keys()
+
 # Complete Contract.Status → badge variant map. Color is semantic, never
 # decorative: green = healthy/terminal-good, yellow = waiting on someone,
 # blue = in-flight process, red = expired/terminated, gray = neutral/inert.
@@ -331,6 +363,17 @@ def event_label(value):
         return ''
     words = [w for w in re.split(r'[_.]+', str(value)) if w]
     return ' '.join(w.upper() if w.lower() in _ACRONYMS else w.capitalize() for w in words)
+
+
+@register.filter
+def semantic_badge_tone(semantic):
+    """Canonical semantic name -> .dc-ds-badge--* tone suffix, for pages
+    migrating onto the canonical badge component. ('success' -> 'success',
+    'not_applicable' -> 'neutral'). Use with design_system/status_badge.html's
+    `tone` parameter. Unknown input falls back to 'neutral' rather than
+    raising, since a badge should never render unstyled."""
+    tone_class = CANONICAL_BADGE_TONE.get(semantic, CANONICAL_BADGE_TONE['neutral'])
+    return tone_class.removeprefix('dc-ds-badge--')
 
 
 @register.filter

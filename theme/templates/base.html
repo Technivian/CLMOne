@@ -211,12 +211,12 @@
             background-color: #F0F2F3 !important;
         }
 
-        [data-theme="light"] .badge-green  { background: #EFF9F4; color: #1B7F5A; }
-        [data-theme="light"] .badge-blue   { background: #EEF3FA; color: #34548A; }
-        [data-theme="light"] .badge-yellow { background: #FBF3E3; color: #85540F; }
-        [data-theme="light"] .badge-red    { background: #FBECEA; color: #913A35; }
-        [data-theme="light"] .badge-purple { background: #F3EFF7; color: #654978; }
-        [data-theme="light"] .badge-gray   { background: #EEF0F2; color: #69717C; }
+        [data-theme="light"] .badge-green  { background: var(--status-positive-bg); color: var(--status-positive-fg); }
+        [data-theme="light"] .badge-blue   { background: var(--status-progress-bg); color: var(--status-progress-fg); }
+        [data-theme="light"] .badge-yellow { background: var(--status-pending-bg); color: var(--status-pending-fg); }
+        [data-theme="light"] .badge-red    { background: var(--status-danger-bg); color: var(--status-danger-fg); }
+        [data-theme="light"] .badge-purple { background: var(--status-special-bg); color: var(--status-special-fg); }
+        [data-theme="light"] .badge-gray   { background: var(--status-neutral-bg); color: var(--status-neutral-fg); }
 
         .nav-section { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--sidebar-fixed-section-label); padding: 16px 5px 8px; margin: 0; }
         .nav-link { display: flex; align-items: center; gap: 11px; min-height: 40px; padding: 0 11px; font-size: 13px; color: var(--sidebar-fixed-text); border-radius: 8px; margin: 2px 0; transition: all 0.15s; text-decoration: none; border: 1px solid transparent; }
@@ -480,14 +480,18 @@
 
         /* Badge chips — fully rounded pills, tinted background + same-hue text.
            Six archival pairs (see DOCCLAD_DESIGN_SYSTEM.md §4): green=positive,
-           blue=in-progress, yellow=pending, red=danger, purple=special, gray=neutral. */
+           blue=in-progress, yellow=pending, red=danger, purple=special, gray=neutral.
+           Compatibility aliases: colour values are sourced entirely from the
+           canonical --status-*-fg/--status-*-bg tokens in docclad-tokens.css
+           (Phase 2 badge/status/empty consolidation) — do not hardcode hex here.
+           Canonical replacement: .dc-ds-badge--{success,progress,attention,danger,special,neutral}. */
         .badge-sm { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 9999px; white-space: nowrap; letter-spacing: 0.01em; }
-        .badge-green  { background: #EFF9F4; color: #1B7F5A; }
-        .badge-blue   { background: #EEF3FA; color: #34548A; }
-        .badge-yellow { background: #FBF3E3; color: #85540F; }
-        .badge-red    { background: #FBECEA; color: #913A35; }
-        .badge-purple { background: #F3EFF7; color: #654978; }
-        .badge-gray   { background: #EEF0F2; color: #69717C; }
+        .badge-green  { background: var(--status-positive-bg); color: var(--status-positive-fg); }
+        .badge-blue   { background: var(--status-progress-bg); color: var(--status-progress-fg); }
+        .badge-yellow { background: var(--status-pending-bg); color: var(--status-pending-fg); }
+        .badge-red    { background: var(--status-danger-bg); color: var(--status-danger-fg); }
+        .badge-purple { background: var(--status-special-bg); color: var(--status-special-fg); }
+        .badge-gray   { background: var(--status-neutral-bg); color: var(--status-neutral-fg); }
 
         /* Lifecycle stepper (contract detail process path) */
         .lc-track { display: flex; align-items: flex-start; overflow-x: auto; padding: 4px 0; }
@@ -901,13 +905,9 @@
             .row-unread  { background: var(--row-unread-bg); }
             .row-overdue { background: var(--row-overdue-bg); }
             .badge-expiring {
-                background: #FBF3E3;
-                color: #85540F;
+                background: var(--status-pending-bg);
+                color: var(--status-pending-fg);
                 border: 1px solid #ECD8B3;
-            }
-                background: rgba(196,145,51,0.14);
-                color: #D9A75B;
-                border: 1px solid rgba(196,145,51,0.3);
             }
             .tab-pill-active {
                 background: var(--card-bg);

@@ -60,8 +60,8 @@
 }
 
 .badge-neutral {
-  background: #EEF0F2;
-  color: #69717C;
+  background: var(--status-neutral-bg);
+  color: var(--status-neutral-fg);
 }
 
 /* Card Components — flat: hairline border only, no drop shadow */
@@ -201,21 +201,36 @@
   @apply flex-1 h-0.5 bg-stroke mx-4;
 }
 
-/* Empty State Components */
+/* Empty State Components.
+   Compatibility alias for base.html's inline .empty-state (which wins by
+   source order today) — kept token-consistent so behaviour doesn't silently
+   change if load order is ever refactored. Canonical replacement: .dc-ds-empty
+   (theme/templates/design_system/empty_state.html). */
 .empty-state {
-  @apply text-center py-12;
+  padding: 32px 22px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
 }
 
 .empty-state-icon {
-  @apply mx-auto h-16 w-16 text-muted mb-4;
+  width: 32px;
+  height: 32px;
+  margin: 0 auto 10px;
+  color: var(--text-muted);
+  opacity: 0.3;
 }
 
 .empty-state-title {
-  @apply text-lg font-medium text-ink mb-2;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
 }
 
 .empty-state-description {
-  @apply text-muted mb-6;
+  color: var(--text-muted);
+  margin-bottom: 24px;
 }
 
 /* Toast Components */
