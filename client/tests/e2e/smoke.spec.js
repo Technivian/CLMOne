@@ -47,17 +47,17 @@ test('redesigned workspace shells render on key frontend pages', async ({ page }
   const cases = [
     {
       path: '/dashboard/',
-      title: /Legal Operations Workspace/,
-      summaryText: /Operational snapshot/,
-      marker: '.ops-strip',
-      shell: '.workspace-main.hero-shell',
+      title: /^(Dashboard|Command Center)$/,
+      summaryText: /Overview of/,
+      marker: '.cc-v3-kpis',
+      shell: '.command-center.cc-v3',
     },
     {
       path: '/contracts/',
-      title: /Contracts Workspace/,
-      summaryText: /Contracts/,
-      marker: '.views-rail',
-      shell: '.workspace-main',
+      title: /Contract Workspace/,
+      summaryText: /Workload Summary/,
+      marker: '.arch-workspace-sidebar',
+      shell: '.arch-workspace-main',
     },
     {
       path: '/contracts/workflows/',
