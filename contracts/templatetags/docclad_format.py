@@ -108,6 +108,22 @@ _STATUS_BADGES = {
     'CANCELLED': 'badge-gray',
 }
 
+# Contract.status -> canonical .dc-ds-badge--* tone suffix, for pages migrated
+# onto design_system/status_badge.html (Contract Detail migration). Mirrors
+# _STATUS_BADGES exactly: IN_REVIEW/APPROVED are in-flight (progress), not
+# yet a positive terminal outcome (success) the way ACTIVE/COMPLETED are.
+_STATUS_BADGE_TONE = {
+    'DRAFT': 'neutral',
+    'PENDING': 'attention',
+    'IN_REVIEW': 'progress',
+    'APPROVED': 'progress',
+    'ACTIVE': 'success',
+    'COMPLETED': 'success',
+    'EXPIRED': 'danger',
+    'TERMINATED': 'danger',
+    'CANCELLED': 'neutral',
+}
+
 # Contract.lifecycle_stage -> a simplified 6-value chip vocabulary for
 # compact table contexts (the work queue's "Stage" column) — a per-row
 # lifecycle dot-track is legible in a dedicated lifecycle section but reads
@@ -200,6 +216,15 @@ _TASK_STATUS_BADGES = {
     'CANCELLED': 'badge-gray',
 }
 
+# LegalTask.status -> canonical .dc-ds-badge--* tone suffix, mirroring
+# _TASK_STATUS_BADGES (Contract Detail migration).
+_TASK_STATUS_BADGE_TONE = {
+    'PENDING': 'attention',
+    'IN_PROGRESS': 'progress',
+    'COMPLETED': 'success',
+    'CANCELLED': 'neutral',
+}
+
 # LegalTask.priority -> badge variant (URGENT/HIGH share the most severe
 # treatment; there is no separate "critical" tier on the model).
 _TASK_PRIORITY_BADGES = {
@@ -276,6 +301,13 @@ _RISK_STATUS_LABELS = {
     'IN_PROGRESS': 'In Progress',
     'RESOLVED': 'Resolved',
 }
+# RiskLog.status -> canonical .dc-ds-badge--* tone suffix, mirroring
+# _RISK_STATUS_BADGES (Contract Detail migration).
+_RISK_STATUS_BADGE_TONE = {
+    'OPEN': 'attention',
+    'IN_PROGRESS': 'progress',
+    'RESOLVED': 'success',
+}
 
 # SignatureRequest.status -> badge variant.
 _SIGNATURE_STATUS_BADGES = {
@@ -288,6 +320,18 @@ _SIGNATURE_STATUS_BADGES = {
     'CANCELLED': 'badge-gray',
 }
 
+# SignatureRequest.status -> canonical .dc-ds-badge--* tone suffix, mirroring
+# _SIGNATURE_STATUS_BADGES (Contract Detail migration).
+_SIGNATURE_STATUS_BADGE_TONE = {
+    'PENDING': 'neutral',
+    'SENT': 'attention',
+    'VIEWED': 'progress',
+    'SIGNED': 'success',
+    'DECLINED': 'danger',
+    'EXPIRED': 'danger',
+    'CANCELLED': 'neutral',
+}
+
 # Contract.risk_level -> badge variant (same LOW/MEDIUM/HIGH/CRITICAL scale
 # already used elsewhere, kept as its own map since it's a distinct field).
 _CONTRACT_RISK_BADGES = {
@@ -295,6 +339,16 @@ _CONTRACT_RISK_BADGES = {
     'MEDIUM': 'badge-yellow',
     'HIGH': 'badge-red',
     'CRITICAL': 'badge-red',
+}
+
+# Contract.risk_level / RiskLog.risk_level -> canonical .dc-ds-badge--* tone
+# suffix (Contract Detail migration). Both models share the identical
+# LOW/MEDIUM/HIGH/CRITICAL vocabulary, so one map serves both consumers.
+_CONTRACT_RISK_BADGE_TONE = {
+    'LOW': 'success',
+    'MEDIUM': 'attention',
+    'HIGH': 'danger',
+    'CRITICAL': 'danger',
 }
 
 # ApprovalRequest.approval_step is a free CharField copied from whichever
@@ -415,6 +469,12 @@ def semantic_badge_tone(semantic):
 
 
 @register.filter
+def contract_status_badge_tone(status):
+    """Contract status key -> canonical .dc-ds-badge--* tone suffix."""
+    return _STATUS_BADGE_TONE.get(status, 'neutral')
+
+
+@register.filter
 def status_badge_class(status):
     """Contract status key -> canonical badge class ('ACTIVE' -> 'badge-green')."""
     return _STATUS_BADGES.get(status, 'badge-gray')
@@ -469,6 +529,12 @@ def task_status_badge_class(status):
 
 
 @register.filter
+def task_status_badge_tone(status):
+    """LegalTask status key -> canonical .dc-ds-badge--* tone suffix."""
+    return _TASK_STATUS_BADGE_TONE.get(status, 'neutral')
+
+
+@register.filter
 def task_priority_badge_class(priority):
     """LegalTask priority key -> canonical badge class."""
     return _TASK_PRIORITY_BADGES.get(priority, 'badge-gray')
@@ -478,6 +544,12 @@ def task_priority_badge_class(priority):
 def risk_status_badge_class(status):
     """RiskLog status key -> canonical badge class."""
     return _RISK_STATUS_BADGES.get(status, 'badge-gray')
+
+
+@register.filter
+def risk_status_badge_tone(status):
+    """RiskLog status key -> canonical .dc-ds-badge--* tone suffix."""
+    return _RISK_STATUS_BADGE_TONE.get(status, 'neutral')
 
 
 @register.filter
@@ -494,9 +566,24 @@ def signature_status_badge_class(status):
 
 
 @register.filter
+def signature_status_badge_tone(status):
+    """SignatureRequest status key -> canonical .dc-ds-badge--* tone suffix."""
+    return _SIGNATURE_STATUS_BADGE_TONE.get(status, 'neutral')
+
+
+@register.filter
 def contract_risk_badge_class(risk_level):
     """Contract risk_level key -> canonical badge class."""
     return _CONTRACT_RISK_BADGES.get(risk_level, 'badge-gray')
+
+
+@register.filter
+def contract_risk_badge_tone(risk_level):
+    """Contract/RiskLog risk_level key -> canonical .dc-ds-badge--* tone
+    suffix. RiskLog.RiskLevel shares the identical LOW/MEDIUM/HIGH/CRITICAL
+    vocabulary as Contract.RiskLevel, so this single map covers both
+    consumers (contract header risk badge and Compliance-tab risk rows)."""
+    return _CONTRACT_RISK_BADGE_TONE.get(risk_level, 'neutral')
 
 
 _OBLIGATION_COMPLIANCE_LABELS = {

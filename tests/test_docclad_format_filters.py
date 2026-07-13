@@ -2,6 +2,8 @@
 from django.test import SimpleTestCase
 
 from contracts.templatetags.docclad_format import (
+    contract_risk_badge_tone,
+    contract_status_badge_tone,
     dpa_approval_badge_tone,
     dpa_severity_badge_tone,
     event_label,
@@ -9,7 +11,10 @@ from contracts.templatetags.docclad_format import (
     iso_datetime,
     money,
     object_type_label,
+    risk_status_badge_tone,
+    signature_status_badge_tone,
     sort_label,
+    task_status_badge_tone,
 )
 
 
@@ -161,3 +166,97 @@ class DPABadgeToneFilterTests(SimpleTestCase):
     def test_unknown_value_falls_back_to_neutral_not_a_crash(self):
         self.assertEqual(dpa_approval_badge_tone('NOT_A_REAL_STATUS'), 'neutral')
         self.assertEqual(dpa_severity_badge_tone('NOT_A_REAL_SEVERITY'), 'neutral')
+
+
+class ContractDetailBadgeToneFilterTests(SimpleTestCase):
+    """Direct coverage for the tone filters added alongside the Contract
+    Detail migration — every persisted enum value must map to a real tone,
+    mirroring DPABadgeToneFilterTests above (DESIGN_CONSTITUTION.md's
+    badge-mapping rule: an unmapped value silently rendering neutral is a
+    defect, not an acceptable fallback)."""
+
+    def test_every_contract_status_maps_to_a_tone(self):
+        from contracts.models import Contract
+
+        expected = {
+            'DRAFT': 'neutral',
+            'PENDING': 'attention',
+            'IN_REVIEW': 'progress',
+            'APPROVED': 'progress',
+            'ACTIVE': 'success',
+            'COMPLETED': 'success',
+            'EXPIRED': 'danger',
+            'TERMINATED': 'danger',
+            'CANCELLED': 'neutral',
+        }
+        choices = {value for value, _ in Contract.Status.choices}
+        self.assertEqual(choices, set(expected.keys()))
+        for status, tone in expected.items():
+            self.assertEqual(contract_status_badge_tone(status), tone)
+
+    def test_every_contract_risk_level_maps_to_a_tone(self):
+        from contracts.models import Contract, RiskLog
+
+        expected = {
+            'LOW': 'success',
+            'MEDIUM': 'attention',
+            'HIGH': 'danger',
+            'CRITICAL': 'danger',
+        }
+        contract_choices = {value for value, _ in Contract.RiskLevel.choices}
+        risk_log_choices = {value for value, _ in RiskLog.RiskLevel.choices}
+        self.assertEqual(contract_choices, set(expected.keys()))
+        self.assertEqual(risk_log_choices, set(expected.keys()))
+        for risk_level, tone in expected.items():
+            self.assertEqual(contract_risk_badge_tone(risk_level), tone)
+
+    def test_every_legal_task_status_maps_to_a_tone(self):
+        from contracts.models import LegalTask
+
+        expected = {
+            'PENDING': 'attention',
+            'IN_PROGRESS': 'progress',
+            'COMPLETED': 'success',
+            'CANCELLED': 'neutral',
+        }
+        choices = {value for value, _ in LegalTask.Status.choices}
+        self.assertEqual(choices, set(expected.keys()))
+        for status, tone in expected.items():
+            self.assertEqual(task_status_badge_tone(status), tone)
+
+    def test_every_signature_request_status_maps_to_a_tone(self):
+        from contracts.models import SignatureRequest
+
+        expected = {
+            'PENDING': 'neutral',
+            'SENT': 'attention',
+            'VIEWED': 'progress',
+            'SIGNED': 'success',
+            'DECLINED': 'danger',
+            'EXPIRED': 'danger',
+            'CANCELLED': 'neutral',
+        }
+        choices = {value for value, _ in SignatureRequest.Status.choices}
+        self.assertEqual(choices, set(expected.keys()))
+        for status, tone in expected.items():
+            self.assertEqual(signature_status_badge_tone(status), tone)
+
+    def test_every_risk_log_status_maps_to_a_tone(self):
+        from contracts.models import RiskLog
+
+        expected = {
+            'OPEN': 'attention',
+            'IN_PROGRESS': 'progress',
+            'RESOLVED': 'success',
+        }
+        choices = {value for value, _ in RiskLog.Status.choices}
+        self.assertEqual(choices, set(expected.keys()))
+        for status, tone in expected.items():
+            self.assertEqual(risk_status_badge_tone(status), tone)
+
+    def test_unknown_value_falls_back_to_neutral_not_a_crash(self):
+        self.assertEqual(contract_status_badge_tone('NOT_A_REAL_STATUS'), 'neutral')
+        self.assertEqual(contract_risk_badge_tone('NOT_A_REAL_RISK_LEVEL'), 'neutral')
+        self.assertEqual(task_status_badge_tone('NOT_A_REAL_STATUS'), 'neutral')
+        self.assertEqual(signature_status_badge_tone('NOT_A_REAL_STATUS'), 'neutral')
+        self.assertEqual(risk_status_badge_tone('NOT_A_REAL_STATUS'), 'neutral')
