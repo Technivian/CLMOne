@@ -1,0 +1,14 @@
+{% if invitation_history %}
+<div class="dc-ds-dense-list max-h-72 overflow-auto">
+  {% for invitation in invitation_history %}
+  <div class="dc-ds-dense-row">
+    <div class="dc-ds-dense-row__main">
+      <div class="dc-ds-dense-row__title">{{ invitation.email }}</div>
+      <div class="dc-ds-dense-row__meta">{{ invitation.get_role_display }} · {{ invitation.get_status_display }} · {{ invitation.created_at|date:"M j, Y g:i A" }}</div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+  {% include "design_system/empty_state.html" with title="No invitation history yet." %}
+{% endif %}

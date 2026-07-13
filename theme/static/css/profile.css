@@ -1,0 +1,38 @@
+/* profile.html — page-scoped layout, token-backed only.
+   Not a shared primitive: sized specifically for the profile page identity
+   header and MFA recovery-code preview, which do not appear elsewhere.
+   Loaded through base.html's {% block page_css %} outlet, after
+   docclad-tokens.css and dist/styles.css. */
+.profile-page-avatar {
+  width: 64px;
+  height: 64px;
+  background: var(--avatar-gradient);
+  border-radius: var(--radius-panel);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.profile-page-avatar__initial {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.profile-recovery-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.profile-recovery-code {
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  border: 1px solid var(--line);
+  padding: 8px 12px;
+  font-size: 0.875rem;
+  font-family: var(--mono);
+  color: var(--status-positive-fg);
+}

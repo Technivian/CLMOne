@@ -66,22 +66,19 @@ class CommandCenterDashboardTests(TestCase):
         response = self.client_.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Command Center')
-        self.assertContains(response, 'Live portfolio overview')
-        # The attention banner is wired to the same real counts as the four
-        # metric cards, not the old hardcoded "23 contracts..." copy — this
-        # org's setUp has no conflicts/reviews/approvals/renewals pending, so
-        # the banner (which would otherwise just restate the zeroed-out
-        # cards) doesn't render at all rather than showing an empty-state message.
+        # The compact header replaced the old oversized date <h1> + separate
+        # "Live portfolio overview" chip with a one-line operational summary
+        # next to the title; when nothing needs attention it reads as such
+        # rather than restating zeroed-out metric cards.
+        self.assertContains(response, 'Governed workflows are up to date')
         self.assertNotContains(response, 'Attention needed:')
 
     def test_metric_cards_render(self):
         response = self.client_.get(reverse('dashboard'))
-        self.assertContains(response, 'Needs Legal Review')
-        self.assertContains(response, 'Exposure Review')
-        self.assertContains(response, 'Blocked')
-        self.assertContains(response, 'Notice / Renewal Risk')
-        self.assertContains(response, 'Commercial exposure under review')
-        self.assertContains(response, 'Deadlines in the next 30 days')
+        self.assertContains(response, 'No approvals waiting')
+        self.assertContains(response, 'No unresolved deviations')
+        self.assertContains(response, 'No DPA conflicts')
+        self.assertContains(response, 'No deadlines in 30 days')
 
     def test_priority_queue_and_right_rail_render(self):
         # Priority Queue is wired to real in-progress contracts, not hardcoded
@@ -96,15 +93,13 @@ class CommandCenterDashboardTests(TestCase):
             created_by=self.user,
         )
         response = self.client_.get(reverse('dashboard'))
-        self.assertContains(response, 'Priority Legal Work Queue')
-        self.assertContains(response, 'My Queue')
+        self.assertContains(response, 'Priority matter')
+        self.assertContains(response, 'Operational queues')
         self.assertContains(response, 'DPA Conflicts')
-        self.assertContains(response, 'Lifecycle Status Overview')
-        self.assertContains(response, 'Top Review Blockers')
-        self.assertContains(response, 'Queue Health')
-        self.assertContains(response, 'Blocking approvals')
-        self.assertContains(response, 'Upcoming Obligations')
-        self.assertContains(response, 'Recent Review Memos')
+        self.assertContains(response, 'Governance controls')
+        self.assertContains(response, 'Recommended Next Actions')
+        self.assertContains(response, 'Upcoming Deadlines')
+        self.assertContains(response, 'Recent Matters')
 
     def test_dashboard_uses_persisted_command_center_model(self):
         CommandCenterSavedView.objects.create(
@@ -153,12 +148,11 @@ class CommandCenterDashboardTests(TestCase):
 
         response = self.client_.get(reverse('dashboard'))
 
-        self.assertContains(response, 'Privacy Escalations')
         self.assertContains(response, 'Persisted DPA conflict row')
         self.assertContains(response, 'MSA cap mismatch')
         self.assertContains(response, 'Counsel review')
         self.assertContains(response, 'Resolve')
-        self.assertContains(response, 'Recent Review Memos')
+        self.assertContains(response, 'Priority matter')
 
     def test_refresh_projection_materializes_source_records(self):
         DPARiskItem.objects.create(

@@ -19,7 +19,7 @@
     <meta name="twitter:image" content="{% static 'img/brand/og-image.png' %}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link href="{% static 'css/docclad-tokens.css' %}{% if ASSET_VERSION %}?v={{ ASSET_VERSION }}{% endif %}" rel="stylesheet">
     <link href="{% static 'css/dist/styles.css' %}{% if ASSET_VERSION %}?v={{ ASSET_VERSION }}{% endif %}" rel="stylesheet">
     <script src="{% static 'js/csp-handlers.js' %}" defer></script>
@@ -32,38 +32,38 @@
         })();
     </script>
     <style nonce="{{ csp_nonce }}">
-        * { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+        * { font-family: var(--font-sans); }
 
         :root, [data-theme="light"] {
-            --bg: #F5F7F8;
-            --surface: #F0F2F3;
-            --surface-alt: #FFFFFF;
-            --primary: #1B7F5A;
-            --primary-hover: #176B4D;
-            --primary-light: #26966B;
-            --accent: #1B7F5A;
-            --cta: #1B7F5A;
-            --cta-hover: #176B4D;
-            --cta-glow: rgba(27,127,90,0.16);
-            --text-primary: #171A1F;
-            --text-secondary: #69717C;
-            --text-muted: #8B929C;
-            --text-dim: #B4BAC1;
-            --border: #DFE3E7;
-            --nav-bg: rgba(255,255,255,0.92);
-            --primary-glow: rgba(27,127,90,0.16);
-            --primary-subtle: rgba(27,127,90,0.08);
-            --primary-bg: rgba(27,127,90,0.12);
-            --primary-bg-light: rgba(27,127,90,0.05);
-            --accent-bg: rgba(27,127,90,0.10);
-            --accent-bg-light: rgba(27,127,90,0.05);
-            --amber-color: #85540F;
-            --amber-bg: #FBF3E3;
-            --error: #913A35;
-            --error-bg: #FBECEA;
-            --error-border: #EACAC7;
-            --input-bg: #FFFFFF;
-            --hover-overlay: rgba(11,19,48,0.03);
+            --bg: var(--paper);
+            --surface: var(--well);
+            --surface-alt: var(--card);
+            --primary: var(--seal);
+            --primary-hover: var(--seal-dark);
+            --primary-light: var(--color-brand-primary);
+            --accent: var(--seal);
+            --cta: var(--seal);
+            --cta-hover: var(--seal-dark);
+            --cta-glow: var(--focus-ring);
+            --text-primary: var(--ink-900);
+            --text-secondary: var(--ink-500);
+            --text-muted: var(--ink-400);
+            --text-dim: var(--ink-300);
+            --border: var(--line);
+            --nav-bg: var(--card);
+            --primary-glow: var(--focus-ring);
+            --primary-subtle: var(--seal-bg);
+            --primary-bg: var(--seal-bg);
+            --primary-bg-light: var(--seal-bg);
+            --accent-bg: var(--seal-bg);
+            --accent-bg-light: var(--seal-bg);
+            --amber-color: var(--status-pending-fg);
+            --amber-bg: var(--status-pending-bg);
+            --error: var(--status-danger-fg);
+            --error-bg: var(--status-danger-bg);
+            --error-border: var(--status-danger-fg);
+            --input-bg: var(--card);
+            --hover-overlay: var(--well);
         }
 
         .theme-toggle { cursor: pointer; background: var(--surface); border: 1px solid var(--border); border-radius: 0.5rem; padding: 0.5rem; color: var(--text-secondary); transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
@@ -89,19 +89,19 @@
         .login-feature-text { color: var(--text-secondary); }
         .login-dim         { color: var(--text-dim); }
         .login-input {
-            width: 100%; padding: 0.75rem 1rem; border-radius: 0.75rem;
-            font-size: 0.875rem; transition: border-color 0.2s, box-shadow 0.2s;
+            width: 100%; padding: var(--space-12) var(--space-16); border-radius: var(--radius-control);
+            font-size: var(--font-size-body); transition: border-color var(--transition-base), box-shadow var(--transition-base);
             background: var(--input-bg); border: 1px solid var(--border);
             color: var(--text-primary); outline: none;
         }
         .login-input::placeholder { color: var(--text-muted); }
-        .login-input:focus {
+        .login-input:focus-visible {
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px var(--primary-subtle);
+            box-shadow: 0 0 0 3px var(--focus-ring);
         }
         .login-input.has-error { border-color: var(--error-border); }
         .glow-btn { position: relative; overflow: hidden; }
-        .glow-btn::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, transparent 50%); pointer-events: none; }
+        .glow-btn::before { display: none; }
         .glow-btn:hover { transform: translateY(-1px); }
         /* ── Login inline-style cleanup helpers ────────────────────────────── */
         .bg-page             { background: var(--bg); }
@@ -123,10 +123,10 @@
         .stat-tile-accent    { background: var(--accent-bg-light); border: 1px solid var(--primary-subtle); }
         .alert-error         { background: var(--error-bg); border: 1px solid var(--error-border); }
         .checkbox-primary    { accent-color: var(--primary); }
-        .glow-btn-primary-grad    { background: var(--cta); box-shadow: 0 8px 32px var(--cta-glow), 0 2px 4px rgba(0,0,0,0.2); }
-        .glow-btn-primary-grad-soft { background: var(--cta); box-shadow: 0 8px 24px var(--cta-glow); }
+        .glow-btn-primary-grad,
+        .glow-btn-primary-grad-soft { background: var(--cta); box-shadow: none; }
         .divider-line        { background: var(--border); }
-        .btn-quiet-surface { border-color: var(--border); color: var(--text-primary); background: var(--surface); }
+        .btn-quiet-surface { border-color: var(--border); color: var(--text-primary); background: var(--card); }
     </style>
 </head>
     <body class="bg-page login-title" data-design-system="casefile">

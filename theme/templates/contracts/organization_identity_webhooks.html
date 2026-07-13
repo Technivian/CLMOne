@@ -1,29 +1,29 @@
 <p class="text-desc-sm">Diagnostics for outbound integration events, including retries and dead-letter items.</p>
-<div class="table-wrapper">
-  <table class="table-base">
+<div class="dc-ds-table-wrap">
+  <table class="dc-ds-table">
     <thead>
-      <tr class="table-head-row">
-        <th class="table-cell-pad">Created</th>
-        <th class="table-cell-pad">Endpoint</th>
-        <th class="table-cell-pad">Event</th>
-        <th class="table-cell-pad">Status</th>
-        <th class="table-cell-pad">Attempts</th>
-        <th class="table-cell-pad">Response</th>
+      <tr>
+        <th scope="col">Created</th>
+        <th scope="col">Endpoint</th>
+        <th scope="col">Event</th>
+        <th scope="col">Status</th>
+        <th scope="col">Attempts</th>
+        <th scope="col">Response</th>
       </tr>
     </thead>
     <tbody>
       {% for delivery in webhook_deliveries %}
-      <tr class="table-body-row">
-        <td class="table-cell-pad table-cell-primary">{{ delivery.created_at|date:"Y-m-d H:i" }}</td>
-        <td class="table-cell-pad c-muted">{{ delivery.endpoint.name }}</td>
-        <td class="table-cell-pad c-muted">{{ delivery.event_type }}</td>
-        <td class="table-cell-pad table-cell-primary">{{ delivery.status }}</td>
-        <td class="table-cell-pad c-muted">{{ delivery.attempt_count }}/{{ delivery.max_attempts }}</td>
-        <td class="table-cell-pad c-muted">{{ delivery.response_status|default:"-" }}</td>
+      <tr>
+        <td>{{ delivery.created_at|date:"Y-m-d H:i" }}</td>
+        <td class="c-muted">{{ delivery.endpoint.name }}</td>
+        <td class="c-muted">{{ delivery.event_type }}</td>
+        <td>{{ delivery.status }}</td>
+        <td class="c-muted">{{ delivery.attempt_count }}/{{ delivery.max_attempts }}</td>
+        <td class="c-muted">{{ delivery.response_status|default:"-" }}</td>
       </tr>
       {% empty %}
       <tr>
-        <td colspan="6" class="table-cell-pad c-muted">No webhook deliveries yet.</td>
+        <td colspan="6">{% include "design_system/empty_state.html" with title="No webhook deliveries yet." %}</td>
       </tr>
       {% endfor %}
     </tbody>

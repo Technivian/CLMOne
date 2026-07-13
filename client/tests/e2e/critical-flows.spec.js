@@ -21,6 +21,18 @@ async function submitOwningForm(page, fieldSelector) {
   });
 }
 
+async function openPanel(page, collapsibleKey) {
+  // contract_form.html's Legal posture / Lifecycle control / Draft brief
+  // sections are collapsed <details> by default (opened automatically only
+  // when the selected contract_type marks a field inside them as required).
+  // Setting .open = true directly (rather than clicking the summary) is
+  // idempotent — it won't toggle an already-open panel closed.
+  await page.evaluate((key) => {
+    const details = document.querySelector(`details[data-collapsible="${key}"]`);
+    if (details) details.open = true;
+  }, collapsibleKey);
+}
+
 async function selectOptionContainingText(page, selector, textFragment) {
   const value = await page.$eval(
     selector,
@@ -50,17 +62,20 @@ test('critical contract create and edit flow works', async ({ page }) => {
   await page.goto('/contracts/new/');
   await page.fill('input[name="title"]', title);
   await page.selectOption('select[name="contract_type"]', 'MSA');
-  await page.fill('textarea[name="content"]', 'Automated E2E contract body');
   await page.selectOption('select[name="status"]', 'DRAFT');
   await page.fill('input[name="counterparty"]', 'E2E Counterparty');
+  await openPanel(page, 'legal-posture');
   await page.fill('input[name="value"]', '10000');
   await page.selectOption('select[name="currency"]', 'USD');
   await page.fill('input[name="governing_law"]', 'State of Delaware');
   await page.fill('input[name="jurisdiction"]', 'New York');
   await page.selectOption('select[name="risk_level"]', 'LOW');
+  await openPanel(page, 'lifecycle-control');
   await page.fill('input[name="start_date"]', '2026-04-12');
   await page.fill('input[name="end_date"]', '2026-12-31');
   await page.selectOption('select[name="lifecycle_stage"]', 'DRAFTING');
+  await openPanel(page, 'draft-brief');
+  await page.fill('textarea[name="content"]', 'Automated E2E contract body');
   await submitOwningForm(page, 'input[name="title"]');
 
   await expect(page).toHaveURL(/\/contracts\/?(\?.*)?$/);
@@ -68,14 +83,16 @@ test('critical contract create and edit flow works', async ({ page }) => {
 
   await page.getByRole('link', { name: title }).click();
   await expect(page).toHaveURL(/\/contracts\/\d+\/?$/);
-  await expect(page.locator('.workspace-main.hero-shell').first()).toBeVisible();
-  await expect(page.locator('.summary-grid').first()).toBeVisible();
-  await expect(page.getByRole('heading', { name: /Lifecycle Guidance/i })).toBeVisible();
+  await expect(page.locator('.page-wrap.reveal-stagger').first()).toBeVisible();
+  await expect(page.locator('.arch-detail-grid').first()).toBeVisible();
+  await expect(page.locator('.lc-track').first()).toBeVisible();
   const detailUrl = page.url().replace(/\/$/, '');
   await page.goto(`${detailUrl}/edit/`);
   await expect(page).toHaveURL(/\/contracts\/\d+\/edit\/?$/);
 
-  await page.selectOption('select[name="status"]', 'ACTIVE');
+  // DRAFT can only transition to IN_REVIEW/PENDING/CANCELLED — not directly
+  // to ACTIVE (see CONTRACT_STATUS_TRANSITIONS in contract_lifecycle.py).
+  await page.selectOption('select[name="status"]', 'PENDING');
   await submitOwningForm(page, 'select[name="status"]');
   await expect(page).toHaveURL(/\/contracts\/?(\?.*)?$/);
 });
@@ -120,17 +137,20 @@ test('critical redesigned workflow path works end-to-end', async ({ page }) => {
   await page.goto('/contracts/new/');
   await page.fill('input[name="title"]', contractTitle);
   await page.selectOption('select[name="contract_type"]', 'MSA');
-  await page.fill('textarea[name="content"]', 'Workflow path contract body');
   await page.selectOption('select[name="status"]', 'DRAFT');
   await page.fill('input[name="counterparty"]', 'Workflow Counterparty');
+  await openPanel(page, 'legal-posture');
   await page.fill('input[name="value"]', '5000');
   await page.selectOption('select[name="currency"]', 'USD');
   await page.fill('input[name="governing_law"]', 'State of Delaware');
   await page.fill('input[name="jurisdiction"]', 'New York');
   await page.selectOption('select[name="risk_level"]', 'LOW');
+  await openPanel(page, 'lifecycle-control');
   await page.fill('input[name="start_date"]', '2026-04-12');
   await page.fill('input[name="end_date"]', '2026-12-31');
   await page.selectOption('select[name="lifecycle_stage"]', 'DRAFTING');
+  await openPanel(page, 'draft-brief');
+  await page.fill('textarea[name="content"]', 'Workflow path contract body');
   await submitOwningForm(page, 'input[name="title"]');
 
   await expect(page).toHaveURL(/\/contracts\/?(\?.*)?$/);

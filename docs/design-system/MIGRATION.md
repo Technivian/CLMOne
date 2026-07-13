@@ -20,6 +20,11 @@ Legacy classes remain mapped to Casefile tokens so unchanged domain screens
 inherit the same color, type, spacing, focus, and surface language. They are a
 migration bridge, not an API for new work.
 
+Migration proceeds in the phases defined in
+[`ARCHITECTURE.md`](ARCHITECTURE.md). Phase 1 changes foundations only; it does
+not authorize production-page or workflow migrations. Compatibility styles and
+`--ds-*` aliases remain until repository-wide usage is zero.
+
 Shared shell, dashboard, repository, and queue icons must use the central icon
 adapter. Custom SVG is reserved for brand marks, diagrams, and domain visuals
 that do not exist in Lucide.

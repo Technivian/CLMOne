@@ -38,6 +38,12 @@
 #   theme/static/js/csp-handlers.js
 #     Removes 'cms-aegis-theme' localStorage key during theme migration. Remove this
 #     localStorage.removeItem call once all active sessions have migrated.
+#
+#   tests/test_5f_role_walkthrough.py
+#     assertNotIn('CMS Aegis', body) — a regression test proving the old brand
+#     name never renders. The forbidden string exists only inside this negative
+#     assertion, never as leaked output. Remove the allowlist entry only if the
+#     assertion itself is removed.
 
 set -euo pipefail
 
@@ -51,6 +57,7 @@ ALLOWLIST_FILES=(
   'config/settings_production.py'
   'config/feature_flags.py'
   'tests/test_salesforce_sprint2_ingestion.py'
+  'tests/test_5f_role_walkthrough.py'
   'theme/templates/base.html'
   'theme/templates/base_fullscreen.html'
   'theme/static/js/csp-handlers.js'

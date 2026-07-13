@@ -6,21 +6,24 @@ Casefile uses semantic roles, never color names in product decisions.
 
 | Role | Token | Use |
 |---|---|---|
-| Canvas | `--paper`, `--ds-color-canvas` | Application background |
-| Surface | `--card`, `--ds-color-surface` | Working panels and controls |
-| Well | `--well`, `--ds-color-surface-muted` | Grouped controls and quiet bands |
-| Text | `--ink-900`, `--ds-color-text` | Primary content |
-| Secondary text | `--ink-500`, `--ds-color-text-secondary` | Supporting content |
-| Border | `--line`, `--ds-color-border` | Structural separation |
-| Primary/trust | `--seal`, `--ds-color-trust` | Primary action, selection, verified state |
+| Canvas | `--paper` | Application background |
+| Surface | `--card` | Working panels and controls |
+| Well | `--well` | Grouped controls and quiet bands |
+| Text | `--ink-900` | Primary content |
+| Secondary text | `--ink-500` | Supporting content |
+| Border | `--line` | Structural separation |
+| Primary/trust | `--seal` | Primary action, selection, verified state |
 | Progress | `--status-progress-*` | Review and active workflow states |
 | Attention | `--status-pending-*` | Waiting, renewal, and due-soon states |
 | Danger | `--status-danger-*` | Blocking exceptions and destructive actions |
 | Special | `--status-special-*` | Specialist or privileged review states |
 
-Forest is not decoration. It means action, selection, progress, or trust.
+Teal is not decoration. It means action, selection, progress, or trust.
 Amber and red require a real operational reason. Never communicate status by
 color alone; pair color with text, iconography, or position.
+
+`--ds-*` names are deprecated aliases retained for compatibility. New code
+uses the canonical tokens shown above.
 
 ## Typography
 

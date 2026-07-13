@@ -1,0 +1,55 @@
+<div class="dc-ds-table-wrap">
+  <table class="dc-ds-table">
+    <thead>
+      <tr>
+        <th scope="col">User</th>
+        <th scope="col">Email</th>
+        <th scope="col">Role</th>
+        <th scope="col">Joined</th>
+        <th scope="col" class="text-right">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for membership in memberships %}
+      <tr>
+        <td>{{ membership.user.get_full_name|default:membership.user.username }}</td>
+        <td class="c-muted">{{ membership.user.email|default:"-" }}</td>
+        <td>
+          <form method="post" action="{% url 'contracts:update_membership_role' membership.id %}" class="inline-flex items-center gap-2">
+            {% csrf_token %}
+            <select name="role" class="select-base px-2 py-1 rounded text-sm border" {% if membership.role == 'OWNER' and not is_owner %}disabled{% endif %}>
+              <option value="OWNER" {% if membership.role == 'OWNER' %}selected{% endif %}>Owner</option>
+              <option value="ADMIN" {% if membership.role == 'ADMIN' %}selected{% endif %}>Admin</option>
+              <option value="MEMBER" {% if membership.role == 'MEMBER' %}selected{% endif %}>Member</option>
+            </select>
+            <button type="submit" class="dc-ds-button dc-ds-button--ghost" {% if membership.role == 'OWNER' and not is_owner %}disabled{% endif %}>Save</button>
+          </form>
+        </td>
+        <td class="c-muted">{{ membership.created_at|date:"M j, Y" }}</td>
+        <td class="text-right">
+          {% if membership.user_id != current_user_id %}
+          <div class="flex flex-col items-end gap-1">
+            <form method="post" action="{% url 'contracts:revoke_member_sessions' membership.id %}" class="inline"
+                  data-confirm="Revoke all active sessions for this member? They will be signed out immediately.">
+              {% csrf_token %}
+              <button type="submit" class="dc-ds-button dc-ds-button--ghost c-warning">Revoke Sessions</button>
+            </form>
+            <form method="post" action="{% url 'contracts:deactivate_organization_member' membership.id %}" class="inline"
+                  data-confirm="Deactivate this member? They will lose access to the organization.">
+              {% csrf_token %}
+              <button type="submit" class="dc-ds-button dc-ds-button--ghost c-danger">Deactivate</button>
+            </form>
+          </div>
+          {% else %}
+          <span class="text-xs c-muted">You</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="5">{% include "design_system/empty_state.html" with title="No active members found." %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

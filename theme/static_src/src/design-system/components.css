@@ -187,6 +187,11 @@
 .dc-ds-badge--danger { border-color: #EACAC7; background: var(--ds-color-danger-soft); color: var(--ds-color-danger); }
 .dc-ds-badge--special { border-color: #DED2E7; background: var(--ds-color-special-soft); color: var(--ds-color-special); }
 .dc-ds-badge--phase { border-color: #B9DFCE; background: var(--ds-color-trust-soft); color: var(--ds-color-trust); }
+/* neutral: added for the canonical semantic vocabulary (Phase 2 badge/status/empty
+   consolidation) — covers "neutral", "inactive", and "not applicable" semantics.
+   Previously only reachable via the base .dc-ds-badge default, which is fragile
+   (indistinguishable from "no tone specified"). */
+.dc-ds-badge--neutral { border-color: var(--line-strong); background: var(--status-neutral-bg); color: var(--status-neutral-fg); }
 
 .dc-ds-alert {
   display: flex;
