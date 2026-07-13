@@ -43,11 +43,22 @@ class DesignSystemTests(TestCase):
             status='ACTIVE',
             created_by=self.user,
         )
+        # Legal Pulse shows a meaningful zero-state instead of a bare "0" —
+        # a PENDING contract is needed for "Needs Legal Review" itself
+        # (not its empty-state copy) to render.
+        Contract.objects.create(
+            organization=organization,
+            title='DS Contract Needing Review',
+            content='Seed so the Legal Pulse metric has a nonzero value.',
+            status='PENDING',
+            created_by=self.user,
+        )
         self.client.login(username='testuser', password='testpass123')
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'DocClad')
-        self.assertContains(response, 'Needs Legal Review')
+        self.assertContains(response, 'High-Risk Deviations')
+        self.assertContains(response, 'css/command-center.css')
 
     def test_dashboard_loads_with_feature_flag_disabled(self):
         os.environ['FEATURE_REDESIGN'] = 'false'
@@ -171,14 +182,13 @@ class DesignSystemTests(TestCase):
 
     def test_casefile_spacing_scale_uses_distinct_four_pixel_steps(self):
         root = Path(settings.BASE_DIR)
-        tokens = (
-            root / 'theme' / 'static_src' / 'src' / 'design-system' / 'tokens.css'
-        ).read_text()
+        tokens = (root / 'theme' / 'static' / 'css' / 'docclad-tokens.css').read_text()
         for token in (
-            '--ds-space-3: 12px',
-            '--ds-space-4: 16px',
-            '--ds-space-5: 20px',
-            '--ds-space-6: 24px',
+            '--space-12: 12px',
+            '--space-16: 16px',
+            '--space-20: 20px',
+            '--space-24: 24px',
+            '--ds-space-3: var(--space-12)',
         ):
             self.assertIn(token, tokens)
 
@@ -190,13 +200,15 @@ class DesignSystemTests(TestCase):
         premium = (
             root / 'theme' / 'static_src' / 'src' / 'design-system' / 'premium.css'
         ).read_text()
+        tokens = (root / 'theme' / 'static' / 'css' / 'docclad-tokens.css').read_text()
         picker = (
             root / 'theme' / 'templates' / 'contracts' / 'contract_template_picker.html'
         ).read_text()
 
         self.assertIn('@import "./premium.css"', index)
-        self.assertIn('--ds-page-x: 32px', premium)
-        self.assertIn('--ds-page-top: 32px', premium)
+        self.assertIn('--page-padding-x: var(--space-32)', tokens)
+        self.assertIn('--page-padding-top: var(--space-32)', tokens)
+        self.assertIn('--ds-page-x: var(--page-padding-x)', tokens)
         self.assertIn('.page-wrap', premium)
         self.assertIn('.dc-ds-page', premium)
         self.assertIn('ctp-page', picker)
@@ -208,6 +220,7 @@ class DesignSystemTests(TestCase):
             'base.html',
             'dashboard.html',
             'contracts/repository.html',
+            'contracts/approval_request_list.html',
         ):
             content = (template_root / relative_path).read_text()
             self.assertNotIn('<svg', content, relative_path)

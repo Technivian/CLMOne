@@ -1,0 +1,25 @@
+{% if invitations %}
+<div class="dc-ds-dense-list">
+  {% for invitation in invitations %}
+  <div class="dc-ds-dense-row">
+    <div class="dc-ds-dense-row__main">
+      <div class="dc-ds-dense-row__title">{{ invitation.email }}</div>
+      <div class="dc-ds-dense-row__meta">{{ invitation.get_role_display }} · Expires {{ invitation.expires_at|date:"M j, Y g:i A" }}</div>
+    </div>
+    <div class="dc-ds-dense-row__actions">
+      <form method="post" action="{% url 'contracts:resend_organization_invite' invitation.id %}">
+        {% csrf_token %}
+        <button type="submit" class="dc-ds-button dc-ds-button--ghost">Resend</button>
+      </form>
+      <form method="post" action="{% url 'contracts:revoke_organization_invite' invitation.id %}"
+            data-confirm="Revoke this invitation? The recipient will no longer be able to join.">
+        {% csrf_token %}
+        <button type="submit" class="dc-ds-button dc-ds-button--ghost c-danger">Revoke</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+  {% include "design_system/empty_state.html" with title="No pending invitations." %}
+{% endif %}

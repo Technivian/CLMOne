@@ -1,5 +1,13 @@
 # DocClad Design System — "Ledger"
 
+> **Architecture notice (2026-07-12):** This document preserves historical
+> rationale and migration context. Its older literal colour values and
+> two-accent discussion are not token authority. `DESIGN_CONSTITUTION.md`,
+> `docs/design-system/ARCHITECTURE.md`, and
+> `theme/static/css/docclad-tokens.css` are authoritative, in that order. New
+> frontend work uses canonical teal `--seal`/`--color-brand-primary`; legacy
+> copper and `--ds-*` names are compatibility aliases only.
+
 Version: 1.3 · 2026-07-07
 Tokens: `theme/static/css/docclad-tokens.css`
 Brand authority: `docclad_agent_brand_kit/docs/docclad-approved-brand-board.png`

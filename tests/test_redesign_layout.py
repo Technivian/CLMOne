@@ -68,17 +68,27 @@ class RedesignLayoutTests(TestCase):
             status='ACTIVE',
             created_by=self.user,
         )
+        # Legal Pulse shows a meaningful zero-state instead of a bare "0" —
+        # a PENDING contract is needed for "Needs Legal Review" itself
+        # (not its empty-state copy) to render.
+        Contract.objects.create(
+            organization=organization,
+            title='Layout Contract Needing Review',
+            content='Seed so the Legal Pulse metric has a nonzero value.',
+            status='PENDING',
+            created_by=self.user,
+        )
         response = self.client.get(reverse('dashboard'))
         self.assertContains(response, 'Command Center')
-        self.assertContains(response, 'Needs Legal Review')
-        self.assertContains(response, 'Exposure Review')
-        self.assertContains(response, 'Notice / Renewal Risk')
-        self.assertContains(response, 'Priority Legal Work Queue')
+        self.assertContains(response, 'High-Risk Deviations')
+        self.assertContains(response, 'No DPA conflicts')
+        self.assertContains(response, 'No deadlines in 30 days')
+        self.assertContains(response, 'Priority matter')
         self.assertContains(response, 'Layout Contract')
 
     def test_dashboard_right_rail(self):
-        # The right rail (risk intelligence/recommended actions) only
-        # renders on the populated dashboard; an empty workspace gets the
+        # The right rail (attention / AI insight / activity) only renders
+        # on the populated dashboard; an empty workspace gets the
         # onboarding checklist instead.
         organization = self._enable_clm_dashboard()
         Contract.objects.create(
@@ -89,9 +99,9 @@ class RedesignLayoutTests(TestCase):
             created_by=self.user,
         )
         response = self.client.get(reverse('dashboard'))
-        self.assertContains(response, 'New Contract')
-        self.assertContains(response, 'Needs Your Attention')
-        self.assertContains(response, 'Recent Review Memos')
+        self.assertContains(response, 'Recommended Next Actions')
+        self.assertContains(response, 'Upcoming Deadlines')
+        self.assertContains(response, 'Recent Matters')
 
     def tearDown(self):
         if 'FEATURE_REDESIGN' in os.environ:

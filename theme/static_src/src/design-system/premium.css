@@ -2,16 +2,6 @@
    Gives legacy Django pages the same spatial and surface system while they
    migrate to dc-ds primitives. Full-bleed workspaces keep their own frames. */
 
-:root {
-  --ds-page-max: 1480px;
-  --ds-page-x: 32px;
-  --ds-page-top: 32px;
-  --ds-page-bottom: 56px;
-  --ds-control-height: 38px;
-  --ds-surface-shadow: 0 1px 2px rgba(23, 26, 31, .045), 0 8px 24px rgba(23, 26, 31, .035);
-  --ds-surface-shadow-hover: 0 2px 4px rgba(23, 26, 31, .055), 0 14px 34px rgba(23, 26, 31, .055);
-}
-
 html { background: var(--ds-color-canvas); }
 
 body[data-design-system="casefile"] {
@@ -207,11 +197,19 @@ body[data-design-system="casefile"] .ctp-entry-cta {
 }
 
 @media (max-width: 1024px) {
-  :root { --ds-page-x: 24px; --ds-page-top: 24px; --ds-page-bottom: 48px; }
+  :root {
+    --page-padding-x: var(--space-24);
+    --page-padding-top: var(--space-24);
+    --page-padding-bottom: var(--space-48);
+  }
 }
 
 @media (max-width: 640px) {
-  :root { --ds-page-x: 16px; --ds-page-top: 24px; --ds-page-bottom: 40px; }
+  :root {
+    --page-padding-x: var(--space-16);
+    --page-padding-top: var(--space-24);
+    --page-padding-bottom: var(--space-40);
+  }
 
   body[data-design-system="casefile"] :is(.arch-header, .page-header) {
     margin-bottom: 20px;

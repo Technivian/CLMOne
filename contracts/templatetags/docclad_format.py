@@ -59,6 +59,38 @@ _OBJECT_TYPE_LABELS = {
 _ACRONYMS = {'ai', 'mfa', 'sso', 'saml', 'scim', 'dsar', 'api', 'id', 'url', 'crm', 'dpa', 'scc', 'ip'}
 _PASCAL_SPLIT_RE = re.compile(r'(?<!^)(?=[A-Z])')
 
+# Canonical semantic vocabulary (design-system Phase 2 — badges, status,
+# empty states). This is the single source of truth for "what does each
+# status word mean, visually" — every *_BADGES map below must resolve to one
+# of these eight names. Values are the legacy `badge-*` class this semantic
+# name currently renders as; CANONICAL_BADGE_TONE gives the .dc-ds-badge--*
+# tone a future migration should use instead. Both point at the same
+# underlying --status-*-fg/--status-*-bg tokens in docclad-tokens.css, so
+# switching a template from one to the other is a pure markup change with no
+# colour drift. Not wired into any *_BADGES map yet — this documents and
+# tests the mapping ahead of any page migration, it does not perform one.
+LEGACY_BADGE_CLASS = {
+    'success': 'badge-green',
+    'information': 'badge-blue',
+    'warning': 'badge-yellow',
+    'danger': 'badge-red',
+    'neutral': 'badge-gray',
+    'pending': 'badge-yellow',
+    'inactive': 'badge-gray',
+    'not_applicable': 'badge-gray',
+}
+CANONICAL_BADGE_TONE = {
+    'success': 'dc-ds-badge--success',
+    'information': 'dc-ds-badge--progress',
+    'warning': 'dc-ds-badge--attention',
+    'danger': 'dc-ds-badge--danger',
+    'neutral': 'dc-ds-badge--neutral',
+    'pending': 'dc-ds-badge--attention',
+    'inactive': 'dc-ds-badge--neutral',
+    'not_applicable': 'dc-ds-badge--neutral',
+}
+assert LEGACY_BADGE_CLASS.keys() == CANONICAL_BADGE_TONE.keys()
+
 # Complete Contract.Status → badge variant map. Color is semantic, never
 # decorative: green = healthy/terminal-good, yellow = waiting on someone,
 # blue = in-flight process, red = expired/terminated, gray = neutral/inert.
@@ -127,6 +159,22 @@ _APPROVAL_STATUS_BADGES = {
     'ESCALATED': 'badge-purple',
 }
 
+# ApprovalRequest.status -> canonical .dc-ds-badge--* tone, for pages
+# migrated onto design_system/status_badge.html (Phase 4). PENDING/APPROVED/
+# REJECTED map onto the 8-name semantic vocabulary (attention/success/
+# danger); ESCALATED deliberately uses --special rather than --danger —
+# ARCHITECTURE.md's Phase 2 audit notes reserve --special for exactly this
+# "rare/escalated" consumer, distinct from a plain blocking/danger state.
+# Kept separate from CANONICAL_BADGE_TONE (which only covers the 8-name
+# vocabulary) rather than folding ESCALATED into 'danger' and losing that
+# distinction.
+_APPROVAL_STATUS_BADGE_TONE = {
+    'PENDING': 'attention',
+    'APPROVED': 'success',
+    'REJECTED': 'danger',
+    'ESCALATED': 'special',
+}
+
 # Document.status -> badge variant.
 _DOCUMENT_STATUS_BADGES = {
     'DRAFT': 'badge-gray',
@@ -169,6 +217,15 @@ _DPA_SEVERITY_BADGES = {
     'LOW': 'badge-green',
 }
 
+# DPARiskItem.severity -> canonical .dc-ds-badge--* tone suffix, for pages
+# migrated onto design_system/status_badge.html (Phase 4).
+_DPA_SEVERITY_BADGE_TONE = {
+    'CRITICAL': 'danger',
+    'HIGH': 'danger',
+    'MEDIUM': 'attention',
+    'LOW': 'success',
+}
+
 # DPAReviewPack.approval_status -> badge variant.
 _DPA_APPROVAL_BADGES = {
     'DRAFT': 'badge-gray',
@@ -176,6 +233,19 @@ _DPA_APPROVAL_BADGES = {
     'ESCALATED': 'badge-purple',
     'APPROVED': 'badge-green',
     'REJECTED': 'badge-red',
+}
+
+# DPAReviewPack.approval_status -> canonical .dc-ds-badge--* tone suffix.
+# ESCALATED deliberately uses --special rather than --danger, mirroring
+# approval_status_badge_tone's treatment of ApprovalRequest.ESCALATED —
+# ARCHITECTURE.md's Phase 2 audit notes reserve --special for exactly this
+# "rare/escalated" consumer, distinct from a plain blocking/danger state.
+_DPA_APPROVAL_BADGE_TONE = {
+    'DRAFT': 'neutral',
+    'UNDER_REVIEW': 'progress',
+    'ESCALATED': 'special',
+    'APPROVED': 'success',
+    'REJECTED': 'danger',
 }
 
 # DPARiskItem.owners is a comma-separated list of Owner codes (a risk can be
@@ -225,6 +295,15 @@ _CONTRACT_RISK_BADGES = {
     'MEDIUM': 'badge-yellow',
     'HIGH': 'badge-red',
     'CRITICAL': 'badge-red',
+}
+
+# Contract.risk_level -> canonical .dc-ds-badge--* tone suffix, for pages
+# migrated onto design_system/status_badge.html (Phase 5).
+_CONTRACT_RISK_BADGE_TONE = {
+    'LOW': 'success',
+    'MEDIUM': 'attention',
+    'HIGH': 'danger',
+    'CRITICAL': 'danger',
 }
 
 # ApprovalRequest.approval_step is a free CharField copied from whichever
@@ -334,6 +413,17 @@ def event_label(value):
 
 
 @register.filter
+def semantic_badge_tone(semantic):
+    """Canonical semantic name -> .dc-ds-badge--* tone suffix, for pages
+    migrating onto the canonical badge component. ('success' -> 'success',
+    'not_applicable' -> 'neutral'). Use with design_system/status_badge.html's
+    `tone` parameter. Unknown input falls back to 'neutral' rather than
+    raising, since a badge should never render unstyled."""
+    tone_class = CANONICAL_BADGE_TONE.get(semantic, CANONICAL_BADGE_TONE['neutral'])
+    return tone_class.removeprefix('dc-ds-badge--')
+
+
+@register.filter
 def status_badge_class(status):
     """Contract status key -> canonical badge class ('ACTIVE' -> 'badge-green')."""
     return _STATUS_BADGES.get(status, 'badge-gray')
@@ -376,6 +466,12 @@ def approval_status_badge_class(status):
 
 
 @register.filter
+def approval_status_badge_tone(status):
+    """ApprovalRequest status key -> canonical .dc-ds-badge--* tone suffix."""
+    return _APPROVAL_STATUS_BADGE_TONE.get(status, 'neutral')
+
+
+@register.filter
 def task_status_badge_class(status):
     """LegalTask status key -> canonical badge class."""
     return _TASK_STATUS_BADGES.get(status, 'badge-gray')
@@ -410,6 +506,12 @@ def signature_status_badge_class(status):
 def contract_risk_badge_class(risk_level):
     """Contract risk_level key -> canonical badge class."""
     return _CONTRACT_RISK_BADGES.get(risk_level, 'badge-gray')
+
+
+@register.filter
+def contract_risk_badge_tone(risk_level):
+    """Contract risk_level key -> canonical .dc-ds-badge--* tone suffix."""
+    return _CONTRACT_RISK_BADGE_TONE.get(risk_level, 'neutral')
 
 
 _OBLIGATION_COMPLIANCE_LABELS = {
@@ -465,9 +567,21 @@ def dpa_severity_badge_class(severity):
 
 
 @register.filter
+def dpa_severity_badge_tone(severity):
+    """DPARiskItem severity key -> canonical .dc-ds-badge--* tone suffix."""
+    return _DPA_SEVERITY_BADGE_TONE.get(severity, 'neutral')
+
+
+@register.filter
 def dpa_approval_badge_class(status):
     """DPAReviewPack approval_status key -> canonical badge class."""
     return _DPA_APPROVAL_BADGES.get(status, 'badge-gray')
+
+
+@register.filter
+def dpa_approval_badge_tone(status):
+    """DPAReviewPack approval_status key -> canonical .dc-ds-badge--* tone suffix."""
+    return _DPA_APPROVAL_BADGE_TONE.get(status, 'neutral')
 
 
 @register.filter

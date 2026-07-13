@@ -1,33 +1,39 @@
 <form method="post" class="form-grid">
   {% csrf_token %}
-  <div class="form-field">
-    <label class="form-label">Identity provider</label>
-    {{ form.identity_provider }}
+  <div class="dc-ds-form-field{% if form.identity_provider.errors %} dc-ds-form-field--error{% endif %}">
+    <label class="dc-ds-form-field__label" for="{{ form.identity_provider.id_for_label }}">Identity provider</label>
+    <div class="dc-ds-form-field__control">{{ form.identity_provider }}</div>
+    {% if form.identity_provider.errors %}<div class="dc-ds-form-field__errors">{% for error in form.identity_provider.errors %}<p>{{ error }}</p>{% endfor %}</div>{% endif %}
   </div>
 
-  <div class="form-field">
-    <label class="form-label">SAML entity ID</label>
-    {{ form.saml_entity_id }}
+  <div class="dc-ds-form-field{% if form.saml_entity_id.errors %} dc-ds-form-field--error{% endif %}">
+    <label class="dc-ds-form-field__label" for="{{ form.saml_entity_id.id_for_label }}">SAML entity ID</label>
+    <div class="dc-ds-form-field__control">{{ form.saml_entity_id }}</div>
+    {% if form.saml_entity_id.errors %}<div class="dc-ds-form-field__errors">{% for error in form.saml_entity_id.errors %}<p>{{ error }}</p>{% endfor %}</div>{% endif %}
   </div>
 
-  <div class="form-field">
-    <label class="form-label">SAML SSO URL</label>
-    {{ form.saml_sso_url }}
+  <div class="dc-ds-form-field{% if form.saml_sso_url.errors %} dc-ds-form-field--error{% endif %}">
+    <label class="dc-ds-form-field__label" for="{{ form.saml_sso_url.id_for_label }}">SAML SSO URL</label>
+    <div class="dc-ds-form-field__control">{{ form.saml_sso_url }}</div>
+    {% if form.saml_sso_url.errors %}<div class="dc-ds-form-field__errors">{% for error in form.saml_sso_url.errors %}<p>{{ error }}</p>{% endfor %}</div>{% endif %}
   </div>
 
-  <div class="form-field">
-    <label class="form-label">SAML SLO URL</label>
-    {{ form.saml_slo_url }}
+  <div class="dc-ds-form-field{% if form.saml_slo_url.errors %} dc-ds-form-field--error{% endif %}">
+    <label class="dc-ds-form-field__label" for="{{ form.saml_slo_url.id_for_label }}">SAML SLO URL</label>
+    <div class="dc-ds-form-field__control">{{ form.saml_slo_url }}</div>
+    {% if form.saml_slo_url.errors %}<div class="dc-ds-form-field__errors">{% for error in form.saml_slo_url.errors %}<p>{{ error }}</p>{% endfor %}</div>{% endif %}
   </div>
 
-  <div class="form-field">
-    <label class="form-label">SAML metadata URL</label>
-    {{ form.saml_metadata_url }}
+  <div class="dc-ds-form-field{% if form.saml_metadata_url.errors %} dc-ds-form-field--error{% endif %}">
+    <label class="dc-ds-form-field__label" for="{{ form.saml_metadata_url.id_for_label }}">SAML metadata URL</label>
+    <div class="dc-ds-form-field__control">{{ form.saml_metadata_url }}</div>
+    {% if form.saml_metadata_url.errors %}<div class="dc-ds-form-field__errors">{% for error in form.saml_metadata_url.errors %}<p>{{ error }}</p>{% endfor %}</div>{% endif %}
   </div>
 
-  <div class="form-field">
-    <label class="form-label">SAML x509 certificate</label>
-    {{ form.saml_x509_certificate }}
+  <div class="dc-ds-form-field{% if form.saml_x509_certificate.errors %} dc-ds-form-field--error{% endif %}">
+    <label class="dc-ds-form-field__label" for="{{ form.saml_x509_certificate.id_for_label }}">SAML x509 certificate</label>
+    <div class="dc-ds-form-field__control">{{ form.saml_x509_certificate }}</div>
+    {% if form.saml_x509_certificate.errors %}<div class="dc-ds-form-field__errors">{% for error in form.saml_x509_certificate.errors %}<p>{{ error }}</p>{% endfor %}</div>{% endif %}
   </div>
 
   <label class="form-checkbox">

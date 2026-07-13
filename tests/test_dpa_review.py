@@ -448,6 +448,42 @@ class DPAReviewPackViewTests(TestCase):
         self.assertIn('DPA liability conflicts with "Payrollminds MSA" liability cap', self.review_pack.review_memo)
         self.assertIn('Linked MSA evidence:', self.review_pack.review_memo)
 
+    def test_link_related_contract_adds_relation_and_audit_log(self):
+        msa = _make_msa(self.organization, self.admin)
+        client = TestClient()
+        client.login(username=self.admin.username, password='testpass123')
+        response = client.post(
+            reverse('contracts:dpa_review_link_related_contract', kwargs={'pk': self.review_pack.pk}),
+            data=json.dumps({'contract_id': msa.pk}), content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(msa, self.review_pack.related_contracts.all())
+        entry = AuditLog.objects.filter(model_name='DPAReviewPack', object_id=self.review_pack.pk).order_by('-timestamp').first()
+        self.assertIsNotNone(entry)
+        self.assertEqual((entry.changes or {}).get('event'), 'dpa_related_contract_linked')
+
+    def test_link_related_contract_requires_edit_permission(self):
+        # self.member is a plain MEMBER who did not create self.contract, so
+        # can_access_contract_action(..., EDIT) denies them — same boundary
+        # every other DPA mutation endpoint enforces.
+        msa = _make_msa(self.organization, self.admin)
+        client = TestClient()
+        client.login(username='dpa_member', password='testpass123')
+        response = client.post(
+            reverse('contracts:dpa_review_link_related_contract', kwargs={'pk': self.review_pack.pk}),
+            data=json.dumps({'contract_id': msa.pk}), content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertNotIn(msa, self.review_pack.related_contracts.all())
+
+    def test_generate_memo_requires_edit_permission(self):
+        client = TestClient()
+        client.login(username='dpa_member', password='testpass123')
+        response = client.post(reverse('contracts:dpa_review_generate_memo', kwargs={'pk': self.review_pack.pk}))
+        self.assertEqual(response.status_code, 403)
+        self.review_pack.refresh_from_db()
+        self.assertEqual(self.review_pack.review_memo, '')
+
     def test_rerunning_analysis_does_not_duplicate_open_auto_detected_items(self):
         client = TestClient()
         client.login(username=self.admin.username, password='testpass123')
@@ -595,6 +631,21 @@ class DPACrossTenantIsolationTests(TestCase):
             reverse('contracts:dpa_review_set_approval_status', kwargs={'pk': self.review_pack_a.pk}),
             data=json.dumps({'status': 'APPROVED'}), content_type='application/json',
         )
+        self.assertEqual(response.status_code, 404)
+
+    def test_other_org_member_cannot_link_related_contract(self):
+        client = TestClient()
+        client.login(username=self.user_b.username, password='testpass123')
+        response = client.post(
+            reverse('contracts:dpa_review_link_related_contract', kwargs={'pk': self.review_pack_a.pk}),
+            data=json.dumps({'contract_id': self.contract_a.pk}), content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 404)
+
+    def test_other_org_member_cannot_generate_memo(self):
+        client = TestClient()
+        client.login(username=self.user_b.username, password='testpass123')
+        response = client.post(reverse('contracts:dpa_review_generate_memo', kwargs={'pk': self.review_pack_a.pk}))
         self.assertEqual(response.status_code, 404)
 
 

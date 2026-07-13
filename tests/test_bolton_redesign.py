@@ -14,7 +14,11 @@ class BoltonRedesignTestCase(TestCase):
             password='testpass123',
             email='test@example.com'
         )
-        self.organization = Organization.objects.create(name='Bolton Firm', slug='bolton-firm')
+        self.organization = Organization.objects.create(
+            name='Bolton Firm',
+            slug='bolton-firm',
+            workspace_mode=Organization.WorkspaceMode.IN_HOUSE_CLM,
+        )
         OrganizationMembership.objects.create(
             organization=self.organization,
             user=self.user,
@@ -43,58 +47,111 @@ class BoltonRedesignTestCase(TestCase):
 
     def test_dashboard_kpi_cards(self):
         self._seed_contract()
+        # Legal Pulse shows a meaningful zero-state instead of a bare "0" —
+        # a PENDING contract is needed for the "Needs Legal Review" metric
+        # itself (not its empty-state copy) to render.
+        Contract.objects.create(
+            organization=self.organization,
+            title='Needs Review Contract',
+            content='Seeded content',
+            status='PENDING',
+            created_by=self.user,
+        )
         self._enable_clm_dashboard()
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
 
-        self.assertContains(response, 'Needs Legal Review')
-        self.assertContains(response, 'Exposure Review')
-        self.assertContains(response, 'Blocked')
-        self.assertContains(response, 'Notice / Renewal Risk')
-        self.assertContains(response, 'Priority Legal Work Queue')
+        self.assertContains(response, 'High-Risk Deviations')
+        self.assertContains(response, 'No approvals waiting')
+        self.assertContains(response, 'No DPA conflicts')
+        self.assertContains(response, 'No deadlines in 30 days')
+        self.assertContains(response, 'Priority matter')
 
-    def test_dashboard_empty_state_hides_kpis(self):
+    def test_dashboard_empty_state_is_intentional(self):
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Workspace at a glance')
-        self.assertContains(response, 'Set up contract operations')
-        # The CSS definitions always mention the priority-strip classes;
-        # assert on the rendered markup instead: no priority card labels in
-        # the onboarding state.
-        self.assertNotContains(response, 'Needs Legal Review')
-        self.assertNotContains(response, 'Awaiting Approval')
+        self.assertContains(response, 'No matter currently requires attention')
+        self.assertContains(response, 'Import agreement')
+        self.assertContains(response, 'No approvals waiting')
+        self.assertContains(response, 'No recommended actions')
 
     def test_dashboard_container_constraint(self):
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'max-width: 1400px')
+        self.assertContains(response, 'css/command-center.css')
+        self.assertContains(response, 'class="command-center cc-v3"')
 
     def test_dashboard_top_bar(self):
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
 
         self.assertContains(response, 'title="Search"')
-        self.assertContains(response, 'title="Toggle theme"')
+        self.assertContains(response, 'data-theme="light"')
         self.assertContains(response, 'title="Notifications"')
         self.assertContains(response, 'New Contract')
         self.assertContains(response, 'Sign out')
 
     def test_dashboard_panels(self):
-        # The dashboard is a legal-ops command desk: a priority action strip,
-        # a workflow queue (saved-view tabs + a single queue table), a
-        # restrained lifecycle status overview, and a right rail (deadlines/
-        # risk watch/activity). The old placeholder-only "Recent Contracts" /
+        # The Command Center dashboard is a legal-ops workbench: a compact
+        # Legal Pulse strip, "Today's Legal Priorities" as the primary
+        # focus (saved-view tabs + a single filter system + queue table),
+        # a restrained lifecycle status overview, a clause/cross-document
+        # conflict marker, and a compact right rail (attention / AI insight
+        # / activity). The old placeholder-only "Recent Contracts" /
         # "Case Portfolio" panels were removed as part of that conversion.
         self._seed_contract()
         self._enable_clm_dashboard()
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Priority Legal Work Queue')
-        self.assertContains(response, 'Lifecycle Status Overview')
-        self.assertContains(response, 'Top Review Blockers')
-        self.assertContains(response, 'Queue Health')
-        self.assertContains(response, 'Upcoming Obligations')
-        self.assertContains(response, 'Recent Review Memos')
+        self.assertContains(response, 'Priority matter')
+        self.assertContains(response, 'Governance controls')
+        self.assertContains(response, 'Recommended Next Actions')
+        self.assertContains(response, 'Upcoming Deadlines')
+        self.assertContains(response, 'Recent Matters')
+
+    def test_legal_pulse_zero_states_are_meaningful_not_bare_zeros(self):
+        # No seeded data at all: every Legal Pulse metric is zero, so each
+        # one must show useful copy instead of a bare "0".
+        self._enable_clm_dashboard()
+        response = self.client.get(reverse('dashboard'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'No approvals waiting')
+        self.assertContains(response, 'No unresolved deviations')
+        self.assertContains(response, 'No DPA conflicts')
+        self.assertContains(response, 'No deadlines in 30 days')
+
+    def test_priority_queue_empty_state_copy(self):
+        self._enable_clm_dashboard()
+        response = self.client.get(reverse('dashboard'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'No matter currently requires attention')
+        self.assertContains(response, 'Governed workflows are up to date')
+
+    def test_single_filter_system_no_duplicate_rows(self):
+        # There must be exactly one filter system: saved-view tabs plus a
+        # single Filters popover. The old second row of workflow-type
+        # summary pills (Privacy reviews / Commercial reviews / ...) that
+        # duplicated the saved-view tabs must be gone.
+        self._seed_contract()
+        self._enable_clm_dashboard()
+        response = self.client.get(reverse('dashboard'))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'data-filters-popover')
+        self.assertNotContains(response, 'data-filters-toggle')
+        self.assertContains(response, 'Recommended Next Actions')
+        self.assertNotContains(response, 'Privacy reviews')
+        self.assertNotContains(response, 'Commercial reviews')
+        self.assertNotContains(response, 'Self-serve ready')
+
+    def test_priority_row_has_detail_sheet_data_and_risk_indicator(self):
+        self._seed_contract()
+        self._enable_clm_dashboard()
+        response = self.client.get(reverse('dashboard'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-risk-score')
+        self.assertContains(response, 'Why this needs attention')
+        self.assertContains(response, 'Recommended action')
+        self.assertContains(response, 'Resolution path')
 
     def test_contracts_table_structure(self):
         Contract.objects.create(
@@ -128,8 +185,7 @@ class BoltonRedesignTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
 
         self.assertContains(response, 'title="Search"')
-        self.assertContains(response, 'title="Toggle theme"')
-        self.assertContains(response, 'title="Search"')
+        self.assertContains(response, 'data-command-trigger')
         self.assertContains(response, 'type="submit"')
 
     def test_typography_and_spacing(self):

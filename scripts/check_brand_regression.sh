@@ -31,6 +31,12 @@
 #     verify_postgres_cutover management command test. This is an infrastructure
 #     mock, not product branding. Remove after CI db is renamed to 'docclad'.
 #
+#   tests/test_5f_role_walkthrough.py
+#     test_login_page_branding asserts the rendered login page does NOT contain
+#     'CMS Aegis' (assertNotIn). The literal string is a regression check for the
+#     absence of the old brand, not a leftover reference. Remove this entry only
+#     if the assertion itself is deleted or rewritten to avoid the literal string.
+#
 #   theme/templates/base.html, theme/templates/base_fullscreen.html
 #     localStorage fallback reads 'cms-aegis-theme' for existing users' saved preference
 #     before migrating to 'docclad-theme'. Remove once the transition period ends.
@@ -51,6 +57,7 @@ ALLOWLIST_FILES=(
   'config/settings_production.py'
   'config/feature_flags.py'
   'tests/test_salesforce_sprint2_ingestion.py'
+  'tests/test_5f_role_walkthrough.py'
   'theme/templates/base.html'
   'theme/templates/base_fullscreen.html'
   'theme/static/js/csp-handlers.js'

@@ -5,47 +5,33 @@
 
 {% block content %}
 <style nonce="{{ csp_nonce }}">
-  /* ── Ironclad table conventions, scoped to this page ─────────── */
+  /* ── Repository-owned rules only: behaviour the canonical .dc-ds-table /
+     .dc-ds-surface / .dc-ds-metric components don't express on their own.
+     Header/body cell padding, colour, borders, and hover now come from
+     .dc-ds-table itself (see #contracts-table below). ─────────────────── */
 
-  /* Flat surfaces: hairline borders only, no ambient shadows */
-  .repo-page .panel,
-  [data-theme="light"] .repo-page .panel { box-shadow: none; }
+  /* Canonical surfaces read flat here (hairline border, no ambient shadow) —
+     an existing, deliberate choice for this page, preserved through the
+     migration rather than switched to .dc-ds-surface's default shadow. */
+  .repo-page .dc-ds-surface { box-shadow: none; }
 
-  /* Column headers: 10.5px/700 uppercase, banded fill — same header
-     treatment as the Dashboard's .wq-table so the two tables read as one
-     component family even though Repository's rows are JS-rendered into
-     its own #contracts-table rather than the shared .wq-table markup. */
-  .repo-page .tbl-head { background: var(--surface); border-bottom: 1px solid var(--card-border); }
-  .repo-page #contracts-table thead th { padding: 10px 16px; }
-  .repo-page .tbl-th {
-    font-size: 10.5px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 0.07em; color: var(--text-muted);
-  }
-  /* Sticky header needs an opaque fill so rows don't bleed through */
+  /* Sticky header needs an opaque fill so rows don't bleed through, and a
+     scroll container so 8 columns don't silently clip under ~1550px
+     (position:sticky only needs a scroll container, which the wrap already
+     provides via overflow-x:auto). */
   .repo-page .table-sticky .tbl-head th { background: var(--card-bg); }
-  /* 8 columns don't fit under ~1550px; scroll horizontally instead of
-     silently clipping the Value/Status columns (the plain overflow-hidden
-     utility on .panel would otherwise just cut them off). Sticky header
-     positioning still works — position:sticky only needs a scroll
-     container, which overflow-x:auto still provides. */
-  .repo-page .table-sticky { overflow-x: auto; overflow-y: hidden; }
+  .repo-page .table-sticky { overflow-y: hidden; }
 
-  /* Rows (JS-rendered): ~52px, hairline separators, quiet hover fill */
-  .repo-page #contracts-table tbody td {
-    padding: 12px 16px; height: 52px; font-size: 13px;
-    color: var(--text-secondary); border-bottom: 1px solid var(--card-border);
-  }
-  .repo-page #contracts-table tbody tr:last-child td { border-bottom: 0; }
-  .repo-page #contracts-table tbody tr:hover td { background: var(--sidebar-hover); transition: background 0.12s; }
-  .repo-page #contracts-table tbody td[colspan] { height: auto; padding: 48px 16px; }
   /* Selected rows stay visible after the pointer moves away — same
-     treatment/token as the Dashboard's .wq-table selected-row state. */
+     treatment/token as the Dashboard's .wq-table selected-row state. Not
+     something .dc-ds-table expresses on its own. */
   .repo-page #contracts-table tbody tr.wq-row-selected td,
   .repo-page #contracts-table tbody tr.wq-row-selected:hover td { background: var(--primary-subtle); }
-  /* Numeric/date columns (Key date, Value) — same convention as .wq-col-num. */
-  .repo-page #contracts-table .wq-col-num { text-align: right; font-variant-numeric: tabular-nums; }
 
-  /* Document cell: strong ink title + muted 11px meta line */
+  /* Document cell: strong ink title + muted 11px meta line. The JS renders
+     generic .font-medium/.text-sm utility classes for this, so the override
+     stays scoped here rather than forcing a JS rewrite for a styling-only
+     change. */
   .repo-page #contracts-table tbody td .font-medium {
     font-size: 13px; font-weight: 700; color: var(--text-primary);
   }
@@ -59,7 +45,9 @@
   .repo-page .repo-muted-text { color: var(--text-muted); }
 
   /* Status filter + saved-view chips: hairline pills, active = ink fill
-     (one active-chip language for the whole views rail) */
+     (one active-chip language for the whole views rail). No canonical
+     equivalent exists for this exact toggle-chip contract, and the JS
+     toggles `.chip-active` directly, so this stays page-owned. */
   .repo-page .repo-status-filter,
   .repo-page .repo-saved-view {
     border-radius: 9999px; background: transparent; border: 1px solid var(--border);
@@ -90,9 +78,27 @@
   /* Search + sort controls stay flat */
   .repo-page .input-base, .repo-page .select-base { box-shadow: none; }
 
-  /* KPI numbers: ink unless the color carries meaning (amber = expiring) */
-  .repo-page .kpi-value.c-accent,
-  .repo-page .kpi-value.c-primary-brand { color: var(--text-primary); }
+  /* "Expiring 30d" metric tile: the one KPI that needs a semantic tone.
+     .dc-ds-metric has no built-in tone modifier, so this is the one
+     requirement .dc-ds-* can't reasonably express — token-backed, not
+     hardcoded hex. */
+  .repo-page .dc-ds-metric.is-attention {
+    background: var(--status-pending-bg);
+    border-color: #ECD8B3;
+  }
+  .repo-page .dc-ds-metric.is-attention .dc-ds-metric__label,
+  .repo-page .dc-ds-metric.is-attention .dc-ds-metric__value {
+    color: var(--status-pending-fg);
+  }
+
+  /* .dc-ds-metric-grid's own breakpoint (1100px) collapses to one column —
+     tuned for narrower two-column scaffolds elsewhere. Repository's rail is
+     only 220px, so the main content area still has room for four short KPI
+     tiles well below 1100px; keep them in a row until the page's own
+     rail-stacking breakpoint (700px) takes over. */
+  @media (min-width: 701px) {
+    .repo-page .dc-ds-metric-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  }
 
   @media (max-width: 700px) {
     .repo-page .workspace-main { order: 1; }
@@ -115,26 +121,26 @@
                 <button type="button" class="views-rail-link" data-rail-view="draft"><span>Draft paper</span><span class="views-rail-count">{{ draft_documents }}</span></button>
                 <button type="button" class="views-rail-link" data-rail-view="expiring_30d"><span>30d attention</span><span class="views-rail-count">{{ expiring_documents }}</span></button>
             </div>
-            <div class="panel mt-4">
-                <div class="panel-head">
-                    <span class="panel-title">Saved views</span>
+            <section class="dc-ds-surface mt-4" aria-labelledby="repo-saved-views-title">
+                <div class="dc-ds-surface__head">
+                    <h2 class="dc-ds-surface__title" id="repo-saved-views-title">Saved views</h2>
                 </div>
-                <div class="panel-inner">
+                <div class="dc-ds-surface__body">
                     <div id="saved-views"></div>
                 </div>
-            </div>
-            <div class="panel mt-4">
-                <div class="panel-head">
-                    <span class="panel-title">Status filters</span>
+            </section>
+            <section class="dc-ds-surface mt-4" aria-labelledby="repo-status-filters-title">
+                <div class="dc-ds-surface__head">
+                    <h2 class="dc-ds-surface__title" id="repo-status-filters-title">Status filters</h2>
                 </div>
-                <div class="panel-inner flex flex-wrap gap-2">
+                <div class="dc-ds-surface__body flex flex-wrap gap-2">
                     <button type="button" class="repo-mini-btn repo-status-filter" data-status-filter="">All</button>
                     <button type="button" class="repo-mini-btn repo-status-filter" data-status-filter="ACTIVE">Active</button>
                     <button type="button" class="repo-mini-btn repo-status-filter" data-status-filter="DRAFT">Draft</button>
                     <button type="button" class="repo-mini-btn repo-status-filter" data-status-filter="PENDING">Pending</button>
                     <button type="button" class="repo-mini-btn repo-status-filter" data-status-filter="EXPIRED">Expired</button>
                 </div>
-            </div>
+            </section>
         </aside>
 
         <section class="workspace-main">
@@ -160,23 +166,11 @@
             </div>
 
             <div class="panel-inner">
-                <div class="dash-grid dash-grid-4 kpi-strip mb-6">
-                    <div class="kpi-card">
-                        <div class="kpi-label">Total Contracts</div>
-                        <div class="kpi-value c-primary">{{ total_documents }}</div>
-                    </div>
-                    <div class="kpi-card">
-                        <div class="kpi-label">Active</div>
-                        <div class="kpi-value c-accent">{{ active_documents }}</div>
-                    </div>
-                    <div class="kpi-card">
-                        <div class="kpi-label">Draft</div>
-                        <div class="kpi-value c-primary-brand">{{ draft_documents }}</div>
-                    </div>
-                    <div class="kpi-card stat-card-amber">
-                        <div class="kpi-label c-amber-soft">Expiring 30d</div>
-                        <div class="kpi-value c-amber">{{ expiring_documents }}</div>
-                    </div>
+                <div class="dc-ds-metric-grid mb-6">
+                    {% include "design_system/metric_card.html" with label="Total Contracts" value=total_documents %}
+                    {% include "design_system/metric_card.html" with label="Active" value=active_documents %}
+                    {% include "design_system/metric_card.html" with label="Draft" value=draft_documents %}
+                    {% include "design_system/metric_card.html" with label="Expiring 30d" value=expiring_documents class_name="is-attention" %}
                 </div>
 
                 <div class="rounded-xl border p-4 mb-4 u-panel-canvas">
@@ -213,22 +207,23 @@
                     </div>
                 </div>
 
-                <div class="panel overflow-hidden table-sticky">
+                <div class="dc-ds-table-wrap table-sticky">
                     <table id="contracts-table" class="dc-ds-table w-full text-sm" data-table-core="server">
+                        <caption class="sr-only">Repository documents — sortable, filterable list of contracts with stage, assignee, activity, key date, value, and status.</caption>
                         <thead class="tbl-head">
                             <tr>
-                                <th class="tbl-th px-5 py-3 text-left"><input type="checkbox" id="select-all" aria-label="Select all"></th>
-                                <th class="tbl-th px-5 py-3 text-left text-xs uppercase tracking-wide">Document</th>
-                                <th class="tbl-th px-5 py-3 text-left text-xs uppercase tracking-wide">Stage</th>
-                                <th class="tbl-th px-5 py-3 text-left text-xs uppercase tracking-wide">Assigned to</th>
-                                <th class="tbl-th px-5 py-3 text-left text-xs uppercase tracking-wide">Latest activity</th>
-                                <th class="tbl-th px-5 py-3 text-left text-xs uppercase tracking-wide wq-col-num">Key date</th>
-                                <th class="tbl-th px-5 py-3 text-left text-xs uppercase tracking-wide wq-col-num">Value</th>
-                                <th class="tbl-th px-5 py-3 text-left text-xs uppercase tracking-wide">Status</th>
+                                <th class="tbl-th" scope="col"><input type="checkbox" id="select-all" aria-label="Select all"></th>
+                                <th class="tbl-th" scope="col">Document</th>
+                                <th class="tbl-th" scope="col">Stage</th>
+                                <th class="tbl-th" scope="col">Assigned to</th>
+                                <th class="tbl-th" scope="col">Latest activity</th>
+                                <th class="tbl-th wq-col-num" scope="col">Key date</th>
+                                <th class="tbl-th wq-col-num" scope="col">Value</th>
+                                <th class="tbl-th" scope="col">Status</th>
                             </tr>
                         </thead>
                         <tbody id="contracts-tbody">
-                            <tr><td colspan="8" class="px-5 py-20 text-center c-muted">Loading...</td></tr>
+                            <tr><td colspan="8" class="px-5 py-20 text-center c-muted" role="status" aria-live="polite">Loading repository documents…</td></tr>
                         </tbody>
                     </table>
                 </div>

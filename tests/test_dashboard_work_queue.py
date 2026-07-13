@@ -77,15 +77,18 @@ class DashboardEmptyStateTests(TestCase):
         self.client = Client()
         self.user = User.objects.create_user(username='emptyuser', password='testpass123', email='empty@example.com')
         self.client.login(username='emptyuser', password='testpass123')
+        organization = get_user_organization(self.user)
+        organization.workspace_mode = Organization.WorkspaceMode.IN_HOUSE_CLM
+        organization.save(update_fields=['workspace_mode'])
 
     def test_onboarding_checklist_shown_when_no_data(self):
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
         body = dashboard_body(response.content.decode())
-        self.assertIn('Workspace at a glance', body)
-        self.assertIn('Set up contract operations', body)
-        self.assertNotIn('Priority Work Queue', body)
-        self.assertNotIn('In Progress', body)
+        self.assertIn('No matter currently requires attention', body)
+        self.assertIn('Governed workflows are up to date', body)
+        self.assertIn('Import agreement', body)
+        self.assertIn('No approvals waiting', body)
 
     def test_onboarding_checklist_hidden_once_a_contract_exists(self):
         organization = get_user_organization(self.user)
@@ -98,8 +101,8 @@ class DashboardEmptyStateTests(TestCase):
         )
         response = self.client.get(reverse('dashboard'))
         self.assertNotContains(response, 'Set up contract operations')
-        self.assertContains(response, 'Priority Work Queue')
-        self.assertContains(response, 'In Progress')
+        self.assertContains(response, 'Command Center')
+        self.assertContains(response, 'Recent Matters')
 
 
 class DashboardQueueRowContentTests(TestCase):
