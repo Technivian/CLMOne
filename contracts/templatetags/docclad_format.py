@@ -297,6 +297,15 @@ _CONTRACT_RISK_BADGES = {
     'CRITICAL': 'badge-red',
 }
 
+# Contract.risk_level -> canonical .dc-ds-badge--* tone suffix, for pages
+# migrated onto design_system/status_badge.html (Phase 5).
+_CONTRACT_RISK_BADGE_TONE = {
+    'LOW': 'success',
+    'MEDIUM': 'attention',
+    'HIGH': 'danger',
+    'CRITICAL': 'danger',
+}
+
 # ApprovalRequest.approval_step is a free CharField copied from whichever
 # ApprovalRule triggered it — it has no Django choices of its own, so
 # without this map the raw rule code (e.g. 'LEGAL') would leak into the UI.
@@ -497,6 +506,12 @@ def signature_status_badge_class(status):
 def contract_risk_badge_class(risk_level):
     """Contract risk_level key -> canonical badge class."""
     return _CONTRACT_RISK_BADGES.get(risk_level, 'badge-gray')
+
+
+@register.filter
+def contract_risk_badge_tone(risk_level):
+    """Contract risk_level key -> canonical .dc-ds-badge--* tone suffix."""
+    return _CONTRACT_RISK_BADGE_TONE.get(risk_level, 'neutral')
 
 
 _OBLIGATION_COMPLIANCE_LABELS = {
