@@ -35,10 +35,14 @@ The following load-bearing namespaces remain supported until deliberately
 migrated:
 
 - `.arch-*`
-- `.cw-*`
 - `.cform-*`
 - `.crs-*`
 - legacy `.panel`, `.kpi-card`, `.wq-*`, `.badge-*`, button, and form classes
+
+`.cw-*` was retired by the Contract List design-system migration: its only
+production consumer (`contract_list.html`) moved to canonical `.dc-ds-*`
+controls, and a repository-wide search confirmed zero remaining consumers.
+It is no longer a supported namespace and must not be reintroduced.
 
 Compatibility does not make these namespaces valid for new component design.
 Touching a legacy page does not authorize replacing its entire styling system.
@@ -82,11 +86,13 @@ architecture drift, not permission to reuse the namespace elsewhere; removing
 it requires a separately approved law-firm dashboard migration.
 
 The audit's workflow-layer ownership is also stale. `.arch-*` is defined in
-`theme/static_src/src/components.css`, but `.cw-*` is split between
-`premium.css` and `contract_list.html`; `.cform-*` remains in contract and
+`theme/static_src/src/components.css`; `.cform-*` remains in contract and
 workflow-builder templates; and `.crs-*` remains in the Review Studio preview.
-Phase 1 preserves this distribution rather than silently beginning a workflow
-page migration.
+`.cw-*` was confined entirely to `contract_list.html`'s own page-local styles
+(not `premium.css`, contrary to the original audit) and has since been
+retired by the Contract List migration. Phase 1 preserves the remaining
+distribution rather than silently beginning a further workflow page
+migration.
 
 ## Verified Phase 2 audit notes (badges, semantic status, empty states)
 
