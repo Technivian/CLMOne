@@ -77,7 +77,11 @@ class DesignSystemPhaseOneTests(SimpleTestCase):
         self.assertIn('outline: 3px solid var(--focus-ring)', base_css)
 
     def test_compatibility_and_command_center_namespaces_remain_bounded(self):
-        for namespace in ('.arch-', '.cw-', '.cform-', '.crs-'):
+        # .cw-* was retired by the Contract List design-system migration
+        # (its only production consumer, contract_list.html, moved to
+        # canonical .dc-ds-* controls) — see ARCHITECTURE.md's compatibility
+        # policy note. It is intentionally absent here, not merely bounded.
+        for namespace in ('.arch-', '.cform-', '.crs-'):
             self.assertTrue(
                 any(
                     namespace in path.read_text(errors='ignore')
@@ -86,6 +90,15 @@ class DesignSystemPhaseOneTests(SimpleTestCase):
                 ),
                 namespace,
             )
+
+        self.assertFalse(
+            any(
+                '.cw-' in path.read_text(errors='ignore')
+                for path in self.theme.rglob('*')
+                if path.is_file() and path.suffix in {'.css', '.html'}
+            ),
+            '.cw-* was retired by the Contract List migration and must not reappear',
+        )
 
         cc_files = []
         for path in self.theme.rglob('*'):

@@ -1,0 +1,55 @@
+/* Contract List (contracts:contract_list) — page-owned rules only: layout
+   composition and the interactions with no canonical primitive. Everything
+   else (surfaces, table, badges, buttons, filter bar, status filters, empty
+   state, dense rows, rail) comes from base.html/components.css' shared
+   classes or design-system/*.css's .dc-ds-* primitives — see
+   contract_list.html for which class each piece of markup now uses. */
+
+/* Page-layout root: fluid width + the same top spacing every arch-header
+   page composes at (page-scoped class per the migration's page-root
+   allowance). */
+.contract-list-page { padding-top: 10px; }
+
+/* Sticky context rail: canonical .dc-ds-rail defines the vertical stack of
+   panels but not a scroll-following position — that's a page-layout
+   decision (this page's header height), not a component contract. */
+@media (min-width: 1101px) {
+  .contract-list-page .dc-ds-rail { position: sticky; top: 102px; }
+}
+
+/* Grid-blowout guard: .dc-ds-scaffold--with-rail's own grid items (this
+   page's <main> and the canonical .dc-ds-rail) have no min-width set, so a
+   wide child — here, the 8-column contracts table inside .dc-ds-table-wrap
+   — pushes the whole grid track past the viewport instead of scrolling
+   inside its own overflow-x:auto wrapper, taking .main-area's real content
+   width with it below the rail's 1100px collapse breakpoint. This is a
+   grid-item sizing gap in the shared scaffold, not something this page's
+   own markup does wrong, so it's fixed here rather than by editing
+   components.css for every other .dc-ds-scaffold--with-rail consumer. */
+.contract-list-page .dc-ds-scaffold--with-rail > * { min-width: 0; }
+
+/* Blocked/high-risk/due-soon watch items: a status dot + title + supporting
+   copy line, three fields deep. No canonical primitive expresses this shape
+   (.dc-ds-dense-row is title+meta+badge+actions in a grid, not a
+   leading dot; a badge alone would drop the copy line). Colours are the
+   canonical --status-*-fg tokens, not new hex, so this stays page-owned
+   without introducing a new colour system. */
+.watch-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; }
+.watch-item + .watch-item { border-top: 1px solid var(--card-border); }
+.watch-dot { width: 8px; height: 8px; border-radius: 999px; background: var(--text-muted); margin-top: 6px; flex-shrink: 0; }
+.watch-dot.is-danger { background: var(--status-danger-fg); }
+.watch-dot.is-attention { background: var(--status-pending-fg); }
+.watch-title { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+.watch-copy { font-size: 12px; color: var(--text-muted); margin-top: 1px; line-height: 1.35; }
+
+/* Status filters use canonical .dc-ds-button--ghost uniformly (no
+   .dc-ds-button--primary here — that variant is reserved for genuine
+   primary actions, not a filter's current-selection state). The active
+   filter is marked with aria-current="page"; this rule gives that marker a
+   visible, token-backed selected style scoped to this nav so it doesn't
+   change .dc-ds-button--ghost's default appearance anywhere else. */
+.contract-list-statuses .dc-ds-button[aria-current="page"] {
+  border-color: var(--ds-color-trust);
+  background: var(--ds-color-trust-soft);
+  color: var(--ds-color-trust);
+}

@@ -5,19 +5,10 @@
 {% block content %}
 <style nonce="{{ csp_nonce }}">
   .arch-header-chips { display: flex; align-items: center; gap: 14px; margin-top: 10px; flex-wrap: wrap; }
-  .arch-action-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .cdoc-row {
-    display: flex; align-items: center; justify-content: space-between; gap: 12px;
-    padding: 10px 0; border-bottom: 1px solid var(--border);
-  }
-  .cdoc-row:last-child { border-bottom: none; }
   .cdoc-icon {
     width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center;
     justify-content: center; flex-shrink: 0; background: var(--primary-subtle);
   }
-  .wf-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
-  .wf-row:last-child { border-bottom: none; }
-  .wf-section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
 </style>
 <div class="page-wrap reveal-stagger">
 
@@ -34,9 +25,9 @@
     <div class="arch-header-left">
       <div class="arch-title-row">
         <h1 class="arch-title">{{ contract.title }}</h1>
-        <span class="badge-sm {{ contract.status|status_badge_class }}">{{ contract.get_status_display }}</span>
+        {% include "design_system/status_badge.html" with tone=contract.status|contract_status_badge_tone label=contract.get_status_display %}
         {% if contract.risk_level %}
-        <span class="badge-sm {{ contract.risk_level|contract_risk_badge_class }}">{{ contract.get_risk_level_display }} risk</span>
+        {% include "design_system/status_badge.html" with tone=contract.risk_level|contract_risk_badge_tone label=contract.get_risk_level_display|add:" risk" %}
         {% endif %}
       </div>
       <div class="arch-meta-strip">
@@ -75,10 +66,10 @@
       </div>
     </div>
     <div class="arch-header-right">
-      <div class="arch-action-bar">
-        <a href="{% url 'contracts:contract_update' contract.pk %}" class="btn-quiet">Edit</a>
-        <a href="{% url 'contracts:approval_request_create' %}" class="btn-quiet">Request approval</a>
-        <a href="{% url 'contracts:signature_request_create' %}" class="btn-quiet">Send for signature</a>
+      <div class="dc-ds-actions">
+        <a href="{% url 'contracts:contract_update' contract.pk %}" class="btn-ghost">Edit</a>
+        <a href="{% url 'contracts:approval_request_create' %}" class="btn-ghost">Request approval</a>
+        <a href="{% url 'contracts:signature_request_create' %}" class="btn-ghost">Send for signature</a>
         <button type="button" id="run-grounded-check" class="btn-cta">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
@@ -91,12 +82,12 @@
 
   {# ── Tabs ──────────────────────────────────────────────────── #}
   <div class="arch-tabs" role="tablist">
-    <button class="arch-tab tab-active" role="tab" aria-selected="true"  data-tab="overview"   aria-controls="tab-overview">Overview</button>
-    <button class="arch-tab"            role="tab" aria-selected="false" data-tab="documents"  aria-controls="tab-documents">Documents</button>
-    <button class="arch-tab"            role="tab" aria-selected="false" data-tab="workflow"   aria-controls="tab-workflow">Workflow</button>
-    <button class="arch-tab"            role="tab" aria-selected="false" data-tab="activity"   aria-controls="tab-activity">Activity</button>
+    <button id="tab-btn-overview"   class="arch-tab tab-active" role="tab" aria-selected="true"  data-tab="overview"   aria-controls="tab-overview">Overview</button>
+    <button id="tab-btn-documents"  class="arch-tab"            role="tab" aria-selected="false" data-tab="documents"  aria-controls="tab-documents">Documents</button>
+    <button id="tab-btn-workflow"   class="arch-tab"            role="tab" aria-selected="false" data-tab="workflow"   aria-controls="tab-workflow">Workflow</button>
+    <button id="tab-btn-activity"  class="arch-tab"            role="tab" aria-selected="false" data-tab="activity"   aria-controls="tab-activity">Activity</button>
     {% if contract_risks %}
-    <button class="arch-tab"            role="tab" aria-selected="false" data-tab="compliance" aria-controls="tab-compliance">Compliance</button>
+    <button id="tab-btn-compliance" class="arch-tab"            role="tab" aria-selected="false" data-tab="compliance" aria-controls="tab-compliance">Compliance</button>
     {% endif %}
   </div>
 
@@ -107,76 +98,86 @@
     <div>
 
       {# ── OVERVIEW ─────────────────────────────────────────── #}
-      <div id="tab-overview" class="arch-tab-panel panel-active" role="tabpanel">
+      <div id="tab-overview" class="arch-tab-panel panel-active" role="tabpanel" aria-labelledby="tab-btn-overview">
         <div class="space-y-6">
 
           {# Lifecycle stage strip #}
-          <div class="card-l2">
-            <div class="arch-section-label">Lifecycle</div>
-            {% lifecycle_steps contract as lc_steps %}
-            <div class="lc-track" role="list" aria-label="Contract lifecycle: currently {{ contract.get_lifecycle_stage_display }}">
-              {% for step in lc_steps %}
-              <div class="lc-step lc-{{ step.state }}" role="listitem" {% if step.state == 'current' %}aria-current="step"{% endif %}>
-                <span class="lc-dot" aria-hidden="true"></span>
-                <span class="lc-label">{{ step.label }}</span>
-              </div>
-              {% endfor %}
+          <section class="dc-ds-surface" aria-labelledby="lifecycle-title">
+            <div class="dc-ds-surface__head">
+              <h2 class="dc-ds-surface__title" id="lifecycle-title">Lifecycle</h2>
             </div>
-            {% if lifecycle_guidance %}
-            <div class="mt-3 pt-3 border-t border-[var(--border)] flex flex-wrap gap-4 text-sm">
-              <div>
-                <span class="text-xs c-muted uppercase tracking-wide font-semibold">Next step</span>
-                <div class="mt-1 c-primary">{{ lifecycle_guidance.action }}</div>
+            <div class="dc-ds-surface__body">
+              {% lifecycle_steps contract as lc_steps %}
+              <div class="lc-track" role="list" aria-label="Contract lifecycle: currently {{ contract.get_lifecycle_stage_display }}">
+                {% for step in lc_steps %}
+                <div class="lc-step lc-{{ step.state }}" role="listitem" {% if step.state == 'current' %}aria-current="step"{% endif %}>
+                  <span class="lc-dot" aria-hidden="true"></span>
+                  <span class="lc-label">{{ step.label }}</span>
+                </div>
+                {% endfor %}
               </div>
-              <div>
-                <span class="text-xs c-muted uppercase tracking-wide font-semibold">Next stage</span>
-                <div class="mt-1 c-primary">{{ lifecycle_guidance.next_stage|event_label }}</div>
+              {% if lifecycle_guidance %}
+              <div class="mt-3 pt-3 border-t border-[var(--border)] flex flex-wrap gap-4 text-sm">
+                <div>
+                  <span class="text-xs c-muted uppercase tracking-wide font-semibold">Next step</span>
+                  <div class="mt-1 c-primary">{{ lifecycle_guidance.action }}</div>
+                </div>
+                <div>
+                  <span class="text-xs c-muted uppercase tracking-wide font-semibold">Next stage</span>
+                  <div class="mt-1 c-primary">{{ lifecycle_guidance.next_stage|event_label }}</div>
+                </div>
               </div>
+              {% endif %}
             </div>
-            {% endif %}
-          </div>
+          </section>
 
           {# Primary draft #}
-          <div class="card-l1">
-            <div class="flex items-center justify-between mb-4">
-              <h2 class="text-base font-700 c-primary">Primary Draft</h2>
-              <span class="badge-sm badge-blue">Source of truth</span>
+          <section class="dc-ds-surface" aria-labelledby="primary-draft-title">
+            <div class="dc-ds-surface__head">
+              <h2 class="dc-ds-surface__title" id="primary-draft-title">Primary Draft</h2>
+              {% include "design_system/status_badge.html" with tone="progress" label="Source of truth" %}
             </div>
-            {% if contract.content %}
-            <div class="content-surface">
-              <div class="content-prose">{{ contract.content }}</div>
+            <div class="dc-ds-surface__body">
+              {% if contract.content %}
+              <div class="content-surface">
+                <div class="content-prose">{{ contract.content }}</div>
+              </div>
+              {% else %}
+              {% include "design_system/empty_state.html" with title="No contract body has been added yet." %}
+              {% endif %}
             </div>
-            {% else %}
-            <div class="empty-state text-sm c-muted">No contract body has been added yet.</div>
-            {% endif %}
-          </div>
+          </section>
 
           {# Negotiation notes #}
-          {% if negotiation_threads %}
-          <div class="card-l1">
-            <div class="flex items-center justify-between mb-4">
-              <h2 class="text-base font-700 c-primary">Negotiation Notes</h2>
-              <a href="{% url 'contracts:add_negotiation_note' contract.pk %}" class="btn-quiet text-xs px-2.5 py-1.5">Add note</a>
+          <section class="dc-ds-surface" aria-labelledby="negotiation-notes-title">
+            <div class="dc-ds-surface__head">
+              <h2 class="dc-ds-surface__title" id="negotiation-notes-title">Negotiation Notes</h2>
+              <a href="{% url 'contracts:add_negotiation_note' contract.pk %}" class="btn-ghost text-xs px-2.5 py-1.5">Add note</a>
             </div>
-            <div class="divide-y divide-[var(--border)]">
-              {% for note in negotiation_threads %}
-              <div class="py-4 {% if forloop.first %}pt-0{% endif %}">
-                <div class="flex items-center justify-between gap-3 mb-2">
-                  <div class="text-sm font-medium c-primary">{{ note.title }}</div>
-                  <div class="text-xs c-muted">{{ note.created_at|date:"M d" }}</div>
+            <div class="dc-ds-surface__body">
+              {% if negotiation_threads %}
+              <div class="divide-y divide-[var(--border)]">
+                {% for note in negotiation_threads %}
+                <div class="py-4 {% if forloop.first %}pt-0{% endif %}">
+                  <div class="flex items-center justify-between gap-3 mb-2">
+                    <div class="text-sm font-medium c-primary">{{ note.title }}</div>
+                    <div class="text-xs c-muted">{{ note.created_at|date:"M d" }}</div>
+                  </div>
+                  <div class="text-sm c-secondary">{{ note.content|truncatechars:220 }}</div>
+                  <div class="text-xs c-muted mt-2">{{ note.created_by.get_full_name|default:"—" }}</div>
                 </div>
-                <div class="text-sm c-secondary">{{ note.content|truncatechars:220 }}</div>
-                <div class="text-xs c-muted mt-2">{{ note.created_by.get_full_name|default:"—" }}</div>
+                {% endfor %}
               </div>
-              {% endfor %}
+              {% else %}
+              <div class="dc-ds-empty">
+                <h2 class="dc-ds-empty__title">No negotiation notes yet.</h2>
+                <div class="dc-ds-actions dc-ds-empty__actions">
+                  <a href="{% url 'contracts:add_negotiation_note' contract.pk %}" class="btn-soft-primary text-sm">Add first note</a>
+                </div>
+              </div>
+              {% endif %}
             </div>
-          </div>
-          {% else %}
-          <div class="card-l2 text-center">
-            <p class="text-sm c-muted">No negotiation notes yet.</p>
-            <a href="{% url 'contracts:add_negotiation_note' contract.pk %}" class="btn-soft-primary mt-3 text-sm">Add first note</a>
-          </div>
-          {% endif %}
+          </section>
 
           {# Contract field review — a grounded rules-engine check, not generative AI; collapsed by default. #}
           <details class="card-l2" id="contract-field-review">
@@ -193,7 +194,7 @@
                 <button id="ai-assistant-submit" type="button" class="btn-soft-primary text-sm">Run review</button>
                 <span id="ai-assistant-status" class="text-xs c-muted" role="status" aria-live="polite"></span>
               </div>
-              <div id="ai-assistant-error" class="hidden text-xs c-danger" role="alert"></div>
+              <div id="ai-assistant-error" class="dc-ds-alert dc-ds-alert--danger hidden" role="alert"></div>
               <div id="ai-assistant-output" class="hidden space-y-3" aria-live="polite" aria-label="Contract field review result"></div>
             </div>
           </details>
@@ -202,164 +203,182 @@
       </div>{# /tab-overview #}
 
       {# ── DOCUMENTS ────────────────────────────────────────── #}
-      <div id="tab-documents" class="arch-tab-panel" role="tabpanel">
-        <div class="card-l1">
-          <div class="flex items-center justify-between mb-4">
-            <h2 class="text-base font-700 c-primary">Documents &amp; Versions</h2>
+      <div id="tab-documents" class="arch-tab-panel" role="tabpanel" aria-labelledby="tab-btn-documents">
+        <section class="dc-ds-surface" aria-labelledby="documents-versions-title">
+          <div class="dc-ds-surface__head">
+            <h2 class="dc-ds-surface__title" id="documents-versions-title">Documents &amp; Versions</h2>
             <a href="{% url 'contracts:document_create' %}" class="btn-cta text-sm">Attach document</a>
           </div>
-          {% if documents %}
-          <div>
-            {% for doc in documents %}
-            <a href="{% url 'contracts:document_detail' doc.pk %}" class="cdoc-row">
-              <div class="flex items-center gap-3 min-w-0">
-                <div class="cdoc-icon">
-                  <svg class="w-4 h-4 c-primary" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                  </svg>
+          <div class="dc-ds-surface__body">
+            {% if documents %}
+            <div>
+              {% for doc in documents %}
+              <a href="{% url 'contracts:document_detail' doc.pk %}" class="dc-ds-dense-row">
+                <div class="dc-ds-dense-row__main flex items-center gap-3 min-w-0">
+                  <div class="cdoc-icon">
+                    <svg class="w-4 h-4 c-primary" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                  </div>
+                  <div class="min-w-0">
+                    <div class="dc-ds-dense-row__title truncate">{{ doc.title }}</div>
+                    <div class="dc-ds-dense-row__meta">{{ doc.get_document_type_display }} · v{{ doc.version }}</div>
+                  </div>
                 </div>
-                <div class="min-w-0">
-                  <div class="text-sm font-medium c-primary truncate">{{ doc.title }}</div>
-                  <div class="text-xs c-muted mt-0.5">{{ doc.get_document_type_display }} · v{{ doc.version }}</div>
+                <div class="dc-ds-dense-row__timestamp text-right hidden sm:block">
+                  <div class="c-secondary">{{ doc.uploaded_by.get_full_name|default:doc.uploaded_by.username|default:"—" }}</div>
+                  <div>{{ doc.created_at|date:"M d, Y" }}</div>
                 </div>
+                <div class="dc-ds-dense-row__actions">
+                  <svg class="w-4 h-4 c-muted" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </div>
+              </a>
+              {% endfor %}
+            </div>
+            {% else %}
+            <div class="dc-ds-empty">
+              <h2 class="dc-ds-empty__title">No documents attached yet.</h2>
+              <div class="dc-ds-actions dc-ds-empty__actions">
+                <a href="{% url 'contracts:document_create' %}" class="btn-soft-primary text-sm">Attach first document</a>
               </div>
-              <div class="flex items-center gap-4 flex-shrink-0">
-                <div class="text-right hidden sm:block">
-                  <div class="text-xs c-secondary">{{ doc.uploaded_by.get_full_name|default:doc.uploaded_by.username|default:"—" }}</div>
-                  <div class="text-xs c-muted">{{ doc.created_at|date:"M d, Y" }}</div>
-                </div>
-                <svg class="w-4 h-4 c-muted" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-              </div>
-            </a>
-            {% endfor %}
+            </div>
+            {% endif %}
           </div>
-          {% else %}
-          <div class="py-12 text-center">
-            <p class="text-sm c-muted mb-3">No documents attached yet.</p>
-            <a href="{% url 'contracts:document_create' %}" class="btn-soft-primary text-sm">Attach first document</a>
-          </div>
-          {% endif %}
-        </div>
+        </section>
       </div>{# /tab-documents #}
 
       {# ── WORKFLOW ─────────────────────────────────────────── #}
-      <div id="tab-workflow" class="arch-tab-panel" role="tabpanel">
+      <div id="tab-workflow" class="arch-tab-panel" role="tabpanel" aria-labelledby="tab-btn-workflow">
         <div class="space-y-6">
 
           {# Approvals #}
-          <div class="card-l1">
-            <div class="wf-section-head">
-              <h2 class="text-base font-700 c-primary">Approvals</h2>
+          <section class="dc-ds-surface" aria-labelledby="approvals-title">
+            <div class="dc-ds-surface__head">
+              <h2 class="dc-ds-surface__title" id="approvals-title">Approvals</h2>
               <a href="{% url 'contracts:approval_request_list' %}" class="text-xs c-link font-medium">View all</a>
             </div>
-            {% if approval_requests %}
-            <div>
-              {% for approval in approval_requests %}
-              <div class="wf-row">
-                <div class="flex items-center gap-3 min-w-0">
-                  {% assignee_chip approval.assigned_to %}
-                  <span class="text-sm c-primary">{{ approval.approval_step|approval_step_label }}</span>
+            <div class="dc-ds-surface__body">
+              {% if approval_requests %}
+              <div>
+                {% for approval in approval_requests %}
+                <div class="dc-ds-dense-row">
+                  <div class="dc-ds-dense-row__main flex items-center gap-3 min-w-0">
+                    {% assignee_chip approval.assigned_to %}
+                    <span class="dc-ds-dense-row__title">{{ approval.approval_step|approval_step_label }}</span>
+                  </div>
+                  <div class="dc-ds-dense-row__badge">
+                    {% include "design_system/status_badge.html" with tone=approval.status|approval_status_badge_tone label=approval.get_status_display %}
+                  </div>
                 </div>
-                <span class="badge-sm {{ approval.status|approval_status_badge_class }}">{{ approval.get_status_display }}</span>
+                {% endfor %}
               </div>
-              {% endfor %}
+              {% else %}
+              {% include "design_system/empty_state.html" with title="No approvals requested for this contract yet." %}
+              {% endif %}
             </div>
-            {% else %}
-            <div class="py-6 text-center text-sm c-muted">No approvals requested for this contract yet.</div>
-            {% endif %}
-          </div>
+          </section>
 
           {# Signatures #}
-          <div class="card-l1">
-            <div class="wf-section-head">
-              <h2 class="text-base font-700 c-primary">Signatures</h2>
+          <section class="dc-ds-surface" aria-labelledby="signatures-title">
+            <div class="dc-ds-surface__head">
+              <h2 class="dc-ds-surface__title" id="signatures-title">Signatures</h2>
               <a href="{% url 'contracts:signature_request_list' %}" class="text-xs c-link font-medium">View all</a>
             </div>
-            {% if signature_requests %}
-            <div>
-              {% for sig in signature_requests %}
-              <div class="wf-row">
-                <div class="min-w-0">
-                  <div class="text-sm c-primary">{{ sig.signer_name }}</div>
-                  <div class="text-xs c-muted">{{ sig.signer_role|default:sig.signer_email }}</div>
+            <div class="dc-ds-surface__body">
+              {% if signature_requests %}
+              <div>
+                {% for sig in signature_requests %}
+                <div class="dc-ds-dense-row">
+                  <div class="dc-ds-dense-row__main min-w-0">
+                    <div class="dc-ds-dense-row__title">{{ sig.signer_name }}</div>
+                    <div class="dc-ds-dense-row__meta">{{ sig.signer_role|default:sig.signer_email }}</div>
+                  </div>
+                  <div class="dc-ds-dense-row__badge">
+                    {% include "design_system/status_badge.html" with tone=sig.status|signature_status_badge_tone label=sig.get_status_display %}
+                  </div>
                 </div>
-                <span class="badge-sm {{ sig.status|signature_status_badge_class }}">{{ sig.get_status_display }}</span>
+                {% endfor %}
               </div>
-              {% endfor %}
+              {% else %}
+              {% include "design_system/empty_state.html" with title="No signature requests for this contract yet." %}
+              {% endif %}
             </div>
-            {% else %}
-            <div class="py-6 text-center text-sm c-muted">No signature requests for this contract yet.</div>
-            {% endif %}
-          </div>
+          </section>
 
           {# Tasks #}
-          <div class="card-l1">
-            <div class="wf-section-head">
-              <h2 class="text-base font-700 c-primary">Tasks</h2>
+          <section class="dc-ds-surface" aria-labelledby="tasks-title">
+            <div class="dc-ds-surface__head">
+              <h2 class="dc-ds-surface__title" id="tasks-title">Tasks</h2>
               <a href="{% url 'contracts:legal_task_kanban' %}" class="text-xs c-link font-medium">View all</a>
             </div>
-            {% if contract_tasks %}
-            <div>
-              {% for task in contract_tasks %}
-              <div class="wf-row">
-                <div class="flex items-center gap-3 min-w-0">
-                  {% assignee_chip task.assigned_to %}
-                  <span class="text-sm c-primary truncate">{{ task.title }}</span>
+            <div class="dc-ds-surface__body">
+              {% if contract_tasks %}
+              <div>
+                {% for task in contract_tasks %}
+                <div class="dc-ds-dense-row">
+                  <div class="dc-ds-dense-row__main flex items-center gap-3 min-w-0">
+                    {% assignee_chip task.assigned_to %}
+                    <span class="dc-ds-dense-row__title truncate">{{ task.title }}</span>
+                  </div>
+                  <div class="dc-ds-dense-row__badge">
+                    {% include "design_system/status_badge.html" with tone=task.status|task_status_badge_tone label=task.get_status_display %}
+                  </div>
                 </div>
-                <span class="badge-sm {{ task.status|task_status_badge_class }}">{{ task.get_status_display }}</span>
+                {% endfor %}
               </div>
-              {% endfor %}
+              {% else %}
+              {% include "design_system/empty_state.html" with title="No tasks linked to this contract yet." %}
+              {% endif %}
             </div>
-            {% else %}
-            <div class="py-6 text-center text-sm c-muted">No tasks linked to this contract yet.</div>
-            {% endif %}
-          </div>
+          </section>
 
         </div>
       </div>{# /tab-workflow #}
 
       {# ── ACTIVITY ─────────────────────────────────────────── #}
-      <div id="tab-activity" class="arch-tab-panel" role="tabpanel">
-        <div class="card-l1">
-          <div class="wf-section-head">
-            <h2 class="text-base font-700 c-primary">Activity</h2>
+      <div id="tab-activity" class="arch-tab-panel" role="tabpanel" aria-labelledby="tab-btn-activity">
+        <section class="dc-ds-surface" aria-labelledby="activity-title">
+          <div class="dc-ds-surface__head">
+            <h2 class="dc-ds-surface__title" id="activity-title">Activity</h2>
             <a href="{% url 'contracts:audit_log_list' %}" class="text-xs c-link font-medium">View full audit trail</a>
           </div>
-          {% if activity_entries %}
-          <div>
-            {% for entry in activity_entries %}
-            {% activity_line entry %}
-            {% endfor %}
+          <div class="dc-ds-surface__body">
+            {% if activity_entries %}
+            <div>
+              {% for entry in activity_entries %}
+              {% activity_line entry %}
+              {% endfor %}
+            </div>
+            {% else %}
+            {% include "design_system/empty_state.html" with title="No recent activity recorded for this contract." %}
+            {% endif %}
           </div>
-          {% else %}
-          <div class="py-6 text-center text-sm c-muted">No recent activity recorded for this contract.</div>
-          {% endif %}
-        </div>
+        </section>
       </div>{# /tab-activity #}
 
       {% if contract_risks %}
       {# ── COMPLIANCE ───────────────────────────────────────── #}
-      <div id="tab-compliance" class="arch-tab-panel" role="tabpanel">
-        <div class="card-l1">
-          <div class="wf-section-head">
-            <h2 class="text-base font-700 c-primary">Risks</h2>
+      <div id="tab-compliance" class="arch-tab-panel" role="tabpanel" aria-labelledby="tab-btn-compliance">
+        <section class="dc-ds-surface" aria-labelledby="risks-title">
+          <div class="dc-ds-surface__head">
+            <h2 class="dc-ds-surface__title" id="risks-title">Risks</h2>
             <a href="{% url 'contracts:risk_log_list' %}" class="text-xs c-link font-medium">View risk register</a>
           </div>
-          <div>
+          <div class="dc-ds-surface__body">
             {% for risk in contract_risks %}
-            <div class="wf-row">
-              <div class="flex items-center gap-3 min-w-0">
+            <div class="dc-ds-dense-row">
+              <div class="dc-ds-dense-row__main flex items-center gap-3 min-w-0">
                 {% assignee_chip risk.assigned_to %}
-                <span class="text-sm c-primary truncate">{{ risk.title }}</span>
+                <span class="dc-ds-dense-row__title truncate">{{ risk.title }}</span>
               </div>
-              <div class="flex items-center gap-2 flex-shrink-0">
-                <span class="badge-sm {% if risk.risk_level == 'CRITICAL' %}badge-red{% elif risk.risk_level == 'HIGH' %}badge-yellow{% elif risk.risk_level == 'MEDIUM' %}badge-blue{% else %}badge-green{% endif %}">{{ risk.get_risk_level_display }}</span>
-                <span class="badge-sm {{ risk.status|risk_status_badge_class }}">{{ risk.status|risk_status_label }}</span>
+              <div class="dc-ds-dense-row__badge flex items-center gap-2">
+                {% include "design_system/status_badge.html" with tone=risk.risk_level|contract_risk_badge_tone label=risk.get_risk_level_display %}
+                {% include "design_system/status_badge.html" with tone=risk.status|risk_status_badge_tone label=risk.status|risk_status_label %}
               </div>
             </div>
             {% endfor %}
           </div>
-        </div>
+        </section>
       </div>{# /tab-compliance #}
       {% endif %}
 
@@ -370,35 +389,47 @@
 
       {# Deadlines — genuinely dynamic, not shown in the header #}
       {% if deadlines %}
-      <div class="card-l2">
-        <div class="arch-section-label">Deadlines</div>
-        <div class="detail-stack">
-          {% for dl in deadlines %}
-          <div class="detail-row">
-            <span class="detail-label">{{ dl.title }}</span>
-            <span class="badge-sm {% if dl.is_overdue %}badge-red{% else %}badge-blue{% endif %}">{% if dl.is_overdue %}Overdue{% else %}{{ dl.days_remaining }}d{% endif %}</span>
-          </div>
-          {% endfor %}
+      <section class="dc-ds-surface" aria-labelledby="deadlines-title">
+        <div class="dc-ds-surface__head">
+          <h2 class="dc-ds-surface__title" id="deadlines-title">Deadlines</h2>
         </div>
-      </div>
+        <div class="dc-ds-surface__body">
+          <div class="detail-stack">
+            {% for dl in deadlines %}
+            <div class="detail-row">
+              <span class="detail-label">{{ dl.title }}</span>
+              <span class="dc-ds-badge {% if dl.is_overdue %}dc-ds-badge--danger{% else %}dc-ds-badge--progress{% endif %}">{% if dl.is_overdue %}Overdue{% else %}{{ dl.days_remaining }}d{% endif %}</span>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
       {% endif %}
 
       {# Related matter #}
       {% if related_case_matter %}
-      <div class="card-l2">
-        <div class="arch-section-label">Related matter</div>
-        <a href="{% url 'contracts:matter_detail' related_case_matter.pk %}" class="text-sm c-link font-medium hover:underline">{{ related_case_matter.title }}</a>
-      </div>
+      <section class="dc-ds-surface" aria-labelledby="related-matter-title">
+        <div class="dc-ds-surface__head">
+          <h2 class="dc-ds-surface__title" id="related-matter-title">Related matter</h2>
+        </div>
+        <div class="dc-ds-surface__body">
+          <a href="{% url 'contracts:matter_detail' related_case_matter.pk %}" class="text-sm c-link font-medium hover:underline">{{ related_case_matter.title }}</a>
+        </div>
+      </section>
       {% endif %}
 
       {# Quick links — secondary navigation not already covered by the action bar or tabs #}
-      <div class="card-l2">
-        <div class="arch-section-label">Quick links</div>
-        <div class="detail-stack">
-          <a href="{% url 'contracts:risk_log_list' %}" class="text-sm c-link font-medium">Risk register</a>
-          <a href="{% url 'contracts:deadline_create' %}" class="text-sm c-link font-medium">Add deadline</a>
+      <section class="dc-ds-surface" aria-labelledby="quick-links-title">
+        <div class="dc-ds-surface__head">
+          <h2 class="dc-ds-surface__title" id="quick-links-title">Quick links</h2>
         </div>
-      </div>
+        <div class="dc-ds-surface__body">
+          <div class="detail-stack">
+            <a href="{% url 'contracts:risk_log_list' %}" class="text-sm c-link font-medium">Risk register</a>
+            <a href="{% url 'contracts:deadline_create' %}" class="text-sm c-link font-medium">Add deadline</a>
+          </div>
+        </div>
+      </section>
 
     </div>{# /arch-context-rail #}
 

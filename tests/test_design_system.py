@@ -219,6 +219,7 @@ class DesignSystemTests(TestCase):
             'base.html',
             'dashboard.html',
             'contracts/repository.html',
+            'contracts/approval_request_list.html',
         ):
             content = (template_root / relative_path).read_text()
             self.assertNotIn('<svg', content, relative_path)
