@@ -1123,16 +1123,13 @@ def dashboard(request):
     ]
 
     # ── Command Center (Phase 2 of the Product Coherence Redesign) ──────
-    # in_house_clm-only data. Deliberately gated so law_firm_ops tenants pay
-    # zero extra queries and see the dashboard exactly as before. Every
-    # figure below reads PERSISTED rows (DPARiskItem, RiskLog, ApprovalRequest,
-    # Deadline, DPAReviewPack.review_memo*) — nothing here re-runs DPA
-    # analysis or cross-document conflict detection at render time; that
-    # only happens when a user explicitly re-runs the review
-    # (dpa_review_run_analysis), unchanged by this work.
-    workspace_mode = getattr(org, 'workspace_mode', 'law_firm_ops') if org else 'law_firm_ops'
-    is_in_house_clm = workspace_mode == 'in_house_clm'
-
+    # The Command Center is the standard dashboard for every organization,
+    # regardless of workspace_mode. Every figure below reads PERSISTED rows
+    # (DPARiskItem, RiskLog, ApprovalRequest, Deadline,
+    # DPAReviewPack.review_memo*) — nothing here re-runs DPA analysis or
+    # cross-document conflict detection at render time; that only happens
+    # when a user explicitly re-runs the review (dpa_review_run_analysis),
+    # unchanged by this work.
     clm_conflict_count = 0
     clm_top_conflicts = []
     clm_needs_review_count = 0
@@ -1147,7 +1144,7 @@ def dashboard(request):
     command_center_saved_views = get_command_center_saved_views(org)
     persisted_command_center_rows = get_persisted_command_center_rows(org, current_user=request.user, today=today)
 
-    if is_in_house_clm and org:
+    if org:
         # Aliased on import — this module already has `Case` bound to
         # contracts.models.Case; a same-named local import would shadow it
         # for the whole function (UnboundLocalError on the case_qs line
@@ -1281,6 +1278,10 @@ def dashboard(request):
             row['recommendation_reason'] = row.get('risk_label') or 'Action required'
 
     priority_queue_rows = rank_command_center_rows(priority_queue_rows, today=today)
+    # Open Governed Actions must represent real workflow issues only — no
+    # onboarding-checklist substitution when the workspace has none. An
+    # empty workspace renders the panel's real "No open governed actions"
+    # empty state instead.
     clm_recommended_actions = group_recommended_actions(priority_queue_rows, today=today, limit=3)
 
     # Secondary-filter option lists for the Filters popover — derived from
@@ -1327,6 +1328,18 @@ def dashboard(request):
     governing_law_recorded = case_qs.exclude(governing_law='').filter(governing_law__isnull=False).exists()
     approval_path_configured = ApprovalRule.objects.filter(organization=org).exists() if org else False
     playbook_attached = DPAPlaybookPosition.objects.filter(Q(organization=org) | Q(organization__isnull=True)).exists() if org else False
+    deadline_tracking_configured = deadlines_qs.exists() or renewal_dates_recorded
+    dpa_monitoring_configured = DPAReviewPack.objects.filter(organization=org).exists() if org else False
+    reviewer_setup_required = (
+        OrganizationMembership.objects.filter(organization=org, is_active=True).count() < 2
+        if org else True
+    )
+    clm_setup_required_count = sum((
+        not approval_path_configured,
+        not deadline_tracking_configured,
+        not dpa_monitoring_configured,
+        reviewer_setup_required,
+    ))
 
     priority_feature = priority_queue_rows[0] if priority_queue_rows else None
     priority_feature_reason = ''
@@ -1442,29 +1455,34 @@ def dashboard(request):
     audit_event_count = AuditLog.objects.filter(organization=org).count() if org else 0
     audit_ready_count = AuditLog.objects.filter(organization=org).exclude(entry_hash='').count() if org else 0
     audit_readiness_percent = _percent(audit_ready_count, audit_event_count)
+    governed_workflow_count = sum(1 for row in priority_queue_rows if row.get('is_workflow'))
     clm_governance_signals = [
         {
             'label': 'Playbook compliance',
-            'value': f'{playbook_coverage_percent}%',
-            'tone': 'good' if playbook_coverage_percent else 'warn',
+            'value': f'{playbook_coverage_percent}%' if governed_workflow_count else 'Not measured',
+            'detail': 'No governed contracts yet' if not governed_workflow_count else 'Measured across governed workflows',
+            'tone': 'good' if governed_workflow_count and playbook_coverage_percent else 'warn',
             'href': reverse('contracts:dpa_playbook_list'),
         },
         {
             'label': 'Approval authority',
             'value': 'Configured' if approval_path_configured else 'Missing',
+            'detail': 'Review approval rules' if approval_path_configured else 'Configure approval authority',
             'tone': 'good' if approval_path_configured else 'warn',
             'href': reverse('contracts:approval_rule_list'),
             'emphasis': not approval_path_configured,
         },
         {
-            'label': 'Audit readiness',
-            'value': f'{audit_readiness_percent}%' if audit_event_count else 'No evidence',
+            'label': 'Audit infrastructure',
+            'value': f'{audit_readiness_percent}%' if audit_event_count and governed_workflow_count else 'Ready',
+            'detail': 'Hash-backed events enabled',
             'tone': 'good' if audit_event_count and audit_readiness_percent == 100 else 'warn',
             'href': reverse('contracts:audit_log_list'),
         },
         {
             'label': 'Policy exceptions',
-            'value': str(clm_policy_exception_count),
+            'value': f'{clm_policy_exception_count} open' if clm_policy_exception_count else 'None open',
+            'detail': 'Open exceptions' if clm_policy_exception_count else 'No policy exceptions',
             'tone': 'warn' if clm_policy_exception_count else 'good',
             'href': reverse('contracts:dpa_review_pack_list'),
         },
@@ -1768,7 +1786,6 @@ def dashboard(request):
         'expiring_contracts': expiring_contracts,
         'lifecycle_chart': lifecycle_chart,
         'lifecycle_total': case_stats['total'] or 0,
-        'is_in_house_clm': is_in_house_clm,
         'clm_conflict_count': clm_conflict_count,
         'clm_top_conflicts': clm_top_conflicts,
         'clm_needs_review_count': clm_needs_review_count,
@@ -1798,6 +1815,10 @@ def dashboard(request):
         'governing_law_recorded': governing_law_recorded,
         'approval_path_configured': approval_path_configured,
         'playbook_attached': playbook_attached,
+        'deadline_tracking_configured': deadline_tracking_configured,
+        'dpa_monitoring_configured': dpa_monitoring_configured,
+        'reviewer_setup_required': reviewer_setup_required,
+        'clm_setup_required_count': clm_setup_required_count,
         'workspace_health_percent': workspace_health_percent,
         'contracts_with_owner_percent': contracts_with_owner_percent,
         'renewal_dates_percent': renewal_dates_percent,

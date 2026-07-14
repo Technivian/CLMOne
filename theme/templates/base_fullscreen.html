@@ -89,15 +89,15 @@
         .login-feature-text { color: var(--text-secondary); }
         .login-dim         { color: var(--text-dim); }
         .login-input {
-            width: 100%; padding: var(--space-12) var(--space-16); border-radius: var(--radius-control);
+            width: 100%; padding: 11px var(--space-12); border-radius: var(--radius-control);
             font-size: var(--font-size-body); transition: border-color var(--transition-base), box-shadow var(--transition-base);
-            background: var(--input-bg); border: 1px solid var(--border);
+            background: var(--card); border: 1px solid var(--line-strong);
             color: var(--text-primary); outline: none;
         }
         .login-input::placeholder { color: var(--text-muted); }
         .login-input:focus-visible {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px var(--focus-ring);
+            border-color: var(--ink-500);
+            box-shadow: 0 0 0 2px var(--card), 0 0 0 4px color-mix(in srgb, var(--focus-ring) 42%, transparent);
         }
         .login-input.has-error { border-color: var(--error-border); }
         .glow-btn { position: relative; overflow: hidden; }

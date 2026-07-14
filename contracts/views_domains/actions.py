@@ -339,14 +339,10 @@ def organization_security_settings(request):
     if request.method == 'POST':
         action = request.POST.get('action', 'save')
         if action == 'save_workspace_mode':
-            new_mode = request.POST.get('workspace_mode')
-            valid_modes = {choice for choice, _label in Organization.WorkspaceMode.choices}
-            if new_mode not in valid_modes:
-                messages.error(request, 'Unrecognized workspace mode.')
-                return redirect('organization_security_settings')
-            if organization.workspace_mode != new_mode:
+            standard_mode = Organization.WorkspaceMode.IN_HOUSE_CLM
+            if organization.workspace_mode != standard_mode:
                 previous_mode = organization.workspace_mode
-                organization.workspace_mode = new_mode
+                organization.workspace_mode = standard_mode
                 organization.save(update_fields=['workspace_mode', 'updated_at'])
                 log_action(
                     request.user,
@@ -355,15 +351,15 @@ def organization_security_settings(request):
                     object_id=organization.id,
                     object_repr=organization.name,
                     changes={
-                        'event': 'organization_workspace_mode_updated',
-                        'workspace_mode': new_mode,
+                        'event': 'organization_workspace_mode_standardized',
+                        'workspace_mode': standard_mode,
                         'previous_workspace_mode': previous_mode,
                     },
                     request=request,
                 )
-                messages.success(request, 'Workspace mode updated.')
+                messages.success(request, 'Command Center is now the standard workspace.')
             else:
-                messages.info(request, 'Workspace mode is already set to that value.')
+                messages.info(request, 'Command Center is already the standard workspace.')
             return redirect('organization_security_settings')
 
         if action == 'revoke_sessions':

@@ -57,7 +57,7 @@ class DesignSystemTests(TestCase):
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'DocClad')
-        self.assertContains(response, 'High-Risk Deviations')
+        self.assertContains(response, 'Risk deviations')
         self.assertContains(response, 'css/command-center.css')
 
     def test_dashboard_loads_with_feature_flag_disabled(self):
@@ -65,7 +65,7 @@ class DesignSystemTests(TestCase):
         self.client.login(username='testuser', password='testpass123')
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Dashboard')
+        self.assertContains(response, 'Command Center')
 
     def test_button_component_snippet(self):
         template = Template(
@@ -114,7 +114,6 @@ class DesignSystemTests(TestCase):
         self.assertContains(response, 'js/docclad-ui.js')
         self.assertContains(response, 'id="docclad-command-palette"')
         self.assertContains(response, 'data-command-input')
-        self.assertContains(response, 'data-command-trigger')
         self.assertContains(response, 'id="docclad-toast-region"')
 
     def test_casefile_catalogue_is_authenticated_and_renders_primitives(self):

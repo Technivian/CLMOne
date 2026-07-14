@@ -8,12 +8,15 @@ own test file only proving its own corner.
 
 Three buckets, matching the architecture note:
 
-1. Shared shell, mode-specific content (dashboard, matter detail, risk
-   review) — law_firm_ops must never render in_house_clm-only content and
-   vice versa.
-2. Shared / mode-neutral routes (Repository, Counterparties, DPA Reviews,
-   Approvals, Reports) — reachable and organization-scoped for both modes,
-   with no mode-conditional branching at all.
+1. Shared shell, mode-specific content (matter detail, risk review) —
+   law_firm_ops must never render in_house_clm-only content and vice versa.
+   The dashboard used to live in this bucket (a plain law_firm_ops variant
+   vs. a rich in_house_clm Command Center); it has since moved to bucket 2 —
+   the Command Center is now the standard dashboard for every organization,
+   regardless of workspace_mode. See DashboardModeNeutralTests below.
+2. Shared / mode-neutral routes (Dashboard, Repository, Counterparties,
+   DPA Reviews, Approvals, Reports) — reachable and organization-scoped for
+   both modes, with no mode-conditional branching at all.
 3. Documented stopgap routes (Playbooks -> dpa_playbook_list) — nav_config's
    mapping is a deliberate, temporary placeholder, not a dedicated page.
    These tests pin that mapping and the page's generic (unbranched) shape
@@ -64,35 +67,6 @@ class _ContainmentFixtureMixin:
 # ═══════════════════════════════════════════════════════════════════════
 # Bucket 1 — shared shell, mode-specific content
 # ═══════════════════════════════════════════════════════════════════════
-
-class DashboardContainmentTests(_ContainmentFixtureMixin, TestCase):
-    def setUp(self):
-        self.firm_org, self.firm_user, self.firm_client = self._make_org_with_user(
-            None, 'Containment Firm', 'containment_firm_user',
-        )
-        self.clm_org, self.clm_user, self.clm_client = self._make_org_with_user(
-            'in_house_clm', 'Containment CLM', 'containment_clm_user',
-        )
-        for org, user in ((self.firm_org, self.firm_user), (self.clm_org, self.clm_user)):
-            Contract.objects.create(
-                organization=org, title=f'Seed Contract {org.pk}', content='x',
-                status='ACTIVE', created_by=user,
-            )
-
-    def test_law_firm_ops_dashboard_shows_no_clm_content(self):
-        response = self.firm_client.get(reverse('dashboard'))
-        content = response.content.decode()
-        self.assertIn('>Dashboard<', content)
-        for forbidden in ('Command Center', 'DPA / MSA Conflicts', 'Approvals in Your Queue'):
-            self.assertNotIn(forbidden, content)
-
-    def test_in_house_clm_dashboard_shows_no_law_firm_content(self):
-        response = self.clm_client.get(reverse('dashboard'))
-        content = response.content.decode()
-        self.assertIn('Command Center', content)
-        for forbidden in ('Billable hours', 'Trust balance', 'Invoice aging'):
-            self.assertNotIn(forbidden, content)
-
 
 class MatterDetailContainmentTests(_ContainmentFixtureMixin, TestCase):
     def setUp(self):
@@ -156,6 +130,41 @@ class RiskReviewContainmentTests(_ContainmentFixtureMixin, TestCase):
 # Bucket 2 — shared / mode-neutral routes: reachable + org-scoped for both
 # modes, with no mode-conditional branching
 # ═══════════════════════════════════════════════════════════════════════
+
+class DashboardModeNeutralTests(_ContainmentFixtureMixin, TestCase):
+    """The Command Center is the standard dashboard for every organization —
+    law_firm_ops and in_house_clm orgs see the identical rich dashboard."""
+
+    def setUp(self):
+        self.firm_org, self.firm_user, self.firm_client = self._make_org_with_user(
+            None, 'Containment Firm', 'containment_firm_user',
+        )
+        self.clm_org, self.clm_user, self.clm_client = self._make_org_with_user(
+            'in_house_clm', 'Containment CLM', 'containment_clm_user',
+        )
+        for org, user in ((self.firm_org, self.firm_user), (self.clm_org, self.clm_user)):
+            Contract.objects.create(
+                organization=org, title=f'Seed Contract {org.pk}', content='x',
+                status='ACTIVE', created_by=user,
+            )
+
+    def test_law_firm_ops_dashboard_shows_command_center(self):
+        response = self.firm_client.get(reverse('dashboard'))
+        content = response.content.decode()
+        self.assertIn('Command Center', content)
+
+    def test_in_house_clm_dashboard_shows_command_center(self):
+        response = self.clm_client.get(reverse('dashboard'))
+        content = response.content.decode()
+        self.assertIn('Command Center', content)
+
+    def test_dashboard_never_shows_law_firm_billing_content(self):
+        for client_ in (self.firm_client, self.clm_client):
+            response = client_.get(reverse('dashboard'))
+            content = response.content.decode()
+            for forbidden in ('Billable hours', 'Trust balance', 'Invoice aging'):
+                self.assertNotIn(forbidden, content)
+
 
 class SharedNeutralRoutesAccessibilityTests(_ContainmentFixtureMixin, TestCase):
     """Repository, Counterparties, DPA Reviews, Approvals, Reports."""

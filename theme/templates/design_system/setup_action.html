@@ -1,0 +1,8 @@
+<a class="dc-ds-setup-action{% if class_name %} {{ class_name }}{% endif %}" href="{{ href }}">
+  <span class="dc-ds-setup-action__icon" aria-hidden="true">{% include "design_system/icon.html" with name=icon|default:"arrow-right" %}</span>
+  <span class="dc-ds-setup-action__copy">
+    <strong>{{ label }}</strong>
+    {% if copy %}<small>{{ copy }}</small>{% endif %}
+  </span>
+  <span class="dc-ds-setup-action__arrow" aria-hidden="true">{% include "design_system/icon.html" with name="arrow-right" %}</span>
+</a>

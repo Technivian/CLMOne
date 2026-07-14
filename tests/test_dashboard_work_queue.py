@@ -85,10 +85,10 @@ class DashboardEmptyStateTests(TestCase):
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
         body = dashboard_body(response.content.decode())
-        self.assertIn('No matter currently requires attention', body)
-        self.assertIn('Governed workflows are up to date', body)
+        self.assertIn('Governance setup is incomplete', body)
         self.assertIn('Import agreement', body)
-        self.assertIn('No approvals waiting', body)
+        self.assertIn('Monitored · no high-risk deviations', body)
+        self.assertIn('Add first key date', body)
 
     def test_onboarding_checklist_hidden_once_a_contract_exists(self):
         organization = get_user_organization(self.user)

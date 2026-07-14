@@ -10,6 +10,7 @@ from contracts.models import (
     ApprovalRequest,
     CommandCenterWorkItem,
     Contract,
+    Deadline,
     Organization,
     OrganizationMembership,
 )
@@ -152,15 +153,52 @@ class CommandCenterProductionSurfaceTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, long_title)
         self.assertContains(response, long_counterparty)
-        self.assertContains(response, 'No approvals waiting')
+        self.assertContains(response, 'Monitored · no high-risk deviations')
         self.assertContains(response, 'Approval authority')
         self.assertContains(response, reverse('contracts:approval_rule_list'))
         self.assertContains(response, reverse('contracts:audit_log_list'))
 
     def test_empty_command_center_state_is_intentional(self):
         response = self.client_.get(reverse('dashboard'))
-        self.assertContains(response, 'No matter currently requires attention')
-        self.assertContains(response, 'Governed workflows are up to date')
+        self.assertContains(response, 'Governance setup is incomplete')
+        self.assertContains(response, 'No monitored issues require attention')
+        self.assertContains(response, 'No active issues')
+        self.assertContains(response, 'Monitored queues are clear.')
+        action_queue_header = response.content.decode().split('id="recommended-actions-title"', 1)[1].split('</div>', 1)[0]
+        self.assertNotIn('View all', action_queue_header)
+        self.assertContains(response, 'Setup required')
+        self.assertContains(response, 'Configure DPA reviews')
+        self.assertContains(response, 'None open')
+        self.assertContains(response, 'No policy exceptions')
+        self.assertNotContains(response, 'No intervention required')
+        self.assertNotContains(response, 'Start DPA review')
+
+    def test_deadline_status_distinguishes_setup_from_clear(self):
+        response = self.client_.get(reverse('dashboard'))
+        self.assertFalse(response.context['deadline_tracking_configured'])
+        self.assertContains(response, 'Deadline tracking is not configured')
+        self.assertContains(response, 'Deadline tracking')
+        self.assertContains(response, 'Not configured')
+        self.assertContains(response, 'Configure deadlines')
+        self.assertNotContains(response, 'See all deadlines')
+        self.assertNotContains(response, 'View calendar')
+
+        contract = Contract.objects.create(
+            organization=self.org, title='Tracked Contract', content='x', created_by=self.user,
+        )
+        Deadline.objects.create(
+            contract=contract,
+            title='Long-range renewal',
+            deadline_type=Deadline.DeadlineType.RENEWAL,
+            due_date=timezone.localdate() + timedelta(days=90),
+            created_by=self.user,
+        )
+        response = self.client_.get(reverse('dashboard'))
+        self.assertTrue(response.context['deadline_tracking_configured'])
+        self.assertContains(response, 'Monitored · nothing due in 30 days')
+        self.assertContains(response, 'View calendar')
+        self.assertNotContains(response, 'Configure deadlines')
+        self.assertNotContains(response, 'See all deadlines')
 
     def test_kpi_counts_are_user_and_workspace_scoped(self):
         contract = Contract.objects.create(
@@ -172,4 +210,4 @@ class CommandCenterProductionSurfaceTests(TestCase):
         )
         response = self.client_.get(reverse('dashboard'))
         self.assertEqual(response.context['clm_my_approvals_count'], 1)
-        self.assertContains(response, 'Assigned to you')
+        self.assertContains(response, '1 assigned to you')

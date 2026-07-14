@@ -20,6 +20,8 @@ not fork their anatomy.
 | Timeline | `audit_timeline_item.html` | Actor/event/time sequence |
 | Command palette | `command_palette.html` | Keyboard and search navigation |
 | Toast region | `toast_region.html` | Transient non-blocking feedback |
+| Setup action | `setup_action.html` | One linked activation step with icon, explanation, and direction |
+| Authentication shell | `.dc-ds-auth-*` | One brand mark, contextual enterprise message, canonical form and provider actions |
 
 ## Buttons
 
@@ -32,6 +34,17 @@ not fork their anatomy.
 - Icon-only buttons require an accessible label and tooltip.
 - Disabled actions must explain the unmet condition nearby.
 
+## Authentication
+
+Use the `dc-ds-auth-*` composition for sign-in and closely related enterprise
+access screens. Keep one brand mark, one primary credential action, canonical
+form controls, and secondary provider actions. Render recognizable provider
+marks through `provider_icon.html`; do not embed or omit them at the page level.
+Context copy should explain
+legal operations, governance, security, or access—not unrelated product
+modules. On compact screens the context panel is removed while the same form,
+validation, routes, and trust message remain available.
+
 ## Status Badges
 
 Badges describe state, never commands. Use concise nouns or past participles:
@@ -42,6 +55,18 @@ Badges describe state, never commands. Use concise nouns or past participles:
 Cards frame one coherent tool, record, or repeated item. Sections are not
 cards by default. Rows inside a card use hairline separators and stable columns.
 Do not place a card inside another card.
+
+Shared surface modifiers:
+
+- `dc-ds-surface--expressive`: spacious dashboard or context card.
+- `dc-ds-surface--feature`: the single branded feature surface on a page.
+- `dc-ds-surface--feature-clear`: all-clear feature treatment.
+- `dc-ds-surface--soft`: unframed setup or grouped-control surface.
+- `dc-ds-surface--interactive`: hover/focus elevation for linked surfaces.
+
+Metric cards use `dc-ds-metric--expressive` in spacious dashboards and
+`dc-ds-metric__value--clear` only when a queue is explicitly clear. Setup rows
+use `setup_action.html`; do not fork their icon/copy/arrow anatomy.
 
 ## Tables
 
@@ -59,3 +84,7 @@ Do not place a card inside another card.
 An empty state must identify whether the condition is initial, filtered, or
 permission-based. Initial CLM states prioritize activation; operational states
 preserve the normal page structure and explain what will appear.
+
+Use the `activation` tone when the empty state is itself a prominent surface,
+and `compact` when it lives inside an existing surface. Both support the shared
+icon slot; recovery actions should use setup actions or standard buttons.

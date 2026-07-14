@@ -27,9 +27,13 @@ def _compute_asset_version():
     """
     if not getattr(settings, 'DEBUG', False):
         return ''
-    css_path = os.path.join(settings.BASE_DIR, 'theme', 'static', 'css', 'dist', 'styles.css')
+    css_paths = [
+        os.path.join(settings.BASE_DIR, 'theme', 'static', 'css', 'dist', 'styles.css'),
+        os.path.join(settings.BASE_DIR, 'theme', 'static', 'css', 'docclad-tokens.css'),
+        os.path.join(settings.BASE_DIR, 'theme', 'static', 'css', 'command-center.css'),
+    ]
     try:
-        return str(int(os.path.getmtime(css_path)))
+        return str(int(max(os.path.getmtime(path) for path in css_paths)))
     except OSError:
         return ''
 
@@ -56,11 +60,26 @@ def _sidebar_nav_for_template(request, user, organization):
         if entry['kind'] == 'section':
             resolved.append({'kind': 'section', 'label': entry['label']})
             continue
+        if entry['kind'] == 'group':
+            children = [{
+                'label': child['label'],
+                'url_name': child['url_name'],
+                'is_active': bool(current_url_name) and child['active'](current_url_name),
+            } for child in entry['children']]
+            resolved.append({
+                'kind': 'group',
+                'label': entry['label'],
+                'icon': entry['icon'],
+                'is_active': any(child['is_active'] for child in children),
+                'children': children,
+            })
+            continue
         resolved.append({
             'kind': 'item',
             'label': entry['label'],
             'url_name': entry['url_name'],
             'icon': entry['icon'],
+            'variant': entry.get('variant', ''),
             'is_active': bool(current_url_name) and entry['active'](current_url_name),
         })
     return resolved

@@ -59,11 +59,11 @@ class RedesignComponentsTestCase(TestCase):
         self._enable_clm_dashboard()
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'High-Risk Deviations')
+        self.assertContains(response, 'Risk deviations')
         self.assertContains(response, 'Component Label Contract')
         self.assertContains(response, 'Priority matter')
         self.assertContains(response, 'Governance controls')
-        self.assertContains(response, 'Recommended Next Actions')
+        self.assertContains(response, 'Action queue')
 
     def test_contracts_list_core_components(self):
         Contract.objects.create(
@@ -82,18 +82,17 @@ class RedesignComponentsTestCase(TestCase):
         self.assertContains(response, 'New Contract')
 
     def test_navigation_structure(self):
-        # This test is specifically about the law-firm-ops nav (unaffected by
-        # the Command Center work); setUp defaults to in_house_clm so other
-        # tests in this class can exercise the Command Center dashboard.
-        self.organization.workspace_mode = Organization.WorkspaceMode.LAW_FIRM_OPS
-        self.organization.save(update_fields=['workspace_mode'])
+        # The legacy sectioned sidebar has been removed from the product
+        # shell; every organization sees the same compact standard nav.
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Dashboard')
-        self.assertContains(response, 'Contract Workspace')
-        self.assertContains(response, 'Tasks')
-        self.assertContains(response, 'Repository')
-        self.assertContains(response, 'Workflows')
+        self.assertContains(response, 'Command Center')
+        self.assertContains(response, 'New Contract')
+        self.assertContains(response, 'Contracts')
+        self.assertContains(response, 'DPA Reviews')
+        self.assertContains(response, 'Obligations')
+        self.assertContains(response, 'Admin')
+        self.assertNotContains(response, 'RISK &amp; COMPLIANCE')
 
     def test_accessibility_and_responsive_markers(self):
         response = self.client.get(reverse('dashboard'))

@@ -1,11 +1,8 @@
-"""Phase 1 of the Product Coherence Redesign: Organization.workspace_mode
-and the mode-aware sidebar (contracts/nav_config.py).
+"""Standard sidebar coverage.
 
-Companion to tests/test_nav_law_firm_baseline.py, which proves the default
-(law_firm_ops) sidebar is byte-for-byte unchanged. This file covers the new
-behavior: the field itself, the in_house_clm nav, specialist-module
-containment, direct-URL access when a module is hidden from nav, and that
-none of this touches DPA Review Pack or approval behavior.
+The legacy law-firm sidebar has been removed from the shell. Workspace mode
+no longer exposes a second navigation system; old-layout pages remain direct
+URL surfaces until rebuilt, but they are not product navigation.
 """
 from django.contrib.auth import get_user_model
 from django.test import Client as TestClient
@@ -22,37 +19,32 @@ from contracts.models import (
 
 User = get_user_model()
 
-# The exact 12-item flat list from the Product Coherence Redesign memo,
-# Section D, as specified for this phase's ticket.
-IN_HOUSE_CLM_NAV_LABELS = [
+STANDARD_NAV_LABELS = [
     'Command Center',
+    'New Contract',
     'Contracts',
-    'Repository',
-    'Matters',
-    'Counterparties',
-    'Risk Review',
     'DPA Reviews',
-    'Approvals',
     'Obligations',
-    'Playbooks',
-    'Reports',
     'Admin',
 ]
 
-# Specialist/law-firm modules that must not render as primary nav items in
-# in_house_clm mode (they remain reachable by direct URL — see the
-# direct-URL-access tests below).
-SPECIALIST_NAV_LABELS_HIDDEN_IN_IN_HOUSE_CLM = [
+OLD_LAYOUT_NAV_LABELS = [
     'Escrow',            # Trust Accounts
     'Budget &amp; Capacity',
     'Workflows',
     'Signature Requests',
     'Tasks',
+    'Repository',
+    'Approvals',
     'Compliance',
     'Privacy',
     'Audit Trail',
     'Documents',
     'Clients',
+    'Counterparties',
+    'Matters',
+    'Playbooks',
+    'Reports',
 ]
 
 
@@ -64,15 +56,9 @@ def sidebar_html(response):
 
 
 class WorkspaceModeFieldTests(TestCase):
-    def test_default_is_law_firm_ops(self):
+    def test_default_is_in_house_clm(self):
         org = Organization.objects.create(name='Default Mode Org', slug='default-mode-org')
-        self.assertEqual(org.workspace_mode, Organization.WorkspaceMode.LAW_FIRM_OPS)
-
-    def test_existing_organizations_are_unaffected_by_the_migration(self):
-        # Organizations created before this field existed behave exactly as
-        # if the migration had never run: same default, same nav.
-        org = Organization.objects.create(name='Pre-existing Org', slug='pre-existing-org')
-        self.assertEqual(org.workspace_mode, 'law_firm_ops')
+        self.assertEqual(org.workspace_mode, Organization.WorkspaceMode.IN_HOUSE_CLM)
 
 
 class WorkspaceModeSettingsExposureTests(TestCase):
@@ -93,10 +79,17 @@ class WorkspaceModeSettingsExposureTests(TestCase):
         self.member_client = TestClient()
         self.member_client.login(username='wm_member', password='testpass123!')
 
-    def test_owner_can_change_workspace_mode(self):
+    def test_workspace_mode_control_is_not_rendered(self):
+        response = self.owner_client.get(reverse('organization_security_settings'))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'Workspace mode')
+        self.assertNotContains(response, 'name="workspace_mode"')
+        self.assertNotContains(response, 'Law firm operations')
+
+    def test_workspace_mode_post_cannot_switch_to_legacy_mode(self):
         response = self.owner_client.post(
             reverse('organization_security_settings'),
-            {'action': 'save_workspace_mode', 'workspace_mode': 'in_house_clm'},
+            {'action': 'save_workspace_mode', 'workspace_mode': 'law_firm_ops'},
         )
         self.assertEqual(response.status_code, 302)
         self.org.refresh_from_db()
@@ -108,17 +101,17 @@ class WorkspaceModeSettingsExposureTests(TestCase):
         response = self.member_client.get(reverse('organization_security_settings'))
         self.assertEqual(response.status_code, 403)
 
-    def test_invalid_mode_value_is_rejected(self):
+    def test_invalid_mode_value_does_not_change_standard_mode(self):
         response = self.owner_client.post(
             reverse('organization_security_settings'),
             {'action': 'save_workspace_mode', 'workspace_mode': 'something_bogus'},
         )
         self.assertEqual(response.status_code, 302)
         self.org.refresh_from_db()
-        self.assertEqual(self.org.workspace_mode, 'law_firm_ops')
+        self.assertEqual(self.org.workspace_mode, 'in_house_clm')
 
 
-class InHouseClmNavTests(TestCase):
+class StandardNavTests(TestCase):
     def setUp(self):
         self.org = Organization.objects.create(
             name='Payrollminds', slug='payrollminds', workspace_mode='in_house_clm',
@@ -138,36 +131,31 @@ class InHouseClmNavTests(TestCase):
         self.member_client = TestClient()
         self.member_client.login(username='clm_member', password='testpass123!')
 
-    def test_all_twelve_primary_nav_items_present_in_order(self):
+    def test_standard_primary_nav_items_present_in_order(self):
         response = self.owner_client.get(reverse('dashboard'))
         content = sidebar_html(response)
         positions = []
-        for label in IN_HOUSE_CLM_NAV_LABELS:
-            self.assertIn(label, content, msg=f'Missing in_house_clm nav label: {label}')
+        for label in STANDARD_NAV_LABELS:
+            self.assertIn(label, content, msg=f'Missing standard nav label: {label}')
             positions.append(content.index(label))
-        self.assertEqual(positions, sorted(positions), 'in_house_clm nav items are out of order')
+        self.assertEqual(positions, sorted(positions), 'standard nav items are out of order')
 
-    def test_specialist_modules_are_not_primary_nav_items(self):
+    def test_old_layout_pages_are_not_primary_nav_items(self):
         response = self.owner_client.get(reverse('dashboard'))
         content = sidebar_html(response)
-        for label in SPECIALIST_NAV_LABELS_HIDDEN_IN_IN_HOUSE_CLM:
-            self.assertNotIn(label, content, msg=f'{label} should not render as a primary nav item in in_house_clm')
+        for label in OLD_LAYOUT_NAV_LABELS:
+            self.assertNotIn(label, content, msg=f'{label} should not render as a primary nav item')
 
-    def test_no_section_headers_in_in_house_clm_nav(self):
-        # The memo's Section D lists a flat 12-item nav; law_firm_ops-style
-        # section headers (EXECUTION, RISK & COMPLIANCE...) should not appear.
+    def test_no_section_headers_in_standard_nav(self):
         response = self.owner_client.get(reverse('dashboard'))
         content = sidebar_html(response)
         for section in ('EXECUTION', 'RISK &amp; COMPLIANCE', 'REFERENCE', 'PLANNING', 'ADMIN'):
             self.assertNotIn(f'>{section}<', content)
 
-    def test_member_also_sees_the_focused_nav(self):
-        # Nav emphasis is per-organization, not per-role — a member sees the
-        # same in_house_clm nav as the owner (role gates individual items
-        # like Escrow, not the mode itself).
+    def test_member_also_sees_the_standard_nav(self):
         response = self.member_client.get(reverse('dashboard'))
         content = sidebar_html(response)
-        for label in IN_HOUSE_CLM_NAV_LABELS:
+        for label in STANDARD_NAV_LABELS:
             self.assertIn(label, content)
 
     def test_command_center_links_to_dashboard(self):
@@ -177,16 +165,16 @@ class InHouseClmNavTests(TestCase):
         self.assertRegex(content, rf'<a href="{href}" class="nav-link active"')
         self.assertIn('Command Center', content)
 
-    def test_matters_links_to_existing_matter_list_route(self):
+    def test_new_contract_links_to_contract_type_picker(self):
         response = self.owner_client.get(reverse('dashboard'))
         content = sidebar_html(response)
-        href = reverse('contracts:matter_list')
+        href = reverse('contracts:contract_template_picker')
         self.assertIn(f'href="{href}"', content)
 
-    def test_active_state_still_works_in_in_house_clm(self):
-        response = self.owner_client.get(reverse('contracts:risk_log_list'))
+    def test_active_state_still_works_in_standard_nav(self):
+        response = self.owner_client.get(reverse('contracts:dpa_review_pack_list'))
         content = sidebar_html(response)
-        href = reverse('contracts:risk_log_list')
+        href = reverse('contracts:dpa_review_pack_list')
         self.assertRegex(content, rf'<a href="{href}" class="nav-link active"')
 
 

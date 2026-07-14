@@ -164,9 +164,9 @@ class UIButtonAndFlowIntegrityTests(TestCase):
         # setUp's contract is DRAFT (not PENDING/IN_REVIEW), so "Needs Legal
         # Review" is genuinely zero and shows its meaningful zero-state
         # headline rather than a bare "0".
-        self.assertContains(dashboard_response, 'No unresolved deviations')
-        self.assertContains(dashboard_response, 'Priority matter')
-        self.assertContains(dashboard_response, 'Recommended Next Actions')
+        self.assertContains(dashboard_response, 'Monitored · no high-risk deviations')
+        self.assertContains(dashboard_response, 'Workspace status')
+        self.assertContains(dashboard_response, 'Action queue')
 
         list_response = self.client.get(reverse('contracts:contract_list'))
         self.assertEqual(list_response.status_code, 200)

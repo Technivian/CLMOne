@@ -6,6 +6,7 @@
 
   <nav class="dc-ds-catalog__nav" aria-label="Catalogue sections">
     <a href="#foundations">Foundations</a>
+    <a href="#surfaces">Surfaces</a>
     <a href="#actions">Actions</a>
     <a href="#status">Status</a>
     <a href="#forms">Forms</a>
@@ -33,6 +34,31 @@
       <div class="dc-ds-surface__title">Heading - Priority work queue</div>
       <p>Body - Review governed agreements, ownership, deadlines, and risk.</p>
       <small>Metadata - Updated Jul 10, 2026 at 08:30</small>
+    </div>
+  </section>
+
+  <section class="dc-ds-catalog__section" id="surfaces">
+    <div class="dc-ds-catalog__intro">
+      <p class="dc-ds-eyebrow">Expressive surfaces</p>
+      <h2>Command and activation patterns</h2>
+      <p>Spacious variants create hierarchy for dashboards and onboarding without changing dense operational records.</p>
+    </div>
+    <div class="dc-ds-catalog__surface-grid">
+      <article class="dc-ds-surface dc-ds-surface--feature dc-ds-catalog__feature-demo">
+        <span class="dc-ds-badge dc-ds-catalog__feature-badge">Priority matter · Clear</span>
+        <h3>Contract control is clear</h3>
+        <p>Feature surfaces are reserved for the single dominant operational context on a page.</p>
+        {% include "design_system/button.html" with label="Import agreement" icon="upload" href="#surfaces" %}
+      </article>
+      <div class="dc-ds-catalog__surface-stack">
+        {% include "design_system/metric_card.html" with label="Pending approvals" value="Clear" note="Queue is clear" state="clear" class_name="dc-ds-metric--expressive" %}
+        {% include "design_system/setup_action.html" with href="#surfaces" icon="workflow" label="Configure approvals" copy="Define who reviews contract decisions." %}
+        {% include "design_system/empty_state.html" with title="No open governed actions" copy="Finish workspace setup to make governance automatic." icon="circle-check" tone="activation" %}
+        <aside class="dc-ds-shell-callout dc-ds-catalog__shell-callout">
+          <strong>Legal intelligence</strong>
+          <p>Use shell callouts for optional assistance that should remain visually subordinate to governed work.</p>
+        </aside>
+      </div>
     </div>
   </section>
 

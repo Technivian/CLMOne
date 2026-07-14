@@ -66,19 +66,21 @@ class CommandCenterDashboardTests(TestCase):
         response = self.client_.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Command Center')
+        self.assertNotContains(response, 'Legal operations')
+        self.assertNotContains(response, 'Live workspace')
+        self.assertNotContains(response, 'Overview of contracts, approvals, and governance.')
         # The compact header replaced the old oversized date <h1> + separate
         # "Live portfolio overview" chip with a one-line operational summary
         # next to the title; when nothing needs attention it reads as such
         # rather than restating zeroed-out metric cards.
-        self.assertContains(response, 'Governed workflows are up to date')
+        self.assertContains(response, 'No monitored issues require attention')
         self.assertNotContains(response, 'Attention needed:')
 
     def test_metric_cards_render(self):
         response = self.client_.get(reverse('dashboard'))
-        self.assertContains(response, 'No approvals waiting')
-        self.assertContains(response, 'No unresolved deviations')
-        self.assertContains(response, 'No DPA conflicts')
-        self.assertContains(response, 'No deadlines in 30 days')
+        self.assertContains(response, 'Monitored · no high-risk deviations')
+        self.assertContains(response, 'Monitored · no DPA conflicts')
+        self.assertContains(response, 'Deadline tracking is not configured')
 
     def test_priority_queue_and_right_rail_render(self):
         # Priority Queue is wired to real in-progress contracts, not hardcoded
@@ -95,9 +97,9 @@ class CommandCenterDashboardTests(TestCase):
         response = self.client_.get(reverse('dashboard'))
         self.assertContains(response, 'Priority matter')
         self.assertContains(response, 'Operational queues')
-        self.assertContains(response, 'DPA Conflicts')
+        self.assertContains(response, 'DPA conflicts')
         self.assertContains(response, 'Governance controls')
-        self.assertContains(response, 'Recommended Next Actions')
+        self.assertContains(response, 'Action queue')
         self.assertContains(response, 'Upcoming Deadlines')
         self.assertContains(response, 'Recent Matters')
 

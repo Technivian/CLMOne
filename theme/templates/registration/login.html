@@ -4,127 +4,94 @@
 {% block title %}Sign in – DocClad{% endblock %}
 
 {% block body %}
-<div class="min-h-screen flex bg-page">
-    <!-- Left marketing panel -->
-    <div class="hidden lg:flex lg:w-1/2 relative items-center justify-center overflow-hidden login-panel-left">
-        <div class="login-divider"></div>
-        <div class="absolute top-1/3 left-1/2 -translate-x-1/2 w-96 h-96 rounded-full glow-blob-primary"></div>
-        <div class="absolute bottom-1/4 left-1/4 w-48 h-48 rounded-full glow-blob-accent"></div>
-        <div class="relative z-10 px-12 max-w-lg">
-            <img src="{% static 'img/brand/docclad-logo-white.svg' %}" alt="DocClad" class="mb-8 brand-logo-dark logo-left-dark">
-            <img src="{% static 'img/brand/docclad-logo-primary.svg' %}" alt="DocClad" class="mb-8 brand-logo-light logo-left-light">
-            <h2 class="text-3xl font-bold mb-4 leading-tight login-title">Protect your portfolio.<br>Empower your team.</h2>
-            <p class="text-[15px] leading-relaxed login-subtitle">DocClad provides the CLM toolkit your team needs to stay organized, compliant, and fast-moving.</p>
-            <div class="mt-12 space-y-5">
-                <div class="flex items-center gap-3.5">
-                    <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 icon-box-accent">
-                        <svg class="w-4 h-4 c-brand-accent" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                    </div>
-                    <span class="text-sm login-feature-text">Manage contracts, counterparties &amp; workflows</span>
-                </div>
-                <div class="flex items-center gap-3.5">
-                    <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 icon-box-accent">
-                        <svg class="w-4 h-4 c-brand-accent" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                    </div>
-                    <span class="text-sm login-feature-text">Track billable hours &amp; generate invoices</span>
-                </div>
-                <div class="flex items-center gap-3.5">
-                    <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 icon-box-accent">
-                        <svg class="w-4 h-4 c-brand-accent" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                    </div>
-                    <span class="text-sm login-feature-text">Automated compliance &amp; conflict checks</span>
-                </div>
-            </div>
+<div class="dc-ds-auth-shell">
+    <a class="dc-ds-auth-brand" href="{% url 'index' %}" aria-label="DocClad home">
+        <img src="{% static 'img/brand/docclad-logo-primary.svg' %}" alt="DocClad">
+    </a>
+
+    <section class="dc-ds-auth-context" aria-labelledby="auth-context-title">
+        <div class="dc-ds-auth-context__inner">
+            <p class="dc-ds-auth-eyebrow">Governed contract operations</p>
+            <h2 id="auth-context-title">Control every contract decision.</h2>
+            <p class="dc-ds-auth-context__copy">Review agreements, route approvals, and maintain a defensible record from one secure workspace.</p>
+            <ul class="dc-ds-auth-benefits">
+                <li><span class="dc-ds-auth-benefits__icon">{% include "design_system/icon.html" with name="file-text" %}</span><span>Centralize contracts, obligations, and counterparties</span></li>
+                <li><span class="dc-ds-auth-benefits__icon">{% include "design_system/icon.html" with name="workflow" %}</span><span>Route approvals with policy-backed governance</span></li>
+                <li><span class="dc-ds-auth-benefits__icon">{% include "design_system/icon.html" with name="shield" %}</span><span>Maintain audit-ready decisions and access controls</span></li>
+            </ul>
         </div>
-    </div>
+    </section>
 
-    <!-- Right sign-in panel -->
-    <div class="w-full lg:w-1/2 flex items-center justify-center p-8 login-panel-right">
-        <div class="w-full max-w-md">
-            <div class="flex items-center justify-between mb-10">
-                <img src="{% static 'img/brand/docclad-logo-white.svg' %}" alt="DocClad" class="brand-logo-dark logo-right-dark">
-                <img src="{% static 'img/brand/docclad-logo-primary.svg' %}" alt="DocClad" class="brand-logo-light logo-right-light">
-            </div>
-
-            <h1 class="text-2xl font-bold mb-1.5 login-title">Welcome back</h1>
-            <p class="text-sm mb-8 login-subtitle">Sign in to your account to continue</p>
+    <main class="dc-ds-auth-main">
+        <div class="dc-ds-auth-card">
+            <header class="dc-ds-auth-card__head">
+                <h1>Access your workspace</h1>
+                <p>Sign in to continue to governed contract operations.</p>
+            </header>
 
             {% if messages %}
-            <div class="mb-6 space-y-2">
+            <div class="dc-ds-auth-messages">
                 {% for message in messages %}
-                <div class="p-4 rounded-xl msg-box">
-                    <p class="text-sm login-title">{{ message }}</p>
-                </div>
+                <div class="dc-ds-auth-message">{{ message }}</div>
                 {% endfor %}
             </div>
             {% endif %}
 
             {% if form.errors %}
-            <div class="mb-6 p-4 rounded-xl alert-error">
-                <p class="text-sm font-medium c-error">Invalid username or password. Please try again.</p>
+            <div class="dc-ds-form-errors dc-ds-auth-errors" role="alert">
+                <p>Invalid username or password. Please try again.</p>
             </div>
             {% endif %}
 
-            <form method="post" class="space-y-5">
+            <form method="post" class="dc-ds-auth-form">
                 {% csrf_token %}
-                <div>
-                    <label for="id_username" class="block text-sm font-semibold mb-2 login-title">Username</label>
+                <div class="dc-ds-form-field">
+                    <label for="id_username" class="dc-ds-form-field__label">Username</label>
                     <input type="text" name="username" id="id_username" autofocus required autocomplete="username"
                         class="login-input form-control"
+                        value="{{ form.username.value|default_if_none:'' }}"
                         placeholder="Enter your username">
                 </div>
-                <div>
-                    <label for="id_password" class="block text-sm font-semibold mb-2 login-title">Password</label>
+                <div class="dc-ds-form-field">
+                    <label for="id_password" class="dc-ds-form-field__label">Password</label>
                     <input type="password" name="password" id="id_password" required autocomplete="current-password"
                         class="login-input form-control"
                         placeholder="Enter your password">
                 </div>
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2">
+                <div class="dc-ds-auth-options">
+                    <div class="dc-ds-auth-remember">
                         <input id="remember" name="remember" type="checkbox" class="h-4 w-4 rounded checkbox-primary form-check-input">
-                        <label for="remember" class="text-sm login-subtitle">Remember me</label>
+                        <label for="remember">Remember me</label>
                     </div>
-                    <a href="{% url 'password_reset' %}" class="text-sm font-semibold c-brand">Forgot password?</a>
+                    <a href="{% url 'password_reset' %}" class="dc-ds-auth-link">Forgot password?</a>
                 </div>
-                <button type="submit" class="glow-btn glow-btn-primary-grad w-full py-3.5 text-white rounded-xl font-semibold text-sm transition-all duration-200">
-                    Sign in
-                </button>
+                {% include "design_system/button.html" with type="submit" tone="primary" label="Sign in" class_name="dc-ds-auth-submit" %}
             </form>
 
+            <div class="dc-ds-auth-divider">or</div>
+            <div class="dc-ds-auth-providers">
             {% if SSO_ENABLED %}
-            <div class="my-5 flex items-center gap-3">
-                <div class="h-px flex-1 divider-line"></div>
-                <span class="text-xs font-semibold uppercase tracking-wide login-subtitle">or</span>
-                <div class="h-px flex-1 divider-line"></div>
-            </div>
             {% with next_url=request.GET.next|default:'/dashboard/' %}
             <a href="{% url 'oidc_authentication_init' %}?next={{ next_url|urlencode }}"
-               class="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold border transition-all duration-200 btn-quiet-surface">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                    <path fill="#EA4335" d="M12 10.2v3.9h5.4c-.24 1.26-.96 2.33-2.04 3.05l3.3 2.56c1.92-1.77 3.03-4.37 3.03-7.47 0-.72-.06-1.42-.2-2.1H12z"/>
-                    <path fill="#34A853" d="M12 22c2.7 0 4.96-.9 6.61-2.44l-3.3-2.56c-.92.61-2.1.97-3.31.97-2.55 0-4.72-1.72-5.5-4.03H3.1v2.63A9.98 9.98 0 0012 22z"/>
-                    <path fill="#FBBC04" d="M6.5 13.94A6 6 0 016.2 12c0-.67.11-1.32.3-1.94V7.43H3.1A10 10 0 002 12c0 1.6.38 3.11 1.1 4.57l3.4-2.63z"/>
-                    <path fill="#4285F4" d="M12 6.03c1.47 0 2.8.5 3.84 1.5l2.88-2.88C16.95 2.98 14.7 2 12 2a9.98 9.98 0 00-8.9 5.43l3.4 2.63C7.28 7.75 9.45 6.03 12 6.03z"/>
-                </svg>
+               class="dc-ds-button dc-ds-auth-provider">
+                {% include "design_system/provider_icon.html" with provider="google" %}
                 Sign in with Google
             </a>
             {% endwith %}
             {% endif %}
-
-            <div class="mt-3">
                 <a href="{% url 'saml_select' %}"
-                   class="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold border transition-all duration-200 btn-quiet-surface">
-                    Sign in with SAML
+                   class="dc-ds-button dc-ds-auth-provider">
+                    Continue with SSO
                 </a>
             </div>
 
-            <div class="mt-8 text-center">
-                <p class="text-sm login-subtitle">
-                    Don't have an account?
-                    <a href="{% url 'register' %}" class="font-semibold transition-colors duration-200 c-brand">Create one free</a>
-                </p>
+            <p class="dc-ds-auth-access">Need a DocClad workspace? <a href="{% url 'register' %}" class="dc-ds-auth-link">Create workspace</a></p>
+
+            <div class="dc-ds-auth-trust">
+                {% include "design_system/icon.html" with name="shield" %}
+                <span>Secure enterprise access</span>
             </div>
         </div>
-    </div>
+    </main>
 </div>
 {% endblock %}

@@ -58,7 +58,7 @@ class DemoCommandCenterSeedTests(TestCase):
 
         for item in CommandCenterWorkItem.objects.filter(organization=self.org, workflow__isnull=False):
             self.assertContains(response, reverse('contracts:workflow_detail', kwargs={'pk': item.workflow_id}))
-        self.assertContains(response, 'Recommended Next Actions')
+        self.assertContains(response, 'Action queue')
 
     def test_dashboard_summary_strip_uses_real_workflow_counts(self):
         # The workflow-type summary strip (a second, duplicate filter row

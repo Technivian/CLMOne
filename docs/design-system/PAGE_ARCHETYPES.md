@@ -1,5 +1,12 @@
 # Page Archetypes
 
+## Authentication
+
+Single brand mark -> legal-operations context -> credential form -> enterprise
+identity providers -> access and trust guidance. Desktop may use a restrained
+context/form split; mobile collapses to the credential form without changing
+authentication behavior or validation.
+
 ## Dashboard
 
 Header -> operational summary -> KPI strip -> 8/4 work queue and intelligence

@@ -70,7 +70,7 @@ body[data-design-system="casefile"] :is(.arch-subtitle, .page-subtitle) {
   line-height: 22px;
 }
 
-body[data-design-system="casefile"] :is(.panel, .card-l1, .card-l2, .dc-ds-surface) {
+body[data-design-system="casefile"] :is(.panel, .card-l1, .card-l2, .dc-ds-surface:not(.dc-ds-surface--expressive):not(.dc-ds-surface--feature)) {
   border-color: var(--ds-color-border);
   background: var(--ds-color-surface);
   box-shadow: var(--ds-surface-shadow);

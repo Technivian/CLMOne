@@ -1,4 +1,5 @@
-<div class="dc-ds-empty{% if class_name %} {{ class_name }}{% endif %}">
+<div class="dc-ds-empty{% if tone %} dc-ds-empty--{{ tone }}{% endif %}{% if class_name %} {{ class_name }}{% endif %}">
+  {% if icon %}<span class="dc-ds-empty__icon" aria-hidden="true">{% include "design_system/icon.html" with name=icon %}</span>{% endif %}
   <h2 class="dc-ds-empty__title">{{ title }}</h2>
   {% if copy %}<p class="dc-ds-empty__copy">{{ copy }}</p>{% endif %}
   {% if actions_template %}<div class="dc-ds-actions dc-ds-empty__actions">{% include actions_template %}</div>{% endif %}

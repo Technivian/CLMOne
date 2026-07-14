@@ -15,10 +15,18 @@
       <kbd>Esc</kbd>
     </form>
     <div class="dc-command__results" data-command-results>
-      {% for entry in SIDEBAR_NAV %}
-        {% if entry.kind == 'section' %}
-          <div class="dc-command__group-label">{{ entry.label }}</div>
-        {% else %}
+{% for entry in SIDEBAR_NAV %}
+{% if entry.kind == 'section' %}
+<div class="dc-command__group-label">{{ entry.label }}</div>
+{% elif entry.kind == 'group' %}
+<div class="dc-command__group-label">{{ entry.label }}</div>
+{% for child in entry.children %}
+<a class="dc-command__item" href="{% url child.url_name %}" data-command-item data-command-search="{{ entry.label|lower }} {{ child.label|lower }}">
+<span>{{ child.label }}</span>
+{% include "design_system/icon.html" with name="arrow-right" %}
+</a>
+{% endfor %}
+{% else %}
           <a class="dc-command__item" href="{% url entry.url_name %}" data-command-item data-command-search="{{ entry.label|lower }}">
             <span>{{ entry.label }}</span>
             {% include "design_system/icon.html" with name="arrow-right" %}

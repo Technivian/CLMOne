@@ -1,5 +1,0 @@
-{% if organization.workspace_mode == 'in_house_clm' %}
-  {% include "design_system/status_badge.html" with label=organization.get_workspace_mode_display tone="success" %}
-{% else %}
-  {% include "design_system/status_badge.html" with label=organization.get_workspace_mode_display %}
-{% endif %}

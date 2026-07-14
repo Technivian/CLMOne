@@ -9,6 +9,8 @@ Casefile uses semantic roles, never color names in product decisions.
 | Canvas | `--paper` | Application background |
 | Surface | `--card` | Working panels and controls |
 | Well | `--well` | Grouped controls and quiet bands |
+| Cool canvas | `--color-surface-canvas-cool` | Command dashboards and expressive workspaces |
+| Soft surface | `--color-surface-soft` | Setup actions and low-emphasis grouped controls |
 | Text | `--ink-900` | Primary content |
 | Secondary text | `--ink-500` | Supporting content |
 | Border | `--line` | Structural separation |
@@ -17,6 +19,7 @@ Casefile uses semantic roles, never color names in product decisions.
 | Attention | `--status-pending-*` | Waiting, renewal, and due-soon states |
 | Danger | `--status-danger-*` | Blocking exceptions and destructive actions |
 | Special | `--status-special-*` | Specialist or privileged review states |
+| Clear | `--color-state-clear*` | Explicitly empty operational queues, always paired with “Clear” text |
 
 Teal is not decoration. It means action, selection, progress, or trust.
 Amber and red require a real operational reason. Never communicate status by
@@ -73,9 +76,17 @@ outer page padding.
 
 - Controls: 8px radius.
 - Cards and panels: 10px radius.
+- Spacious dashboard surfaces: 20px radius through `--radius-surface`.
+- Branded feature surfaces: 20px radius through `--radius-feature`.
 - Pills: status, filters, and people only.
 - Working surfaces use borders first and restrained shadows second.
+- Expressive dashboard surfaces may use `--shadow-surface-expressive`; one
+  branded feature surface per page may use `--shadow-feature`.
 - Nested cards are prohibited. Use bands, dividers, or list rows inside cards.
+
+The expressive palette (`--color-feature-*`, `--gradient-feature*`) establishes
+hierarchy; it does not communicate workflow status. Dense forms, tables, and
+record cards retain the default compact shape and elevation contract.
 
 ## Icons
 

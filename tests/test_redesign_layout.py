@@ -39,12 +39,14 @@ class RedesignLayoutTests(TestCase):
 
     def test_sidebar_navigation_sections_and_links(self):
         response = self.client.get(reverse('dashboard'))
-        self.assertContains(response, 'REFERENCE')
-        self.assertContains(response, 'Contract Workspace')
-        self.assertContains(response, 'RISK &amp; COMPLIANCE')
-        self.assertContains(response, 'Dashboard')
-        self.assertContains(response, 'Counterparties')
-        self.assertContains(response, 'Workflows')
+        self.assertContains(response, 'Command Center')
+        self.assertContains(response, 'New Contract')
+        self.assertContains(response, 'Contracts')
+        self.assertContains(response, 'DPA Reviews')
+        self.assertContains(response, 'Obligations')
+        self.assertContains(response, 'Admin')
+        self.assertNotContains(response, 'REFERENCE')
+        self.assertNotContains(response, 'RISK &amp; COMPLIANCE')
 
     def test_topbar_actions(self):
         response = self.client.get(reverse('dashboard'))
@@ -80,9 +82,9 @@ class RedesignLayoutTests(TestCase):
         )
         response = self.client.get(reverse('dashboard'))
         self.assertContains(response, 'Command Center')
-        self.assertContains(response, 'High-Risk Deviations')
-        self.assertContains(response, 'No DPA conflicts')
-        self.assertContains(response, 'No deadlines in 30 days')
+        self.assertContains(response, 'Risk deviations')
+        self.assertContains(response, 'No DPA review is configured')
+        self.assertContains(response, 'Deadline tracking is not configured')
         self.assertContains(response, 'Priority matter')
         self.assertContains(response, 'Layout Contract')
 
@@ -99,7 +101,7 @@ class RedesignLayoutTests(TestCase):
             created_by=self.user,
         )
         response = self.client.get(reverse('dashboard'))
-        self.assertContains(response, 'Recommended Next Actions')
+        self.assertContains(response, 'Action queue')
         self.assertContains(response, 'Upcoming Deadlines')
         self.assertContains(response, 'Recent Matters')
 

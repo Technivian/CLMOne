@@ -37,7 +37,7 @@ class Organization(models.Model):
     # Never gates permissions or route availability, only what the sidebar
     # renders by default; every route stays reachable directly regardless.
     workspace_mode = models.CharField(
-        max_length=20, choices=WorkspaceMode.choices, default=WorkspaceMode.LAW_FIRM_OPS,
+        max_length=20, choices=WorkspaceMode.choices, default=WorkspaceMode.IN_HOUSE_CLM,
     )
     require_mfa = models.BooleanField(default=False)
     session_idle_timeout_minutes = models.PositiveIntegerField(

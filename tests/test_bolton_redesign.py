@@ -61,19 +61,19 @@ class BoltonRedesignTestCase(TestCase):
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
 
-        self.assertContains(response, 'High-Risk Deviations')
-        self.assertContains(response, 'No approvals waiting')
-        self.assertContains(response, 'No DPA conflicts')
-        self.assertContains(response, 'No deadlines in 30 days')
+        self.assertContains(response, 'Risk deviations')
+        self.assertContains(response, 'Monitored · no high-risk deviations')
+        self.assertContains(response, 'No DPA review is configured')
+        self.assertContains(response, 'Deadline tracking is not configured')
         self.assertContains(response, 'Priority matter')
 
     def test_dashboard_empty_state_is_intentional(self):
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'No matter currently requires attention')
+        self.assertContains(response, 'Governance setup is incomplete')
         self.assertContains(response, 'Import agreement')
-        self.assertContains(response, 'No approvals waiting')
-        self.assertContains(response, 'No recommended actions')
+        self.assertContains(response, 'Monitored · no high-risk deviations')
+        self.assertContains(response, 'No active issues')
 
     def test_dashboard_container_constraint(self):
         response = self.client.get(reverse('dashboard'))
@@ -105,7 +105,7 @@ class BoltonRedesignTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Priority matter')
         self.assertContains(response, 'Governance controls')
-        self.assertContains(response, 'Recommended Next Actions')
+        self.assertContains(response, 'Action queue')
         self.assertContains(response, 'Upcoming Deadlines')
         self.assertContains(response, 'Recent Matters')
 
@@ -115,17 +115,15 @@ class BoltonRedesignTestCase(TestCase):
         self._enable_clm_dashboard()
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'No approvals waiting')
-        self.assertContains(response, 'No unresolved deviations')
-        self.assertContains(response, 'No DPA conflicts')
-        self.assertContains(response, 'No deadlines in 30 days')
+        self.assertContains(response, 'Monitored · no high-risk deviations')
+        self.assertContains(response, 'Deadline tracking is not configured')
 
     def test_priority_queue_empty_state_copy(self):
         self._enable_clm_dashboard()
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'No matter currently requires attention')
-        self.assertContains(response, 'Governed workflows are up to date')
+        self.assertContains(response, 'Governance setup is incomplete')
+        self.assertContains(response, 'No monitored issues require attention')
 
     def test_single_filter_system_no_duplicate_rows(self):
         # There must be exactly one filter system: saved-view tabs plus a
@@ -138,7 +136,7 @@ class BoltonRedesignTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, 'data-filters-popover')
         self.assertNotContains(response, 'data-filters-toggle')
-        self.assertContains(response, 'Recommended Next Actions')
+        self.assertContains(response, 'Action queue')
         self.assertNotContains(response, 'Privacy reviews')
         self.assertNotContains(response, 'Commercial reviews')
         self.assertNotContains(response, 'Self-serve ready')
@@ -185,7 +183,7 @@ class BoltonRedesignTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
 
         self.assertContains(response, 'title="Search"')
-        self.assertContains(response, 'data-command-trigger')
+        self.assertContains(response, 'data-command-input')
         self.assertContains(response, 'type="submit"')
 
     def test_typography_and_spacing(self):
