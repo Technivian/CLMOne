@@ -1,16 +1,18 @@
-# CLM One production Blueprint.
+# CLM One free demo Blueprint.
 #
-# These resource names are intentionally distinct from the previous deployment.
-# Import this file as a new Render Blueprint to provision an isolated CLM One
-# stack in Frankfurt: web, worker, two cron jobs, Postgres, and Key Value.
+# This Blueprint intentionally uses only Render resource types that support the
+# Free instance type. It is suitable for demos and evaluation, not production:
+# the web service spins down when idle, and the free Postgres database expires
+# after 30 days. Render does not offer free workers, cron jobs, pre-deploy
+# commands, or durable local disks, so those resources/features are omitted.
 #
-# Render environment groups cannot contain `sync: false` values or resource
-# references. Shared non-secret settings live in clm-one-production-config;
-# datastore URLs are wired per service, and operator-provided shared secrets are
-# entered once on the web service then referenced by the background services.
+# Background work falls back to the application's synchronous/in-process path.
+# Email uses Django's console backend because free web services cannot connect
+# to SMTP ports 25, 465, or 587. Contract files still use operator-provided,
+# S3-compatible object storage because Render's free filesystem is ephemeral.
 
 envVarGroups:
-  - name: clm-one-production-config
+  - name: clm-one-free-config
     envVars:
       - key: DJANGO_ENV
         value: production
@@ -26,24 +28,16 @@ envVarGroups:
         value: "false"
       - key: TRUST_ACCOUNTING_ENABLED
         value: "false"
-      - key: EMAIL_HOST
-        value: smtp.resend.com
-      - key: EMAIL_PORT
-        value: "587"
-      - key: EMAIL_HOST_USER
-        value: resend
-      - key: EMAIL_USE_TLS
-        value: "true"
       - key: DEFAULT_FROM_EMAIL
         value: onboarding@resend.dev
       - key: ESIGN_PROVIDER
-        value: documenso
-      - key: ESIGN_DOCUMENSO_BASE_URL
-        value: https://app.documenso.com
+        value: "null"
+      - key: SSO_ENABLED
+        value: "false"
 
 databases:
-  - name: clm-one-production-postgres
-    plan: basic-256mb
+  - name: clm-one-free-postgres
+    plan: free
     region: frankfurt
     postgresMajorVersion: "16"
     databaseName: clmone
@@ -51,42 +45,26 @@ databases:
     ipAllowList: []
 
 services:
-  # Durable Redis-compatible queue and cache. It is private to this Render
-  # workspace and region; no public inbound connections are allowed.
-  - name: clm-one-production-cache
-    type: keyvalue
-    plan: starter
-    region: frankfurt
-    ipAllowList: []
-    maxmemoryPolicy: noeviction
-    persistenceMode: journal-snapshot
-
-  - name: clm-one-production-web
+  - name: clm-one-free-web
     type: web
     runtime: python
-    plan: starter
+    plan: free
     region: frankfurt
     branch: main
     autoDeployTrigger: commit
     healthCheckPath: /_health/
     buildCommand: ./build.sh
-    preDeployCommand: python3 manage.py migrate --noinput
-    startCommand: gunicorn config.wsgi:application --bind 0.0.0.0:$PORT
+    startCommand: sh -c 'python3 manage.py migrate --noinput && exec gunicorn config.wsgi:application --bind 0.0.0.0:$PORT'
     envVars:
-      - fromGroup: clm-one-production-config
+      - fromGroup: clm-one-free-config
       - key: DATABASE_URL
         fromDatabase:
-          name: clm-one-production-postgres
-          property: connectionString
-      - key: REDIS_URL
-        fromService:
-          type: keyvalue
-          name: clm-one-production-cache
+          name: clm-one-free-postgres
           property: connectionString
       - key: APP_BASE_URL
         fromService:
           type: web
-          name: clm-one-production-web
+          name: clm-one-free-web
           envVarKey: RENDER_EXTERNAL_URL
       - key: ALLOWED_HOSTS
         value: localhost,.onrender.com
@@ -97,7 +75,8 @@ services:
       - key: SECURE_HSTS_PRELOAD
         value: "true"
 
-      # Required deployment inputs shared with background services.
+      # Required deployment inputs. Use an AWS S3 bucket or a compatible free
+      # storage provider. AWS_S3_ENDPOINT_URL is optional for AWS itself.
       - key: AWS_STORAGE_BUCKET_NAME
         sync: false
       - key: AWS_ACCESS_KEY_ID
@@ -110,314 +89,3 @@ services:
         sync: false
       - key: OPERATOR_ALERT_EMAIL
         sync: false
-      - key: OUTBOUND_WEBHOOK_ALLOWED_HOSTS
-        sync: false
-      - key: EMAIL_HOST_PASSWORD
-        sync: false
-      - key: SENTRY_DSN
-        sync: false
-      - key: GEMINI_API_KEY
-        sync: false
-      - key: ESIGN_DOCUMENSO_API_KEY
-        sync: false
-      - key: ESIGN_DOCUMENSO_WEBHOOK_SECRET
-        sync: false
-
-      # Web-only optional integrations.
-      - key: SSO_ENABLED
-        value: "true"
-      - key: OIDC_OP_DISCOVERY_ENDPOINT
-        value: https://accounts.google.com/.well-known/openid-configuration
-      - key: OIDC_OP_AUTHORIZATION_ENDPOINT
-        value: https://accounts.google.com/o/oauth2/v2/auth
-      - key: OIDC_OP_TOKEN_ENDPOINT
-        value: https://oauth2.googleapis.com/token
-      - key: OIDC_OP_USER_ENDPOINT
-        value: https://openidconnect.googleapis.com/v1/userinfo
-      - key: OIDC_OP_JWKS_ENDPOINT
-        value: https://www.googleapis.com/oauth2/v3/certs
-      - key: OIDC_RP_SCOPES
-        value: openid email profile
-      - key: OIDC_VERIFY_SSL
-        value: "true"
-      - key: OIDC_RP_CLIENT_ID
-        sync: false
-      - key: OIDC_RP_CLIENT_SECRET
-        sync: false
-      - key: STRIPE_SECRET_KEY
-        sync: false
-      - key: STRIPE_PUBLISHABLE_KEY
-        sync: false
-      - key: STRIPE_WEBHOOK_SECRET
-        sync: false
-      - key: STRIPE_PRICE_STARTER_MONTHLY
-        sync: false
-      - key: STRIPE_PRICE_STARTER_YEARLY
-        sync: false
-      - key: STRIPE_PRICE_PROFESSIONAL_MONTHLY
-        sync: false
-      - key: STRIPE_PRICE_PROFESSIONAL_YEARLY
-        sync: false
-
-  # Drains the persisted BackgroundJob queue continuously.
-  - name: clm-one-production-worker
-    type: worker
-    runtime: python
-    plan: starter
-    region: frankfurt
-    branch: main
-    autoDeployTrigger: commit
-    buildCommand: ./build.sh
-    startCommand: python3 manage.py run_worker --poll-interval=10 --batch-size=20
-    envVars:
-      - fromGroup: clm-one-production-config
-      - key: DATABASE_URL
-        fromDatabase:
-          name: clm-one-production-postgres
-          property: connectionString
-      - key: REDIS_URL
-        fromService:
-          type: keyvalue
-          name: clm-one-production-cache
-          property: connectionString
-      - key: APP_BASE_URL
-        fromService:
-          type: web
-          name: clm-one-production-web
-          envVarKey: RENDER_EXTERNAL_URL
-      - key: AWS_STORAGE_BUCKET_NAME
-        fromService:
-          type: web
-          name: clm-one-production-web
-          envVarKey: AWS_STORAGE_BUCKET_NAME
-      - key: AWS_ACCESS_KEY_ID
-        fromService:
-          type: web
-          name: clm-one-production-web
-          envVarKey: AWS_ACCESS_KEY_ID
-      - key: AWS_SECRET_ACCESS_KEY
-        fromService:
-          type: web
-          name: clm-one-production-web
-          envVarKey: AWS_SECRET_ACCESS_KEY
-      - key: AWS_S3_REGION_NAME
-        fromService:
-          type: web
-          name: clm-one-production-web
-          envVarKey: AWS_S3_REGION_NAME
-      - key: AWS_S3_ENDPOINT_URL
-        fromService:
-          type: web
-          name: clm-one-production-web
-          envVarKey: AWS_S3_ENDPOINT_URL
-      - key: OPERATOR_ALERT_EMAIL
-        fromService:
-          type: web
-          name: clm-one-production-web
-          envVarKey: OPERATOR_ALERT_EMAIL
-      - key: OUTBOUND_WEBHOOK_ALLOWED_HOSTS
-        fromService:
-          type: web
-          name: clm-one-production-web
-          envVarKey: OUTBOUND_WEBHOOK_ALLOWED_HOSTS
-      - key: EMAIL_HOST_PASSWORD
-        fromService:
-          type: web
-          name: clm-one-production-web
-          envVarKey: EMAIL_HOST_PASSWORD
-      - key: SENTRY_DSN
-        fromService:
-          type: web
-          name: clm-one-production-web
-          envVarKey: SENTRY_DSN
-      - key: GEMINI_API_KEY
-        fromService:
-          type: web
-          name: clm-one-production-web
-          envVarKey: GEMINI_API_KEY
-      - key: ESIGN_DOCUMENSO_API_KEY
-        fromService:
-          type: web
-          name: clm-one-production-web
-          envVarKey: ESIGN_DOCUMENSO_API_KEY
-      - key: ESIGN_DOCUMENSO_WEBHOOK_SECRET
-        fromService:
-          type: web
-          name: clm-one-production-web
-          envVarKey: ESIGN_DOCUMENSO_WEBHOOK_SECRET
-
-  # Every 15 minutes: queue per-workspace jobs, then drain a bounded batch.
-  - name: clm-one-production-cron-dispatch
-    type: cron
-    runtime: python
-    plan: starter
-    region: frankfurt
-    branch: main
-    autoDeployTrigger: commit
-    schedule: "*/15 * * * *"
-    buildCommand: ./build.sh
-    startCommand: sh -c 'python3 manage.py queue_background_jobs && python3 manage.py process_background_jobs --limit 200'
-    envVars:
-      - fromGroup: clm-one-production-config
-      - key: DATABASE_URL
-        fromDatabase:
-          name: clm-one-production-postgres
-          property: connectionString
-      - key: REDIS_URL
-        fromService:
-          type: keyvalue
-          name: clm-one-production-cache
-          property: connectionString
-      - key: APP_BASE_URL
-        fromService:
-          type: web
-          name: clm-one-production-web
-          envVarKey: RENDER_EXTERNAL_URL
-      - key: AWS_STORAGE_BUCKET_NAME
-        fromService:
-          type: web
-          name: clm-one-production-web
-          envVarKey: AWS_STORAGE_BUCKET_NAME
-      - key: AWS_ACCESS_KEY_ID
-        fromService:
-          type: web
-          name: clm-one-production-web
-          envVarKey: AWS_ACCESS_KEY_ID
-      - key: AWS_SECRET_ACCESS_KEY
-        fromService:
-          type: web
-          name: clm-one-production-web
-          envVarKey: AWS_SECRET_ACCESS_KEY
-      - key: AWS_S3_REGION_NAME
-        fromService:
-          type: web
-          name: clm-one-production-web
-          envVarKey: AWS_S3_REGION_NAME
-      - key: AWS_S3_ENDPOINT_URL
-        fromService:
-          type: web
-          name: clm-one-production-web
-          envVarKey: AWS_S3_ENDPOINT_URL
-      - key: OPERATOR_ALERT_EMAIL
-        fromService:
-          type: web
-          name: clm-one-production-web
-          envVarKey: OPERATOR_ALERT_EMAIL
-      - key: OUTBOUND_WEBHOOK_ALLOWED_HOSTS
-        fromService:
-          type: web
-          name: clm-one-production-web
-          envVarKey: OUTBOUND_WEBHOOK_ALLOWED_HOSTS
-      - key: EMAIL_HOST_PASSWORD
-        fromService:
-          type: web
-          name: clm-one-production-web
-          envVarKey: EMAIL_HOST_PASSWORD
-      - key: SENTRY_DSN
-        fromService:
-          type: web
-          name: clm-one-production-web
-          envVarKey: SENTRY_DSN
-      - key: GEMINI_API_KEY
-        fromService:
-          type: web
-          name: clm-one-production-web
-          envVarKey: GEMINI_API_KEY
-      - key: ESIGN_DOCUMENSO_API_KEY
-        fromService:
-          type: web
-          name: clm-one-production-web
-          envVarKey: ESIGN_DOCUMENSO_API_KEY
-      - key: ESIGN_DOCUMENSO_WEBHOOK_SECRET
-        fromService:
-          type: web
-          name: clm-one-production-web
-          envVarKey: ESIGN_DOCUMENSO_WEBHOOK_SECRET
-
-  # Daily at 02:30 UTC: expiry, lifecycle, and retention processing.
-  - name: clm-one-production-cron-daily
-    type: cron
-    runtime: python
-    plan: starter
-    region: frankfurt
-    branch: main
-    autoDeployTrigger: commit
-    schedule: "30 2 * * *"
-    buildCommand: ./build.sh
-    startCommand: sh -c 'python3 manage.py run_contract_expiration && python3 manage.py run_contract_lifecycle_jobs && python3 manage.py run_retention_jobs'
-    envVars:
-      - fromGroup: clm-one-production-config
-      - key: DATABASE_URL
-        fromDatabase:
-          name: clm-one-production-postgres
-          property: connectionString
-      - key: REDIS_URL
-        fromService:
-          type: keyvalue
-          name: clm-one-production-cache
-          property: connectionString
-      - key: APP_BASE_URL
-        fromService:
-          type: web
-          name: clm-one-production-web
-          envVarKey: RENDER_EXTERNAL_URL
-      - key: AWS_STORAGE_BUCKET_NAME
-        fromService:
-          type: web
-          name: clm-one-production-web
-          envVarKey: AWS_STORAGE_BUCKET_NAME
-      - key: AWS_ACCESS_KEY_ID
-        fromService:
-          type: web
-          name: clm-one-production-web
-          envVarKey: AWS_ACCESS_KEY_ID
-      - key: AWS_SECRET_ACCESS_KEY
-        fromService:
-          type: web
-          name: clm-one-production-web
-          envVarKey: AWS_SECRET_ACCESS_KEY
-      - key: AWS_S3_REGION_NAME
-        fromService:
-          type: web
-          name: clm-one-production-web
-          envVarKey: AWS_S3_REGION_NAME
-      - key: AWS_S3_ENDPOINT_URL
-        fromService:
-          type: web
-          name: clm-one-production-web
-          envVarKey: AWS_S3_ENDPOINT_URL
-      - key: OPERATOR_ALERT_EMAIL
-        fromService:
-          type: web
-          name: clm-one-production-web
-          envVarKey: OPERATOR_ALERT_EMAIL
-      - key: OUTBOUND_WEBHOOK_ALLOWED_HOSTS
-        fromService:
-          type: web
-          name: clm-one-production-web
-          envVarKey: OUTBOUND_WEBHOOK_ALLOWED_HOSTS
-      - key: EMAIL_HOST_PASSWORD
-        fromService:
-          type: web
-          name: clm-one-production-web
-          envVarKey: EMAIL_HOST_PASSWORD
-      - key: SENTRY_DSN
-        fromService:
-          type: web
-          name: clm-one-production-web
-          envVarKey: SENTRY_DSN
-      - key: GEMINI_API_KEY
-        fromService:
-          type: web
-          name: clm-one-production-web
-          envVarKey: GEMINI_API_KEY
-      - key: ESIGN_DOCUMENSO_API_KEY
-        fromService:
-          type: web
-          name: clm-one-production-web
-          envVarKey: ESIGN_DOCUMENSO_API_KEY
-      - key: ESIGN_DOCUMENSO_WEBHOOK_SECRET
-        fromService:
-          type: web
-          name: clm-one-production-web
-          envVarKey: ESIGN_DOCUMENSO_WEBHOOK_SECRET

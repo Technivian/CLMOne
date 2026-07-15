@@ -163,7 +163,7 @@ class S3StorageOptionsValid(SimpleTestCase):
 
 
 class RenderDeploymentConfig(SimpleTestCase):
-    """The CLM One Blueprint provisions one isolated, production-backed stack."""
+    """The CLM One demo Blueprint contains only free Render resources."""
 
     def setUp(self):
         with open(os.path.join(_REPO, 'render.yaml')) as fh:
@@ -176,74 +176,59 @@ class RenderDeploymentConfig(SimpleTestCase):
         return {e.get('key'): e.get('value') for e in self.groups[name]['envVars'] if 'key' in e}
 
     def test_shared_group_contains_only_shareable_configuration(self):
-        group_name = 'clm-one-production-config'
+        group_name = 'clm-one-free-config'
         kv = self._group_kv(group_name)
         self.assertEqual(kv.get('DJANGO_ENV'), 'production')
         self.assertEqual(kv.get('MEDIA_STORAGE_BACKEND'), 's3')
+        self.assertEqual(kv.get('SSO_ENABLED'), 'false')
+        self.assertEqual(kv.get('ESIGN_PROVIDER'), 'null')
         for entry in self.groups[group_name]['envVars']:
             self.assertNotEqual(entry.get('sync'), False)
             self.assertNotIn('fromDatabase', entry)
             self.assertNotIn('fromService', entry)
 
-    def test_blueprint_provisions_private_database_and_cache(self):
-        database = self.databases['clm-one-production-postgres']
+    def test_blueprint_provisions_only_free_web_and_database(self):
+        self.assertEqual(set(self.services), {'clm-one-free-web'})
+        self.assertEqual(set(self.databases), {'clm-one-free-postgres'})
+
+        web = self.services['clm-one-free-web']
+        self.assertEqual(web['type'], 'web')
+        self.assertEqual(web['plan'], 'free')
+
+        database = self.databases['clm-one-free-postgres']
+        self.assertEqual(database['plan'], 'free')
         self.assertEqual(database['region'], 'frankfurt')
         self.assertEqual(database['ipAllowList'], [])
 
-        cache = self.services['clm-one-production-cache']
-        self.assertEqual(cache['type'], 'keyvalue')
-        self.assertEqual(cache['region'], 'frankfurt')
-        self.assertEqual(cache['ipAllowList'], [])
-        self.assertEqual(cache['maxmemoryPolicy'], 'noeviction')
-
-    def test_all_application_services_share_config_and_datastores(self):
-        app_services = (
-            'clm-one-production-web',
-            'clm-one-production-worker',
-            'clm-one-production-cron-dispatch',
-            'clm-one-production-cron-daily',
-        )
-        for svc in app_services:
-            self.assertIn(svc, self.services)
-            env = self.services[svc]['envVars']
-            froms = {entry.get('fromGroup') for entry in env if 'fromGroup' in entry}
-            self.assertIn('clm-one-production-config', froms)
-            by_key = {entry.get('key'): entry for entry in env if entry.get('key')}
-            self.assertEqual(
-                by_key['DATABASE_URL']['fromDatabase'],
-                {'name': 'clm-one-production-postgres', 'property': 'connectionString'},
-            )
-            self.assertEqual(
-                by_key['REDIS_URL']['fromService'],
-                {
-                    'type': 'keyvalue',
-                    'name': 'clm-one-production-cache',
-                    'property': 'connectionString',
-                },
-            )
-
-    def test_worker_type_and_cron_schedules(self):
-        self.assertEqual(self.services['clm-one-production-worker']['type'], 'worker')
-        dispatch = self.services['clm-one-production-cron-dispatch']
-        daily = self.services['clm-one-production-cron-daily']
-        self.assertEqual(dispatch['type'], 'cron')
-        self.assertEqual(dispatch['schedule'], '*/15 * * * *')
-        self.assertEqual(daily['type'], 'cron')
-        self.assertEqual(daily['schedule'], '30 2 * * *')
-
-    def test_web_uses_render_url_and_runs_migrations_before_deploy(self):
-        web = self.services['clm-one-production-web']
+    def test_web_uses_free_safe_runtime_configuration(self):
+        web = self.services['clm-one-free-web']
+        froms = {entry.get('fromGroup') for entry in web['envVars'] if 'fromGroup' in entry}
+        self.assertIn('clm-one-free-config', froms)
         by_key = {entry.get('key'): entry for entry in web['envVars'] if entry.get('key')}
+        self.assertEqual(
+            by_key['DATABASE_URL']['fromDatabase'],
+            {'name': 'clm-one-free-postgres', 'property': 'connectionString'},
+        )
+        self.assertNotIn('REDIS_URL', by_key)
         self.assertEqual(
             by_key['APP_BASE_URL']['fromService'],
             {
                 'type': 'web',
-                'name': 'clm-one-production-web',
+                'name': 'clm-one-free-web',
                 'envVarKey': 'RENDER_EXTERNAL_URL',
             },
         )
-        self.assertEqual(web['preDeployCommand'], 'python3 manage.py migrate --noinput')
-        self.assertNotIn('migrate', web['startCommand'])
+        self.assertNotIn('preDeployCommand', web)
+        self.assertIn('manage.py migrate --noinput', web['startCommand'])
+
+    def test_paid_and_unsupported_free_features_are_absent(self):
+        raw = open(os.path.join(_REPO, 'render.yaml')).read()
+        self.assertNotIn('type: worker', raw)
+        self.assertNotIn('type: cron', raw)
+        self.assertNotIn('type: keyvalue', raw)
+        self.assertNotIn('preDeployCommand:', raw)
+        self.assertNotIn('EMAIL_HOST', raw)
+        self.assertNotIn('EMAIL_HOST_PASSWORD', raw)
 
     def test_ephemeral_media_bypass_absent_in_pilot_config(self):
         raw = open(os.path.join(_REPO, 'render.yaml')).read()
