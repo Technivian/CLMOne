@@ -6,10 +6,35 @@ from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.test import TestCase
 
-from contracts.models import ApprovalRule, CommandCenterWorkItem, Contract, Organization, RiskSignal
+from contracts.models import (
+    ApprovalRule,
+    CommandCenterWorkItem,
+    Contract,
+    Organization,
+    OrganizationMembership,
+    RiskSignal,
+)
 
 
 class SeedMvpDemoCommandTests(TestCase):
+    def test_creates_the_deployment_demo_admin_with_the_published_credentials(self):
+        call_command('seed_mvp_demo')
+
+        admin = get_user_model().objects.get(username='mvp_admin')
+
+        self.assertEqual(admin.email, 'mvp_admin@clmone.local')
+        self.assertEqual(admin.get_full_name(), 'Alex Admin')
+        self.assertTrue(admin.is_active)
+        self.assertTrue(admin.check_password('CLMOneMVP!2026'))
+        self.assertTrue(
+            OrganizationMembership.objects.filter(
+                organization__slug='clmone-mvp',
+                user=admin,
+                role=OrganizationMembership.Role.OWNER,
+                is_active=True,
+            ).exists()
+        )
+
     def test_reset_removes_stale_demo_work_and_restores_northstar_priority(self):
         output = StringIO()
         call_command('seed_mvp_demo', stdout=output)
