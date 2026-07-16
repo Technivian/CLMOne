@@ -57,17 +57,21 @@ test('MSA governed drafting cockpit generates a workflow workspace and dashboard
   await expect(page.getByText('Decision panel')).toBeVisible();
   await expect(page.getByText('Review and generate')).toBeVisible();
 
+  await selectField(page, 'payrollminds_contracting_entity', 'Payrollminds B.V.');
   await fillField(page, 'counterparty', counterparty);
   await fillField(page, 'start_date', '2026-10-01');
   await fillField(page, 'contract_owner', 'Avery Brooks');
   await fillField(page, 'business_unit', 'Revenue Operations');
   await fillField(page, 'internal_reference', `MSA-E2E-${suffix}`);
+  await fillField(page, 'client_contact_name', 'Nina van Dijk');
+  await fillField(page, 'client_contact_email', 'nina.vandijk@example.com');
   await fillField(page, 'value', '350000');
   await selectField(page, 'currency', 'EUR');
   await fillField(page, 'payment_terms', 'Net 30');
   await fillField(page, 'initial_term', '24 months');
   await selectField(page, 'renewal_type', 'Auto-renew');
   await fillField(page, 'termination_notice_period', '60');
+  await fillField(page, 'consultant_service_type', 'Payroll implementation and advisory');
   await fillField(page, 'services_description', 'Managed logistics platform and support services.');
   await fillField(page, 'governing_law', 'Delaware');
   await fillField(page, 'jurisdiction', 'Amsterdam');
@@ -109,16 +113,21 @@ test('MSA governed drafting cockpit generates a workflow workspace and dashboard
   await expect(page).toHaveURL(/\/contracts\/workflows\/\d+\/?$/);
   await expect(page.getByText('Workflow Timeline')).toBeVisible();
   await expect(page.getByText(counterparty).first()).toBeVisible();
-  await expect(page.locator('.msa-ws-card-head', { hasText: 'Generated MSA Draft' }).first()).toBeVisible();
-  await expect(page.locator('.msa-ws-card-head', { hasText: 'Risk Signals' }).first()).toBeVisible();
-  await expect(page.locator('.msa-ws-card-head', { hasText: 'Approval Route' }).first()).toBeVisible();
-  await expect(page.locator('.msa-ws-card-head', { hasText: 'Audit Trail Preview' }).first()).toBeVisible();
+  await expect(page.getByText('Generated MSA draft').first()).toBeVisible();
+  await page.getByRole('button', { name: /Active exceptions/ }).click();
+  const governanceDrawer = page.getByRole('dialog', { name: 'Governance details' });
+  await expect(governanceDrawer.getByRole('heading', { name: 'Risk monitoring' })).toBeVisible();
+  await expect(governanceDrawer.getByRole('heading', { name: 'Approval route' })).toBeVisible();
+  await expect(governanceDrawer.getByRole('heading', { name: 'Audit details' })).toBeVisible();
+  await governanceDrawer.getByRole('button', { name: 'Close governance details' }).click();
   await expect(page.getByRole('button', { name: 'Send to Legal Review' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Send to Finance' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Download MSA summary' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Export Word' })).toBeVisible();
 
-  await page.locator('[data-clause-link="data-protection"]:visible').first().click();
+  const dataProtectionStep = page.locator('.msa-ws-drafting-step').filter({ hasText: 'Data Protection' });
+  await dataProtectionStep.locator('summary').click();
+  await dataProtectionStep.locator('[data-clause-link="data-protection"]').click();
   await expect(page.locator('#data-protection')).toHaveClass(/is-linked/);
 
   const workspaceHref = page.url();
@@ -126,5 +135,5 @@ test('MSA governed drafting cockpit generates a workflow workspace and dashboard
   await page.goto(workspaceHref);
   await expect(page).toHaveURL(/\/contracts\/workflows\/\d+\/?$/);
   await expect(page.getByText('Workflow Timeline')).toBeVisible();
-  await expect(page.locator('.msa-ws-card-head', { hasText: 'Generated MSA Draft' }).first()).toBeVisible();
+  await expect(page.getByText('Generated MSA draft').first()).toBeVisible();
 });

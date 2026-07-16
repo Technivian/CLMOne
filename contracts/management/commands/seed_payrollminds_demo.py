@@ -163,7 +163,7 @@ class Command(BaseCommand):
             },
             {
                 'title': 'Atlas Workforce Order Confirmation 2026',
-                'contract_type': Contract.ContractType.PURCHASE_ORDER,
+                'contract_type': Contract.ContractType.ORDER_CONFIRMATION,
                 'counterparty': 'Atlas Workforce B.V.',
                 'status': Contract.Status.PENDING,
                 'stage': 'APPROVAL',

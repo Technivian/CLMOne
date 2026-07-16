@@ -88,6 +88,11 @@ class RepositoryControlsPreservedTests(TestCase):
         self.assertContains(response, 'Atlas Workforce B.V.')
         self.assertContains(response, 'High')
         self.assertContains(response, 'Pending')
+        self.assertContains(response, reverse('contracts:repository'))
+        self.assertContains(response, reverse('dashboard'))
+        self.assertContains(response, reverse('contracts:approval_request_list'))
+        self.assertContains(response, reverse('contracts:signature_request_list'))
+        self.assertContains(response, reverse('contracts:risk_log_list'))
 
     def test_new_stage_assignee_activity_columns_present(self):
         response = self.client.get(reverse('contracts:repository'))

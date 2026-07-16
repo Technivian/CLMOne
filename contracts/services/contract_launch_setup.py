@@ -132,6 +132,7 @@ LAUNCH_SETUP_CONFIG = {
         'approval_route': 'Standard commercial approval — escalates for high risk or high value.',
     },
     Contract.ContractType.PURCHASE_ORDER: CommercialCounselCopy,
+    Contract.ContractType.ORDER_CONFIRMATION: CommercialCounselCopy,
     Contract.ContractType.RESELLER: CommercialCounselCopy,
     Contract.ContractType.SAAS: {
         'playbook': 'SaaS / Data Security playbook',

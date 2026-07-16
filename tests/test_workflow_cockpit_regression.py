@@ -112,6 +112,8 @@ class WorkflowCockpitRegressionTests(TestCase):
                 self._dpa_payload(),
                 'Generated DPA Draft',
                 'DPA',
+                'Approval Route',
+                'Audit Trail Preview',
                 get_dpa_workflow_template,
             ),
             (
@@ -120,11 +122,13 @@ class WorkflowCockpitRegressionTests(TestCase):
                 self._msa_payload(),
                 'MSA Commercial Review Workflow',
                 'MSA',
+                'Approval route',
+                'Audit details',
                 get_msa_workflow_template,
             ),
         ]
 
-        for _name, url, payload, workspace_marker, contract_type, template_getter in cases:
+        for _name, url, payload, workspace_marker, contract_type, approval_marker, audit_marker, template_getter in cases:
             before_workflows = Workflow.objects.count()
             response = self.client_.post(url, payload)
             self.assertEqual(Workflow.objects.count(), before_workflows + 1)
@@ -145,8 +149,8 @@ class WorkflowCockpitRegressionTests(TestCase):
 
             workspace = self.client_.get(reverse('contracts:workflow_detail', kwargs={'pk': workflow.pk}))
             self.assertContains(workspace, workspace_marker)
-            self.assertContains(workspace, 'Approval Route')
-            self.assertContains(workspace, 'Audit Trail Preview')
+            self.assertContains(workspace, approval_marker)
+            self.assertContains(workspace, audit_marker)
 
     def test_dashboard_renders_mixed_workflow_rows_with_workspace_links(self):
         dpa_workflow = create_dpa_workflow_instance(

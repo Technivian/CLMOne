@@ -15,6 +15,7 @@ DEFAULT_CONTRACT_REQUIRED_FIELD_POLICIES = {
     Contract.ContractType.LICENSE: ('counterparty', 'governing_law', 'jurisdiction'),
     Contract.ContractType.VENDOR: ('counterparty', 'governing_law', 'jurisdiction'),
     Contract.ContractType.PURCHASE_ORDER: ('counterparty', 'governing_law', 'jurisdiction'),
+    Contract.ContractType.ORDER_CONFIRMATION: ('counterparty', 'governing_law', 'jurisdiction'),
     Contract.ContractType.PARTNERSHIP: ('counterparty', 'governing_law', 'jurisdiction'),
     Contract.ContractType.RESELLER: ('counterparty', 'governing_law', 'jurisdiction'),
     Contract.ContractType.SETTLEMENT: ('counterparty', 'governing_law', 'jurisdiction'),

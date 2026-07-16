@@ -776,6 +776,7 @@ class Contract(models.Model):
         TERMS_OF_SERVICE = 'TERMS_OF_SERVICE', 'Terms of Service / Terms & Conditions'
         VENDOR = 'VENDOR', 'Vendor Agreement'
         PURCHASE_ORDER = 'PURCHASE_ORDER', 'Purchase Order'
+        ORDER_CONFIRMATION = 'ORDER_CONFIRMATION', 'Order Confirmation'
         PARTNERSHIP = 'PARTNERSHIP', 'Partnership Agreement'
         RESELLER = 'RESELLER', 'Referral / Reseller / Channel Partner Agreement'
         SETTLEMENT = 'SETTLEMENT', 'Settlement Agreement'

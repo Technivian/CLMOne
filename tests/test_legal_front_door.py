@@ -7,10 +7,10 @@ unmodified document_upload_api.
 """
 from django.contrib.auth import get_user_model
 from django.test import Client as TestClient
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from contracts.models import Organization, OrganizationMembership
+from contracts.models import Organization, OrganizationMembership, OrgPolicy
 
 User = get_user_model()
 
@@ -74,3 +74,17 @@ class UploadSignedContractViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, reverse('contracts:document_upload_api'))
         self.assertContains(response, 'usc-dropzone')
+
+    @override_settings(GEMINI_AI_ENABLED=False, GEMINI_API_KEY='')
+    def test_unconfigured_ai_is_explicitly_disabled_in_upload_ui(self):
+        response = self.client_.get(reverse('contracts:upload_signed_contract'))
+        self.assertContains(response, 'Manual review only')
+        self.assertContains(response, 'AI review is not configured for this environment')
+        self.assertContains(response, 'id="usc-run-ai-review" disabled', html=False)
+
+    @override_settings(GEMINI_AI_ENABLED=True, GEMINI_API_KEY='test-provider-key')
+    def test_configured_workspace_can_opt_in_to_ai_review(self):
+        OrgPolicy.objects.create(organization=self.org, ai_features_enabled=True)
+        response = self.client_.get(reverse('contracts:upload_signed_contract'))
+        self.assertContains(response, 'AI review available · Human review required')
+        self.assertContains(response, 'id="usc-run-ai-review" checked', html=False)

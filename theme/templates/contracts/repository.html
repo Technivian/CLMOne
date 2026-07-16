@@ -15,26 +15,33 @@
   .repo-page #contracts-table tbody td .font-medium { font-size: 13px; font-weight: 700; color: var(--text-primary); }
   .repo-page #contracts-table tbody td .text-sm, .repo-muted-text { color: var(--text-muted); }
   .repo-page #contracts-table tbody td .text-sm { font-size: 11px; margin-top: 2px; }
-  .repo-page .repo-filter-drawer { display: none; max-width: 400px; }
+  .repo-page .repo-filter-shell { display: grid; gap: var(--space-16); width: 100%; }
+  .repo-page .repo-view-tabs { display: flex; gap: 8px; flex-wrap: wrap; width: 100%; }
+  .repo-page .repo-filter-controls { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; width: 100%; }
+  .repo-page .repo-filter-controls > * { min-width: 0; }
+  .repo-page .repo-filter-controls .repo-search-field { flex: 1 1 320px; }
+  .repo-page .repo-filter-controls .repo-sort-select { flex: 0 0 220px; }
+  .repo-page .repo-filter-controls .repo-filter-toggle { flex: 0 0 auto; }
+  .repo-page .repo-filter-drawer { display: none; width: 100%; max-width: none; }
   .repo-page .repo-filter-drawer.is-open { display: block; }
-  .repo-page .repo-filter-drawer__body { display: grid; gap: var(--space-12); grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .repo-page .repo-filter-drawer__body { display: grid; gap: var(--space-12); grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .repo-page .repo-filter-drawer__views { grid-column: 1 / -1; display: grid; gap: var(--space-8); }
+  .repo-page .repo-filter-drawer__view-list { display: flex; gap: 8px; flex-wrap: wrap; }
   .repo-page .repo-filter-drawer label { display: grid; gap: 6px; color: var(--text-muted); font-size: 12px; font-weight: 650; }
   .repo-page .repo-filter-drawer select { min-width: 0; }
-  .repo-page .repo-view-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
   .repo-page .repo-row-action { color: var(--text-muted); font-size: 20px; line-height: 1; padding: 4px 8px; }
   .repo-page .repo-row-action:hover { color: var(--primary); }
-  @media (max-width: 700px) { .repo-page .repo-filter-drawer__body { grid-template-columns: 1fr; } }
+  @media (max-width: 1100px) { .repo-page .repo-filter-drawer__body { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 700px) {
+    .repo-page .repo-filter-drawer__body { grid-template-columns: 1fr; }
+    .repo-page .repo-filter-controls .repo-search-field,
+    .repo-page .repo-filter-controls .repo-sort-select,
+    .repo-page .repo-filter-controls .repo-filter-toggle { flex-basis: 100%; }
+  }
 </style>
 
 <div class="dc-ds-page dc-ds-page--wide dc-ds-page-flow repo-page">
   <div class="dc-ds-page-actions">
-    <nav class="repo-view-tabs" aria-label="Contract operations">
-      <a href="{% url 'contracts:repository' %}" class="dc-ds-choice chip-active">All contracts</a>
-      <a href="{% url 'dashboard' %}" class="dc-ds-choice">My work</a>
-      <a href="{% url 'contracts:approval_request_list' %}" class="dc-ds-choice">Approvals</a>
-      <a href="{% url 'contracts:signature_request_list' %}" class="dc-ds-choice">Signatures</a>
-      <a href="{% url 'contracts:risk_log_list' %}" class="dc-ds-choice">Risks</a>
-    </nav>
     <div class="dc-ds-actions">
       <details class="relative">
         <summary class="dc-ds-button dc-ds-button--primary cursor-pointer">Add contract</summary>
@@ -53,22 +60,37 @@
     <div class="dc-ds-summary__item dc-ds-summary__item--info"><span class="dc-ds-summary__label">Expiring soon</span><strong class="dc-ds-summary__value">{{ expiring_contracts }}</strong></div>
   </div>
 
-  <div class="dc-ds-filterbar">
-    <div class="flex gap-3 flex-wrap items-center">
-      <div class="relative flex-1 min-w-64">
+  <div class="repo-filter-shell dc-ds-surface p-4">
+    <nav class="repo-view-tabs" aria-label="Contract operations">
+      <a href="{% url 'contracts:repository' %}" class="dc-ds-choice chip-active">All contracts</a>
+      <a href="{% url 'dashboard' %}" class="dc-ds-choice">My work</a>
+      <a href="{% url 'contracts:approval_request_list' %}" class="dc-ds-choice">Approvals</a>
+      <a href="{% url 'contracts:signature_request_list' %}" class="dc-ds-choice">Signatures</a>
+      <a href="{% url 'contracts:risk_log_list' %}" class="dc-ds-choice">Risks</a>
+    </nav>
+    <div class="repo-filter-controls">
+      <div class="relative repo-search-field">
         {% include "design_system/icon.html" with name="search" class_name="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none c-muted" %}
         <input type="search" id="search-input" placeholder="Search contracts" class="w-full pl-9 pr-3 py-2 text-sm rounded-lg border focus:outline-none input-base">
       </div>
-      <select id="sort-select" class="px-3 py-2 text-sm rounded-lg border focus:outline-none select-base" aria-label="Sort contracts">
+      <select id="sort-select" class="repo-sort-select px-3 py-2 text-sm rounded-lg border focus:outline-none select-base" aria-label="Sort contracts">
         <option value="updated_desc">Recently updated</option><option value="updated_asc">Oldest first</option><option value="title">Contract A–Z</option><option value="status">Status</option>
       </select>
-      <button id="repo-filter-toggle" type="button" class="dc-ds-button dc-ds-button--ghost" aria-expanded="false" aria-controls="repository-filters">Filters and views</button>
+      <button id="repo-filter-toggle" type="button" class="repo-filter-toggle dc-ds-button dc-ds-button--ghost" aria-expanded="false" aria-controls="repository-filters">Filters and views</button>
     </div>
   </div>
 
   <section id="repository-filters" class="repo-filter-drawer dc-ds-surface p-4" aria-label="Filters and views">
     <div class="flex items-center justify-between gap-3 mb-3"><h2 class="font-semibold">Filters and views</h2><button type="button" data-action="clear-repository-filters" class="btn-ghost text-sm">Clear filters</button></div>
     <div class="repo-filter-drawer__body">
+      <div class="repo-filter-drawer__views">
+        <p class="text-xs font-semibold c-muted mb-0">Quick views</p>
+        <div class="repo-filter-drawer__view-list">
+          <button type="button" class="dc-ds-choice repo-quick-view chip-active" data-rail-view="all" aria-pressed="true">All contracts</button>
+          <button type="button" class="dc-ds-choice repo-quick-view" data-rail-view="active" aria-pressed="false">Active contracts</button>
+          <button type="button" class="dc-ds-choice repo-quick-view" data-rail-view="draft" aria-pressed="false">Draft contracts</button>
+        </div>
+      </div>
       <label>Status<select id="status-filter-select" class="select-base px-3 py-2 rounded-lg border"><option value="">All statuses</option><option value="DRAFT">Draft</option><option value="IN_REVIEW">Internal review</option><option value="PENDING">Approval</option><option value="APPROVED">Signature</option><option value="ACTIVE">Active</option><option value="EXPIRED">Expired</option></select></label>
       <label>Contract type<select id="type-filter-select" class="select-base px-3 py-2 rounded-lg border"><option value="">All contract types</option>{% for value, label in contract_types %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></label>
       <label>Owner<select id="owner-filter-select" class="select-base px-3 py-2 rounded-lg border"><option value="">All owners</option>{% for owner in repository_owners %}<option value="{{ owner.pk }}">{{ owner.get_full_name|default:owner.username }}</option>{% endfor %}</select></label>
@@ -76,7 +98,6 @@
       <label>Risk level<select id="risk-filter-select" class="select-base px-3 py-2 rounded-lg border"><option value="">All risk levels</option>{% for value, label in risk_levels %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></label>
       <label>Approval state<select id="approval-filter-select" class="select-base px-3 py-2 rounded-lg border"><option value="">Any approval state</option>{% for value, label in approval_states %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></label>
       <label>Expiry<select id="expiry-filter-select" class="select-base px-3 py-2 rounded-lg border"><option value="">Any key date</option><option value="30">Expiring in 30 days</option></select></label>
-      <div><p class="text-xs font-semibold c-muted mb-2">Views</p><div class="flex gap-2 flex-wrap"><button type="button" class="dc-ds-choice repo-quick-view chip-active" data-rail-view="all" aria-pressed="true">All contracts</button><button type="button" class="dc-ds-choice repo-quick-view" data-rail-view="active" aria-pressed="false">Active contracts</button><button type="button" class="dc-ds-choice repo-quick-view" data-rail-view="draft" aria-pressed="false">Draft contracts</button></div></div>
     </div>
   </section>
 

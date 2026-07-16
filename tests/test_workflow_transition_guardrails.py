@@ -288,7 +288,7 @@ class WorkflowTransitionGuardrailsTests(TestCase):
             data=self._approval_update_payload(ApprovalRequest.Status.REJECTED),
         )
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Invalid approval status transition.')
+        self.assertContains(response, 'Select a valid choice. REJECTED is not one of the available choices.')
 
         self.approval_request.refresh_from_db()
         self.assertEqual(self.approval_request.status, ApprovalRequest.Status.APPROVED)

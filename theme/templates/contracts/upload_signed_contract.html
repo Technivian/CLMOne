@@ -1,49 +1,10 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Upload & Review – CLM One{% endblock %}
 {% block authenticated_page_title %}Upload &amp; Review{% endblock %}
 {% block authenticated_page_subtitle %}Bring a signed agreement into CLM One and create traceable review work from the clauses that need attention.{% endblock %}
+{% block page_css %}<link href="{% static 'css/upload-review.css' %}{% if ASSET_VERSION %}?v={{ ASSET_VERSION }}{% endif %}" rel="stylesheet">{% endblock %}
 {% block content %}
-<style nonce="{{ csp_nonce }}">
-  .uac-layout { display: grid; grid-template-columns: minmax(0, 1fr) 304px; gap: var(--space-24); align-items: start; }
-  .uac-main { display: grid; gap: var(--space-16); min-width: 0; }
-  .uac-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-16); }
-  .uac-field { min-width: 0; }
-  .uac-field--full { grid-column: 1 / -1; }
-  .uac-field input, .uac-field select { width: 100%; min-height: 42px; padding: 0 12px; border: 1px solid var(--line); border-radius: var(--radius-control); font: var(--text-small); }
-  .uac-value { display: grid; grid-template-columns: minmax(0, 1fr) 122px; gap: var(--space-8); }
-  .uac-field label { display: block; margin-bottom: 7px; color: var(--ink-900); font: var(--text-small); font-weight: 700; }
-  .uac-field-help { margin: 6px 0 0; color: var(--ink-500); font: var(--text-meta); line-height: 1.45; }
-  .uac-check { display: flex; align-items: flex-start; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--well); }
-  .uac-check input { width: 16px; height: 16px; margin-top: 2px; accent-color: var(--seal); }
-  .uac-check strong { display: block; color: var(--ink-900); font: var(--text-small); font-weight: 700; }
-  .uac-check span { display: block; margin-top: 2px; color: var(--ink-500); font: var(--text-meta); line-height: 1.45; }
-  .uac-check--spaced { margin-top: var(--space-16); }
-  .uac-dropzone { display: grid; justify-items: center; gap: var(--space-8); min-height: 164px; padding: var(--space-24); border: 1.5px dashed var(--line-strong); border-radius: var(--radius-subpanel); background: var(--well); text-align: center; cursor: pointer; transition: border-color .15s ease, background .15s ease; }
-  .uac-dropzone:hover, .uac-dropzone.is-dragover { border-color: var(--seal); background: var(--seal-bg); }
-  .uac-dropzone-icon { display: grid; place-items: center; width: 38px; height: 38px; border-radius: var(--radius-control); color: var(--seal); background: var(--card); border: 1px solid var(--line); }
-  .uac-dropzone-icon svg { width: 18px; height: 18px; }
-  .uac-dropzone-title { color: var(--ink-900); font: var(--text-small); font-weight: 700; }
-  .uac-dropzone-copy { color: var(--ink-500); font: var(--text-meta); line-height: 1.45; }
-  .uac-filename { min-height: 18px; color: var(--seal-dark); font: var(--text-meta); font-weight: 700; }
-  .uac-actions { display: flex; justify-content: space-between; align-items: center; gap: var(--space-12); padding: var(--space-16) var(--space-24); border-top: 1px solid var(--line); }
-  .uac-status { display: none; margin: 0 var(--space-24) var(--space-20); padding: 12px; border: 1px solid var(--line); border-radius: var(--radius-control); font: var(--text-small); line-height: 1.45; }
-  .uac-status.is-success { display: block; color: var(--status-positive-fg); border-color: var(--color-status-success-border); background: var(--status-positive-bg); }
-  .uac-status.is-error { display: block; color: var(--status-danger-fg); border-color: var(--color-status-error-border); background: var(--status-danger-bg); }
-  .uac-status a { color: inherit; font-weight: 700; }
-  .uac-rail { display: grid; gap: var(--space-16); }
-  .uac-rail-title { margin: 0; color: var(--ink-900); font: var(--text-heading); }
-  .uac-rail-copy { margin: var(--space-8) 0 0; color: var(--ink-500); font: var(--text-small); line-height: 1.5; }
-  .uac-status-pill { display: inline-flex; align-items: center; min-height: 24px; margin-top: var(--space-12); padding: 0 8px; border-radius: var(--radius-pill); background: var(--status-progress-bg); color: var(--status-progress-fg); font: var(--text-meta); font-weight: 700; }
-  .uac-steps { display: grid; gap: var(--space-12); margin: var(--space-16) 0 0; padding: 0; list-style: none; }
-  .uac-steps li { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: var(--space-8); color: var(--ink-600); font: var(--text-meta); line-height: 1.45; }
-  .uac-step { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--seal-bg); color: var(--seal-dark); font-size: 11px; font-weight: 800; }
-  .uac-rail-list { display: grid; gap: var(--space-8); margin: var(--space-12) 0 0; padding: 0; list-style: none; color: var(--ink-600); font: var(--text-meta); line-height: 1.45; }
-  .uac-rail-list li { padding-left: 14px; position: relative; }
-  .uac-rail-list li::before { content: ""; position: absolute; left: 0; top: 6px; width: 5px; height: 5px; border-radius: 50%; background: var(--seal); }
-  @media (max-width: 980px) { .uac-layout { grid-template-columns: 1fr; } .uac-rail { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-  @media (max-width: 640px) { .uac-form-grid, .uac-rail { grid-template-columns: 1fr; } .uac-value { grid-template-columns: 1fr; } .uac-actions { align-items: stretch; flex-direction: column-reverse; } .uac-actions .dc-ds-button { width: 100%; } }
-</style>
-
 <div class="dc-ds-page dc-ds-page-flow">
   <div class="uac-layout">
     <form id="usc-form" class="uac-main">
@@ -118,8 +79,15 @@
           </div>
           <input type="file" id="usc-file-input" name="file" accept=".pdf,.docx,.txt,.md,.csv,.html,.xml,.json" hidden>
           <label class="uac-check uac-check--spaced" for="usc-run-ai-review">
-            <input type="checkbox" id="usc-run-ai-review" checked>
-            <span><strong>Run AI clause review after upload</strong>Potential issues are added to the Risk Register and Action Queue with quoted evidence. No agreement is approved, rejected, or changed automatically.</span>
+            <input type="checkbox" id="usc-run-ai-review"{% if ai_review_available %} checked{% else %} disabled aria-describedby="usc-ai-review-status"{% endif %}>
+            <span>
+              <strong>Run AI clause review after upload</strong>
+              {% if ai_review_available %}
+                Potential issues are added to the Risk Register and Action Queue with quoted evidence. No agreement is approved, rejected, or changed automatically.
+              {% else %}
+                <span id="usc-ai-review-status">{{ ai_review_unavailable_reason }}</span>
+              {% endif %}
+            </span>
           </label>
         </div>
         <div class="uac-status" id="usc-status" role="status" aria-live="polite"></div>
@@ -135,7 +103,11 @@
         <div class="dc-ds-surface__body">
           <h2 class="uac-rail-title">AI review, with control</h2>
           <p class="uac-rail-copy">The review creates governed suggestions—not legal decisions—for the agreement owner to assess.</p>
-          <span class="uac-status-pill">Human review required</span>
+          {% if ai_review_available %}
+            <span class="uac-status-pill">AI review available · Human review required</span>
+          {% else %}
+            <span class="uac-status-pill">Manual review only</span>
+          {% endif %}
           <ol class="uac-steps">
             <li><span class="uac-step">1</span><span>CLM One extracts readable clause text from the uploaded file.</span></li>
             <li><span class="uac-step">2</span><span>AI identifies potentially risky or uncertain clauses with a direct quote.</span></li>

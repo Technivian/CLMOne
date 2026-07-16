@@ -149,7 +149,7 @@ class BoltonRedesignTestCase(TestCase):
         self.assertContains(response, 'data-risk-score')
         self.assertContains(response, 'Portfolio health signals')
         self.assertContains(response, 'Blocking issue')
-        self.assertContains(response, 'Next action')
+        self.assertContains(response, 'Top priority')
 
     def test_contracts_table_structure(self):
         Contract.objects.create(

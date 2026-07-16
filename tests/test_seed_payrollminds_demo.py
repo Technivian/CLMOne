@@ -51,6 +51,10 @@ class PayrollmindsDemoSeedTests(TestCase):
         order_confirmation = organization.contracts.get(
             title='Atlas Workforce Order Confirmation 2026',
         )
+        self.assertEqual(
+            order_confirmation.contract_type,
+            Contract.ContractType.ORDER_CONFIRMATION,
+        )
         self.assertEqual(order_confirmation.parent_contract, msa)
         self.assertEqual(msa.linked_contracts.count(), 1)
 

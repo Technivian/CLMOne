@@ -378,10 +378,28 @@ def upload_signed_contract(request):
         organization_memberships__organization=organization,
         organization_memberships__is_active=True,
     ).distinct().order_by('first_name', 'last_name', 'username')
+    policy_enabled = OrgPolicy.objects.filter(organization=organization).values_list(
+        'ai_features_enabled', flat=True,
+    ).first()
+    if policy_enabled is None:
+        policy_enabled = True
+    provider_configured = bool(
+        getattr(settings, 'GEMINI_AI_ENABLED', False)
+        and getattr(settings, 'GEMINI_API_KEY', '')
+    )
+    ai_review_available = bool(policy_enabled and provider_configured)
+    if not policy_enabled:
+        ai_review_unavailable_reason = 'AI review is disabled by this workspace’s data controls.'
+    elif not provider_configured:
+        ai_review_unavailable_reason = 'AI review is not configured for this environment. Your agreement can still be stored and reviewed manually.'
+    else:
+        ai_review_unavailable_reason = ''
     return render(request, 'contracts/upload_signed_contract.html', {
         'contract_types': Contract.ContractType.choices,
         'currencies': Contract.Currency.choices,
         'owners': owners,
+        'ai_review_available': ai_review_available,
+        'ai_review_unavailable_reason': ai_review_unavailable_reason,
     })
 
 

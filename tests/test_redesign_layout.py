@@ -87,6 +87,9 @@ class RedesignLayoutTests(TestCase):
         self.assertContains(response, 'Configure tracking')
         self.assertContains(response, 'Top priority')
         self.assertContains(response, 'Layout Contract')
+        self.assertContains(response, 'cc-v3-top-priority-insights')
+        self.assertContains(response, 'Blocking issue')
+        self.assertContains(response, 'Recommended action')
 
     def test_dashboard_right_rail(self):
         # The right rail (attention / AI insight / activity) only renders
