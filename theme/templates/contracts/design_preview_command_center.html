@@ -84,8 +84,8 @@
       <div class="cc-greeting-sub">Here's what's happening across your contract portfolio.</div>
     </div>
     <div class="arch-action-bar">
-      <a href="{% url 'contracts:global_search' %}" class="btn-quiet">Search</a>
-      <a href="{% url 'contracts:contract_create' %}" class="btn-cta">
+      <a href="{% url 'contracts:global_search' %}" class="dc-ds-button--quiet">Search</a>
+      <a href="{% url 'contracts:contract_create' %}" class="dc-ds-button--primary">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
         New
       </a>
@@ -142,7 +142,7 @@
               </td>
               <td class="c-muted cc-td-muted">{{ item.counterparty }}</td>
               <td class="c-muted cc-td-muted">{{ item.type }}</td>
-              <td><span class="badge-sm badge-blue">{{ item.status }}</span></td>
+              <td><span class="dc-ds-badge--progress">{{ item.status }}</span></td>
               <td>
                 <div class="cc-risk-dot-row">
                   <span class="cc-risk-dot {% if item.risk == 'High' %}on high{% endif %}"></span>

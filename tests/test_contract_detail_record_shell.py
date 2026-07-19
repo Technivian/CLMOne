@@ -64,7 +64,8 @@ class ContractDetailShellTests(TestCase):
 
     def test_uses_shared_page_wrap_shell(self):
         response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
-        self.assertContains(response, 'page-wrap')
+        self.assertContains(response, 'dc-ds-shell')
+        self.assertContains(response, 'dc-ds-workspace--record')
 
     def test_uses_shared_page_header_pattern(self):
         response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
@@ -72,7 +73,16 @@ class ContractDetailShellTests(TestCase):
         self.assertContains(response, 'arch-title')
 
     def test_uses_document_workspace_surface_and_inline_note_composer(self):
+        Document.objects.create(
+            organization=self.organization,
+            title='Shell Agreement',
+            document_type=Document.DocType.CONTRACT,
+            version=1,
+            contract=self.contract,
+            uploaded_by=self.user,
+        )
         response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
+        self.assertContains(response, 'dc-ds-workspace--record')
         self.assertContains(response, 'contract-document-hero')
         self.assertContains(response, 'data-open-note-dialog')
         self.assertContains(response, 'id="contract-note-dialog"')
@@ -149,7 +159,7 @@ class ContractDetailMetadataHeaderTests(TestCase):
         self.assertIn('Northwind Logistics LLC', body)
         self.assertIn('$125,000.00', body)
         self.assertIn('High risk', body)
-        self.assertIn('contract-command-strip', body)
+        self.assertIn('dc-ds-workspace__metadata-grid', body)
         self.assertIn('Current stage', body)
         self.assertIn('Negotiation', body)
 
@@ -227,6 +237,9 @@ class ContractDetailMetadataHeaderTests(TestCase):
         self.assertIn('Rowan', body)
 
     def test_no_owner_renders_unassigned_not_a_crash(self):
+        self.contract.owner = None
+        self.contract.created_by = None
+        self.contract.save(update_fields=['owner', 'created_by', 'updated_at'])
         response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
         body = page_body(response.content.decode())
         self.assertIn('Unassigned', body)
@@ -458,13 +471,22 @@ class ContractDetailDocumentsTabTests(TestCase):
         self.assertIn('Casey', body)
 
     def test_workspace_uses_command_strip_and_document_surface(self):
+        Document.objects.create(
+            organization=self.organization,
+            title='Primary Agreement',
+            document_type=Document.DocType.CONTRACT,
+            version=1,
+            contract=self.contract,
+            uploaded_by=self.uploader,
+        )
         response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
         body = page_body(response.content.decode())
-        self.assertIn('contract-command-strip', body)
+        self.assertIn('dc-ds-workspace__metadata-grid', body)
         self.assertIn('Current stage', body)
         self.assertIn('Next action', body)
         self.assertIn('Review status', body)
         self.assertIn('contract-document-hero', body)
+        self.assertIn('dc-ds-workspace--record', body)
 
 
 class ContractDetailWorkflowTabTests(TestCase):

@@ -79,10 +79,13 @@
         .list-row {
             display: flex; align-items: center; justify-content: space-between; gap: 12px;
             padding: 12px 18px; border-bottom: 1px solid var(--card-border);
-            transition: background 0.15s; text-decoration: none; color: inherit;
+            transition: background 0.15s, box-shadow 0.15s, transform 0.15s; text-decoration: none; color: inherit;
         }
         .list-row:last-child { border-bottom: none; }
         .list-row:hover { background: var(--sidebar-hover); }
+        @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+            a.list-row:hover { transform: translateY(-1px); box-shadow: 0 3px 8px rgba(16, 24, 40, 0.06); }
+        }
 
         /* Status indicator dots */
         .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
@@ -236,5 +239,4 @@
         .repo-saved-view-delete {
             border: 0; cursor: pointer;
         }
-
 

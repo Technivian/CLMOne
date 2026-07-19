@@ -44,8 +44,8 @@
             <p class="page-subtitle c-muted">Version {{ document.version }} &middot; {{ document.get_document_type_display }} &middot; {{ document.get_status_display }}</p>
         </div>
         <div class="page-actions">
-            {% if document.file %}<a href="{% url 'contracts:document_download' document.pk %}" class="dc-ds-button dc-ds-button--primary btn-primary-grad text-white">Download</a>{% endif %}
-            <a href="{% url 'contracts:document_update' document.pk %}" class="dc-ds-button dc-ds-button--quiet btn-ghost">Edit</a>
+            {% if document.file %}<a href="{% url 'contracts:document_download' document.pk %}" class="dc-ds-button dc-ds-button--primary text-white">Download</a>{% endif %}
+            <a href="{% url 'contracts:document_update' document.pk %}" class="dc-ds-button dc-ds-button--quiet">Edit</a>
         </div>
     </div>
 
@@ -64,8 +64,8 @@
             </div>
             {% if document.is_privileged or document.is_confidential %}
             <div class="mt-4 flex gap-2">
-                {% if document.is_privileged %}<span class="dc-ds-badge dc-ds-badge--sm badge-sm badge-yellow">Attorney-Client Privilege</span>{% endif %}
-                {% if document.is_confidential %}<span class="dc-ds-badge dc-ds-badge--sm badge-sm badge-red">Confidential</span>{% endif %}
+                {% if document.is_privileged %}<span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--attention">Attorney-Client Privilege</span>{% endif %}
+                {% if document.is_confidential %}<span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--danger">Confidential</span>{% endif %}
             </div>
             {% endif %}
         </div>

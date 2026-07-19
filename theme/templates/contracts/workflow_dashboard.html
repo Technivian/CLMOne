@@ -17,7 +17,7 @@
                 </div>
             </div>
             <div class="workspace-tools">
-                <button id="filters-toggle-btn" aria-expanded="false" aria-controls="filters-panel" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border btn-ghost">
+                <button id="filters-toggle-btn" aria-expanded="false" aria-controls="filters-panel" class="dc-ds-button dc-ds-button--quiet inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border">
                     Filters
                 </button>
             </div>
@@ -41,19 +41,19 @@
                 </div>
             </div>
             <div class="workspace-tools">
-                <a href="{% url 'contracts:workflow_create' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg btn-primary-grad">
+                <a href="{% url 'contracts:workflow_create' %}" class="dc-ds-button dc-ds-button--primary inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg">
                     <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                     </svg>
                     Start workflow
                 </a>
-                <a href="{{ approval_rules_url }}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border btn-ghost">
+                <a href="{{ approval_rules_url }}" class="dc-ds-button dc-ds-button--quiet inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border">
                     Approval rules
                 </a>
-                <a href="{{ approval_requests_url }}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border btn-ghost">
+                <a href="{{ approval_requests_url }}" class="dc-ds-button dc-ds-button--quiet inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border">
                     Approval requests
                 </a>
-                <a href="{% url 'contracts:workflow_template_list' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border btn-ghost">
+                <a href="{% url 'contracts:workflow_template_list' %}" class="dc-ds-button dc-ds-button--quiet inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border">
                     Templates
                 </a>
             </div>
@@ -101,7 +101,7 @@
                     </select>
                 </div>
                 <div class="flex items-end gap-2">
-                    <button type="submit" class="btn-primary-grad text-white w-full">Apply Filters</button>
+                    <button type="submit" class="dc-ds-button dc-ds-button--primary text-white w-full">Apply Filters</button>
                 </div>
             </form>
         </div>
@@ -149,13 +149,13 @@
                             </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="badge-sm
-                                {% if workflow.current_stage == 'Internal Review' %}badge-yellow
-                                {% elif workflow.current_stage == 'External Review' %}badge-blue
-                                {% elif workflow.current_stage == 'Negotiation' %}badge-purple
-                                {% elif workflow.current_stage == 'Signature' %}badge-green
-                                {% elif workflow.current_stage == 'Execution' %}badge-gray
-                                {% else %}badge-gray{% endif %}">
+                            <span class="
+                                {% if workflow.current_stage == 'Internal Review' %}dc-ds-badge--attention
+                                {% elif workflow.current_stage == 'External Review' %}dc-ds-badge--progress
+                                {% elif workflow.current_stage == 'Negotiation' %}dc-ds-badge--special
+                                {% elif workflow.current_stage == 'Signature' %}dc-ds-badge--success
+                                {% elif workflow.current_stage == 'Execution' %}dc-ds-badge--neutral
+                                {% else %}dc-ds-badge--neutral{% endif %}">
                                 {{ workflow.current_stage }}
                             </span>
                         </td>
@@ -206,10 +206,10 @@
         </p>
         <div class="flex gap-2">
             {% if page_obj.has_previous %}
-                <a href="?page={{ page_obj.previous_page_number }}" class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg border btn-ghost">Previous</a>
+                <a href="?page={{ page_obj.previous_page_number }}" class="dc-ds-button dc-ds-button--quiet inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg border">Previous</a>
             {% endif %}
             {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}" class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg border btn-ghost">Next</a>
+                <a href="?page={{ page_obj.next_page_number }}" class="dc-ds-button dc-ds-button--quiet inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg border">Next</a>
             {% endif %}
         </div>
     </div>

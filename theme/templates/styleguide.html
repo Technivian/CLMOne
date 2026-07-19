@@ -14,11 +14,11 @@
     <div class="card-section mb-8">
         <h2 class="text-xl font-semibold text-primary-700 mb-4">Primary Buttons</h2>
         <div class="flex flex-wrap gap-4 items-center">
-            <button class="btn-primary-grad btn-sm">Small Primary</button>
-            <button class="btn-primary-grad btn-md">Medium Primary</button>
-            <button class="btn-primary-grad btn-lg">Large Primary</button>
-            <button class="btn-primary-grad btn-xl">Extra Large Primary</button>
-            <button class="btn-primary-grad" disabled>Disabled</button>
+            <button class="dc-ds-button--primary dc-ds-button--sm">Small Primary</button>
+            <button class="dc-ds-button dc-ds-button--primary btn-md">Medium Primary</button>
+            <button class="dc-ds-button--primary dc-ds-button--lg">Large Primary</button>
+            <button class="dc-ds-button dc-ds-button--primary btn-xl">Extra Large Primary</button>
+            <button class="dc-ds-button--primary" disabled>Disabled</button>
         </div>
     </div>
 
@@ -26,11 +26,11 @@
     <div class="card-section mb-8">
         <h2 class="text-xl font-semibold text-primary-700 mb-4">Accent Buttons (CLM One Blue)</h2>
         <div class="flex flex-wrap gap-4 items-center">
-            <button class="btn-soft-primary-primary btn-sm">Small Accent</button>
-            <button class="btn-soft-primary-primary btn-md">Medium Accent</button>
-            <button class="btn-soft-primary-primary btn-lg">Large Accent</button>
-            <button class="btn-soft-primary-primary btn-xl">Extra Large Accent</button>
-            <button class="btn-soft-primary-primary" disabled>Disabled</button>
+            <button class="dc-ds-button--soft dc-ds-button--sm">Small Accent</button>
+            <button class="dc-ds-button dc-ds-button--soft btn-md">Medium Accent</button>
+            <button class="dc-ds-button--soft dc-ds-button--lg">Large Accent</button>
+            <button class="dc-ds-button dc-ds-button--soft btn-xl">Extra Large Accent</button>
+            <button class="dc-ds-button--soft" disabled>Disabled</button>
         </div>
     </div>
 
@@ -38,11 +38,11 @@
     <div class="card-section mb-8">
         <h2 class="text-xl font-semibold text-primary-700 mb-4">Outline Buttons</h2>
         <div class="flex flex-wrap gap-4 items-center">
-            <button class="btn-quiet btn-sm">Small Outline</button>
-            <button class="btn-quiet btn-md">Medium Outline</button>
-            <button class="btn-quiet btn-lg">Large Outline</button>
-            <button class="btn-quiet btn-xl">Extra Large Outline</button>
-            <button class="btn-quiet" disabled>Disabled</button>
+            <button class="dc-ds-button--quiet dc-ds-button--sm">Small Outline</button>
+            <button class="dc-ds-button dc-ds-button--quiet btn-md">Medium Outline</button>
+            <button class="dc-ds-button--quiet dc-ds-button--lg">Large Outline</button>
+            <button class="dc-ds-button dc-ds-button--quiet btn-xl">Extra Large Outline</button>
+            <button class="dc-ds-button--quiet" disabled>Disabled</button>
         </div>
     </div>
 
@@ -50,11 +50,11 @@
     <div class="card-section mb-8">
         <h2 class="text-xl font-semibold text-primary-700 mb-4">Ghost Buttons</h2>
         <div class="flex flex-wrap gap-4 items-center">
-            <button class="btn-ghost btn-sm">Small Ghost</button>
-            <button class="btn-ghost btn-md">Medium Ghost</button>
-            <button class="btn-ghost btn-lg">Large Ghost</button>
-            <button class="btn-ghost btn-xl">Extra Large Ghost</button>
-            <button class="btn-ghost" disabled>Disabled</button>
+            <button class="dc-ds-button--quiet dc-ds-button--sm">Small Ghost</button>
+            <button class="dc-ds-button dc-ds-button--quiet btn-md">Medium Ghost</button>
+            <button class="dc-ds-button--quiet dc-ds-button--lg">Large Ghost</button>
+            <button class="dc-ds-button dc-ds-button--quiet btn-xl">Extra Large Ghost</button>
+            <button class="dc-ds-button--quiet" disabled>Disabled</button>
         </div>
     </div>
 
@@ -62,19 +62,19 @@
     <div class="card-section mb-8">
         <h2 class="text-xl font-semibold text-primary-700 mb-4">Buttons with Icons</h2>
         <div class="flex flex-wrap gap-4 items-center">
-            <button class="btn-primary-grad btn-lg flex items-center space-x-2">
+            <button class="dc-ds-button dc-ds-button--lg dc-ds-button--primary flex items-center space-x-2">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                 </svg>
                 <span>New Contract</span>
             </button>
-            <button class="btn-soft-primary-primary btn-lg flex items-center space-x-2">
+            <button class="dc-ds-button dc-ds-button--lg dc-ds-button--soft flex items-center space-x-2">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                 </svg>
                 <span>Start Workflow</span>
             </button>
-            <button class="btn-quiet btn-lg flex items-center space-x-2">
+            <button class="dc-ds-button dc-ds-button--lg dc-ds-button--quiet flex items-center space-x-2">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
                 </svg>
@@ -88,15 +88,15 @@
         <h2 class="text-xl font-semibold text-primary-700 mb-4">Interactive States</h2>
         <p class="text-sm text-muted mb-4">Hover and focus on the buttons below to see state changes</p>
         <div class="flex flex-wrap gap-4 items-center">
-            <button type="button" class="btn-primary-grad btn-lg" data-action="demo-alert" data-message="Primary button clicked!">Click Me (Primary)</button>
-            <button type="button" class="btn-soft-primary-primary btn-lg" data-action="demo-alert" data-message="Accent button clicked!">Click Me (Accent)</button>
-            <button type="button" class="btn-quiet btn-lg" data-action="demo-alert" data-message="Outline button clicked!">Click Me (Outline)</button>
+            <button type="button" class="dc-ds-button--primary dc-ds-button--lg" data-action="demo-alert" data-message="Primary button clicked!">Click Me (Primary)</button>
+            <button type="button" class="dc-ds-button--soft dc-ds-button--lg" data-action="demo-alert" data-message="Accent button clicked!">Click Me (Accent)</button>
+            <button type="button" class="dc-ds-button--quiet dc-ds-button--lg" data-action="demo-alert" data-message="Outline button clicked!">Click Me (Outline)</button>
         </div>
     </div>
 
     <!-- Back to Dashboard -->
     <div class="card-section">
-        <a href="{% url 'dashboard' %}" class="btn-ghost">
+        <a href="{% url 'dashboard' %}" class="dc-ds-button--quiet">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
             </svg>

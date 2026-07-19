@@ -56,7 +56,6 @@
   .dpa-choice { display:flex; align-items:flex-start; gap:var(--space-8); padding:var(--space-12); border:1px solid var(--line); border-radius:var(--radius-control); background:var(--well); }
   .dpa-choice input { width:18px; height:18px; flex:0 0 18px; margin:2px 0 0; accent-color:var(--seal); }
   .dpa-choice .form-label { margin-bottom:var(--space-4); }
-  .dpa-field-error { margin:var(--space-4) 0 0; color:var(--status-danger-fg); font:var(--text-meta); }
   .dpa-step3 { display:grid; gap:var(--space-24); margin-top:var(--space-24); }
   .dpa-step3-section { padding-top:var(--space-20); border-top:1px solid var(--line); }
   .dpa-step3-section:first-child { padding-top:0; border-top:0; }
@@ -132,10 +131,8 @@
   [data-step4-reveal][hidden], [data-step4-position-reveal][hidden] { display:none; }
   .dpa-step4-position { padding:var(--space-16); border:1px solid var(--line); border-radius:var(--radius-control); background:var(--well); }
   .dpa-evidence-name { display:block; margin-top:var(--space-4); color:var(--status-positive-fg); font:var(--text-meta); }
-  .dpa-form-actions { display:flex; align-items:center; gap:var(--space-12); margin-top:var(--space-24); }
-  .dpa-form-actions .dpa-spacer { flex:1; }
   @media (min-width:1000px) { .dpa-field-grid { grid-template-columns:repeat(3, minmax(0, 1fr)); } }
-  @media (max-width:700px) { .dpa-intake { grid-template-columns:1fr; gap:var(--space-16); } .topbar-page-title .dpa-title-context { display:none; } .dpa-step-list { grid-template-columns:repeat(2, minmax(0, 1fr)); } .dpa-workflow-heading { grid-column:1 / -1; } .dpa-field-grid, .dpa-step3-grid, .dpa-step4-grid, .dpa-subprocessor-row { grid-template-columns:1fr; } .dpa-field--wide, .dpa-step3-field--wide, .dpa-step4-field--wide { grid-column:auto; } .dpa-form-actions { flex-wrap:wrap; } .dpa-form-actions .dpa-spacer { display:none; } }
+  @media (max-width:700px) { .dpa-intake { grid-template-columns:1fr; gap:var(--space-16); } .topbar-page-title .dpa-title-context { display:none; } .dpa-step-list { grid-template-columns:repeat(2, minmax(0, 1fr)); } .dpa-workflow-heading { grid-column:1 / -1; } .dpa-field-grid, .dpa-step3-grid, .dpa-step4-grid, .dpa-subprocessor-row { grid-template-columns:1fr; } .dpa-field--wide, .dpa-step3-field--wide, .dpa-step4-field--wide { grid-column:auto; } }
 </style>
 
 <div class="dc-ds-page dpa-intake">

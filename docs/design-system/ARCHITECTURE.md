@@ -1,15 +1,15 @@
 # CLM One Frontend Architecture
 
-Status: Phase 1 foundation active; Phase 2 component consolidation pending
-review. The target architecture is recorded in ADR/PDR 0008.
+Status: **Phase 6 complete** for the authenticated application (2026-07-19).
+Public-shell / legal-document systems remain approved exceptions (optional
+Phase 6.1). The target architecture is recorded in ADR/PDR 0008.
 Authority: `DESIGN_CONSTITUTION.md` (the CLM One Governance Charter)
 
 ## Authority and ownership
 
-The Phase 1 boundary is intentional: it establishes build, token, shell, and
-compatibility ownership without migrating individual pages. See
-`docs/adr/0008-frontend-design-system-phase-1.md` for the approved target and
-`LEGACY_COMPATIBILITY_INVENTORY.md` for the retained bridge.
+See `docs/adr/0008-frontend-design-system-phase-1.md` for the approved target,
+`LEGACY_COMPATIBILITY_INVENTORY.md` for the current bridge, and
+`LEGACY_COMPATIBILITY_INVENTORY_PHASE1.md` for the superseded Phase 1 record.
 
 1. The Governance Charter is authoritative when code, screenshots, audits, or
    older documentation conflict with it.

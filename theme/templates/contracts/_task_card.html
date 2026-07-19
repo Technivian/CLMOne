@@ -14,10 +14,10 @@
 <div class="task-card">
     <div class="flex justify-between items-start">
         <p class="task-title">{{ task.title }}</p>
-        <span class="badge-sm
-            {% if task.priority == 'HIGH' %}badge-red
-            {% elif task.priority == 'MEDIUM' %}badge-yellow
-            {% elif task.priority == 'LOW' %}badge-green
+        <span class="
+            {% if task.priority == 'HIGH' %}dc-ds-badge--danger
+            {% elif task.priority == 'MEDIUM' %}dc-ds-badge--attention
+            {% elif task.priority == 'LOW' %}dc-ds-badge--success
             {% endif %}
         ">{{ task.get_priority_display }}</span>
     </div>
@@ -31,10 +31,10 @@
 <div class="task-card">
     <div class="flex items-start justify-between mb-2">
         <h4 class="task-title">{{ task.title }}</h4>
-        <span class="badge-sm
-            {% if task.priority == 'HIGH' %}badge-red
-            {% elif task.priority == 'MEDIUM' %}badge-yellow
-            {% else %}badge-green{% endif %}">
+        <span class="
+            {% if task.priority == 'HIGH' %}dc-ds-badge--danger
+            {% elif task.priority == 'MEDIUM' %}dc-ds-badge--attention
+            {% else %}dc-ds-badge--success{% endif %}">
             {{ task.get_priority_display }}
         </span>
     </div>

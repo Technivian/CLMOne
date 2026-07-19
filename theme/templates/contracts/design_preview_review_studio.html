@@ -103,7 +103,7 @@
         <a href="{% url 'contracts:design_preview_relationship_detail' %}">{{ doc.org }}</a>
         <span class="sep">&rsaquo;</span>
         <span class="current">{{ doc.title }}</span>
-        <span class="badge-sm badge-blue">{{ doc.draft }}</span>
+        <span class="dc-ds-badge--progress">{{ doc.draft }}</span>
       </div>
       <div class="crs-title-row">
         <span class="crs-title">Contract Review Studio</span>
@@ -114,9 +114,9 @@
         <span class="crs-avatar">O</span><span class="crs-avatar">J</span><span class="crs-avatar">P</span>
         <span class="crs-avatar crs-avatar-more">+2</span>
       </div>
-      <a href="#" class="btn-quiet">Share</a>
-      <a href="#" class="btn-quiet">Compare</a>
-      <a href="#" class="btn-cta">Finalize</a>
+      <a href="#" class="dc-ds-button--quiet">Share</a>
+      <a href="#" class="dc-ds-button--quiet">Compare</a>
+      <a href="#" class="dc-ds-button--primary">Finalize</a>
     </div>
   </div>
 
@@ -160,7 +160,7 @@
         <button class="crs-subtab" data-subtab="yourposition">Your Position</button>
       </div>
       <div id="subtab-playbook" class="crs-subpanel active">
-        <div class="crs-position-label">Your Position <span class="badge-sm badge-green crs-badge-inline">Preferred</span></div>
+        <div class="crs-position-label">Your Position <span class="dc-ds-badge dc-ds-badge--sm crs-badge-inline dc-ds-badge--success">Preferred</span></div>
         <div class="crs-position-value">{{ active_clause.your_position }}</div>
       </div>
       <div id="subtab-counterparty" class="crs-subpanel">
@@ -223,7 +223,7 @@
         <div class="crs-section-block">
           <div class="crs-section-title">Suggested Fallback Language</div>
           <div class="crs-fallback-text">{{ active_clause.fallback_language }}</div>
-          <button class="btn-quiet crs-btn-spaced">Insert</button>
+          <button class="dc-ds-button dc-ds-button--quiet crs-btn-spaced">Insert</button>
         </div>
 
         <div class="crs-section-block">
@@ -240,7 +240,7 @@
               <span class="crs-avatar">L</span><span class="crs-avatar">F</span>
               <span class="c-muted crs-approval-teams-label">{{ approvals_required.teams }}</span>
             </div>
-            <span class="badge-sm badge-yellow">{{ approvals_required.pending }} pending</span>
+            <span class="dc-ds-badge--attention">{{ approvals_required.pending }} pending</span>
           </div>
         </div>
       </div>

@@ -30,3 +30,7 @@ playwright-report/
 .env
 *.pid
 backups/
+
+# Local HTTPS/mkcert material (do not commit)
+.certs/
+.srl

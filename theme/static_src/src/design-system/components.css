@@ -138,6 +138,76 @@
 .dc-ds-record-steps li { display: flex; align-items: flex-start; gap: 9px; color: var(--text-secondary); font-size: 12px; line-height: 18px; }
 .dc-ds-record-steps__number { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; flex: 0 0 20px; border-radius: var(--radius-pill); background: var(--primary-subtle); color: var(--primary); font-size: 11px; font-weight: 700; }
 
+/* Phase 5C workspace scaffold. This is intentionally structural: document
+   canvases, governed drafting content, and route-specific risk logic retain
+   their own classes. DPA, NDA, MSA, and standard contract detail pages share
+   these hooks for headers, metadata, actions, timelines, surfaces, and rails. */
+.dc-ds-workspace { min-width: 0; }
+.dc-ds-workspace--six-steps { --dc-ds-workspace-steps: 6; }
+.dc-ds-workspace__header,
+.dc-ds-workspace__timeline,
+.dc-ds-workspace__surface,
+.dc-ds-workspace__summary {
+  min-width: 0;
+  border: 1px solid var(--color-border-soft, var(--card-border));
+  border-radius: var(--radius-subpanel);
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+}
+.dc-ds-workspace__header { padding: var(--space-24); margin-bottom: var(--space-16); }
+.dc-ds-workspace__title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-16); }
+.dc-ds-workspace__title { min-width: 0; margin: 0; overflow-wrap: anywhere; color: var(--ink-900); font: var(--text-title); }
+.dc-ds-workspace__subtitle { margin: var(--space-4) 0 0; color: var(--ink-500); font: var(--text-small); }
+.dc-ds-workspace__actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: var(--space-8); margin-top: var(--space-16); }
+.dc-ds-workspace__actions > :is(a, button, form) { min-width: 0; }
+.dc-ds-workspace__actions > form { margin: 0; }
+.dc-ds-workspace__metadata-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-12);
+  margin-top: var(--space-16);
+}
+.dc-ds-workspace__metadata-item { min-width: 0; padding: var(--space-12); border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--well); }
+.dc-ds-workspace__metadata-label { display: block; color: var(--ink-500); font: var(--text-eyebrow); letter-spacing: .08em; text-transform: uppercase; }
+.dc-ds-workspace__metadata-value { display: block; margin-top: var(--space-4); overflow-wrap: anywhere; color: var(--ink-900); font: var(--text-small); font-weight: 650; }
+.dc-ds-workspace__timeline { padding: var(--space-16) var(--space-20); margin-bottom: var(--space-16); overflow-x: auto; }
+.dc-ds-workspace__timeline-title { margin-bottom: var(--space-12); color: var(--ink-900); font: var(--text-heading); }
+.dc-ds-workspace__timeline-track { display: grid; min-width: max-content; grid-template-columns: repeat(var(--dc-ds-workspace-steps, 7), minmax(84px, 1fr)); }
+.dc-ds-workspace__timeline-step { position: relative; min-width: 0; color: var(--ink-500); font-size: 11px; font-weight: 700; text-align: center; }
+.dc-ds-workspace__timeline-step:not(:last-child)::after { content: ""; position: absolute; top: 13px; left: calc(50% + 18px); right: calc(-50% + 18px); height: 1px; background: var(--line); }
+.dc-ds-workspace__timeline-dot { position: relative; z-index: 1; display: grid; width: 26px; height: 26px; place-items: center; margin: 0 auto var(--space-8); border: 2px solid var(--line); border-radius: var(--radius-pill); background: var(--card); color: var(--ink-500); font-size: 11px; font-weight: 700; }
+.dc-ds-workspace__timeline-step:is(.is-done, .is-active) .dc-ds-workspace__timeline-dot { border-color: var(--seal); background: var(--seal-bg); color: var(--seal-dark); }
+.dc-ds-workspace__timeline-step.is-active { color: var(--ink-900); }
+.dc-ds-workspace__layout { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(320px, .55fr); gap: var(--grid-gutter); align-items: start; }
+.dc-ds-workspace__main,
+.dc-ds-workspace__rail,
+.dc-ds-workspace__pane { min-width: 0; }
+.dc-ds-workspace__rail { display: grid; gap: var(--space-12); }
+.dc-ds-workspace__surface { overflow: hidden; }
+.dc-ds-workspace__surface + .dc-ds-workspace__surface { margin-top: var(--space-12); }
+.dc-ds-workspace__surface-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-12); padding: var(--space-16) var(--space-20); border-bottom: 1px solid var(--line); }
+.dc-ds-workspace__surface-title { min-width: 0; color: var(--ink-900); font: var(--text-heading); }
+.dc-ds-workspace__surface-body { padding: var(--space-20); }
+.dc-ds-workspace__rail-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-8); padding: var(--space-8); border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--card); }
+.dc-ds-workspace__rail-tab { min-height: 34px; border: 1px solid transparent; border-radius: var(--radius-control); background: transparent; color: var(--ink-500); font: var(--text-meta); font-weight: 650; cursor: pointer; }
+.dc-ds-workspace__rail-tab[aria-selected="true"] { border-color: var(--color-control-selected-border); background: var(--color-control-selected-bg); color: var(--color-control-selected-text); }
+.dc-ds-workspace__rail-tab:focus-visible,
+.dc-ds-workspace__actions :is(a, button):focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+
+@media (max-width: 1180px) {
+  .dc-ds-workspace__layout { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 640px) {
+  .dc-ds-workspace__header,
+  .dc-ds-workspace__timeline,
+  .dc-ds-workspace__surface-body { padding: var(--space-16); }
+  .dc-ds-workspace__title-row { flex-direction: column; gap: var(--space-12); }
+  .dc-ds-workspace__actions { width: 100%; justify-content: stretch; }
+  .dc-ds-workspace__actions > :is(a, button, form) { flex: 1 1 150px; }
+  .dc-ds-workspace__actions > form > button { width: 100%; }
+}
+
 @media (max-width: 980px) {
   .dc-ds-record-layout--with-rail { grid-template-columns: 1fr; }
   .dc-ds-record-rail { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -981,7 +1051,7 @@ body:has(.topbar-page-title:not(:empty)) .dc-ds-page-hero:not(:has(.dc-ds-action
 }
 
 .dc-ds-info-hint:focus-visible {
-  outline: 2px solid var(--ds-color-primary);
+  outline: 2px solid var(--seal);
   outline-offset: 2px;
 }
 

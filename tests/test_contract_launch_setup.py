@@ -285,10 +285,16 @@ class NewContractRequestPageTests(_LaunchSetupFixtureMixin, TestCase):
         self.assertIn('id="contract-form" novalidate', content)
         self.assertIn('Starting template', content)
         self.assertIn('Review playbook', content)
+        self.assertIn('id="launch-setup-playbook-copy"', content)
         self.assertNotIn('Playbook applied', content)
         self.assertIn('Save draft', content)
         self.assertIn('Create contract', content)
         self.assertIn('Risk not assessed', content)
+
+    def test_new_request_right_rail_avoids_unnecessary_header_dividers(self):
+        content = self._get().content.decode()
+        self.assertIn('.cform-rail-head {', content)
+        self.assertEqual(content.count('class="cform-rail-head"'), 3)
 
     def test_new_request_has_sticky_action_bar_and_no_footer(self):
         response = self._get()
@@ -334,7 +340,9 @@ class NewContractRequestPageTests(_LaunchSetupFixtureMixin, TestCase):
         response = self._get()
         content = response.content.decode()
 
-        self.assertEqual(content.count('dc-ds-button--primary btn-cta'), 2)
+        # Form CTAs only (shell topbar also uses --primary).
+        self.assertEqual(content.count('type="submit" class="dc-ds-button dc-ds-button--primary'), 2)
+        self.assertNotIn('btn-cta', content)
         self.assertNotIn('cform-create-cta', content)
         self.assertNotIn('var(--copper-700)', content)
         self.assertIn('background: var(--seal);', content)

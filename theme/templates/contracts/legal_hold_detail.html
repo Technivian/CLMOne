@@ -7,7 +7,7 @@
 {% endblock %}
 {% block content %}
 <div class="dc-ds-page dc-ds-page-flow dc-ds-record-page">
-    <header class="dc-ds-page-hero"><div class="dc-ds-actions"><a href="{% url 'contracts:legal_hold_update' object.pk %}" class="dc-ds-button dc-ds-button--primary btn-primary-grad">Edit</a></div></header>
+    <header class="dc-ds-page-hero"><div class="dc-ds-actions"><a href="{% url 'contracts:legal_hold_update' object.pk %}" class="dc-ds-button dc-ds-button--primary">Edit</a></div></header>
     <div class="dc-ds-record-content dc-ds-record-content--narrow"><div class="panel panel-inner dc-ds-surface dc-ds-record-metadata">
         <div class="dc-ds-record-metadata__row"><span class="dc-ds-record-metadata__label">Status</span><p class="dc-ds-record-metadata__value">{{ object.get_status_display }}</p></div>
         <div class="dc-ds-record-metadata__row"><span class="dc-ds-record-metadata__label">Matter</span><p class="dc-ds-record-metadata__value">{{ object.matter|default:"-" }}</p></div>

@@ -17,16 +17,16 @@ visual and layout reference, not a separate dashboard theme.
 
 ## Compatibility Policy
 
-Legacy classes remain mapped to the same Command Center-backed tokens so
-unchanged domain screens inherit its canvas, type, spacing, focus, surface,
-control, table, and semantic-state language. They are a migration bridge, not
-an API for new work.
+Authenticated templates use `.dc-ds-*` controls. Global `.btn-*` / `.badge-*`
+CSS aliases remain only for approved public/legal exceptions until optional
+Phase 6.1. Deprecated `--ds-*` token aliases remain until repository-wide
+usage is zero.
 
-Migration proceeds in the phases defined in
-[`ARCHITECTURE.md`](ARCHITECTURE.md). Primary operating surfaces use canonical
-markup directly; specialist legacy workflows inherit the same visual contract
-through compatibility styles. Compatibility styles and `--ds-*` aliases remain
-until repository-wide usage is zero.
+Migration through Phase 6 for the authenticated app is complete
+([`PHASE_6_LEGACY_RETIREMENT.md`](PHASE_6_LEGACY_RETIREMENT.md),
+ADR/PDR [`0008`](../adr/0008-frontend-design-system-phase-1.md)). Optional
+public-shell work:
+[`PHASE_6_1_PUBLIC_SHELL_FOLLOWUP.md`](PHASE_6_1_PUBLIC_SHELL_FOLLOWUP.md).
 
 Shared shell, dashboard, repository, and queue icons must use the central icon
 adapter. Custom SVG is reserved for brand marks, diagrams, and domain visuals

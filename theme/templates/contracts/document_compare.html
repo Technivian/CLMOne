@@ -26,7 +26,7 @@
             <h1 class="page-title">Document Compare</h1>
             <p class="page-subtitle">{{ document.title }} v{{ document.version }} vs v{{ other_document.version }}</p>
         </div>
-        <a href="{% url 'contracts:document_detail' document.pk %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border btn-ghost">Back to document</a>
+        <a href="{% url 'contracts:document_detail' document.pk %}" class="dc-ds-button dc-ds-button--quiet inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border">Back to document</a>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">

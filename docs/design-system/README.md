@@ -26,6 +26,15 @@ When sources disagree, use this order:
    `.dc-ds-*` CSS under `theme/static_src/src/design-system/components.css`.
 5. Older redesign plans, audits, and screenshots as historical context only.
 
+Phase 6 (authenticated legacy retirement + anti-drift) is recorded in
+[PHASE_6_LEGACY_RETIREMENT.md](PHASE_6_LEGACY_RETIREMENT.md) and
+[LEGACY_COMPATIBILITY_INVENTORY.md](LEGACY_COMPATIBILITY_INVENTORY.md).
+ADR/PDR [0008](../adr/0008-frontend-design-system-phase-1.md) is marked
+completed for the authenticated app. Optional public-shell follow-up:
+[PHASE_6_1_PUBLIC_SHELL_FOLLOWUP.md](PHASE_6_1_PUBLIC_SHELL_FOLLOWUP.md).
+The Phase 1 inventory is retained as superseded:
+[LEGACY_COMPATIBILITY_INVENTORY_PHASE1.md](LEGACY_COMPATIBILITY_INVENTORY_PHASE1.md).
+
 ## Contents
 
 - [Foundations](FOUNDATIONS.md)

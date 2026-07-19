@@ -28,7 +28,7 @@
       <p class="page-subtitle">
         {{ usage.plan_name }} plan &nbsp;·&nbsp; {{ usage.period_start }} – {{ usage.period_end }}
         {% if current_sub and current_sub.subscription_status != 'free' %}
-          &nbsp;·&nbsp; <span class="badge-sm {% if current_sub.subscription_status == 'active' %}badge-green{% elif current_sub.subscription_status == 'past_due' %}badge-yellow{% else %}badge-gray{% endif %}">{{ current_sub.subscription_status|title }}</span>
+          &nbsp;·&nbsp; <span class="{% if current_sub.subscription_status == 'active' %}dc-ds-badge--success{% elif current_sub.subscription_status == 'past_due' %}dc-ds-badge--attention{% else %}dc-ds-badge--neutral{% endif %}">{{ current_sub.subscription_status|title }}</span>
         {% endif %}
       </p>
     </div>
@@ -36,7 +36,7 @@
       {% if current_sub and current_sub.stripe_customer_id %}
         <form method="post" action="{% url 'contracts:billing_portal' %}" class="inline">
           {% csrf_token %}
-          <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border btn-ghost">
+          <button type="submit" class="dc-ds-button dc-ds-button--quiet inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border">
             Manage subscription
           </button>
         </form>

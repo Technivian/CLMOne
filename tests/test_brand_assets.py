@@ -87,17 +87,22 @@ class ApprovedBrandAssetTests(SimpleTestCase):
         shell = (
             Path(settings.BASE_DIR) / 'theme' / 'templates' / 'base.html'
         ).read_text()
+        shell_css = (
+            Path(settings.BASE_DIR)
+            / 'theme'
+            / 'static_src'
+            / 'src'
+            / 'global-shell'
+            / 'legacy-layout.css'
+        ).read_text()
 
         self.assertEqual(shell.count("brand/clm-one-logo-header-tight.svg"), 1)
         self.assertIn("brand/clm-one-logo-reversed-tight.svg", shell)
         self.assertIn("brand/clm-one-mark-reversed-tight.svg", shell)
-        self.assertIn('.logo-wordmark    { height: 32px; width: auto;', shell)
-        self.assertIn(
-            '.sidebar-brand .logo-mark { display: none; height: 32px; width: auto;',
-            shell,
-        )
-        self.assertIn('background: var(--color-shell-deep);', shell)
-        self.assertNotIn('padding: 7px 8px;', shell)
+        self.assertIn('.logo-wordmark    { height: 32px; width: auto;', shell_css)
+        self.assertIn('.logo-mark        { width: 28px; height: 28px;', shell_css)
+        self.assertIn('background: var(--color-shell-deep);', shell_css)
+        self.assertNotIn('padding: 7px 8px;', shell_css)
 
     def test_manifest_uses_canonical_static_brand_icons(self):
         manifest = json.loads((self.brand_dir / 'site.webmanifest').read_text())

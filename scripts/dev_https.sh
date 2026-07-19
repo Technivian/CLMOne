@@ -104,7 +104,7 @@ EOF
     -config "$ROOT_CA_CFG"
 }
 
-generate_leaf_cert() {
+generate_leaf_cert_openssl() {
   cat > "$LEAF_CFG" <<'EOF'
 [req]
 default_bits = 2048
@@ -148,16 +148,40 @@ EOF
     -extensions req_ext
 }
 
-trust_root_ca() {
+# Prefer mkcert when available: its CA is already in the system trust store,
+# so Chrome does not show NET::ERR_CERT_AUTHORITY_INVALID for local HTTPS.
+ensure_leaf_cert() {
+  mkdir -p "$CERT_DIR"
+
+  if command_exists mkcert; then
+    mkcert -install >/dev/null 2>&1 || true
+    mkcert -cert-file "$LEAF_CERT" -key-file "$LEAF_KEY" \
+      localhost 127.0.0.1 ::1
+    echo "Using mkcert leaf certificate (trusted by Chrome)."
+    return
+  fi
+
+  generate_root_ca_if_needed
+  generate_leaf_cert_openssl
+  trust_root_ca_openssl
+}
+
+trust_root_ca_openssl() {
   security delete-certificate -c localhost "$HOME/Library/Keychains/login.keychain-db" >/dev/null 2>&1 || true
 
   local sha
   sha="$(openssl x509 -in "$ROOT_CA_CERT" -noout -fingerprint -sha256 | cut -d'=' -f2 | tr -d ':')"
 
   if ! security find-certificate -a -Z "$HOME/Library/Keychains/login.keychain-db" | grep -q "$sha"; then
-    security add-trusted-cert -d -r trustRoot \
+    # Keychain trust may prompt for a password; do not block server start if it fails.
+    if ! security add-trusted-cert -d -r trustRoot \
       -k "$HOME/Library/Keychains/login.keychain-db" \
-      "$ROOT_CA_CERT"
+      "$ROOT_CA_CERT" >/dev/null 2>&1; then
+      echo "Warning: could not auto-trust the local CA in your login keychain."
+      echo "The server will still start; your browser may warn until you trust:"
+      echo "  $ROOT_CA_CERT"
+      echo "Tip: install mkcert (brew install mkcert) for trusted local HTTPS."
+    fi
   fi
 }
 
@@ -169,6 +193,7 @@ start_server() {
     --port "$PORT"
     --ssl-keyfile "$LEAF_KEY"
     --ssl-certfile "$LEAF_CERT"
+    --lifespan off
   )
 
   if [[ "$MODE" == "background" ]]; then
@@ -239,9 +264,7 @@ case "$ACTION" in
   up)
     require_tools
     stop_existing
-    generate_root_ca_if_needed
-    generate_leaf_cert
-    trust_root_ca
+    ensure_leaf_cert
     start_server
     ;;
   down)

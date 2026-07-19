@@ -11,14 +11,14 @@ These are wrapper examples only; do not introduce new styles here.
       <h1 class="page-title">{{ page_title }}</h1>
       <p class="page-subtitle">{{ page_subtitle }}</p>
     </div>
-    <a href="{{ primary_action_url }}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 btn-primary-grad">{{ primary_action_label }}</a>
+    <a href="{{ primary_action_url }}" class="dc-ds-button dc-ds-button--primary inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90">{{ primary_action_label }}</a>
   </div>
 
   <div class="flex items-center gap-3 mb-4 flex-wrap">
     <form method="get" class="flex items-center gap-2 flex-1 min-w-0">
       <input type="text" name="q" class="w-full px-3 py-2 text-sm rounded-lg border form-input" placeholder="Search...">
       <select name="status" class="px-3 py-2 text-sm rounded-lg border form-select"></select>
-      <button type="submit" class="px-3 py-2 text-sm rounded-lg border btn-ghost">Search</button>
+      <button type="submit" class="dc-ds-button dc-ds-button--quiet px-3 py-2 text-sm rounded-lg border">Search</button>
     </form>
   </div>
 
@@ -68,8 +68,8 @@ These are wrapper examples only; do not introduce new styles here.
       </div>
     </div>
     <div class="btn-group">
-      <button class="px-4 py-2 text-sm font-semibold text-white rounded-lg btn-primary-grad">Run</button>
-      <button class="px-4 py-2 text-sm rounded-lg border btn-ghost">Cancel</button>
+      <button class="dc-ds-button dc-ds-button--primary px-4 py-2 text-sm font-semibold text-white rounded-lg">Run</button>
+      <button class="dc-ds-button dc-ds-button--quiet px-4 py-2 text-sm rounded-lg border">Cancel</button>
     </div>
   </div>
 </div>

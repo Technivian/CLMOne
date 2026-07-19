@@ -15,7 +15,7 @@
     {% for row in rows %}
     <tr>
       <td>
-        <span class="badge-sm {{ row.priority_badge_class }}">{{ row.priority_label }}</span>
+        <span class=" {{ row.priority_badge_class }}">{{ row.priority_label }}</span>
         <a href="{{ row.href }}" class="wq-item-link">{{ row.title|truncatechars:44 }}</a>
         {% if row.meta %}<div class="wq-item-meta">{{ row.meta }}</div>{% endif %}
       </td>
@@ -23,7 +23,7 @@
       <td>{% assignee_chip row.assignee %}</td>
       <td>{% activity_line row.activity %}</td>
       <td class="wq-col-num{% if row.due_overdue %} wq-due-overdue{% endif %}">{{ row.due_date|date:"d M Y" }}</td>
-      <td><span class="badge-sm {{ row.status_badge_class }}">{{ row.status_label }}</span></td>
+      <td><span class=" {{ row.status_badge_class }}">{{ row.status_label }}</span></td>
       <td class="wq-approval-actions">
         {% if row.can_complete %}
         <button type="button" class="wq-approve-btn" data-task-action="complete" data-complete-url="{{ row.complete_url }}">Complete</button>

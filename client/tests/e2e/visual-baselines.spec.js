@@ -13,6 +13,7 @@ async function login(page) {
 }
 
 async function capture(page, path, marker, name) {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   const response = await page.goto(path);
   expect(response).not.toBeNull();
   expect(response.status()).toBeLessThan(400);
@@ -25,10 +26,21 @@ async function capture(page, path, marker, name) {
     await expect(revealChildren.first()).toHaveCSS('opacity', '1');
     await expect(revealChildren.last()).toHaveCSS('opacity', '1');
   }
-  await expect(page).toHaveScreenshot(`phase-1-${name}.png`, {
+  const options = {
     fullPage: true,
     animations: 'disabled',
-  });
+  };
+  // The Command Center expresses live relative due dates and activity age.
+  // These are intentionally covered by its functional tests but cannot form
+  // a stable visual fixture across a date boundary.
+  if (name === 'dashboard') {
+    options.mask = [
+      page.locator('.cc-v3-action-date'),
+      page.locator('.cc-v3-date-status'),
+      page.locator('.cc-v3-table tbody td:last-child'),
+    ];
+  }
+  await expect(page).toHaveScreenshot(`phase-1-${name}.png`, options);
 }
 
 test.describe('Phase 1 visual baselines', () => {
@@ -42,7 +54,7 @@ test.describe('Phase 1 visual baselines', () => {
   });
 
   test('list baseline', async ({ page }) => {
-    await capture(page, '/contracts/', '.page-wrap.cw-page', 'list');
+    await capture(page, '/contracts/', '.dc-ds-list-page.repo-page, .page-wrap.cw-page', 'list');
   });
 
   test('form baseline', async ({ page }) => {
@@ -59,6 +71,6 @@ test.describe('Phase 1 visual baselines', () => {
       links.map((link) => link.getAttribute('href')).find((href) => /^\/contracts\/\d+\/$/.test(href))
     ));
     expect(detailPath).toBeTruthy();
-    await capture(page, detailPath, '.page-wrap', 'detail');
+    await capture(page, detailPath, '.dc-ds-workspace--record, .page-wrap', 'detail');
   });
 });

@@ -168,12 +168,17 @@ class RenderDpaLivePreviewTests(TestCase):
     def test_blank_body_returns_blank(self):
         self.assertEqual(render_dpa_live_preview(None, {}), '')
 
-    def test_scc_fallback_toggle_changes_transfer_position_copy(self):
-        with_fallback = render_dpa_live_preview('{{data_transfer_position}}', {'cross_border_transfer': True, 'include_scc_fallback': True})
-        without_fallback = render_dpa_live_preview('{{data_transfer_position}}', {'cross_border_transfer': True, 'include_scc_fallback': False})
-        self.assertIn('SCC', with_fallback)
-        self.assertIn('fallback language', with_fallback)
-        self.assertNotIn('fallback language', without_fallback)
+    def test_confirmed_scc_changes_transfer_position_copy(self):
+        confirmed_scc = render_dpa_live_preview(
+            '{{data_transfer_position}}',
+            {'cross_border_transfer': True, 'transfer_mechanism': 'SCC'},
+        )
+        unconfirmed = render_dpa_live_preview(
+            '{{data_transfer_position}}',
+            {'cross_border_transfer': True, 'transfer_mechanism': 'None'},
+        )
+        self.assertIn('SCC', confirmed_scc)
+        self.assertIn('confirmed transfer safeguard', unconfirmed)
 
 
 class DetectDpaRiskSignalsTests(TestCase):
@@ -193,12 +198,14 @@ class DetectDpaRiskSignalsTests(TestCase):
         signal = RiskSignal.objects.get(workflow=self.workflow, code='missing_dpo_contact')
         self.assertEqual(signal.severity, RiskSignal.Severity.MEDIUM)
 
-    def test_clean_submission_creates_no_signals(self):
+    def test_clean_submission_keeps_required_dpa_review_signal(self):
         detect_dpa_risk_signals(self.workflow, {
             'personal_data_involved': False, 'cross_border_transfer': False, 'subprocessors_used': False, 'transfer_mechanism': 'None',
             'dpo_contact': 'privacy@acme.com', 'breach_notification_hours': 24, 'liability_position': '',
         })
-        self.assertEqual(RiskSignal.objects.filter(workflow=self.workflow).count(), 0)
+        signals = RiskSignal.objects.filter(workflow=self.workflow)
+        self.assertEqual(signals.count(), 1)
+        self.assertEqual(signals.get().code, 'dpa_review_required')
 
     def test_signals_are_persisted_not_just_returned(self):
         created = detect_dpa_risk_signals(self.workflow, {'cross_border_transfer': False, 'dpo_contact': '', 'breach_notification_hours': 24})

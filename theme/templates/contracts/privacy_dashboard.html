@@ -10,7 +10,7 @@
       <p class="arch-subtitle">Data protection and retention center</p>
     </div>
     <div class="arch-header-right">
-      <a href="{% url 'contracts:privacy_evidence_export' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border btn-ghost">Export evidence CSV</a>
+      <a href="{% url 'contracts:privacy_evidence_export' %}" class="dc-ds-button dc-ds-button--quiet inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border">Export evidence CSV</a>
     </div>
   </div>
 
@@ -65,20 +65,20 @@
         <tbody>
           <tr class="border-b transition-colors tbl-row">
             <td class="px-5 py-3.5 tbl-td font-medium c-primary">Retention Policies</td>
-            <td class="px-5 py-3.5 tbl-td"><span class="badge-sm badge-blue">{{ retention_count }} active</span></td>
+            <td class="px-5 py-3.5 tbl-td"><span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--progress">{{ retention_count }} active</span></td>
             <td class="px-5 py-3.5 tbl-td c-secondary">Data retention schedules and disposal rules</td>
             <td class="px-5 py-3.5 tbl-td text-right"><a href="{% url 'contracts:retention_policy_list' %}" class="c-link font-medium">View →</a></td>
           </tr>
           <tr class="border-b transition-colors tbl-row">
             <td class="px-5 py-3.5 tbl-td font-medium c-primary">Legal Holds</td>
             {# Preserve legal_hold_count urgency signal: red badge when holds are active #}
-            <td class="px-5 py-3.5 tbl-td"><span class="badge-sm {% if legal_hold_count > 0 %}badge-red{% else %}badge-gray{% endif %}">{{ legal_hold_count }} active</span></td>
+            <td class="px-5 py-3.5 tbl-td"><span class="dc-ds-badge dc-ds-badge--sm {% if legal_hold_count > 0 %}dc-ds-badge--danger{% else %}dc-ds-badge--neutral{% endif %}">{{ legal_hold_count }} active</span></td>
             <td class="px-5 py-3.5 tbl-td c-secondary">Litigation holds suspending routine deletion</td>
             <td class="px-5 py-3.5 tbl-td text-right"><a href="{% url 'contracts:legal_hold_list' %}" class="c-link font-medium">View →</a></td>
           </tr>
           <tr class="transition-colors tbl-row">
             <td class="px-5 py-3.5 tbl-td font-medium c-primary">Ethical Walls</td>
-            <td class="px-5 py-3.5 tbl-td"><span class="badge-sm badge-gray">{{ ethical_wall_count }} active</span></td>
+            <td class="px-5 py-3.5 tbl-td"><span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--neutral">{{ ethical_wall_count }} active</span></td>
             <td class="px-5 py-3.5 tbl-td c-secondary">Conflict-of-interest access restrictions</td>
             <td class="px-5 py-3.5 tbl-td text-right"><a href="{% url 'contracts:ethical_wall_list' %}" class="c-link font-medium">Manage →</a></td>
           </tr>
@@ -110,7 +110,7 @@
             <td class="px-5 py-3.5 tbl-td">{{ dsar.get_request_type_display }}</td>
             <td class="px-5 py-3.5 tbl-td">{{ dsar.requester_name }}</td>
             <td class="px-5 py-3.5 tbl-td">
-              <span class="badge-sm {% if dsar.status == 'COMPLETED' %}badge-green{% elif dsar.is_overdue %}badge-red{% else %}badge-yellow{% endif %}">{{ dsar.get_status_display }}</span>
+              <span class="dc-ds-badge dc-ds-badge--sm {% if dsar.status == 'COMPLETED' %}dc-ds-badge--success{% elif dsar.is_overdue %}dc-ds-badge--danger{% else %}dc-ds-badge--attention{% endif %}">{{ dsar.get_status_display }}</span>
             </td>
             <td class="px-5 py-3.5 tbl-td">{{ dsar.due_date|default:"—" }}</td>
           </tr>

@@ -107,16 +107,26 @@ class DesignSystemPhaseTwoTests(SimpleTestCase):
         for legacy_class in ('badge-sm', 'badge-green', 'badge-blue', 'badge-yellow', 'badge-red', 'badge-purple', 'badge-gray'):
             self.assertIn(f'.{legacy_class}', self.global_shell_css, f'{legacy_class} was removed from global shell CSS')
 
-    def test_legacy_badge_classes_still_have_repository_consumers(self):
-        # Guardrail: do not let a legacy class quietly reach zero usage and
-        # then get "cleaned up" without anyone noticing — that decision needs
-        # to be explicit, not accidental.
-        consumers = 0
-        for html_file in self.theme.rglob('*.html'):
+    def test_legacy_badge_classes_remain_only_on_approved_exceptions(self):
+        # Phase 6: authenticated templates are pure .dc-ds-badge. Public shell
+        # and legal-document boundaries may retain legacy badge-* adapters.
+        exceptions = {
+            'landing.html', 'legal_front_door.html', 'base_fullscreen.html',
+            '404.html', '403.html', '500.html',
+        }
+        consumers = []
+        templates = self.theme / 'templates'
+        for html_file in templates.rglob('*.html'):
+            rel = html_file.relative_to(templates).as_posix()
+            if rel in exceptions or rel.startswith('registration/'):
+                continue
             text = html_file.read_text(errors='ignore')
-            if re.search(r'\bbadge-(green|blue|yellow|red|purple|gray)\b', text):
-                consumers += 1
-        self.assertGreater(consumers, 0, 'legacy .badge-* classes have zero remaining consumers')
+            # Class attributes only — ignore docs/comments/JS identifiers.
+            for match in re.finditer(r'''\bclass=(["'])(.*?)\1''', text, flags=re.S):
+                if re.search(r'(?<![\w-])badge-(green|blue|yellow|red|purple|gray|sm)(?![\w-])', match.group(2)):
+                    consumers.append(rel)
+                    break
+        self.assertEqual(consumers, [], f'unexpected authenticated badge-* consumers: {consumers}')
 
     def test_empty_state_and_wq_empty_still_defined(self):
         self.assertIn('.empty-state {', self.global_shell_css)

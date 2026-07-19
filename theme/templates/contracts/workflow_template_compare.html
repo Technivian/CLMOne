@@ -37,7 +37,7 @@
                 <h1 class="page-title">Template Comparison</h1>
                 <p class="page-subtitle">{{ comparison.left_template.name }} v{{ comparison.left_template.version }} vs {{ comparison.right_template.name }} v{{ comparison.right_template.version }}</p>
             </div>
-            <a href="{% url 'contracts:workflow_template_detail' comparison.left_template.pk %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border btn-ghost">Back</a>
+            <a href="{% url 'contracts:workflow_template_detail' comparison.left_template.pk %}" class="dc-ds-button dc-ds-button--quiet inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border">Back</a>
         </div>
 
         <div class="flex flex-wrap gap-2 mb-6">
@@ -52,14 +52,14 @@
             <div class="compare-card">
                 <div class="flex items-center justify-between mb-2">
                     <h2 class="font-semibold">Left</h2>
-                    <span class="badge-sm badge-gray">v{{ comparison.left_template.version }}</span>
+                    <span class="dc-ds-badge--neutral">v{{ comparison.left_template.version }}</span>
                 </div>
                 <p class="text-sm c-muted">{{ comparison.left_template.description }}</p>
             </div>
             <div class="compare-card">
                 <div class="flex items-center justify-between mb-2">
                     <h2 class="font-semibold">Right</h2>
-                    <span class="badge-sm badge-gray">v{{ comparison.right_template.version }}</span>
+                    <span class="dc-ds-badge--neutral">v{{ comparison.right_template.version }}</span>
                 </div>
                 <p class="text-sm c-muted">{{ comparison.right_template.description }}</p>
             </div>

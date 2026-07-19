@@ -1,0 +1,27 @@
+/* Canonical authenticated-shell API. The legacy structural names remain
+   co-applied in base.html only while dashboard and route-local compatibility
+   CSS still consume them. New authenticated shell work targets dc-ds-shell. */
+.dc-ds-shell { display: flex; height: 100vh; min-height: 100vh; overflow: hidden; }
+.dc-ds-shell__sidebar { width: 225px; height: 100vh; display: flex; flex-direction: column; flex-shrink: 0; overflow: visible; background: var(--color-shell-deep); box-shadow: var(--shadow-shell-edge); }
+.dc-ds-shell__main { flex: 1; display: flex; flex-direction: column; min-width: 0; height: 100vh; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; background: var(--paper); }
+.dc-ds-shell__topbar { display: flex; align-items: center; justify-content: space-between; flex: 0 0 var(--shell-topbar-height); min-height: var(--shell-topbar-height); gap: var(--space-16); padding: 0 var(--space-24) 0 var(--space-32); background: var(--card); }
+.dc-ds-shell__content { flex: 1 0 auto; width: 100%; min-width: 0; background: var(--paper); }
+.dc-ds-shell__mobile-toggle,
+.dc-ds-shell__scrim { display: none; }
+.dc-ds-shell__page-context { min-width: 260px; max-width: 540px; flex: 1 1 540px; align-self: stretch; display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
+.dc-ds-shell__page-title { min-width: 0; margin: 0; overflow: hidden; color: var(--color-brand-foundation); font: var(--text-display); letter-spacing: -.03em; text-overflow: ellipsis; white-space: nowrap; }
+.dc-ds-shell__page-subtitle { display: none; }
+
+@media (max-width: 900px) {
+  .dc-ds-shell__sidebar { position: fixed; inset: 0 auto 0 0; z-index: 80; width: 225px; overflow-y: auto; overflow-x: hidden; transform: translateX(-100%); box-shadow: 18px 0 40px rgba(8, 18, 35, .22); }
+  body.mobile-nav-open .dc-ds-shell__sidebar { transform: translateX(0); }
+  .dc-ds-shell__mobile-toggle { display: inline-grid; place-items: center; flex: 0 0 auto; width: 40px; height: 40px; border: 0; border-radius: 9px; background: transparent; color: var(--text-primary); cursor: pointer; }
+  .dc-ds-shell__scrim { position: fixed; inset: 0; z-index: 70; border: 0; background: rgba(8, 18, 35, .45); backdrop-filter: blur(2px); }
+  body.mobile-nav-open .dc-ds-shell__scrim { display: block; }
+}
+
+@media (max-width: 640px) {
+  .dc-ds-shell__topbar { flex-basis: 64px; min-height: 64px; gap: var(--space-8); padding-inline: var(--space-16); }
+  .dc-ds-shell__page-context { min-width: 0; max-width: none; flex: 1 1 auto; }
+  .dc-ds-shell__page-title { font: var(--text-section); }
+}

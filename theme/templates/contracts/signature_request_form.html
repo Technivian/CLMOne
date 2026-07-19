@@ -7,7 +7,7 @@
             <h1 class="page-title">{{ object|yesno:"Edit,New" }} Signature Request</h1>
         </div>
         <div class="page-actions">
-            <a href="{% url 'contracts:signature_request_list' %}" class="btn-ghost">&larr; Back</a>
+            <a href="{% url 'contracts:signature_request_list' %}" class="dc-ds-button--quiet">&larr; Back</a>
         </div>
     </div>
     <div class="panel dc-ds-surface">
@@ -18,7 +18,7 @@
                 {% include "design_system/form_field.html" with field=field class_name="mb-4" preserve_help=True %}
                 {% endfor %}
                 <div class="flex justify-end gap-3 pt-4">
-                    <button type="submit" class="btn-primary-grad text-white">Save</button>
+                    <button type="submit" class="dc-ds-button dc-ds-button--primary text-white">Save</button>
                 </div>
             </form>
         </div>

@@ -21,7 +21,7 @@
             <span class="layout-toggle-label">Layout:</span>
             <form method="post" action="{% url 'toggle_redesign' %}" class="inline">
                 {% csrf_token %}
-                <button type="submit" class="btn btn-sm {% if FEATURE_REDESIGN %}btn-primary-grad{% else %}btn-quiet{% endif %}">
+                <button type="submit" class="dc-ds-button--sm {% if FEATURE_REDESIGN %}dc-ds-button--primary{% else %}dc-ds-button--quiet{% endif %}">
                     {% if FEATURE_REDESIGN %}
                         New Design
                     {% else %}

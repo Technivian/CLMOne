@@ -155,7 +155,7 @@ class DesignSystemPhaseTwoATests(SimpleTestCase):
         expectations = {
             'repository.html': ('dc-ds-control', 'dc-ds-button--quiet'),
             'contract_form.html': ('dc-ds-badge--sm', 'dc-ds-button--primary'),
-            'contract_detail.html': ('dc-ds-surface contract-surface', 'dc-ds-control--textarea'),
+            'contract_detail.html': ('dc-ds-workspace--record', 'dc-ds-control--textarea'),
         }
         for template_name, required in expectations.items():
             content = (templates / template_name).read_text()

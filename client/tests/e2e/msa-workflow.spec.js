@@ -125,15 +125,14 @@ test('MSA governed drafting cockpit generates a workflow workspace and dashboard
   await expect(page.getByRole('button', { name: 'Download MSA summary' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Export Word' })).toBeVisible();
 
-  const dataProtectionStep = page.locator('.msa-ws-drafting-step').filter({ hasText: 'Data Protection' });
+  const dataProtectionStep = page.locator('.dc-ds-workspace__drafting-step').filter({ hasText: 'Data Protection' });
   await dataProtectionStep.locator('summary').click();
   await dataProtectionStep.locator('[data-clause-link="data-protection"]').click();
   await expect(page.locator('#data-protection')).toHaveClass(/is-linked/);
 
-  const workspaceHref = page.url();
-  await page.goto('/contracts/workflows/');
-  await page.goto(workspaceHref);
-  await expect(page).toHaveURL(/\/contracts\/workflows\/\d+\/?$/);
-  await expect(page.getByText('Workflow Timeline')).toBeVisible();
-  await expect(page.getByText('Generated MSA draft').first()).toBeVisible();
+  await expect(page.getByRole('link', { name: 'View contract record' })).toBeVisible();
+  await page.getByRole('link', { name: 'View contract record' }).click();
+  await expect(page).toHaveURL(/\/contracts\/\d+\/?$/);
+  await expect(page.locator('.dc-ds-workspace--record')).toBeVisible();
+  await expect(page.getByText(counterparty).first()).toBeVisible();
 });

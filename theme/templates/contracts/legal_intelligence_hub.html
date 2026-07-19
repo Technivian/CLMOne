@@ -64,11 +64,11 @@
             <tr class="border-b transition-colors tbl-row">
                 <td class="px-5 py-3.5">
                     {% if signal.severity %}
-                    <span class="badge-sm
-                        {% if signal.severity == 'CRITICAL' %}badge-red
-                        {% elif signal.severity == 'HIGH' %}badge-yellow
-                        {% elif signal.severity == 'MEDIUM' %}badge-blue
-                        {% else %}badge-green{% endif %}">
+                    <span class="
+                        {% if signal.severity == 'CRITICAL' %}dc-ds-badge--danger
+                        {% elif signal.severity == 'HIGH' %}dc-ds-badge--attention
+                        {% elif signal.severity == 'MEDIUM' %}dc-ds-badge--progress
+                        {% else %}dc-ds-badge--success{% endif %}">
                         {{ signal.severity_display }}
                     </span>
                     {% else %}
@@ -78,7 +78,7 @@
                 <td class="px-5 py-3.5">
                     <div class="font-medium c-primary">
                         {{ signal.title }}
-                        {% if signal.is_conflict %}<span class="badge-sm badge-red">Cross-doc conflict</span>{% endif %}
+                        {% if signal.is_conflict %}<span class="dc-ds-badge--danger">Cross-doc conflict</span>{% endif %}
                     </div>
                     {% if signal.summary %}<p class="text-xs mt-0.5 c-muted">{{ signal.summary|truncatechars:88 }}</p>{% endif %}
                 </td>
@@ -107,14 +107,14 @@
                     {% endif %}
                 </td>
                 <td class="px-5 py-3.5">
-                    <span class="badge-sm badge-gray">{{ signal.status_display }}</span>
+                    <span class="dc-ds-badge--neutral">{{ signal.status_display }}</span>
                 </td>
                 <td class="px-5 py-3.5 tbl-td">
                     {% if signal.due_date %}{{ signal.due_date|due_countdown }}{% else %}{{ signal.updated_at|date:"d M Y" }}{% endif %}
                 </td>
                 <td class="px-5 py-3.5 text-right">
                     <a href="{{ signal.source_url }}"
-                       class="text-xs font-medium px-2.5 py-1 rounded-md border transition-opacity hover:opacity-80 btn-ghost">View</a>
+                       class="dc-ds-button dc-ds-button--quiet text-xs font-medium px-2.5 py-1 rounded-md border transition-opacity hover:opacity-80">View</a>
                 </td>
             </tr>
             {% empty %}

@@ -158,7 +158,7 @@
             <h1 class="page-title">Clause Library</h1>
             <p class="c-muted mt-1">Manage reusable contract clauses</p>
         </div>
-        <button type="button" class="btn-primary-grad text-white inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg" data-action="open-new-clause-modal">
+        <button type="button" class="dc-ds-button dc-ds-button--primary text-white inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg" data-action="open-new-clause-modal">
             <svg aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
             </svg>
@@ -203,7 +203,7 @@
         <p class="mt-1 text-sm c-muted">No approved clause matches the current search or category.</p>
         <p class="mt-1 text-sm c-muted">Clauses appear here after legal creates and approves reusable language.</p>
         <div class="mt-6">
-            <button type="button" class="btn-primary-grad text-white px-4 py-2 text-sm font-semibold rounded-lg" data-action="open-new-clause-modal">New Clause</button>
+            <button type="button" class="dc-ds-button dc-ds-button--primary text-white px-4 py-2 text-sm font-semibold rounded-lg" data-action="open-new-clause-modal">New Clause</button>
         </div>
     </div>
 </div>
@@ -249,8 +249,8 @@
                 </div>
             </div>
             <div class="flex justify-end space-x-3 mt-6">
-                <button type="button" data-action="close-new-clause-modal" class="btn-ghost">Cancel</button>
-                <button type="submit" class="btn-primary-grad text-white px-4 py-2 text-sm font-semibold rounded-lg">Create Clause</button>
+                <button type="button" data-action="close-new-clause-modal" class="dc-ds-button--quiet">Cancel</button>
+                <button type="submit" class="dc-ds-button dc-ds-button--primary text-white px-4 py-2 text-sm font-semibold rounded-lg">Create Clause</button>
             </div>
         </form>
     </div>
@@ -349,7 +349,7 @@ function renderClauses(clausesToRender) {
                 <div class="flex-1">
                     <div class="flex items-center space-x-3 mb-2">
                         <h3 class="clause-title">${clause.title}</h3>
-                        <span class="badge-sm badge-gray">${clause.category}</span>
+                        <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--neutral">${clause.category}</span>
                         <span class="clause-version">v${clause.version}</span>
                     </div>
                     <p class="clause-excerpt">${clause.content.substring(0, 200)}...</p>
@@ -358,7 +358,7 @@ function renderClauses(clausesToRender) {
                     </div>
                 </div>
                 <div class="flex items-center space-x-2 ml-4">
-                    <button type="button" data-action="insert-clause" data-clause-id="${clause.id}" class="btn-quiet btn-sm">Insert</button>
+                    <button type="button" data-action="insert-clause" data-clause-id="${clause.id}" class="dc-ds-button dc-ds-button--quiet dc-ds-button--sm">Insert</button>
                     <button type="button" data-action="edit-clause" data-clause-id="${clause.id}" class="icon-btn-quiet">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>

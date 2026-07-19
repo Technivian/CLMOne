@@ -305,7 +305,10 @@
             /* ── Settings hub / repository helpers ─────────────────────────── */
             .page-container      { max-width: 1100px; margin: 0 auto; }
             .settings-grid       { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
-            .settings-card       { display: block; padding: 18px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); text-decoration: none; transition: all 0.2s ease; }
+            .settings-card       { display: block; padding: 18px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); text-decoration: none; transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease; }
+            @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+                a.settings-card:hover { border-color: color-mix(in srgb, var(--primary) 30%, var(--border)); box-shadow: 0 5px 12px rgba(16, 24, 40, 0.08); transform: translateY(-2px); }
+            }
             .settings-card-head  { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
             .settings-card-title { font-size: 16px; font-weight: 700; color: var(--text-primary); }
             .settings-card-desc  { font-size: 13px; color: var(--text-secondary); }
@@ -502,11 +505,14 @@
                 background: color-mix(in srgb, var(--surface) 84%, transparent);
                 color: var(--text-primary);
                 text-decoration: none;
-                transition: border-color 0.2s ease, background 0.2s ease;
+                transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
             }
             .action-link:hover {
                 border-color: color-mix(in srgb, var(--primary) 28%, var(--card-border));
                 background: color-mix(in srgb, var(--primary-subtle) 80%, var(--surface));
+            }
+            @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+                .action-link:hover { box-shadow: 0 4px 10px rgba(16, 24, 40, 0.08); transform: translateY(-1px); }
             }
             .action-link svg { width: 14px; height: 14px; color: var(--text-muted); }
             .content-prose {
@@ -628,7 +634,7 @@
             .btn-primary-grad { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; color: white; font-size: 13px; font-weight: 600; border-radius: 8px; transition: all 0.2s; text-decoration: none; background: var(--btn-gradient); }
             .btn-primary-grad svg { width: 14px; height: 14px; }
             .sidebar-padding { padding: var(--space-8) var(--space-16) 230px; overflow-y: auto; }
-            .main-content-pad { padding: 0; flex: 1 0 auto; }
+            .dc-ds-shell__content { padding: 0; flex: 1 0 auto; }
             .sidebar-workspace {
                 margin: 12px 12px 8px;
                 padding: 10px;
@@ -703,11 +709,11 @@
                 .summary-grid { grid-template-columns: 1fr; }
             }
             @media (max-width: 1320px) {
-                .main-area > .top-bar .global-search-form { width: 100%; min-width: 0; max-width: 360px; }
-                .main-area > .top-bar .org-label,
-                .main-area > .top-bar .username-text,
-                .main-area > .top-bar .profile-caret { display: none; }
-                .main-area > .top-bar .profile-trigger { padding-left: 2px; padding-right: 2px; }
+                .dc-ds-shell__main > .dc-ds-shell__topbar .global-search-form { width: 100%; min-width: 0; max-width: 360px; }
+                .dc-ds-shell__main > .dc-ds-shell__topbar .org-label,
+                .dc-ds-shell__main > .dc-ds-shell__topbar .username-text,
+                .dc-ds-shell__main > .dc-ds-shell__topbar .profile-caret { display: none; }
+                .dc-ds-shell__main > .dc-ds-shell__topbar .profile-trigger { padding-left: 2px; padding-right: 2px; }
             }
             @media (max-width: 640px) {
                 .page-wrap { padding: 0 16px 32px; }
@@ -715,7 +721,7 @@
                 .workspace-kicker-row { gap: 6px; }
                 .global-search-form { display: none; }
                 .nav-icon-search { display: inline-flex; align-items: center; }
-                .sidebar-container { width: 64px; }
+                .dc-ds-shell__sidebar { width: 64px; }
                 .sidebar-header { height: 64px; justify-content: center; padding: 0; }
                 .sidebar-brand { flex: 0 0 auto; }
                 .sidebar-brand .logo-wordmark { display: none; }
@@ -727,10 +733,10 @@
                 .nav-link { justify-content: center; min-height: 42px; padding: 0; font-size: 0; border-radius: 8px; }
                 .nav-link svg { width: 19px; height: 19px; }
                 .nav-link.active { border-color: var(--sidebar-fixed-active-border); }
-                .main-area { min-width: 0; }
+                .dc-ds-shell__main { min-width: 0; }
             }
             @media (max-width: 900px) {
-                .sidebar-container {
+                .dc-ds-shell__sidebar {
                     position: fixed;
                     inset: 0 auto 0 0;
                     z-index: 80;
@@ -739,9 +745,9 @@
                     transition: transform .2s ease;
                     box-shadow: 18px 0 40px rgba(8, 18, 35, .22);
                 }
-                body.mobile-nav-open .sidebar-container { transform: translateX(0); }
+                body.mobile-nav-open .dc-ds-shell__sidebar { transform: translateX(0); }
                 .sidebar-header { height: 76px; justify-content: center; padding: 0; }
-                .sidebar-container > .rail-toggle-btn { display: none; }
+                .dc-ds-shell__sidebar > .rail-toggle-btn { display: none; }
                 .sidebar-brand { flex: 0 0 auto; }
                 .sidebar-brand .logo-wordmark { display: none; }
                 .sidebar-brand .logo-mark { display: block; }
@@ -752,7 +758,7 @@
                 .nav-link { justify-content: flex-start; min-height: 44px; padding: 0 8px; font-size: 13px; }
                 .nav-link svg { width: 18px; height: 18px; }
                 .nav-group-items { padding-left: 36px; }
-                .mobile-nav-toggle {
+                .dc-ds-shell__mobile-toggle {
                     width: 40px;
                     height: 40px;
                     display: inline-grid;
@@ -764,9 +770,9 @@
                     color: var(--text-primary);
                     cursor: pointer;
                 }
-                .mobile-nav-toggle:hover { background: var(--well); }
-                .mobile-nav-toggle svg { width: 20px; height: 20px; }
-                .sidebar-scrim {
+                .dc-ds-shell__mobile-toggle:hover { background: var(--well); }
+                .dc-ds-shell__mobile-toggle svg { width: 20px; height: 20px; }
+                .dc-ds-shell__scrim {
                     position: fixed;
                     inset: 0;
                     z-index: 70;
@@ -774,14 +780,14 @@
                     background: rgba(8, 18, 35, .45);
                     backdrop-filter: blur(2px);
                 }
-                body.mobile-nav-open .sidebar-scrim { display: block; }
+                body.mobile-nav-open .dc-ds-shell__scrim { display: block; }
                 body.mobile-nav-open { overflow: hidden; }
             }
 
             /* Shared Command Center rail. This is intentionally unscoped:
                navigation is product chrome, never page chrome. A route may
                change the work surface, but it must not change the sidebar. */
-            .sidebar-container {
+            .dc-ds-shell__sidebar {
                 position: relative;
                 width: 225px;
                 z-index: 70;
@@ -850,7 +856,7 @@
             .sidebar-profile svg { color: color-mix(in srgb, var(--clmone-white) 58%, transparent); }
 
             @media (max-width: 900px) {
-                .sidebar-container {
+                .dc-ds-shell__sidebar {
                     position: fixed;
                     inset: 0 auto 0 0;
                     z-index: 80;
@@ -860,9 +866,9 @@
                     transform: translateX(-100%);
                     box-shadow: 18px 0 40px rgba(8, 18, 35, .22);
                 }
-                body.mobile-nav-open .sidebar-container { transform: translateX(0); }
+                body.mobile-nav-open .dc-ds-shell__sidebar { transform: translateX(0); }
                 .sidebar-header { height: 76px; justify-content: center; padding: 0; }
-                .sidebar-container > .rail-toggle-btn { display: none; }
+                .dc-ds-shell__sidebar > .rail-toggle-btn { display: none; }
                 .sidebar-brand { height: auto; flex-basis: auto; padding: 0; }
                 .sidebar-padding { padding: 8px 16px 20px; }
                 .nav-link { min-height: 44px; justify-content: flex-start; padding: 0 10px; font-size: 13px; }
@@ -873,7 +879,3 @@
             /* Page chrome is intentionally title-led. Contextual guidance is
                controlled by its owning component so form help, validation,
                and accessibility relationships remain available. */
-            body[data-design-system=casefile] .topbar-page-subtitle {
-                display: none;
-            }
-

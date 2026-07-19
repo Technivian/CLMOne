@@ -19,14 +19,14 @@
     <div class="page-actions">
       <form method="post" action="{% url 'contracts:mark_all_notifications_read' %}">
         {% csrf_token %}
-        <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border dc-ds-button dc-ds-button--quiet btn-ghost">Mark all as read</button>
+        <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border dc-ds-button dc-ds-button--quiet">Mark all as read</button>
       </form>
     </div>
     {% endif %}
   </div>
 
   <div class="flex flex-wrap gap-2 mb-6">
-    <a href="{% url 'contracts:notification_list' %}" class="chip {% if not filter_state and not filter_type %}chip-active{% else %}chip-inactive{% endif %}">All</a>
+    <a href="{% url 'contracts:notification_list' %}" class="chip {% if not filter_state and filter_type %}chip-active{% else %}chip-inactive{% endif %}">All</a>
     <a href="{% url 'contracts:notification_list' %}?state=unread" class="chip {% if filter_state == 'unread' %}chip-active{% else %}chip-inactive{% endif %}">Unread</a>
     <a href="{% url 'contracts:notification_list' %}?state=read" class="chip {% if filter_state == 'read' %}chip-active{% else %}chip-inactive{% endif %}">Read</a>
     <a href="{% url 'contracts:notification_list' %}?type=SYSTEM" class="chip {% if filter_type == 'SYSTEM' %}chip-active{% else %}chip-inactive{% endif %}">System</a>

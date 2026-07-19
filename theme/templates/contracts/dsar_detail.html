@@ -19,7 +19,7 @@
             <a href="{% url 'contracts:dsar_list' %}" class="dsar-back">&larr; Back to list</a>
             <div class="dsar-title">{{ object }}</div>
         </div>
-        <a href="{% url 'contracts:dsar_update' object.pk %}" class="dc-ds-button dc-ds-button--quiet btn-quiet">Edit</a>
+        <a href="{% url 'contracts:dsar_update' object.pk %}" class="dc-ds-button dc-ds-button--quiet">Edit</a>
     </div>
     <div class="panel dsar-panel">
             <div class="dsar-field"><span class="dsar-label">Reference</span><p class="dsar-value">{{ object.reference_number }}</p></div>

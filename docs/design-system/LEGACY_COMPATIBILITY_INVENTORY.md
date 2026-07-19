@@ -1,53 +1,58 @@
-# Legacy compatibility inventory
+# Legacy compatibility inventory (Phase 6 — current)
 
-Phase 1 retains every entry below. They are compatibility APIs, not approved
-targets for new authenticated-app work. The complete token-alias mapping is
-kept beside canonical replacements in
-`theme/static/css/clmone-tokens.css`.
+Status: **Authoritative** for the authenticated app as of 2026-07-19.
+
+Phase 6 retires authenticated-app `btn-*` / `badge-*` dual classes. Entries
+below are **approved exceptions** or **retired-but-defined** CSS adapters.
+New authenticated work must use `.dc-ds-*` only.
+
+Historical Phase 1 inventory (superseded, retained):
+[`LEGACY_COMPATIBILITY_INVENTORY_PHASE1.md`](LEGACY_COMPATIBILITY_INVENTORY_PHASE1.md).
+
+Phase 6 evidence: [`PHASE_6_LEGACY_RETIREMENT.md`](PHASE_6_LEGACY_RETIREMENT.md).  
+ADR/PDR 0008: [`docs/adr/0008-frontend-design-system-phase-1.md`](../adr/0008-frontend-design-system-phase-1.md).  
+Optional non-blocking follow-up: [`PHASE_6_1_PUBLIC_SHELL_FOLLOWUP.md`](PHASE_6_1_PUBLIC_SHELL_FOLLOWUP.md).
+
+## Approved template exceptions (may still use legacy classes)
+
+- `theme/templates/landing.html` (uses `lp-btn-*`, not legacy `btn-*`)
+- `theme/templates/legal_front_door.html`
+- `theme/templates/base_fullscreen.html`
+- `theme/templates/registration/**`
+- `theme/templates/404.html`, `403.html`, `500.html`
 
 ## Deprecated token aliases
 
-`--ds-color-shell`, `--ds-color-shell-border`, `--ds-color-canvas`,
-`--ds-color-surface`, `--ds-color-surface-muted`,
-`--ds-color-surface-raised`, `--ds-color-border`,
-`--ds-color-border-strong`, `--ds-color-text`,
-`--ds-color-text-secondary`, `--ds-color-text-muted`, `--ds-color-trust`,
-`--ds-color-trust-hover`, `--ds-color-trust-soft`, `--ds-color-action`,
-`--ds-color-action-hover`, `--ds-color-action-soft`, `--ds-color-progress`,
-`--ds-color-progress-soft`, `--ds-color-attention`,
-`--ds-color-attention-soft`, `--ds-color-danger`, `--ds-color-danger-soft`,
-`--ds-color-special`, `--ds-color-special-soft`, `--ds-color-success`,
-`--ds-color-success-soft`, `--ds-font-sans`, `--ds-font-serif`,
-`--ds-text-xs`, `--ds-text-sm`, `--ds-text-md`, `--ds-text-lg`,
-`--ds-text-xl`, `--ds-text-title`, `--ds-line-tight`, `--ds-line-base`,
-`--ds-space-1`, `--ds-space-2`, `--ds-space-3`, `--ds-space-4`,
-`--ds-space-5`, `--ds-space-6`, `--ds-space-8`, `--ds-space-10`,
-`--ds-space-16`, `--ds-space-20`, `--ds-space-24`, `--ds-space-30`,
-`--ds-grid-columns`, `--ds-grid-margin`, `--ds-grid-gutter`,
-`--ds-radius-sm`, `--ds-radius-md`, `--ds-radius-lg`, `--ds-radius-pill`,
-`--ds-shadow-hairline`, `--ds-focus-ring`, `--ds-motion-fast`,
-`--ds-motion-base`, `--ds-motion-slow`, `--ds-ease-standard`,
-`--ds-chart-1`, `--ds-chart-2`, `--ds-chart-3`, `--ds-chart-4`,
-`--ds-chart-5`, `--ds-chart-grid`, `--ds-chart-axis`, `--ds-page-max`,
-`--ds-page-x`, `--ds-page-top`, `--ds-page-bottom`, `--ds-control-height`,
-`--ds-surface-shadow`, and `--ds-surface-shadow-hover`.
+Unchanged from Phase 1 — see `theme/static/css/clmone-tokens.css` for the
+`--ds-*` compatibility map (includes `--ds-color-shell` and peers). Do not
+introduce new `--ds-*` consumers. Prefer `--seal` / `--ink-*` / `--dc-ds-*`.
 
-## Legacy selector families
+## Legacy selector families (disposition)
 
-| Family | Current owner | Consumer scope | Phase 2 disposition |
-|---|---|---|---|
-| `.btn*`, `.btn-cta`, `.btn-quiet`, `.btn-primary-grad` | `components.css`, shell compatibility CSS, local templates | authenticated app | Map to `.dc-ds-button`; do not delete in Phase 1. |
-| `.card*`, `.panel*`, `.kpi-*`, `.summary-*`, `.stat*` | `components.css`, compatibility CSS | dashboards, records, settings | Map to `.dc-ds-surface`/metric primitives. |
-| `.table*`, `.wq-*`, `.cw-*` | components, partials, list templates | repository and queues | Map to `.dc-ds-table` and work rows. |
-| `.badge-*`, `.status-*`, `.chip-*` | components, shell compatibility CSS | all authenticated routes | Map to `.dc-ds-badge` and `.dc-ds-choice`. |
-| `.input`, `.form-*`, bare controls | components, compatibility CSS, local forms | forms and builders | Map to Casefile form-field/control contracts. |
-| `.arch-*` | `components.css` | list/detail/workspace archetypes | Replace by scaffold, hero, rail, actions, and choice primitives. |
-| `.cform-*`, `.dpa-*`, `.nda-*`, `.msa-*`, `.crs-*` | workflow/review templates | specialised routes | Keep route-scoped until a dedicated migration. |
-| `.cc-v3-*` | `command-center.css`, dashboard only | dashboard | Keep private; promote only reusable decisions. |
-| `.lp-*` and legal document typography | landing/legal templates | public and document rendering | Explicitly separate from authenticated-app migration. |
+| Family | Disposition (Phase 6) |
+|---|---|
+| `.btn*`, `.btn-cta`, `.btn-quiet`, `.btn-primary-grad` | CSS retained for public exceptions; **zero authenticated class consumers** |
+| `.badge-*` | CSS retained for public exceptions; **zero authenticated class consumers** |
+| `.card*`, `.panel*`, `.kpi-*`, … | Map incrementally to `.dc-ds-surface` / metric; not blocking Phase 6 |
+| `.table*`, `.wq-*`, `.cw-*` | List scaffolds may retain domain structure; controls are `.dc-ds-*` |
+| `.cform-*`, `.dpa-step-*`, builder pickers | Route-scoped unique chrome OK |
+| `.cc-v3-*` | Private to Command Center; expressive hero preserved; **zero-consumer orphans purged** |
+| `.lp-*` / legal document typography | Explicitly out of authenticated migration |
 
-## Removal gate
+## Removal gate (still required for global CSS aliases)
 
-Before deleting a selector or alias, run a repository-wide consumer search,
-record zero consumers in the migration PR, and include visual coverage for
-each prior route family. Phase 1 performs none of these removals.
+Before deleting a CSS alias definition:
+
+1. Repository-wide consumer search including public exceptions reaches zero, **or**
+2. Public shell is migrated in optional Phase 6.1.
+3. Record evidence in the PR; update visual baselines only via explicit,
+   reviewed local regeneration (`PLAYWRIGHT_UPDATE_SNAPSHOTS=1`) — never in CI.
+
+## Enforcement
+
+- `scripts/check_design_system_drift.sh`
+- `scripts/check_design_system_contrast.sh`
+- `scripts/check_visual_baselines.sh` (`--update-snapshots=none`)
+- `.github/workflows/design-system-guardrails.yml`
+- `.github/workflows/visual-regression.yml`
+- Foundation gate: `test_phase_six_authenticated_templates_have_no_btn_badge_dual_classes`

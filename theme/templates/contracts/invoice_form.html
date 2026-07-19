@@ -19,8 +19,8 @@
           {% endfor %}
         </div>
         <div class="flex gap-3 pt-4">
-          <button type="submit" class="btn-primary-grad">{% if form.instance.pk %}Update{% else %}Create{% endif %} Invoice</button>
-          <a href="{% url 'contracts:invoice_list' %}" class="btn-ghost">Cancel</a>
+          <button type="submit" class="dc-ds-button--primary">{% if form.instance.pk %}Update{% else %}Create{% endif %} Invoice</button>
+          <a href="{% url 'contracts:invoice_list' %}" class="dc-ds-button--quiet">Cancel</a>
         </div>
       </form>
     </div>

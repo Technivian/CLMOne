@@ -23,23 +23,23 @@
                 </div>
             </div>
             <div class="workspace-tools flex flex-wrap gap-2">
-                <a href="{% url 'contracts:signature_request_list' %}" class="inline-flex items-center px-3 py-2 text-sm rounded-lg border btn-ghost">Back to Workspace</a>
+                <a href="{% url 'contracts:signature_request_list' %}" class="dc-ds-button dc-ds-button--quiet inline-flex items-center px-3 py-2 text-sm rounded-lg border">Back to Workspace</a>
                 {% if can_resend %}
                 <form method="post" action="{{ resend_url }}">
                     {% csrf_token %}
-                    <button type="submit" class="inline-flex items-center px-3 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 btn-primary-grad">Resend</button>
+                    <button type="submit" class="dc-ds-button dc-ds-button--primary inline-flex items-center px-3 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90">Resend</button>
                 </form>
                 {% endif %}
                 {% if can_cancel %}
                 <form method="post" action="{{ cancel_url }}">
                     {% csrf_token %}
-                    <button type="submit" class="inline-flex items-center px-3 py-2 text-sm rounded-lg border btn-ghost">Cancel</button>
+                    <button type="submit" class="dc-ds-button dc-ds-button--quiet inline-flex items-center px-3 py-2 text-sm rounded-lg border">Cancel</button>
                 </form>
                 {% endif %}
                 {% if can_retry %}
                 <form method="post" action="{{ retry_url }}">
                     {% csrf_token %}
-                    <button type="submit" class="inline-flex items-center px-3 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 btn-primary-grad">Retry</button>
+                    <button type="submit" class="dc-ds-button dc-ds-button--primary inline-flex items-center px-3 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90">Retry</button>
                 </form>
                 {% endif %}
             </div>
@@ -94,9 +94,9 @@
                             <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                                 <div>
                                     <div class="flex items-center gap-2 flex-wrap">
-                                        <span class="badge-sm {% if signer.request.status == 'SIGNED' %}badge-green{% elif signer.request.status == 'VIEWED' %}badge-purple{% elif signer.request.status == 'SENT' %}badge-blue{% elif signer.request.status == 'PENDING' %}badge-yellow{% else %}badge-red{% endif %}">Signer {{ signer.position }}</span>
+                                        <span class="{% if signer.request.status == 'SIGNED' %}dc-ds-badge--success{% elif signer.request.status == 'VIEWED' %}dc-ds-badge--special{% elif signer.request.status == 'SENT' %}dc-ds-badge--progress{% elif signer.request.status == 'PENDING' %}dc-ds-badge--attention{% else %}dc-ds-badge--danger{% endif %}">Signer {{ signer.position }}</span>
                                         <span class="text-sm font-semibold c-primary">{{ signer.request.signer_name }}</span>
-                                        {% if signer.is_current %}<span class="badge-sm badge-blue">Current position</span>{% endif %}
+                                        {% if signer.is_current %}<span class="dc-ds-badge--progress">Current position</span>{% endif %}
                                     </div>
                                     <div class="text-xs c-muted mt-1">{{ signer.request.signer_email }}{% if signer.request.signer_role %} · {{ signer.request.signer_role }}{% endif %}</div>
                                 </div>
@@ -133,7 +133,7 @@
                         <div class="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
                             <div class="space-y-1">
                                 <div class="flex items-center gap-2 flex-wrap">
-                                    <span class="badge-sm {% if event.action == 'created' %}badge-gray{% elif event.action == 'sent' %}badge-blue{% elif event.action == 'viewed' %}badge-purple{% elif event.action == 'signed' %}badge-green{% elif event.action == 'failed' %}badge-red{% elif event.action == 'resent' %}badge-yellow{% else %}badge-gray{% endif %}">{{ event.action|title }}</span>
+                                    <span class="{% if event.action == 'created' %}dc-ds-badge--neutral{% elif event.action == 'sent' %}dc-ds-badge--progress{% elif event.action == 'viewed' %}dc-ds-badge--special{% elif event.action == 'signed' %}dc-ds-badge--success{% elif event.action == 'failed' %}dc-ds-badge--danger{% elif event.action == 'resent' %}dc-ds-badge--attention{% else %}dc-ds-badge--neutral{% endif %}">{{ event.action|title }}</span>
                                     <span class="text-sm font-medium c-primary">{{ event.summary }}</span>
                                 </div>
                                 <div class="text-xs c-muted">{{ event.timestamp|default:"—" }} · {{ event.actor }}</div>
@@ -158,7 +158,7 @@
                 <div class="panel-inner detail-stack">
                     <div class="detail-row"><span class="detail-label">Contract</span><span class="detail-value">{{ contract.title }}</span></div>
                     <div class="detail-row"><span class="detail-label">Provider</span><span class="detail-value">{{ provider_label }}</span></div>
-                    <div class="detail-row"><span class="detail-label">Status</span><span class="badge-sm {% if packet_status == 'SIGNED' %}badge-green{% elif packet_status == 'DECLINED' or packet_status == 'EXPIRED' or packet_status == 'CANCELLED' %}badge-red{% elif packet_status == 'VIEWED' %}badge-purple{% elif packet_status == 'SENT' %}badge-blue{% else %}badge-yellow{% endif %}">{{ packet_status_display }}</span></div>
+                    <div class="detail-row"><span class="detail-label">Status</span><span class="{% if packet_status == 'SIGNED' %}dc-ds-badge--success{% elif packet_status == 'DECLINED' or packet_status == 'EXPIRED' or packet_status == 'CANCELLED' %}dc-ds-badge--danger{% elif packet_status == 'VIEWED' %}dc-ds-badge--special{% elif packet_status == 'SENT' %}dc-ds-badge--progress{% else %}dc-ds-badge--attention{% endif %}">{{ packet_status_display }}</span></div>
                     <div class="detail-row"><span class="detail-label">Current signer</span><span class="detail-value">{{ current_signer_name|default:"—" }}</span></div>
                     <div class="detail-row"><span class="detail-label">Current position</span><span class="detail-value">{{ current_position|default:"—" }}</span></div>
                     <div class="detail-row"><span class="detail-label">Signed</span><span class="detail-value">{{ signed_count }}</span></div>
@@ -196,7 +196,7 @@
                                 <div class="font-medium c-primary">{{ request.signer_name }}</div>
                                 <div class="text-xs c-muted">{{ request.signer_email }}</div>
                             </div>
-                            <span class="badge-sm {% if request.status == 'SIGNED' %}badge-green{% elif request.status == 'DECLINED' or request.status == 'EXPIRED' or request.status == 'CANCELLED' %}badge-red{% elif request.status == 'VIEWED' %}badge-purple{% elif request.status == 'SENT' %}badge-blue{% else %}badge-yellow{% endif %}">{{ request.get_status_display }}</span>
+                            <span class="{% if request.status == 'SIGNED' %}dc-ds-badge--success{% elif request.status == 'DECLINED' or request.status == 'EXPIRED' or request.status == 'CANCELLED' %}dc-ds-badge--danger{% elif request.status == 'VIEWED' %}dc-ds-badge--special{% elif request.status == 'SENT' %}dc-ds-badge--progress{% else %}dc-ds-badge--attention{% endif %}">{{ request.get_status_display }}</span>
                         </div>
                         <div class="mt-2 text-xs c-muted">Order {{ request.order }} · Provider ref {{ request.external_id|default:"—" }}</div>
                     </div>

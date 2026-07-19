@@ -1,0 +1,37 @@
+name: Design System Guardrails
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  design-system-anti-drift:
+    name: Anti-drift + contrast
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Colour contrast verification
+        run: bash scripts/check_design_system_contrast.sh
+
+      - name: Design-system anti-drift
+        run: bash scripts/check_design_system_drift.sh
+
+      - name: Foundation phase gates
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements/dev.txt
+          DJANGO_SETTINGS_MODULE=config.settings_test python manage.py test \
+            tests.test_design_system_phase1_foundation \
+            tests.test_design_system_phase2a \
+            -v 1

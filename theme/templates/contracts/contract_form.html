@@ -639,9 +639,9 @@ body.nav-collapsed .cform-bottom-actions {
       </div>
     </div>
     <div class="arch-header-right" id="contract-form-top-actions">
-      <a href="{% url 'contracts:repository' %}" class="dc-ds-button dc-ds-button--link btn-link">Cancel</a>
-      <button type="submit" name="preview_draft" value="1" class="dc-ds-button dc-ds-button--quiet btn-quiet">Save draft</button>
-      <button type="submit" class="dc-ds-button dc-ds-button--primary btn-cta">
+      <a href="{% url 'contracts:repository' %}" class="dc-ds-button dc-ds-button--link">Cancel</a>
+      <button type="submit" name="preview_draft" value="1" class="dc-ds-button dc-ds-button--quiet">Save draft</button>
+      <button type="submit" class="dc-ds-button dc-ds-button--primary">
         {% if form.instance.pk %}Update Contract{% else %}Create contract{% endif %}
       </button>
     </div>
@@ -1033,7 +1033,7 @@ body.nav-collapsed .cform-bottom-actions {
               {% if section.badges %}
               <div class="flex flex-wrap gap-2">
                 {% for badge in section.badges %}
-                <span class="badge-sm {% if badge.tone == 'indigo' %}badge-purple{% elif badge.tone == 'blue' %}badge-blue{% elif badge.tone == 'red' %}badge-red{% elif badge.tone == 'amber' %}badge-yellow{% elif badge.tone == 'emerald' %}badge-green{% else %}badge-gray{% endif %}" title="{{ badge.label }}">{{ badge.label }}</span>
+                <span class="{% if badge.tone == 'indigo' %}dc-ds-badge--special{% elif badge.tone == 'blue' %}dc-ds-badge--progress{% elif badge.tone == 'red' %}dc-ds-badge--danger{% elif badge.tone == 'amber' %}dc-ds-badge--attention{% elif badge.tone == 'emerald' %}dc-ds-badge--success{% else %}dc-ds-badge--neutral{% endif %}" title="{{ badge.label }}">{{ badge.label }}</span>
                 {% endfor %}
               </div>
               {% endif %}
@@ -1133,8 +1133,8 @@ body.nav-collapsed .cform-bottom-actions {
     {% if not form.instance.pk %}
     <div class="cform-bottom-actions" id="contract-form-sticky-actions" aria-label="Contract request actions">
       <div class="cform-bottom-actions__cluster">
-        <button type="submit" name="preview_draft" value="1" class="dc-ds-button dc-ds-button--quiet btn-quiet">Save draft</button>
-        <button type="submit" class="dc-ds-button dc-ds-button--primary btn-cta" id="submit-contract-btn">Create contract</button>
+        <button type="submit" name="preview_draft" value="1" class="dc-ds-button dc-ds-button--quiet">Save draft</button>
+        <button type="submit" class="dc-ds-button dc-ds-button--primary" id="submit-contract-btn">Create contract</button>
       </div>
     </div>
     {% endif %}
@@ -1221,7 +1221,7 @@ body.nav-collapsed .cform-bottom-actions {
     function insertSectionAfter(ref) {
         const card = buildBlankSection();
         const badges = card.querySelector('[data-draft-badges]');
-        if (badges) badges.innerHTML = '<span class="badge-sm badge-gray">New section</span>';
+        if (badges) badges.innerHTML = '<span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--neutral">New section</span>';
         const links = card.querySelector('[data-draft-links]');
         if (links) links.innerHTML = '<span class="draft-source-label">No source clause.</span>';
         list.insertBefore(card, ref?.nextSibling || null);

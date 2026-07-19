@@ -24,7 +24,7 @@
             </div>
             <div class="workspace-tools">
                 {% if back_url %}
-                <a href="{{ back_url }}" class="inline-flex items-center px-3 py-2 text-sm rounded-lg border btn-ghost">Back</a>
+                <a href="{{ back_url }}" class="dc-ds-button dc-ds-button--quiet inline-flex items-center px-3 py-2 text-sm rounded-lg border">Back</a>
                 {% endif %}
             </div>
         </div>
@@ -41,7 +41,7 @@
                 <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div class="space-y-1">
                         <div class="flex items-center gap-2 flex-wrap">
-                            <span class="badge-sm {{ entry.action_class }}">{{ entry.action }}</span>
+                            <span class="{{ entry.action_class }}">{{ entry.action }}</span>
                             <span class="text-sm font-medium c-primary">{{ entry.summary }}</span>
                         </div>
                         <div class="text-xs c-muted">
@@ -50,7 +50,7 @@
                         {% if entry.changed_fields %}
                         <div class="flex flex-wrap gap-2 pt-1">
                             {% for field in entry.changed_fields %}
-                            <span class="badge-sm badge-gray">{{ field }}</span>
+                            <span class="dc-ds-badge--neutral">{{ field }}</span>
                             {% endfor %}
                         </div>
                         {% endif %}

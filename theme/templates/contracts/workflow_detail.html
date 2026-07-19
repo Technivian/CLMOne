@@ -47,9 +47,9 @@
             </div>
             <div class="workspace-tools">
                 {% if workflow.contract %}
-                <a href="{% url 'contracts:contract_detail' workflow.contract.pk %}" class="inline-flex items-center px-3 py-2 text-sm rounded-lg border btn-ghost">View Contract</a>
+                <a href="{% url 'contracts:contract_detail' workflow.contract.pk %}" class="dc-ds-button dc-ds-button--quiet inline-flex items-center px-3 py-2 text-sm rounded-lg border">View Contract</a>
                 {% endif %}
-                <a href="{% url 'contracts:workflow_dashboard' %}" class="inline-flex items-center px-3 py-2 text-sm rounded-lg border btn-ghost">Back to Dashboard</a>
+                <a href="{% url 'contracts:workflow_dashboard' %}" class="dc-ds-button dc-ds-button--quiet inline-flex items-center px-3 py-2 text-sm rounded-lg border">Back to Dashboard</a>
             </div>
         </div>
         <div class="workspace-toolbar">
@@ -76,13 +76,13 @@
     <div class="panel mb-6">
         <div class="panel-inner">
             <div class="flex items-center gap-2 flex-wrap">
-                <span class="badge-sm {% if workflow.status == 'DRAFT' %}badge-blue{% else %}badge-gray{% endif %}">Draft</span>
+                <span class="{% if workflow.status == 'DRAFT' %}dc-ds-badge--progress{% else %}dc-ds-badge--neutral{% endif %}">Draft</span>
                 <span class="c-muted">→</span>
-                <span class="badge-sm {% if workflow.status == 'ACTIVE' %}badge-yellow{% else %}badge-gray{% endif %}">Review</span>
+                <span class="{% if workflow.status == 'ACTIVE' %}dc-ds-badge--attention{% else %}dc-ds-badge--neutral{% endif %}">Review</span>
                 <span class="c-muted">→</span>
-                <span class="badge-sm {% if workflow.status == 'ACTIVE' %}badge-purple{% else %}badge-gray{% endif %}">Approval</span>
+                <span class="{% if workflow.status == 'ACTIVE' %}dc-ds-badge--special{% else %}dc-ds-badge--neutral{% endif %}">Approval</span>
                 <span class="c-muted">→</span>
-                <span class="badge-sm {% if workflow.status == 'COMPLETED' %}badge-green{% else %}badge-gray{% endif %}">Completed</span>
+                <span class="{% if workflow.status == 'COMPLETED' %}dc-ds-badge--success{% else %}dc-ds-badge--neutral{% endif %}">Completed</span>
             </div>
         </div>
     </div>
@@ -115,18 +115,18 @@
                             <div class="flex items-center gap-2 flex-wrap">
                                 <h4 class="text-sm font-semibold c-primary">{{ step.name }}</h4>
                                 {% if step.status == 'COMPLETED' %}
-                                <span class="badge-sm badge-green">{{ step.get_status_display }}</span>
+                                <span class="dc-ds-badge--success">{{ step.get_status_display }}</span>
                                 {% elif step.status == 'IN_PROGRESS' %}
-                                <span class="badge-sm badge-blue">{{ step.get_status_display }}</span>
+                                <span class="dc-ds-badge--progress">{{ step.get_status_display }}</span>
                                 {% elif step.status == 'ESCALATED' %}
-                                <span class="badge-sm badge-red">{{ step.get_status_display }}</span>
+                                <span class="dc-ds-badge--danger">{{ step.get_status_display }}</span>
                                 {% elif step.status == 'SKIPPED' %}
-                                <span class="badge-sm badge-gray">{{ step.get_status_display }}</span>
+                                <span class="dc-ds-badge--neutral">{{ step.get_status_display }}</span>
                                 {% else %}
-                                <span class="badge-sm badge-yellow">{{ step.get_status_display }}</span>
+                                <span class="dc-ds-badge--attention">{{ step.get_status_display }}</span>
                                 {% endif %}
                                 {% if step.template_step %}
-                                <span class="badge-sm badge-purple">{{ step.template_step.get_step_kind_display }}</span>
+                                <span class="dc-ds-badge--special">{{ step.template_step.get_step_kind_display }}</span>
                                 {% endif %}
                             </div>
                             {% if step.template_step and step.template_step.condition_expression %}
@@ -185,13 +185,13 @@
                 <div class="panel-head">
                     <span class="panel-title">Workflow Summary</span>
                     {% if workflow.status == 'ACTIVE' %}
-                    <span class="badge-sm badge-green">{{ workflow.get_status_display }}</span>
+                    <span class="dc-ds-badge--success">{{ workflow.get_status_display }}</span>
                     {% elif workflow.status == 'COMPLETED' %}
-                    <span class="badge-sm badge-blue">{{ workflow.get_status_display }}</span>
+                    <span class="dc-ds-badge--progress">{{ workflow.get_status_display }}</span>
                     {% elif workflow.status == 'CANCELLED' %}
-                    <span class="badge-sm badge-red">{{ workflow.get_status_display }}</span>
+                    <span class="dc-ds-badge--danger">{{ workflow.get_status_display }}</span>
                     {% else %}
-                    <span class="badge-sm badge-gray">{{ workflow.get_status_display }}</span>
+                    <span class="dc-ds-badge--neutral">{{ workflow.get_status_display }}</span>
                     {% endif %}
                 </div>
                 <div class="panel-inner detail-stack text-sm">
@@ -226,7 +226,7 @@
                     <div class="subpanel-row">
                         <div class="flex items-center justify-between gap-3">
                             <div class="font-medium c-primary">{{ rule.name }}</div>
-                            <span class="badge-sm {% if rule.is_active %}badge-green{% else %}badge-gray{% endif %}">{{ rule.get_trigger_type_display }}</span>
+                            <span class="{% if rule.is_active %}dc-ds-badge--success{% else %}dc-ds-badge--neutral{% endif %}">{{ rule.get_trigger_type_display }}</span>
                         </div>
                         <div class="mt-1 c-muted">{{ rule.get_approval_step_display }} · {{ rule.trigger_value }}</div>
                     </div>
@@ -246,7 +246,7 @@
                     <div class="subpanel-row">
                         <div class="flex items-center justify-between gap-3">
                             <div class="font-medium c-primary">{{ request_item.approval_step }}</div>
-                            <span class="badge-sm {% if request_item.status == 'APPROVED' %}badge-green{% elif request_item.status == 'REJECTED' %}badge-red{% elif request_item.status == 'ESCALATED' %}badge-blue{% else %}badge-yellow{% endif %}">{{ request_item.get_status_display }}</span>
+                            <span class="{% if request_item.status == 'APPROVED' %}dc-ds-badge--success{% elif request_item.status == 'REJECTED' %}dc-ds-badge--danger{% elif request_item.status == 'ESCALATED' %}dc-ds-badge--progress{% else %}dc-ds-badge--attention{% endif %}">{{ request_item.get_status_display }}</span>
                         </div>
                         <div class="mt-1 c-muted">
                             {{ request_item.contract.title }}
@@ -268,7 +268,7 @@
                     {% for entry in workflow_audit_feed %}
                     <div class="subpanel-row">
                         <div class="flex items-center justify-between gap-3">
-                            <span class="badge-sm {{ entry.action_class }}">{{ entry.action }}</span>
+                            <span class="{{ entry.action_class }}">{{ entry.action }}</span>
                             <span class="text-xs c-muted">{{ entry.timestamp|date:"M d, H:i" }}</span>
                         </div>
                         <div class="mt-2 font-medium c-primary">{{ entry.summary }}</div>
@@ -276,7 +276,7 @@
                         {% if entry.changed_fields %}
                         <div class="mt-2 flex flex-wrap gap-2">
                             {% for field in entry.changed_fields %}
-                            <span class="badge-sm badge-gray">{{ field }}</span>
+                            <span class="dc-ds-badge--neutral">{{ field }}</span>
                             {% endfor %}
                         </div>
                         {% endif %}
@@ -326,7 +326,7 @@
                                 {% if add_step_form.due_date.errors %}<p class="mt-1 text-xs c-danger">{{ add_step_form.due_date.errors.0 }}</p>{% endif %}
                             </div>
                         </div>
-                        <button type="submit" class="btn-primary-grad text-white w-full">Add Step</button>
+                        <button type="submit" class="dc-ds-button dc-ds-button--primary text-white w-full">Add Step</button>
                     </form>
                 </div>
             </div>
@@ -358,8 +358,8 @@
                     </div>
                 </div>
                 <div class="flex justify-end gap-3 mt-6">
-                    <button type="button" data-action="close-step-modal" class="btn-ghost">Cancel</button>
-                    <button type="submit" class="btn-primary-grad text-white">Update Step</button>
+                    <button type="button" data-action="close-step-modal" class="dc-ds-button--quiet">Cancel</button>
+                    <button type="submit" class="dc-ds-button dc-ds-button--primary text-white">Update Step</button>
                 </div>
             </form>
             </div>

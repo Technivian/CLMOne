@@ -29,7 +29,7 @@
       </td>
       <td>{% include 'components/_assignee_chip.html' with user=obligation.assigned_to %}</td>
       <td class="wq-col-num{% if obligation.is_overdue %} wq-due-overdue{% endif %}">{{ obligation.due_date|due_countdown }}</td>
-      <td><span class="badge-sm {{ obligation|obligation_compliance_badge_class }}">{{ obligation|obligation_compliance_label }}</span></td>
+      <td><span class=" dc-ds-badge--{{ obligation|obligation_compliance_badge_class|legacy_badge_tone }}">{{ obligation|obligation_compliance_label }}</span></td>
       <td class="wq-col-action">
         <details class="wq-kebab obligation-actions-menu">
           <summary aria-label="Actions for {{ obligation.title|truncatechars:50 }}" class="wq-kebab-trigger">

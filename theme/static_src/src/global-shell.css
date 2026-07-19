@@ -8,3 +8,6 @@
 @import "./global-shell/foundations.css";
 @import "./global-shell/shared-components.css";
 @import "./global-shell/legacy-layout.css";
+@import "./global-shell/shell-primitives.css";
+@import "./global-shell/workspaces.css";
+@import "./global-shell/workflow-builder-cockpit.css";

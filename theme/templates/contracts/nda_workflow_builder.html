@@ -91,7 +91,7 @@
 .cform-route-step.is-active-now .cform-route-step-dot { background: var(--primary); color: #fff; }
 .cform-route-step-name { font-size: 10.5px; font-weight: 650; color: var(--text-primary); }
 .cform-route-step-note { font-size: 9px; color: var(--text-muted); margin-top: 1px; }
-.btn-cta.is-guarded { opacity: 0.6; }
+.dc-ds-button--primary.is-guarded { opacity: 0.6; }
 @media (max-width: 1400px) {
   .nda-workflow-page .arch-workspace-grid { grid-template-columns: minmax(0, 1fr); }
   .nda-workflow-page .arch-workspace-sidebar { position: static; }
@@ -107,8 +107,8 @@
         <p class="nda-subtitle">AI-assisted drafting from approved templates and playbooks.</p>
       </div>
       <div class="nda-head-actions">
-        <a href="{% url 'contracts:contract_template_picker' %}" class="btn-link">Cancel</a>
-        <button type="submit" class="btn-cta" id="submit-nda-btn">Generate governed draft</button>
+        <a href="{% url 'contracts:contract_template_picker' %}" class="dc-ds-button dc-ds-button--ghost">Cancel</a>
+        <button type="submit" class="dc-ds-button dc-ds-button--primary" id="submit-nda-btn">Generate governed draft</button>
       </div>
     </div>
 

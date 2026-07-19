@@ -1084,6 +1084,13 @@ class ContractCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView
         ctx['can_view_approval_routing'] = can_manage_organization(
             self.request.user, get_user_organization(self.request.user),
         )
+        org = get_user_organization(self.request.user)
+        contract_type = (
+            ctx['form'].initial.get('contract_type')
+            or self.request.GET.get('type')
+            or Contract.ContractType.OTHER
+        )
+        ctx['governance_panel'] = get_governance_panel(org, contract_type, None)
         return ctx
 
     @staticmethod
@@ -1336,6 +1343,7 @@ class ContractUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin, UpdateVi
                 )
             except ContractTransitionError as exc:
                 form.add_error('status', str(exc))
+                messages.error(self.request, str(exc))
                 return self.form_invalid(form)
         if self.object.dpa_attached:
             from contracts.services.dpa_activation import ensure_dpa_review_pack

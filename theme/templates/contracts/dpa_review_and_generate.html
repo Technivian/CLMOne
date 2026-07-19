@@ -8,29 +8,6 @@
 </a>
 {% endblock %}
 {% block content %}
-<style nonce="{{ csp_nonce }}">
-  .dpa-review { max-width:1120px; margin:0 auto; }
-  .dpa-review-grid { display:grid; grid-template-columns:minmax(0, 1.25fr) minmax(300px, .75fr); gap:var(--space-20); align-items:start; }
-  .dpa-review-card { border:1px solid var(--color-border-soft); border-radius:var(--radius-subpanel); background:var(--card); box-shadow:var(--shadow-card); }
-  .dpa-review-head { padding:var(--space-20); border-bottom:1px solid var(--line); }
-  .dpa-review-title { margin:0; color:var(--ink-900); font:var(--text-heading); }
-  .dpa-review-copy { margin:var(--space-8) 0 0; color:var(--ink-500); font:var(--text-small); line-height:1.5; }
-  .dpa-summary-list { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:0; }
-  .dpa-summary-row { min-width:0; padding:var(--space-16) var(--space-20); border-bottom:1px solid var(--line); }
-  .dpa-summary-row:nth-child(odd) { border-right:1px solid var(--line); }
-  .dpa-summary-label { color:var(--ink-500); font:var(--text-meta); }
-  .dpa-summary-value { margin-top:var(--space-4); overflow-wrap:anywhere; color:var(--ink-800); font:var(--text-small); font-weight:650; line-height:1.45; }
-  .dpa-findings { display:grid; gap:var(--space-12); padding:var(--space-16); }
-  .dpa-finding { padding:var(--space-16); border:1px solid var(--color-status-warning-border); border-radius:var(--radius-control); background:var(--status-pending-bg); }
-  .dpa-finding.is-clear { border-color:var(--color-status-success-border); background:var(--status-positive-bg); }
-  .dpa-finding-title { margin:0; color:var(--ink-900); font:var(--text-small); font-weight:750; }
-  .dpa-finding-status { margin:var(--space-4) 0 0; color:var(--status-pending-fg); font:var(--text-meta); font-weight:700; }
-  .dpa-finding.is-clear .dpa-finding-status { color:var(--status-positive-fg); }
-  .dpa-finding-detail { margin:var(--space-8) 0 0; color:var(--ink-600); font:var(--text-meta); line-height:1.45; }
-  .dpa-review-actions { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:var(--space-12); margin-top:var(--space-20); }
-  @media (max-width:900px) { .dpa-review-grid { grid-template-columns:1fr; } }
-  @media (max-width:600px) { .dpa-summary-list { grid-template-columns:1fr; } .dpa-summary-row:nth-child(odd) { border-right:0; } .dpa-review-actions { justify-content:stretch; } .dpa-review-actions .dc-ds-button { flex:1; } }
-</style>
 <div class="dc-ds-page dpa-review">
   <div class="dpa-review-grid">
     <section class="dpa-review-card">

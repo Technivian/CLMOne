@@ -51,7 +51,7 @@ OLD_LAYOUT_NAV_LABELS = [
 
 def sidebar_html(response):
     content = response.content.decode()
-    start = content.index('<nav class="sidebar-container"')
+    start = content.index('<nav class="dc-ds-shell__sidebar"')
     end = content.index('</nav>', start)
     return content[start:end]
 

@@ -75,15 +75,21 @@ class ExpressiveDesignSystemContractTests(SimpleTestCase):
             '#000',
             '#061727',
             '#071726',
+            '#0b1b31',
             '#0b1b33',
             '#0b2638',
+            '#0c4b55',
             '#0d5c62',
+            '#102940',
+            '#102a42',
             '#102b42',
             '#102d46',
             '#75ded9',
+            '#c9f5f1',
             '#dffbf8',
             '#ffaaa1',
             '#ffd27b',
+            '#ffe2a0',
         }
         self.assertTrue(hex_values.issubset(approved_hex_values))
 

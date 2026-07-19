@@ -11,10 +11,10 @@
         <p class="dc-ds-subtitle">Search, review, and maintain document records across matters.</p>
     </div>
     <div class="dc-ds-actions">
-        <a href="{% url 'contracts:document_ocr_queue' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border dc-ds-button dc-ds-button--quiet btn-ghost">
+        <a href="{% url 'contracts:document_ocr_queue' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border dc-ds-button dc-ds-button--quiet">
             Text Extraction Queue
         </a>
-        <a href="{% url 'contracts:document_create' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 dc-ds-button dc-ds-button--primary btn-primary-grad">
+        <a href="{% url 'contracts:document_create' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 dc-ds-button dc-ds-button--primary">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
             Upload Document
         </a>
@@ -42,15 +42,15 @@
             <tr>
                 <td>
                     <a href="{% url 'contracts:document_detail' doc.pk %}" class="font-medium c-link">{{ doc.title|truncatechars:40 }}</a>
-                    {% if doc.is_privileged %}<span class="dc-ds-badge dc-ds-badge--sm badge-sm badge-yellow ml-1">Privileged</span>{% endif %}
-                    {% if doc.is_confidential %}<span class="dc-ds-badge dc-ds-badge--sm badge-sm badge-red ml-1">Confidential</span>{% endif %}
+                    {% if doc.is_privileged %}<span class="dc-ds-badge dc-ds-badge--sm ml-1 dc-ds-badge--attention">Privileged</span>{% endif %}
+                    {% if doc.is_confidential %}<span class="dc-ds-badge dc-ds-badge--sm ml-1 dc-ds-badge--danger">Confidential</span>{% endif %}
                 </td>
                 <td>{{ doc.get_document_type_display }}</td>
                 <td><span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ doc.status|document_status_badge_tone }}">{{ doc.get_status_display }}</span></td>
                 <td>{{ doc.matter.matter_number|default:"—" }}</td>
                 <td data-numeric>v{{ doc.version }}</td>
                 <td>{{ doc.created_at|date:"M d, Y" }}</td>
-                <td class="text-right"><a href="{% url 'contracts:document_update' doc.pk %}" class="dc-ds-button dc-ds-button--quiet btn-ghost">Edit</a></td>
+                <td class="text-right"><a href="{% url 'contracts:document_update' doc.pk %}" class="dc-ds-button dc-ds-button--quiet">Edit</a></td>
             </tr>
             {% empty %}
             {% url 'contracts:document_create' as document_create_url %}

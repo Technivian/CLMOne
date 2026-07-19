@@ -54,14 +54,14 @@ test('NDA self-serve cockpit generates a governed workspace and dashboard row', 
   await expect(page).toHaveURL(/\/contracts\/workflows\/\d+\/?$/);
   await expect(page.getByText('Workflow Timeline')).toBeVisible();
   await expect(page.getByText(counterparty).first()).toBeVisible();
-  await expect(page.locator('.nda-ws-card-head', { hasText: 'Generated NDA Draft' }).first()).toBeVisible();
-  await expect(page.locator('.nda-ws-card-head', { hasText: 'Risk Signals' }).first()).toBeVisible();
-  await expect(page.locator('.nda-ws-card-head', { hasText: 'Approval Route' }).first()).toBeVisible();
+  await expect(page.locator('.dc-ds-workspace__surface-head', { hasText: 'Generated NDA Draft' }).first()).toBeVisible();
+  await expect(page.locator('.dc-ds-workspace__surface-head', { hasText: 'Risk Signals' }).first()).toBeVisible();
+  await expect(page.locator('.dc-ds-workspace__surface-head', { hasText: 'Approval Route' }).first()).toBeVisible();
   await expect(page.getByRole('button', { name: 'Send for signature' })).toBeVisible();
 
-  const workspaceUrl = page.url();
-  await page.goto('/contracts/workflows/');
-  await page.goto(workspaceUrl);
-
-  await expect(page).toHaveURL(/\/contracts\/workflows\/\d+\/?$/);
+  await expect(page.getByRole('link', { name: 'View contract record' })).toBeVisible();
+  await page.getByRole('link', { name: 'View contract record' }).click();
+  await expect(page).toHaveURL(/\/contracts\/\d+\/?$/);
+  await expect(page.locator('.dc-ds-workspace--record')).toBeVisible();
+  await expect(page.getByText(counterparty).first()).toBeVisible();
 });

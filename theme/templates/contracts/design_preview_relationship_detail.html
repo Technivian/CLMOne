@@ -74,7 +74,7 @@
     <div class="arch-header-left">
       <div class="arch-title-row">
         <h1 class="arch-title">{{ company.name }}</h1>
-        <span class="badge-sm badge-blue">{{ company.tier }}</span>
+        <span class="dc-ds-badge--progress">{{ company.tier }}</span>
       </div>
       <div class="rel-header-meta">
         <div><div class="rel-meta-label">Industry</div><div class="rel-meta-value">{{ company.industry }}</div></div>
@@ -106,7 +106,7 @@
         {% endfor %}
       </div>
       <div class="rel-spine-footer">
-        <a href="#" class="btn-quiet rel-block-btn">+ Add Document</a>
+        <a href="#" class="dc-ds-button dc-ds-button--quiet rel-block-btn">+ Add Document</a>
       </div>
     </div>
 
@@ -192,7 +192,7 @@
           {% for risk in ai_brief.top_risks %}
           <div class="rel-risk-item">
             <span class="rel-risk-item-label">&bull; {{ risk.label }}</span>
-            <span class="badge-sm {% if risk.severity == 'High' %}badge-red{% else %}badge-yellow{% endif %}">{{ risk.severity }}</span>
+            <span class="{% if risk.severity == 'High' %}dc-ds-badge--danger{% else %}dc-ds-badge--attention{% endif %}">{{ risk.severity }}</span>
           </div>
           {% endfor %}
         </div>
@@ -201,7 +201,7 @@
         <div class="rel-nba-box">{{ ai_brief.next_best_action }}</div>
       </div>
 
-      <a href="{% url 'contracts:design_preview_review_studio' %}" class="btn-cta rel-block-btn">
+      <a href="{% url 'contracts:design_preview_review_studio' %}" class="dc-ds-button dc-ds-button--primary rel-block-btn">
         Open in Review Studio
         <svg class="rel-cta-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
       </a>

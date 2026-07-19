@@ -13,8 +13,8 @@
                 </div>
             </div>
             <div class="workspace-tools">
-                <a href="{% url 'contracts:workflow_dashboard' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border btn-ghost">Back to Workflows</a>
-                <a href="{% url 'contracts:workflow_template_create' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 btn-primary-grad">
+                <a href="{% url 'contracts:workflow_dashboard' %}" class="dc-ds-button dc-ds-button--quiet inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border">Back to Workflows</a>
+                <a href="{% url 'contracts:workflow_template_create' %}" class="dc-ds-button dc-ds-button--primary inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90">
                     <svg class="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                     Create Template
                 </a>
@@ -47,11 +47,11 @@
             <div class="flex items-start justify-between gap-3 mb-2">
                 <h3 class="text-lg font-semibold c-primary">{{ template.name }}</h3>
                 <div class="flex items-center gap-2">
-                    <span class="badge-sm badge-gray">v{{ template.version }}</span>
+                    <span class="dc-ds-badge--neutral">v{{ template.version }}</span>
                     {% if template.is_active %}
-                    <span class="badge-sm badge-green">Published</span>
+                    <span class="dc-ds-badge--success">Published</span>
                     {% else %}
-                    <span class="badge-sm badge-gray">Unpublished</span>
+                    <span class="dc-ds-badge--neutral">Unpublished</span>
                     {% endif %}
                 </div>
             </div>

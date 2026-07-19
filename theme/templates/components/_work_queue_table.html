@@ -18,7 +18,7 @@
         <a href="{{ row.href }}" class="wq-item-link">{{ row.title|truncatechars:44 }}</a>
         {% if row.meta %}<div class="wq-item-meta">{{ row.meta }}</div>{% endif %}
       </td>
-      <td>{% if row.contract %}<span class="badge-sm {{ row.contract.lifecycle_stage|lifecycle_stage_badge_class }}">{{ row.contract.lifecycle_stage|lifecycle_stage_label }}</span>{% else %}<span class="c-dim">—</span>{% endif %}</td>
+      <td>{% if row.contract %}<span class=" dc-ds-badge--{{ row.contract.lifecycle_stage|lifecycle_stage_badge_class|legacy_badge_tone }}">{{ row.contract.lifecycle_stage|lifecycle_stage_label }}</span>{% else %}<span class="c-dim">—</span>{% endif %}</td>
       <td>
         {% if row.assignee %}
         <span class="wq-owner">
@@ -38,7 +38,7 @@
       <td>{% if row.contract %}<span class="wq-risk wq-risk-{{ row.contract.risk_level|lower }}"><i class="wq-risk-dot" aria-hidden="true"></i>{{ row.contract.get_risk_level_display }}</span>{% else %}<span class="c-dim">—</span>{% endif %}</td>
       <td class="wq-col-num{% if row.due_overdue %} wq-due-overdue{% elif row.due_today %} wq-due-today{% endif %}">{{ row.due_date|due_countdown }}</td>
       <td class="wq-col-action">
-        <a href="{{ row.href }}" class="text-xs font-semibold px-2.5 py-1.5 rounded-md border transition-opacity hover:opacity-80 btn-ghost">{{ row.action_label|default:"View" }}</a>
+        <a href="{{ row.href }}" class="dc-ds-button dc-ds-button--quiet text-xs font-semibold px-2.5 py-1.5 rounded-md border transition-opacity hover:opacity-80">{{ row.action_label|default:"View" }}</a>
         <details class="wq-kebab">
           <summary aria-label="More actions" class="wq-kebab-trigger">&#8942;</summary>
           <div class="wq-kebab-menu">

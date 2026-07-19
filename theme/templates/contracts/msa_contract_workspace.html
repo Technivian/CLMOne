@@ -1,158 +1,65 @@
-<style nonce="{{ csp_nonce }}">
-.msa-ws { padding: var(--space-24) var(--space-32) var(--space-56); background: var(--paper); }
-.msa-ws-header, .msa-ws-governance-summary, .msa-ws-card, .msa-ws-timeline { background: var(--card); border: 1px solid var(--color-border-soft); border-radius: var(--radius-subpanel); box-shadow: var(--shadow-card); }
-.msa-ws-header { padding: var(--space-24); margin-bottom: var(--space-16); }
-.msa-ws-title-row, .msa-ws-card-head, .msa-ws-drawer-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-16); }
-.msa-ws-title { margin: 0; color: var(--color-brand-foundation); font: var(--text-title); }
-.msa-ws-subtitle, .msa-ws-meta-value, .msa-ws-copy, .msa-kv-value, .msa-audit-meta { color: var(--ink-500); font: var(--text-small); }
-.msa-ws-subtitle { margin: var(--space-4) 0 0; }
-.msa-ws-actions { display: flex; flex-wrap: wrap; gap: var(--space-8); margin-top: var(--space-16); }
-.msa-ws-cta, .msa-ws-action-secondary, .msa-ws-action-teal, .msa-ws-governance-button, .msa-ws-tabs button { min-height: 38px; display: inline-flex; align-items: center; justify-content: center; padding: 0 var(--space-16); border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--card); color: var(--color-brand-foundation); font-size: 12px; font-weight: 650; text-decoration: none; cursor: pointer; }
-.msa-ws-cta { border-color: var(--seal); background: var(--seal); color: var(--clmone-white); }
-.msa-ws-action-teal, .msa-ws-governance-button { border-color: var(--color-brand-primary-subtle); background: var(--color-brand-primary-subtle); color: var(--seal-dark); }
-.msa-ws-badge, .msa-field-chip { display: inline-flex; align-items: center; gap: var(--space-4); padding: 4px var(--space-8); border: 1px solid var(--color-status-success-border); border-radius: var(--radius-pill); background: var(--seal-bg); color: var(--seal-dark); font-size: 10px; font-weight: 650; }
-.msa-ws-meta-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-8); margin-top: var(--space-16); }
-.msa-ws-meta { min-width: 0; padding: var(--space-12); border: 1px solid var(--hairline); border-radius: var(--radius-control); background: var(--well); }
-.msa-ws-meta-label, .msa-kv-label { color: var(--ink-500); font: var(--text-eyebrow); letter-spacing: .08em; text-transform: uppercase; }
-.msa-ws-meta-value { margin-top: var(--space-4); color: var(--color-brand-foundation); font-weight: 650; overflow-wrap: anywhere; }
-.msa-ws-timeline { padding: var(--space-16) var(--space-20); margin-bottom: var(--space-16); }
-.msa-ws-timeline-title { margin-bottom: var(--space-12); color: var(--color-brand-foundation); font: var(--text-heading); }
-.msa-ws-track { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
-.msa-ws-step { position: relative; color: var(--ink-500); font-size: 10px; font-weight: 600; text-align: center; }
-.msa-ws-step:not(:last-child)::after { content: ""; position: absolute; top: 12px; left: calc(50% + 16px); right: calc(-50% + 16px); height: 1px; background: var(--line); }
-.msa-ws-dot { width: 24px; height: 24px; display: grid; place-items: center; margin: 0 auto var(--space-8); border: 1px solid var(--line); border-radius: var(--radius-pill); background: var(--card); color: var(--ink-500); font-size: 10px; font-weight: 650; position: relative; z-index: 1; }
-.msa-ws-step.is-done .msa-ws-dot, .msa-ws-step.is-active .msa-ws-dot { border-color: var(--seal); background: var(--seal-bg); color: var(--seal-dark); }
-.msa-ws-step.is-active { color: var(--color-brand-foundation); }
-.msa-ws-governance-summary { display: grid; grid-template-columns: 1.25fr repeat(3, minmax(0, 1fr)); gap: 0; margin-bottom: var(--space-24); padding: var(--space-8); }
-.msa-ws-summary-item { min-width: 0; padding: var(--space-12) var(--space-16); border-right: 1px solid var(--hairline); }
-.msa-ws-summary-item:last-child { border-right: 0; }
-.msa-ws-summary-item button { width: 100%; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
-.msa-ws-summary-label { display: block; color: var(--ink-500); font: var(--text-meta); }
-.msa-ws-summary-value { display: block; margin-top: var(--space-4); color: var(--color-brand-foundation); font-size: 13px; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.msa-ws-summary-item.is-action .msa-ws-summary-value { color: var(--seal-dark); }
-.msa-ws-grid { display: grid; grid-template-columns: minmax(420px, 40%) minmax(680px, 1fr); gap: var(--space-24); align-items: start; }
-.msa-ws-pane { min-width: 0; }
-.msa-ws-card { overflow: hidden; }
-.msa-ws-card-head { align-items: center; padding: var(--space-16) var(--space-20); border-bottom: 1px solid var(--hairline); }
-.msa-ws-card-title { color: var(--color-brand-foundation); font: var(--text-heading); }
-.msa-ws-card-body { padding: var(--space-20); }
-.msa-ws-drafting-list { display: grid; gap: var(--space-8); }
-.msa-ws-drafting-step { border: 1px solid var(--hairline); border-radius: var(--radius-control); background: var(--card); }
-.msa-ws-drafting-step[open] { border-color: var(--color-control-selected-border); background: var(--color-control-selected-bg); }
-.msa-ws-drafting-step summary { display: flex; align-items: center; justify-content: space-between; gap: var(--space-8); padding: var(--space-16); color: var(--color-brand-foundation); font: var(--text-subheading); cursor: pointer; }
-.msa-ws-drafting-step summary::marker { color: var(--seal); }
-.msa-ws-drafting-content { padding: 0 var(--space-16) var(--space-16); }
-.msa-ws-drafting-source { margin-top: var(--space-8); color: var(--ink-500); font: var(--text-meta); }
-.msa-ws-preview-card { min-height: 720px; }
-.msa-doc { max-width: 78ch; margin: 0 auto; color: var(--ink-700); font-family: Georgia, "Iowan Old Style", "Palatino Linotype", Palatino, serif; font-size: 14px; line-height: 1.72; }
-.msa-clause { padding: var(--space-16); border-bottom: 1px solid var(--hairline); scroll-margin-top: var(--space-24); }
-.msa-clause:last-child { border-bottom: 0; }
-.msa-clause.is-linked { background: var(--seal-bg); box-shadow: inset 3px 0 0 var(--seal); }
-.msa-clause-head { margin-bottom: var(--space-8); }
-.msa-clause-title { color: var(--color-brand-foundation); font: var(--text-eyebrow); }
-.msa-field-chip-row { display: flex; flex-wrap: wrap; gap: var(--space-4); margin-top: var(--space-12); }
-.msa-ws-tabs { display: none; }
-.msa-ws-drawer { width: min(420px, calc(100vw - 32px)); max-width: none; min-height: 100dvh; margin: 0 0 0 auto; padding: 0; border: 0; background: var(--card); color: var(--color-brand-foundation); box-shadow: var(--shadow-drawer); }
-.msa-ws-drawer::backdrop { background: rgba(11, 23, 40, .32); }
-.msa-ws-drawer-inner { height: 100%; overflow-y: auto; padding: var(--space-24); }
-.msa-ws-drawer-head { position: sticky; top: calc(var(--space-24) * -1); z-index: 1; align-items: center; padding: var(--space-16) 0; background: var(--card); border-bottom: 1px solid var(--hairline); }
-.msa-ws-drawer-head h2 { margin: 0; font: var(--text-section); }
-.msa-ws-drawer-close { width: 36px; height: 36px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--card); color: var(--ink-600); cursor: pointer; }
-.msa-ws-drawer-section { padding: var(--space-20) 0; border-bottom: 1px solid var(--hairline); }
-.msa-ws-drawer-section:last-child { border-bottom: 0; }
-.msa-ws-drawer-section h3 { margin: 0 0 var(--space-12); font: var(--text-heading); }
-.msa-rail-item, .msa-risk-card, .msa-approval-card, .msa-audit-row { padding: var(--space-12); border: 1px solid var(--hairline); border-radius: var(--radius-control); background: var(--well); }
-.msa-rail-item, .msa-risk-card + .msa-risk-card, .msa-approval-card + .msa-approval-card, .msa-audit-row + .msa-audit-row { margin-top: var(--space-8); }
-.msa-rail-title, .msa-risk-title, .msa-approval-title, .msa-audit-title { color: var(--color-brand-foundation); font: var(--text-subheading); }
-.msa-risk-top { display: flex; justify-content: space-between; gap: var(--space-8); margin-bottom: var(--space-8); }
-.msa-risk-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-12); }
-.msa-risk-sev { padding: 4px var(--space-8); border: 1px solid var(--color-status-warning-border); border-radius: var(--radius-pill); background: var(--status-pending-bg); color: var(--status-pending-fg); font-size: 10px; font-weight: 650; text-transform: uppercase; }
-.msa-risk-sev.high, .msa-risk-sev.critical { border-color: var(--color-status-error-border); background: var(--status-danger-bg); color: var(--status-danger-fg); }
-.msa-risk-link { display: inline-flex; margin-top: var(--space-12); color: var(--seal-dark); font: var(--text-meta); font-weight: 650; }
-.msa-status { color: var(--seal-dark); font-weight: 650; }
-.msa-approval-trigger { margin-top: var(--space-12); }
-@media (max-width: 1180px) {
-  .msa-ws { padding-inline: var(--space-16); }
-  .msa-ws-grid { display: block; }
-  .msa-ws-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-8); margin-bottom: var(--space-16); }
-  .msa-ws-tabs button[aria-selected="true"] { border-color: var(--seal); background: var(--seal); color: var(--clmone-white); }
-  .msa-ws-grid.has-tabs .msa-ws-pane { display: none; }
-  .msa-ws-grid.has-tabs .msa-ws-pane.is-active { display: block; }
-  .msa-ws-preview-card { min-height: 0; }
-}
-@media (max-width: 720px) {
-  .msa-ws-header, .msa-ws-card-body, .msa-ws-drawer-inner { padding: var(--space-16); }
-  .msa-ws-title-row, .msa-ws-governance-summary { display: block; }
-  .msa-ws-governance-summary { padding: 0; }
-  .msa-ws-summary-item { border-right: 0; border-bottom: 1px solid var(--hairline); }
-  .msa-ws-summary-item:last-child { border-bottom: 0; }
-  .msa-ws-meta-grid, .msa-risk-grid { grid-template-columns: 1fr; }
-  .msa-ws-track { overflow-x: auto; grid-template-columns: repeat(7, 84px); padding-bottom: var(--space-8); }
-  .msa-ws-drawer { width: 100vw; }
-}
-</style>
-
-<div class="page-wrap page-wrap-fluid msa-ws">
-  <section class="msa-ws-header">
-    <div class="msa-ws-title-row">
+<div class="dc-ds-workspace dc-ds-workspace--msa">
+  <section class="dc-ds-workspace__header">
+    <div class="dc-ds-workspace__title-row">
       <div>
-        <h1 class="msa-ws-title">{{ workflow.contract.title|default:workflow.title }}</h1>
-        <p class="msa-ws-subtitle">{{ workflow.title }} · Enterprise Services MSA · Netherlands · B2B</p>
-        <div class="msa-ws-actions">
-          <form method="post" action="{% url 'contracts:msa_submit_for_review' workflow.pk 'legal' %}">{% csrf_token %}<button type="submit" class="msa-ws-cta">Send to Legal Review</button></form>
-          {% if msa_workspace.finance_approval_triggered %}<form method="post" action="{% url 'contracts:msa_submit_for_review' workflow.pk 'finance' %}">{% csrf_token %}<button type="submit" class="msa-ws-action-secondary">Send to Finance</button></form>{% endif %}
-          <form method="post" action="{% url 'contracts:msa_export_document' workflow.pk 'summary' %}">{% csrf_token %}<button type="submit" class="msa-ws-action-teal">Download MSA summary</button></form>
-          <form method="post" action="{% url 'contracts:msa_export_document' workflow.pk 'word' %}">{% csrf_token %}<button type="submit" class="msa-ws-action-secondary">Export Word</button></form>
+        <h1 class="dc-ds-workspace__title">{{ workflow.contract.title|default:workflow.title }}</h1>
+        <p class="dc-ds-workspace__subtitle">{{ workflow.title }} · Enterprise Services MSA · Netherlands · B2B</p>
+        <div class="dc-ds-workspace__actions">
+          {% if workflow.contract %}<a href="{% url 'contracts:contract_detail' workflow.contract.pk %}" class="dc-ds-button dc-ds-button--link">View contract record</a>{% endif %}
+          <form method="post" action="{% url 'contracts:msa_submit_for_review' workflow.pk 'legal' %}">{% csrf_token %}<button type="submit" class="dc-ds-button dc-ds-button--primary">Send to Legal Review</button></form>
+          {% if msa_workspace.finance_approval_triggered %}<form method="post" action="{% url 'contracts:msa_submit_for_review' workflow.pk 'finance' %}">{% csrf_token %}<button type="submit" class="dc-ds-button dc-ds-button--quiet">Send to Finance</button></form>{% endif %}
+          <form method="post" action="{% url 'contracts:msa_export_document' workflow.pk 'summary' %}">{% csrf_token %}<button type="submit" class="dc-ds-button dc-ds-button--soft">Download MSA summary</button></form>
+          <form method="post" action="{% url 'contracts:msa_export_document' workflow.pk 'word' %}">{% csrf_token %}<button type="submit" class="dc-ds-button dc-ds-button--quiet">Export Word</button></form>
         </div>
       </div>
-      <button type="button" class="msa-ws-cta" data-msa-open-governance>Review next action</button>
+      <button type="button" class="dc-ds-button dc-ds-button--primary" data-workspace-open-governance>Review next action</button>
     </div>
-    <div class="msa-ws-meta-grid">
-      <div class="msa-ws-meta"><div class="msa-ws-meta-label">Contract type</div><div class="msa-ws-meta-value">MSA</div></div>
-      <div class="msa-ws-meta"><div class="msa-ws-meta-label">Counterparty</div><div class="msa-ws-meta-value">{{ workflow.contract.counterparty|default:"Counterparty pending" }}</div></div>
-      <div class="msa-ws-meta"><div class="msa-ws-meta-label">Current stage</div><div class="msa-ws-meta-value">{{ msa_workspace.current_stage }}</div></div>
-      <div class="msa-ws-meta"><div class="msa-ws-meta-label">Owner</div><div class="msa-ws-meta-value">{{ msa_workspace.owner }}</div></div>
-      <div class="msa-ws-meta"><div class="msa-ws-meta-label">Risk level</div><div class="msa-ws-meta-value">{{ msa_workspace.risk_level }}</div></div>
-      <div class="msa-ws-meta"><div class="msa-ws-meta-label">Primary next action</div><div class="msa-ws-meta-value">{{ msa_workspace.next_action }}</div></div>
+    <div class="dc-ds-workspace__metadata-grid">
+      <div class="dc-ds-workspace__metadata-item"><div class="dc-ds-workspace__metadata-label">Contract type</div><div class="dc-ds-workspace__metadata-value">MSA</div></div>
+      <div class="dc-ds-workspace__metadata-item"><div class="dc-ds-workspace__metadata-label">Counterparty</div><div class="dc-ds-workspace__metadata-value">{{ workflow.contract.counterparty|default:"Counterparty pending" }}</div></div>
+      <div class="dc-ds-workspace__metadata-item"><div class="dc-ds-workspace__metadata-label">Current stage</div><div class="dc-ds-workspace__metadata-value">{{ msa_workspace.current_stage }}</div></div>
+      <div class="dc-ds-workspace__metadata-item"><div class="dc-ds-workspace__metadata-label">Owner</div><div class="dc-ds-workspace__metadata-value">{{ msa_workspace.owner }}</div></div>
+      <div class="dc-ds-workspace__metadata-item"><div class="dc-ds-workspace__metadata-label">Risk level</div><div class="dc-ds-workspace__metadata-value">{{ msa_workspace.risk_level }}</div></div>
+      <div class="dc-ds-workspace__metadata-item"><div class="dc-ds-workspace__metadata-label">Primary next action</div><div class="dc-ds-workspace__metadata-value">{{ msa_workspace.next_action }}</div></div>
     </div>
   </section>
 
-  <section class="msa-ws-timeline" aria-label="Workflow Timeline">
-    <div class="msa-ws-timeline-title">Workflow Timeline</div>
-    <div class="msa-ws-track">
+  <section class="dc-ds-workspace__timeline" aria-label="Workflow Timeline">
+    <div class="dc-ds-workspace__timeline-title">Workflow Timeline</div>
+    <div class="dc-ds-workspace__timeline-track">
       {% for step in msa_workspace.timeline %}
-      <div class="msa-ws-step{% if forloop.counter0 < msa_workspace.active_timeline_index %} is-done{% elif forloop.counter0 == msa_workspace.active_timeline_index %} is-active{% endif %}">
-        <div class="msa-ws-dot">{% if forloop.counter0 < msa_workspace.active_timeline_index %}✓{% else %}{{ forloop.counter }}{% endif %}</div>
+      <div class="dc-ds-workspace__timeline-step{% if forloop.counter0 < msa_workspace.active_timeline_index %} is-done{% elif forloop.counter0 == msa_workspace.active_timeline_index %} is-active{% endif %}">
+        <div class="dc-ds-workspace__timeline-dot">{% if forloop.counter0 < msa_workspace.active_timeline_index %}✓{% else %}{{ forloop.counter }}{% endif %}</div>
         <div>{{ step }}</div>
       </div>
       {% endfor %}
     </div>
   </section>
 
-  <section class="msa-ws-governance-summary" aria-label="Governance summary">
-    <div class="msa-ws-summary-item is-action"><button type="button" data-msa-open-governance><span class="msa-ws-summary-label">Next action</span><span class="msa-ws-summary-value">{{ msa_workspace.next_action }}</span></button></div>
-    <div class="msa-ws-summary-item"><span class="msa-ws-summary-label">Required fields</span><span class="msa-ws-summary-value">{{ msa_workspace.required_field_progress.completed }} of {{ msa_workspace.required_field_progress.total }} complete</span></div>
-    <div class="msa-ws-summary-item"><button type="button" data-msa-open-governance><span class="msa-ws-summary-label">Active exceptions</span><span class="msa-ws-summary-value">{{ msa_workspace.risk_cards|length }} open</span></button></div>
-    <div class="msa-ws-summary-item is-action"><button type="button" data-msa-open-governance><span class="msa-ws-summary-label">Approval route</span><span class="msa-ws-summary-value">{% for approval in msa_workspace.approval_cards %}{{ approval.name }}{% if not forloop.last %} → {% endif %}{% endfor %}</span></button></div>
+  <section class="dc-ds-workspace__summary" aria-label="Governance summary">
+    <div class="dc-ds-workspace__summary-item is-action"><button type="button" data-workspace-open-governance><span class="dc-ds-workspace__summary-label">Next action</span><span class="dc-ds-workspace__summary-value">{{ msa_workspace.next_action }}</span></button></div>
+    <div class="dc-ds-workspace__summary-item"><span class="dc-ds-workspace__summary-label">Required fields</span><span class="dc-ds-workspace__summary-value">{{ msa_workspace.required_field_progress.completed }} of {{ msa_workspace.required_field_progress.total }} complete</span></div>
+    <div class="dc-ds-workspace__summary-item"><button type="button" data-workspace-open-governance><span class="dc-ds-workspace__summary-label">Active exceptions</span><span class="dc-ds-workspace__summary-value">{{ msa_workspace.risk_cards|length }} open</span></button></div>
+    <div class="dc-ds-workspace__summary-item is-action"><button type="button" data-workspace-open-governance><span class="dc-ds-workspace__summary-label">Approval route</span><span class="dc-ds-workspace__summary-value">{% for approval in msa_workspace.approval_cards %}{{ approval.name }}{% if not forloop.last %} → {% endif %}{% endfor %}</span></button></div>
   </section>
 
-  <nav class="msa-ws-tabs" aria-label="MSA workspace panels">
-    <button type="button" role="tab" aria-selected="true" aria-controls="msa-drafting-pane" data-msa-tab="msa-drafting-pane">Guided drafting</button>
-    <button type="button" role="tab" aria-selected="false" aria-controls="msa-preview-pane" data-msa-tab="msa-preview-pane">Contract preview</button>
+  <nav class="dc-ds-workspace__tabs" aria-label="MSA workspace panels">
+    <button type="button" role="tab" aria-selected="true" aria-controls="msa-drafting-pane" data-workspace-tab="msa-drafting-pane">Guided drafting</button>
+    <button type="button" role="tab" aria-selected="false" aria-controls="msa-preview-pane" data-workspace-tab="msa-preview-pane">Contract preview</button>
   </nav>
 
-  <div class="msa-ws-grid" data-msa-workspace>
-    <section class="msa-ws-pane is-active" id="msa-drafting-pane" role="tabpanel">
-      <section class="msa-ws-card">
-        <div class="msa-ws-card-head"><div><div class="msa-ws-card-title">Guided drafting</div><p class="msa-ws-copy">Review each governed section, its source, and its required inputs.</p></div><span class="msa-ws-badge">{{ msa_workspace.document_sections|length }} sections</span></div>
-        <div class="msa-ws-card-body"><div class="msa-ws-drafting-list">
+  <div class="dc-ds-workspace__layout" data-workspace-layout>
+    <section class="dc-ds-workspace__pane is-active" id="msa-drafting-pane" role="tabpanel">
+      <section class="dc-ds-workspace__surface">
+        <div class="dc-ds-workspace__surface-head"><div><div class="dc-ds-workspace__surface-title">Guided drafting</div><p class="dc-ds-workspace__copy">Review each governed section, its source, and its required inputs.</p></div><span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--progress">{{ msa_workspace.document_sections|length }} sections</span></div>
+        <div class="dc-ds-workspace__surface-body"><div class="dc-ds-workspace__drafting-list">
           {% for section in msa_workspace.document_sections %}
-          <details class="msa-ws-drafting-step"{% if forloop.first %} open{% endif %}>
-            <summary><span>{{ section.title }}</span><span class="msa-ws-badge">{{ section.source }}</span></summary>
-            <div class="msa-ws-drafting-content">
-              <div class="msa-ws-copy">{{ section.source_detail }}</div>
-              {% if section.fields %}<div class="msa-field-chip-row">{% for field in section.fields %}<span class="msa-field-chip">{{ field }}</span>{% endfor %}</div>{% endif %}
-              <a class="msa-risk-link" href="#{{ section.section_id }}" data-clause-link="{{ section.section_id }}">Open in contract preview</a>
+          <details class="dc-ds-workspace__drafting-step"{% if forloop.first %} open{% endif %}>
+            <summary><span>{{ section.title }}</span><span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--progress">{{ section.source }}</span></summary>
+            <div class="dc-ds-workspace__drafting-content">
+              <div class="dc-ds-workspace__copy">{{ section.source_detail }}</div>
+              {% if section.fields %}<div class="dc-ds-workspace__field-chip-row">{% for field in section.fields %}<span class="dc-ds-workspace__field-chip">{{ field }}</span>{% endfor %}</div>{% endif %}
+              <a class="dc-ds-workspace__risk-link" href="#{{ section.section_id }}" data-clause-link="{{ section.section_id }}">Open in contract preview</a>
             </div>
           </details>
           {% endfor %}
@@ -160,55 +67,55 @@
       </section>
     </section>
 
-    <section class="msa-ws-pane" id="msa-preview-pane" role="tabpanel">
-      <section class="msa-ws-card msa-ws-preview-card">
-        <div class="msa-ws-card-head"><div><div class="msa-ws-card-title">Live contract preview</div><p class="msa-ws-copy">The current governed MSA draft.</p></div><span class="msa-ws-badge">Version {{ msa_workspace.draft_document.version|default:"1" }}</span></div>
-        <div class="msa-ws-card-body"><div class="msa-doc">
+    <section class="dc-ds-workspace__pane" id="msa-preview-pane" role="tabpanel">
+      <section class="dc-ds-workspace__surface dc-ds-workspace__preview-card">
+        <div class="dc-ds-workspace__surface-head"><div><div class="dc-ds-workspace__surface-title">Live contract preview</div><p class="dc-ds-workspace__copy">The current governed MSA draft.</p></div><span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--progress">Version {{ msa_workspace.draft_document.version|default:"1" }}</span></div>
+        <div class="dc-ds-workspace__surface-body"><div class="dc-ds-workspace__doc">
           {% for section in msa_workspace.document_sections %}
-          <article class="msa-clause" id="{{ section.section_id }}"><div class="msa-clause-head"><div class="msa-clause-title">{{ section.title }}</div></div><p>{{ section.content|linebreaksbr }}</p></article>
+          <article class="dc-ds-workspace__clause" id="{{ section.section_id }}"><div class="dc-ds-workspace__clause-head"><div class="dc-ds-workspace__clause-title">{{ section.title }}</div></div><p>{{ section.content|linebreaksbr }}</p></article>
           {% endfor %}
         </div></div>
       </section>
     </section>
   </div>
 
-  <dialog class="msa-ws-drawer" id="msa-governance-drawer" aria-labelledby="msa-governance-drawer-title">
-    <div class="msa-ws-drawer-inner">
-      <div class="msa-ws-drawer-head"><h2 id="msa-governance-drawer-title">Governance details</h2><form method="dialog"><button class="msa-ws-drawer-close" aria-label="Close governance details">×</button></form></div>
-      <section class="msa-ws-drawer-section"><h3>Sources</h3>
-        <div class="msa-rail-item"><div><div class="msa-rail-title">Template source</div><div class="msa-ws-copy">Enterprise Services MSA · Netherlands · B2B</div></div></div>
-        <div class="msa-rail-item"><div><div class="msa-rail-title">Playbook source</div><div class="msa-ws-copy">MSA Commercial Playbook</div></div></div>
-        <div class="msa-rail-item"><div><div class="msa-rail-title">Clause library source</div><div class="msa-ws-copy">Approved liability, renewal, and data-protection fallback clauses.</div></div></div>
+  <dialog class="dc-ds-workspace__drawer" id="msa-governance-drawer" aria-labelledby="msa-governance-drawer-title">
+    <div class="dc-ds-workspace__drawer-inner">
+      <div class="dc-ds-workspace__drawer-head"><h2 id="msa-governance-drawer-title">Governance details</h2><form method="dialog"><button class="dc-ds-workspace__drawer-close" aria-label="Close governance details">×</button></form></div>
+      <section class="dc-ds-workspace__drawer-section"><h3>Sources</h3>
+        <div class="dc-ds-workspace__rail-item"><div><div class="dc-ds-workspace__rail-title">Template source</div><div class="dc-ds-workspace__copy">Enterprise Services MSA · Netherlands · B2B</div></div></div>
+        <div class="dc-ds-workspace__rail-item"><div><div class="dc-ds-workspace__rail-title">Playbook source</div><div class="dc-ds-workspace__copy">MSA Commercial Playbook</div></div></div>
+        <div class="dc-ds-workspace__rail-item"><div><div class="dc-ds-workspace__rail-title">Clause library source</div><div class="dc-ds-workspace__copy">Approved liability, renewal, and data-protection fallback clauses.</div></div></div>
       </section>
-      <section class="msa-ws-drawer-section"><h3>Risk monitoring</h3><p class="msa-ws-copy">Finance, liability, privacy, renewal, IP, and governing-law checks run against this draft and determine the active exception count and approval route.</p>
-        {% for risk in msa_workspace.risk_cards %}<article class="msa-risk-card"><div class="msa-risk-top"><div class="msa-risk-title">{{ risk.title }}</div><span class="msa-risk-sev {{ risk.severity_code }}">{{ risk.severity }}</span></div><div class="msa-risk-grid"><div><div class="msa-kv-label">Reason</div><div class="msa-kv-value">{{ risk.reason }}</div></div><div><div class="msa-kv-label">Source</div><div class="msa-kv-value">{{ risk.source }}</div></div><div><div class="msa-kv-label">Recommended action</div><div class="msa-kv-value">{{ risk.recommended_action }}</div></div><div><div class="msa-kv-label">Approval impact</div><div class="msa-kv-value">{{ risk.approval_impact }}</div></div></div><a class="msa-risk-link" href="#{{ risk.section_anchor }}" data-clause-link="{{ risk.section_anchor }}">Open related draft section</a></article>{% empty %}<div class="msa-rail-item"><div><div class="msa-rail-title">No active exceptions</div><div class="msa-ws-copy">The current draft follows the selected template and playbook.</div></div></div>{% endfor %}
+      <section class="dc-ds-workspace__drawer-section"><h3>Risk monitoring</h3><p class="dc-ds-workspace__copy">Finance, liability, privacy, renewal, IP, and governing-law checks run against this draft and determine the active exception count and approval route.</p>
+        {% for risk in msa_workspace.risk_cards %}<article class="dc-ds-workspace__risk-card"><div class="dc-ds-workspace__risk-top"><div class="dc-ds-workspace__risk-title">{{ risk.title }}</div><span class="dc-ds-workspace__risk-sev {{ risk.severity_code }}">{{ risk.severity }}</span></div><div class="dc-ds-workspace__risk-grid"><div><div class="dc-ds-workspace__kv-label">Reason</div><div class="dc-ds-workspace__kv-value">{{ risk.reason }}</div></div><div><div class="dc-ds-workspace__kv-label">Source</div><div class="dc-ds-workspace__kv-value">{{ risk.source }}</div></div><div><div class="dc-ds-workspace__kv-label">Recommended action</div><div class="dc-ds-workspace__kv-value">{{ risk.recommended_action }}</div></div><div><div class="dc-ds-workspace__kv-label">Approval impact</div><div class="dc-ds-workspace__kv-value">{{ risk.approval_impact }}</div></div></div><a class="dc-ds-workspace__risk-link" href="#{{ risk.section_anchor }}" data-clause-link="{{ risk.section_anchor }}">Open related draft section</a></article>{% empty %}<div class="dc-ds-workspace__rail-item"><div><div class="dc-ds-workspace__rail-title">No active exceptions</div><div class="dc-ds-workspace__copy">The current draft follows the selected template and playbook.</div></div></div>{% endfor %}
       </section>
-      <section class="msa-ws-drawer-section"><h3>Approval route</h3>
-        {% for approval in msa_workspace.approval_cards %}<article class="msa-approval-card"><div class="msa-risk-top"><div class="msa-approval-title">{{ approval.name }}</div><span class="msa-ws-badge">{{ approval.status }}</span></div><div class="msa-kv-label">Why triggered</div><div class="msa-kv-value">{{ approval.reason }}</div><div class="msa-kv-label msa-approval-trigger">Trigger</div><div class="msa-kv-value">{{ approval.trigger }}</div>{% if approval.assigned_to %}<div class="msa-kv-label msa-approval-trigger">Assigned to</div><div class="msa-kv-value">{{ approval.assigned_to }}</div>{% endif %}{% if approval.can_decide %}<form method="post" action="{% url 'contracts:contract_approval_decision' workflow.contract.pk approval.id 'approve' %}" class="msa-ws-actions">{% csrf_token %}<label class="msa-kv-label" for="approval-comment-{{ approval.id }}">Decision comment</label><textarea class="input-base" id="approval-comment-{{ approval.id }}" name="comment" rows="2" required></textarea><button type="submit" class="msa-ws-cta">Approve</button><button type="submit" formaction="{% url 'contracts:contract_approval_decision' workflow.contract.pk approval.id 'request-changes' %}" class="msa-ws-action-secondary">Request changes</button><button type="submit" formaction="{% url 'contracts:contract_approval_decision' workflow.contract.pk approval.id 'reject' %}" class="msa-ws-action-secondary">Reject</button></form>{% endif %}</article>{% endfor %}
+      <section class="dc-ds-workspace__drawer-section"><h3>Approval route</h3>
+        {% for approval in msa_workspace.approval_cards %}<article class="dc-ds-workspace__approval-card"><div class="dc-ds-workspace__risk-top"><div class="dc-ds-workspace__approval-title">{{ approval.name }}</div><span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--progress">{{ approval.status }}</span></div><div class="dc-ds-workspace__kv-label">Why triggered</div><div class="dc-ds-workspace__kv-value">{{ approval.reason }}</div><div class="dc-ds-workspace__kv-label dc-ds-workspace__approval-trigger">Trigger</div><div class="dc-ds-workspace__kv-value">{{ approval.trigger }}</div>{% if approval.assigned_to %}<div class="dc-ds-workspace__kv-label dc-ds-workspace__approval-trigger">Assigned to</div><div class="dc-ds-workspace__kv-value">{{ approval.assigned_to }}</div>{% endif %}{% if approval.can_decide %}<form method="post" action="{% url 'contracts:contract_approval_decision' workflow.contract.pk approval.id 'approve' %}" class="dc-ds-workspace__actions">{% csrf_token %}<label class="dc-ds-workspace__kv-label" for="approval-comment-{{ approval.id }}">Decision comment</label><textarea class="input-base" id="approval-comment-{{ approval.id }}" name="comment" rows="2" required></textarea><button type="submit" class="dc-ds-button dc-ds-button--primary">Approve</button><button type="submit" formaction="{% url 'contracts:contract_approval_decision' workflow.contract.pk approval.id 'request-changes' %}" class="dc-ds-button dc-ds-button--quiet">Request changes</button><button type="submit" formaction="{% url 'contracts:contract_approval_decision' workflow.contract.pk approval.id 'reject' %}" class="dc-ds-button dc-ds-button--quiet">Reject</button></form>{% endif %}</article>{% endfor %}
       </section>
-      <section class="msa-ws-drawer-section"><h3>Audit details</h3>{% for entry in msa_workspace.audit_preview %}<div class="msa-audit-row"><div class="msa-audit-title">{{ entry.event }}</div><div class="msa-audit-meta">{{ entry.meta }}</div><div class="msa-audit-meta">{{ entry.timestamp|date:"M d, Y H:i" }}</div></div>{% empty %}<p class="msa-ws-copy">No audit events have been recorded for this workflow yet.</p>{% endfor %}</section>
+      <section class="dc-ds-workspace__drawer-section"><h3>Audit details</h3>{% for entry in msa_workspace.audit_preview %}<div class="dc-ds-workspace__audit-row"><div class="dc-ds-workspace__audit-title">{{ entry.event }}</div><div class="dc-ds-workspace__audit-meta">{{ entry.meta }}</div><div class="dc-ds-workspace__audit-meta">{{ entry.timestamp|date:"M d, Y H:i" }}</div></div>{% empty %}<p class="dc-ds-workspace__copy">No audit events have been recorded for this workflow yet.</p>{% endfor %}</section>
     </div>
   </dialog>
 </div>
 <script nonce="{{ csp_nonce }}">
 document.addEventListener('click', function (event) {
-  var governanceTrigger = event.target.closest('[data-msa-open-governance]');
+  var governanceTrigger = event.target.closest('[data-workspace-open-governance]');
   if (governanceTrigger) {
     var drawer = document.getElementById('msa-governance-drawer');
     if (drawer && !drawer.open) drawer.showModal();
     return;
   }
 
-  var tab = event.target.closest('[data-msa-tab]');
+  var tab = event.target.closest('[data-workspace-tab]');
   if (tab) {
-    var workspace = document.querySelector('[data-msa-workspace]');
+    var workspace = document.querySelector('[data-workspace-layout]');
     if (!workspace) return;
     workspace.classList.add('has-tabs');
-    document.querySelectorAll('[data-msa-tab]').forEach(function (button) {
+    document.querySelectorAll('[data-workspace-tab]').forEach(function (button) {
       button.setAttribute('aria-selected', String(button === tab));
     });
-    workspace.querySelectorAll('.msa-ws-pane').forEach(function (pane) {
-      pane.classList.toggle('is-active', pane.id === tab.getAttribute('data-msa-tab'));
+    workspace.querySelectorAll('.dc-ds-workspace__pane').forEach(function (pane) {
+      pane.classList.toggle('is-active', pane.id === tab.getAttribute('data-workspace-tab'));
     });
     return;
   }
@@ -218,17 +125,17 @@ document.addEventListener('click', function (event) {
   event.preventDefault();
   var target = document.getElementById(link.getAttribute('data-clause-link'));
   if (!target) return;
-  var workspace = document.querySelector('[data-msa-workspace]');
+  var workspace = document.querySelector('[data-workspace-layout]');
   if (workspace) {
     workspace.classList.add('has-tabs');
-    workspace.querySelectorAll('.msa-ws-pane').forEach(function (pane) {
+    workspace.querySelectorAll('.dc-ds-workspace__pane').forEach(function (pane) {
       pane.classList.toggle('is-active', pane.id === 'msa-preview-pane');
     });
-    document.querySelectorAll('[data-msa-tab]').forEach(function (button) {
-      button.setAttribute('aria-selected', String(button.getAttribute('data-msa-tab') === 'msa-preview-pane'));
+    document.querySelectorAll('[data-workspace-tab]').forEach(function (button) {
+      button.setAttribute('aria-selected', String(button.getAttribute('data-workspace-tab') === 'msa-preview-pane'));
     });
   }
-  document.querySelectorAll('.msa-clause.is-linked').forEach(function (node) {
+  document.querySelectorAll('.dc-ds-workspace__clause.is-linked').forEach(function (node) {
     node.classList.remove('is-linked');
   });
   target.classList.add('is-linked');

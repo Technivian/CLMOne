@@ -26,17 +26,17 @@
         <div class="arch-header-left">
             <div class="arch-title-row">
                 <h1 class="arch-title">{{ review_pack.contract.title }}</h1>
-                <span class="badge-sm {{ review_pack.approval_status|dpa_approval_badge_class }}">{{ review_pack.get_approval_status_display }}</span>
+                <span class="dc-ds-badge--{{ review_pack.approval_status|dpa_approval_badge_class|legacy_badge_tone }}">{{ review_pack.get_approval_status_display }}</span>
             </div>
             <p class="arch-subtitle">DPA Review Pack{% if review_pack.counterparty %} · {{ review_pack.counterparty.name }}{% endif %}{% if review_pack.reviewer %} · Reviewer: {{ review_pack.reviewer.get_full_name|default:review_pack.reviewer.username }}{% endif %}</p>
         </div>
         <div class="arch-header-right">
             {% if can_edit %}
-            <button type="button" id="dpa-run-analysis-btn" class="btn-ghost" data-analyze-url="{% url 'contracts:dpa_review_run_analysis' review_pack.pk %}">Run Analysis</button>
-            <button type="button" id="dpa-generate-memo-btn" class="btn-ghost" data-memo-url="{% url 'contracts:dpa_review_generate_memo' review_pack.pk %}">Generate Review Memo</button>
+            <button type="button" id="dpa-run-analysis-btn" class="dc-ds-button--quiet" data-analyze-url="{% url 'contracts:dpa_review_run_analysis' review_pack.pk %}">Run Analysis</button>
+            <button type="button" id="dpa-generate-memo-btn" class="dc-ds-button--quiet" data-memo-url="{% url 'contracts:dpa_review_generate_memo' review_pack.pk %}">Generate Review Memo</button>
             {% endif %}
-            <a href="{% url 'contracts:dpa_review_pack_memo' review_pack.pk %}" class="btn-ghost">View Memo</a>
-            <a href="{% url 'contracts:contract_detail' review_pack.contract.pk %}" class="btn-ghost">View Contract</a>
+            <a href="{% url 'contracts:dpa_review_pack_memo' review_pack.pk %}" class="dc-ds-button--quiet">View Memo</a>
+            <a href="{% url 'contracts:contract_detail' review_pack.contract.pk %}" class="dc-ds-button--quiet">View Contract</a>
         </div>
     </div>
     <div id="dpa-analysis-error" class="msg-error rounded-lg p-3 mb-4 text-sm" hidden></div>
@@ -58,7 +58,7 @@
             <select id="dpa-link-contract-select" class="select-base text-xs">
                 {% for c in linkable_contracts %}<option value="{{ c.pk }}">{{ c.title }}</option>{% endfor %}
             </select>
-            <button type="button" id="dpa-link-contract-btn" class="btn-ghost text-xs" data-link-url="{% url 'contracts:dpa_review_link_related_contract' review_pack.pk %}">Link Contract</button>
+            <button type="button" id="dpa-link-contract-btn" class="dc-ds-button dc-ds-button--quiet text-xs" data-link-url="{% url 'contracts:dpa_review_link_related_contract' review_pack.pk %}">Link Contract</button>
         </div>
         {% endif %}
     </div>
@@ -135,7 +135,7 @@
                 <input class="input-base text-xs" id="dpa-risk-title" type="text" placeholder="Unresolved risk title">
                 <input class="input-base text-xs" id="dpa-risk-description" type="text" placeholder="What remains unresolved?">
                 <select class="select-base text-xs" id="dpa-risk-severity"><option value="MEDIUM">Medium</option><option value="HIGH">High</option><option value="CRITICAL">Critical</option><option value="LOW">Low</option></select>
-                <button type="button" class="btn-ghost text-xs" id="dpa-risk-create">Add unresolved risk</button>
+                <button type="button" class="dc-ds-button dc-ds-button--quiet text-xs" id="dpa-risk-create">Add unresolved risk</button>
             </div>
             {% endif %}
         </div>
@@ -158,10 +158,10 @@
                         <p class="text-xs mt-0.5 c-muted">{{ risk.description|truncatechars:140 }}</p>
                         {% if risk.fallback_recommendation %}<p class="text-xs mt-0.5 c-dim">Fallback: {{ risk.fallback_recommendation|truncatechars:120 }}</p>{% endif %}
                         <div class="dpa-risk-meta">
-                            {% if risk.source_section %}<span class="badge-sm badge-gray">{{ risk.source_section }}</span>{% endif %}
-                            {% if risk.source_field %}<span class="badge-sm badge-gray">{{ risk.source_field }}</span>{% endif %}
-                            {% if risk.detection_rule %}<span class="badge-sm badge-gray">{{ risk.detection_rule }}</span>{% endif %}
-                            {% if risk.conflict_type %}<span class="badge-sm badge-red">{{ risk.conflict_type }}</span>{% endif %}
+                            {% if risk.source_section %}<span class="dc-ds-badge--neutral">{{ risk.source_section }}</span>{% endif %}
+                            {% if risk.source_field %}<span class="dc-ds-badge--neutral">{{ risk.source_field }}</span>{% endif %}
+                            {% if risk.detection_rule %}<span class="dc-ds-badge--neutral">{{ risk.detection_rule }}</span>{% endif %}
+                            {% if risk.conflict_type %}<span class="dc-ds-badge--danger">{{ risk.conflict_type }}</span>{% endif %}
                         </div>
                         <div class="dpa-evidence">
                             <strong>Evidence:</strong> {{ risk.evidence_text|default:'Evidence requires manual verification' }}
@@ -173,13 +173,13 @@
                         {% if can_review %}
                         <div class="mt-2 flex items-center gap-2">
                             <input class="input-base text-xs dpa-note-input" type="text" placeholder="Add reviewer note" data-note-url="{% url 'contracts:dpa_risk_item_add_note' risk.pk %}">
-                            <button type="button" class="btn-ghost text-xs dpa-note-submit">Add Note</button>
+                            <button type="button" class="dc-ds-button dc-ds-button--quiet text-xs dpa-note-submit">Add Note</button>
                         </div>
                         {% endif %}
                     </td>
                     <td class="px-5 py-3.5 tbl-td">{{ risk.get_category_display }}</td>
-                    <td class="px-5 py-3.5"><span class="badge-sm {{ risk.severity|dpa_severity_badge_class }}">{{ risk.get_severity_display }}</span></td>
-                    <td class="px-5 py-3.5"><span class="badge-sm badge-gray">{{ risk.get_confidence_display }}</span></td>
+                    <td class="px-5 py-3.5"><span class="dc-ds-badge--{{ risk.severity|dpa_severity_badge_class|legacy_badge_tone }}">{{ risk.get_severity_display }}</span></td>
+                    <td class="px-5 py-3.5"><span class="dc-ds-badge--neutral">{{ risk.get_confidence_display }}</span></td>
                     <td class="px-5 py-3.5">{% for chip in risk.owners|dpa_owner_chips %}<span class="dpa-owner-chip">{{ chip }}</span>{% endfor %}</td>
                     <td class="px-5 py-3.5">
                         {% if can_review %}
@@ -244,7 +244,7 @@
                     {% endfor %}
                 </select>
                 <input id="dpa-approval-comment" class="input-base text-sm" type="text" placeholder="Decision note">
-                <button type="button" id="dpa-approval-submit" class="btn-primary-grad text-white">Update Status</button>
+                <button type="button" id="dpa-approval-submit" class="dc-ds-button dc-ds-button--primary text-white">Update Status</button>
             </div>
         </div>
     </div>

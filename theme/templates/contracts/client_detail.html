@@ -15,8 +15,8 @@
       <p class="dc-ds-subtitle">{{ client.get_client_type_display }} &middot; {{ client.get_status_display }}{% if client.industry %} &middot; {{ client.industry }}{% endif %}</p>
     </div>
     <div class="dc-ds-actions">
-      <a href="{% url 'contracts:matter_create' %}?client={{ client.pk }}" class="inline-flex items-center px-3 py-2 rounded-lg text-sm font-medium text-white border border-transparent dc-ds-button dc-ds-button--primary btn-primary-grad">New Matter</a>
-      <a href="{% url 'contracts:client_update' client.pk %}" class="inline-flex items-center px-3 py-2 rounded-lg text-sm border dc-ds-button dc-ds-button--quiet btn-ghost">Edit</a>
+      <a href="{% url 'contracts:matter_create' %}?client={{ client.pk }}" class="inline-flex items-center px-3 py-2 rounded-lg text-sm font-medium text-white border border-transparent dc-ds-button dc-ds-button--primary">New Matter</a>
+      <a href="{% url 'contracts:client_update' client.pk %}" class="inline-flex items-center px-3 py-2 rounded-lg text-sm border dc-ds-button dc-ds-button--quiet">Edit</a>
     </div>
   </header>
 
@@ -69,7 +69,7 @@
           <div class="text-sm font-medium">{{ matter.matter_number }} - {{ matter.title }}</div>
           <div class="text-xs c-muted">{{ matter.get_practice_area_display }}</div>
         </div>
-        <span class="dc-ds-badge dc-ds-badge--sm badge-sm {% if matter.status == 'ACTIVE' %}badge-green{% else %}badge-gray{% endif %}">{{ matter.get_status_display }}</span>
+        <span class="dc-ds-badge dc-ds-badge--sm {% if matter.status == 'ACTIVE' %}dc-ds-badge--success{% else %}dc-ds-badge--neutral{% endif %}">{{ matter.get_status_display }}</span>
       </a>
       {% empty %}
       <div class="empty-state">No matters for this client.</div>

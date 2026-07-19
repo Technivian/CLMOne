@@ -148,7 +148,7 @@ class BoltonRedesignTestCase(TestCase):
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'data-risk-score')
-        self.assertContains(response, 'Portfolio health signals')
+        self.assertContains(response, 'Portfolio health score')
         self.assertContains(response, 'Blocking issue')
         self.assertContains(response, 'Top priority')
 
@@ -190,13 +190,11 @@ class BoltonRedesignTestCase(TestCase):
     def test_typography_and_spacing(self):
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
-        # Inter is the sole product typeface per the approved brand kit and
-        # the "Ledger" design system (CLMONE_DESIGN_SYSTEM.md) — Manrope/Sora
-        # were retired in the 2026-07-05 rebrand.
-        self.assertContains(response, "font-family: 'Inter'")
+        # Inter remains the product typeface (Google Fonts load + CSS stacks).
+        self.assertContains(response, 'family=Inter')
         self.assertNotContains(response, "font-family: 'Manrope'")
-        self.assertContains(response, 'dash-grid')
-        self.assertContains(response, 'gap: 20px')
+        self.assertContains(response, 'cc-v3')
+        self.assertContains(response, 'data-risk-score')
 
     def tearDown(self):
         """Clean up environment variables"""

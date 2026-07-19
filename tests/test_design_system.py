@@ -303,7 +303,7 @@ class DesignSystemTests(TestCase):
             root / 'theme' / 'static_src' / 'src' / 'design-system' / 'premium.css'
         ).read_text()
 
-        self.assertIn('class="topbar-page-context"', base)
+        self.assertIn('topbar-page-context', base)
         self.assertIn('block authenticated_page_title', base)
         self.assertIn('dc-ds-header-promoted', base)
         self.assertIn('css/dist/global-shell.css', base)
@@ -365,25 +365,24 @@ class DesignSystemTests(TestCase):
             self.assertIn('dc-ds-scaffold--with-rail', content, relative_path)
             self.assertIn('dc-ds-summary--vertical', content, relative_path)
 
-    def test_legacy_workspaces_and_document_views_inherit_command_center_layout_rules(self):
+    def test_workspace_and_document_views_inherit_shared_layout_rules(self):
         root = Path(settings.BASE_DIR)
         templates = root / 'theme' / 'templates' / 'contracts'
-        premium = (
-            root / 'theme' / 'static_src' / 'src' / 'design-system' / 'premium.css'
+        workspaces = (
+            root / 'theme' / 'static_src' / 'src' / 'global-shell' / 'workspaces.css'
         ).read_text()
 
-        # These routes retain specialised workflow content, but their layout,
-        # actions, cards, and breakpoints must stay governed by the shared
-        # compatibility layer.
+        # These routes retain specialised workflow content, but their shared
+        # structure is governed by canonical workspace source.
         for selector in (
-            '.dpa-ws, .nda-ws',
-            '.dpa-ws-header, .nda-ws-header, .dpa-ws-timeline, .nda-ws-timeline, .dpa-ws-card, .nda-ws-card',
-            '.dpa-ws-grid, .nda-ws-grid',
-            '.page-actions, .arch-header-right, .workspace-tools',
-            '.dash-grid-4, .dash-grid-3, .dash-grid-2, .contract-status-grid',
-            'grid-template-columns: repeat(7, minmax(88px, 1fr))',
+            '.dc-ds-workspace--workflow',
+            '.dc-ds-workspace__header',
+            '.dc-ds-workspace__timeline',
+            '.dc-ds-workspace__surface',
+            '.dc-ds-workspace__layout',
+            'grid-template-columns:repeat(7, 84px)',
         ):
-            self.assertIn(selector, premium)
+            self.assertIn(selector, workspaces)
 
         for relative_path in (
             'document_detail.html',
@@ -479,8 +478,8 @@ class DesignSystemTests(TestCase):
         os.environ['FEATURE_REDESIGN'] = 'true'
         self.client.login(username='testuser', password='testpass123')
         response = self.client.get(reverse('dashboard'))
-        self.assertContains(response, 'main-layout')
-        self.assertContains(response, 'sidebar-container')
+        self.assertContains(response, 'dc-ds-shell')
+        self.assertContains(response, 'dc-ds-shell__sidebar')
         self.assertContains(response, 'css/dist/global-shell.css')
         shell = '\n'.join(
             source.read_text()

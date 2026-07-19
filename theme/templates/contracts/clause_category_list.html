@@ -10,7 +10,7 @@
       <h1 class="dc-ds-title">Clause Categories</h1>
       <p class="dc-ds-subtitle">Manage categories that organize the governed clause library.</p>
     </div>
-    <div class="dc-ds-actions"><a href="{% url 'contracts:clause_category_create' %}" class="dc-ds-button dc-ds-button--primary btn-primary-grad text-white inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg">
+    <div class="dc-ds-actions"><a href="{% url 'contracts:clause_category_create' %}" class="dc-ds-button dc-ds-button--primary text-white inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg">
         <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
         Add New
       </a></div>
@@ -36,7 +36,7 @@
           <td data-numeric>{{ item.order }}</td>
           <td data-numeric>{{ item.clauses.count }}</td>
           <td class="text-right">
-            <a href="{% url 'contracts:clause_category_update' item.pk %}" class="dc-ds-button dc-ds-button--quiet btn-ghost">Edit</a>
+            <a href="{% url 'contracts:clause_category_update' item.pk %}" class="dc-ds-button dc-ds-button--quiet">Edit</a>
           </td>
         </tr>
         {% empty %}

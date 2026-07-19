@@ -40,8 +40,8 @@
 
         {% if form.non_field_errors %}<p class="dc-ds-form-field__errors" role="alert">{{ form.non_field_errors|join:", " }}</p>{% endif %}
         <div class="dc-ds-form-actions">
-          <a href="{% url 'contracts:approval_request_list' %}" class="btn-ghost">Cancel</a>
-          <button type="submit" class="btn-primary-grad">{{ object|yesno:"Save changes,Create approval request" }}</button>
+          <a href="{% url 'contracts:approval_request_list' %}" class="dc-ds-button--quiet">Cancel</a>
+          <button type="submit" class="dc-ds-button--primary">{{ object|yesno:"Save changes,Create approval request" }}</button>
         </div>
       </form>
     </section>
