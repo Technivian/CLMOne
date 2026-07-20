@@ -82,16 +82,12 @@ class DesignSystemPhaseTwoATests(SimpleTestCase):
 
     def test_contract_status_adapter_covers_every_model_status_and_fails_safe(self):
         expected = {
-            'NEEDS_INPUT': 'attention', 'UPLOADED': 'progress', 'PROCESSING': 'progress',
-            'CLASSIFICATION_REQUIRED': 'attention', 'AI_REVIEW_IN_PROGRESS': 'progress',
-            'AI_REVIEW_READY': 'special', 'HUMAN_REVIEW_IN_PROGRESS': 'progress',
-            'INFORMATION_REQUIRED': 'attention', 'INTERNAL_APPROVAL_REQUIRED': 'attention',
-            'NEGOTIATION_IN_PROGRESS': 'progress', 'READY_FOR_SIGNATURE': 'attention',
-            'SIGNATURE_IN_PROGRESS': 'progress', 'EXECUTED': 'success',
-            'OBLIGATIONS_ACTIVE': 'success', 'DRAFT': 'neutral', 'PENDING': 'attention',
-            'IN_REVIEW': 'progress', 'APPROVED': 'progress', 'ACTIVE': 'success',
-            'EXPIRED': 'danger', 'TERMINATED': 'danger', 'COMPLETED': 'success',
+            'IN_PROGRESS': 'progress',
+            'ACTIVE': 'success',
+            'EXPIRED': 'danger',
+            'TERMINATED': 'danger',
             'CANCELLED': 'neutral',
+            'ARCHIVED': 'neutral',
         }
         self.assertEqual({value for value, _ in Contract.Status.choices}, set(expected))
         for status, tone in expected.items():
@@ -99,14 +95,16 @@ class DesignSystemPhaseTwoATests(SimpleTestCase):
                 self.assertEqual(contract_status_badge_tone(status), tone)
         self.assertEqual(contract_status_badge_tone(None), 'neutral')
         self.assertEqual(contract_status_badge_tone('RETIRED_STATUS'), 'neutral')
+        # Legacy aliases may still map in templatetags for stale rows.
+        self.assertEqual(contract_status_badge_tone('DRAFT'), 'neutral')
+        self.assertEqual(contract_status_badge_tone('PENDING'), 'attention')
 
     def test_document_status_adapter_covers_every_model_status_and_fails_safe(self):
         expected = {
             'DRAFT': 'neutral',
-            'REVIEW': 'attention',
-            'APPROVED': 'progress',
             'FINAL': 'success',
-            'ARCHIVED': 'neutral',
+            'EXECUTED': 'success',
+            'SUPERSEDED': 'neutral',
         }
         self.assertEqual({value for value, _ in Document.Status.choices}, set(expected))
         for status, tone in expected.items():
@@ -114,9 +112,13 @@ class DesignSystemPhaseTwoATests(SimpleTestCase):
                 self.assertEqual(document_status_badge_tone(status), tone)
         self.assertEqual(document_status_badge_tone(None), 'neutral')
         self.assertEqual(document_status_badge_tone('RETIRED_STATUS'), 'neutral')
+        self.assertEqual(document_status_badge_tone('REVIEW'), 'attention')
+        self.assertEqual(document_status_badge_tone('APPROVED'), 'progress')
+        self.assertEqual(document_status_badge_tone('ARCHIVED'), 'neutral')
 
     def test_lifecycle_stage_adapter_covers_every_stage_and_fails_safe(self):
         expected = {
+            'INTAKE': 'neutral',
             'DRAFTING': 'neutral',
             'INTERNAL_REVIEW': 'progress',
             'NEGOTIATION': 'progress',
@@ -125,7 +127,6 @@ class DesignSystemPhaseTwoATests(SimpleTestCase):
             'EXECUTED': 'success',
             'OBLIGATION_TRACKING': 'success',
             'RENEWAL': 'attention',
-            'ARCHIVED': 'neutral',
         }
         choices = Contract._meta.get_field('lifecycle_stage').choices
         self.assertEqual({value for value, _ in choices}, set(expected))
@@ -238,12 +239,30 @@ class DesignSystemPhaseTwoATests(SimpleTestCase):
             'clause_template_list.html': ('dc-ds-table-wrap', 'dc-ds-table', 'design_system/empty_state.html'),
             'approval_request_list.html': ('dc-ds-table-wrap',),
             'approval_rule_list_table.html': ('dc-ds-table-wrap', 'dc-ds-table'),
+            # App-wide table standardization closeout (Contracts as source of truth).
+            'matter_list.html': ('dc-ds-table-wrap', 'dc-ds-table', 'design_system/empty_state.html', 'scope="col"'),
+            'client_list.html': ('dc-ds-table-wrap', 'dc-ds-table', 'design_system/empty_state.html'),
+            'counterparty_list.html': ('dc-ds-table-wrap', 'dc-ds-table', 'design_system/empty_state.html'),
+            'budget_list.html': ('dc-ds-table-wrap', 'dc-ds-table', 'design_system/empty_state.html'),
+            'invoice_list.html': ('dc-ds-table-wrap', 'dc-ds-table', 'design_system/empty_state.html'),
+            'risk_log_list.html': ('dc-ds-table-wrap', 'dc-ds-table', 'design_system/empty_state.html'),
+            'dsar_list.html': ('dc-ds-table-wrap', 'dc-ds-table', 'design_system/empty_state.html'),
+            'workflow_template_detail.html': ('dc-ds-table-wrap', 'dc-ds-table', 'design_system/empty_state.html'),
         }
         for template_name, required in expectations.items():
             content = (templates / template_name).read_text()
             for value in required:
                 with self.subTest(template=template_name, value=value):
                     self.assertIn(value, content)
+            with self.subTest(template=template_name, banned='tbl-row'):
+                self.assertNotIn('tbl-row', content)
+            with self.subTest(template=template_name, banned='wf-table'):
+                self.assertNotIn('wf-table', content)
+        dashboard = (self.root / 'theme' / 'templates' / 'dashboard.html').read_text()
+        self.assertIn('dc-ds-table-wrap', dashboard)
+        self.assertIn('dc-ds-table', dashboard)
+        self.assertIn('design_system/empty_state.html', dashboard)
+        self.assertNotIn('cc-v3-table', dashboard)
         repository_js = (self.root / 'theme' / 'static' / 'js' / 'clmone-repository.js').read_text()
         self.assertIn('dc-ds-table-state', repository_js)
         self.assertIn('aria-selected', repository_js)
@@ -265,7 +284,7 @@ class DesignSystemPhaseTwoATests(SimpleTestCase):
             'document_list.html': ('authenticated_page_title', 'dc-ds-list-page', 'dc-ds-list-header', 'dc-ds-actions'),
             'clause_category_list.html': ('authenticated_page_title', 'dc-ds-list-page', 'dc-ds-list-header', 'dc-ds-actions'),
             'clause_template_list.html': ('authenticated_page_title', 'dc-ds-list-page', 'dc-ds-list-header', 'dc-ds-actions'),
-            'approval_request_list.html': ('authenticated_page_title', 'dc-ds-list-page', 'dc-ds-list-toolbar', 'dc-ds-workspace-tabs', '_workflow_operations_tabs.html'),
+            'approval_request_list.html': ('authenticated_page_title', 'dc-ds-list-page', 'dc-ds-list-toolbar', '_workflow_designer_tabs.html'),
             # Intentional Workflow Ops unification: approval rules use the shared
             # list-page toolbar + workflow ops tabs include (not page_scaffold).
             'approval_rule_list.html': ('authenticated_page_title', 'dc-ds-list-page', 'dc-ds-list-toolbar', '_workflow_designer_tabs.html'),
