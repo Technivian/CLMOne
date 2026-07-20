@@ -127,15 +127,21 @@
       {% if template.description %}<div class="ctp-card-sub">{{ template.description }}</div>{% endif %}
     </a>
     {% endfor %}
+    {% if not CONTROLLED_PILOT_ENABLED %}
     <a href="{% url 'contracts:contract_create' %}?type={{ selected_type }}" class="ctp-card ctp-card-blank dc-ds-surface dc-ds-surface--interactive">
       <div class="ctp-card-title">Start blank</div>
       <div class="ctp-card-sub">Draft from scratch — no template content.</div>
     </a>
+    {% endif %}
+    {% else %}
+    {% if CONTROLLED_PILOT_ENABLED %}
+      {% include "design_system/empty_state.html" with icon="file-text" title="No approved templates for this type" reason="Your workspace has not published a reusable template for this contract type yet." how="During the controlled pilot, start MSA, NDA, or DPA from New Contract using the governed builders." class_name="dc-ds-empty--activation" %}
     {% else %}
     {% url 'contracts:contract_create' as blank_contract_url %}
     {% with blank_contract_url=blank_contract_url|add:'?type='|add:selected_type %}
       {% include "design_system/empty_state.html" with icon="file-text" title="No approved templates for this type" reason="Your workspace has not published a reusable template for this contract type yet." how="Approved templates appear here after an administrator publishes them; you can still begin a controlled blank draft now." action_url=blank_contract_url action_label="Start blank draft" class_name="dc-ds-empty--activation" %}
     {% endwith %}
+    {% endif %}
     {% endif %}
   </div>
 
@@ -154,7 +160,9 @@
       >
     </div>
     <div class="ctp-toolbar-action">
+      {% if not CONTROLLED_PILOT_ENABLED %}
       <a href="{% url 'contracts:upload_signed_contract' %}" class="dc-ds-button dc-ds-button--primary">Upload &amp; review agreement</a>
+      {% endif %}
     </div>
   </div>
 

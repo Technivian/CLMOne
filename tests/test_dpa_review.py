@@ -529,6 +529,68 @@ class DPAReviewPackViewTests(TestCase):
         response = client.get(reverse('contracts:dpa_review_pack_detail', kwargs={'pk': self.review_pack.pk}))
         self.assertEqual(response.status_code, 200)
 
+    def test_detail_workspace_shell_and_tabs(self):
+        client = TestClient()
+        client.login(username='dpa_member', password='testpass123')
+        url = reverse('contracts:dpa_review_pack_detail', kwargs={'pk': self.review_pack.pk})
+        response = client.get(url)
+        self.assertEqual(response.status_code, 200)
+        body = response.content.decode().split('<div id="djDebug"', 1)[0]
+        self.assertIn('dc-ds-workspace--dpa', body)
+        self.assertIn('dc-ds-workspace--record', body)
+        self.assertIn('role="tablist"', body)
+        self.assertIn('Overview', body)
+        self.assertIn('Findings', body)
+        self.assertIn('Risks', body)
+        self.assertIn('Documents', body)
+        self.assertIn('Decision history', body)
+        self.assertIn('Actions', body)
+        self.assertIn('Decision required', body)
+        self.assertIn('Related actions', body)
+        self.assertNotIn('Quick links', body)
+        self.assertIn('Risk summary', body)
+        self.assertIn('dc-ds-workspace__rail--sticky', body)
+        self.assertIn('View memo', body)
+        self.assertIn('View contract', body)
+        self.assertIn('Actions', body)
+        self.assertNotIn('Generate Review Memo', body)
+
+        admin_client = TestClient()
+        admin_client.login(username=self.admin.username, password='testpass123')
+        admin_body = admin_client.get(url).content.decode().split('<div id="djDebug"', 1)[0]
+        self.assertIn('Generate memo', admin_body)
+        self.assertIn('Run analysis', admin_body)
+
+        findings = client.get(f'{url}?tab=findings')
+        self.assertEqual(findings.status_code, 200)
+        findings_body = findings.content.decode().split('<div id="djDebug"', 1)[0]
+        self.assertIn('Role Qualification', findings_body)
+        self.assertIn('Processing Description', findings_body)
+        self.assertIn('Liability Conflict Detection', findings_body)
+        self.assertIn('dpa-category-row', findings_body)
+        self.assertTrue(
+            any(label in findings_body for label in (
+                'Confirmed', 'Needs input', 'Risk', 'Not applicable', 'Not reviewed',
+            ))
+        )
+
+        history = client.get(f'{url}?tab=history')
+        self.assertEqual(history.status_code, 200)
+        self.assertContains(history, 'Decision history')
+
+    def test_detail_decision_bar_for_reviewer(self):
+        self.review_pack.reviewer = self.member
+        self.review_pack.approval_status = DPAReviewPack.ApprovalStatus.UNDER_REVIEW
+        self.review_pack.save(update_fields=['reviewer', 'approval_status'])
+        client = TestClient()
+        client.login(username='dpa_member', password='testpass123')
+        response = client.get(reverse('contracts:dpa_review_pack_detail', kwargs={'pk': self.review_pack.pk}))
+        self.assertEqual(response.status_code, 200)
+        body = response.content.decode().split('<div id="djDebug"', 1)[0]
+        self.assertIn('dpa-decision-bar', body)
+        self.assertIn('Submit decision', body)
+        self.assertIn('Decision note', body)
+
     def test_run_analysis_persists_risk_items(self):
         client = TestClient()
         client.login(username=self.admin.username, password='testpass123')
@@ -753,7 +815,8 @@ class DPACopyQualityTests(TestCase):
     def test_no_raw_internals_on_detail_page(self):
         client = TestClient()
         client.login(username=self.user.username, password='testpass123')
-        response = client.get(reverse('contracts:dpa_review_pack_detail', kwargs={'pk': self.review_pack.pk}))
+        url = reverse('contracts:dpa_review_pack_detail', kwargs={'pk': self.review_pack.pk})
+        response = client.get(f'{url}?tab=findings')
         self.assertEqual(response.status_code, 200)
         body = response.content.decode().split('<div id="djDebug"', 1)[0]
         self.assertNotIn('DPAReviewPack', body)

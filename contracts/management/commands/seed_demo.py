@@ -77,13 +77,13 @@ DEMO_CONTRACTS = [
     ('Employment Agreement — VP Engineering', 'EMPLOYMENT', 'ACTIVE', 'LOW', -90, None, None, False, None, -1),
     ('Lease Agreement — Regional Office', 'LEASE', 'ACTIVE', 'MEDIUM', -700, 665, 635, True, Decimal('310000'), 3),
     ('Master Service Agreement — Solstice Cloud (renewing)', 'MSA', 'ACTIVE', 'MEDIUM', -350, 12, 5, True, Decimal('142000'), 4),
-    ('NDA — Prospective Partner Discussions', 'NDA', 'DRAFT', 'LOW', None, None, None, False, None, 2),
-    ('Statement of Work — Data Migration (draft)', 'SOW', 'DRAFT', 'MEDIUM', None, None, None, False, Decimal('54000'), 0),
-    ('Settlement Agreement — Vendor Dispute', 'SETTLEMENT', 'PENDING', 'HIGH', None, None, None, False, Decimal('18000'), 3),
+    ('NDA — Prospective Partner Discussions', 'NDA', 'IN_PROGRESS', 'LOW', None, None, None, False, None, 2),
+    ('Statement of Work — Data Migration (draft)', 'SOW', 'IN_PROGRESS', 'MEDIUM', None, None, None, False, Decimal('54000'), 0),
+    ('Settlement Agreement — Vendor Dispute', 'SETTLEMENT', 'IN_PROGRESS', 'HIGH', None, None, None, False, Decimal('18000'), 3),
     ('Vendor Agreement — Legacy Support (expired)', 'VENDOR', 'EXPIRED', 'LOW', -730, -30, None, False, Decimal('22000'), 1),
     ('MSA — Discontinued Supplier', 'MSA', 'TERMINATED', 'MEDIUM', -600, -100, None, False, Decimal('60000'), 2),
-    ('SOW — Q1 Consulting Engagement (completed)', 'SOW', 'COMPLETED', 'LOW', -200, -30, None, False, Decimal('35000'), 4),
-    ('Amendment — Northwind MSA Extension', 'AMENDMENT', 'IN_REVIEW', 'MEDIUM', None, None, None, False, None, 0),
+    ('SOW — Q1 Consulting Engagement (completed)', 'SOW', 'ACTIVE', 'LOW', -200, -30, None, False, Decimal('35000'), 4),
+    ('Amendment — Northwind MSA Extension', 'AMENDMENT', 'IN_PROGRESS', 'MEDIUM', None, None, None, False, None, 0),
 ]
 
 DEMO_CLAUSE_TEMPLATES = [
@@ -226,23 +226,32 @@ class Command(BaseCommand):
                     'auto_renew': auto_renew,
                     'notice_period_days': 30 if auto_renew else None,
                     'created_by': creator,
-                    'lifecycle_stage': self._lifecycle_stage_for(status),
+                    'lifecycle_stage': self._lifecycle_stage_for(title, status),
                 },
             )
             contracts.append(contract)
         return contracts
 
     @staticmethod
-    def _lifecycle_stage_for(status):
+    def _lifecycle_stage_for(title, status):
+        # Prefer title-driven stage for in-progress demos so the walkthrough
+        # still shows drafting / approval / review variety under one record status.
+        by_title = {
+            'NDA — Prospective Partner Discussions': 'DRAFTING',
+            'Statement of Work — Data Migration (draft)': 'DRAFTING',
+            'Settlement Agreement — Vendor Dispute': 'APPROVAL',
+            'Amendment — Northwind MSA Extension': 'INTERNAL_REVIEW',
+            'SOW — Q1 Consulting Engagement (completed)': 'OBLIGATION_TRACKING',
+        }
+        if title in by_title:
+            return by_title[title]
         return {
-            'DRAFT': 'DRAFTING',
-            'PENDING': 'APPROVAL',
-            'IN_REVIEW': 'INTERNAL_REVIEW',
-            'APPROVED': 'SIGNATURE',
+            'IN_PROGRESS': 'DRAFTING',
             'ACTIVE': 'OBLIGATION_TRACKING',
             'EXPIRED': 'RENEWAL',
-            'TERMINATED': 'ARCHIVED',
-            'COMPLETED': 'ARCHIVED',
+            'TERMINATED': 'OBLIGATION_TRACKING',
+            'CANCELLED': 'DRAFTING',
+            'ARCHIVED': 'OBLIGATION_TRACKING',
         }.get(status, 'DRAFTING')
 
     # ---- clause library ------------------------------------------------

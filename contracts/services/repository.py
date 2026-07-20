@@ -22,6 +22,7 @@ from contracts.services.queue_rows import (
 from contracts.templatetags.clmone_format import (
     contract_status_badge_tone,
     contract_type_short_label,
+    document_status_badge_tone,
     lifecycle_stage_badge_tone,
     lifecycle_steps,
     money,
@@ -32,6 +33,7 @@ from contracts.services.workflow_operations import split_exception_from_title
 # Compact next-action verbs for repository payloads (hidden on All contracts;
 # surfaces that need them — My work / Approvals — can reuse the same wording).
 _REPO_NEXT_ACTION = {
+    'INTAKE': 'Complete intake',
     'DRAFTING': 'Continue drafting',
     'INTERNAL_REVIEW': 'Complete internal review',
     'NEGOTIATION': 'Resolve open negotiation points',
@@ -110,6 +112,32 @@ class DjangoRepositoryService:
         type_short = contract_type_short_label(contract.contract_type, type_display)
         stage_short, stage_full = _repository_stage_label(contract)
 
+        primary_doc = None
+        docs = getattr(contract, '_prefetched_objects_cache', {}).get('documents')
+        if docs is not None:
+            ordered = sorted(docs, key=lambda d: (d.version or 0, d.id or 0), reverse=True)
+            for doc in ordered:
+                if doc.status != 'SUPERSEDED' and not getattr(doc, 'is_deleted', False):
+                    primary_doc = doc
+                    break
+            if primary_doc is None and ordered:
+                primary_doc = ordered[0]
+        else:
+            primary_doc = (
+                contract.documents.filter(is_deleted=False)
+                .exclude(status='SUPERSEDED')
+                .order_by('-version', '-id')
+                .first()
+            )
+            if primary_doc is None:
+                primary_doc = (
+                    contract.documents.filter(is_deleted=False)
+                    .order_by('-version', '-id')
+                    .first()
+                )
+        doc_state = primary_doc.status if primary_doc else ''
+        doc_state_display = primary_doc.get_status_display() if primary_doc else ''
+
         kwargs = dict(
             id=str(contract.id),
             title=display_title,
@@ -140,6 +168,9 @@ class DjangoRepositoryService:
             stage_display_full=stage_full,
             has_exception=show_exception_badge,
             next_action=_repository_next_action(contract, has_exception=show_exception_badge),
+            document_state=doc_state,
+            document_state_display=doc_state_display,
+            document_state_badge_tone=document_status_badge_tone(doc_state) if doc_state else '',
         )
         if content is not None:
             kwargs['content'] = content
@@ -148,7 +179,7 @@ class DjangoRepositoryService:
     def list(self, params: ListParams) -> ListResult:
         """List contracts with filtering and pagination"""
         queryset = scope_queryset_for_organization(
-            Contract.objects.select_related('created_by', 'owner').all(),
+            Contract.objects.select_related('created_by', 'owner').prefetch_related('documents'),
             self.organization,
         )
         
@@ -168,9 +199,13 @@ class DjangoRepositoryService:
                 )
             )
 
-        # Apply status filter
+        # Apply status filter (six record statuses)
         if params.status:
             queryset = queryset.filter(status__in=params.status)
+
+        # Apply workflow-stage filter
+        if params.lifecycle_stage:
+            queryset = queryset.filter(lifecycle_stage__in=params.lifecycle_stage)
 
         # Apply the "30d attention" saved-view window — same ACTIVE +
         # end_date-within-N-days definition as the Dashboard Renewals queue
@@ -208,6 +243,8 @@ class DjangoRepositoryService:
             queryset = queryset.order_by('search_rank', 'updated_at') if params.q else queryset.order_by('updated_at')
         elif params.sort == 'title':
             queryset = queryset.order_by('search_rank', 'title') if params.q else queryset.order_by('title')
+        elif params.sort == 'stage':
+            queryset = queryset.order_by('search_rank', 'lifecycle_stage') if params.q else queryset.order_by('lifecycle_stage')
         elif params.sort == 'status':
             queryset = queryset.order_by('search_rank', 'status') if params.q else queryset.order_by('status')
         elif params.q:

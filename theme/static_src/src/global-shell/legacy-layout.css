@@ -198,15 +198,17 @@
                 background: var(--surface); border: 1px solid var(--border); border-radius: 9999px; padding: 1px 8px;
             }
             .wq-tab.wq-tab-active .wq-tab-count { background: var(--primary-subtle); border-color: var(--primary-bg); color: var(--primary-light); }
-            .wq-table { width: 100%; border-collapse: collapse; }
+            .wq-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
             .wq-table th {
                 padding: 10px 16px; font-size: 10.5px; font-weight: 700; text-transform: uppercase;
                 letter-spacing: 0.07em; color: var(--text-muted); text-align: left;
                 background: var(--surface); border-bottom: 1px solid var(--card-border);
+                overflow: hidden;
             }
             .wq-table td {
                 padding: 15px 16px; font-size: 13px; color: var(--text-primary);
                 border-bottom: 1px solid var(--card-border); vertical-align: middle;
+                overflow: hidden;
             }
             .wq-table tr:last-child td { border-bottom: none; }
             .wq-table tr:hover td { background: var(--sidebar-hover); }
@@ -215,9 +217,9 @@
                just a checked checkbox easy to lose track of in a dense table. */
             .wq-table tr.wq-row-selected td { background: var(--primary-subtle); }
             .wq-table tr.wq-row-selected:hover td { background: var(--primary-subtle); }
-            .wq-table a.wq-item-link { color: var(--text-primary); text-decoration: none; font-weight: 700; }
+            .wq-table a.wq-item-link { color: var(--text-primary); text-decoration: none; font-weight: 700; display: block; min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             .wq-table a.wq-item-link:hover { color: var(--primary-light); }
-            .wq-item-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+            .wq-item-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             .wq-empty { text-align: center; padding: 28px 16px; color: var(--text-muted); font-size: 13px; }
             .wq-due-overdue { color: var(--msg-error-text); font-weight: 600; }
             .wq-due-today { color: var(--status-pending-fg, #85540F); font-weight: 600; }
@@ -250,7 +252,7 @@
 
             /* Action column — a per-stage verb button plus an overflow menu
                for View/Edit, so the row always has one obvious next step. */
-            .wq-next-action { color: var(--text-primary); font-size: 12.5px; font-weight: 650; line-height: 1.35; }
+            .wq-next-action { display: block; min-width: 0; max-width: 100%; color: var(--text-primary); font-size: 12.5px; font-weight: 650; line-height: 1.35; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             .wq-col-action { display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
             .wq-kebab { position: relative; }
             .wq-kebab-trigger { list-style: none; cursor: pointer; width: 30px; height: 30px; border-radius: 7px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 16px; line-height: 1; }
@@ -597,6 +599,24 @@
             .topbar-page-context .topbar-back-link { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 32px; width: 32px; height: 32px; border: 1px solid var(--line); border-radius: 7px; background: var(--card); color: var(--ink-500); text-decoration: none; transition: color .15s ease, border-color .15s ease, background-color .15s ease; }
             .topbar-page-context .topbar-back-link svg { width: 18px; height: 18px; }
             .topbar-page-context .topbar-back-link:hover { border-color: var(--line-strong); background: var(--well); color: var(--seal-dark); }
+            .topbar-page-context .topbar-back-link:has(.topbar-back-label) {
+              flex: 0 0 auto;
+              width: auto;
+              height: auto;
+              min-height: 32px;
+              gap: 6px;
+              padding: 4px 10px 4px 6px;
+              border: 0;
+              background: transparent;
+              color: var(--ink-600);
+              font: var(--text-small);
+              font-weight: 600;
+            }
+            .topbar-page-context .topbar-back-link:has(.topbar-back-label):hover {
+              background: transparent;
+              color: var(--seal-dark);
+            }
+            .topbar-page-context .topbar-back-label { white-space: nowrap; }
             .topbar-back-link:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
             .global-search-form { display: inline-flex; align-items: center; gap: 8px; min-width: 280px; max-width: 460px; width: 42vw; }
             .global-search-wrap { position: relative; width: 100%; }

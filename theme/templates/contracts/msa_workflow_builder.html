@@ -503,7 +503,7 @@
     const signals = [];
     const valueEl = fieldEl('value');
     const valueNum = valueEl && valueEl.value ? parseFloat(valueEl.value) : 0;
-    if (boolValue('value_above_threshold_confirmed') || valueNum >= 250000) signals.push({ tone: 'high', text: 'Finance approval signal: contract value is above the approval threshold.', link: 'fees-payment' });
+    if (boolValue('value_above_threshold_confirmed') || valueNum >= {{ finance_approval_threshold }}) signals.push({ tone: 'high', text: 'Finance approval signal: contract value is above the approval threshold.', link: 'fees-payment' });
     const paymentTerm = String(fieldRawValue(fieldEl('payment_terms')) || '');
     const paymentDays = paymentTerm.match(/(\d+)/);
     if (paymentDays && parseInt(paymentDays[1], 10) !== 30) signals.push({ tone: 'high', text: 'Finance approval signal: payment terms deviate from the standard Net 30 position.', link: 'fees-payment' });

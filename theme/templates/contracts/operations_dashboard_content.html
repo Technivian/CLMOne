@@ -1,14 +1,6 @@
 {% include "design_system/page_hero.html" with eyebrow="Admin → Operations" title="Operations" subtitle=page_subtitle actions_template="contracts/operations_dashboard_actions.html" %}
 
-<nav class="dc-ds-list-tabs mb-4" aria-label="Operations sections">
-  {% for tab in operations_tabs %}
-  <a
-    class="dc-ds-choice{% if active_tab == tab.id %} chip-active{% endif %}"
-    href="{% url 'operations_dashboard' %}{% if tab.id != 'overview' %}?tab={{ tab.id }}{% endif %}"
-    {% if active_tab == tab.id %}aria-current="page"{% endif %}
-  >{{ tab.label }}</a>
-  {% endfor %}
-</nav>
+{% include "components/_workspace_tabs.html" with tabs=operations_tabs aria_label="Operations sections" %}
 
 {% if incidents %}
   {% include "contracts/operations_dashboard_incidents.html" %}

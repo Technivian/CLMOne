@@ -83,10 +83,11 @@ test('critical contract create and edit flow works', async ({ page }) => {
 
   await page.getByRole('link', { name: title }).click();
   await expect(page).toHaveURL(/\/contracts\/\d+\/?$/);
-  await expect(page.locator('.page-wrap.reveal-stagger').first()).toBeVisible();
-  await expect(page.locator('.arch-detail-grid').first()).toBeVisible();
-  await page.getByRole('tab', { name: 'Workflow' }).click();
-  await expect(page.locator('.lc-track').first()).toBeVisible();
+  // Intentional product change: record shell uses dc-ds-workspace--record (not page-wrap/arch-detail-grid).
+  await expect(page.locator('.dc-ds-workspace--record').first()).toBeVisible();
+  await expect(page.getByText('Contract details').first()).toBeVisible();
+  await expect(page.getByText('Contract lifecycle').first()).toBeVisible();
+  await expect(page.getByText('View full workflow')).toHaveCount(0);
   const detailUrl = page.url().replace(/\/$/, '');
   await page.goto(`${detailUrl}/edit/`);
   await expect(page).toHaveURL(/\/contracts\/\d+\/edit\/?$/);
@@ -181,7 +182,7 @@ test('critical redesigned workflow path works end-to-end', async ({ page }) => {
   expect(templateCreateResponse.status()).toBeLessThan(400);
 
   await expect(page).toHaveURL(/\/contracts\/workflows\/templates\/create\/?$/);
-  await expect(page.getByText(/Create Workflow Template/).first()).toBeVisible();
+  await expect(page.getByText(/Create template/).first()).toBeVisible();
   await page.fill('input[name="name"]', templateName);
   await page.fill('textarea[name="description"]', 'Automated template for redesigned path test');
   await page.selectOption('select[name="category"]', { index: 1 });

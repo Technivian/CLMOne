@@ -166,7 +166,7 @@ def upsert_contract_from_netsuite(organization, mapped: dict):
     contract.title = title
     contract.counterparty = str(mapped.get('counterparty_name', '') or '').strip()
     contract.contract_type = _normalize_choice(mapped.get('contract_type'), Contract.ContractType.choices, Contract.ContractType.OTHER)
-    contract.status = _normalize_choice(mapped.get('status'), Contract.Status.choices, Contract.Status.DRAFT)
+    contract.status = _normalize_choice(mapped.get('status'), Contract.Status.choices, Contract.Status.IN_PROGRESS)
     contract.risk_level = _normalize_choice(mapped.get('risk_level'), Contract.RiskLevel.choices, Contract.RiskLevel.LOW)
     contract.value = _to_decimal(mapped.get('contract_value'))
     contract.currency = _normalize_choice(mapped.get('currency'), Contract.Currency.choices, Contract.Currency.OTHER)

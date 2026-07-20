@@ -6,6 +6,7 @@ from contracts.templatetags.clmone_format import (
     humanduration,
     iso_datetime,
     money,
+    money_compact,
     object_type_label,
     sort_label,
 )
@@ -31,6 +32,18 @@ class MoneyFilterTests(SimpleTestCase):
 
     def test_unparsable_value_passes_through(self):
         self.assertEqual(money('not-a-number'), 'not-a-number')
+
+
+class MoneyCompactFilterTests(SimpleTestCase):
+    def test_omits_cents_for_whole_amounts(self):
+        self.assertEqual(money_compact(48000, 'EUR'), '€48,000')
+        self.assertEqual(money_compact(125000), '$125,000')
+
+    def test_keeps_cents_when_meaningful(self):
+        self.assertEqual(money_compact('125000.5'), '$125,000.50')
+
+    def test_empty_value_renders_em_dash(self):
+        self.assertEqual(money_compact(None), '—')
 
 
 class IsoDatetimeFilterTests(SimpleTestCase):

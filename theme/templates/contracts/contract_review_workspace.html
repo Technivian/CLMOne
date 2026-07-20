@@ -37,19 +37,7 @@
     </div>
   </header>
 
-  <nav class="dc-ds-workspace__tabs dc-ds-list-tabs contract-command-tabs" role="tablist" aria-label="Contract workspace tabs">
-    {% for tab in workspace_tabs %}
-    <a
-      href="{{ tab.url }}"
-      class="dc-ds-choice{% if tab.active %} chip-active{% endif %}"
-      role="tab"
-      id="tab-{{ tab.key }}"
-      aria-selected="{% if tab.active %}true{% else %}false{% endif %}"
-      aria-controls="{{ tab.panel_id }}"
-      {% if tab.active %}tabindex="0"{% else %}tabindex="-1"{% endif %}
-    >{{ tab.label }}</a>
-    {% endfor %}
-  </nav>
+  {% include "components/_workspace_tabs.html" with tabs=workspace_tabs aria_label="Contract workspace tabs" role_tablist=True nav_class="dc-ds-workspace__tabs" %}
 
   <div class="dc-ds-workspace__layout dc-ds-workspace__layout--single">
     <div class="dc-ds-workspace__main">
@@ -157,14 +145,18 @@
           </div>
         </div>
         <div class="dc-ds-workspace__surface-body">
-          <div class="dc-ds-list-tabs contract-review-inner-tabs" role="tablist" aria-label="Review panels">
-            <button type="button" class="dc-ds-choice chip-active" data-review-tab="overview" role="tab" aria-selected="true">Overview</button>
-            <button type="button" class="dc-ds-choice" data-review-tab="findings" role="tab" aria-selected="false">Findings</button>
-            <button type="button" class="dc-ds-choice" data-review-tab="clauses" role="tab" aria-selected="false">Clauses</button>
-            <button type="button" class="dc-ds-choice" data-review-tab="questions" role="tab" aria-selected="false">Questions</button>
-            <button type="button" class="dc-ds-choice" data-review-tab="obligations" role="tab" aria-selected="false">Obligations</button>
-            <button type="button" class="dc-ds-choice" data-review-tab="activity" role="tab" aria-selected="false">Activity</button>
-          </div>
+          {# In-page panel switcher: same underline visual language as workspace tabs;
+             buttons (not routes) so local review panels stay client-side. #}
+          <nav class="dc-ds-workspace-tabs dc-ds-workspace-tabs--section" role="tablist" aria-label="Review panels" data-review-panel-tabs>
+            <div class="dc-ds-workspace-tabs__list">
+              <button type="button" class="dc-ds-workspace-tabs__tab is-active" data-review-tab="overview" role="tab" aria-selected="true">Overview</button>
+              <button type="button" class="dc-ds-workspace-tabs__tab" data-review-tab="findings" role="tab" aria-selected="false">Findings</button>
+              <button type="button" class="dc-ds-workspace-tabs__tab" data-review-tab="clauses" role="tab" aria-selected="false">Clauses</button>
+              <button type="button" class="dc-ds-workspace-tabs__tab" data-review-tab="questions" role="tab" aria-selected="false">Questions</button>
+              <button type="button" class="dc-ds-workspace-tabs__tab" data-review-tab="obligations" role="tab" aria-selected="false">Obligations</button>
+              <button type="button" class="dc-ds-workspace-tabs__tab" data-review-tab="activity" role="tab" aria-selected="false">Audit trail</button>
+            </div>
+          </nav>
 
           <div class="contract-review-panel is-active" data-review-panel="overview">
             {% if review_state.findings_ready %}
@@ -354,7 +346,6 @@
       var tab = button.dataset.reviewTab;
       document.querySelectorAll('[data-review-tab]').forEach(function (item) {
         var active = item === button;
-        item.classList.toggle('chip-active', active);
         item.classList.toggle('is-active', active);
         item.setAttribute('aria-selected', active ? 'true' : 'false');
       });

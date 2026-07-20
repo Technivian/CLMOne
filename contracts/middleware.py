@@ -77,6 +77,99 @@ class SecurityHeadersMiddleware:
         return response
 
 
+class ControlledPilotScopeMiddleware:
+    """Deny direct URL access to surfaces outside the controlled pilot scope.
+
+    Enforcement is path-based and fail-closed for excluded prefixes. When
+    ``CONTROLLED_PILOT_ENABLED`` is false, only the existing billing/trust
+    kill switches apply (so ``render.yaml`` flags are actually enforced).
+    Does not log request bodies, credentials, or contract content.
+    """
+
+    # Exact freeform create is excluded; governed builders remain allowed.
+    _PILOT_ALLOWED_NEW_PREFIXES = (
+        '/contracts/new/start',
+        '/contracts/new/msa',
+        '/contracts/new/nda',
+        '/contracts/new/dpa',
+    )
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        path = request.path or '/'
+        decision = self._deny_reason(path)
+        if decision:
+            logger.info(
+                'pilot_scope_denied path=%s reason=%s',
+                path,
+                decision,
+            )
+            if request.user.is_authenticated:
+                try:
+                    from django.contrib import messages
+                    messages.warning(
+                        request,
+                        'That area is outside the approved controlled-pilot scope.',
+                    )
+                except Exception:
+                    pass
+                return redirect(reverse('dashboard'))
+            return redirect(reverse('login'))
+        return self.get_response(request)
+
+    def _deny_reason(self, path):
+        billing_on = getattr(settings, 'BILLING_SELF_SERVE_ENABLED', True)
+        trust_on = getattr(settings, 'TRUST_ACCOUNTING_ENABLED', True)
+        pilot_on = getattr(settings, 'CONTROLLED_PILOT_ENABLED', False)
+        ai_on = getattr(settings, 'GEMINI_AI_ENABLED', False)
+
+        if not billing_on and path.startswith('/contracts/billing'):
+            return 'billing_disabled'
+        if not trust_on and path.startswith('/contracts/trust-accounts'):
+            return 'trust_accounting_disabled'
+
+        if not pilot_on:
+            return None
+
+        # Law-firm / commercial modules out of pilot.
+        for prefix, reason in (
+            ('/contracts/clients', 'law_firm_clients'),
+            ('/contracts/matters', 'law_firm_matters'),
+            ('/contracts/invoices', 'law_firm_invoices'),
+            ('/contracts/trust-accounts', 'trust_accounting'),
+            ('/contracts/billing', 'billing'),
+            ('/contracts/signatures', 'signatures_out_of_scope'),
+            ('/contracts/new/upload', 'upload_review_out_of_scope'),
+            ('/contracts/dpa-reviews', 'dpa_review_packs_out_of_scope'),
+            ('/contracts/obligations', 'obligations_out_of_scope'),
+            ('/contracts/workflows/templates', 'workflow_designer_out_of_scope'),
+            ('/contracts/approval-rules', 'approval_rule_authoring_out_of_scope'),
+        ):
+            if path.startswith(prefix):
+                return reason
+
+        # Freeform create (/contracts/new/ or /contracts/new/?…) — not builders.
+        if path.rstrip('/') == '/contracts/new' or path.startswith('/contracts/new?'):
+            return 'freeform_create_out_of_scope'
+        if path.startswith('/contracts/new/'):
+            if not any(path.startswith(p) for p in self._PILOT_ALLOWED_NEW_PREFIXES):
+                return 'freeform_create_out_of_scope'
+
+        # Unrestricted AI entry points when kill switch is off (pilot default).
+        if not ai_on:
+            if '/ai-' in path or path.endswith('/ai-assistant/') or '/ai-assistant' in path:
+                return 'ai_disabled'
+            if '/api/' in path and any(
+                token in path
+                for token in ('/ai-extract', '/ai-suggest', '/ai-draft', '/ai-clauses')
+            ):
+                return 'ai_disabled'
+
+        return None
+
+
 class AuthRateLimitMiddleware:
     """
     Simple per-IP request throttling for auth-sensitive endpoints.
@@ -112,22 +205,43 @@ class AuthRateLimitMiddleware:
                 return self.get_response(request)
 
             limit, window = self._policy_for_path(path)
-            key = f'auth-rl:{path}:{client_ip}'
+            key = self._auth_rate_limit_key(path, client_ip)
+            reset_key = self._auth_rate_limit_reset_key(path, client_ip)
             now = int(time.time())
-            bucket = cache.get(key)
+            count, reset_at = self._load_auth_counter(key, reset_key, window, now)
 
-            if not bucket or not isinstance(bucket, dict) or now >= bucket.get('reset_at', 0):
-                bucket = {'count': 0, 'reset_at': now + window}
+            if path == '/login/':
+                blocked = count >= limit
+                response = self.get_response(request)
+                if response.status_code == 302:
+                    cache.delete(key)
+                    cache.delete(reset_key)
+                    return response
+                if blocked:
+                    retry_after = max(reset_at - now, 1)
+                    response = HttpResponse('Too many requests. Please try again later.', status=429)
+                    response['Retry-After'] = str(retry_after)
+                    return response
+                if response.status_code == 200:
+                    new_count = self._increment_auth_counter(key, reset_key, reset_at, now)
+                    # Close the concurrent multi-worker race: if this failure pushed
+                    # the shared counter past the limit, return 429 for this request.
+                    if new_count > limit:
+                        retry_after = max(reset_at - now, 1)
+                        response = HttpResponse('Too many requests. Please try again later.', status=429)
+                        response['Retry-After'] = str(retry_after)
+                        return response
+                return response
 
-            if bucket['count'] >= limit:
-                retry_after = max(bucket['reset_at'] - now, 1)
+            if count >= limit:
+                retry_after = max(reset_at - now, 1)
                 response = HttpResponse('Too many requests. Please try again later.', status=429)
                 response['Retry-After'] = str(retry_after)
                 return response
 
-            bucket['count'] += 1
-            cache.set(key, bucket, timeout=window)
-            return self.get_response(request)
+            response = self.get_response(request)
+            self._increment_auth_counter(key, reset_key, reset_at, now)
+            return response
         except Exception as exc:
             logger.exception('auth_rate_limit_cache_failure', extra={'path': request.path, 'client_ip': self._client_ip(request)})
             if settings.DEBUG:
@@ -140,6 +254,57 @@ class AuthRateLimitMiddleware:
             # endpoints rather than disclose internals or silently stop
             # throttling (audit C10). Generic, information-free response.
             return HttpResponse('Service temporarily unavailable.', status=503, content_type='text/plain')
+
+    @staticmethod
+    def _auth_rate_limit_key(path, client_ip):
+        return f'auth-rl:{path}:{client_ip}'
+
+    @staticmethod
+    def _auth_rate_limit_reset_key(path, client_ip):
+        return f'auth-rl-reset:{path}:{client_ip}'
+
+    @staticmethod
+    def _load_auth_counter(key, reset_key, window, now):
+        """Load count + window end; migrate legacy dict buckets if present."""
+        raw = cache.get(key)
+        if isinstance(raw, dict):
+            reset_at = int(raw.get('reset_at') or (now + window))
+            if now >= reset_at:
+                cache.delete(key)
+                cache.delete(reset_key)
+                return 0, now + window
+            return int(raw.get('count') or 0), reset_at
+
+        reset_at = cache.get(reset_key)
+        if reset_at is None or now >= int(reset_at):
+            return 0, now + window
+        return int(raw or 0), int(reset_at)
+
+    @staticmethod
+    def _increment_auth_counter(key, reset_key, reset_at, now):
+        """Atomically increment the shared Redis/LocMem failure counter."""
+        ttl = max(int(reset_at) - now, 1)
+        cache.add(reset_key, int(reset_at), timeout=ttl)
+        raw = cache.get(key)
+        if isinstance(raw, dict):
+            count = int(raw.get('count') or 0) + 1
+            cache.set(key, count, timeout=ttl)
+            return count
+        if raw is None:
+            cache.set(key, 1, timeout=ttl)
+            return 1
+        try:
+            incremented = cache.incr(key)
+            if incremented is None:
+                raise ValueError('cache.incr returned None')
+            return int(incremented)
+        except (ValueError, TypeError):
+            try:
+                count = int(raw) + 1
+            except (TypeError, ValueError):
+                count = 1
+            cache.set(key, count, timeout=ttl)
+            return count
 
     @staticmethod
     def _client_ip(request):
@@ -251,6 +416,9 @@ class SessionSecurityMiddleware:
             or getattr(settings, 'SESSION_IDLE_TIMEOUT_MINUTES', 120)
         )
         now_ts = current_session_timestamp()
+        # Pilot verification harness (DJANGO_E2E only): force idle expiry without waiting.
+        if getattr(settings, 'DJANGO_E2E', False) and request.GET.get('e2e_force_idle') == '1':
+            request.session['session_last_activity_at'] = now_ts - (idle_timeout_minutes * 60 + 5)
         last_activity = session.get('session_last_activity_at')
         if last_activity is not None:
             try:

@@ -1,0 +1,9 @@
+[CLM One] Database: //tmp/clmone-pilot-env-verify.sqlite3 (local, env=production)
+100 objects imported automatically (use -v 2 for details).
+
+FLAGS {'CONTROLLED_PILOT_ENABLED': True, 'GEMINI_AI_ENABLED': False, 'BILLING_SELF_SERVE_ENABLED': False, 'TRUST_ACCOUNTING_ENABLED': False, 'FINANCE_APPROVAL_THRESHOLD': '100000', 'RATELIMIT_ENABLED': True, 'LOGIN_RATE_LIMIT_REQUESTS': 10}
+user=pilot_admin membership=ADMIN active=True
+user=pilot_finance membership=MEMBER active=True
+user=pilot_legal membership=MEMBER active=True
+user=pilot_owner membership=OWNER active=True
+user=pilot_requester membership=MEMBER active=True

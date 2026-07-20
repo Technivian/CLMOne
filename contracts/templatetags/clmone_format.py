@@ -112,6 +112,14 @@ _CANONICAL_TONE_ALIASES = {
 # null, and retired values are neutral so a new server value cannot look like a
 # successful agreement or final document by accident.
 _CONTRACT_STATUS_SEMANTICS = {
+    # Canonical six record statuses
+    'IN_PROGRESS': 'progress',
+    'ACTIVE': 'success',
+    'EXPIRED': 'danger',
+    'TERMINATED': 'danger',
+    'CANCELLED': 'neutral',
+    'ARCHIVED': 'neutral',
+    # Legacy aliases (pre-three-dimension) — still render safely if stale data appears
     'NEEDS_INPUT': 'attention',
     'UPLOADED': 'progress',
     'PROCESSING': 'progress',
@@ -130,18 +138,18 @@ _CONTRACT_STATUS_SEMANTICS = {
     'PENDING': 'attention',
     'IN_REVIEW': 'progress',
     'APPROVED': 'progress',
-    'ACTIVE': 'success',
-    'EXPIRED': 'danger',
-    'TERMINATED': 'danger',
     'COMPLETED': 'success',
-    'CANCELLED': 'neutral',
 }
 
 _DOCUMENT_STATUS_SEMANTICS = {
+    # Canonical four document states
     'DRAFT': 'neutral',
+    'FINAL': 'success',
+    'EXECUTED': 'success',
+    'SUPERSEDED': 'neutral',
+    # Legacy aliases
     'REVIEW': 'attention',
     'APPROVED': 'progress',
-    'FINAL': 'success',
     'ARCHIVED': 'neutral',
 }
 
@@ -165,17 +173,18 @@ _SEMANTIC_LEGACY_BADGE_CLASS = {
 # page via {% stage_dots %} — this is a compact-context alternative, not a
 # replacement of the richer view.
 _LIFECYCLE_STAGE_LABELS = {
-    'DRAFTING': 'Draft',
-    'INTERNAL_REVIEW': 'Legal Review',
-    'NEGOTIATION': 'Legal Review',
+    'INTAKE': 'Intake',
+    'DRAFTING': 'Drafting',
+    'INTERNAL_REVIEW': 'Internal review',
+    'NEGOTIATION': 'Negotiation',
     'APPROVAL': 'Approval',
     'SIGNATURE': 'Signature',
-    'EXECUTED': 'Active',
-    'OBLIGATION_TRACKING': 'Active',
+    'EXECUTED': 'Executed',
+    'OBLIGATION_TRACKING': 'Obligation tracking',
     'RENEWAL': 'Renewal',
-    'ARCHIVED': 'Archived',
 }
 _LIFECYCLE_STAGE_SEMANTICS = {
+    'INTAKE': 'neutral',
     'DRAFTING': 'neutral',
     'INTERNAL_REVIEW': 'progress',
     'NEGOTIATION': 'progress',
@@ -184,7 +193,6 @@ _LIFECYCLE_STAGE_SEMANTICS = {
     'EXECUTED': 'success',
     'OBLIGATION_TRACKING': 'success',
     'RENEWAL': 'attention',
-    'ARCHIVED': 'neutral',
 }
 _LIFECYCLE_STAGE_BADGES = {
     stage: _SEMANTIC_LEGACY_BADGE_CLASS[tone]
@@ -320,6 +328,7 @@ _APPROVAL_STEP_LABELS = {
 # it is the position of contract.lifecycle_stage in this list that decides
 # which steps render as done/current/upcoming.
 _LIFECYCLE_PATH = [
+    ('INTAKE', 'Intake'),
     ('DRAFTING', 'Drafting'),
     ('INTERNAL_REVIEW', 'Internal Review'),
     ('NEGOTIATION', 'Negotiation'),
@@ -328,7 +337,6 @@ _LIFECYCLE_PATH = [
     ('EXECUTED', 'Executed'),
     ('OBLIGATION_TRACKING', 'Obligation Tracking'),
     ('RENEWAL', 'Renewal'),
-    ('ARCHIVED', 'Archived'),
 ]
 
 
@@ -376,6 +384,21 @@ def money(value, currency='USD'):
     except (InvalidOperation, ValueError):
         return value
     symbol = _CURRENCY_SYMBOLS.get(currency, f'{currency} ')
+    return f'{symbol}{amount:,.2f}'
+
+
+@register.filter
+def money_compact(value, currency='USD'):
+    """Like money, but omit cents when the amount is a whole unit (€48,000)."""
+    if value in (None, ''):
+        return '—'
+    try:
+        amount = Decimal(str(value))
+    except (InvalidOperation, ValueError):
+        return value
+    symbol = _CURRENCY_SYMBOLS.get(currency, f'{currency} ')
+    if amount == amount.to_integral_value():
+        return f'{symbol}{amount:,.0f}'
     return f'{symbol}{amount:,.2f}'
 
 

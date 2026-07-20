@@ -24,6 +24,7 @@ STANDARD_NAV_LABELS = [
     'New Contract',
     'Upload &amp; Review',
     'Contracts',
+    'Workflow Operations',
     'DPA Reviews',
     'Obligations',
 ]
@@ -31,7 +32,6 @@ STANDARD_NAV_LABELS = [
 OLD_LAYOUT_NAV_LABELS = [
     'Escrow',            # Trust Accounts
     'Budget &amp; Capacity',
-    'Workflows',
     'Signature Requests',
     'Tasks',
     'Repository',
@@ -183,12 +183,35 @@ class StandardNavTests(TestCase):
             'nav-icon-svg--new-contract',
             'nav-icon-svg--upload-review',
             'nav-icon-svg--contracts',
+            'nav-icon-svg--workflows',
             'nav-icon-svg--dpa-reviews',
             'nav-icon-svg--obligations',
         ):
             self.assertIn(class_name, content)
         self.assertNotIn('nav-icon-svg--admin', content)
         self.assertNotIn('nav-icon-svg--settings', content)
+
+    def test_workflow_operations_links_to_dashboard_hub(self):
+        response = self.owner_client.get(reverse('dashboard'))
+        content = sidebar_html(response)
+        href = reverse('contracts:workflow_dashboard')
+        self.assertIn(f'href="{href}"', content)
+        self.assertIn('Workflow Operations', content)
+
+    def test_workflow_designer_active_on_routing_rules(self):
+        response = self.owner_client.get(reverse('contracts:approval_rule_list'))
+        content = sidebar_html(response)
+        href = reverse('contracts:workflow_template_list')
+        self.assertRegex(content, rf'<a href="{href}" class="nav-link[^\"]*\bactive\b')
+        self.assertIn('Workflow Designer', content)
+
+    def test_workflow_operations_not_active_on_templates(self):
+        response = self.owner_client.get(reverse('contracts:workflow_template_list'))
+        content = sidebar_html(response)
+        ops_href = reverse('contracts:workflow_dashboard')
+        designer_href = reverse('contracts:workflow_template_list')
+        self.assertRegex(content, rf'<a href="{designer_href}" class="nav-link[^\"]*\bactive\b')
+        self.assertNotRegex(content, rf'<a href="{ops_href}" class="nav-link[^\"]*\bactive\b')
     def test_new_contract_links_to_contract_type_picker(self):
         response = self.owner_client.get(reverse('dashboard'))
         content = sidebar_html(response)

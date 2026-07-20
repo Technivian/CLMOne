@@ -24,6 +24,8 @@ envVarGroups:
         value: s3
       - key: GEMINI_AI_ENABLED
         value: "false"
+      - key: CONTROLLED_PILOT_ENABLED
+        value: "true"
       - key: BILLING_SELF_SERVE_ENABLED
         value: "false"
       - key: TRUST_ACCOUNTING_ENABLED

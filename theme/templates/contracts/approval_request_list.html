@@ -6,13 +6,100 @@
 {% block content %}
 {% include "components/_list_page_shell_styles.html" %}
 <style nonce="{{ csp_nonce }}">
-  .approvals-page .clm-list-shell { margin-bottom: var(--space-12); }
-  .approvals-queue-card {
-    background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px;
-    overflow: hidden; box-sizing: border-box;
+  /* Match Active workflows list rhythm: quiet count, full-width table, no card chrome. */
+  .approvals-page .clm-list-summary { --dc-ds-summary-columns: 2; }
+  .approvals-page .clm-list-result-count {
+    font-size: 13px; font-weight: 600; color: var(--ink-700, var(--text-secondary));
+    margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent;
+    white-space: nowrap; min-width: 0; line-height: 1.2;
   }
-  .approvals-tabs-wrap { padding: 6px 12px 0; }
-  .approvals-queue-body { overflow-x: auto; }
+  .approvals-page.dc-ds-list-page > .dc-ds-filterbar { margin-bottom: calc(-1 * var(--space-8)); }
+  .approvals-page.dc-ds-list-page > .clm-list-summary { margin-top: var(--space-12); }
+  .approvals-page .dc-ds-table-wrap { overflow-x: auto; overflow-y: visible; }
+  .approvals-page .approvals-queue-tabs {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin-bottom: 0;
+  }
+  .approvals-page .approvals-queue-count {
+    font-variant-numeric: tabular-nums; opacity: 0.75; margin-left: 4px;
+  }
+  .approvals-page .approvals-table {
+    min-width: 100%; width: 100%; table-layout: fixed;
+  }
+  .approvals-page .approvals-table th,
+  .approvals-page .approvals-table td {
+    vertical-align: top; padding: 16px 12px; overflow: hidden;
+  }
+  .approvals-page .approvals-table [data-col].is-hidden { display: none; }
+  .approvals-page .approvals-table th[data-col="title"],
+  .approvals-page .approvals-table td[data-col="title"] {
+    position: sticky; left: 0; z-index: 2; min-width: 240px; width: 24%;
+    background: var(--card-bg, #fff);
+    box-shadow: 1px 0 0 var(--line, var(--card-border));
+  }
+  .approvals-page .approvals-table thead th[data-col="title"] { z-index: 5; }
+  .approvals-page .approvals-table tbody tr:hover td { background: var(--color-surface-table-head, var(--well)); }
+  .approvals-page .approvals-table tbody tr:hover td[data-col="title"] {
+    background: var(--color-surface-table-head, var(--well));
+  }
+  .approvals-page .approvals-table th[data-col="stage"],
+  .approvals-page .approvals-table td[data-col="stage"] { min-width: 120px; width: 12%; }
+  .approvals-page .approvals-table th[data-col="requester"],
+  .approvals-page .approvals-table td[data-col="requester"],
+  .approvals-page .approvals-table th[data-col="assignee"],
+  .approvals-page .approvals-table td[data-col="assignee"] { min-width: 130px; width: 12%; }
+  .approvals-page .approvals-table th[data-col="activity"],
+  .approvals-page .approvals-table td[data-col="activity"] { min-width: 180px; width: 16%; }
+  .approvals-page .approvals-table th[data-col="due"],
+  .approvals-page .approvals-table td[data-col="due"] {
+    min-width: 104px; width: 8%; white-space: nowrap;
+    font-variant-numeric: tabular-nums; color: var(--ink-700, var(--text-secondary));
+  }
+  .approvals-page .approvals-table th[data-col="status"],
+  .approvals-page .approvals-table td[data-col="status"] { min-width: 100px; width: 9%; }
+  .approvals-page .approvals-table th[data-col="next_action"],
+  .approvals-page .approvals-table td[data-col="next_action"] { min-width: 160px; width: 14%; }
+  .approvals-page .approvals-table th[data-col="actions"],
+  .approvals-page .approvals-table td[data-col="actions"] {
+    min-width: 168px; width: 168px; overflow: visible; white-space: nowrap;
+  }
+  .approvals-page .approvals-table .wq-item-link {
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+    overflow: hidden; line-height: 1.35; word-break: break-word;
+    color: var(--ink-900, var(--text-primary)); font-size: 13px; font-weight: 700;
+    text-decoration: none;
+  }
+  .approvals-page .approvals-table .wq-item-link:hover { color: var(--primary); }
+  .approvals-page .approvals-table .wq-item-meta {
+    margin-top: 4px; color: var(--ink-700, var(--text-secondary)); font-size: 12px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .approvals-page .approvals-table .wq-empty {
+    padding: 48px 24px; text-align: center; color: var(--ink-600, var(--text-secondary));
+    font-size: 14px; font-weight: 550;
+  }
+  .approvals-page .approvals-col-menu { position: relative; }
+  .approvals-page .approvals-col-menu__panel {
+    display: none; position: absolute; right: 0; top: calc(100% + 6px); z-index: 20;
+    min-width: 200px; padding: 10px; border-radius: 10px;
+  }
+  .approvals-page .approvals-col-menu.is-open .approvals-col-menu__panel { display: grid; gap: 6px; }
+  .approvals-page .approvals-col-menu__panel label {
+    display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500;
+    color: var(--text-primary); cursor: pointer;
+  }
+  body[data-design-system=casefile]:has(.approvals-page) .top-bar .global-search-form { max-width: 248px; flex-basis: 248px; }
+  body[data-design-system=casefile]:has(.approvals-page) .top-bar .global-search-input {
+    height: 36px; border: 1px solid transparent !important; background: transparent !important; color: var(--ink-600);
+  }
+  body[data-design-system=casefile]:has(.approvals-page) .top-bar .global-search-input:focus-visible {
+    border-color: var(--line) !important; background: var(--card) !important;
+  }
+  body[data-design-system=casefile]:has(.approvals-page) .app-footer { display: none; }
+  @media (max-width: 560px) {
+    .approvals-page .clm-list-summary { --dc-ds-summary-columns: 1; }
+  }
 </style>
 
 <div id="approvals-root" class="dc-ds-page dc-ds-page--wide dc-ds-page-flow dc-ds-list-page clm-list-page approvals-page">
@@ -23,48 +110,158 @@
         <a href="{% url 'contracts:approval_request_create' %}" class="dc-ds-button dc-ds-button--primary">New approval request</a>
       </div>
     </div>
+
+    <div class="clm-list-filter-controls">
+      {# Client-side queue panels: underline pattern; buttons keep live counts without routing. #}
+      <nav class="approvals-queue-tabs dc-ds-workspace-tabs dc-ds-workspace-tabs--section wq-tabs" role="tablist" aria-label="Approval queue views">
+        <div class="dc-ds-workspace-tabs__list">
+          {% for tab in queue_tabs %}
+          <button type="button"
+                  class="dc-ds-workspace-tabs__tab{% if forloop.first %} is-active wq-tab-active{% endif %}"
+                  data-queue-tab="{{ tab.key }}"
+                  data-queue-count="{{ tab.rows|length }}"
+                  role="tab"
+                  aria-selected="{% if forloop.first %}true{% else %}false{% endif %}">
+            {{ tab.label }}<span class="approvals-queue-count">{{ tab.rows|length }}</span>
+          </button>
+          {% endfor %}
+        </div>
+      </nav>
+      <div class="clm-list-actions-stack">
+        <p id="approvals-result-count" class="clm-list-result-count" aria-live="polite">
+          {% with first=queue_tabs.0 %}{{ first.rows|length }} request{{ first.rows|length|pluralize }}{% endwith %}
+        </p>
+        <div class="approvals-col-menu" id="approvals-col-menu">
+          <button id="approvals-col-toggle" type="button" class="clm-list-filter-toggle dc-ds-button dc-ds-button--ghost" aria-expanded="false" aria-controls="approvals-col-panel">Columns</button>
+          <div id="approvals-col-panel" class="approvals-col-menu__panel dc-ds-surface" role="group" aria-label="Visible columns">
+            <label><input type="checkbox" data-col-toggle="stage" checked> Stage</label>
+            <label><input type="checkbox" data-col-toggle="requester" checked> Requested by</label>
+            <label><input type="checkbox" data-col-toggle="assignee" checked> Assigned to</label>
+            <label><input type="checkbox" data-col-toggle="activity" checked> Latest activity</label>
+            <label><input type="checkbox" data-col-toggle="due" checked> Due</label>
+            <label><input type="checkbox" data-col-toggle="status" checked> Status</label>
+            <label><input type="checkbox" data-col-toggle="next_action" checked> Next action</label>
+          </div>
+        </div>
+      </div>
+    </div>
   </header>
 
-  <div class="approvals-queue-card">
-    <div class="approvals-tabs-wrap">
-      <nav class="wq-tabs dc-ds-list-tabs" role="tablist" aria-label="Approval queue views">
-        {% for tab in queue_tabs %}
-        <button type="button"
-                class="wq-tab{% if forloop.first %} wq-tab-active{% endif %}"
-                data-queue-tab="{{ tab.key }}"
-                role="tab"
-                aria-selected="{% if forloop.first %}true{% else %}false{% endif %}">
-          {{ tab.label }} <span class="wq-tab-count">{{ tab.rows|length }}</span>
-        </button>
-        {% endfor %}
-      </nav>
+  {% with waiting=queue_tabs.0 open=queue_tabs.2 %}
+  <div class="dc-ds-summary clm-list-summary" aria-label="Approval requests summary">
+    <div class="dc-ds-summary__item {% if waiting.rows %}dc-ds-summary__item--info{% else %}dc-ds-summary__item--clear{% endif %}">
+      <span class="dc-ds-summary__label">Waiting on me</span>
+      <strong class="dc-ds-summary__value">{{ waiting.rows|length }}</strong>
     </div>
-    <div class="approvals-queue-body dc-ds-table-wrap">
-      {% for tab in queue_tabs %}
-        {% approval_queue_table tab.key tab.rows tab.empty_message forloop.first %}
-      {% endfor %}
+    <div class="dc-ds-summary__item {% if open.rows %}dc-ds-summary__item--info{% else %}dc-ds-summary__item--clear{% endif %}">
+      <span class="dc-ds-summary__label">All open</span>
+      <strong class="dc-ds-summary__value">{{ open.rows|length }}</strong>
     </div>
+  </div>
+  {% endwith %}
+
+  <div class="dc-ds-table-wrap">
+    {% for tab in queue_tabs %}
+      {% approval_queue_table tab.key tab.rows tab.empty_message forloop.first %}
+    {% endfor %}
   </div>
 </div>
 
 <script nonce="{{ csp_nonce }}">
 (function () {
-  /* Saved-view tabs — same client-side switch as Dashboard/Repository, no page reload. */
-  var tabs = document.querySelectorAll('.wq-tab[data-queue-tab]');
-  var panels = document.querySelectorAll('table.wq-table[data-queue-panel]');
+  var root = document.getElementById('approvals-root');
+  if (!root) return;
+
+  var tabs = root.querySelectorAll('[data-queue-tab]');
+  var panels = root.querySelectorAll('table.wq-table[data-queue-panel]');
+  var resultCount = document.getElementById('approvals-result-count');
+
+  function setResultCount(n) {
+    if (!resultCount) return;
+    var count = Number(n) || 0;
+    resultCount.textContent = count + ' request' + (count === 1 ? '' : 's');
+  }
+
   tabs.forEach(function (tab) {
     tab.addEventListener('click', function () {
       var key = tab.getAttribute('data-queue-tab');
       tabs.forEach(function (t) {
         var active = t === tab;
+        t.classList.toggle('is-active', active);
         t.classList.toggle('wq-tab-active', active);
         t.setAttribute('aria-selected', active ? 'true' : 'false');
       });
       panels.forEach(function (panel) {
         panel.hidden = panel.getAttribute('data-queue-panel') !== key;
       });
+      setResultCount(tab.getAttribute('data-queue-count'));
     });
   });
+
+  var STORAGE_KEY = 'clmone-approvals-columns-v1';
+  var DEFAULT_COLS = {
+    stage: true,
+    requester: true,
+    assignee: true,
+    activity: true,
+    due: true,
+    status: true,
+    next_action: true
+  };
+  var colMenu = document.getElementById('approvals-col-menu');
+  var colToggle = document.getElementById('approvals-col-toggle');
+  var columnVisibility = Object.assign({}, DEFAULT_COLS);
+
+  try {
+    var saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    Object.keys(DEFAULT_COLS).forEach(function (key) {
+      if (typeof saved[key] === 'boolean') columnVisibility[key] = saved[key];
+    });
+  } catch (err) { /* ignore corrupt storage */ }
+
+  function applyColumnVisibility() {
+    Object.keys(DEFAULT_COLS).forEach(function (key) {
+      var visible = columnVisibility[key] !== false;
+      root.querySelectorAll('[data-col="' + key + '"]').forEach(function (el) {
+        el.classList.toggle('is-hidden', !visible);
+      });
+      var input = root.querySelector('[data-col-toggle="' + key + '"]');
+      if (input) input.checked = visible;
+    });
+  }
+
+  function persistColumns() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(columnVisibility)); } catch (err) { /* ignore */ }
+  }
+
+  if (colToggle && colMenu) {
+    colToggle.addEventListener('click', function () {
+      var open = colMenu.classList.toggle('is-open');
+      colToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    document.addEventListener('click', function (event) {
+      if (!colMenu.contains(event.target)) {
+        colMenu.classList.remove('is-open');
+        colToggle.setAttribute('aria-expanded', 'false');
+      }
+    });
+    document.addEventListener('keydown', function (event) {
+      if (event.key !== 'Escape') return;
+      colMenu.classList.remove('is-open');
+      colToggle.setAttribute('aria-expanded', 'false');
+    });
+  }
+
+  root.querySelectorAll('[data-col-toggle]').forEach(function (input) {
+    input.addEventListener('change', function () {
+      var key = input.getAttribute('data-col-toggle');
+      if (!Object.prototype.hasOwnProperty.call(DEFAULT_COLS, key)) return;
+      columnVisibility[key] = !!input.checked;
+      applyColumnVisibility();
+      persistColumns();
+    });
+  });
+  applyColumnVisibility();
 
   function getCsrfToken() {
     return document.cookie
@@ -78,7 +275,7 @@
      contracts/services/approval_workflow.py). This page only decides
      whether to SHOW the buttons (server-computed row.can_decide); the real
      authorization boundary is those endpoints, unchanged by this page. */
-  document.querySelectorAll('[data-approval-action]').forEach(function (btn) {
+  root.querySelectorAll('[data-approval-action]').forEach(function (btn) {
     btn.addEventListener('click', function () {
       var action = btn.getAttribute('data-approval-action');
       var url = action === 'approve' ? btn.getAttribute('data-approve-url') : btn.getAttribute('data-reject-url');

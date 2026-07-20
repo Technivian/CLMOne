@@ -33,6 +33,7 @@
     </script>
     <script src="{% static 'js/csp-handlers.js' %}" defer></script>
     <script src="{% static 'js/clmone-ui.js' %}" defer></script>
+    <script src="{% static 'js/clmone-workspace-tabs.js' %}" defer></script>
     <link href="{% static 'css/dist/global-shell.css' %}{% if ASSET_VERSION %}?v={{ ASSET_VERSION }}{% endif %}" rel="stylesheet">
 </head>
 <body class="c-primary-text" data-design-system="casefile">
@@ -178,7 +179,7 @@
                 <button type="button" class="dc-ds-shell__mobile-toggle" id="mobileNavToggle" aria-controls="sidebar" aria-expanded="false" aria-label="Open navigation">
                     {% include "design_system/icon.html" with name="menu" %}
                 </button>
-                <div class="dc-ds-shell__page-context topbar-page-context" aria-label="Current page">
+                <div class="dc-ds-shell__page-context topbar-page-context" aria-label="Current page"{% block authenticated_page_context_attrs %}{% endblock %}>
                     <div class="topbar-page-title-row">
                         {% block authenticated_page_back %}
                         {% if request.resolver_match.url_name != 'dashboard' %}
@@ -414,6 +415,7 @@
         var subtitle = context && context.querySelector('.topbar-page-subtitle');
         var main = document.querySelector('.dc-ds-shell__content');
         if (!context || !title || !main || title.textContent.trim()) return;
+        if (context.hasAttribute('data-suppress-title-promotion')) return;
 
         var sourceTitle = main.querySelector(
             '.dc-ds-page-hero .dc-ds-title, .arch-header .arch-title, .page-header .page-title, .workspace-header .workspace-title, .workspace-main-head .workspace-title'

@@ -483,6 +483,9 @@ class DocumentUpdateView(TenantScopedFormMixin, TenantScopedQuerysetMixin, Login
             parent_document=original_document,
         )
         self.object.save()
+        if original_document.status in {Document.Status.FINAL, Document.Status.EXECUTED}:
+            original_document.status = Document.Status.SUPERSEDED
+            original_document.save(update_fields=['status', 'updated_at'])
         queue_document_ocr_review(self.object)
         log_action(
             self.request.user,

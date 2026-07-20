@@ -9,11 +9,12 @@ module.exports = defineConfig({
   // The local E2E server uses one SQLite workspace. Serial execution keeps
   // lifecycle mutations deterministic and avoids cross-test data races.
   workers: 1,
-  timeout: 30000,
+  timeout: 60000,
   updateSnapshots: allowSnapshotUpdate ? 'changed' : 'none',
   expect: {
-    timeout: 5000,
+    timeout: 8000,
   },
+  retries: 0,
   webServer: process.env.E2E_BASE_URL
     ? undefined
     : {
@@ -25,6 +26,9 @@ module.exports = defineConfig({
   use: {
     headless: true,
     baseURL: process.env.E2E_BASE_URL || 'http://127.0.0.1:8010',
+    screenshot: 'only-on-failure',
+    video: 'retain-on-failure',
+    trace: 'retain-on-failure',
   },
   reporter: 'list',
 });

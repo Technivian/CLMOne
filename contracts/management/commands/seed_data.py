@@ -106,6 +106,7 @@ class Command(BaseCommand):
             organization=organization,
             title='Master Services Agreement - Acme', contract_type='MSA',
             content='This Master Services Agreement...', status='ACTIVE',
+            lifecycle_stage='OBLIGATION_TRACKING',
             counterparty='TechStart Inc', value=Decimal('500000'),
             start_date=today - timedelta(days=90), end_date=today + timedelta(days=275),
             client=client1, matter=matter1, created_by=attorney1
@@ -114,6 +115,7 @@ class Command(BaseCommand):
             organization=organization,
             title='NDA - Global Industries', contract_type='NDA',
             content='This Non-Disclosure Agreement...', status='ACTIVE',
+            lifecycle_stage='OBLIGATION_TRACKING',
             counterparty='Global Industries LLC', value=Decimal('0'),
             start_date=today - timedelta(days=60), end_date=today + timedelta(days=305),
             client=client2, matter=matter3, created_by=attorney2
@@ -121,7 +123,8 @@ class Command(BaseCommand):
         contract3 = Contract.objects.create(
             organization=organization,
             title='Employment Settlement Draft', contract_type='SETTLEMENT',
-            content='Settlement terms...', status='DRAFT',
+            content='Settlement terms...', status='IN_PROGRESS',
+            lifecycle_stage='DRAFTING',
             counterparty='Former Employer Inc', value=Decimal('75000'),
             client=client3, matter=matter2, created_by=attorney2
         )

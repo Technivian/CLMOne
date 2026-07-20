@@ -45,7 +45,13 @@ from contracts.tenancy import set_organization_on_instance
 WORKFLOW_TEMPLATE_NAME = 'MSA Commercial Review Workflow'
 TEMPLATE_LABEL = 'Enterprise Services MSA · Netherlands · B2B'
 PLAYBOOK_LABEL = 'MSA Commercial Playbook'
-FINANCE_APPROVAL_THRESHOLD = 250000
+from contracts.services.finance_approval_policy import (
+    finance_threshold_display,
+    finance_threshold_from_field_values,
+    get_finance_approval_threshold,
+)
+
+FINANCE_APPROVAL_THRESHOLD = int(get_finance_approval_threshold())
 STANDARD_PAYMENT_TERM_DAYS = 30
 
 SECTION_ORDER = [
@@ -328,17 +334,12 @@ def render_msa_live_preview(template_body: Optional[str], field_values_by_key: d
 def detect_msa_risk_signals(workflow: Workflow, field_values_by_key: dict) -> List[RiskSignal]:
     signals = []
 
-    contract_value = field_values_by_key.get('value')
-    try:
-        contract_value_num = float(contract_value) if contract_value not in (None, '') else 0
-    except (TypeError, ValueError):
-        contract_value_num = 0
-
-    finance_trigger = bool(field_values_by_key.get('value_above_threshold_confirmed')) or contract_value_num >= FINANCE_APPROVAL_THRESHOLD
+    finance_trigger, finance_reason, finance_audit = finance_threshold_from_field_values(field_values_by_key)
     if finance_trigger:
+        threshold = get_finance_approval_threshold()
         signals.append((
             'finance_approval_required',
-            f'Contract value exceeds the finance approval threshold of {FINANCE_APPROVAL_THRESHOLD:,}.',
+            finance_reason or f'Contract value meets or exceeds the finance approval threshold of {threshold:,.0f}.',
             RiskSignal.Severity.HIGH,
         ))
 
@@ -485,9 +486,9 @@ def create_msa_workflow_instance(*, organization, user, cleaned_values: dict, re
     contract = Contract(
         title=f"MSA — {cleaned_values.get('counterparty') or 'Untitled counterparty'}",
         contract_type=Contract.ContractType.MSA,
-        status=Contract.Status.DRAFT,
+        status=Contract.Status.IN_PROGRESS,
         created_by=user,
-        lifecycle_stage='DRAFTING',
+        lifecycle_stage=Contract.LifecycleStage.DRAFTING,
         risk_level=Contract.RiskLevel.LOW,
     )
     set_organization_on_instance(contract, organization)

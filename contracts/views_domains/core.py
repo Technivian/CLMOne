@@ -280,11 +280,20 @@ def operations_dashboard(request):
         'hide_app_footer': True,
         'active_tab': tab,
         'operations_tabs': [
-            {'id': 'overview', 'label': 'Overview'},
-            {'id': 'jobs', 'label': 'Jobs'},
-            {'id': 'schedules', 'label': 'Schedules'},
-            {'id': 'alerts', 'label': 'Alerts'},
-            {'id': 'audit', 'label': 'Audit'},
+            {
+                'key': key,
+                'id': key,  # legacy alias for callers still reading tab.id
+                'label': label,
+                'url': reverse('operations_dashboard') if key == 'overview' else f"{reverse('operations_dashboard')}?tab={key}",
+                'active': tab == key,
+            }
+            for key, label in (
+                ('overview', 'Overview'),
+                ('jobs', 'Jobs'),
+                ('schedules', 'Schedules'),
+                ('alerts', 'Alerts'),
+                ('audit', 'Audit'),
+            )
         ],
         'scheduler': scheduler,
         'database': database,

@@ -194,12 +194,10 @@ start_server() {
   export DJANGO_SETTINGS_MODULE="${DJANGO_SETTINGS_MODULE:-config.settings_development}"
   export DJANGO_DEBUG="${DJANGO_DEBUG:-true}"
 
-  # --reload: pick up Python/view/templatetag edits without a manual restart.
-  # --reload-include '*.py': HTML/CSS templates already re-read when DEBUG=true;
-  #   avoiding process restarts on template saves keeps django-browser-reload's
-  #   SSE connection from blocking every save.
-  # --timeout-graceful-shutdown 1: force-kill on reload even if an SSE client
-  #   (django-browser-reload) is still connected.
+  # Foreground keeps --reload for interactive terminals.
+  # Background must NOT use --reload: uvicorn's WatchFiles parent/child pair
+  # routinely exits on macOS when detached via nohup from a short-lived shell.
+  # DEBUG=true still re-reads templates/static without a process restart.
   local cmd=(
     "$ROOT_DIR/.venv/bin/python" -m uvicorn config.asgi:application
     --host "$HOST"
@@ -207,12 +205,6 @@ start_server() {
     --ssl-keyfile "$LEAF_KEY"
     --ssl-certfile "$LEAF_CERT"
     --lifespan off
-    --reload
-    --reload-include "*.py"
-    --reload-dir "$ROOT_DIR/contracts"
-    --reload-dir "$ROOT_DIR/config"
-    --reload-dir "$ROOT_DIR/theme"
-    --timeout-graceful-shutdown 1
   )
 
   if [[ "$MODE" == "background" ]]; then
@@ -222,37 +214,49 @@ start_server() {
       DJANGO_DEBUG="$DJANGO_DEBUG" \
       "${cmd[@]}" >> "$LOG_FILE" 2>&1 &
     local pid=$!
+    disown "$pid" 2>/dev/null || true
     echo "$pid" > "$PID_FILE"
 
     local tries=0
-    while [[ $tries -lt 20 ]]; do
+    while [[ $tries -lt 40 ]]; do
       if lsof -i "tcp:$PORT" -sTCP:LISTEN >/dev/null 2>&1; then
         break
       fi
       if ! kill -0 "$pid" 2>/dev/null; then
         echo "HTTPS dev server failed to start. See $LOG_FILE"
         rm -f "$PID_FILE"
+        tail -30 "$LOG_FILE" || true
         return 1
       fi
-      sleep 0.2
+      sleep 0.25
       tries=$((tries + 1))
     done
 
     if ! lsof -i "tcp:$PORT" -sTCP:LISTEN >/dev/null 2>&1; then
       echo "HTTPS dev server did not open port $PORT in time. See $LOG_FILE"
       rm -f "$PID_FILE"
+      tail -30 "$LOG_FILE" || true
       return 1
     fi
 
-    echo "HTTPS dev server started in background (pid $pid) with auto-reload."
+    echo "HTTPS dev server started in background (pid $pid, no auto-reload)."
     echo "URL: https://$HOST:$PORT/"
     echo "Log: $LOG_FILE"
+    echo "Tip: for Python auto-reload, run without --background in a dedicated terminal."
   else
-  echo "Starting HTTPS dev server on https://$HOST:$PORT/ (auto-reload enabled)"
-  exec env DATABASE_URL="$DATABASE_URL" \
-    DJANGO_SETTINGS_MODULE="$DJANGO_SETTINGS_MODULE" \
-    DJANGO_DEBUG="$DJANGO_DEBUG" \
-    "${cmd[@]}"
+    cmd+=(
+      --reload
+      --reload-include "*.py"
+      --reload-dir "$ROOT_DIR/contracts"
+      --reload-dir "$ROOT_DIR/config"
+      --reload-dir "$ROOT_DIR/theme"
+      --timeout-graceful-shutdown 1
+    )
+    echo "Starting HTTPS dev server on https://$HOST:$PORT/ (auto-reload enabled)"
+    exec env DATABASE_URL="$DATABASE_URL" \
+      DJANGO_SETTINGS_MODULE="$DJANGO_SETTINGS_MODULE" \
+      DJANGO_DEBUG="$DJANGO_DEBUG" \
+      "${cmd[@]}"
   fi
 }
 

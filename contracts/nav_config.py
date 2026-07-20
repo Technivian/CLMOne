@@ -44,10 +44,48 @@ _ICON_DPA_REVIEWS = _nav_icon(
     'dpa-reviews',
     '<path d="M12 3.5 6 6.2v4.1c0 4.2 2.6 7.7 6 9.5 3.4-1.8 6-5.3 6-9.5V6.2z"/><path d="m9.5 12.1 1.7 1.7 3.4-3.7"/><path d="M8.8 8.8h6.4"/>'
 )
+_ICON_WORKFLOWS = _nav_icon(
+    'workflows',
+    '<path d="M6 4h5v5H6zM13 4h5v5h-5zM6 15h5v5H6z"/><path d="M8.5 9v3h7V9"/><path d="M15.5 9v6"/>'
+)
 
 
 def _always(user, organization):
     return True
+
+
+def _not_controlled_pilot(user, organization):
+    from django.conf import settings
+    return not getattr(settings, 'CONTROLLED_PILOT_ENABLED', False)
+
+
+_WORKFLOW_OPS_ACTIVE = (
+    'workflow_dashboard',
+    'workflow_dashboard_legacy',
+    'workflow_detail',
+    'workflow_create',
+    'workflow_activity',
+    'approval_request_list',
+    'approval_request_create',
+    'approval_request_update',
+)
+
+_WORKFLOW_DESIGNER_ACTIVE = (
+    'workflow_template_list',
+    'workflow_template_detail',
+    'workflow_template_create',
+    'workflow_template_update',
+    'workflow_template_preview',
+    'workflow_template_activity',
+    'workflow_template_duplicate',
+    'workflow_template_archive',
+    'workflow_template_delete',
+    'workflow_approval_route_list',
+    'workflow_designer_history',
+    'approval_rule_list',
+    'approval_rule_create',
+    'approval_rule_update',
+)
 
 
 _STANDARD_NAV = [
@@ -57,16 +95,22 @@ _STANDARD_NAV = [
      'variant': 'action',
      'active': lambda n: n in ('contract_template_picker', 'contract_create', 'dpa_workflow_builder', 'msa_workflow_builder', 'nda_workflow_builder'), 'visible': _always},
     {'kind': 'item', 'label': 'Upload & Review', 'url_name': 'contracts:upload_signed_contract', 'icon': _ICON_UPLOAD,
-     'active': lambda n: n == 'upload_signed_contract', 'visible': _always},
+     'active': lambda n: n == 'upload_signed_contract', 'visible': _not_controlled_pilot},
     # Repository is the canonical contract list. The former Contract
     # Workspace remains available by direct URL for active legacy work, but
     # primary navigation must not send people back into that screen family.
     {'kind': 'item', 'label': 'Contracts', 'url_name': 'contracts:repository', 'icon': _ICON_FOLDER,
      'active': lambda n: n in ('repository', 'contract_list', 'contract_detail', 'contract_update'), 'visible': _always},
+    # Workflow Operations is the live instance queue (active workflows +
+    # approval requests). Authoring lives under Workflow Designer.
+    {'kind': 'item', 'label': 'Workflow Operations', 'url_name': 'contracts:workflow_dashboard', 'icon': _ICON_WORKFLOWS,
+     'active': lambda n: n in _WORKFLOW_OPS_ACTIVE, 'visible': _always},
+    {'kind': 'item', 'label': 'Workflow Designer', 'url_name': 'contracts:workflow_template_list', 'icon': _ICON_WORKFLOWS,
+     'active': lambda n: n in _WORKFLOW_DESIGNER_ACTIVE, 'visible': _not_controlled_pilot},
     {'kind': 'item', 'label': 'DPA Reviews', 'url_name': 'contracts:dpa_review_pack_list', 'icon': _ICON_DPA_REVIEWS,
-     'active': lambda n: bool(n) and 'dpa_review' in n, 'visible': _always},
+     'active': lambda n: bool(n) and 'dpa_review' in n, 'visible': _not_controlled_pilot},
     {'kind': 'item', 'label': 'Obligations', 'url_name': 'contracts:obligations_workspace', 'icon': _ICON_TASK,
-     'active': lambda n: bool(n) and ('obligations' in n or 'deadline' in n), 'visible': _always},
+     'active': lambda n: bool(n) and ('obligations' in n or 'deadline' in n), 'visible': _not_controlled_pilot},
 ]
 
 

@@ -104,14 +104,52 @@ class ContractDetailShellTests(TestCase):
     def test_contract_workspace_tabs_and_overview_sections_present(self):
         response = self.client.get(detail_url(self.contract.pk))
         body = page_body(response.content.decode())
+        # Multi-line {# #} comments are not stripped by Django and leak as text.
+        self.assertNotIn('{#', body)
+        self.assertNotIn('Canonical CLM One workspace navigation tabs', body)
         self.assertIn('role="tablist"', body)
-        for label in ('Overview', 'Documents', 'Review', 'Approvals', 'Risks', 'Obligations', 'Activity'):
+        self.assertIn('data-workspace-tabs', body)
+        for label in ('Overview', 'Documents', 'Workflow', 'Risks', 'Obligations', 'Audit trail'):
             self.assertIn(label, body)
+        tab_labels = [tab['label'] for tab in response.context['workspace_tabs']]
+        self.assertEqual(
+            tab_labels,
+            ['Overview', 'Documents', 'Workflow', 'Risks', 'Obligations', 'Audit trail'],
+        )
+        self.assertNotIn('Review', tab_labels)
+        self.assertNotIn('Activity', tab_labels)
+        self.assertIn('Contract lifecycle', body)
+        self.assertNotIn('View full workflow', body)
+        self.assertNotIn('View workflow</', body)
+        self.assertNotIn('contract-workflow-reveal', body)
+        self.assertNotIn('contract-lifecycle-stepper', body)
         for label in ('Contract details', 'Progress', 'Action required'):
             self.assertIn(label, body)
         self.assertIn('contract-overview-grid', body)
         self.assertIn('dc-ds-workspace__rail--sticky', body)
-        self.assertIn('Quick links', body)
+        self.assertNotIn('Status:', body)
+        self.assertNotIn('Stage:', body)
+        self.assertIn('Active', body)
+        self.assertIn('Drafting', body)
+        self.assertIn('contract-command-stage', body)
+        self.assertIn('Upcoming milestone', body)
+        self.assertNotIn('View all details', body)
+        self.assertIn('contract-next-steps__action', body)
+        self.assertNotIn('>Contracts</h1>', body)
+        self.assertIn('data-suppress-title-promotion', body)
+        self.assertIn('border-bottom: 1px solid var(--hairline, var(--line));', open('theme/static_src/src/global-shell/workspaces.css').read())
+        snapshot = response.context['overview_risk_snapshot']
+        self.assertIn(snapshot['tone'], ('attention', 'neutral', 'danger', 'progress', 'success'))
+        if 'not assessed' in str(snapshot['label']).casefold() or 'reassessment' in str(snapshot['label']).casefold():
+            self.assertNotEqual(snapshot['tone'], 'success')
+        workflow = self.client.get(detail_url(self.contract.pk, 'workflow'))
+        workflow_body = page_body(workflow.content.decode())
+        self.assertIn('Full workflow', workflow_body)
+        self.assertIn('contract-lifecycle-stepper', workflow_body)
+        self.assertIn('Upcoming milestone', workflow_body)
+        self.assertIn('Review findings', workflow_body)
+        self.assertIn('Contract lifecycle', body)
+        self.assertNotIn('Quick links', body)
 
     def test_banned_jargon_is_absent(self):
         response = self.client.get(detail_url(self.contract.pk))
@@ -173,9 +211,16 @@ class ContractDetailMetadataHeaderTests(TestCase):
         self.assertIn('Header Contract', body)
         self.assertIn('Active', body)
         self.assertIn('Negotiation', body)
+        self.assertIn('contract-command-stage', body)
+        self.assertNotIn('Status:', body)
+        self.assertNotIn('Stage:', body)
         self.assertIn('Northwind Logistics LLC', body)
-        self.assertIn('Owner: Rowan', body)
+        self.assertIn('contract-command-owner__avatar', body)
+        self.assertIn('Rowan', body)
         self.assertIn('Updated', body)
+        self.assertIn('v1', body)
+        self.assertIn('contract-command-meta__value', body)
+        self.assertRegex(body, r'contract-command-meta__value[^>]*>\$125,000<')
         self.assertNotIn('dc-ds-workspace__metadata-grid', body)
 
     def test_header_omits_duplicate_command_summary_grid(self):
@@ -203,7 +248,8 @@ class ContractDetailMetadataHeaderTests(TestCase):
         overview = self.client.get(detail_url(self.contract.pk))
         overview_body = page_body(overview.content.decode())
         self.assertIn('Progress', overview_body)
-        self.assertIn('View workflow', overview_body)
+        self.assertIn('Contract lifecycle', overview_body)
+        self.assertNotIn('View full workflow', overview_body)
         self.assertIn('Paper source', overview_body)
         self.assertIn('Our paper', overview_body)
         self.assertNotIn('Workflow checklist', overview_body)
@@ -281,6 +327,15 @@ class ContractDetailActionsTests(TestCase):
         body = page_body(response.content.decode())
         self.assertIn(reverse('contracts:contract_update', kwargs={'pk': self.contract.pk}), body)
         self.assertIn('Attach source document', body)
+        actions_idx = body.index('dc-ds-workspace__actions')
+        banner_idx = body.index('contract-action-card')
+        header_actions = body[actions_idx:banner_idx]
+        self.assertNotIn('Attach source document', header_actions)
+        # Actions menu removed: it duplicated workspace tabs and sat under the
+        # tab strip (lower items like Approvals were unclickable).
+        self.assertNotIn('contract-command-overflow', header_actions)
+        self.assertNotIn('aria-label="Contract actions"', header_actions)
+        self.assertIn('Attach source document', body[banner_idx:banner_idx + 1200])
         self.assertNotIn(reverse('contracts:signature_request_create'), body)
         approvals = self.client.get(detail_url(self.contract.pk, 'approvals'))
         approvals_body = page_body(approvals.content.decode())
@@ -513,11 +568,11 @@ class ContractDetailDocumentsTabTests(TestCase):
         overview = self.client.get(detail_url(self.contract.pk))
         overview_body = page_body(overview.content.decode())
         self.assertIn('role="tablist"', overview_body)
-        self.assertIn('contract-command-tabs', overview_body)
+        self.assertIn('data-workspace-tabs', overview_body)
         self.assertIn('dc-ds-workspace__rail--sticky', overview_body)
         self.assertIn('Contract details', overview_body)
         self.assertIn('Progress', overview_body)
-        self.assertIn('Quick links', overview_body)
+        self.assertNotIn('Quick links', overview_body)
         self.assertNotIn('dc-ds-workspace__metadata-grid', overview_body)
         docs = self.client.get(detail_url(self.contract.pk, 'documents'))
         docs_body = page_body(docs.content.decode())
@@ -644,7 +699,7 @@ class ContractDetailActivityTabTests(TestCase):
         )
         response = self.client.get(detail_url(self.contract.pk, 'activity'))
         body = page_body(response.content.decode())
-        self.assertIn('Activity', body)
+        self.assertIn('Audit trail', body)
         self.assertIn('Redline note', body)
         self.assertIn('Internal note', body)
         self.assertIn('Audit', body)
@@ -701,8 +756,11 @@ class ContractDetailStateConsistencyTests(TestCase):
         body = page_body(response.content.decode())
         self.assertIn('Resolve blockers', body)
         self.assertIn('Unresolved indemnity exposure', body)
-        self.assertIn('Signature requirement', body)
-        self.assertIn('At least one approval is required before signature routing.', body)
+        self.assertNotIn('Signature requirement', body)
+        workflow = self.client.get(detail_url(self.contract.pk, 'workflow'))
+        workflow_body = page_body(workflow.content.decode())
+        self.assertIn('Signature requirement', workflow_body)
+        self.assertIn('At least one approval is required before signature routing.', workflow_body)
         risks = self.client.get(detail_url(self.contract.pk, 'risks'))
         risks_body = page_body(risks.content.decode())
         self.assertIn('Unresolved indemnity exposure', risks_body)
@@ -788,20 +846,27 @@ class ContractDetailTabRoutingTests(TestCase):
 
     def test_each_tab_renders_its_panel(self):
         expectations = {
-            'overview': 'Contract details',
-            'documents': 'Documents &amp; versions',
-            'review': 'Contract review',
-            'approvals': 'Approvals',
-            'risks': 'Risks',
-            'obligations': 'Obligations',
-            'activity': 'Activity',
+            'overview': ('overview', 'Contract details'),
+            'documents': ('documents', 'Documents &amp; versions'),
+            'workflow': ('workflow', 'Review findings'),
+            'risks': ('risks', 'Risks'),
+            'obligations': ('obligations', 'Obligations'),
+            'activity': ('activity', 'Audit trail'),
         }
-        for tab, heading in expectations.items():
+        for tab, (active, heading) in expectations.items():
             response = self.client.get(detail_url(self.contract.pk, tab))
             body = page_body(response.content.decode())
-            self.assertEqual(response.context['active_tab'], tab)
+            self.assertEqual(response.context['active_tab'], active)
             self.assertIn(heading, body)
-            self.assertIn(f'id="contract-tab-{tab}"', body)
+            self.assertIn(f'id="contract-tab-{active}"', body)
+
+    def test_legacy_review_and_approvals_tabs_alias_to_workflow(self):
+        for legacy, section in (('review', 'review'), ('approvals', 'approvals')):
+            response = self.client.get(detail_url(self.contract.pk, legacy))
+            body = page_body(response.content.decode())
+            self.assertEqual(response.context['active_tab'], 'workflow')
+            self.assertEqual(response.context['workflow_section'], section)
+            self.assertIn('id="contract-tab-workflow"', body)
 
     def test_invalid_tab_falls_back_to_overview(self):
         response = self.client.get(detail_url(self.contract.pk) + '?tab=not-a-tab')
@@ -829,7 +894,7 @@ class ContractDetailTerminologyAndBlockerTests(TestCase):
         )
         response = self.client.get(detail_url(self.contract.pk, 'review'))
         body = page_body(response.content.decode())
-        self.assertIn('Contract review', body)
+        self.assertIn('Review findings', body)
         self.assertIn('Not started', body)
         self.assertIn('Run review', body)
         for legacy in LEGACY_REVIEW_LABELS:
@@ -841,14 +906,19 @@ class ContractDetailTerminologyAndBlockerTests(TestCase):
         self.assertIn('Attach source document', body)
         self.assertIn('Action required', body)
         self.assertIn('contract-action-card', body)
-        self.assertIn('Signature requirement', body)
-        self.assertIn('The contract must be fully approved before signature routing.', body)
+        self.assertIn('Contract lifecycle', body)
+        self.assertNotIn('View full workflow', body)
+        self.assertNotIn('Signature requirement', body)
         self.assertEqual(response.context['contract_command']['primary_action']['label'], 'Attach source document')
         self.assertEqual(response.context['contract_command']['lifecycle_label'], 'Draft · Intake incomplete')
         self.assertTrue(any('approved' in item.lower() for item in response.context['later_workflow_requirements']))
-        self.assertIn('View workflow', body)
         self.assertNotIn('contract-action-summary', body)
         self.assertIn('dc-ds-workspace__rail--sticky', body)
+        workflow = self.client.get(detail_url(self.contract.pk, 'workflow'))
+        workflow_body = page_body(workflow.content.decode())
+        self.assertIn('Signature requirement', workflow_body)
+        self.assertIn('The contract must be fully approved before signature routing.', workflow_body)
+        self.assertIn('Upcoming milestone', workflow_body)
 
     def test_duplicate_state_labels_removed_from_header_and_overview(self):
         response = self.client.get(detail_url(self.contract.pk))
@@ -859,12 +929,17 @@ class ContractDetailTerminologyAndBlockerTests(TestCase):
         self.assertIn('dc-ds-workspace__rail--sticky', body)
         self.assertIn('>Status</dt>', body)
         self.assertIn('>Stage</dt>', body)
-        self.assertIn('Quick links', body)
-        self.assertIn('contract-command-tabs', body)
+        self.assertNotIn('Quick links', body)
+        self.assertIn('data-workspace-tabs', body)
         self.assertIn('contract-overview-grid', body)
         self.assertIn('contract-progress-track', body)
-        self.assertIn('Current stage', body)
-        self.assertIn('Next milestone', body)
+        self.assertNotIn('View full workflow', body)
+        # Stage/next/blocking meta removed from overview lifecycle card (redundant with track + Action required).
+        self.assertNotIn('<dt>Current stage</dt>', body)
+        self.assertNotIn('<dt>Next step</dt>', body)
+        self.assertNotIn('<dt>Blocking item</dt>', body)
+        self.assertIn('Upcoming milestone', body)
+        self.assertNotIn('>Next milestone</dt>', body)
         css = open('theme/static_src/src/global-shell/workspaces.css').read()
         self.assertIn('--page-max-width', css)
         self.assertIn('dc-ds-workspace__rail--sticky', css)

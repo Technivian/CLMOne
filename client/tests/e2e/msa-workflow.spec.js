@@ -38,6 +38,18 @@ async function checkField(page, key) {
   await field.check();
 }
 
+async function openWorkspaceActions(page) {
+  // Actions is a <details>/<summary> control, not a button.
+  const menu = page.locator('details.dc-ds-workspace__actions-menu');
+  const summary = menu.locator('summary');
+  await expect(summary).toBeVisible();
+  if (!(await menu.evaluate((el) => el.open))) {
+    await summary.click();
+  }
+  await expect(menu).toHaveJSProperty('open', true);
+  await expect(page.locator('.dc-ds-workspace__actions-panel')).toBeVisible();
+}
+
 test('MSA governed drafting cockpit generates a workflow workspace and dashboard queue row', async ({ page }) => {
   test.slow();
   await login(page);
@@ -47,7 +59,7 @@ test('MSA governed drafting cockpit generates a workflow workspace and dashboard
 
   await page.goto('/contracts/new/start/');
   await expect(page.getByRole('heading', { name: 'New Contract' })).toBeVisible();
-  await page.locator('a[href="/contracts/new/msa/"]').click();
+  await page.locator('a[href="/contracts/new/msa/"]').first().click();
 
   await expect(page).toHaveURL(/\/contracts\/new\/msa\/?$/);
   await expect(page.getByRole('heading', { name: 'New MSA Draft' })).toBeVisible();
@@ -113,14 +125,25 @@ test('MSA governed drafting cockpit generates a workflow workspace and dashboard
   await expect(page).toHaveURL(/\/contracts\/workflows\/\d+\/?$/);
   await expect(page.getByText('Lifecycle')).toBeVisible();
   await expect(page.getByText(counterparty).first()).toBeVisible();
-  await expect(page.getByRole('heading', { name: new RegExp(`MSA · ${counterparty}`) })).toBeVisible();
+  await expect(page.getByRole('heading', { name: new RegExp(`MSA · ${counterparty}`) }).first()).toBeVisible();
   await expect(page.getByRole('button', { name: /Review Finance approval route|Review MSA risk|Review privacy|Review generated MSA/ })).toBeVisible();
-  await page.getByRole('button', { name: 'Actions' }).click();
-  await expect(page.getByRole('menuitem', { name: 'Send to Legal Review' })).toBeVisible();
-  await expect(page.getByRole('menuitem', { name: 'Send to Finance' })).toBeVisible();
-  await expect(page.getByRole('menuitem', { name: 'Download MSA summary' })).toBeVisible();
-  await expect(page.getByRole('menuitem', { name: 'Export Word' })).toBeVisible();
-  await page.getByRole('button', { name: /open exception/i }).click();
+  await openWorkspaceActions(page);
+  await page.getByRole('menuitem', { name: 'Send to Legal Review' }).click();
+  await expect(page.getByText(/MSA submitted to .* for review/i).first()).toBeVisible();
+
+  await openWorkspaceActions(page);
+  await page.getByRole('menuitem', { name: 'Send to Finance' }).click();
+  await expect(page.getByText(/MSA submitted to .* for review/i).first()).toBeVisible();
+
+  await openWorkspaceActions(page);
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('menuitem', { name: 'Export Word' }).click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toMatch(/\.docx$/i);
+
+  await openWorkspaceActions(page);
+  await expect(page.getByRole('menuitem', { name: 'View contract record' })).toBeVisible();
+  await page.getByRole('button', { name: /open exception|Review Finance approval route|Review MSA risk|Review privacy|Review generated MSA/i }).first().click();
   const governanceDrawer = page.getByRole('dialog', { name: 'Governance details' });
   await expect(governanceDrawer.getByRole('heading', { name: 'Risk monitoring' })).toBeVisible();
   await expect(governanceDrawer.getByRole('heading', { name: 'Approval route' })).toBeVisible();
@@ -133,7 +156,7 @@ test('MSA governed drafting cockpit generates a workflow workspace and dashboard
   await dataProtectionStep.locator('[data-clause-link="data-protection"]').click();
   await expect(page.locator('#data-protection')).toHaveClass(/is-linked/);
 
-  await page.getByRole('button', { name: 'Actions' }).click();
+  await openWorkspaceActions(page);
   await expect(page.getByRole('menuitem', { name: 'View contract record' })).toBeVisible();
   await page.getByRole('menuitem', { name: 'View contract record' }).click();
   await expect(page).toHaveURL(/\/contracts\/\d+\/?$/);

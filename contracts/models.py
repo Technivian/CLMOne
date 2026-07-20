@@ -771,29 +771,25 @@ class Matter(models.Model):
 
 class Contract(models.Model):
     class Status(models.TextChoices):
-        NEEDS_INPUT = 'NEEDS_INPUT', 'Needs input'
-        UPLOADED = 'UPLOADED', 'Uploaded'
-        PROCESSING = 'PROCESSING', 'Processing'
-        CLASSIFICATION_REQUIRED = 'CLASSIFICATION_REQUIRED', 'Classification Required'
-        AI_REVIEW_IN_PROGRESS = 'AI_REVIEW_IN_PROGRESS', 'AI Review in Progress'
-        AI_REVIEW_READY = 'AI_REVIEW_READY', 'AI Review Ready'
-        HUMAN_REVIEW_IN_PROGRESS = 'HUMAN_REVIEW_IN_PROGRESS', 'Human Review in Progress'
-        INFORMATION_REQUIRED = 'INFORMATION_REQUIRED', 'Information Required'
-        INTERNAL_APPROVAL_REQUIRED = 'INTERNAL_APPROVAL_REQUIRED', 'Internal Approval Required'
-        NEGOTIATION_IN_PROGRESS = 'NEGOTIATION_IN_PROGRESS', 'Negotiation in Progress'
-        READY_FOR_SIGNATURE = 'READY_FOR_SIGNATURE', 'Ready for Signature'
-        SIGNATURE_IN_PROGRESS = 'SIGNATURE_IN_PROGRESS', 'Signature in Progress'
-        EXECUTED = 'EXECUTED', 'Executed'
-        OBLIGATIONS_ACTIVE = 'OBLIGATIONS_ACTIVE', 'Obligations Active'
-        DRAFT = 'DRAFT', 'Draft'
-        PENDING = 'PENDING', 'Pending'
-        IN_REVIEW = 'IN_REVIEW', 'In Review'
-        APPROVED = 'APPROVED', 'Approved'
+        """Record status — business state of the contract record (not workflow stage)."""
+        IN_PROGRESS = 'IN_PROGRESS', 'In progress'
         ACTIVE = 'ACTIVE', 'Active'
         EXPIRED = 'EXPIRED', 'Expired'
         TERMINATED = 'TERMINATED', 'Terminated'
-        COMPLETED = 'COMPLETED', 'Completed'
         CANCELLED = 'CANCELLED', 'Cancelled'
+        ARCHIVED = 'ARCHIVED', 'Archived'
+
+    class LifecycleStage(models.TextChoices):
+        """Workflow stage — where the agreement sits in the operating pipeline."""
+        INTAKE = 'INTAKE', 'Intake'
+        DRAFTING = 'DRAFTING', 'Drafting'
+        INTERNAL_REVIEW = 'INTERNAL_REVIEW', 'Internal review'
+        NEGOTIATION = 'NEGOTIATION', 'Negotiation'
+        APPROVAL = 'APPROVAL', 'Approval'
+        SIGNATURE = 'SIGNATURE', 'Signature'
+        EXECUTED = 'EXECUTED', 'Executed'
+        OBLIGATION_TRACKING = 'OBLIGATION_TRACKING', 'Obligation tracking'
+        RENEWAL = 'RENEWAL', 'Renewal'
 
     class ContractType(models.TextChoices):
         NDA = 'NDA', 'Non-Disclosure Agreement'
@@ -841,7 +837,7 @@ class Contract(models.Model):
     title = models.CharField(max_length=200)
     contract_type = models.CharField(max_length=20, choices=ContractType.choices, default=ContractType.OTHER)
     content = models.TextField(blank=True)
-    status = models.CharField(max_length=30, choices=Status.choices, default=Status.DRAFT)
+    status = models.CharField(max_length=30, choices=Status.choices, default=Status.IN_PROGRESS)
     case_phase = models.CharField(
         max_length=20,
         choices=[
@@ -879,17 +875,11 @@ class Contract(models.Model):
     auto_renew = models.BooleanField(default=False)
     notice_period_days = models.PositiveIntegerField(null=True, blank=True)
     termination_notice_date = models.DateField(null=True, blank=True)
-    lifecycle_stage = models.CharField(max_length=20, choices=[
-        ('DRAFTING', 'Drafting'),
-        ('INTERNAL_REVIEW', 'Internal Review'),
-        ('NEGOTIATION', 'Negotiation'),
-        ('APPROVAL', 'Approval'),
-        ('SIGNATURE', 'Signature'),
-        ('EXECUTED', 'Executed'),
-        ('OBLIGATION_TRACKING', 'Obligation Tracking'),
-        ('RENEWAL', 'Renewal/Termination'),
-        ('ARCHIVED', 'Archived'),
-    ], default='DRAFTING')
+    lifecycle_stage = models.CharField(
+        max_length=20,
+        choices=LifecycleStage.choices,
+        default=LifecycleStage.DRAFTING,
+    )
     client = models.ForeignKey('Client', on_delete=models.SET_NULL, null=True, blank=True, related_name='contracts')
     matter = models.ForeignKey('Matter', on_delete=models.SET_NULL, null=True, blank=True, related_name='contracts')
     parent_contract = models.ForeignKey(
@@ -939,6 +929,20 @@ class Contract(models.Model):
         from .services.contract_lifecycle import can_transition_lifecycle_stage as can_transition_contract_lifecycle_stage
 
         return can_transition_contract_lifecycle_stage(self, new_stage)
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        from .services.lifecycle_dimensions import validate_status_stage_pair
+
+        super().clean()
+        errors = {}
+        try:
+            validate_status_stage_pair(self.status, self.lifecycle_stage)
+        except ValidationError as exc:
+            errors['status'] = exc.messages
+            errors['lifecycle_stage'] = exc.messages
+        if errors:
+            raise ValidationError(errors)
 
     class Meta:
         indexes = [
@@ -990,11 +994,11 @@ class Document(models.Model):
         OTHER = 'OTHER', 'Other'
 
     class Status(models.TextChoices):
+        """Document state — artifact maturity (not contract record status)."""
         DRAFT = 'DRAFT', 'Draft'
-        REVIEW = 'REVIEW', 'Under Review'
-        APPROVED = 'APPROVED', 'Approved'
         FINAL = 'FINAL', 'Final'
-        ARCHIVED = 'ARCHIVED', 'Archived'
+        EXECUTED = 'EXECUTED', 'Executed'
+        SUPERSEDED = 'SUPERSEDED', 'Superseded'
 
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, null=True, blank=True, related_name='documents')
     title = models.CharField(max_length=300)
@@ -1029,6 +1033,23 @@ class Document(models.Model):
 
     def __str__(self):
         return f'{self.title} (v{self.version})'
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        from .services.lifecycle_dimensions import validate_document_state_for_contract
+
+        super().clean()
+        if not self.contract_id:
+            return
+        contract = self.contract
+        try:
+            validate_document_state_for_contract(
+                self.status,
+                contract_status=getattr(contract, 'status', None),
+                contract_stage=getattr(contract, 'lifecycle_stage', None),
+            )
+        except ValidationError as exc:
+            raise ValidationError({'status': exc.messages}) from exc
 
     def save(self, *args, **kwargs):
         if self.file:
@@ -1086,8 +1107,9 @@ class Document(models.Model):
 
         1. It is the direct subject of a completed (SIGNED) signature request.
            This covers: signed documents, completion evidence, signature packets.
-        2. It has reached FINAL status on a contract whose lifecycle stage is
-           EXECUTED — i.e. the executed source document of a binding agreement.
+        2. It has reached FINAL or EXECUTED status on a contract whose lifecycle
+           stage is at/after EXECUTED — i.e. the executed source document of a
+           binding agreement.
         3. It is a final court filing, pleading, or discovery document.
 
         Unsigned/cancelled drafts follow the ordinary deletion policy.
@@ -1100,11 +1122,12 @@ class Document(models.Model):
                 'This document cannot be deleted: it is the subject of a '
                 'completed signature request.'
             )
-        # 2. FINAL source document on an executed contract.
+        # 2. FINAL/EXECUTED source document on an executed/active contract.
+        executed_stages = {'EXECUTED', 'OBLIGATION_TRACKING', 'RENEWAL'}
         if (
-            self.status == self.Status.FINAL
+            self.status in {self.Status.FINAL, self.Status.EXECUTED}
             and self.contract_id
-            and self.contract.lifecycle_stage == 'EXECUTED'
+            and self.contract.lifecycle_stage in executed_stages
         ):
             raise PermissionError(
                 'This document cannot be deleted: it is a final document on '
@@ -1112,7 +1135,7 @@ class Document(models.Model):
             )
         # 3. Final court / legal filing.
         legal_types = {self.DocType.COURT_FILING, self.DocType.PLEADING, self.DocType.DISCOVERY}
-        if self.document_type in legal_types and self.status == self.Status.FINAL:
+        if self.document_type in legal_types and self.status in {self.Status.FINAL, self.Status.EXECUTED}:
             raise PermissionError(
                 'This document cannot be deleted: it is a final court/legal record.'
             )

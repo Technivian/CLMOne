@@ -7,7 +7,8 @@ CLM One is a Django-based contract lifecycle management platform with multi-tena
 - Backend: Django 5.2.5
 - Database: SQLite in development
 - Auth routes: `/login/`, `/register/`, `/logout/`
-- App shell: dashboard + CLM SaaS UI with light/dark theme support
+- App shell: dashboard + CLM SaaS UI (light-first pilot shell)
+- Governance: [`GOVERNANCE_CHARTER.md`](GOVERNANCE_CHARTER.md) (canonical; supersedes historical `DESIGN_CONSTITUTION.md`)
 - Dev server: `127.0.0.1:8060` or `0.0.0.0:8060`
 
 ## Local HTTPS (Chrome/Safari)

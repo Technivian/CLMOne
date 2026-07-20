@@ -4,7 +4,12 @@ from decimal import Decimal
 from typing import Mapping
 
 from contracts.models import Contract
-from contracts.services.contract_launch_setup import MSA_FINANCE_APPROVAL_THRESHOLD, get_launch_setup_for_type
+from contracts.services.finance_approval_policy import (
+    finance_threshold_display,
+    get_finance_approval_threshold,
+    requires_finance_approval,
+)
+from contracts.services.contract_launch_setup import get_launch_setup_for_type
 from contracts.services.intake_risk import STANDARD_LAW_TERMS
 
 
@@ -68,11 +73,15 @@ def derive_intake_route(values: Mapping[str, object], *, template_applied: bool 
     if privacy_reason:
         add_reviewer('Privacy', privacy_reason)
 
-    value = Decimal(str(values.get('value') or 0))
-    if value >= Decimal(str(MSA_FINANCE_APPROVAL_THRESHOLD)):
+    finance_required, finance_reason, finance_audit = requires_finance_approval(
+        value=values.get('value'),
+        currency=str(values.get('currency') or 'USD'),
+        confirmed_above_threshold=bool(values.get('value_above_threshold_confirmed')),
+    )
+    if finance_required:
         approvers.append({
             'role': 'Finance Director',
-            'reason': f'Finance Director added because contract value meets the ${MSA_FINANCE_APPROVAL_THRESHOLD:,.0f} approval threshold.',
+            'reason': finance_reason,
         })
     if contract_type:
         approvers.append({
@@ -95,4 +104,5 @@ def derive_intake_route(values: Mapping[str, object], *, template_applied: bool 
 
 
 def intake_routing_client_policy() -> dict:
-    return {'finance_approval_threshold': str(MSA_FINANCE_APPROVAL_THRESHOLD)}
+    threshold = get_finance_approval_threshold()
+    return {'finance_approval_threshold': str(threshold)}

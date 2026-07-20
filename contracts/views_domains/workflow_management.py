@@ -1,16 +1,17 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
-from django.db.models import Max, Q
+from django.db.models import Count, Max, Q
 from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 from django.views import View
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
 from contracts.forms import WorkflowForm, WorkflowStepForm, WorkflowTemplateForm, WorkflowTemplatePreviewForm, WorkflowTemplateStepForm
+from contracts.middleware import log_action
 from contracts.models import (
     ApprovalRequest,
     ApprovalRoute,
@@ -51,6 +52,14 @@ from contracts.services.workflow_audit import (
 )
 from contracts.services.workflow_simulation import simulate_workflow_template
 from contracts.services.workflow_templates import COMPARISON_PRESETS, compare_template_versions, clone_template_version, list_template_versions
+from contracts.services.workflow_designer import (
+    build_template_card,
+    duplicate_workflow_template,
+    ensure_stepless_templates_unpublished,
+    filter_workflow_templates,
+    validate_template_for_publish,
+    workflow_designer_tabs,
+)
 from contracts.view_support import (
     TenantAssignCreateMixin,
     apply_form_queryset_scopes,
@@ -84,12 +93,104 @@ class WorkflowTemplateListView(TenantScopedQuerysetMixin, LoginRequiredMixin, Li
         return _workflow_template_queryset_for_organization(org)
 
     def get_context_data(self, **kwargs):
-        from contracts.services.workflow_operations import workflow_operations_tabs
-
         context = super().get_context_data(**kwargs)
-        context['ops_tabs'] = workflow_operations_tabs(active='templates')
-        context['hide_app_footer'] = True
+        context.update(_workflow_template_list_context(self.request, context['workflow_templates']))
         return context
+
+
+def _workflow_template_list_context(request, templates_qs):
+    organization = get_user_organization(request.user)
+    ensure_stepless_templates_unpublished(templates_qs)
+    params = request.GET
+    filtered = filter_workflow_templates(
+        templates_qs.select_related('contract_type').prefetch_related('steps', 'steps__specific_assignee'),
+        q=params.get('q', ''),
+        contract_type=params.get('contract_type', ''),
+        status=params.get('status', ''),
+        owner=params.get('owner', ''),
+        sort=params.get('sort', 'updated'),
+    )
+    filtered = filtered.annotate(
+        active_workflow_count=Count(
+            'workflow',
+            filter=Q(workflow__status=Workflow.Status.ACTIVE),
+            distinct=True,
+        ),
+    )
+    templates = list(filtered)
+    cards = [build_template_card(template) for template in templates]
+    filter_q = (params.get('q') or '').strip()
+    filter_contract_type = (params.get('contract_type') or '').strip()
+    filter_status = (params.get('status') or '').strip()
+    filter_owner = (params.get('owner') or '').strip()
+    filter_sort = (params.get('sort') or 'updated').strip()
+    more_filters_active = bool(
+        filter_contract_type
+        or filter_status
+        or filter_owner
+        or (filter_sort and filter_sort != 'updated')
+    )
+    return {
+        'workflow_templates': templates,
+        'template_cards': cards,
+        'result_count': len(cards),
+        'designer_tabs': workflow_designer_tabs(active='templates'),
+        'filter_q': filter_q,
+        'filter_contract_type': filter_contract_type,
+        'filter_status': filter_status,
+        'filter_owner': filter_owner,
+        'filter_sort': filter_sort,
+        'more_filters_active': more_filters_active,
+        'category_choices': WorkflowTemplate.Category.choices,
+        'hide_app_footer': True,
+        'organization': organization,
+    }
+
+
+@login_required
+def workflow_template_list(request):
+    templates = _workflow_template_queryset_for_organization(get_user_organization(request.user))
+    return render(request, 'contracts/workflow_template_list.html', _workflow_template_list_context(request, templates))
+
+
+@login_required
+def workflow_approval_route_list(request):
+    organization = get_user_organization(request.user)
+    template_qs = _workflow_template_queryset_for_organization(organization)
+    routes = (
+        ApprovalRoute.objects.filter(workflow_template__in=template_qs)
+        .select_related('workflow_template')
+        .order_by('workflow_template__name', 'order', 'pk')
+    )
+    return render(request, 'contracts/workflow_approval_route_list.html', {
+        'approval_routes': routes,
+        'designer_tabs': workflow_designer_tabs(active='approval_rules'),
+        'result_count': routes.count(),
+        'hide_app_footer': True,
+    })
+
+
+@login_required
+def workflow_designer_history(request):
+    organization = get_user_organization(request.user)
+    template_ids = list(
+        _workflow_template_queryset_for_organization(organization).values_list('pk', flat=True)
+    )
+    logs = (
+        AuditLog.objects.filter(
+            Q(model_name='WorkflowTemplate', object_id__in=template_ids)
+            | Q(model_name='WorkflowTemplateStep', changes__template_id__in=template_ids)
+            | Q(changes__event__startswith='workflow_template', changes__template_id__in=template_ids)
+        )
+        .select_related('user')
+        .order_by('-timestamp', '-pk')[:100]
+    )
+    from contracts.services.workflow_audit import build_audit_feed
+    return render(request, 'contracts/workflow_designer_history.html', {
+        'audit_feed': build_audit_feed(logs),
+        'designer_tabs': workflow_designer_tabs(active='history'),
+        'hide_app_footer': True,
+    })
 
 
 class WorkflowTemplateDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailView):
@@ -432,9 +533,12 @@ def workflow_template_step_reorder(request, pk):
 def workflow_template_publish_toggle(request, pk):
     organization = get_user_organization(request.user)
     template = get_object_or_404(_workflow_template_queryset_for_organization(organization), pk=pk)
-    if not template.steps.exists():
-        messages.error(request, 'Add at least one step before publishing this template.')
-        return redirect('contracts:workflow_template_detail', pk=template.pk)
+    # Publishing requires stages + valid routing/owners; unpublish always allowed.
+    if not template.is_active:
+        validation = validate_template_for_publish(template)
+        if not validation.ok:
+            messages.error(request, validation.message)
+            return redirect('contracts:workflow_template_detail', pk=template.pk)
 
     old_status = template.is_active
     template.is_active = not template.is_active
@@ -625,31 +729,100 @@ def update_workflow_step(request, pk):
 @login_required
 def workflow_template_create(request):
     organization = get_user_organization(request.user)
+    template_qs = _workflow_template_queryset_for_organization(organization)
     if request.method == 'POST':
-        form = WorkflowTemplateForm(request.POST)
+        form = WorkflowTemplateForm(request.POST, template_queryset=template_qs)
         if form.is_valid():
-            template = form.save(commit=False)
-            set_organization_on_instance(template, organization)
-            # Sub-block D4: a template created through this form has zero
-            # steps by definition (WorkflowTemplateForm doesn't expose
-            # is_active, but the model's own default is True — see
-            # WorkflowTemplate.is_active — which let a template be
-            # "Published" with 0 steps the moment it was created, before its
-            # first step was ever added). Force it unpublished at creation;
-            # workflow_template_publish_toggle already refuses to publish a
-            # stepless template, so the only way to reach "published" is to
-            # add at least one step first, then explicitly publish.
-            template.is_active = False
-            template.save()
+            source_mode = form.cleaned_data.get('source_mode') or 'blank'
+            source_template = form.cleaned_data.get('source_template')
+            if source_mode == 'duplicate' and source_template:
+                template = duplicate_workflow_template(
+                    source_template,
+                    name=form.cleaned_data['name'],
+                )
+                template.description = form.cleaned_data.get('description') or template.description
+                template.category = form.cleaned_data.get('category') or template.category
+                template.contract_type = form.cleaned_data.get('contract_type') or template.contract_type
+                set_organization_on_instance(template, organization)
+                template.is_active = False
+                template.save()
+            else:
+                template = form.save(commit=False)
+                set_organization_on_instance(template, organization)
+                # Sub-block D4: a template created through this form has zero
+                # steps by definition. Force unpublished at creation.
+                template.is_active = False
+                template.save()
             log_workflow_template_created(template, request.user, request=request)
             messages.info(
                 request,
-                f'"{template.name}" was created unpublished. Add at least one step, then publish it.',
+                f'"{template.name}" was created as a draft. Configure stages in Workflow Designer, then publish.',
             )
             return redirect('contracts:workflow_template_detail', pk=template.pk)
     else:
-        form = WorkflowTemplateForm()
-    return render(request, 'contracts/workflow_template_form.html', {'form': form})
+        form = WorkflowTemplateForm(template_queryset=template_qs)
+    return render(request, 'contracts/workflow_template_form.html', {
+        'form': form,
+        'designer_tabs': workflow_designer_tabs(active='templates'),
+        'hide_app_footer': True,
+    })
+
+
+@login_required
+@require_POST
+def workflow_template_duplicate(request, pk):
+    organization = get_user_organization(request.user)
+    template = get_object_or_404(_workflow_template_queryset_for_organization(organization), pk=pk)
+    clone = duplicate_workflow_template(template)
+    set_organization_on_instance(clone, organization or template.organization)
+    clone.save(update_fields=['organization'])
+    log_workflow_template_created(clone, request.user, request=request)
+    messages.success(request, f'Duplicated “{template.name}” as “{clone.name}”.')
+    return redirect('contracts:workflow_template_detail', pk=clone.pk)
+
+
+@login_required
+@require_POST
+def workflow_template_archive(request, pk):
+    """Archive = unpublish. Zero-stage templates stay Draft · Incomplete."""
+    organization = get_user_organization(request.user)
+    template = get_object_or_404(_workflow_template_queryset_for_organization(organization), pk=pk)
+    if not template.is_active:
+        messages.info(request, f'“{template.name}” is already unpublished.')
+        return redirect('contracts:workflow_template_list')
+    old_status = template.is_active
+    template.is_active = False
+    template.save(update_fields=['is_active'])
+    log_workflow_template_publish_toggled(template, request.user, old_status, template.is_active, request=request)
+    messages.success(request, f'Archived workflow template {template.name}.')
+    return redirect('contracts:workflow_template_list')
+
+
+@login_required
+@require_POST
+def workflow_template_delete(request, pk):
+    organization = get_user_organization(request.user)
+    template = get_object_or_404(_workflow_template_queryset_for_organization(organization), pk=pk)
+    if not template.organization_id or (organization and template.organization_id != organization.id):
+        messages.error(request, 'System templates cannot be deleted. Duplicate them instead.')
+        return redirect('contracts:workflow_template_detail', pk=template.pk)
+    if Workflow.objects.filter(template=template, status=Workflow.Status.ACTIVE).exists():
+        messages.error(request, 'Cannot delete a template with active workflows. Archive it instead.')
+        return redirect('contracts:workflow_template_detail', pk=template.pk)
+    name = template.name
+    template_id = template.pk
+    template.delete()
+    log_action(
+        request.user,
+        AuditLog.Action.DELETE,
+        'WorkflowTemplate',
+        object_id=template_id,
+        object_repr=name,
+        changes={'event': 'workflow_template_deleted', 'template_id': template_id, 'template_name': name},
+        request=request,
+    )
+    messages.success(request, f'Deleted workflow template {name}.')
+    return redirect('contracts:workflow_template_list')
 
 
 @login_required
@@ -1015,15 +1188,51 @@ def _dpa_document_sections(draft_content, values):
     return sections
 
 
-def _dpa_audit_preview(workflow):
-    timestamp = workflow.created_at
+def _workflow_audit_history(workflow, *, limit=12):
+    """Return persisted audit rows for a governed workflow workspace."""
+    if not workflow or not workflow.organization_id:
+        return []
+
+    approval_ids = []
+    document_ids = []
+    deadline_ids = []
+    if workflow.contract_id:
+        approval_ids = list(workflow.contract.approval_requests.values_list('pk', flat=True))
+        document_ids = list(workflow.contract.documents.values_list('pk', flat=True))
+        deadline_ids = list(workflow.contract.deadlines.values_list('pk', flat=True))
+
+    audit_filter = Q(model_name='Workflow', object_id=workflow.pk)
+    if workflow.contract_id:
+        audit_filter |= Q(model_name='Contract', object_id=workflow.contract_id)
+    if approval_ids:
+        audit_filter |= Q(model_name='ApprovalRequest', object_id__in=approval_ids)
+    if document_ids:
+        audit_filter |= Q(model_name='Document', object_id__in=document_ids)
+    if deadline_ids:
+        audit_filter |= Q(model_name='Deadline', object_id__in=deadline_ids)
+
+    entries = (
+        AuditLog.objects.filter(organization=workflow.organization)
+        .filter(audit_filter)
+        .select_related('user')
+        .order_by('-timestamp')[:limit]
+    )
     return [
-        {'event': 'Workflow created', 'meta': 'DPA Privacy Review Workflow instance opened', 'timestamp': timestamp},
-        {'event': 'Approved template applied', 'meta': 'GDPR Processor DPA · Netherlands · B2B', 'timestamp': timestamp},
-        {'event': 'Field values captured', 'meta': 'Required DPA fields and smart privacy questions stored', 'timestamp': timestamp},
-        {'event': 'Risk checks run', 'meta': 'Personal data, EEA/SCC, subprocessor, breach-window, and DPO checks evaluated', 'timestamp': timestamp},
-        {'event': 'Approval route generated', 'meta': 'Contract owner, Legal, and conditional DPO routing prepared', 'timestamp': timestamp},
+        {
+            'event': (entry.event_type or entry.get_action_display()).replace('.', ' ').replace('_', ' ').title(),
+            'meta': entry.object_repr or (entry.user.get_full_name() or entry.user.username if entry.user else 'System'),
+            'timestamp': entry.timestamp,
+            'actor': entry.user.get_full_name() or entry.user.username if entry.user else 'System',
+            'action': entry.event_type or entry.get_action_display(),
+            'target': entry.object_repr or entry.model_name,
+            'reason': (entry.changes or {}).get('reason') or (entry.changes or {}).get('event') or '',
+        }
+        for entry in entries
     ]
+
+
+def _dpa_audit_preview(workflow):
+    return _workflow_audit_history(workflow)
 
 
 def _dpa_workspace_context(workflow):
@@ -1362,30 +1571,7 @@ def _msa_enrich_document_sections(sections, *, values, risk_cards, current_stage
 
 def _msa_audit_preview(workflow):
     """Render the persisted tamper-evident audit history, never a projection."""
-    approval_ids = workflow.contract.approval_requests.values_list('pk', flat=True)
-    document_ids = workflow.contract.documents.values_list('pk', flat=True)
-    deadline_ids = workflow.contract.deadlines.values_list('pk', flat=True)
-    audit_filter = (
-        Q(model_name='Workflow', object_id=workflow.pk)
-        | Q(model_name='Contract', object_id=workflow.contract_id)
-        | Q(model_name='ApprovalRequest', object_id__in=approval_ids)
-        | Q(model_name='Document', object_id__in=document_ids)
-        | Q(model_name='Deadline', object_id__in=deadline_ids)
-    )
-    entries = (
-        AuditLog.objects.filter(organization=workflow.organization)
-        .filter(audit_filter)
-        .select_related('user')
-        .order_by('-timestamp')[:12]
-    )
-    return [
-        {
-            'event': (entry.event_type or entry.get_action_display()).replace('.', ' ').replace('_', ' ').title(),
-            'meta': entry.object_repr or (entry.user.get_full_name() or entry.user.username if entry.user else 'System'),
-            'timestamp': entry.timestamp,
-        }
-        for entry in entries
-    ]
+    return _workflow_audit_history(workflow)
 
 
 def _msa_workspace_context(workflow, actor=None):
@@ -1665,14 +1851,7 @@ def _nda_document_sections(draft_content, values):
 
 
 def _nda_audit_preview(workflow):
-    timestamp = workflow.created_at
-    return [
-        {'event': 'Workflow created', 'meta': 'NDA Self-Serve Workflow instance opened', 'timestamp': timestamp},
-        {'event': 'Approved template applied', 'meta': 'Mutual NDA · Netherlands · B2B', 'timestamp': timestamp},
-        {'event': 'Field values captured', 'meta': 'Required NDA fields and self-serve questions stored', 'timestamp': timestamp},
-        {'event': 'Risk checks run', 'meta': 'Confidentiality, privacy, residual knowledge, and governing law checks evaluated', 'timestamp': timestamp},
-        {'event': 'Approval route generated', 'meta': 'Contract owner with conditional Legal routing prepared', 'timestamp': timestamp},
-    ]
+    return _workflow_audit_history(workflow)
 
 
 def _nda_workspace_context(workflow):
@@ -1689,7 +1868,7 @@ def _nda_workspace_context(workflow):
     elif risk_codes:
         next_action = 'Review NDA legal risk signals'
     else:
-        next_action = 'Send for signature'
+        next_action = 'Review generated NDA draft'
 
     risk_cards = [_nda_risk_detail_for_signal(signal) for signal in risk_signals]
     if not risk_cards:
@@ -1760,6 +1939,7 @@ def _workflow_template_detail_context(template, organization, step_form=None):
     template_versions = list_template_versions(template)
     form = step_form or WorkflowTemplateStepForm()
     form = apply_form_queryset_scopes(form, organization, {'specific_assignee': organization_user_queryset})
+    publish_validation = validate_template_for_publish(template)
     return {
         'workflow_template': template,
         'steps': steps,
@@ -1770,6 +1950,10 @@ def _workflow_template_detail_context(template, organization, step_form=None):
         'step_controls': _build_template_step_controls(steps),
         'workflow_template_audit_feed': get_workflow_template_audit_feed(template, limit=6),
         'workflow_template_activity_url': reverse_lazy('contracts:workflow_template_activity', kwargs={'pk': template.pk}),
+        'publish_validation': publish_validation,
+        'can_publish': publish_validation.ok and not template.is_active,
+        'is_incomplete_template': not bool(steps),
+        'designer_tabs': workflow_designer_tabs(active='templates'),
     }
 
 
@@ -1798,15 +1982,3 @@ def _build_workflow_editor_context(form, organization):
         'template_versions': template_versions,
         'template_comparison': comparison,
     }
-
-
-@login_required
-def workflow_template_list(request):
-    from contracts.services.workflow_operations import workflow_operations_tabs
-
-    templates = _workflow_template_queryset_for_organization(get_user_organization(request.user))
-    return render(request, 'contracts/workflow_template_list.html', {
-        'workflow_templates': templates,
-        'ops_tabs': workflow_operations_tabs(active='templates'),
-        'hide_app_footer': True,
-    })

@@ -445,10 +445,11 @@ class ContractForm(forms.ModelForm):
             'matter': forms.Select(attrs={'class': TAILWIND_SELECT}),
         }
 
-    def __init__(self, *args, organization=None, actor=None, selected_template=None, **kwargs):
+    def __init__(self, *args, organization=None, actor=None, selected_template=None, revision_unlocked=False, **kwargs):
         self.organization = organization
         self.actor = actor
         self.selected_template = selected_template
+        self.revision_unlocked = bool(revision_unlocked)
         super().__init__(*args, **kwargs)
         # New Contract Request should default to an unselected placeholder,
         # not silently pre-select "Other" — but only for a fresh create
@@ -479,12 +480,10 @@ class ContractForm(forms.ModelForm):
             self.fields['owner'].queryset = self.fields['owner'].queryset.filter(pk=actor.pk)
             self.fields['owner'].initial = actor.pk
         self.fields['owner'].label_from_instance = self._owner_label
-        if not self.instance.pk:
-            # Intake creates one governed state only. Status and lifecycle
-            # advance through their existing workflow transitions, while
-            # intake risk is derived from the request signals below.
-            for field_name in ('status', 'lifecycle_stage', 'risk_level'):
-                self.fields.pop(field_name, None)
+        # Status / lifecycle / risk are never free-edited on this form —
+        # create derives them; edit uses lifecycle services / versioning.
+        for field_name in ('status', 'lifecycle_stage', 'risk_level'):
+            self.fields.pop(field_name, None)
         for field_name in ('title', 'contract_type', 'counterparty', 'governing_law'):
             self.fields[field_name].required = True
 
@@ -516,6 +515,32 @@ class ContractForm(forms.ModelForm):
         if not self.instance.pk:
             self.fields['termination_notice_date'].widget.attrs['readonly'] = 'readonly'
             self.fields['termination_notice_date'].help_text = 'Calculated from the expiry date and notice period when both are provided.'
+
+        if self.instance.pk:
+            from contracts.services.contract_edit_governance import (
+                GOVERNED_EDIT_FIELDS,
+                contract_is_governance_locked,
+            )
+            self.governance_locked = contract_is_governance_locked(self.instance)
+            self.governed_fields_readonly = self.governance_locked and not self.revision_unlocked
+            if self.governed_fields_readonly:
+                for field_name in GOVERNED_EDIT_FIELDS:
+                    field = self.fields.get(field_name)
+                    if not field:
+                        continue
+                    field.disabled = True
+                    field.required = False
+                    help_bits = [field.help_text] if field.help_text else []
+                    help_bits.append('Locked on the approved record — use Create new version or Create amendment.')
+                    field.help_text = ' '.join(help_bits)
+            else:
+                for field_name in GOVERNED_EDIT_FIELDS:
+                    field = self.fields.get(field_name)
+                    if field:
+                        field.widget.attrs['data-governed-field'] = 'true'
+        else:
+            self.governance_locked = False
+            self.governed_fields_readonly = False
 
     @staticmethod
     def _clause_template_label(clause_template):
@@ -936,14 +961,51 @@ class WorkflowForm(forms.ModelForm):
 
 
 class WorkflowTemplateForm(forms.ModelForm):
+    source_mode = forms.ChoiceField(
+        label='Starting point',
+        choices=(
+            ('blank', 'Blank template'),
+            ('duplicate', 'Duplicate an existing template'),
+        ),
+        initial='blank',
+        widget=forms.RadioSelect,
+        required=True,
+    )
+    source_template = forms.ModelChoiceField(
+        label='Template to duplicate',
+        queryset=WorkflowTemplate.objects.none(),
+        required=False,
+        widget=forms.Select(attrs={'class': TAILWIND_SELECT}),
+    )
+
     class Meta:
         model = WorkflowTemplate
-        fields = ['name', 'description', 'category']
+        fields = ['name', 'description', 'category', 'contract_type']
         widgets = {
             'name': forms.TextInput(attrs={'class': TAILWIND_INPUT}),
             'description': forms.Textarea(attrs={'class': TAILWIND_TEXTAREA, 'rows': 4}),
             'category': forms.Select(attrs={'class': TAILWIND_SELECT}),
+            'contract_type': forms.Select(attrs={'class': TAILWIND_SELECT}),
         }
+
+    def __init__(self, *args, template_queryset=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        qs = template_queryset if template_queryset is not None else WorkflowTemplate.objects.none()
+        self.fields['source_template'].queryset = qs.order_by('name', '-version')
+        self.fields['contract_type'].required = False
+        self.fields['contract_type'].empty_label = 'Any / not bound'
+        self.fields['description'].required = False
+        self.fields['description'].help_text = 'Optional — shown on the template card and designer.'
+        # UpdateView edits an existing template — hide create-only starting-point fields.
+        if self.instance and self.instance.pk:
+            self.fields.pop('source_mode', None)
+            self.fields.pop('source_template', None)
+
+    def clean(self):
+        cleaned = super().clean()
+        if 'source_mode' in self.fields and cleaned.get('source_mode') == 'duplicate' and not cleaned.get('source_template'):
+            self.add_error('source_template', 'Select a template to duplicate.')
+        return cleaned
 
 
 class WorkflowTemplatePreviewForm(forms.Form):

@@ -27,7 +27,14 @@ EU_JURISDICTION_KEYWORDS = {
     'AUSTRIA',
 }
 
-HIGH_VALUE_THRESHOLD = 250_000
+from contracts.services.finance_approval_policy import get_finance_approval_threshold
+
+# Workflow category routing uses the same high-value threshold as Finance approval.
+def _high_value_threshold(organization=None):
+    return get_finance_approval_threshold(organization)
+
+
+HIGH_VALUE_THRESHOLD = int(get_finance_approval_threshold())
 HIGH_RISK_TYPES = {
     Contract.ContractType.EMPLOYMENT,
     Contract.ContractType.LEASE,
@@ -80,7 +87,7 @@ def suggest_workflow_category_for_contract(contract):
     if contract.contract_type in HIGH_RISK_TYPES:
         return WorkflowTemplate.Category.DUE_DILIGENCE
 
-    if contract.value and contract.value >= HIGH_VALUE_THRESHOLD:
+    if contract.value and contract.value >= _high_value_threshold(getattr(contract, 'organization', None)):
         return WorkflowTemplate.Category.DUE_DILIGENCE
 
     return WorkflowTemplate.Category.CONTRACT_REVIEW

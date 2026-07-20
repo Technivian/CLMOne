@@ -144,6 +144,481 @@ def _review_status_list_label(pack):
     )
 
 
+_NEEDS_INPUT_STATUSES = {
+    DPARiskItem.Status.NEEDS_BUSINESS_INPUT,
+    DPARiskItem.Status.NEEDS_DPO_SECURITY_INPUT,
+}
+_OPENISH_RISK_STATUSES = {
+    DPARiskItem.Status.OPEN,
+    DPARiskItem.Status.IN_REVIEW,
+    DPARiskItem.Status.NEEDS_BUSINESS_INPUT,
+    DPARiskItem.Status.NEEDS_DPO_SECURITY_INPUT,
+    DPARiskItem.Status.ESCALATED,
+}
+_CATEGORY_STATE_TONES = {
+    'risk': 'danger',
+    'needs_input': 'attention',
+    'confirmed': 'success',
+    'not_applicable': 'neutral',
+    'not_reviewed': 'neutral',
+}
+_CATEGORY_STATE_LABELS = {
+    'risk': 'Risk',
+    'needs_input': 'Needs input',
+    'confirmed': 'Confirmed',
+    'not_applicable': 'Not applicable',
+    'not_reviewed': 'Not reviewed',
+}
+
+
+def _risk_summary_for_pack(risk_items):
+    unresolved = [r for r in risk_items if r.status not in _RESOLVED_RISK_STATUSES]
+    by_severity = {'CRITICAL': 0, 'HIGH': 0, 'MEDIUM': 0, 'LOW': 0}
+    for risk in unresolved:
+        by_severity[risk.severity] = by_severity.get(risk.severity, 0) + 1
+    return {
+        'total': len(risk_items),
+        'open': len(unresolved),
+        'critical': by_severity['CRITICAL'],
+        'high': by_severity['HIGH'],
+        'medium': by_severity['MEDIUM'],
+        'low': by_severity['LOW'],
+        'needs_input': sum(1 for r in unresolved if r.status in _NEEDS_INPUT_STATUSES),
+    }
+
+
+def _category_state(category_risks, reviewed, applicable=True):
+    """Derive a compact review state — risk and decision over raw extraction."""
+    if not applicable:
+        return 'not_applicable'
+    open_risks = [r for r in category_risks if r.status in _OPENISH_RISK_STATUSES]
+    if any(r.severity in {DPARiskItem.Severity.CRITICAL, DPARiskItem.Severity.HIGH} for r in open_risks):
+        return 'risk'
+    if any(
+        r.status in _NEEDS_INPUT_STATUSES or r.confidence == DPARiskItem.Confidence.NEEDS_HUMAN_CHECK
+        for r in open_risks
+    ):
+        return 'needs_input'
+    if open_risks:
+        return 'risk'
+    if not reviewed:
+        return 'not_reviewed'
+    return 'confirmed'
+
+
+def _build_review_categories(pack, risk_items):
+    """Numbered review categories as expandable rows with decision-first states."""
+    by_category = {}
+    for risk in risk_items:
+        by_category.setdefault(risk.category, []).append(risk)
+
+    analyzed = bool(pack.last_analyzed_at)
+    payroll_flags = [
+        pack.has_employee_identity_data,
+        pack.has_salary_wage_data,
+        pack.has_tax_data,
+        pack.has_social_security_data,
+        pack.has_bank_account_data,
+        pack.has_pension_benefits_data,
+        pack.has_absence_leave_data,
+        pack.has_employment_contract_data,
+        pack.has_national_identifiers,
+        pack.has_payroll_corrections,
+        pack.has_payslip_data,
+        pack.has_cross_border_payroll_data,
+    ]
+    security_flags = [
+        pack.security_encryption,
+        pack.security_access_control,
+        pack.security_mfa,
+        pack.security_logging,
+        pack.security_backup,
+        pack.security_incident_response,
+        pack.security_data_segregation,
+    ]
+    processing_filled = any(
+        [
+            pack.data_subject_categories,
+            pack.personal_data_categories,
+            pack.special_category_data,
+            pack.processing_purposes,
+            pack.processing_duration,
+            pack.retention_obligations,
+            pack.systems_tools_vendors,
+        ]
+    )
+
+    specs = [
+        {
+            'number': 1,
+            'key': 'role',
+            'title': 'Role Qualification',
+            'risk_category': DPARiskItem.Category.ROLE_QUALIFICATION,
+            'summary': pack.get_role_qualification_display(),
+            'details': [
+                ('Qualification', pack.get_role_qualification_display()),
+                ('Notes', pack.role_qualification_notes or '—'),
+                ('Subprocessors involved', 'Yes' if pack.subprocessors_involved else 'No'),
+            ],
+            'reviewed': analyzed or pack.role_qualification != DPAReviewPack.RoleQualification.AMBIGUOUS,
+            'applicable': True,
+        },
+        {
+            'number': 2,
+            'key': 'processing',
+            'title': 'Processing Description',
+            'risk_category': DPARiskItem.Category.PROCESSING_SCOPE,
+            'summary': (
+                (pack.processing_purposes or pack.data_subject_categories or 'Processing scope not yet captured')[:120]
+            ),
+            'details': [
+                ('Data subjects', pack.data_subject_categories or '—'),
+                ('Personal data', pack.personal_data_categories or '—'),
+                ('Special category', pack.special_category_data or '—'),
+                ('Purposes', pack.processing_purposes or '—'),
+                ('Duration', pack.processing_duration or '—'),
+                ('Retention', pack.retention_obligations or '—'),
+                ('Systems / vendors', pack.systems_tools_vendors or '—'),
+            ],
+            'reviewed': analyzed or processing_filled,
+            'applicable': True,
+        },
+        {
+            'number': 3,
+            'key': 'payroll',
+            'title': 'Payroll-Specific Data Categories',
+            'risk_category': DPARiskItem.Category.PROCESSING_SCOPE,
+            'summary': (
+                f'{sum(1 for flag in payroll_flags if flag)} of {len(payroll_flags)} payroll categories present'
+            ),
+            'details': [
+                (label, 'Present' if getattr(pack, field) else 'Not present')
+                for field, label in (
+                    ('has_employee_identity_data', 'Employee identity data'),
+                    ('has_salary_wage_data', 'Salary / wage data'),
+                    ('has_tax_data', 'Tax data'),
+                    ('has_social_security_data', 'Social security data'),
+                    ('has_bank_account_data', 'Bank account details'),
+                    ('has_pension_benefits_data', 'Pension / benefits data'),
+                    ('has_absence_leave_data', 'Absence / leave data'),
+                    ('has_employment_contract_data', 'Employment contract data'),
+                    ('has_national_identifiers', 'National identifiers'),
+                    ('has_payroll_corrections', 'Payroll corrections'),
+                    ('has_payslip_data', 'Payslip data'),
+                    ('has_cross_border_payroll_data', 'Cross-border payroll data'),
+                )
+            ],
+            'reviewed': analyzed,
+            'applicable': analyzed or any(payroll_flags),
+        },
+        {
+            'number': 4,
+            'key': 'subprocessor',
+            'title': 'Subprocessor / Vendor Review',
+            'risk_category': DPARiskItem.Category.SUBPROCESSOR,
+            'summary': (
+                'Prior approval required'
+                if pack.subprocessor_prior_approval_required
+                else (
+                    'General authorization allowed'
+                    if pack.subprocessor_general_authorization_allowed
+                    else 'Subprocessor controls not confirmed'
+                )
+            ),
+            'details': [
+                ('Prior approval required', 'Yes' if pack.subprocessor_prior_approval_required else 'No'),
+                ('General authorization', 'Yes' if pack.subprocessor_general_authorization_allowed else 'No'),
+                (
+                    'Notification period',
+                    f'{pack.subprocessor_notification_period_days} days'
+                    if pack.subprocessor_notification_period_days is not None
+                    else 'Not specified',
+                ),
+                (
+                    'Linked subprocessors',
+                    ', '.join(sp.name for sp in pack.subprocessors.all()) or 'None linked',
+                ),
+            ],
+            'reviewed': analyzed,
+            'applicable': True,
+        },
+        {
+            'number': 5,
+            'key': 'transfer',
+            'title': 'International Transfer Review',
+            'risk_category': DPARiskItem.Category.TRANSFER,
+            'summary': (
+                'Transfers outside EEA — mechanism review required'
+                if pack.transfers_outside_eea
+                else 'No EEA-outbound transfers flagged'
+            ),
+            'details': [
+                ('Transfers outside EEA', 'Yes' if pack.transfers_outside_eea else 'No'),
+                ('Transfer mechanism present', 'Yes' if pack.transfer_mechanism_present else 'No'),
+                ('DPO/Security escalation', 'Yes' if pack.transfer_escalation_required else 'No'),
+                ('Notes', pack.transfer_notes or '—'),
+            ],
+            'reviewed': analyzed,
+            'applicable': (not analyzed)
+            or pack.transfers_outside_eea
+            or bool(by_category.get(DPARiskItem.Category.TRANSFER)),
+        },
+        {
+            'number': 6,
+            'key': 'security',
+            'title': 'Security Measures',
+            'risk_category': DPARiskItem.Category.SECURITY,
+            'summary': (
+                'Specific measures described'
+                if pack.security_measures_specific
+                else (
+                    f'{sum(1 for flag in security_flags if flag)} controls mentioned — specificity unclear'
+                    if any(security_flags)
+                    else 'Security measures not confirmed'
+                )
+            ),
+            'details': [
+                (label, 'Present' if getattr(pack, field) else 'Not present')
+                for field, label in (
+                    ('security_encryption', 'Encryption'),
+                    ('security_access_control', 'Access control'),
+                    ('security_mfa', 'Multi-factor authentication'),
+                    ('security_logging', 'Logging'),
+                    ('security_backup', 'Backup'),
+                    ('security_incident_response', 'Incident response'),
+                    ('security_data_segregation', 'Data segregation'),
+                )
+            ]
+            + [
+                (
+                    'Specificity',
+                    'Specific' if pack.security_measures_specific else 'Vague / generic',
+                ),
+                ('Notes', pack.security_notes or '—'),
+            ],
+            'reviewed': analyzed,
+            'applicable': True,
+        },
+        {
+            'number': 7,
+            'key': 'breach',
+            'title': 'Breach Notification',
+            'risk_category': DPARiskItem.Category.BREACH_NOTIFICATION,
+            'summary': (
+                f'{pack.breach_notification_deadline_hours}h deadline'
+                + ('' if pack.breach_notification_realistic else ' — may be unrealistic')
+                if pack.breach_notification_deadline_hours is not None
+                else 'Deadline not specified'
+            ),
+            'details': [
+                (
+                    'Deadline',
+                    f'{pack.breach_notification_deadline_hours} hours'
+                    if pack.breach_notification_deadline_hours is not None
+                    else 'Not specified',
+                ),
+                ('Realistic', 'Yes' if pack.breach_notification_realistic else 'No'),
+                ('Conflicts with MSA', 'Yes' if pack.breach_notification_conflicts_msa else 'No'),
+                ('Notes', pack.breach_notification_notes or '—'),
+            ],
+            'reviewed': analyzed or pack.breach_notification_deadline_hours is not None,
+            'applicable': True,
+        },
+        {
+            'number': 8,
+            'key': 'dsar',
+            'title': 'Data Subject Request Assistance',
+            'risk_category': DPARiskItem.Category.DSAR,
+            'summary': (
+                'Assistance required'
+                + (
+                    f' · {pack.dsar_assistance_deadline_days} days'
+                    if pack.dsar_assistance_deadline_days is not None
+                    else ''
+                )
+                if pack.dsar_assistance_required
+                else 'Assistance not required / not confirmed'
+            ),
+            'details': [
+                ('Assistance required', 'Yes' if pack.dsar_assistance_required else 'No'),
+                (
+                    'Deadline',
+                    f'{pack.dsar_assistance_deadline_days} days'
+                    if pack.dsar_assistance_deadline_days is not None
+                    else 'Not specified',
+                ),
+                ('Chargeable', 'Yes' if pack.dsar_assistance_chargeable else 'No'),
+                ('Business confirmation needed', 'Yes' if pack.dsar_business_confirmation_needed else 'No'),
+            ],
+            'reviewed': analyzed,
+            'applicable': True,
+        },
+        {
+            'number': 9,
+            'key': 'audit',
+            'title': 'Audit Rights',
+            'risk_category': DPARiskItem.Category.AUDIT,
+            'summary': (
+                'On-site audit allowed'
+                if pack.audit_rights_onsite_allowed
+                else (
+                    'Third-party reports accepted'
+                    if pack.audit_third_party_reports_accepted
+                    else 'Audit rights not confirmed'
+                )
+            ),
+            'details': [
+                ('On-site allowed', 'Yes' if pack.audit_rights_onsite_allowed else 'No'),
+                ('Frequency limited', 'Yes' if pack.audit_rights_frequency_limited else 'No'),
+                ('Third-party reports', 'Yes' if pack.audit_third_party_reports_accepted else 'No'),
+                ('Costs addressed', 'Yes' if pack.audit_costs_addressed else 'No'),
+                ('Conflicts with MSA', 'Yes' if pack.audit_conflicts_msa else 'No'),
+                ('Notes', pack.audit_notes or '—'),
+            ],
+            'reviewed': analyzed,
+            'applicable': True,
+        },
+        {
+            'number': 10,
+            'key': 'deletion',
+            'title': 'Deletion and Return',
+            'risk_category': DPARiskItem.Category.DELETION,
+            'summary': (
+                f'{pack.deletion_return_deadline_days}-day return / deletion window'
+                if pack.deletion_return_deadline_days is not None
+                else 'Deletion / return deadline not specified'
+            ),
+            'details': [
+                (
+                    'Deadline',
+                    f'{pack.deletion_return_deadline_days} days'
+                    if pack.deletion_return_deadline_days is not None
+                    else 'Not specified',
+                ),
+                ('Statutory retention conflict', 'Yes' if pack.deletion_legal_retention_conflict else 'No'),
+                ('Backup addressed', 'Yes' if pack.deletion_backup_addressed else 'No'),
+                ('Certification required', 'Yes' if pack.deletion_certification_required else 'No'),
+                ('Notes', pack.deletion_notes or '—'),
+            ],
+            'reviewed': analyzed or pack.deletion_return_deadline_days is not None,
+            'applicable': True,
+        },
+        {
+            'number': 11,
+            'key': 'liability',
+            'title': 'Liability Conflict Detection',
+            'risk_category': DPARiskItem.Category.LIABILITY,
+            'summary': (
+                'Uncapped or MSA-cap override risk'
+                if pack.liability_uncapped or pack.liability_overrides_msa_cap
+                else 'No liability conflict flagged'
+            ),
+            'details': [
+                ('Uncapped', 'Yes' if pack.liability_uncapped else 'No'),
+                ('Overrides MSA cap', 'Yes' if pack.liability_overrides_msa_cap else 'No'),
+                ('Separate indemnities', 'Yes' if pack.liability_separate_indemnities else 'No'),
+                ('Conflicts standard position', 'Yes' if pack.liability_conflicts_standard_position else 'No'),
+                ('Notes', pack.liability_notes or '—'),
+            ],
+            'reviewed': analyzed,
+            'applicable': True,
+        },
+    ]
+
+    rows = []
+    for spec in specs:
+        category_risks = by_category.get(spec['risk_category'], [])
+        # Payroll shares PROCESSING_SCOPE with processing description — only
+        # attach scope risks to the processing row to avoid duplicate banners.
+        if spec['key'] == 'payroll':
+            category_risks = []
+        state = _category_state(category_risks, reviewed=spec['reviewed'], applicable=spec['applicable'])
+        open_count = sum(1 for r in category_risks if r.status in _OPENISH_RISK_STATUSES)
+        decision_summary = spec['summary']
+        if state == 'risk' and open_count:
+            decision_summary = f'{open_count} open risk{"s" if open_count != 1 else ""} — {spec["summary"]}'
+        elif state == 'needs_input':
+            decision_summary = f'Needs human input — {spec["summary"]}'
+        rows.append(
+            {
+                **spec,
+                'state': state,
+                'state_label': _CATEGORY_STATE_LABELS[state],
+                'state_tone': _CATEGORY_STATE_TONES[state],
+                'open_risk_count': open_count,
+                'decision_summary': decision_summary,
+                'risks': category_risks,
+            }
+        )
+    return rows
+
+
+def _primary_action_for_pack(pack, unresolved_risks, critical_risk_count, can_edit, can_approve):
+    """One contextual primary CTA for the review header."""
+    next_action = _next_action_for_pack(pack, unresolved_risks, critical_risk_count)
+    if next_action == 'Resolve role qualification':
+        return {
+            'label': 'Review findings',
+            'href': '?tab=findings',
+            'mode': 'link',
+            'next_action': next_action,
+        }
+    if next_action in {'Address critical risks', 'Resolve open risks'}:
+        return {
+            'label': 'Open risks',
+            'href': '?tab=risks',
+            'mode': 'link',
+            'next_action': next_action,
+        }
+    if next_action == 'Start review' and can_edit and not pack.last_analyzed_at:
+        return {
+            'label': 'Run analysis',
+            'mode': 'analyze',
+            'next_action': next_action,
+        }
+    if next_action in {'Complete approval decision', 'Resolve escalation', 'Revise after rejection'} and can_approve:
+        return {
+            'label': 'Record decision',
+            'href': '#dpa-decision-bar',
+            'mode': 'link',
+            'next_action': next_action,
+        }
+    if next_action == 'Start review' and can_approve:
+        return {
+            'label': 'Start review',
+            'href': '#dpa-decision-bar',
+            'mode': 'link',
+            'next_action': next_action,
+        }
+    return {
+        'label': 'View findings',
+        'href': '?tab=findings',
+        'mode': 'link',
+        'next_action': next_action,
+    }
+
+
+def _workspace_tabs_for_pack(pack, active_tab):
+    base = reverse('contracts:dpa_review_pack_detail', kwargs={'pk': pack.pk})
+    tabs = (
+        ('overview', 'Overview'),
+        ('findings', 'Findings'),
+        ('risks', 'Risks'),
+        ('documents', 'Documents'),
+        ('history', 'Decision history'),
+    )
+    return [
+        {
+            'key': key,
+            'label': label,
+            'url': f'{base}?tab={key}',
+            'active': key == active_tab,
+            'panel_id': f'dpa-tab-{key}',
+        }
+        for key, label in tabs
+    ]
+
+
 class DPAReviewPackListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
     """Operational DPA review queue: unresolved work, filters, and next actions."""
     model = DPAReviewPack
@@ -233,6 +708,29 @@ class DPAReviewPackListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListV
         ctx['selected_role'] = (params.get('role') or '').strip()
         ctx['selected_severity'] = (params.get('severity') or '').strip()
         ctx['selected_owner'] = (params.get('owner') or '').strip()
+        list_url = reverse('contracts:dpa_review_pack_list')
+        selected_status = ctx['selected_status']
+        selected_severity = ctx['selected_severity']
+        ctx['view_tabs'] = [
+            {
+                'key': 'all',
+                'label': 'All reviews',
+                'url': list_url,
+                'active': not selected_status and not selected_severity,
+            },
+            {
+                'key': 'needs_decision',
+                'label': 'Needs decision',
+                'url': f'{list_url}?status=UNDER_REVIEW',
+                'active': selected_status == 'UNDER_REVIEW',
+            },
+            {
+                'key': 'critical',
+                'label': 'Critical risks',
+                'url': f'{list_url}?severity=CRITICAL',
+                'active': selected_severity == 'CRITICAL',
+            },
+        ]
         ctx['review_status_choices'] = DPAReviewPack.ApprovalStatus.choices
         ctx['processing_role_choices'] = DPAReviewPack.RoleQualification.choices
         ctx['risk_severity_choices'] = DPARiskItem.Severity.choices
@@ -298,11 +796,63 @@ class DPAReviewPackDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, Det
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         review_pack = ctx['review_pack']
-        ctx['risk_items'] = review_pack.risk_items.all()
+        risk_items = list(review_pack.risk_items.all())
+        unresolved = [r for r in risk_items if r.status not in _RESOLVED_RISK_STATUSES]
+        critical_count = sum(1 for r in unresolved if r.severity == DPARiskItem.Severity.CRITICAL)
+        risk_summary = _risk_summary_for_pack(risk_items)
+        can_edit = can_access_contract_action(self.request.user, review_pack.contract, ContractAction.EDIT)
+        can_review = _can_review_pack(self.request.user, review_pack)
+        primary = _primary_action_for_pack(
+            review_pack, unresolved, critical_count, can_edit=can_edit, can_approve=can_review,
+        )
+        active_tab = (self.request.GET.get('tab') or 'overview').strip().lower()
+        allowed_tabs = {'overview', 'findings', 'risks', 'documents', 'history'}
+        if active_tab not in allowed_tabs:
+            active_tab = 'overview'
+
+        review_categories = _build_review_categories(review_pack, risk_items)
+        ctx['risk_items'] = risk_items
+        ctx['open_risks'] = unresolved
+        ctx['review_categories'] = review_categories
+        ctx['key_findings'] = [
+            row for row in review_categories if row['state'] in {'risk', 'needs_input'}
+        ][:5]
         ctx['approval_history'] = review_pack.approval_history.all()
-        ctx['can_edit'] = can_access_contract_action(self.request.user, review_pack.contract, ContractAction.EDIT)
-        ctx['can_review'] = _can_review_pack(self.request.user, review_pack)
-        ctx['can_approve'] = ctx['can_review']
+        ctx['can_edit'] = can_edit
+        ctx['can_review'] = can_review
+        ctx['can_approve'] = can_review
+        ctx['risk_summary'] = risk_summary
+        ctx['active_tab'] = active_tab
+        ctx['workspace_tabs'] = _workspace_tabs_for_pack(review_pack, active_tab)
+        ctx['review_command'] = {
+            'next_action': primary['next_action'],
+            'primary_action': primary,
+            'show_primary_action': True,
+            'owner_label': (
+                review_pack.reviewer.get_full_name() or review_pack.reviewer.username
+                if review_pack.reviewer_id
+                else 'Unassigned'
+            ),
+            'status_label': _review_status_label(review_pack),
+            'risk_badges': [
+                badge
+                for badge in (
+                    {'label': f'{risk_summary["critical"]} critical', 'tone': 'danger'}
+                    if risk_summary['critical']
+                    else None,
+                    {'label': f'{risk_summary["high"]} high', 'tone': 'attention'}
+                    if risk_summary['high']
+                    else None,
+                    {'label': f'{risk_summary["open"]} open', 'tone': 'neutral'}
+                    if risk_summary['open'] and not risk_summary['critical'] and not risk_summary['high']
+                    else None,
+                    {'label': 'Needs input', 'tone': 'attention'}
+                    if risk_summary['needs_input']
+                    else None,
+                )
+                if badge
+            ],
+        }
         org = get_user_organization(self.request.user)
         ctx['linkable_contracts'] = (
             Contract.objects.filter(organization=org)
@@ -311,33 +861,9 @@ class DPAReviewPackDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, Det
             .order_by('title')
             if org else Contract.objects.none()
         )
-        ctx['payroll_data_fields'] = [
-            (label, getattr(review_pack, field_name)) for field_name, label in (
-                ('has_employee_identity_data', 'Employee identity data'),
-                ('has_salary_wage_data', 'Salary / wage data'),
-                ('has_tax_data', 'Tax data'),
-                ('has_social_security_data', 'Social security data'),
-                ('has_bank_account_data', 'Bank account details'),
-                ('has_pension_benefits_data', 'Pension / benefits data'),
-                ('has_absence_leave_data', 'Absence / leave data'),
-                ('has_employment_contract_data', 'Employment contract data'),
-                ('has_national_identifiers', 'National identifiers'),
-                ('has_payroll_corrections', 'Payroll corrections'),
-                ('has_payslip_data', 'Payslip data'),
-                ('has_cross_border_payroll_data', 'Cross-border payroll data'),
-            )
-        ]
-        ctx['security_fields'] = [
-            (label, getattr(review_pack, field_name)) for field_name, label in (
-                ('security_encryption', 'Encryption'),
-                ('security_access_control', 'Access control'),
-                ('security_mfa', 'Multi-factor authentication'),
-                ('security_logging', 'Logging'),
-                ('security_backup', 'Backup'),
-                ('security_incident_response', 'Incident response'),
-                ('security_data_segregation', 'Data segregation'),
-            )
-        ]
+        ctx['linked_documents'] = list(review_pack.documents.all())
+        ctx['related_contracts'] = list(review_pack.related_contracts.all())
+        ctx['show_decision_bar'] = can_review and review_pack.approval_status != DPAReviewPack.ApprovalStatus.APPROVED
         return ctx
 
 

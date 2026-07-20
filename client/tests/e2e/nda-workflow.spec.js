@@ -57,9 +57,8 @@ test('NDA self-serve cockpit generates a governed workspace and dashboard row', 
   await expect(page.locator('.dc-ds-workspace__surface-head', { hasText: 'Generated NDA Draft' }).first()).toBeVisible();
   await expect(page.locator('.dc-ds-workspace__surface-head', { hasText: 'Risk Signals' }).first()).toBeVisible();
   await expect(page.locator('.dc-ds-workspace__surface-head', { hasText: 'Approval Route' }).first()).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Send for signature' })).toBeVisible();
-
   await expect(page.getByRole('link', { name: 'View contract record' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Send for signature' })).toHaveCount(0);
   await page.getByRole('link', { name: 'View contract record' }).click();
   await expect(page).toHaveURL(/\/contracts\/\d+\/?$/);
   await expect(page.locator('.dc-ds-workspace--record')).toBeVisible();

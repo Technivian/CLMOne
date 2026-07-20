@@ -1,68 +1,72 @@
-{% extends 'base.html' %}
-{% block title %}Create Workflow Template{% endblock %}
+{% extends "base.html" %}
+{% block title %}Create Workflow Template – CLM One{% endblock %}
+{% block authenticated_page_title %}Workflow Designer{% endblock %}
+{% block authenticated_page_subtitle %}Create a template, then open the full designer to configure stages.{% endblock %}
+
 {% block content %}
-<div class="page-wrap reveal-stagger">
-    <div class="workspace-main hero-shell mb-6">
-        <div class="workspace-main-head">
-            <div>
-                <h1 class="workspace-title">Create Workflow Template</h1>
-                <p class="workspace-subtitle">Define a reusable workflow blueprint for contract execution, review, and approvals.</p>
-                <div class="workspace-kicker-row">
-                    <span class="workspace-kicker"><strong>Reusable</strong> workflow structure</span>
-                    <span class="workspace-kicker"><strong>Template-first</strong> operating model</span>
-                </div>
-            </div>
-            <div class="workspace-tools">
-                <a href="{% url 'contracts:workflow_template_list' %}" class="dc-ds-button dc-ds-button--quiet inline-flex items-center px-3 py-2 text-sm rounded-lg border">Back to Templates</a>
-            </div>
-        </div>
-        <div class="workspace-toolbar">
-            <div class="summary-grid w-full">
-                <div class="summary-card">
-                    <div class="summary-label">Goal</div>
-                    <div class="summary-value">Standardize</div>
-                    <div class="summary-meta">Create a repeatable workflow pattern</div>
-                </div>
-                <div class="summary-card">
-                    <div class="summary-label">Output</div>
-                    <div class="summary-value">Template</div>
-                    <div class="summary-meta">Reusable across multiple contracts</div>
-                </div>
-                <div class="summary-card">
-                    <div class="summary-label">Next step</div>
-                    <div class="summary-value">Add steps</div>
-                    <div class="summary-meta">Configure the sequence after creation</div>
-                </div>
-            </div>
-        </div>
+{% include "components/_list_page_shell_styles.html" %}
+<div class="dc-ds-page dc-ds-page--wide dc-ds-page-flow dc-ds-list-page clm-list-page">
+  <header class="clm-list-shell dc-ds-filterbar dc-ds-list-toolbar" aria-label="Workflow Designer controls">
+    <div class="clm-list-view-header">
+      {% include "components/_workflow_designer_tabs.html" with tabs=designer_tabs %}
+      <div class="clm-list-view-actions">
+        <a href="{% url 'contracts:workflow_template_list' %}" class="dc-ds-button dc-ds-button--quiet">Back to templates</a>
+      </div>
     </div>
-    <div class="panel">
-        <div class="panel-inner">
-            <form method="post">
-                {% csrf_token %}
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label for="{{ form.name.id_for_label }}" class="form-label">{{ form.name.label }}</label>
-                        {{ form.name }}
-                        {% if form.name.errors %}<p class="c-danger text-sm mt-1">{{ form.name.errors.0 }}</p>{% endif %}
-                    </div>
-                    <div>
-                        <label for="{{ form.description.id_for_label }}" class="form-label">{{ form.description.label }}</label>
-                        {{ form.description }}
-                        {% if form.description.errors %}<p class="c-danger text-sm mt-1">{{ form.description.errors.0 }}</p>{% endif %}
-                    </div>
-                    <div>
-                        <label for="{{ form.category.id_for_label }}" class="form-label">{{ form.category.label }}</label>
-                        {{ form.category }}
-                        {% if form.category.errors %}<p class="c-danger text-sm mt-1">{{ form.category.errors.0 }}</p>{% endif %}
-                    </div>
-                </div>
-                <div class="flex justify-end gap-3 mt-6">
-                    <a href="{% url 'contracts:workflow_template_list' %}" class="dc-ds-button--quiet">Cancel</a>
-                    <button type="submit" class="dc-ds-button dc-ds-button--primary text-white">Create Template</button>
-                </div>
-            </form>
+  </header>
+
+  <section class="dc-ds-surface" style="padding: var(--space-20); max-width: 720px;">
+    <h2 class="dc-ds-workspace__surface-title" style="margin:0 0 var(--space-8);">Create template</h2>
+    <p class="profile-page__muted" style="margin:0 0 var(--space-16); color: var(--ink-500); font: var(--text-small);">
+      Name the blueprint, choose a contract type, then open Workflow Designer to add stages before publishing.
+    </p>
+    <form method="post" class="grid gap-4">
+      {% csrf_token %}
+      <div>
+        <label for="{{ form.name.id_for_label }}" class="form-label">{{ form.name.label }}</label>
+        {{ form.name }}
+        {% if form.name.errors %}<p class="c-danger text-sm mt-1">{{ form.name.errors.0 }}</p>{% endif %}
+      </div>
+      <div>
+        <label for="{{ form.description.id_for_label }}" class="form-label">{{ form.description.label }}</label>
+        {{ form.description }}
+        {% if form.description.errors %}<p class="c-danger text-sm mt-1">{{ form.description.errors.0 }}</p>{% endif %}
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label for="{{ form.contract_type.id_for_label }}" class="form-label">Contract type</label>
+          {{ form.contract_type }}
+          {% if form.contract_type.errors %}<p class="c-danger text-sm mt-1">{{ form.contract_type.errors.0 }}</p>{% endif %}
         </div>
-    </div>
+        <div>
+          <label for="{{ form.category.id_for_label }}" class="form-label">{{ form.category.label }}</label>
+          {{ form.category }}
+          {% if form.category.errors %}<p class="c-danger text-sm mt-1">{{ form.category.errors.0 }}</p>{% endif %}
+        </div>
+      </div>
+      {% if form.source_mode %}
+      <fieldset style="border:0; padding:0; margin:0;">
+        <legend class="form-label">Starting point</legend>
+        <div style="display:grid; gap:8px; margin-top:6px;">
+          {% for radio in form.source_mode %}
+          <label style="display:flex; gap:8px; align-items:center; font: var(--text-small); color: var(--ink-800);">
+            {{ radio.tag }} {{ radio.choice_label }}
+          </label>
+          {% endfor %}
+        </div>
+        {% if form.source_mode.errors %}<p class="c-danger text-sm mt-1">{{ form.source_mode.errors.0 }}</p>{% endif %}
+      </fieldset>
+      <div>
+        <label for="{{ form.source_template.id_for_label }}" class="form-label">{{ form.source_template.label }}</label>
+        {{ form.source_template }}
+        {% if form.source_template.errors %}<p class="c-danger text-sm mt-1">{{ form.source_template.errors.0 }}</p>{% endif %}
+      </div>
+      {% endif %}
+      <div class="flex justify-end gap-3 mt-2">
+        <a href="{% url 'contracts:workflow_template_list' %}" class="dc-ds-button dc-ds-button--quiet">Cancel</a>
+        <button type="submit" class="dc-ds-button dc-ds-button--primary">Create and open designer</button>
+      </div>
+    </form>
+  </section>
 </div>
 {% endblock %}

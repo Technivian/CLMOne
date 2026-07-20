@@ -80,7 +80,6 @@ COMPACT_LIFECYCLE_LABELS = {
     'EXECUTED': 'Active',
     'OBLIGATION_TRACKING': 'Active',
     'RENEWAL': 'Renewal',
-    'ARCHIVED': 'Archived',
 }
 
 DEFAULT_RAIL_ITEMS = [
@@ -734,7 +733,15 @@ def refresh_command_center_projection(organization, actor=None, today=None):
 
     contract_qs = (
         Contract.objects
-        .filter(organization=organization, status__in=[Contract.Status.PENDING, Contract.Status.IN_REVIEW])
+        .filter(
+            organization=organization,
+            status=Contract.Status.IN_PROGRESS,
+            lifecycle_stage__in=[
+                Contract.LifecycleStage.INTERNAL_REVIEW,
+                Contract.LifecycleStage.NEGOTIATION,
+                Contract.LifecycleStage.APPROVAL,
+            ],
+        )
         .order_by('-updated_at')[:100]
     )
     for contract in contract_qs:

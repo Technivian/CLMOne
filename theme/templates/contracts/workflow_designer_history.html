@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Change History – CLM One{% endblock %}
+{% block authenticated_page_title %}Workflow Designer{% endblock %}
+{% block authenticated_page_subtitle %}Template publishing, versioning, and configuration events.{% endblock %}
+
+{% block content %}
+{% include "components/_list_page_shell_styles.html" %}
+<div class="dc-ds-page dc-ds-page--wide dc-ds-page-flow dc-ds-list-page clm-list-page">
+  <header class="clm-list-shell dc-ds-filterbar dc-ds-list-toolbar" aria-label="Workflow Designer controls">
+    <div class="clm-list-view-header">
+      {% include "components/_workflow_designer_tabs.html" with tabs=designer_tabs %}
+      <div class="clm-list-view-actions">
+        <a href="{% url 'contracts:workflow_template_list' %}" class="dc-ds-button dc-ds-button--quiet">Open templates</a>
+      </div>
+    </div>
+  </header>
+
+  <section class="dc-ds-surface" aria-labelledby="designer-history-heading">
+    <div style="padding: var(--space-16); border-bottom: 1px solid var(--hairline, var(--line));">
+      <h2 id="designer-history-heading" style="margin:0; font: var(--text-heading);">Change history</h2>
+    </div>
+    <div style="padding: var(--space-16); display:grid; gap: var(--space-12);">
+      {% for item in audit_feed %}
+      <article style="display:flex; justify-content:space-between; gap: var(--space-12); padding-bottom: var(--space-12); border-bottom: 1px solid var(--hairline, var(--line));">
+        <div>
+          <strong style="display:block; color: var(--ink-900); font: var(--text-subheading);">{{ item.summary }}</strong>
+          <span style="color: var(--ink-500); font: var(--text-meta);">{{ item.actor }} · {{ item.timestamp|date:"j M Y H:i" }}</span>
+          {% if item.changed_fields %}
+          <div style="margin-top:6px; color: var(--ink-500); font: var(--text-meta);">
+            {% for field in item.changed_fields %}<div>{{ field }}</div>{% endfor %}
+          </div>
+          {% endif %}
+        </div>
+        <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--neutral">{{ item.action }}</span>
+      </article>
+      {% empty %}
+      <p class="contract-empty" style="margin:0; color: var(--ink-500);">No template changes recorded yet.</p>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+{% endblock %}

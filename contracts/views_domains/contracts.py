@@ -95,12 +95,15 @@ from contracts.services.contract_lifecycle import (
 from contracts.services.contract_detail_workspace import (
     build_contract_command,
     build_contract_detail_tabs,
+    build_workflow_section_tabs,
+    contract_operations_hub_tabs,
     build_overview_progress,
     contract_detail_tab_url,
     derive_contract_review_status,
     format_contract_audit_activity_detail,
     get_submit_readiness,
     normalize_contract_detail_tab,
+    normalize_workflow_section,
 )
 from contracts.services.ai_policy import evaluate_prompt
 from contracts.services.ai_actions import build_action_plan, execute_action_plan
@@ -135,6 +138,32 @@ class ContractListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
                 Contract.Status.TERMINATED,
                 Contract.Status.CANCELLED,
             ])
+        elif status == 'DRAFT':
+            queryset = queryset.filter(
+                status=Contract.Status.IN_PROGRESS,
+                lifecycle_stage__in=[
+                    Contract.LifecycleStage.INTAKE,
+                    Contract.LifecycleStage.DRAFTING,
+                ],
+            )
+        elif status == 'IN_REVIEW':
+            queryset = queryset.filter(
+                status=Contract.Status.IN_PROGRESS,
+                lifecycle_stage__in=[
+                    Contract.LifecycleStage.INTERNAL_REVIEW,
+                    Contract.LifecycleStage.NEGOTIATION,
+                ],
+            )
+        elif status == 'PENDING':
+            queryset = queryset.filter(
+                status=Contract.Status.IN_PROGRESS,
+                lifecycle_stage=Contract.LifecycleStage.APPROVAL,
+            )
+        elif status == 'APPROVED':
+            queryset = queryset.filter(
+                status=Contract.Status.IN_PROGRESS,
+                lifecycle_stage=Contract.LifecycleStage.SIGNATURE,
+            )
         elif status:
             queryset = queryset.filter(status=status)
         if contract_type:
@@ -158,13 +187,57 @@ class ContractListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
         tenant_cases = scope_queryset_for_organization(Case.objects.all(), org)
         case_stats = tenant_cases.aggregate(
             total=Count('id'),
-            active=Count('id', filter=Q(status='ACTIVE')),
-            expiring_soon=Count('id', filter=Q(status='ACTIVE', end_date__lte=thirty_days_from_today, end_date__gte=today)),
-            draft=Count('id', filter=Q(status='DRAFT')),
-            legal_review=Count('id', filter=Q(status='IN_REVIEW')),
-            approval=Count('id', filter=Q(status='PENDING')),
-            signature=Count('id', filter=Q(status='APPROVED')),
-            blocked=Count('id', filter=Q(status__in=['EXPIRED', 'TERMINATED', 'CANCELLED'])),
+            active=Count('id', filter=Q(status=Contract.Status.ACTIVE)),
+            expiring_soon=Count(
+                'id',
+                filter=Q(
+                    status=Contract.Status.ACTIVE,
+                    end_date__lte=thirty_days_from_today,
+                    end_date__gte=today,
+                ),
+            ),
+            draft=Count(
+                'id',
+                filter=Q(
+                    status=Contract.Status.IN_PROGRESS,
+                    lifecycle_stage__in=[
+                        Contract.LifecycleStage.INTAKE,
+                        Contract.LifecycleStage.DRAFTING,
+                    ],
+                ),
+            ),
+            legal_review=Count(
+                'id',
+                filter=Q(
+                    status=Contract.Status.IN_PROGRESS,
+                    lifecycle_stage__in=[
+                        Contract.LifecycleStage.INTERNAL_REVIEW,
+                        Contract.LifecycleStage.NEGOTIATION,
+                    ],
+                ),
+            ),
+            approval=Count(
+                'id',
+                filter=Q(
+                    status=Contract.Status.IN_PROGRESS,
+                    lifecycle_stage=Contract.LifecycleStage.APPROVAL,
+                ),
+            ),
+            signature=Count(
+                'id',
+                filter=Q(
+                    status=Contract.Status.IN_PROGRESS,
+                    lifecycle_stage=Contract.LifecycleStage.SIGNATURE,
+                ),
+            ),
+            blocked=Count(
+                'id',
+                filter=Q(status__in=[
+                    Contract.Status.EXPIRED,
+                    Contract.Status.TERMINATED,
+                    Contract.Status.CANCELLED,
+                ]),
+            ),
             high_risk=Count('id', filter=Q(risk_level__in=['HIGH', 'CRITICAL'])),
         )
         expiring_ids_qs = tenant_cases.filter(
@@ -592,7 +665,7 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
             risk_label, risk_badge_class = 'Open findings', 'badge-yellow'
         else:
             if (
-                case_record.status == Contract.Status.DRAFT
+                case_record.status == Contract.Status.IN_PROGRESS
                 and case_record.lifecycle_stage == 'DRAFTING'
                 and not review_completed
             ):
@@ -609,12 +682,15 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
                 intake_assessment = assess_intake_risk(case_record.__dict__)
                 intake_level = audited_assessment.get('level') or intake_assessment.level
                 risk_label = audited_assessment.get('label') or intake_assessment.label
-                risk_badge_class = {
-                    Contract.RiskLevel.CRITICAL: 'badge-red',
-                    Contract.RiskLevel.HIGH: 'badge-yellow',
-                    Contract.RiskLevel.MEDIUM: 'badge-blue',
-                    Contract.RiskLevel.LOW: 'badge-green',
-                }.get(intake_level, 'badge-gray')
+                if not intake_level or 'not assessed' in str(risk_label).casefold():
+                    risk_badge_class = 'badge-gray'
+                else:
+                    risk_badge_class = {
+                        Contract.RiskLevel.CRITICAL: 'badge-red',
+                        Contract.RiskLevel.HIGH: 'badge-yellow',
+                        Contract.RiskLevel.MEDIUM: 'badge-blue',
+                        Contract.RiskLevel.LOW: 'badge-green',
+                    }.get(intake_level, 'badge-gray')
             elif review_completed:
                 risk_label = f'Reviewed {case_record.get_risk_level_display()} risk'
                 risk_badge_class = {
@@ -625,12 +701,35 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
                 }.get(case_record.risk_level, 'badge-gray')
             else:
                 risk_label = f'{case_record.get_risk_level_display()} risk'
-                risk_badge_class = {
-                    Contract.RiskLevel.CRITICAL: 'badge-red',
-                    Contract.RiskLevel.HIGH: 'badge-yellow',
-                    Contract.RiskLevel.MEDIUM: 'badge-blue',
-                    Contract.RiskLevel.LOW: 'badge-green',
-                }.get(case_record.risk_level, 'badge-gray')
+                # Unreviewed record-level defaults are not completed assessments.
+                if case_record.risk_level == Contract.RiskLevel.LOW:
+                    risk_badge_class = 'badge-yellow'
+                    if case_record.status == Contract.Status.IN_PROGRESS:
+                        risk_label = 'Risk reassessment required'
+                else:
+                    risk_badge_class = {
+                        Contract.RiskLevel.CRITICAL: 'badge-red',
+                        Contract.RiskLevel.HIGH: 'badge-yellow',
+                        Contract.RiskLevel.MEDIUM: 'badge-blue',
+                        Contract.RiskLevel.LOW: 'badge-green',
+                    }.get(case_record.risk_level, 'badge-gray')
+
+        risk_tone = {
+            'badge-red': 'danger',
+            'badge-yellow': 'attention',
+            'badge-blue': 'progress',
+            'badge-green': 'success',
+            'badge-gray': 'neutral',
+        }.get(risk_badge_class, 'neutral')
+        incomplete_risk = any(
+            token in str(risk_label).casefold()
+            for token in ('not assessed', 'incomplete', 'reassessment required')
+        )
+        if incomplete_risk:
+            # Reserve green for completed assessments with no material risk.
+            risk_tone = 'attention'
+            if risk_badge_class == 'badge-green':
+                risk_badge_class = 'badge-yellow'
 
         ctx['contract_command'] = build_contract_command(
             contract=case_record,
@@ -657,10 +756,20 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
         ctx['lifecycle_command_label'] = ctx['contract_command']['lifecycle_label']
         ctx['lifecycle_command_badge_class'] = ctx['contract_command']['lifecycle_badge_class']
 
-        active_tab = normalize_contract_detail_tab(self.request.GET.get('tab'))
+        raw_tab = self.request.GET.get('tab')
+        active_tab = normalize_contract_detail_tab(raw_tab)
         ctx['active_tab'] = active_tab
         ctx['workspace_tabs'] = build_contract_detail_tabs(case_record.pk, active_tab)
+        workflow_section = normalize_workflow_section(
+            self.request.GET.get('section'),
+            raw_tab=raw_tab,
+        )
+        ctx['workflow_section'] = workflow_section
+        ctx['workflow_section_tabs'] = build_workflow_section_tabs(case_record.pk, workflow_section)
         ctx['overview_tab_url'] = contract_detail_tab_url(case_record.pk, 'overview')
+        ctx['workflow_tab_url'] = contract_detail_tab_url(case_record.pk, 'workflow')
+        ctx['workflow_review_url'] = f"{ctx['workflow_tab_url']}&section=review" if '?' in ctx['workflow_tab_url'] else f"{ctx['workflow_tab_url']}?section=review"
+        ctx['workflow_approvals_url'] = f"{ctx['workflow_tab_url']}&section=approvals" if '?' in ctx['workflow_tab_url'] else f"{ctx['workflow_tab_url']}?section=approvals"
         ctx['contract_obligations'] = list(
             case_record.deadlines.select_related('assigned_to').order_by('due_date', 'pk')[:20]
         )
@@ -680,6 +789,7 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
         ctx['overview_risk_snapshot'] = {
             'label': risk_label,
             'badge_class': risk_badge_class,
+            'tone': risk_tone,
             'findings': list(ctx['open_findings'][:3]),
             'high_risk_count': len(ctx['high_risk_findings']),
             'open_count': len(ctx['open_findings']),
@@ -922,9 +1032,9 @@ def contract_review_workspace(request, pk):
         organization=organization,
     ).order_by('-timestamp')[:20]
     review_state = _document_review_state(contract, document, review_run, finding_count=findings.count())
-    workspace_tabs = build_contract_detail_tabs(contract.pk, 'review')
+    workspace_tabs = build_contract_detail_tabs(contract.pk, 'workflow')
     for tab in workspace_tabs:
-        if tab['key'] == 'review':
+        if tab['key'] == 'workflow':
             tab['url'] = reverse('contracts:contract_review_workspace', kwargs={'pk': contract.pk})
             break
     return render(request, 'contracts/contract_review_workspace.html', {
@@ -940,6 +1050,8 @@ def contract_review_workspace(request, pk):
         'playbooks': ClausePlaybook.objects.filter(organization=organization, is_active=True).order_by('name'),
         'contract_types': Contract.ContractType.choices,
         'workspace_tabs': workspace_tabs,
+        'active_tab': 'workflow',
+        'workflow_section': 'review',
         'can_edit': can_access_contract_action(request.user, contract, ContractAction.EDIT),
         'hide_app_footer': True,
     })
@@ -992,7 +1104,7 @@ def _document_review_state(contract, document, review_run, *, finding_count):
         status_label, status_class, status_badge_tone = 'Needs input', 'badge-yellow', 'attention'
     elif current_status == DocumentReviewRun.Status.AI_REVIEW_IN_PROGRESS:
         status_label, status_class, status_badge_tone = 'AI review in progress', 'badge-blue', 'progress'
-    elif ready and contract.status == Contract.Status.HUMAN_REVIEW_IN_PROGRESS:
+    elif ready and contract.lifecycle_stage == Contract.LifecycleStage.INTERNAL_REVIEW:
         status_label, status_class, status_badge_tone = 'Human review in progress', 'badge-blue', 'progress'
     elif ready:
         status_label, status_class, status_badge_tone = 'AI review ready', 'badge-green', 'success'
@@ -1204,11 +1316,19 @@ class ContractCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView
     def form_valid(self, form):
         set_organization_on_instance(form.instance, get_user_organization(self.request.user))
         form.instance.created_by = self.request.user
-        # New contracts always start in DRAFT; reaching ACTIVE etc. must go
-        # through ContractLifecycleService transitions (prevents create-as-ACTIVE
-        # bypassing the approval prerequisite).
-        form.instance.status = Contract.Status.DRAFT
-        form.instance.lifecycle_stage = 'DRAFTING'
+        parent_id = self.request.GET.get('parent') or self.request.POST.get('parent_contract_id')
+        if parent_id:
+            parent = (
+                scope_queryset_for_organization(Contract.objects.all(), get_user_organization(self.request.user))
+                .filter(pk=parent_id)
+                .first()
+            )
+            if parent:
+                form.instance.parent_contract = parent
+        # New contracts always start IN_PROGRESS at DRAFTING; reaching ACTIVE
+        # must go through activate_contract / lifecycle transitions.
+        form.instance.status = Contract.Status.IN_PROGRESS
+        form.instance.lifecycle_stage = Contract.LifecycleStage.DRAFTING
         assessment = form.intake_risk_assessment()
         route_decision = form.intake_route_decision()
         form.instance.risk_level = assessment.level or Contract.RiskLevel.LOW
@@ -1266,18 +1386,38 @@ class ContractUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin, UpdateVi
         org = get_user_organization(self.request.user)
         return scope_queryset_for_organization(Contract.objects.all(), org)
 
+    def _revision_unlocked(self):
+        contract = getattr(self, 'object', None) or getattr(self, 'original_contract', None)
+        if not contract:
+            return False
+        from contracts.services.contract_edit_governance import revision_session_key
+        return bool(self.request.session.get(revision_session_key(contract.pk)))
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['organization'] = get_user_organization(self.request.user)
+        kwargs['actor'] = self.request.user
+        kwargs['revision_unlocked'] = self._revision_unlocked()
         return kwargs
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         org = get_user_organization(self.request.user)
+        from contracts.services.contract_edit_governance import build_edit_governance_context
+        revision_unlocked = self._revision_unlocked()
+        edit_gov = build_edit_governance_context(self.object, revision_unlocked=revision_unlocked)
         ctx['launch_setup_map'] = get_launch_setup_map()
         ctx['intake_risk_policy'] = intake_risk_client_policy()
         ctx['intake_routing_policy'] = intake_routing_client_policy()
         ctx['governance_panel'] = get_governance_panel(org, self.object.contract_type, None, contract=self.object)
+        ctx['hide_app_footer'] = True
+        ctx['edit_governance'] = edit_gov
+        ctx['is_edit_mode'] = True
+        ctx['can_view_approval_routing'] = can_manage_organization(self.request.user, org)
+        ctx['amendment_create_url'] = (
+            reverse('contracts:contract_create')
+            + f'?type=AMENDMENT&parent={self.object.pk}'
+        )
         return ctx
 
     @staticmethod
@@ -1312,21 +1452,49 @@ class ContractUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin, UpdateVi
 
     def _render_preview(self, form):
         draft_sections = self._build_preview_sections(form)
-        return render(
-            self.request,
-            self.template_name,
-            {
-                'form': form,
-                'contract': self.object,
-                'form_action': reverse('contracts:contract_update', kwargs={'pk': self.object.pk}),
-                'draft_sections': draft_sections,
-                'draft_preview_selected_clause_count': len(draft_sections),
-                'preview_mode': True,
-            },
-        )
+        context = self.get_context_data(form=form)
+        context.update({
+            'form': form,
+            'contract': self.object,
+            'form_action': reverse('contracts:contract_update', kwargs={'pk': self.object.pk}),
+            'draft_sections': draft_sections,
+            'draft_preview_selected_clause_count': len(draft_sections),
+            'preview_mode': True,
+            'hide_app_footer': True,
+        })
+        return render(self.request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
+        self.original_contract = self.object
+        from contracts.services.contract_edit_governance import revision_session_key
+        from contracts.services.contract_versions import get_version_service
+
+        if 'create_new_version' in request.POST:
+            version = get_version_service().create_version(
+                self.object,
+                changed_by=request.user,
+                change_summary='Baseline snapshot before governed revision',
+            )
+            request.session[revision_session_key(self.object.pk)] = True
+            log_action(
+                request.user,
+                'UPDATE',
+                'Contract',
+                self.object.id,
+                str(self.object),
+                changes={
+                    'event': 'contract_version_created_for_edit',
+                    'version_number': version.version_number,
+                },
+                request=request,
+            )
+            messages.success(
+                request,
+                f'Version v{version.version_number} saved. Governed fields are unlocked for this revision.',
+            )
+            return redirect(reverse('contracts:contract_update', kwargs={'pk': self.object.pk}))
+
         if 'preview_draft' in request.POST:
             form = self.get_form()
             if form.is_valid():
@@ -1341,53 +1509,76 @@ class ContractUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin, UpdateVi
             return HttpResponseForbidden('You do not have permission to edit this contract.')
         return super().dispatch(request, *args, **kwargs)
 
-    def form_valid(self, form):
-        from contracts.services.contract_lifecycle import (
-            ContractTransitionError,
-            can_transition_contract_status,
-            get_contract_lifecycle_service,
-        )
-        new_status = form.cleaned_data.get('status')
-        original_status = getattr(self, 'original_contract', None) and self.original_contract.status
-        status_changing = bool(original_status) and new_status != original_status
+    def get_success_url(self):
+        return reverse('contracts:contract_detail', kwargs={'pk': self.object.pk})
 
-        # The status transition is owned by the lifecycle service, not the form.
-        # Pre-validate the graph cheaply, then keep the form save status-neutral
-        # and apply the transition through the service after the field edits land.
-        if status_changing:
-            if not can_transition_contract_status(original_status, new_status):
-                form.add_error('status', f'Cannot change status from {original_status} to {new_status}.')
-                return self.form_invalid(form)
-            form.instance.status = original_status  # field edits save with the old status
+    def form_valid(self, form):
+        from contracts.services.contract_edit_governance import (
+            GOVERNED_CHANGE_WARNING,
+            assess_edit_risk,
+            contract_is_governance_locked,
+            governed_fields_changed,
+            restore_governed_fields,
+            revision_session_key,
+        )
+
+        original = getattr(self, 'original_contract', None) or self.object
+        revision_unlocked = self._revision_unlocked()
+        changed_governed = governed_fields_changed(form.cleaned_data, original)
+
+        if getattr(form, 'governed_fields_readonly', False):
+            restore_governed_fields(form.instance, original)
+            changed_governed = []
+
+        if changed_governed and not revision_unlocked and contract_is_governance_locked(original):
+            # Defence in depth if a forged POST bypasses disabled widgets.
+            restore_governed_fields(form.instance, original)
+            form.add_error(
+                None,
+                'Governed terms cannot overwrite the approved record. Create a new version or amendment first.',
+            )
+            return self.form_invalid(form)
+
+        risk_assessment = None
+        if changed_governed:
+            risk_assessment = assess_edit_risk(form.cleaned_data)
+            if risk_assessment.level:
+                form.instance.risk_level = risk_assessment.level
+
+        # Preserve operational status/stage — never accept free-form POSTs for them.
+        form.instance.status = original.status
+        form.instance.lifecycle_stage = original.lifecycle_stage
 
         response = super().form_valid(form)
-        changes = build_contract_audit_changes(getattr(self, 'original_contract', None), self.object)
+        changes = build_contract_audit_changes(original, self.object)
         event = 'contract_updated'
         if changes.get('lifecycle_stage'):
             event = 'contract_lifecycle_stage_changed'
+        audit_changes = {
+            'event': event,
+            'changed_fields': sorted(changes.keys()),
+            'field_changes': changes,
+        }
+        if changed_governed:
+            audit_changes['governed_fields_changed'] = changed_governed
+            audit_changes['risk_assessment'] = risk_assessment.as_dict() if risk_assessment else None
+            audit_changes['revision_unlocked'] = revision_unlocked
         log_action(
             self.request.user,
             'UPDATE',
             'Contract',
             self.object.id,
             str(self.object),
-            changes={
-                'event': event,
-                'changed_fields': sorted(changes.keys()),
-                'field_changes': changes,
-            },
+            changes=audit_changes,
             request=self.request,
         )
 
-        if status_changing:
-            try:
-                get_contract_lifecycle_service().transition(
-                    self.object, new_status, self.request.user, request=self.request,
-                )
-            except ContractTransitionError as exc:
-                form.add_error('status', str(exc))
-                messages.error(self.request, str(exc))
-                return self.form_invalid(form)
+        if changed_governed:
+            messages.warning(self.request, GOVERNED_CHANGE_WARNING)
+            self.request.session.pop(revision_session_key(self.object.pk), None)
+        else:
+            messages.success(self.request, f'Contract "{self.object.title}" updated.')
+
         if self.object.dpa_attached:
             from contracts.services.dpa_activation import ensure_dpa_review_pack
             ensure_dpa_review_pack(self.object, self.request.user, request=self.request)
@@ -1527,9 +1718,28 @@ class RepositoryView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
         expiry_cutoff = timezone.localdate() + timedelta(days=30)
         contract_stats = tenant_contracts.aggregate(
             total=Count('id'),
-            awaiting_action=Count('id', filter=Q(status__in=[Contract.Status.PENDING, Contract.Status.IN_REVIEW])),
+            awaiting_action=Count(
+                'id',
+                filter=Q(
+                    status=Contract.Status.IN_PROGRESS,
+                    lifecycle_stage__in=[
+                        Contract.LifecycleStage.INTERNAL_REVIEW,
+                        Contract.LifecycleStage.NEGOTIATION,
+                        Contract.LifecycleStage.APPROVAL,
+                    ],
+                ),
+            ),
             active=Count('id', filter=Q(status=Contract.Status.ACTIVE)),
-            draft=Count('id', filter=Q(status=Contract.Status.DRAFT)),
+            draft=Count(
+                'id',
+                filter=Q(
+                    status=Contract.Status.IN_PROGRESS,
+                    lifecycle_stage__in=[
+                        Contract.LifecycleStage.INTAKE,
+                        Contract.LifecycleStage.DRAFTING,
+                    ],
+                ),
+            ),
             expiring=Count(
                 'id',
                 filter=Q(
@@ -1567,6 +1777,7 @@ class RepositoryView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
             .values_list('counterparty', flat=True)
             .distinct()
         )
+        ctx['hub_tabs'] = contract_operations_hub_tabs(active='repository')
         return ctx
 
 
@@ -1730,13 +1941,32 @@ def dashboard(request):
 
     case_stats = case_qs.aggregate(
         total=Count('id'),
-        active=Count('id', filter=Q(status='ACTIVE')),
-        draft=Count('id', filter=Q(status='DRAFT')),
-        pending=Count('id', filter=Q(status='PENDING')),
-        expiring_soon=Count('id', filter=Q(status='ACTIVE', end_date__lte=thirty_days, end_date__gte=today)),
-        high_risk_active=Count('id', filter=Q(status='ACTIVE', risk_level__in=['HIGH', 'CRITICAL'])),
-        missing_dpa=Count('id', filter=Q(status='ACTIVE', dpa_attached=False)),
-        missing_governing_law=Count('id', filter=Q(status='ACTIVE', governing_law='')),
+        active=Count('id', filter=Q(status=Contract.Status.ACTIVE)),
+        draft=Count(
+            'id',
+            filter=Q(
+                status=Contract.Status.IN_PROGRESS,
+                lifecycle_stage__in=[
+                    Contract.LifecycleStage.INTAKE,
+                    Contract.LifecycleStage.DRAFTING,
+                ],
+            ),
+        ),
+        pending=Count(
+            'id',
+            filter=Q(
+                status=Contract.Status.IN_PROGRESS,
+                lifecycle_stage__in=[
+                    Contract.LifecycleStage.INTERNAL_REVIEW,
+                    Contract.LifecycleStage.NEGOTIATION,
+                    Contract.LifecycleStage.APPROVAL,
+                ],
+            ),
+        ),
+        expiring_soon=Count('id', filter=Q(status=Contract.Status.ACTIVE, end_date__lte=thirty_days, end_date__gte=today)),
+        high_risk_active=Count('id', filter=Q(status=Contract.Status.ACTIVE, risk_level__in=['HIGH', 'CRITICAL'])),
+        missing_dpa=Count('id', filter=Q(status=Contract.Status.ACTIVE, dpa_attached=False)),
+        missing_governing_law=Count('id', filter=Q(status=Contract.Status.ACTIVE, governing_law='')),
     )
     client_stats = clients_qs.aggregate(total=Count('id'))
     case_matter_stats = case_matter_qs.aggregate(total=Count('id'), active=Count('id', filter=Q(status='ACTIVE')))
@@ -1882,7 +2112,14 @@ def dashboard(request):
     waiting_on_me_raw = sorted(waiting_on_me_raw, key=lambda item: item['sort_key'])[:10]
 
     case_status_data = []
-    status_mapping = [('ACTIVE', 'Active'), ('DRAFT', 'Draft'), ('PENDING', 'In Review'), ('EXPIRED', 'Expired'), ('TERMINATED', 'Terminated')]
+    status_mapping = [
+        (Contract.Status.ACTIVE, 'Active'),
+        (Contract.Status.IN_PROGRESS, 'In progress'),
+        (Contract.Status.EXPIRED, 'Expired'),
+        (Contract.Status.TERMINATED, 'Terminated'),
+        (Contract.Status.CANCELLED, 'Cancelled'),
+        (Contract.Status.ARCHIVED, 'Archived'),
+    ]
     status_counts = case_qs.values('status').annotate(count=Count('id'))
     status_counts_dict = {item['status']: item['count'] for item in status_counts}
     for status_code, status_label in status_mapping:
@@ -1933,7 +2170,6 @@ def dashboard(request):
         'EXECUTED': 'View',
         'OBLIGATION_TRACKING': 'Track',
         'RENEWAL': 'Track',
-        'ARCHIVED': 'View',
     }
 
     def _build_contract_queue(queryset, due_field='end_date', limit=10):
@@ -1980,7 +2216,14 @@ def dashboard(request):
                 'filter_dpa': contract.contract_type == 'DPA',
                 'filter_high_risk': contract.risk_level in ('HIGH', 'CRITICAL'),
                 'filter_renewals': bool(due),
-                'filter_waiting': contract.status in ('PENDING', 'IN_REVIEW'),
+                'filter_waiting': (
+                    contract.status == Contract.Status.IN_PROGRESS
+                    and contract.lifecycle_stage in (
+                        Contract.LifecycleStage.INTERNAL_REVIEW,
+                        Contract.LifecycleStage.NEGOTIATION,
+                        Contract.LifecycleStage.APPROVAL,
+                    )
+                ),
             })
         return rows
 
@@ -2009,19 +2252,38 @@ def dashboard(request):
         return rows
 
     queue_in_progress = _build_contract_queue(
-        case_qs.select_related('client').filter(status__in=['PENDING', 'IN_REVIEW', 'APPROVED', 'ACTIVE']).order_by('-updated_at')
+        case_qs.select_related('client').filter(
+            Q(status=Contract.Status.IN_PROGRESS) | Q(status=Contract.Status.ACTIVE)
+        ).order_by('-updated_at')
     )
     queue_needs_review = _build_contract_queue(
-        case_qs.select_related('client').filter(status__in=['PENDING', 'IN_REVIEW']).order_by('-created_at')
+        case_qs.select_related('client').filter(
+            status=Contract.Status.IN_PROGRESS,
+            lifecycle_stage__in=[
+                Contract.LifecycleStage.INTERNAL_REVIEW,
+                Contract.LifecycleStage.NEGOTIATION,
+                Contract.LifecycleStage.APPROVAL,
+            ],
+        ).order_by('-created_at')
     )
     queue_renewals = _build_contract_queue(
-        case_qs.select_related('client').filter(status='ACTIVE', end_date__lte=thirty_days, end_date__gte=today).order_by('end_date'),
+        case_qs.select_related('client').filter(
+            status=Contract.Status.ACTIVE,
+            end_date__lte=thirty_days,
+            end_date__gte=today,
+        ).order_by('end_date'),
         due_field='end_date',
     )
     for row in queue_renewals:
         row['due_overdue'] = False  # a renewal window is upcoming attention, not a missed deadline
     queue_completed = _build_contract_queue(
-        case_qs.select_related('client').filter(status='COMPLETED').order_by('-updated_at')
+        case_qs.select_related('client').filter(
+            status=Contract.Status.ACTIVE,
+            lifecycle_stage__in=[
+                Contract.LifecycleStage.EXECUTED,
+                Contract.LifecycleStage.OBLIGATION_TRACKING,
+            ],
+        ).order_by('-updated_at')
     )
     queue_waiting_on_me = _finalize_waiting_on_me(waiting_on_me_raw)
 
@@ -2065,7 +2327,6 @@ def dashboard(request):
         'EXECUTED': 'Active',
         'OBLIGATION_TRACKING': 'Active',
         'RENEWAL': 'Active',
-        'ARCHIVED': 'Active',
     }
     lifecycle_buckets = {label: 0 for label in _LIFECYCLE_BUCKET_ORDER}
     for row in case_qs.values('status', 'lifecycle_stage').annotate(count=Count('id')):
@@ -2073,6 +2334,8 @@ def dashboard(request):
             bucket = 'Expired'
         elif row['status'] == 'TERMINATED':
             bucket = 'Terminated'
+        elif row['status'] == 'ARCHIVED':
+            bucket = 'Active'  # archived records fold into Active for the overview chart
         else:
             bucket = _STAGE_TO_BUCKET.get(row['lifecycle_stage'], 'Draft')
         lifecycle_buckets[bucket] += row['count']
@@ -2133,7 +2396,14 @@ def dashboard(request):
             .order_by('severity_rank', '-created_at')[:5]
         )
 
-        clm_needs_review_count = case_qs.filter(status__in=['PENDING', 'IN_REVIEW']).count()
+        clm_needs_review_count = case_qs.filter(
+            status=Contract.Status.IN_PROGRESS,
+            lifecycle_stage__in=[
+                Contract.LifecycleStage.INTERNAL_REVIEW,
+                Contract.LifecycleStage.NEGOTIATION,
+                Contract.LifecycleStage.APPROVAL,
+            ],
+        ).count()
 
         clm_my_approvals_count = approvals_qs.filter(status='PENDING', assigned_to=request.user).count()
         clm_pending_approvals_count = approvals_qs.filter(status='PENDING').count()

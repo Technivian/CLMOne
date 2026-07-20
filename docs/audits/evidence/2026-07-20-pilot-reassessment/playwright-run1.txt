@@ -1,0 +1,392 @@
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
+
+> client@1.0.0 test:e2e
+> playwright test --config=playwright.config.js tests/e2e/msa-workflow.spec.js tests/e2e/nda-workflow.spec.js tests/e2e/dpa-workflow.spec.js tests/e2e/pilot-gate.spec.js --reporter=list
+
+[WebServer] 2026-07-20 15:07:37,867 INFO contracts.middleware request_id=2f01b603-b4e8-47f2-938b-376ba2b46f09 user_id=- org_id=- path=/login/ request_completed
+[WebServer] [20/Jul/2026 15:07:37] "GET /login/ HTTP/1.1" 200 13516
+
+Running 10 tests using 1 worker
+
+(node:37333) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:37333) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] 2026-07-20 15:07:38,347 INFO contracts.middleware request_id=390b5be4-b24f-4d54-966b-826f84b121cb user_id=- org_id=- path=/login/ request_completed
+[WebServer] [20/Jul/2026 15:07:38] "GET /login/ HTTP/1.1" 200 13516
+[WebServer] [20/Jul/2026 15:07:38] "GET /static/brand/clm-one-brand.css?v=1784556371 HTTP/1.1" 200 556
+[WebServer] [20/Jul/2026 15:07:38] "GET /static/css/clmone-tokens.css?v=1784556371 HTTP/1.1" 200 20791
+[WebServer] [20/Jul/2026 15:07:38] "GET /static/css/dist/styles.css?v=1784556371 HTTP/1.1" 200 141013
+[WebServer] [20/Jul/2026 15:07:38] "GET /static/brand/clm-one-logo-transparent.webp HTTP/1.1" 200 87006
+[WebServer] [20/Jul/2026 15:07:38] "GET /static/js/csp-handlers.js HTTP/1.1" 200 2271
+[WebServer] [20/Jul/2026 15:07:38] "GET /static/js/clmone-ui.js HTTP/1.1" 200 6078
+[WebServer] [20/Jul/2026 15:07:38] "GET /static/django-browser-reload/reload-listener.js HTTP/1.1" 200 623
+[WebServer] [20/Jul/2026 15:07:38] "GET /static/django-browser-reload/reload-worker.js HTTP/1.1" 200 2711
+[WebServer] 2026-07-20 15:07:38,450 INFO contracts.middleware request_id=4ef82f9f-0e14-4715-98c6-abb0eb960ce0 user_id=- org_id=- path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:38,651 INFO contracts.middleware request_id=72d61090-1b58-4459-99c3-f53dc7c05247 user_id=- org_id=- path=/login/ request_completed
+[WebServer] [20/Jul/2026 15:07:38] "POST /login/ HTTP/1.1" 302 0
+[WebServer] 2026-07-20 15:07:38,722 INFO contracts.middleware request_id=a0c19681-ed67-451a-ac8b-54eac8a5055e user_id=1 org_id=1 path=/dashboard/ request_completed
+[WebServer] [20/Jul/2026 15:07:38] "GET /dashboard/ HTTP/1.1" 200 43775
+[WebServer] [20/Jul/2026 15:07:38] "GET /static/brand/clm-one-mark-reversed-tight.svg HTTP/1.1" 200 27461
+[WebServer] [20/Jul/2026 15:07:38] "GET /static/brand/clm-one-logo-reversed-tight.svg HTTP/1.1" 200 61383
+[WebServer] [20/Jul/2026 15:07:38] "GET /static/css/command-center.css?v=1784556371 HTTP/1.1" 200 62851
+[WebServer] [20/Jul/2026 15:07:38] "GET /static/css/dist/global-shell.css?v=1784556371 HTTP/1.1" 200 141175
+[WebServer] 2026-07-20 15:07:38,776 INFO contracts.middleware request_id=6607e948-e18a-4b89-a700-d255c8368bfb user_id=1 org_id=1 path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:38,804 INFO contracts.middleware request_id=77aa3520-e601-41c2-8fc0-a419e2c3fcd5 user_id=1 org_id=1 path=/dashboard/ request_completed
+[WebServer] [20/Jul/2026 15:07:38] "GET /dashboard/ HTTP/1.1" 200 43775
+[WebServer] 2026-07-20 15:07:38,824 INFO contracts.middleware request_id=9279a640-a1d0-4567-8d20-4f2d563e4fa9 user_id=1 org_id=1 path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:38,864 INFO contracts.middleware request_id=3e0c1444-5f74-4a5c-978b-8c942a4e53f1 user_id=1 org_id=1 path=/contracts/new/dpa/ request_completed
+[WebServer] [20/Jul/2026 15:07:38] "GET /contracts/new/dpa/ HTTP/1.1" 200 58103
+[WebServer] 2026-07-20 15:07:38,884 INFO contracts.middleware request_id=87b65b92-4bb9-4509-b714-1ecc13d81651 user_id=1 org_id=1 path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:39,007 INFO contracts.middleware request_id=7cfd8a45-a14a-44a4-b071-fb32732a1476 user_id=1 org_id=1 path=/contracts/new/dpa/ request_completed
+[WebServer] [20/Jul/2026 15:07:39] "POST /contracts/new/dpa/ HTTP/1.1" 200 58280
+[WebServer] 2026-07-20 15:07:39,028 INFO contracts.middleware request_id=1f7bc14a-a38c-4eed-b857-f8425f8026b7 user_id=1 org_id=1 path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:39,083 INFO contracts.middleware request_id=47ccd96d-8ea1-4680-8d8b-295bfd4cc15c user_id=1 org_id=1 path=/contracts/new/dpa/ request_completed
+[WebServer] [20/Jul/2026 15:07:39] "POST /contracts/new/dpa/ HTTP/1.1" 302 0
+[WebServer] 2026-07-20 15:07:39,117 INFO contracts.middleware request_id=96d6207a-d4d8-4e14-9c1a-fdaffca03d27 user_id=1 org_id=1 path=/contracts/new/dpa/ request_completed
+[WebServer] [20/Jul/2026 15:07:39] "GET /contracts/new/dpa/?step=2 HTTP/1.1" 200 58890
+[WebServer] 2026-07-20 15:07:39,137 INFO contracts.middleware request_id=0874bb91-817b-4be2-aa24-0be04a69a915 user_id=1 org_id=1 path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:39,184 INFO contracts.middleware request_id=16b28ace-ab96-44a3-914d-ce72060f1479 user_id=1 org_id=1 path=/contracts/new/dpa/ request_completed
+[WebServer] [20/Jul/2026 15:07:39] "POST /contracts/new/dpa/ HTTP/1.1" 302 0
+[WebServer] 2026-07-20 15:07:39,219 INFO contracts.middleware request_id=5d94428d-ae3b-4559-814c-92d83b91f4ab user_id=1 org_id=1 path=/contracts/new/dpa/ request_completed
+[WebServer] [20/Jul/2026 15:07:39] "GET /contracts/new/dpa/?step=3 HTTP/1.1" 200 72896
+[WebServer] 2026-07-20 15:07:39,247 INFO contracts.middleware request_id=cfad84c9-c252-401b-b009-06c143a8e975 user_id=1 org_id=1 path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:39,621 INFO contracts.middleware request_id=340a6241-fed4-4748-905a-f7c34b950b93 user_id=1 org_id=1 path=/contracts/new/dpa/ request_completed
+[WebServer] [20/Jul/2026 15:07:39] "POST /contracts/new/dpa/ HTTP/1.1" 302 0
+[WebServer] 2026-07-20 15:07:39,663 INFO contracts.middleware request_id=10092953-1d37-4e2e-b470-32b362aa2161 user_id=1 org_id=1 path=/contracts/new/dpa/ request_completed
+[WebServer] [20/Jul/2026 15:07:39] "GET /contracts/new/dpa/?step=4 HTTP/1.1" 200 73397
+[WebServer] 2026-07-20 15:07:39,689 INFO contracts.middleware request_id=72c5dbc0-f4f9-444e-b072-164bec2fa2e4 user_id=1 org_id=1 path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:40,041 INFO contracts.middleware request_id=e6b8a19e-7910-41cc-af7a-0bc94b761997 user_id=1 org_id=1 path=/contracts/new/dpa/ request_completed
+[WebServer] [20/Jul/2026 15:07:40] "POST /contracts/new/dpa/ HTTP/1.1" 302 0
+[WebServer] 2026-07-20 15:07:40,078 INFO contracts.middleware request_id=97426cae-3e79-4ab8-9788-f6f19bff67b1 user_id=1 org_id=1 path=/contracts/new/dpa/review/ request_completed
+[WebServer] [20/Jul/2026 15:07:40] "GET /contracts/new/dpa/review/ HTTP/1.1" 200 36518
+[WebServer] 2026-07-20 15:07:40,099 INFO contracts.middleware request_id=b3e036ad-f181-49ed-8529-11f031796c9f user_id=1 org_id=1 path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:40,158 INFO contracts.middleware request_id=ce876020-fee6-4cef-9135-6b7ea6101b17 user_id=1 org_id=1 path=/contracts/new/dpa/review/ request_completed
+[WebServer] [20/Jul/2026 15:07:40] "POST /contracts/new/dpa/review/ HTTP/1.1" 302 0
+[WebServer] 2026-07-20 15:07:40,193 INFO contracts.middleware request_id=5db1f868-d511-4ca1-a3f5-f46671cb298a user_id=1 org_id=1 path=/contracts/workflows/4/ request_completed
+[WebServer] [20/Jul/2026 15:07:40] "GET /contracts/workflows/4/ HTTP/1.1" 200 48199
+[WebServer] 2026-07-20 15:07:40,218 INFO contracts.middleware request_id=6e9d116f-720b-4c16-b0ed-60dc40a27ed3 user_id=1 org_id=1 path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:40,354 INFO contracts.middleware request_id=3dfc8b0b-b278-42c7-b833-932718780550 user_id=1 org_id=1 path=/contracts/10/ request_completed
+[WebServer] [20/Jul/2026 15:07:40] "GET /contracts/10/ HTTP/1.1" 200 49746
+[WebServer] 2026-07-20 15:07:40,379 INFO contracts.middleware request_id=96a5f53a-f0c6-4f53-a7c5-c4495ce50e66 user_id=1 org_id=1 path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:40,409 INFO contracts.middleware request_id=ee727292-1410-44bc-a873-fd0a4192aedb user_id=1 org_id=1 path=/contracts/workflows/4/ request_completed
+[WebServer] [20/Jul/2026 15:07:40] "GET /contracts/workflows/4/ HTTP/1.1" 200 47990
+[WebServer] 2026-07-20 15:07:40,428 INFO contracts.middleware request_id=ae269d47-91a1-4dc0-b3d7-cc1488ac0356 user_id=1 org_id=1 path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:40,738 INFO contracts.middleware request_id=b310374d-a794-42d2-a776-2fe1cc5ee273 user_id=1 org_id=1 path=/contracts/10/ request_completed
+[WebServer] [20/Jul/2026 15:07:40] "GET /contracts/10/ HTTP/1.1" 200 49746
+[WebServer] 2026-07-20 15:07:40,764 INFO contracts.middleware request_id=b702e7f0-31ef-45fc-895a-43be58def365 user_id=1 org_id=1 path=/__reload__/events/ request_completed
+  ✓   1 tests/e2e/dpa-workflow.spec.js:31:1 › DPA four-step builder validates, generates, and opens the contract record (2.5s)
+[WebServer] 2026-07-20 15:07:40,811 INFO contracts.middleware request_id=8e7a7ade-406f-4922-bc9b-e735fd1416f8 user_id=- org_id=- path=/login/ request_completed
+[WebServer] [20/Jul/2026 15:07:40] "GET /login/ HTTP/1.1" 200 13516
+[WebServer] [20/Jul/2026 15:07:40] "GET /static/brand/clm-one-brand.css?v=1784556371 HTTP/1.1" 200 556
+[WebServer] [20/Jul/2026 15:07:40] "GET /static/css/clmone-tokens.css?v=1784556371 HTTP/1.1" 200 20791
+[WebServer] [20/Jul/2026 15:07:40] "GET /static/css/dist/styles.css?v=1784556371 HTTP/1.1" 200 141013
+[WebServer] [20/Jul/2026 15:07:40] "GET /static/brand/clm-one-logo-transparent.webp HTTP/1.1" 200 87006
+[WebServer] [20/Jul/2026 15:07:40] "GET /static/js/csp-handlers.js HTTP/1.1" 200 2271
+[WebServer] [20/Jul/2026 15:07:40] "GET /static/js/clmone-ui.js HTTP/1.1" 200 6078
+[WebServer] [20/Jul/2026 15:07:40] "GET /static/django-browser-reload/reload-listener.js HTTP/1.1" 200 623
+[WebServer] [20/Jul/2026 15:07:40] "GET /static/django-browser-reload/reload-worker.js HTTP/1.1" 200 2711
+[WebServer] 2026-07-20 15:07:40,915 INFO contracts.middleware request_id=0cd2fbe2-902c-4825-b5ed-625ba4ee9c17 user_id=- org_id=- path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:41,118 INFO contracts.middleware request_id=e2044056-4d9c-44a8-b35c-938b29576226 user_id=- org_id=- path=/login/ request_completed
+[WebServer] [20/Jul/2026 15:07:41] "POST /login/ HTTP/1.1" 302 0
+[WebServer] 2026-07-20 15:07:41,180 INFO contracts.middleware request_id=4a2e68ae-5578-48e4-bd32-2bb99927d970 user_id=1 org_id=1 path=/dashboard/ request_completed
+[WebServer] [20/Jul/2026 15:07:41] "GET /dashboard/ HTTP/1.1" 200 44947
+[WebServer] [20/Jul/2026 15:07:41] "GET /static/brand/clm-one-mark-reversed-tight.svg HTTP/1.1" 200 27461
+[WebServer] [20/Jul/2026 15:07:41] "GET /static/css/command-center.css?v=1784556371 HTTP/1.1" 200 62851
+[WebServer] [20/Jul/2026 15:07:41] "GET /static/brand/clm-one-logo-reversed-tight.svg HTTP/1.1" 200 61383
+[WebServer] [20/Jul/2026 15:07:41] "GET /static/css/dist/global-shell.css?v=1784556371 HTTP/1.1" 200 141175
+[WebServer] 2026-07-20 15:07:41,248 INFO contracts.middleware request_id=eb6ba4f6-a2c8-471a-8694-2d60b21050f3 user_id=1 org_id=1 path=/dashboard/ request_completed
+[WebServer] [20/Jul/2026 15:07:41] "GET /dashboard/ HTTP/1.1" 200 44947
+[WebServer] 2026-07-20 15:07:41,281 INFO contracts.middleware request_id=5bed7c33-838e-47a0-986b-d3ae1193cc5c user_id=1 org_id=1 path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:41,365 INFO contracts.middleware request_id=a4144234-5010-4094-9367-433824faa465 user_id=1 org_id=1 path=/contracts/new/start/ request_completed
+[WebServer] [20/Jul/2026 15:07:41] "GET /contracts/new/start/ HTTP/1.1" 200 51723
+[WebServer] 2026-07-20 15:07:41,384 INFO contracts.middleware request_id=48405898-df14-4fc3-9dba-9cae6a721726 user_id=1 org_id=1 path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:41,452 INFO contracts.middleware request_id=351365f8-5c55-40c0-b872-5e0087027104 user_id=1 org_id=1 path=/contracts/new/msa/ request_completed
+[WebServer] [20/Jul/2026 15:07:41] "GET /contracts/new/msa/ HTTP/1.1" 200 90849
+[WebServer] 2026-07-20 15:07:41,484 INFO contracts.middleware request_id=cea05673-88e4-4d58-9886-759e61038d9f user_id=1 org_id=1 path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:43,242 INFO contracts.middleware request_id=7d2ff7fc-c136-41fb-9d95-db6282edd5fe user_id=1 org_id=1 path=/contracts/new/msa/ request_completed
+[WebServer] [20/Jul/2026 15:07:43] "POST /contracts/new/msa/ HTTP/1.1" 302 0
+[WebServer] 2026-07-20 15:07:43,281 INFO contracts.middleware request_id=1b19f5f8-e9ca-433b-bb88-68e49beca5e8 user_id=1 org_id=1 path=/contracts/workflows/5/ request_completed
+[WebServer] [20/Jul/2026 15:07:43] "GET /contracts/workflows/5/ HTTP/1.1" 200 68618
+[WebServer] 2026-07-20 15:07:43,307 INFO contracts.middleware request_id=c1c80f8b-cea0-4a40-9203-74b8dfb0526b user_id=1 org_id=1 path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:43,650 INFO contracts.middleware request_id=e9e38e0e-e080-4193-a031-06b106771472 user_id=1 org_id=1 path=/contracts/workflows/5/msa/submit/legal/ request_completed
+[WebServer] [20/Jul/2026 15:07:43] "POST /contracts/workflows/5/msa/submit/legal/ HTTP/1.1" 302 0
+[WebServer] 2026-07-20 15:07:43,696 INFO contracts.middleware request_id=5be6047f-88eb-4ea4-a118-7be3e4e6aa6e user_id=1 org_id=1 path=/contracts/workflows/5/ request_completed
+[WebServer] [20/Jul/2026 15:07:43] "GET /contracts/workflows/5/ HTTP/1.1" 200 69500
+[WebServer] 2026-07-20 15:07:43,727 INFO contracts.middleware request_id=eb73c88a-c5ae-46ba-8298-f6552a7473c1 user_id=1 org_id=1 path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:43,823 INFO contracts.middleware request_id=52744560-31a9-43a5-985c-3efb7e258638 user_id=1 org_id=1 path=/contracts/workflows/5/msa/submit/finance/ request_completed
+[WebServer] [20/Jul/2026 15:07:43] "POST /contracts/workflows/5/msa/submit/finance/ HTTP/1.1" 302 0
+[WebServer] 2026-07-20 15:07:43,864 INFO contracts.middleware request_id=348d1af7-bb4d-495e-a94c-1cbb6f485a56 user_id=1 org_id=1 path=/contracts/workflows/5/ request_completed
+[WebServer] [20/Jul/2026 15:07:43] "GET /contracts/workflows/5/ HTTP/1.1" 200 70195
+[WebServer] 2026-07-20 15:07:43,889 INFO contracts.middleware request_id=ae0e6d3c-816d-4189-96ee-05eee4c54003 user_id=1 org_id=1 path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:44,079 INFO contracts.middleware request_id=7eac49f2-e3d3-4478-8ad8-ff615de480dc user_id=1 org_id=1 path=/contracts/workflows/5/msa/export/word/ request_completed
+[WebServer] [20/Jul/2026 15:07:44] "POST /contracts/workflows/5/msa/export/word/ HTTP/1.1" 302 0
+[WebServer] 2026-07-20 15:07:44,087 INFO contracts.middleware request_id=37578404-34cc-4a15-bfcd-5498298317fd user_id=1 org_id=1 path=/contracts/documents/6/download/ request_completed
+[WebServer] [20/Jul/2026 15:07:44] "GET /contracts/documents/6/download/ HTTP/1.1" 302 0
+[WebServer] 2026-07-20 15:07:44,092 INFO contracts.middleware request_id=0b30e7ec-e8a6-40fb-a9f8-9b2287244ca9 user_id=1 org_id=1 path=/media/documents/general/Payrollminds_MSA_E2E_MSA_Counterparty_061274_2026-07-20.docx request_completed
+[WebServer] [20/Jul/2026 15:07:44] "GET /media/documents/general/Payrollminds_MSA_E2E_MSA_Counterparty_061274_2026-07-20.docx HTTP/1.1" 200 37299
+[WebServer] 2026-07-20 15:07:44,587 INFO contracts.middleware request_id=95065e60-f0da-45b8-a658-54a96b54d57a user_id=1 org_id=1 path=/contracts/11/ request_completed
+[WebServer] [20/Jul/2026 15:07:44] "GET /contracts/11/ HTTP/1.1" 200 49881
+[WebServer] 2026-07-20 15:07:44,611 INFO contracts.middleware request_id=c8529e4b-e7a7-4329-b605-d571e90bb5a6 user_id=1 org_id=1 path=/__reload__/events/ request_completed
+  ✓   2 tests/e2e/msa-workflow.spec.js:53:1 › MSA governed drafting cockpit generates a workflow workspace and dashboard queue row (3.8s)
+[WebServer] 2026-07-20 15:07:44,652 INFO contracts.middleware request_id=c7409852-5c8c-4849-97ed-8c3e0dc5e785 user_id=- org_id=- path=/login/ request_completed
+[WebServer] [20/Jul/2026 15:07:44] "GET /login/ HTTP/1.1" 200 13516
+[WebServer] [20/Jul/2026 15:07:44] "GET /static/brand/clm-one-brand.css?v=1784556371 HTTP/1.1" 200 556
+[WebServer] [20/Jul/2026 15:07:44] "GET /static/css/clmone-tokens.css?v=1784556371 HTTP/1.1" 200 20791
+[WebServer] [20/Jul/2026 15:07:44] "GET /static/brand/clm-one-logo-transparent.webp HTTP/1.1" 200 87006
+[WebServer] [20/Jul/2026 15:07:44] "GET /static/css/dist/styles.css?v=1784556371 HTTP/1.1" 200 141013
+[WebServer] [20/Jul/2026 15:07:44] "GET /static/js/csp-handlers.js HTTP/1.1" 200 2271
+[WebServer] [20/Jul/2026 15:07:44] "GET /static/js/clmone-ui.js HTTP/1.1" 200 6078
+[WebServer] [20/Jul/2026 15:07:44] "GET /static/django-browser-reload/reload-listener.js HTTP/1.1" 200 623
+[WebServer] [20/Jul/2026 15:07:44] "GET /static/django-browser-reload/reload-worker.js HTTP/1.1" 200 2711
+[WebServer] 2026-07-20 15:07:44,738 INFO contracts.middleware request_id=3a837e5c-bef3-40dc-aa7b-198a5baca1c9 user_id=- org_id=- path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:44,935 INFO contracts.middleware request_id=63d1ee1f-b039-495e-8e6a-2b8f2141ef74 user_id=- org_id=- path=/login/ request_completed
+[WebServer] [20/Jul/2026 15:07:44] "POST /login/ HTTP/1.1" 302 0
+[WebServer] 2026-07-20 15:07:44,999 INFO contracts.middleware request_id=3e36e777-d180-436a-b795-c3c5e622495f user_id=1 org_id=1 path=/dashboard/ request_completed
+[WebServer] [20/Jul/2026 15:07:45] "GET /dashboard/ HTTP/1.1" 200 46183
+[WebServer] [20/Jul/2026 15:07:45] "GET /static/brand/clm-one-mark-reversed-tight.svg HTTP/1.1" 200 27461
+[WebServer] [20/Jul/2026 15:07:45] "GET /static/brand/clm-one-logo-reversed-tight.svg HTTP/1.1" 200 61383
+[WebServer] [20/Jul/2026 15:07:45] "GET /static/css/command-center.css?v=1784556371 HTTP/1.1" 200 62851
+[WebServer] [20/Jul/2026 15:07:45] "GET /static/css/dist/global-shell.css?v=1784556371 HTTP/1.1" 200 141175
+[WebServer] 2026-07-20 15:07:45,051 INFO contracts.middleware request_id=1f3fe4f3-9e52-4e3a-831a-a3795306e628 user_id=1 org_id=1 path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:45,091 INFO contracts.middleware request_id=0cdfde52-4c02-494f-bb8c-4e695af3334e user_id=1 org_id=1 path=/dashboard/ request_completed
+[WebServer] [20/Jul/2026 15:07:45] "GET /dashboard/ HTTP/1.1" 200 46183
+[WebServer] 2026-07-20 15:07:45,126 INFO contracts.middleware request_id=df0a6209-24ed-4eda-9b22-7a792e9dbfaa user_id=1 org_id=1 path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:45,152 INFO contracts.middleware request_id=c586c1cd-3c51-42fd-b9ae-9d3096d0a0d5 user_id=1 org_id=1 path=/contracts/new/start/ request_completed
+[WebServer] [20/Jul/2026 15:07:45] "GET /contracts/new/start/ HTTP/1.1" 200 51723
+[WebServer] 2026-07-20 15:07:45,171 INFO contracts.middleware request_id=91d082b8-09c0-4517-8c7f-8e0151572258 user_id=1 org_id=1 path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:45,286 INFO contracts.middleware request_id=27a7ffcf-329e-46f2-8fe5-b5d4dcc23068 user_id=1 org_id=1 path=/contracts/new/nda/ request_completed
+[WebServer] [20/Jul/2026 15:07:45] "GET /contracts/new/nda/ HTTP/1.1" 200 65533
+[WebServer] 2026-07-20 15:07:45,321 INFO contracts.middleware request_id=4711e223-649b-49e4-9b4c-c691bec3effc user_id=1 org_id=1 path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:46,365 INFO contracts.middleware request_id=8bcffb75-7d93-4838-ad40-6e481c559c74 user_id=1 org_id=1 path=/contracts/new/nda/ request_completed
+[WebServer] [20/Jul/2026 15:07:46] "POST /contracts/new/nda/ HTTP/1.1" 302 0
+[WebServer] 2026-07-20 15:07:46,404 INFO contracts.middleware request_id=052f1fdb-cd67-4cca-8fb2-f7ce0f039f00 user_id=1 org_id=1 path=/contracts/workflows/6/ request_completed
+[WebServer] [20/Jul/2026 15:07:46] "GET /contracts/workflows/6/ HTTP/1.1" 200 45901
+[WebServer] 2026-07-20 15:07:46,430 INFO contracts.middleware request_id=2f13500a-adf9-4e5b-9256-f69612196340 user_id=1 org_id=1 path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:46,503 INFO contracts.middleware request_id=8a440e37-9e20-437c-a0c1-43b5e46c09e4 user_id=1 org_id=1 path=/contracts/12/ request_completed
+[WebServer] [20/Jul/2026 15:07:46] "GET /contracts/12/ HTTP/1.1" 200 49738
+[WebServer] 2026-07-20 15:07:46,530 INFO contracts.middleware request_id=f4c577aa-af6d-4e1c-a2ca-e3801c141a18 user_id=1 org_id=1 path=/__reload__/events/ request_completed
+  ✓   3 tests/e2e/nda-workflow.spec.js:15:1 › NDA self-serve cockpit generates a governed workspace and dashboard row (1.9s)
+[WebServer] 2026-07-20 15:07:46,569 INFO contracts.middleware request_id=ed65a406-8562-44d8-bf23-91fc547b8e87 user_id=- org_id=- path=/login/ request_completed
+[WebServer] [20/Jul/2026 15:07:46] "GET /login/ HTTP/1.1" 200 13516
+[WebServer] [20/Jul/2026 15:07:46] "GET /static/brand/clm-one-brand.css?v=1784556371 HTTP/1.1" 200 556
+[WebServer] [20/Jul/2026 15:07:46] "GET /static/css/clmone-tokens.css?v=1784556371 HTTP/1.1" 200 20791
+[WebServer] [20/Jul/2026 15:07:46] "GET /static/brand/clm-one-logo-transparent.webp HTTP/1.1" 200 87006
+[WebServer] [20/Jul/2026 15:07:46] "GET /static/css/dist/styles.css?v=1784556371 HTTP/1.1" 200 141013
+[WebServer] [20/Jul/2026 15:07:46] "GET /static/js/csp-handlers.js HTTP/1.1" 200 2271
+[WebServer] [20/Jul/2026 15:07:46] "GET /static/js/clmone-ui.js HTTP/1.1" 200 6078
+[WebServer] [20/Jul/2026 15:07:46] "GET /static/django-browser-reload/reload-listener.js HTTP/1.1" 200 623
+[WebServer] [20/Jul/2026 15:07:46] "GET /static/django-browser-reload/reload-worker.js HTTP/1.1" 200 2711
+[WebServer] 2026-07-20 15:07:46,654 INFO contracts.middleware request_id=f53e70ef-3c1d-4aed-b4ec-245d2f45bccc user_id=- org_id=- path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:46,850 INFO contracts.middleware request_id=0c074779-adac-4b2a-a51d-091e180d9165 user_id=- org_id=- path=/login/ request_completed
+[WebServer] [20/Jul/2026 15:07:46] "POST /login/ HTTP/1.1" 302 0
+[WebServer] 2026-07-20 15:07:46,913 INFO contracts.middleware request_id=4df3c449-d986-49a0-b128-3f6727b9f9d6 user_id=1 org_id=1 path=/dashboard/ request_completed
+[WebServer] [20/Jul/2026 15:07:46] "GET /dashboard/ HTTP/1.1" 200 46183
+[WebServer] [20/Jul/2026 15:07:46] "GET /static/brand/clm-one-mark-reversed-tight.svg HTTP/1.1" 200 27461
+[WebServer] [20/Jul/2026 15:07:46] "GET /static/css/command-center.css?v=1784556371 HTTP/1.1" 200 62851
+[WebServer] [20/Jul/2026 15:07:46] "GET /static/brand/clm-one-logo-reversed-tight.svg HTTP/1.1" 200 61383
+[WebServer] [20/Jul/2026 15:07:46] "GET /static/css/dist/global-shell.css?v=1784556371 HTTP/1.1" 200 141175
+[WebServer] 2026-07-20 15:07:46,989 INFO contracts.middleware request_id=fb079ab7-f7c8-4cf8-8d3c-be1cc52f6566 user_id=1 org_id=1 path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:47,002 INFO contracts.middleware request_id=1843f8dc-c095-4d66-9844-5ecc6b7df3f2 user_id=1 org_id=1 path=/dashboard/ request_completed
+[WebServer] [20/Jul/2026 15:07:47] "GET /dashboard/ HTTP/1.1" 200 46183
+[WebServer] 2026-07-20 15:07:47,024 INFO contracts.middleware request_id=2e3a18bf-0039-460b-a2ac-aab4fe00bfbc user_id=1 org_id=1 path=/__reload__/events/ request_completed
+  ✓   4 tests/e2e/pilot-gate.spec.js:20:3 › Pilot gate: authentication › successful login reaches dashboard (487ms)
+[WebServer] 2026-07-20 15:07:47,059 INFO contracts.middleware request_id=928a1f5f-00c0-484b-937d-2f937e04fe87 user_id=- org_id=- path=/login/ request_completed
+[WebServer] [20/Jul/2026 15:07:47] "GET /login/ HTTP/1.1" 200 13516
+[WebServer] [20/Jul/2026 15:07:47] "GET /static/css/clmone-tokens.css?v=1784556371 HTTP/1.1" 200 20791
+[WebServer] [20/Jul/2026 15:07:47] "GET /static/brand/clm-one-brand.css?v=1784556371 HTTP/1.1" 200 556
+[WebServer] [20/Jul/2026 15:07:47] "GET /static/brand/clm-one-logo-transparent.webp HTTP/1.1" 200 87006
+[WebServer] [20/Jul/2026 15:07:47] "GET /static/css/dist/styles.css?v=1784556371 HTTP/1.1" 200 141013
+[WebServer] [20/Jul/2026 15:07:47] "GET /static/js/csp-handlers.js HTTP/1.1" 200 2271
+[WebServer] [20/Jul/2026 15:07:47] "GET /static/js/clmone-ui.js HTTP/1.1" 200 6078
+[WebServer] [20/Jul/2026 15:07:47] "GET /static/django-browser-reload/reload-listener.js HTTP/1.1" 200 623
+[WebServer] [20/Jul/2026 15:07:47] "GET /static/django-browser-reload/reload-worker.js HTTP/1.1" 200 2711
+[WebServer] 2026-07-20 15:07:47,141 INFO contracts.middleware request_id=cfca6201-b69d-4db1-8380-2c74c5b98457 user_id=- org_id=- path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:47,343 INFO contracts.middleware request_id=9588a89b-0c60-4e34-9d07-dbd96be363f1 user_id=- org_id=- path=/login/ request_completed
+[WebServer] [20/Jul/2026 15:07:47] "POST /login/ HTTP/1.1" 200 13717
+[WebServer] 2026-07-20 15:07:47,352 INFO contracts.middleware request_id=ee99126e-677e-429a-9882-7db9bf635bf7 user_id=- org_id=- path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:47,353 INFO contracts.middleware request_id=50232fa2-ff95-4cc0-a704-536e377df920 user_id=- org_id=- path=/login/ request_completed
+[WebServer] [20/Jul/2026 15:07:47] "GET /login/ HTTP/1.1" 200 13516
+[WebServer] 2026-07-20 15:07:47,363 INFO contracts.middleware request_id=edc21709-0ed0-474d-8789-12e59f4fd1fa user_id=- org_id=- path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:47,644 INFO contracts.middleware request_id=d50c8afb-261e-4a58-87a1-c8110608e88e user_id=- org_id=- path=/login/ request_completed
+[WebServer] [20/Jul/2026 15:07:47] "POST /login/ HTTP/1.1" 200 13717
+[WebServer] 2026-07-20 15:07:47,659 INFO contracts.middleware request_id=df2a8834-be47-46da-9574-c755efd04424 user_id=- org_id=- path=/login/ request_completed
+[WebServer] 2026-07-20 15:07:47,660 INFO contracts.middleware request_id=afbf13f0-c62c-4d3e-8836-c871059fcb1e user_id=- org_id=- path=/__reload__/events/ request_completed
+[WebServer] [20/Jul/2026 15:07:47] "GET /login/ HTTP/1.1" 200 13516
+[WebServer] 2026-07-20 15:07:47,673 INFO contracts.middleware request_id=b1c3a751-2cab-4171-b38a-80e2270986a2 user_id=- org_id=- path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:47,947 INFO contracts.middleware request_id=4611b959-370c-45ca-9266-586c1f80ef46 user_id=- org_id=- path=/login/ request_completed
+[WebServer] [20/Jul/2026 15:07:47] "POST /login/ HTTP/1.1" 200 13717
+[WebServer] 2026-07-20 15:07:47,965 INFO contracts.middleware request_id=1362023e-98ff-4c7e-901f-9214956de277 user_id=- org_id=- path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:47,966 INFO contracts.middleware request_id=bf1a0dc9-0327-4476-8f8e-c358d316d004 user_id=- org_id=- path=/login/ request_completed
+[WebServer] [20/Jul/2026 15:07:47] "GET /login/ HTTP/1.1" 200 13516
+[WebServer] 2026-07-20 15:07:47,981 INFO contracts.middleware request_id=b7d714e1-fd57-46bd-93db-6da48e452917 user_id=- org_id=- path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:48,244 INFO contracts.middleware request_id=dc9736f7-5116-4ad7-9d94-ea4e334a6c10 user_id=- org_id=- path=/login/ request_completed
+[WebServer] Too Many Requests: /login/
+[WebServer] 2026-07-20 15:07:48,245 WARNING django.request request_id=- user_id=- org_id=- path=- Too Many Requests: /login/
+[WebServer] [20/Jul/2026 15:07:48] "POST /login/ HTTP/1.1" 429 42
+[WebServer] 2026-07-20 15:07:48,259 INFO contracts.middleware request_id=1d1e6ee2-bff1-401a-88b8-9fb3f1063fa4 user_id=- org_id=- path=/login/ request_completed
+[WebServer] [20/Jul/2026 15:07:48] "GET /login/ HTTP/1.1" 200 13516
+[WebServer] 2026-07-20 15:07:48,273 INFO contracts.middleware request_id=0f635dfb-6fb2-4bad-a7e7-0dd81273d0ec user_id=- org_id=- path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:48,607 INFO contracts.middleware request_id=f2eee67f-94c0-4dd4-b0b3-50f11117864f user_id=- org_id=- path=/login/ request_completed
+[WebServer] [20/Jul/2026 15:07:48] "POST /login/ HTTP/1.1" 302 0
+[WebServer] 2026-07-20 15:07:48,674 INFO contracts.middleware request_id=082915f2-da10-473f-bea3-5dcf81241f63 user_id=1 org_id=1 path=/dashboard/ request_completed
+[WebServer] [20/Jul/2026 15:07:48] "GET /dashboard/ HTTP/1.1" 200 46183
+[WebServer] [20/Jul/2026 15:07:48,682] - Broken pipe from ('127.0.0.1', 63556)
+[WebServer] [20/Jul/2026 15:07:48,682] - Broken pipe from ('127.0.0.1', 63558)
+[WebServer] [20/Jul/2026 15:07:48,683] - Broken pipe from ('127.0.0.1', 63557)
+[WebServer] [20/Jul/2026 15:07:48,683] - Broken pipe from ('127.0.0.1', 63559)
+  ✓   5 tests/e2e/pilot-gate.spec.js:26:3 › Pilot gate: authentication › repeated failed login eventually returns 429 (1.7s)
+[WebServer] 2026-07-20 15:07:48,716 INFO contracts.middleware request_id=257ca5d6-4b49-4b17-8610-f06b0e242229 user_id=- org_id=- path=/login/ request_completed
+[WebServer] [20/Jul/2026 15:07:48] "GET /login/ HTTP/1.1" 200 13516
+[WebServer] [20/Jul/2026 15:07:48] "GET /static/brand/clm-one-brand.css?v=1784556371 HTTP/1.1" 200 556
+[WebServer] [20/Jul/2026 15:07:48] "GET /static/css/clmone-tokens.css?v=1784556371 HTTP/1.1" 200 20791
+[WebServer] [20/Jul/2026 15:07:48] "GET /static/css/dist/styles.css?v=1784556371 HTTP/1.1" 200 141013
+[WebServer] [20/Jul/2026 15:07:48] "GET /static/brand/clm-one-logo-transparent.webp HTTP/1.1" 200 87006
+[WebServer] [20/Jul/2026 15:07:48] "GET /static/js/csp-handlers.js HTTP/1.1" 200 2271
+[WebServer] [20/Jul/2026 15:07:48] "GET /static/js/clmone-ui.js HTTP/1.1" 200 6078
+[WebServer] [20/Jul/2026 15:07:48] "GET /static/django-browser-reload/reload-listener.js HTTP/1.1" 200 623
+[WebServer] [20/Jul/2026 15:07:48] "GET /static/django-browser-reload/reload-worker.js HTTP/1.1" 200 2711
+[WebServer] 2026-07-20 15:07:48,796 INFO contracts.middleware request_id=b001d9e3-e7cf-4733-a92c-4f9f9030ae18 user_id=- org_id=- path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:49,000 INFO contracts.middleware request_id=b921a76f-d0c4-4c6e-8e9c-c1017412eb87 user_id=- org_id=- path=/login/ request_completed
+[WebServer] [20/Jul/2026 15:07:49] "POST /login/ HTTP/1.1" 200 13703
+[WebServer] 2026-07-20 15:07:49,010 INFO contracts.middleware request_id=21b41684-4061-4206-af84-e1c30ed90351 user_id=- org_id=- path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:49,011 INFO contracts.middleware request_id=f6543312-8586-4175-94e6-0e33aff35fd9 user_id=- org_id=- path=/login/ request_completed
+[WebServer] [20/Jul/2026 15:07:49] "GET /login/ HTTP/1.1" 200 13516
+[WebServer] 2026-07-20 15:07:49,021 INFO contracts.middleware request_id=aa5fb02d-18c2-4d25-a7a1-ef6c576c7ba1 user_id=- org_id=- path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:49,365 INFO contracts.middleware request_id=4b9fb4d5-f91a-4d31-86ef-829b8f7c8ac7 user_id=- org_id=- path=/login/ request_completed
+[WebServer] [20/Jul/2026 15:07:49] "POST /login/ HTTP/1.1" 302 0
+[WebServer] 2026-07-20 15:07:49,431 INFO contracts.middleware request_id=ae1e34fe-6a87-4d2f-b94f-1100dd8eb940 user_id=1 org_id=1 path=/dashboard/ request_completed
+[WebServer] [20/Jul/2026 15:07:49] "GET /dashboard/ HTTP/1.1" 200 46183
+[WebServer] [20/Jul/2026 15:07:49] "GET /static/css/command-center.css?v=1784556371 HTTP/1.1" 200 62851
+[WebServer] [20/Jul/2026 15:07:49] "GET /static/brand/clm-one-mark-reversed-tight.svg HTTP/1.1" 200 27461
+[WebServer] [20/Jul/2026 15:07:49] "GET /static/brand/clm-one-logo-reversed-tight.svg HTTP/1.1" 200 61383
+[WebServer] [20/Jul/2026 15:07:49] "GET /static/css/dist/global-shell.css?v=1784556371 HTTP/1.1" 200 141175
+[WebServer] 2026-07-20 15:07:49,488 INFO contracts.middleware request_id=b664ea8d-7135-43ae-ab95-998ffc37fbbd user_id=1 org_id=1 path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:49,520 INFO contracts.middleware request_id=6c9a571b-8d22-417b-8567-3f302ad780ff user_id=1 org_id=1 path=/dashboard/ request_completed
+[WebServer] [20/Jul/2026 15:07:49] "GET /dashboard/ HTTP/1.1" 200 46183
+  ✓   6 tests/e2e/pilot-gate.spec.js:62:3 › Pilot gate: authentication › successful login clears failed-attempt counter (854ms)
+[WebServer] 2026-07-20 15:07:49,542 INFO contracts.middleware request_id=8723bd8a-7c37-49a1-a579-dfa502f278a8 user_id=1 org_id=1 path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:49,575 INFO contracts.middleware request_id=d699ff2d-db37-4f91-b3a7-62b31a00e9a7 user_id=- org_id=- path=/login/ request_completed
+[WebServer] [20/Jul/2026 15:07:49] "GET /login/ HTTP/1.1" 200 13516
+[WebServer] [20/Jul/2026 15:07:49] "GET /static/css/clmone-tokens.css?v=1784556371 HTTP/1.1" 200 20791
+[WebServer] [20/Jul/2026 15:07:49] "GET /static/brand/clm-one-brand.css?v=1784556371 HTTP/1.1" 200 556
+[WebServer] [20/Jul/2026 15:07:49] "GET /static/brand/clm-one-logo-transparent.webp HTTP/1.1" 200 87006
+[WebServer] [20/Jul/2026 15:07:49] "GET /static/css/dist/styles.css?v=1784556371 HTTP/1.1" 200 141013
+[WebServer] [20/Jul/2026 15:07:49] "GET /static/js/csp-handlers.js HTTP/1.1" 200 2271
+[WebServer] [20/Jul/2026 15:07:49] "GET /static/js/clmone-ui.js HTTP/1.1" 200 6078
+[WebServer] [20/Jul/2026 15:07:49] "GET /static/django-browser-reload/reload-listener.js HTTP/1.1" 200 623
+[WebServer] [20/Jul/2026 15:07:49] "GET /static/django-browser-reload/reload-worker.js HTTP/1.1" 200 2711
+[WebServer] 2026-07-20 15:07:49,675 INFO contracts.middleware request_id=a387ee1d-ed38-4803-9299-9c5733f8f836 user_id=- org_id=- path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:49,889 INFO contracts.middleware request_id=558482c1-07e0-4d1c-a248-815425a24d1f user_id=- org_id=- path=/login/ request_completed
+[WebServer] [20/Jul/2026 15:07:49] "POST /login/ HTTP/1.1" 302 0
+[WebServer] 2026-07-20 15:07:50,018 INFO contracts.middleware request_id=837786ab-b3e7-4eb5-b9ef-4b75630f390c user_id=1 org_id=1 path=/dashboard/ request_completed
+[WebServer] [20/Jul/2026 15:07:50] "GET /dashboard/ HTTP/1.1" 200 46183
+[WebServer] [20/Jul/2026 15:07:50] "GET /static/brand/clm-one-mark-reversed-tight.svg HTTP/1.1" 200 27461
+[WebServer] [20/Jul/2026 15:07:50] "GET /static/css/command-center.css?v=1784556371 HTTP/1.1" 200 62851
+[WebServer] [20/Jul/2026 15:07:50] "GET /static/brand/clm-one-logo-reversed-tight.svg HTTP/1.1" 200 61383
+[WebServer] [20/Jul/2026 15:07:50] "GET /static/css/dist/global-shell.css?v=1784556371 HTTP/1.1" 200 141175
+[WebServer] 2026-07-20 15:07:50,074 INFO contracts.middleware request_id=16078060-4752-49b8-be6f-e1255050ba04 user_id=1 org_id=1 path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:50,111 INFO contracts.middleware request_id=c25852fc-3734-4773-8832-c0e4347c98b3 user_id=1 org_id=1 path=/dashboard/ request_completed
+[WebServer] [20/Jul/2026 15:07:50] "GET /dashboard/ HTTP/1.1" 200 46183
+[WebServer] 2026-07-20 15:07:50,141 INFO contracts.middleware request_id=e77e6b4f-e012-4eb4-ac90-a82583ac1c50 user_id=1 org_id=1 path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:50,175 INFO contracts.middleware request_id=3d7c56d3-fa5c-4cd8-b2f3-8d89405ca5a9 user_id=1 org_id=1 path=/contracts/new/nda/ request_completed
+[WebServer] [20/Jul/2026 15:07:50] "GET /contracts/new/nda/ HTTP/1.1" 200 65533
+[WebServer] 2026-07-20 15:07:50,202 INFO contracts.middleware request_id=756654fd-46a3-4219-9d44-7f60104d91f5 user_id=1 org_id=1 path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:50,333 INFO contracts.middleware request_id=c80ce879-7832-41f5-9def-311524e7945b user_id=1 org_id=1 path=/contracts/new/nda/ request_completed
+[WebServer] [20/Jul/2026 15:07:50] "POST /contracts/new/nda/ HTTP/1.1" 302 0
+[WebServer] 2026-07-20 15:07:50,367 INFO contracts.middleware request_id=b97339a6-43b5-4b7f-8e4b-fb14f83ce86d user_id=1 org_id=1 path=/contracts/workflows/7/ request_completed
+[WebServer] [20/Jul/2026 15:07:50] "GET /contracts/workflows/7/ HTTP/1.1" 200 45781
+[WebServer] 2026-07-20 15:07:50,390 INFO contracts.middleware request_id=387c7a54-0ce5-4ebd-b563-becc2b54601a user_id=1 org_id=1 path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:50,462 INFO contracts.middleware request_id=966e4b58-f7af-41b1-ac58-99e74f858741 user_id=1 org_id=1 path=/contracts/13/ request_completed
+[WebServer] [20/Jul/2026 15:07:50] "GET /contracts/13/ HTTP/1.1" 200 49683
+[WebServer] 2026-07-20 15:07:50,489 INFO contracts.middleware request_id=b70fc0f9-b58d-4961-816c-985fa5fbbdcc user_id=1 org_id=1 path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:50,583 INFO contracts.middleware request_id=28ecc415-228f-4cba-8592-9eac557ecf66 user_id=1 org_id=1 path=/contracts/13/ request_completed
+[WebServer] [20/Jul/2026 15:07:50] "GET /contracts/13/ HTTP/1.1" 200 49683
+  ✓   7 tests/e2e/pilot-gate.spec.js:86:3 › Pilot gate: NDA supported actions only › NDA workspace hides unsupported CTAs and keeps View contract record (1.1s)
+[WebServer] 2026-07-20 15:07:50,605 INFO contracts.middleware request_id=0e797451-9605-488e-82a2-846e0fc1d671 user_id=1 org_id=1 path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:50,637 INFO contracts.middleware request_id=0c5d2410-8b6d-49f8-9146-1d99e6400fe9 user_id=- org_id=- path=/login/ request_completed
+[WebServer] [20/Jul/2026 15:07:50] "GET /login/ HTTP/1.1" 200 13516
+[WebServer] [20/Jul/2026 15:07:50] "GET /static/css/clmone-tokens.css?v=1784556371 HTTP/1.1" 200 20791
+[WebServer] [20/Jul/2026 15:07:50] "GET /static/brand/clm-one-brand.css?v=1784556371 HTTP/1.1" 200 556
+[WebServer] [20/Jul/2026 15:07:50] "GET /static/brand/clm-one-logo-transparent.webp HTTP/1.1" 200 87006
+[WebServer] [20/Jul/2026 15:07:50] "GET /static/css/dist/styles.css?v=1784556371 HTTP/1.1" 200 141013
+[WebServer] [20/Jul/2026 15:07:50] "GET /static/js/csp-handlers.js HTTP/1.1" 200 2271
+[WebServer] [20/Jul/2026 15:07:50] "GET /static/js/clmone-ui.js HTTP/1.1" 200 6078
+[WebServer] [20/Jul/2026 15:07:50] "GET /static/django-browser-reload/reload-listener.js HTTP/1.1" 200 623
+[WebServer] [20/Jul/2026 15:07:50] "GET /static/django-browser-reload/reload-worker.js HTTP/1.1" 200 2711
+[WebServer] 2026-07-20 15:07:50,719 INFO contracts.middleware request_id=e27f8230-bbd7-45f0-a776-44f613f47f7d user_id=- org_id=- path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:50,914 INFO contracts.middleware request_id=b26ba75d-f0fe-4a41-9a63-2a4965255399 user_id=- org_id=- path=/login/ request_completed
+[WebServer] [20/Jul/2026 15:07:50] "POST /login/ HTTP/1.1" 302 0
+[WebServer] 2026-07-20 15:07:50,979 INFO contracts.middleware request_id=a0b386d2-2881-46fb-b947-4b56dd5e88bb user_id=1 org_id=1 path=/dashboard/ request_completed
+[WebServer] [20/Jul/2026 15:07:50] "GET /dashboard/ HTTP/1.1" 200 46183
+[WebServer] [20/Jul/2026 15:07:50] "GET /static/brand/clm-one-mark-reversed-tight.svg HTTP/1.1" 200 27461
+[WebServer] [20/Jul/2026 15:07:50] "GET /static/css/command-center.css?v=1784556371 HTTP/1.1" 200 62851
+[WebServer] [20/Jul/2026 15:07:50] "GET /static/brand/clm-one-logo-reversed-tight.svg HTTP/1.1" 200 61383
+[WebServer] [20/Jul/2026 15:07:50] "GET /static/css/dist/global-shell.css?v=1784556371 HTTP/1.1" 200 141175
+[WebServer] 2026-07-20 15:07:51,032 INFO contracts.middleware request_id=d47ff4f1-caf4-4f94-b16e-9cd40d27801b user_id=1 org_id=1 path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:51,070 INFO contracts.middleware request_id=d53d9764-2adb-4fba-9a05-cae15ca4251b user_id=1 org_id=1 path=/dashboard/ request_completed
+[WebServer] [20/Jul/2026 15:07:51] "GET /dashboard/ HTTP/1.1" 200 46183
+[WebServer] 2026-07-20 15:07:51,104 INFO contracts.middleware request_id=43c1b16f-5533-49c6-bba1-7f9c8dbf437f user_id=1 org_id=1 path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:51,138 INFO contracts.middleware request_id=f0f78295-3201-4362-a0da-7bc963ae705d user_id=1 org_id=1 path=/contracts/new/dpa/ request_completed
+[WebServer] [20/Jul/2026 15:07:51] "GET /contracts/new/dpa/ HTTP/1.1" 200 58103
+  ✓   8 tests/e2e/pilot-gate.spec.js:117:3 › Pilot gate: DPA supported actions only › DPA workspace hides unsupported CTAs after generate (551ms)
+[WebServer] 2026-07-20 15:07:51,159 INFO contracts.middleware request_id=e7e526fe-04e0-43d8-bb15-2b5484619460 user_id=1 org_id=1 path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:51,193 INFO contracts.middleware request_id=6fd3966d-4b67-4055-8af6-f7e992723d7f user_id=- org_id=- path=/login/ request_completed
+[WebServer] [20/Jul/2026 15:07:51] "GET /login/ HTTP/1.1" 200 13516
+[WebServer] [20/Jul/2026 15:07:51] "GET /static/brand/clm-one-brand.css?v=1784556371 HTTP/1.1" 200 556
+[WebServer] [20/Jul/2026 15:07:51] "GET /static/css/clmone-tokens.css?v=1784556371 HTTP/1.1" 200 20791
+[WebServer] [20/Jul/2026 15:07:51] "GET /static/css/dist/styles.css?v=1784556371 HTTP/1.1" 200 141013
+[WebServer] [20/Jul/2026 15:07:51] "GET /static/brand/clm-one-logo-transparent.webp HTTP/1.1" 200 87006
+[WebServer] [20/Jul/2026 15:07:51] "GET /static/js/csp-handlers.js HTTP/1.1" 200 2271
+[WebServer] [20/Jul/2026 15:07:51] "GET /static/js/clmone-ui.js HTTP/1.1" 200 6078
+[WebServer] [20/Jul/2026 15:07:51] "GET /static/django-browser-reload/reload-listener.js HTTP/1.1" 200 623
+[WebServer] [20/Jul/2026 15:07:51] "GET /static/django-browser-reload/reload-worker.js HTTP/1.1" 200 2711
+[WebServer] 2026-07-20 15:07:51,272 INFO contracts.middleware request_id=e5b1903a-6349-4d45-b122-780ecf378c65 user_id=- org_id=- path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:51,480 INFO contracts.middleware request_id=34075cfb-ff4f-4360-acb4-8902514bdd8b user_id=- org_id=- path=/login/ request_completed
+[WebServer] [20/Jul/2026 15:07:51] "POST /login/ HTTP/1.1" 302 0
+[WebServer] 2026-07-20 15:07:51,547 INFO contracts.middleware request_id=a195849c-0a73-4ee6-8883-ac1e6dca18e9 user_id=1 org_id=1 path=/dashboard/ request_completed
+[WebServer] [20/Jul/2026 15:07:51] "GET /dashboard/ HTTP/1.1" 200 46183
+[WebServer] [20/Jul/2026 15:07:51] "GET /static/brand/clm-one-mark-reversed-tight.svg HTTP/1.1" 200 27461
+[WebServer] [20/Jul/2026 15:07:51] "GET /static/css/command-center.css?v=1784556371 HTTP/1.1" 200 62851
+[WebServer] [20/Jul/2026 15:07:51] "GET /static/brand/clm-one-logo-reversed-tight.svg HTTP/1.1" 200 61383
+[WebServer] [20/Jul/2026 15:07:51] "GET /static/css/dist/global-shell.css?v=1784556371 HTTP/1.1" 200 141175
+[WebServer] 2026-07-20 15:07:51,598 INFO contracts.middleware request_id=13a51ddc-f6e6-48fa-904b-7afe9c74f671 user_id=1 org_id=1 path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:51,701 INFO contracts.middleware request_id=f70e3ef8-8b67-4a09-8162-4b3da4e0d077 user_id=1 org_id=1 path=/dashboard/ request_completed
+[WebServer] [20/Jul/2026 15:07:51] "GET /dashboard/ HTTP/1.1" 200 46183
+[WebServer] 2026-07-20 15:07:51,732 INFO contracts.middleware request_id=52eaaad7-f91e-46a7-8c31-afd625d7c5be user_id=1 org_id=1 path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:51,762 INFO contracts.middleware request_id=efba4f99-3c75-497d-8547-baa1003b3f31 user_id=1 org_id=1 path=/contracts/search/ request_completed
+[WebServer] [20/Jul/2026 15:07:51] "GET /contracts/search/?q=confidentiality&search_mode=semantic HTTP/1.1" 200 33304
+[WebServer] 2026-07-20 15:07:51,780 INFO contracts.middleware request_id=fb7c6960-98fa-4bea-92fa-4a08e316dd91 user_id=1 org_id=1 path=/__reload__/events/ request_completed
+  ✓   9 tests/e2e/pilot-gate.spec.js:127:3 › Pilot gate: search fallback › search remains usable and tenant-scoped (621ms)
+[WebServer] 2026-07-20 15:07:51,817 INFO contracts.middleware request_id=00e73878-ae6f-476f-ad28-0c4d994390ea user_id=- org_id=- path=/login/ request_completed
+[WebServer] [20/Jul/2026 15:07:51] "GET /login/ HTTP/1.1" 200 13516
+[WebServer] [20/Jul/2026 15:07:51] "GET /static/brand/clm-one-brand.css?v=1784556371 HTTP/1.1" 200 556
+[WebServer] [20/Jul/2026 15:07:51] "GET /static/css/clmone-tokens.css?v=1784556371 HTTP/1.1" 200 20791
+[WebServer] [20/Jul/2026 15:07:51] "GET /static/css/dist/styles.css?v=1784556371 HTTP/1.1" 200 141013
+[WebServer] [20/Jul/2026 15:07:51] "GET /static/brand/clm-one-logo-transparent.webp HTTP/1.1" 200 87006
+[WebServer] [20/Jul/2026 15:07:51] "GET /static/js/csp-handlers.js HTTP/1.1" 200 2271
+[WebServer] [20/Jul/2026 15:07:51] "GET /static/js/clmone-ui.js HTTP/1.1" 200 6078
+[WebServer] [20/Jul/2026 15:07:51] "GET /static/django-browser-reload/reload-listener.js HTTP/1.1" 200 623
+[WebServer] [20/Jul/2026 15:07:52] "GET /static/django-browser-reload/reload-worker.js HTTP/1.1" 200 2711
+[WebServer] 2026-07-20 15:07:52,008 INFO contracts.middleware request_id=db732bdd-38c6-4173-95e5-411b532cc7f6 user_id=- org_id=- path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:52,213 INFO contracts.middleware request_id=4593e72b-7aae-4adb-b2df-b2ab7bf7f849 user_id=- org_id=- path=/login/ request_completed
+[WebServer] [20/Jul/2026 15:07:52] "POST /login/ HTTP/1.1" 302 0
+[WebServer] 2026-07-20 15:07:52,278 INFO contracts.middleware request_id=13e90cbf-e5b8-4000-8cb4-72511fb6b71e user_id=1 org_id=1 path=/dashboard/ request_completed
+[WebServer] [20/Jul/2026 15:07:52] "GET /dashboard/ HTTP/1.1" 200 46183
+[WebServer] [20/Jul/2026 15:07:52] "GET /static/brand/clm-one-mark-reversed-tight.svg HTTP/1.1" 200 27461
+[WebServer] [20/Jul/2026 15:07:52] "GET /static/brand/clm-one-logo-reversed-tight.svg HTTP/1.1" 200 61383
+[WebServer] [20/Jul/2026 15:07:52] "GET /static/css/command-center.css?v=1784556371 HTTP/1.1" 200 62851
+[WebServer] [20/Jul/2026 15:07:52] "GET /static/css/dist/global-shell.css?v=1784556371 HTTP/1.1" 200 141175
+[WebServer] 2026-07-20 15:07:52,334 INFO contracts.middleware request_id=9776be0d-9ab2-4708-8d4c-58837e7c63cc user_id=1 org_id=1 path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:52,370 INFO contracts.middleware request_id=38d912b2-21c2-4bd5-a4ee-d6a5be954b76 user_id=1 org_id=1 path=/dashboard/ request_completed
+[WebServer] [20/Jul/2026 15:07:52] "GET /dashboard/ HTTP/1.1" 200 46183
+[WebServer] 2026-07-20 15:07:52,401 INFO contracts.middleware request_id=48a8c22d-afe1-48a5-a8a3-94131efc25db user_id=1 org_id=1 path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:52,427 INFO contracts.middleware request_id=937ea794-b8c9-4c6a-b469-696bd811d0b6 user_id=1 org_id=1 path=/contracts/repository/ request_completed
+[WebServer] [20/Jul/2026 15:07:52] "GET /contracts/repository/ HTTP/1.1" 200 49745
+[WebServer] [20/Jul/2026 15:07:52] "GET /static/js/clmone-repository.js?v=1784556371 HTTP/1.1" 200 48495
+  ✓  10 tests/e2e/pilot-gate.spec.js:136:3 › Pilot gate: repository stage vs status › repository Stage column sorts by stage key (665ms)
+[WebServer] 2026-07-20 15:07:52,452 INFO contracts.middleware request_id=cc815277-6436-4a95-9012-a9bb0c2f9878 user_id=1 org_id=1 path=/__reload__/events/ request_completed
+[WebServer] 2026-07-20 15:07:52,454 INFO contracts.middleware request_id=0adba1e7-ad85-4f8c-8c0d-15469df38339 user_id=1 org_id=1 path=/contracts/api/contracts/ request_completed
+[WebServer] [20/Jul/2026 15:07:52,460] - Broken pipe from ('127.0.0.1', 63626)
+
+  10 passed (32.5s)

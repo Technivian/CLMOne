@@ -234,11 +234,14 @@ class AIClauseReviewWorkflowTests(TestCase):
         self.assertEqual(response.status_code, 403)
 
     def test_contract_workspace_exposes_governed_review_state(self):
+        # Intentional product change (tabbed contract workspace): review copy lives
+        # on ?tab=review. Assert current governed copy, not retired "AI-assisted" label.
         detail = reverse('contracts:contract_detail', args=[self.contract.pk])
-        response = self.client.get(detail)
-        self.assertContains(response, 'AI-assisted clause review')
-        self.assertContains(response, 'Human review required')
-        self.assertContains(response, self.url)
+        response = self.client.get(f'{detail}?tab=review')
+        self.assertContains(response, 'Contract review')
+        self.assertContains(response, 'subject to human review')
+        self.assertContains(response, 'Open review workspace')
+        self.assertContains(response, reverse('contracts:contract_review_workspace', args=[self.contract.pk]))
 
     def test_review_workspace_and_finding_actions_are_human_governed(self):
         span = AIExtractionSpan.objects.create(

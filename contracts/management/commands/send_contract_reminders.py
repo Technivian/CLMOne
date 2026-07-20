@@ -29,7 +29,7 @@ class Command(BaseCommand):
             Contract.objects
             .filter(
                 organization__is_active=True,
-                status__in=[Contract.Status.ACTIVE, Contract.Status.APPROVED],
+                status__in=[Contract.Status.ACTIVE],
             )
             .filter(Q(end_date__isnull=False) | Q(renewal_date__isnull=False))
             .select_related(

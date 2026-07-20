@@ -1,0 +1,50 @@
+{
+  "active_users": 5,
+  "ai_usage_and_policy_denials_approx": 0,
+  "audit_anomalies": 0,
+  "audit_event_creation_failures": 0,
+  "authorization_failures": 0,
+  "contracts_created": 5,
+  "contracts_created_by_type": [
+    {
+      "contract_type": "DPA",
+      "count": 1
+    },
+    {
+      "contract_type": "MSA",
+      "count": 3
+    },
+    {
+      "contract_type": "NDA",
+      "count": 1
+    }
+  ],
+  "date": "2026-07-20",
+  "exports_approx": 0,
+  "failed_actions": 0,
+  "feature_flags": {
+    "BILLING_SELF_SERVE_ENABLED": false,
+    "CONTROLLED_PILOT_ENABLED": true,
+    "FINANCE_APPROVAL_THRESHOLD": "100000",
+    "GEMINI_AI_ENABLED": false,
+    "LOGIN_RATE_LIMIT_REQUESTS": 3,
+    "RATELIMIT_ENABLED": true,
+    "TRUST_ACCOUNTING_ENABLED": false
+  },
+  "http_status_counts": {
+    "2xx": 11,
+    "3xx": 1,
+    "4xx": 0,
+    "5xx": 0
+  },
+  "lifecycle_transition_failures": 0,
+  "login_failures": 0,
+  "msa_finance_submissions_approx": 0,
+  "msa_legal_submissions_approx": 0,
+  "notes": "Counts are derived from AuditLog metadata and request metrics. Contract content, credentials, and secrets are never included.",
+  "organization": "controlled-pilot-org",
+  "routing_anomalies": null,
+  "support_requests": null,
+  "unresolved_incidents": null,
+  "workflow_completions_approx": 0
+}

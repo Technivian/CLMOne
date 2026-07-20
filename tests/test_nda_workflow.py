@@ -196,12 +196,17 @@ class NDAWorkflowBuilderIntegrationTests(TestCase):
         workspace = self.client_.get(reverse('contracts:workflow_detail', kwargs={'pk': workflow.pk}))
         for text in (
             'Generated NDA Draft',
-            'Send for signature',
-            'Generate NDA summary',
-            'Export Word',
+            'View contract record',
             'No NDA risk triggers were detected',
+            'Audit history',
         ):
             self.assertContains(workspace, text)
+        for hidden in (
+            'Generate NDA summary',
+            'Export Word',
+        ):
+            self.assertNotContains(workspace, hidden)
+        self.assertNotContains(workspace, 'type="button" class="dc-ds-button dc-ds-button--primary">Send for signature')
 
     def test_high_risk_nda_workspace_renders_risks_and_legal_action(self):
         self.client_.post(reverse('contracts:nda_workflow_builder'), self._high_risk_payload())
@@ -212,12 +217,11 @@ class NDAWorkflowBuilderIntegrationTests(TestCase):
             'Privacy / DPA review signal',
             'Residual knowledge risk',
             'Governing law escalation',
-            'Send to Legal Review',
             'Approval Route',
-            'Audit Trail Preview',
-            'Workflow created',
+            'Audit history',
         ):
             self.assertContains(workspace, text)
+        self.assertNotContains(workspace, 'Send to Legal Review')
 
     def test_command_center_row_links_back_to_generated_workspace(self):
         self.client_.post(reverse('contracts:nda_workflow_builder'), self._low_risk_payload())

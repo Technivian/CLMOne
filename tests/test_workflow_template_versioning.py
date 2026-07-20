@@ -222,6 +222,7 @@ class WorkflowTemplateVersioningTests(TestCase):
             'name': 'Freshly Created Template',
             'description': 'Has no steps yet',
             'category': WorkflowTemplate.Category.GENERAL,
+            'source_mode': 'blank',
         })
         self.assertEqual(response.status_code, 302)
         created = WorkflowTemplate.objects.get(name='Freshly Created Template')
@@ -254,6 +255,56 @@ class WorkflowTemplateVersioningTests(TestCase):
         self.assertEqual(response.status_code, 302)
         template.refresh_from_db()
         self.assertTrue(template.is_active)
+
+    def test_approval_stage_without_owner_cannot_publish(self):
+        self.client.force_login(self.user)
+        template = WorkflowTemplate.objects.create(
+            name='Needs Owner', description='', organization=self.org,
+            category=WorkflowTemplate.Category.GENERAL, version=1, is_active=False,
+        )
+        WorkflowTemplateStep.objects.create(
+            template=template,
+            name='Legal approval',
+            order=1,
+            step_kind=WorkflowTemplateStep.StepKind.APPROVAL,
+        )
+        response = self.client.post(reverse('contracts:workflow_template_publish_toggle', args=[template.pk]))
+        self.assertEqual(response.status_code, 302)
+        template.refresh_from_db()
+        self.assertFalse(template.is_active)
+
+    def test_list_marks_standard_zero_stage_as_draft_incomplete(self):
+        self.client.force_login(self.user)
+        WorkflowTemplate.objects.create(
+            name='Standard',
+            description='Standard workflow placeholder',
+            organization=self.org,
+            category=WorkflowTemplate.Category.GENERAL,
+            version=1,
+            is_active=True,
+        )
+        response = self.client.get(reverse('contracts:workflow_template_list'))
+        self.assertEqual(response.status_code, 200)
+        body = response.content.decode()
+        self.assertIn('Draft · Incomplete', body)
+        self.assertIn('Open designer', body)
+        standard = WorkflowTemplate.objects.get(name='Standard', organization=self.org)
+        self.assertFalse(standard.is_active)
+
+    def test_create_duplicate_opens_designer_with_copied_stages(self):
+        self.client.force_login(self.user)
+        response = self.client.post(reverse('contracts:workflow_template_create'), {
+            'name': 'Copied Contract Review',
+            'description': 'Duplicated from existing',
+            'category': WorkflowTemplate.Category.CONTRACT_REVIEW,
+            'source_mode': 'duplicate',
+            'source_template': self.template.pk,
+        })
+        self.assertEqual(response.status_code, 302)
+        created = WorkflowTemplate.objects.get(name='Copied Contract Review')
+        self.assertFalse(created.is_active)
+        self.assertEqual(created.steps.count(), self.template.steps.count())
+        self.assertEqual(response['Location'], reverse('contracts:workflow_template_detail', args=[created.pk]))
 
     def test_condition_expression_validation(self):
         valid_form = WorkflowTemplateStepForm(

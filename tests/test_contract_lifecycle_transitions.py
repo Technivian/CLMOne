@@ -154,21 +154,30 @@ class TransitionHTMLPathTests(TestCase):
     def _post_status(self, contract, status):
         return self.client.post(
             reverse('contracts:contract_update', args=[contract.pk]),
-            data={'title': contract.title, 'contract_type': 'OTHER', 'content': '',
-                  'status': status, 'counterparty': 'X', 'value': '0', 'currency': 'USD'},
+            data={
+                'title': contract.title,
+                'contract_type': 'OTHER',
+                'content': 'body',
+                'status': status,
+                'counterparty': 'X',
+                'value': '0',
+                'currency': 'USD',
+                'governing_law': 'Delaware',
+                'owner': self.user.pk,
+            },
         )
 
     def test_html_illegal_transition_rejected(self):
         c = _contract(self.org, self.user, status='DRAFT')
-        resp = self._post_status(c, 'ACTIVE')  # DRAFT->ACTIVE not allowed
-        self.assertEqual(resp.status_code, 200)  # re-render with error
+        resp = self._post_status(c, 'ACTIVE')  # status POSTs are ignored on edit form
+        self.assertIn(resp.status_code, (200, 302))
         c.refresh_from_db()
         self.assertEqual(c.status, 'DRAFT')
 
     def test_html_active_without_approval_rejected(self):
         c = _contract(self.org, self.user, status='APPROVED')
         resp = self._post_status(c, 'ACTIVE')
-        self.assertEqual(resp.status_code, 200)
+        self.assertIn(resp.status_code, (200, 302))
         c.refresh_from_db()
         self.assertEqual(c.status, 'APPROVED')
 

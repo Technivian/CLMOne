@@ -11,16 +11,24 @@
   .dpa-review-page .dpa-review-row { cursor: pointer; }
   .dpa-review-page .dpa-review-row:hover td { background: var(--sidebar-hover); }
   .dpa-review-page .dpa-review-row:focus-visible { outline: none; box-shadow: inset var(--ds-focus-ring); }
-  .dpa-review-page .dpa-review-next-action { color: var(--ds-color-text); font-weight: 650; }
-  .dpa-review-page .dpa-review-counterparty {
-    margin-top: 2px; font-size: 12px; font-weight: 500; color: var(--ink-600, var(--text-muted));
-    line-height: 1.3; word-break: break-word;
+  .dpa-review-page .dpa-review-role {
+    display: block; max-width: 100%; line-height: 1.35;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .dpa-review-page .dpa-review-next-action {
+    display: block; max-width: 100%;
+    color: var(--ds-color-text); font-weight: 650;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
   .dpa-review-page .dpa-review-agreement-title {
     display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
     overflow: hidden; line-height: 1.35; word-break: break-word;
   }
-  .dpa-review-page .dpa-review-role { display: block; max-width: 11rem; line-height: 1.35; word-break: break-word; }
+  .dpa-review-page .dpa-review-counterparty {
+    display: block; margin-top: 2px; font-size: 12px; font-weight: 500;
+    color: var(--ink-600, var(--text-muted)); line-height: 1.3;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
   .dpa-review-page .dpa-review-stack {
     display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; max-width: 12rem;
   }
@@ -36,6 +44,8 @@
     color: var(--text-primary); cursor: pointer;
   }
   .dpa-review-page .dc-ds-table-wrap { overflow-x: auto; }
+  .dpa-review-page #dpa-reviews-table th,
+  .dpa-review-page #dpa-reviews-table td { overflow: hidden; }
   .dpa-review-page #dpa-reviews-table {
     min-width: 1200px; width: 100%; table-layout: fixed;
   }
@@ -77,11 +87,7 @@
   <form method="get" action="{{ dpa_list_url }}" id="dpa-review-filters-form">
     <header class="clm-list-shell dc-ds-filterbar dc-ds-table-toolbar dc-ds-list-toolbar" aria-label="DPA review workspace controls">
       <div class="clm-list-view-header">
-        <nav class="clm-list-view-tabs dc-ds-list-tabs" aria-label="DPA review views">
-          <a href="{{ dpa_list_url }}" class="dc-ds-choice{% if not selected_status and not selected_severity %} chip-active{% endif %}">All reviews</a>
-          <a href="{{ dpa_list_url }}?status=UNDER_REVIEW" class="dc-ds-choice{% if selected_status == 'UNDER_REVIEW' %} chip-active{% endif %}">Needs decision</a>
-          <a href="{{ dpa_list_url }}?severity=CRITICAL" class="dc-ds-choice{% if selected_severity == 'CRITICAL' %} chip-active{% endif %}">Critical risks</a>
-        </nav>
+        {% include "components/_workspace_tabs.html" with tabs=view_tabs aria_label="DPA review views" nav_class="clm-list-view-tabs" %}
         <div class="clm-list-view-actions">
           {% if can_manage_playbook %}
           <a class="dc-ds-button dc-ds-button--ghost" href="{{ playbook_url }}">Manage playbook</a>
@@ -173,7 +179,7 @@
   </div>
 
   <div class="dc-ds-table-wrap">
-    <table id="dpa-reviews-table" class="dc-ds-table" data-table-core="server">
+    <table id="dpa-reviews-table" class="dc-ds-table dc-ds-table--fixed" data-table-core="server">
       <caption class="sr-only">Active DPA reviews with agreement, processing role, review state, owner, next action, and most recent update.</caption>
       <thead>
         <tr>

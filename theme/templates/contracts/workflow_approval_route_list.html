@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Approval Rules – CLM One{% endblock %}
+{% block authenticated_page_title %}Workflow Designer{% endblock %}
+{% block authenticated_page_subtitle %}Template-level approval chains used by governed workflows.{% endblock %}
+
+{% block content %}
+{% include "components/_list_page_shell_styles.html" %}
+<style nonce="{{ csp_nonce }}">
+  .workflow-approval-routes-page .clm-list-result-count {
+    font-size: 13px; font-weight: 600; color: var(--ink-700); margin: 0 0 var(--space-12);
+    padding: 0; border: 0; background: transparent;
+  }
+</style>
+<div class="dc-ds-page dc-ds-page--wide dc-ds-page-flow dc-ds-list-page clm-list-page workflow-approval-routes-page">
+  <header class="clm-list-shell dc-ds-filterbar dc-ds-list-toolbar" aria-label="Workflow Designer controls">
+    <div class="clm-list-view-header">
+      {% include "components/_workflow_designer_tabs.html" with tabs=designer_tabs %}
+      <div class="clm-list-view-actions">
+        <a href="{% url 'contracts:workflow_template_list' %}" class="dc-ds-button dc-ds-button--quiet">Open templates</a>
+      </div>
+    </div>
+  </header>
+
+  <p class="clm-list-result-count" aria-live="polite">{{ result_count }} approval rule{{ result_count|pluralize }}</p>
+
+  <div class="dc-ds-surface" style="overflow:hidden;">
+    <table class="dc-ds-table w-full text-sm">
+      <thead>
+        <tr>
+          <th scope="col">Template</th>
+          <th scope="col">Step</th>
+          <th scope="col">Role</th>
+          <th scope="col">Order</th>
+          <th scope="col">Condition</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for route in approval_routes %}
+        <tr>
+          <td><a href="{% url 'contracts:workflow_template_detail' route.workflow_template_id %}" class="c-link">{{ route.workflow_template.name }}</a></td>
+          <td>{{ route.name }}</td>
+          <td>{{ route.role_label|default:"—" }}</td>
+          <td>{{ route.order }}</td>
+          <td>{% if route.is_conditional %}{{ route.condition_note|default:"Conditional" }}{% else %}Always{% endif %}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="text-center c-muted" style="padding:48px 16px;">No template approval routes yet. Define them on a workflow template in Designer.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

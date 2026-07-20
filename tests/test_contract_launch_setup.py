@@ -219,7 +219,7 @@ class IntakeRiskAssessmentTests(TestCase):
     def test_high_value_uses_named_finance_approver(self):
         route = derive_intake_route(self._values(value='150000'), template_applied=True)
         self.assertEqual(route.approvers[0]['role'], 'Finance Director')
-        self.assertIn('approval threshold', route.approvers[0]['reason'])
+        self.assertIn('threshold', route.approvers[0]['reason'].lower())
 
 
 class NewContractRequestPageTests(_LaunchSetupFixtureMixin, TestCase):

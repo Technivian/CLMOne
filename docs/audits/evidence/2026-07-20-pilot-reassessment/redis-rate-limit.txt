@@ -1,0 +1,31 @@
+2026-07-20 15:08:44,407 INFO contracts.middleware request_id=d6657de8-30c5-4af0-a67c-659140f82424 user_id=- org_id=- path=/login/ request_completed
+2026-07-20 15:08:44,487 INFO contracts.middleware request_id=f52ff577-b4a0-4739-a3e0-9d87f5f6d022 user_id=- org_id=- path=/login/ request_completed
+2026-07-20 15:08:44,565 INFO contracts.middleware request_id=592e2574-baa3-4c84-ad88-6be62250fe5d user_id=- org_id=- path=/login/ request_completed
+2026-07-20 15:08:44,646 INFO contracts.middleware request_id=31436057-1b3f-4b70-aa44-4d80626f0cee user_id=- org_id=- path=/login/ request_completed
+2026-07-20 15:08:44,646 WARNING django.request request_id=- user_id=- org_id=- path=- Too Many Requests: /login/
+2026-07-20 15:08:44,759 INFO contracts.middleware request_id=6b2c166c-4901-4a01-9e93-99bcfcd83ad4 user_id=- org_id=- path=/login/ request_completed
+2026-07-20 15:08:44,761 WARNING contracts.signals request_id=08ffc4ae-16b7-4238-b9f2-ffad8bf90df0 user_id=- org_id=- path=/login/ login_failed audit throttled ip=None user=rl_pilot_user
+2026-07-20 15:08:44,766 WARNING contracts.signals request_id=5a08c887-d1c8-4517-b87b-14c1d8853dbd user_id=- org_id=- path=/login/ login_failed audit throttled ip=None user=rl_pilot_user
+2026-07-20 15:08:44,768 INFO contracts.middleware request_id=08ffc4ae-16b7-4238-b9f2-ffad8bf90df0 user_id=- org_id=- path=/login/ request_completed
+2026-07-20 15:08:44,807 WARNING contracts.signals request_id=b55ea357-de22-4858-8073-f3d808fdc131 user_id=- org_id=- path=/login/ login_failed audit throttled ip=None user=rl_pilot_user
+2026-07-20 15:08:44,809 INFO contracts.middleware request_id=5a08c887-d1c8-4517-b87b-14c1d8853dbd user_id=- org_id=- path=/login/ request_completed
+2026-07-20 15:08:44,814 INFO contracts.middleware request_id=b55ea357-de22-4858-8073-f3d808fdc131 user_id=- org_id=- path=/login/ request_completed
+2026-07-20 15:08:44,815 WARNING django.request request_id=- user_id=- org_id=- path=- Too Many Requests: /login/
+2026-07-20 15:08:44,838 WARNING contracts.signals request_id=6f8a2446-da06-40c3-a4b9-6e1bbf5a127e user_id=- org_id=- path=/login/ login_failed audit throttled ip=None user=rl_pilot_user
+2026-07-20 15:08:44,840 INFO contracts.middleware request_id=6f8a2446-da06-40c3-a4b9-6e1bbf5a127e user_id=- org_id=- path=/login/ request_completed
+2026-07-20 15:08:44,840 WARNING django.request request_id=- user_id=- org_id=- path=- Too Many Requests: /login/
+2026-07-20 15:08:44,884 WARNING contracts.signals request_id=a0a7ce50-2c91-4228-a82e-c525df030d46 user_id=- org_id=- path=/login/ login_failed audit throttled ip=None user=rl_pilot_user
+2026-07-20 15:08:44,886 INFO contracts.middleware request_id=a0a7ce50-2c91-4228-a82e-c525df030d46 user_id=- org_id=- path=/login/ request_completed
+2026-07-20 15:08:44,886 WARNING django.request request_id=- user_id=- org_id=- path=- Too Many Requests: /login/
+2026-07-20 15:08:44,961 WARNING contracts.signals request_id=6e241d2b-381e-4a38-95a0-aeb3d1c2fb6e user_id=- org_id=- path=/login/ login_failed audit throttled ip=None user=rl_pilot_user
+2026-07-20 15:08:44,963 INFO contracts.middleware request_id=6e241d2b-381e-4a38-95a0-aeb3d1c2fb6e user_id=- org_id=- path=/login/ request_completed
+2026-07-20 15:08:45,046 INFO contracts.middleware request_id=5c83c8ee-b916-466b-b716-64e31cb35ea6 user_id=- org_id=- path=/login/ request_completed
+[CLM One] Database: //tmp/clmone-pilot-rl.sqlite3 (local, env=production)
+Using cache backend: django_redis.cache.RedisCache
+REDIS_URL present: yes (value redacted)
+PASS: shared Redis counter blocked after sequential multi-client failures
+PASS: concurrent multi-client posts observed statuses [200, 200, 200, 429, 429, 429]
+PASS: unrelated IP remains unblocked
+PASS: successful login returns 302
+PASS: Redis remains healthy
+ALL REDIS RATE-LIMIT CHECKS PASSED

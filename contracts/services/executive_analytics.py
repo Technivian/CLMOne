@@ -32,7 +32,7 @@ def build_executive_cycle_time_snapshot(organization, window_days: int = 180) ->
 def build_executive_bottlenecks(organization, limit: int = 5) -> list[dict]:
     rows = (
         Contract.objects.filter(organization=organization)
-        .exclude(lifecycle_stage='ARCHIVED')
+        .exclude(status=Contract.Status.ARCHIVED)
         .values('lifecycle_stage')
         .annotate(count=Count('id'))
         .order_by('-count', 'lifecycle_stage')[: max(1, int(limit))]

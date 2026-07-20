@@ -10,6 +10,7 @@ class CLMOneRepository {
         this.filters = {
             q: '',
             status: [],
+            lifecycle_stage: [],
             contract_type: [],
             owner: [],
             counterparty: [],
@@ -26,11 +27,11 @@ class CLMOneRepository {
             counterparty: true,
             stage: true,
             owner: true,
-            activity: true,
+            activity: false,
             key_date: true,
             value: true,
         };
-        this.columnStorageKey = 'clmone-repo-columns';
+        this.columnStorageKey = 'clmone-repo-columns-v2';
         
         this.init();
     }
@@ -113,6 +114,11 @@ class CLMOneRepository {
                 colMenu.classList.remove('is-open');
                 colToggle.setAttribute('aria-expanded', 'false');
             }
+            if (!event.target.closest('.repo-row-menu')) {
+                document.querySelectorAll('.repo-row-menu[open]').forEach((menu) => {
+                    menu.open = false;
+                });
+            }
         });
 
         const bindSelectFilter = (id, apply) => {
@@ -120,6 +126,11 @@ class CLMOneRepository {
             if (control) control.addEventListener('change', (event) => apply(event.target.value));
         };
         bindSelectFilter('status-filter-select', (value) => this.applyStatusFilter(value));
+        bindSelectFilter('stage-filter-select', (value) => {
+            this.filters.lifecycle_stage = value ? [value] : [];
+            this.filters.page = 1;
+            this.renderFilterChips(); this.updateURL(); this.loadContracts();
+        });
         bindSelectFilter('type-filter-select', (value) => {
             this.filters.contract_type = value ? [value] : [];
             this.filters.page = 1;
@@ -217,6 +228,7 @@ class CLMOneRepository {
         // Load filters from URL
         if (params.get('q')) this.filters.q = params.get('q');
         if (params.getAll('status').length) this.filters.status = params.getAll('status');
+        if (params.getAll('lifecycle_stage').length) this.filters.lifecycle_stage = params.getAll('lifecycle_stage');
         if (params.getAll('contract_type').length) this.filters.contract_type = params.getAll('contract_type');
         ['owner', 'counterparty', 'risk_level', 'approval_state'].forEach((filterName) => {
             if (params.getAll(filterName).length) this.filters[filterName] = params.getAll(filterName);
@@ -245,6 +257,8 @@ class CLMOneRepository {
         this.syncSortHeaders();
         const statusSelect = document.getElementById('status-filter-select');
         if (statusSelect) statusSelect.value = this.filters.status.length === 1 ? this.filters.status[0] : '';
+        const stageSelect = document.getElementById('stage-filter-select');
+        if (stageSelect) stageSelect.value = this.filters.lifecycle_stage.length === 1 ? this.filters.lifecycle_stage[0] : '';
         const typeSelect = document.getElementById('type-filter-select');
         if (typeSelect) typeSelect.value = this.filters.contract_type.length === 1 ? this.filters.contract_type[0] : '';
         const ownerSelect = document.getElementById('owner-filter-select');
@@ -283,6 +297,8 @@ class CLMOneRepository {
         let next = 'updated_desc';
         if (column === 'title') {
             next = 'title';
+        } else if (column === 'stage') {
+            next = 'stage';
         } else if (column === 'status') {
             next = 'status';
         } else if (column === 'updated') {
@@ -297,6 +313,7 @@ class CLMOneRepository {
         const sort = this.filters.sort || 'updated_desc';
         const mapping = {
             title: { key: 'title', direction: 'ascending' },
+            stage: { key: 'stage', direction: 'ascending' },
             status: { key: 'status', direction: 'ascending' },
             updated_desc: { key: 'updated', direction: 'descending' },
             updated_asc: { key: 'updated', direction: 'ascending' },
@@ -359,6 +376,7 @@ class CLMOneRepository {
         
         if (this.filters.q) params.set('q', this.filters.q);
         this.filters.status.forEach(s => params.append('status', s));
+        this.filters.lifecycle_stage.forEach(s => params.append('lifecycle_stage', s));
         this.filters.contract_type.forEach(t => params.append('contract_type', t));
         ['owner', 'counterparty', 'risk_level', 'approval_state'].forEach((filterName) => {
             this.filters[filterName].forEach((value) => params.append(filterName, value));
@@ -467,10 +485,35 @@ class CLMOneRepository {
         return `<span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--${contract.stage_badge_tone || 'neutral'} repo-stage-badge"${titleAttr}>${this.escapeHtml(shortLabel)}</span>`;
     }
 
+    renderRowActions(contract) {
+        const title = this.escapeHtml(contract.title);
+        const detailUrl = `/contracts/${contract.id}/`;
+        const activityUrl = `${detailUrl}?tab=activity`;
+        return `
+            <details class="wq-kebab repo-row-menu">
+              <summary aria-label="Actions for ${title}" class="wq-kebab-trigger">
+                <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.7"></circle><circle cx="12" cy="12" r="1.7"></circle><circle cx="12" cy="19" r="1.7"></circle></svg>
+              </summary>
+              <div class="wq-kebab-menu">
+                <a href="${detailUrl}">Open contract</a>
+                <a href="${activityUrl}">View activity</a>
+              </div>
+            </details>
+        `;
+    }
+
     renderTypeCell(contract) {
         const shortLabel = contract.contract_type_short || contract.contract_type_display || 'Other';
         const fullLabel = contract.contract_type_display || shortLabel;
-        return `<span class="repo-type-label" title="${this.escapeHtml(fullLabel)}">${this.escapeHtml(shortLabel)}</span>`;
+        return `<span class="repo-type-label dc-ds-table-cell-text" title="${this.escapeHtml(fullLabel)}">${this.escapeHtml(shortLabel)}</span>`;
+    }
+
+    renderTruncatedText(value, fallback = '—') {
+        const text = (value || '').trim() || fallback;
+        if (text === '—') {
+            return '<span class="repo-empty-label">—</span>';
+        }
+        return `<span class="dc-ds-table-cell-text" title="${this.escapeHtml(text)}">${this.escapeHtml(text)}</span>`;
     }
 
     renderContracts(result) {
@@ -481,6 +524,7 @@ class CLMOneRepository {
             const hasActiveFilters = Boolean(
                 this.filters.q
                 || this.filters.status.length
+                || this.filters.lifecycle_stage.length
                 || this.filters.contract_type.length
                 || this.filters.owner.length
                 || this.filters.counterparty.length
@@ -529,7 +573,7 @@ class CLMOneRepository {
                     ${this.renderTypeCell(contract)}
                 </td>
                 <td class="repo-cell" data-col="counterparty">
-                    ${this.escapeHtml(contract.counterparty || '—')}
+                    ${this.renderTruncatedText(contract.counterparty)}
                 </td>
                 <td class="repo-cell" data-col="stage">
                     ${this.renderStageBadge(contract)}
@@ -547,7 +591,7 @@ class CLMOneRepository {
                     ${contract.value_display || '—'}
                 </td>
                 <td class="repo-cell repo-actions-cell" data-col="actions">
-                    <a href="/contracts/${contract.id}/" class="repo-row-action" aria-label="Open ${this.escapeHtml(contract.title)}">⋯</a>
+                    ${this.renderRowActions(contract)}
                 </td>
             </tr>
         `).join('');
@@ -555,10 +599,20 @@ class CLMOneRepository {
         // Add click handlers
         tbody.querySelectorAll('.contract-row').forEach(row => {
             row.addEventListener('click', (e) => {
-                if (!e.target.closest('input, a, button')) {
+                if (!e.target.closest('input, a, button, summary, .wq-kebab, .wq-kebab-menu')) {
                     const contractId = row.dataset.contractId;
                     window.location.href = `/contracts/${contractId}/`;
                 }
+            });
+        });
+
+        tbody.querySelectorAll('.repo-row-menu').forEach((menu) => {
+            menu.addEventListener('click', (event) => event.stopPropagation());
+            menu.addEventListener('toggle', () => {
+                if (!menu.open) return;
+                tbody.querySelectorAll('.repo-row-menu[open]').forEach((other) => {
+                    if (other !== menu) other.open = false;
+                });
             });
         });
         
@@ -619,6 +673,7 @@ class CLMOneRepository {
     clearRepositoryFilters() {
         this.filters.q = '';
         this.filters.status = [];
+        this.filters.lifecycle_stage = [];
         this.filters.contract_type = [];
         this.filters.owner = [];
         this.filters.counterparty = [];
@@ -782,6 +837,7 @@ class CLMOneRepository {
     filterDisplayValue(filterName, value) {
         const controlIds = {
             status: 'status-filter-select',
+            lifecycle_stage: 'stage-filter-select',
             contract_type: 'type-filter-select',
             owner: 'owner-filter-select',
             counterparty: 'counterparty-filter-select',
@@ -834,7 +890,22 @@ class CLMOneRepository {
                     this.filters.status = this.filters.status.filter((value) => value !== status);
                     this.filters.page = 1;
                     this.renderFilterChips();
+                    this.syncControlsToFilters();
                     this.updateQuickFilterState();
+                    this.updateURL();
+                    this.loadContracts();
+                }
+            });
+        });
+
+        this.filters.lifecycle_stage.forEach((stage) => {
+            chips.push({
+                label: `Stage: ${this.filterDisplayValue('lifecycle_stage', stage)}`,
+                onClick: () => {
+                    this.filters.lifecycle_stage = this.filters.lifecycle_stage.filter((value) => value !== stage);
+                    this.filters.page = 1;
+                    this.renderFilterChips();
+                    this.syncControlsToFilters();
                     this.updateURL();
                     this.loadContracts();
                 }
@@ -1018,13 +1089,15 @@ class CLMOneRepository {
             return;
         }
 
-        const header = ['id', 'title', 'status', 'counterparty', 'value', 'owner', 'updated_at'];
+        const header = ['id', 'title', 'status', 'stage', 'document_state', 'counterparty', 'value', 'owner', 'updated_at'];
         const csvLines = [
             header.join(','),
             ...rows.map((contract) => [
                 contract.id,
                 this.csvEscape(contract.title),
-                this.csvEscape(contract.status),
+                this.csvEscape(contract.status_display || contract.status),
+                this.csvEscape(contract.stage_display_full || contract.stage_display || ''),
+                this.csvEscape(contract.document_state_display || contract.document_state || ''),
                 this.csvEscape(contract.counterparty || ''),
                 contract.value ?? '',
                 this.csvEscape(contract.owner || ''),

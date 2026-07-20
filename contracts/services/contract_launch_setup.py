@@ -28,11 +28,14 @@ from django.contrib.auth.models import AbstractBaseUser
 from contracts.models import Contract, ContractTemplate
 from contracts.services.contract_policies import get_required_fields_for_contract_type
 
-# Matches the existing (pre-this-feature) "commercial approval" framing in
-# contract_form.html's JS `monetaryReview` check — kept as the single named
-# constant for the MSA-specific finance-threshold messaging this feature
-# adds, rather than introducing a third, uncoordinated threshold number.
-MSA_FINANCE_APPROVAL_THRESHOLD = 100_000
+from contracts.services.finance_approval_policy import (
+    finance_threshold_display,
+    get_finance_approval_threshold,
+    requires_finance_approval,
+)
+
+# Backward-compatible alias — prefer finance_approval_policy helpers in new code.
+MSA_FINANCE_APPROVAL_THRESHOLD = int(get_finance_approval_threshold())
 
 FIELD_LABELS = {
     'counterparty': 'Counterparty',
@@ -188,7 +191,7 @@ LAUNCH_SETUP_CONFIG = {
         'review_route': 'Legal review',
         'approval_route': (
             f'Legal review, plus finance approval if contract value is at or above '
-            f'${MSA_FINANCE_APPROVAL_THRESHOLD:,.0f}.'
+            f'{finance_threshold_display()}.'
         ),
     },
     Contract.ContractType.SOW: CommercialCounselCopy,

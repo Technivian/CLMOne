@@ -1,24 +1,55 @@
-import logging
+"""Canonical contract lifecycle transitions for record status and workflow stage.
+
+Record status, workflow stage, and document state are three separate dimensions.
+Pairing rules live in ``lifecycle_dimensions``; this module owns transition
+graphs, activation, and audited writers.
+"""
+
+from __future__ import annotations
+
 import hashlib
+import logging
 from datetime import date
 from decimal import Decimal
 
 from django.db import transaction
 from django.utils import timezone
 
+from contracts.services.lifecycle_dimensions import (
+    RECORD_STATUS_ACTIVE,
+    RECORD_STATUS_ARCHIVED,
+    RECORD_STATUS_CANCELLED,
+    RECORD_STATUS_EXPIRED,
+    RECORD_STATUS_IN_PROGRESS,
+    RECORD_STATUS_TERMINATED,
+    RECORD_TERMINAL_STATUSES,
+    STAGE_APPROVAL,
+    STAGE_DRAFTING,
+    STAGE_EXECUTED,
+    STAGE_INTAKE,
+    STAGE_INTERNAL_REVIEW,
+    STAGE_NEGOTIATION,
+    STAGE_OBLIGATION_TRACKING,
+    STAGE_RENEWAL,
+    STAGE_SIGNATURE,
+    DOC_STATE_EXECUTED,
+    is_valid_status_stage_pair,
+    validate_status_stage_pair,
+)
+
 logger = logging.getLogger(__name__)
 
 
 CONTRACT_LIFECYCLE_TRANSITIONS = {
-    'DRAFTING': {'INTERNAL_REVIEW', 'ARCHIVED'},
-    'INTERNAL_REVIEW': {'NEGOTIATION', 'ARCHIVED'},
-    'NEGOTIATION': {'APPROVAL', 'ARCHIVED'},
-    'APPROVAL': {'SIGNATURE', 'ARCHIVED'},
-    'SIGNATURE': {'EXECUTED', 'ARCHIVED'},
-    'EXECUTED': {'OBLIGATION_TRACKING', 'RENEWAL', 'ARCHIVED'},
-    'OBLIGATION_TRACKING': {'RENEWAL', 'ARCHIVED'},
-    'RENEWAL': {'DRAFTING', 'ARCHIVED'},
-    'ARCHIVED': set(),
+    STAGE_INTAKE: {STAGE_DRAFTING},
+    STAGE_DRAFTING: {STAGE_INTERNAL_REVIEW},
+    STAGE_INTERNAL_REVIEW: {STAGE_NEGOTIATION},
+    STAGE_NEGOTIATION: {STAGE_APPROVAL},
+    STAGE_APPROVAL: {STAGE_SIGNATURE},
+    STAGE_SIGNATURE: {STAGE_EXECUTED, STAGE_OBLIGATION_TRACKING},
+    STAGE_EXECUTED: {STAGE_OBLIGATION_TRACKING, STAGE_RENEWAL},
+    STAGE_OBLIGATION_TRACKING: {STAGE_RENEWAL},
+    STAGE_RENEWAL: {STAGE_DRAFTING},
 }
 
 TRACKED_CONTRACT_FIELDS = (
@@ -60,7 +91,13 @@ def can_transition_lifecycle_stage(contract, new_stage):
     current_stage = getattr(contract, 'lifecycle_stage', None)
     if new_stage == current_stage:
         return True
-    return new_stage in get_allowed_lifecycle_stages(current_stage)
+    if not get_allowed_lifecycle_stages(current_stage):
+        return False
+    if new_stage not in get_allowed_lifecycle_stages(current_stage):
+        return False
+    # Stage advances must remain compatible with current record status.
+    status = getattr(contract, 'status', None)
+    return is_valid_status_stage_pair(status, new_stage)
 
 
 def _normalize_audit_value(value):
@@ -108,14 +145,15 @@ def build_contract_lifecycle_guidance(contract, today=None):
     today = today or timezone.localdate()
 
     stage_guidance = {
-        'DRAFTING': ('Drafting', 'Submit for review when the record is ready.', 'INTERNAL_REVIEW'),
-        'INTERNAL_REVIEW': ('Internal review', 'Resolve reviewer feedback and move into negotiation.', 'NEGOTIATION'),
-        'NEGOTIATION': ('Negotiation', 'Resolve open commercial and legal positions before approval.', 'APPROVAL'),
-        'APPROVAL': ('Approval', 'Collect the required approvals before signature routing.', 'SIGNATURE'),
-        'SIGNATURE': ('Signature', 'Track signatures and activate only when the packet is complete.', 'EXECUTED'),
-        'EXECUTED': ('Executed', 'Confirm obligations and renewal dates for ongoing management.', 'OBLIGATION_TRACKING'),
-        'OBLIGATION_TRACKING': ('Obligation tracking', 'Monitor obligations and prepare the next renewal decision.', 'RENEWAL'),
-        'RENEWAL': ('Renewal', 'Decide whether to renew, amend, terminate, or archive the agreement.', 'DRAFTING'),
+        STAGE_INTAKE: ('Intake', 'Capture required fields and open drafting.', STAGE_DRAFTING),
+        STAGE_DRAFTING: ('Drafting', 'Submit for review when the record is ready.', STAGE_INTERNAL_REVIEW),
+        STAGE_INTERNAL_REVIEW: ('Internal review', 'Resolve reviewer feedback and move into negotiation.', STAGE_NEGOTIATION),
+        STAGE_NEGOTIATION: ('Negotiation', 'Resolve open commercial and legal positions before approval.', STAGE_APPROVAL),
+        STAGE_APPROVAL: ('Approval', 'Collect the required approvals before signature routing.', STAGE_SIGNATURE),
+        STAGE_SIGNATURE: ('Signature', 'Track signatures and activate when the packet is complete.', STAGE_OBLIGATION_TRACKING),
+        STAGE_EXECUTED: ('Executed', 'Confirm obligations and renewal dates for ongoing management.', STAGE_OBLIGATION_TRACKING),
+        STAGE_OBLIGATION_TRACKING: ('Obligation tracking', 'Monitor obligations and prepare the next renewal decision.', STAGE_RENEWAL),
+        STAGE_RENEWAL: ('Renewal', 'Decide whether to renew, amend, terminate, or archive the agreement.', STAGE_DRAFTING),
     }
     state, action, next_stage = stage_guidance.get(
         getattr(contract, 'lifecycle_stage', None),
@@ -133,23 +171,21 @@ def build_contract_lifecycle_guidance(contract, today=None):
     if contract is None:
         return guidance
 
-    if contract.lifecycle_stage == 'ARCHIVED':
+    if contract.status == RECORD_STATUS_ARCHIVED:
         guidance.update({
             'state': 'Archived',
             'severity': 'low',
             'action': 'No operational action required.',
-            'next_stage': 'ARCHIVED',
+            'next_stage': contract.lifecycle_stage,
             'detail': 'Archived contracts are retained for evidence and reference only.',
         })
         return guidance
 
     # Renewal, expiry and termination signals become operational only after a
-    # contract is executed/active.  Applying them while a record is still
-    # drafting or under review makes the page claim two incompatible next
-    # stages (for example, Drafting and Renewal at the same time).
+    # contract is active or past execution stage.
     operational_lifecycle = (
-        contract.status == 'ACTIVE'
-        or contract.lifecycle_stage in {'EXECUTED', 'OBLIGATION_TRACKING', 'RENEWAL'}
+        contract.status == RECORD_STATUS_ACTIVE
+        or contract.lifecycle_stage in {STAGE_EXECUTED, STAGE_OBLIGATION_TRACKING, STAGE_RENEWAL}
     )
 
     if operational_lifecycle and contract.end_date:
@@ -162,14 +198,14 @@ def build_contract_lifecycle_guidance(contract, today=None):
                 'state': 'Expired',
                 'severity': 'high',
                 'action': 'Review immediately for renewal, termination, or archive eligibility.',
-                'next_stage': 'RENEWAL',
+                'next_stage': STAGE_RENEWAL,
             })
         elif days_until_end <= 30:
             guidance.update({
                 'state': 'Renewal Window',
                 'severity': 'medium',
                 'action': 'Prepare renewal or termination decision now.',
-                'next_stage': 'RENEWAL',
+                'next_stage': STAGE_RENEWAL,
             })
 
     if operational_lifecycle and contract.renewal_date:
@@ -182,7 +218,7 @@ def build_contract_lifecycle_guidance(contract, today=None):
                 'state': 'Renewal Due',
                 'severity': 'medium',
                 'action': 'Finalize renewal language and stakeholder approvals.',
-                'next_stage': 'RENEWAL',
+                'next_stage': STAGE_RENEWAL,
             })
 
     if operational_lifecycle and contract.auto_renew:
@@ -192,7 +228,7 @@ def build_contract_lifecycle_guidance(contract, today=None):
                 'state': 'Auto-Renew Enabled',
                 'severity': 'medium',
                 'action': 'Set a cancellation checkpoint before the notice deadline.',
-                'next_stage': 'RENEWAL',
+                'next_stage': STAGE_RENEWAL,
             })
         else:
             guidance['action'] = f"{guidance['action']} Auto-renew is enabled."
@@ -207,14 +243,14 @@ def build_contract_lifecycle_guidance(contract, today=None):
                 'state': 'Termination Notice Due',
                 'severity': 'high',
                 'action': 'Send termination notice or move to archive review immediately.',
-                'next_stage': 'RENEWAL',
+                'next_stage': STAGE_RENEWAL,
             })
 
-    if guidance['severity'] == 'low' and contract.lifecycle_stage == 'EXECUTED' and not contract.end_date:
+    if guidance['severity'] == 'low' and contract.lifecycle_stage == STAGE_EXECUTED and not contract.end_date:
         guidance.update({
             'state': 'Execution Complete',
             'action': 'Capture renewal date and notice period to prepare for lifecycle management.',
-            'next_stage': 'OBLIGATION_TRACKING',
+            'next_stage': STAGE_OBLIGATION_TRACKING,
         })
 
     return guidance
@@ -226,11 +262,14 @@ def get_signature_routing_blockers(contract):
     This helper is deliberately used by both the detail-page action model and
     the form endpoint so a hidden or stale UI cannot bypass the workflow.
     """
-    from contracts.models import ApprovalRequest, Contract, RiskLog
+    from contracts.models import ApprovalRequest, RiskLog
 
     blockers = []
-    if contract.status != Contract.Status.APPROVED:
-        blockers.append('The contract must be fully approved before signature routing.')
+    # Signature routing is a workflow-stage concern; record status stays IN_PROGRESS
+    # until activation. Approvals must be complete and stage at/after APPROVAL.
+    stage = getattr(contract, 'lifecycle_stage', None)
+    if stage not in {STAGE_APPROVAL, STAGE_SIGNATURE, STAGE_EXECUTED}:
+        blockers.append('Move the contract to Approval or Signature stage before routing signatures.')
 
     approvals = ApprovalRequest.objects.filter(contract=contract)
     if not approvals.exists():
@@ -273,40 +312,33 @@ def record_contract_grounded_check(contract, actor, *, request=None, trigger='ma
             'event': 'contract.grounded_check_completed',
             'trigger': trigger,
             'status': contract.status,
+            'lifecycle_stage': contract.lifecycle_stage,
             'risk_level': contract.risk_level,
             'open_risk_count': open_risk_count,
         },
     )
 
 
-# ---------------------------------------------------------------------------
-# Canonical Contract.status lifecycle (Phase 4B)
-#
-# `status` is the business lifecycle (distinct from `lifecycle_stage` above).
-# Every status change must go through ContractLifecycleService.transition so the
-# same graph, permissions, prerequisites, atomicity and chained audit apply to
-# HTML, API, bulk, jobs and admin paths alike.
-# ---------------------------------------------------------------------------
-
-# Allowed status transitions. Terminal states have no outgoing edges; returning
-# from a terminal state requires a separately designed restoration workflow
-# (intentionally not provided here).
-# Activation is reachable from the review states (PENDING/IN_REVIEW/APPROVED) but
-# is gated by the ACTIVE precondition (an approved ApprovalRequest, plus signature
-# completion where signatures exist). DRAFT->ACTIVE and any terminal->ACTIVE are
-# blocked by the graph; the precondition then enforces approval/signature.
+# Allowed record-status transitions. Terminal states have no outgoing edges;
+# returning from a terminal state requires system repair (system=True).
 CONTRACT_STATUS_TRANSITIONS = {
-    'DRAFT': {'IN_REVIEW', 'PENDING', 'CANCELLED'},
-    'PENDING': {'IN_REVIEW', 'APPROVED', 'ACTIVE', 'DRAFT', 'CANCELLED'},   # submitted for approval
-    'IN_REVIEW': {'APPROVED', 'PENDING', 'ACTIVE', 'DRAFT', 'CANCELLED'},
-    'APPROVED': {'ACTIVE', 'CANCELLED'},
-    'ACTIVE': {'EXPIRED', 'TERMINATED', 'COMPLETED'},
-    'EXPIRED': set(),
-    'TERMINATED': set(),
-    'COMPLETED': set(),
-    'CANCELLED': set(),
+    RECORD_STATUS_IN_PROGRESS: {
+        RECORD_STATUS_ACTIVE,
+        RECORD_STATUS_CANCELLED,
+        RECORD_STATUS_ARCHIVED,
+    },
+    RECORD_STATUS_ACTIVE: {
+        RECORD_STATUS_EXPIRED,
+        RECORD_STATUS_TERMINATED,
+        RECORD_STATUS_CANCELLED,
+        RECORD_STATUS_ARCHIVED,
+    },
+    RECORD_STATUS_EXPIRED: {RECORD_STATUS_ARCHIVED},
+    RECORD_STATUS_TERMINATED: {RECORD_STATUS_ARCHIVED},
+    RECORD_STATUS_CANCELLED: {RECORD_STATUS_ARCHIVED},
+    RECORD_STATUS_ARCHIVED: set(),
 }
-CONTRACT_TERMINAL_STATUSES = frozenset({'EXPIRED', 'TERMINATED', 'COMPLETED', 'CANCELLED'})
+CONTRACT_TERMINAL_STATUSES = RECORD_TERMINAL_STATUSES
 
 
 class ContractTransitionError(Exception):
@@ -343,8 +375,19 @@ def can_transition_contract_status(current_status, new_status):
     return new_status in get_allowed_contract_statuses(current_status)
 
 
+def _primary_contract_document(contract):
+    docs = list(contract.documents.filter(is_deleted=False).order_by('-version', '-id'))
+    if not docs:
+        return None
+    # Prefer non-superseded, then highest version.
+    for doc in docs:
+        if doc.status != 'SUPERSEDED':
+            return doc
+    return docs[0]
+
+
 class ContractLifecycleService:
-    """Single authority for Contract.status transitions."""
+    """Single authority for Contract.status and lifecycle_stage transitions."""
 
     def transition(self, contract, new_status, actor=None, *, system=False,
                    reason='', request=None, actor_type=None, job_run_id=None):
@@ -363,10 +406,6 @@ class ContractLifecycleService:
 
         contract_id = contract.pk if hasattr(contract, 'pk') else contract
         with transaction.atomic():
-            # Lock only the contract row: select_related('organization') adds a
-            # LEFT OUTER JOIN (organization is nullable) and PostgreSQL refuses
-            # FOR UPDATE on the nullable side of an outer join, so scope the lock
-            # with of=('self',).
             contract = (
                 Contract.objects.select_for_update(of=('self',)).select_related('organization')
                 .get(pk=contract_id)
@@ -376,23 +415,34 @@ class ContractLifecycleService:
             if not system:
                 if actor is None or not getattr(actor, 'is_authenticated', False):
                     raise ContractTransitionForbidden('Authentication required.', status_code=403)
-                # Tenant + permission (can_access_contract_action checks org membership).
                 if not can_access_contract_action(actor, contract, ContractAction.EDIT):
                     raise ContractTransitionForbidden(
                         'You do not have permission to change this contract.', status_code=403)
 
-            # Idempotent no-op.
             if new_status == old_status:
                 return contract
 
-            if new_status not in get_allowed_contract_statuses(old_status):
+            if new_status not in get_allowed_contract_statuses(old_status) and not system:
                 raise InvalidContractTransition(
                     f'Cannot move a contract from {old_status} to {new_status}.')
 
+            # Keep stage compatible when status changes (e.g. ACTIVE requires post-activation stage).
+            target_stage = contract.lifecycle_stage
+            if new_status == RECORD_STATUS_ACTIVE and target_stage not in {
+                STAGE_EXECUTED, STAGE_OBLIGATION_TRACKING, STAGE_RENEWAL,
+            }:
+                target_stage = STAGE_OBLIGATION_TRACKING
+            if not system:
+                validate_status_stage_pair(new_status, target_stage)
+
             self._check_preconditions(contract, new_status, ApprovalRequest, SignatureRequest)
 
+            update_fields = ['status', 'updated_at']
             contract.status = new_status
-            contract.save(update_fields=['status', 'updated_at'])
+            if target_stage != contract.lifecycle_stage:
+                contract.lifecycle_stage = target_stage
+                update_fields.append('lifecycle_stage')
+            contract.save(update_fields=update_fields)
 
             resolved_actor_type = actor_type or (
                 AuditLog.ActorType.SCHEDULED_JOB if system and actor is None
@@ -413,25 +463,13 @@ class ContractLifecycleService:
         return contract
 
     def _check_preconditions(self, contract, new_status, ApprovalRequest, SignatureRequest):
-        if new_status == 'ACTIVE':
+        if new_status == RECORD_STATUS_ACTIVE:
             has_approval = ApprovalRequest.objects.filter(
                 contract=contract, status=ApprovalRequest.Status.APPROVED,
             ).exists()
             if not has_approval:
                 raise ContractTransitionPreconditionFailed(
                     'A contract cannot be activated without an approved approval request.')
-            # Signature prerequisite — evaluate only the CURRENT applicable
-            # signing workflow, not every historical request. There is no packet
-            # model, so the "current" request for each signer is the most recent
-            # one (by created_at); a re-issued request supersedes older ones for
-            # that signer. Rules for each signer's current request:
-            #   SIGNED                       -> satisfied
-            #   CANCELLED / EXPIRED          -> withdrawn (does NOT block)
-            #   PENDING / SENT / VIEWED      -> in-flight (BLOCKS: not complete)
-            #   DECLINED                     -> active refusal (BLOCKS)
-            # This ensures cancelled/expired/superseded/abandoned historical
-            # requests cannot wrongly block activation, while genuinely open or
-            # refused current requests still do.
             S = SignatureRequest.Status
             withdrawn = {S.CANCELLED, S.EXPIRED}
             latest_by_signer = {}
@@ -448,6 +486,235 @@ class ContractLifecycleService:
                 raise ContractTransitionPreconditionFailed(
                     'A contract cannot be activated while its current signature '
                     'workflow has unsigned, in-flight or declined requests.')
+
+    def transition_lifecycle_stage(
+        self,
+        contract,
+        new_stage,
+        actor=None,
+        *,
+        system=False,
+        reason='',
+        request=None,
+        actor_type=None,
+    ):
+        """Move ``lifecycle_stage`` through the canonical service with audit."""
+        from contracts.middleware import log_action
+        from contracts.models import AuditLog, Contract
+        from contracts.permissions import ContractAction, can_access_contract_action
+
+        contract_id = contract.pk if hasattr(contract, 'pk') else contract
+        with transaction.atomic():
+            contract = (
+                Contract.objects.select_for_update(of=('self',)).select_related('organization')
+                .get(pk=contract_id)
+            )
+            old_stage = contract.lifecycle_stage
+            if new_stage == old_stage:
+                return contract
+
+            if not system:
+                if actor is None or not getattr(actor, 'is_authenticated', False):
+                    raise ContractTransitionForbidden('Authentication required.', status_code=403)
+                if not can_access_contract_action(actor, contract, ContractAction.EDIT):
+                    raise ContractTransitionForbidden(
+                        'You do not have permission to change this contract.', status_code=403)
+
+                if contract.status in RECORD_TERMINAL_STATUSES:
+                    raise InvalidContractTransition(
+                        'Cannot advance workflow stage on a terminal contract record.')
+
+                if not can_transition_lifecycle_stage(contract, new_stage):
+                    raise InvalidContractTransition(
+                        f'Cannot move a contract from lifecycle stage {old_stage} to {new_stage}.')
+                validate_status_stage_pair(contract.status, new_stage)
+
+            contract.lifecycle_stage = new_stage
+            contract.save(update_fields=['lifecycle_stage', 'updated_at'])
+            resolved_actor_type = actor_type or (
+                AuditLog.ActorType.SYSTEM if system and actor is None else AuditLog.ActorType.HUMAN
+            )
+            log_action(
+                actor, AuditLog.Action.UPDATE, 'Contract',
+                object_id=contract.pk, object_repr=str(contract)[:300],
+                organization=contract.organization, request=request,
+                event_type='contract.lifecycle_stage_changed', actor_type=resolved_actor_type,
+                changes={
+                    'event': 'contract.lifecycle_stage_changed',
+                    'from': old_stage,
+                    'to': new_stage,
+                    'reason': (reason or '')[:300],
+                },
+            )
+        return contract
+
+    def apply_operational_position(
+        self,
+        contract,
+        *,
+        status=None,
+        lifecycle_stage=None,
+        actor=None,
+        system=False,
+        reason='',
+        request=None,
+        actor_type=None,
+    ):
+        """Apply status and/or lifecycle stage atomically with chained audit."""
+        from contracts.middleware import log_action
+        from contracts.models import AuditLog, Contract
+        from contracts.permissions import ContractAction, can_access_contract_action
+
+        contract_id = contract.pk if hasattr(contract, 'pk') else contract
+        with transaction.atomic():
+            contract = (
+                Contract.objects.select_for_update(of=('self',)).select_related('organization')
+                .get(pk=contract_id)
+            )
+            old_status = contract.status
+            old_stage = contract.lifecycle_stage
+            update_fields = ['updated_at']
+            next_status = status if status is not None else old_status
+            next_stage = lifecycle_stage if lifecycle_stage is not None else old_stage
+
+            if not system:
+                if actor is None or not getattr(actor, 'is_authenticated', False):
+                    raise ContractTransitionForbidden('Authentication required.', status_code=403)
+                if not can_access_contract_action(actor, contract, ContractAction.EDIT):
+                    raise ContractTransitionForbidden(
+                        'You do not have permission to change this contract.', status_code=403)
+                if status is not None and status != old_status:
+                    if status not in get_allowed_contract_statuses(old_status):
+                        raise InvalidContractTransition(
+                            f'Cannot move a contract from {old_status} to {status}.')
+                if lifecycle_stage is not None and lifecycle_stage != old_stage:
+                    if not can_transition_lifecycle_stage(
+                        type('C', (), {'status': next_status, 'lifecycle_stage': old_stage})(),
+                        lifecycle_stage,
+                    ):
+                        # Re-check with provisional status for joint updates.
+                        provisional = type('C', (), {
+                            'status': old_status,
+                            'lifecycle_stage': old_stage,
+                        })()
+                        if not can_transition_lifecycle_stage(provisional, lifecycle_stage) and status is None:
+                            raise InvalidContractTransition(
+                                f'Cannot move a contract from lifecycle stage {old_stage} to {lifecycle_stage}.')
+                validate_status_stage_pair(next_status, next_stage)
+
+            if status is not None and status != old_status:
+                if status == RECORD_STATUS_ACTIVE and not system:
+                    from contracts.models import ApprovalRequest, SignatureRequest
+                    self._check_preconditions(contract, status, ApprovalRequest, SignatureRequest)
+                contract.status = status
+                update_fields.append('status')
+
+            if lifecycle_stage is not None and lifecycle_stage != old_stage:
+                contract.lifecycle_stage = lifecycle_stage
+                update_fields.append('lifecycle_stage')
+
+            if len(update_fields) == 1:
+                return contract
+
+            if system or status is not None or lifecycle_stage is not None:
+                validate_status_stage_pair(contract.status, contract.lifecycle_stage)
+
+            contract.save(update_fields=update_fields)
+            resolved_actor_type = actor_type or (
+                AuditLog.ActorType.SYSTEM if system and actor is None else AuditLog.ActorType.HUMAN
+            )
+            log_action(
+                actor, AuditLog.Action.UPDATE, 'Contract',
+                object_id=contract.pk, object_repr=str(contract)[:300],
+                organization=contract.organization, request=request,
+                event_type='contract.operational_position_changed', actor_type=resolved_actor_type,
+                changes={
+                    'event': 'contract.operational_position_changed',
+                    'status': {'before': old_status, 'after': contract.status},
+                    'lifecycle_stage': {'before': old_stage, 'after': contract.lifecycle_stage},
+                    'reason': (reason or '')[:300],
+                },
+            )
+        return contract
+
+    def activate_contract(
+        self,
+        contract,
+        actor=None,
+        *,
+        system=False,
+        reason='Contract activated after signature completion',
+        request=None,
+        actor_type=None,
+    ):
+        """Happy-path activation triad: ACTIVE + OBLIGATION_TRACKING + primary doc EXECUTED."""
+        from contracts.middleware import log_action
+        from contracts.models import AuditLog, Contract, Document
+
+        contract_id = contract.pk if hasattr(contract, 'pk') else contract
+        with transaction.atomic():
+            contract = (
+                Contract.objects.select_for_update(of=('self',)).select_related('organization')
+                .get(pk=contract_id)
+            )
+            if not system:
+                from contracts.models import ApprovalRequest, SignatureRequest
+                self._check_preconditions(
+                    contract, RECORD_STATUS_ACTIVE, ApprovalRequest, SignatureRequest,
+                )
+
+            old_status = contract.status
+            old_stage = contract.lifecycle_stage
+            contract.status = RECORD_STATUS_ACTIVE
+            contract.lifecycle_stage = STAGE_OBLIGATION_TRACKING
+            contract.save(update_fields=['status', 'lifecycle_stage', 'updated_at'])
+
+            primary = _primary_contract_document(contract)
+            if primary and primary.status != DOC_STATE_EXECUTED:
+                old_doc_status = primary.status
+                primary.status = Document.Status.EXECUTED
+                primary.save(update_fields=['status', 'updated_at'])
+                log_action(
+                    actor, AuditLog.Action.UPDATE, 'Document',
+                    object_id=primary.pk, object_repr=str(primary)[:300],
+                    organization=contract.organization, request=request,
+                    event_type='document.status_changed',
+                    actor_type=actor_type or (
+                        AuditLog.ActorType.SYSTEM if system and actor is None else AuditLog.ActorType.HUMAN
+                    ),
+                    changes={
+                        'event': 'document.status_changed',
+                        'from': old_doc_status,
+                        'to': DOC_STATE_EXECUTED,
+                        'reason': (reason or '')[:300],
+                    },
+                )
+
+            resolved_actor_type = actor_type or (
+                AuditLog.ActorType.SYSTEM if system and actor is None else AuditLog.ActorType.HUMAN
+            )
+            log_action(
+                actor, AuditLog.Action.UPDATE, 'Contract',
+                object_id=contract.pk, object_repr=str(contract)[:300],
+                organization=contract.organization, request=request,
+                event_type='contract.activated',
+                actor_type=resolved_actor_type,
+                changes={
+                    'event': 'contract.activated',
+                    'status': {'before': old_status, 'after': contract.status},
+                    'lifecycle_stage': {'before': old_stage, 'after': contract.lifecycle_stage},
+                    'reason': (reason or '')[:300],
+                },
+            )
+        return contract
+
+
+def apply_contract_operational_position(contract, **kwargs):
+    return get_contract_lifecycle_service().apply_operational_position(contract, **kwargs)
+
+
+def activate_contract(contract, **kwargs):
+    return get_contract_lifecycle_service().activate_contract(contract, **kwargs)
 
 
 def get_contract_lifecycle_service():

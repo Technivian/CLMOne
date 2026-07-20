@@ -6,13 +6,8 @@
         <p class="dc-ds-workspace__subtitle">{{ workflow.title }} · GDPR Processor DPA · Netherlands · B2B</p>
         <div class="dc-ds-workspace__actions">
           {% if workflow.contract %}<a href="{% url 'contracts:contract_detail' workflow.contract.pk %}" class="dc-ds-button dc-ds-button--link">View contract record</a>{% endif %}
-          <button type="button" class="dc-ds-button dc-ds-button--primary">Send to Legal Review</button>
-          {% if dpa_workspace.dpo_approval_triggered %}<button type="button" class="dc-ds-button dc-ds-button--quiet">Send to DPO</button>{% endif %}
-          <button type="button" class="dc-ds-button dc-ds-button--soft">Generate DPA review memo</button>
-          <button type="button" class="dc-ds-button dc-ds-button--quiet">Export Word</button>
         </div>
       </div>
-      <a class="dc-ds-button dc-ds-button--primary" href="#risk-signals">Review next action</a>
     </div>
     <div class="dc-ds-workspace__metadata-grid">
       <div class="dc-ds-workspace__metadata-item"><div class="dc-ds-workspace__metadata-label">Contract type</div><div class="dc-ds-workspace__metadata-value">DPA</div></div>
@@ -67,10 +62,12 @@
     </main>
 
     <aside class="dc-ds-workspace__rail">
-      <div class="dc-ds-workspace__rail-tabs" role="tablist" aria-label="DPA workspace rail">
-        <button class="dc-ds-workspace__rail-tab" type="button" role="tab" aria-selected="true" aria-controls="dpa-rail-review" data-workspace-rail-tab="review">Review</button>
-        <button class="dc-ds-workspace__rail-tab" type="button" role="tab" aria-selected="false" aria-controls="dpa-rail-properties" data-workspace-rail-tab="properties">Properties</button>
-        <button class="dc-ds-workspace__rail-tab" type="button" role="tab" aria-selected="false" aria-controls="dpa-rail-activity" data-workspace-rail-tab="activity">Activity</button>
+      <div class="dc-ds-workspace-tabs dc-ds-workspace-tabs--section dc-ds-workspace__rail-tabs" role="tablist" aria-label="DPA workspace rail">
+        <div class="dc-ds-workspace-tabs__list">
+          <button class="dc-ds-workspace-tabs__tab is-active dc-ds-workspace__rail-tab" type="button" role="tab" aria-selected="true" aria-controls="dpa-rail-review" data-workspace-rail-tab="review">Review findings</button>
+          <button class="dc-ds-workspace-tabs__tab dc-ds-workspace__rail-tab" type="button" role="tab" aria-selected="false" aria-controls="dpa-rail-properties" data-workspace-rail-tab="properties">Properties</button>
+          <button class="dc-ds-workspace-tabs__tab dc-ds-workspace__rail-tab" type="button" role="tab" aria-selected="false" aria-controls="dpa-rail-activity" data-workspace-rail-tab="activity">Audit trail</button>
+        </div>
       </div>
       <div class="dc-ds-workspace__rail-pane" id="dpa-rail-review" role="tabpanel" data-workspace-rail-pane="review">
       <section class="dc-ds-workspace__surface" id="risk-signals">
@@ -100,7 +97,7 @@
       </div>
       <div class="dc-ds-workspace__rail-pane" id="dpa-rail-activity" role="tabpanel" data-workspace-rail-pane="activity" hidden>
       <section class="dc-ds-workspace__surface">
-        <div class="dc-ds-workspace__surface-head"><div class="dc-ds-workspace__surface-title">Audit Trail Preview</div></div>
+        <div class="dc-ds-workspace__surface-head"><div class="dc-ds-workspace__surface-title">Audit history</div></div>
         <div class="dc-ds-workspace__surface-body">
           {% for entry in dpa_workspace.audit_preview %}
           <div class="dc-ds-workspace__audit-row">
@@ -108,6 +105,8 @@
             <div class="dc-ds-workspace__audit-meta">{{ entry.meta }}</div>
             <div class="dc-ds-workspace__audit-meta">{{ entry.timestamp|date:"M d, Y H:i" }}</div>
           </div>
+          {% empty %}
+          <p class="dc-ds-workspace__copy">No audit events have been recorded for this workflow yet.</p>
           {% endfor %}
         </div>
       </section>
@@ -130,7 +129,9 @@ document.querySelectorAll('[data-workspace-rail-tab]').forEach(function (tab) {
   tab.addEventListener('click', function () {
     var name = tab.getAttribute('data-workspace-rail-tab');
     document.querySelectorAll('[data-workspace-rail-tab]').forEach(function (button) {
-      button.setAttribute('aria-selected', String(button === tab));
+      var active = button === tab;
+      button.setAttribute('aria-selected', String(active));
+      button.classList.toggle('is-active', active);
     });
     document.querySelectorAll('[data-workspace-rail-pane]').forEach(function (pane) {
       pane.hidden = pane.getAttribute('data-workspace-rail-pane') !== name;

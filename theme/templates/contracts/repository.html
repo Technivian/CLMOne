@@ -20,6 +20,7 @@
   .repo-page #contracts-table th.tbl-th,
   .repo-page #contracts-table td.repo-cell {
     padding: 16px 12px;
+    overflow: hidden;
   }
   .repo-page #contracts-table tbody tr.wq-row-selected td,
   .repo-page #contracts-table tbody tr.wq-row-selected:hover td { background: var(--primary-subtle); }
@@ -69,10 +70,25 @@
     word-break: break-word;
   }
   .repo-page #contracts-table th[data-col="type"],
-  .repo-page #contracts-table td[data-col="type"] { min-width: 128px; width: 10%; white-space: nowrap; }
-  .repo-page .repo-type-label { white-space: nowrap; }
+  .repo-page #contracts-table td[data-col="type"] { min-width: 128px; width: 10%; }
+  .repo-page .repo-type-label {
+    display: block;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
   .repo-page #contracts-table th[data-col="counterparty"],
   .repo-page #contracts-table td[data-col="counterparty"] { min-width: 150px; width: 12%; }
+  .repo-page .repo-counterparty-label {
+    display: block;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
   .repo-page #contracts-table th[data-col="stage"],
   .repo-page #contracts-table td[data-col="stage"] { min-width: 145px; width: 145px; }
   .repo-page .repo-stage-badge {
@@ -108,15 +124,23 @@
   .repo-page #contracts-table td[data-col="value"],
   .repo-page .repo-value {
     min-width: 112px; width: 9%; white-space: nowrap; text-align: right !important;
-    padding-right: 12px; font-variant-numeric: tabular-nums;
+    padding-right: 16px; font-variant-numeric: tabular-nums;
     color: var(--ink-800, var(--text-primary));
   }
   .repo-page #contracts-table th[data-col="actions"],
   .repo-page #contracts-table td[data-col="actions"],
   .repo-page .repo-actions-cell {
-    min-width: 40px; width: 40px; max-width: 40px; padding-left: 4px; padding-right: 8px;
-    text-align: center;
+    min-width: 48px; width: 48px; max-width: 48px; padding-left: 8px; padding-right: 8px;
+    text-align: center; overflow: visible;
   }
+  .repo-page .repo-row-menu { position: relative; display: inline-block; }
+  .repo-page .repo-row-menu .wq-kebab-trigger {
+    width: 32px; height: 32px; border-radius: 8px; color: var(--text-muted);
+  }
+  .repo-page .repo-row-menu[open] .wq-kebab-trigger {
+    background: var(--primary-subtle); color: var(--primary);
+  }
+  .repo-page .repo-row-menu .wq-kebab-menu { min-width: 168px; }
   .repo-page #contracts-table th[aria-sort] button.repo-sort-btn {
     display: inline-flex; align-items: center; gap: 6px; padding: 0; border: 0;
     background: transparent; color: inherit; font: inherit; text-transform: inherit;
@@ -127,7 +151,17 @@
   .repo-page #contracts-table [data-col].is-hidden { display: none; }
   body[data-design-system=casefile] .repo-page .repo-filter-shell { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "tabs actions" "tools tools"; gap: var(--space-10) var(--space-16); width: 100%; padding: 0 0 var(--space-10); border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: transparent; }
   .repo-page .repo-view-header { display: contents; }
-  .repo-page .repo-view-tabs { grid-area: tabs; align-self: center; display: flex; gap: 8px; flex-wrap: wrap; flex: 1 1 auto; min-width: 0; }
+  .repo-page .repo-view-tabs {
+    grid-area: tabs;
+    align-self: end;
+    display: flex;
+    gap: var(--space-4);
+    flex-wrap: nowrap;
+    flex: 1 1 auto;
+    min-width: 0;
+    margin-bottom: 0;
+    border-bottom: 0;
+  }
   .repo-page .repo-view-actions { grid-area: actions; justify-self: end; display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }
   .repo-page .repo-filter-controls { grid-area: tools; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; width: 100%; }
   .repo-page .repo-filter-controls > * { min-width: 0; }
@@ -158,8 +192,6 @@
     display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500;
     color: var(--text-primary); cursor: pointer;
   }
-  .repo-page .repo-row-action { color: var(--text-muted); font-size: 20px; line-height: 1; padding: 0 2px; }
-  .repo-page .repo-row-action:hover { color: var(--primary); }
   body[data-design-system=casefile]:has(.repo-page) .top-bar .global-search-form { max-width: 248px; flex-basis: 248px; }
   body[data-design-system=casefile]:has(.repo-page) .top-bar .global-search-input { height: 36px; border: 1px solid transparent !important; background: transparent !important; color: var(--ink-600); }
   body[data-design-system=casefile]:has(.repo-page) .top-bar .global-search-input:focus-visible { border-color: var(--line) !important; background: var(--card) !important; }
@@ -180,12 +212,7 @@
 <div class="dc-ds-page dc-ds-page--wide dc-ds-page-flow dc-ds-list-page repo-page">
   <header class="repo-filter-shell dc-ds-filterbar dc-ds-table-toolbar dc-ds-list-toolbar" aria-label="Contracts workspace controls">
     <div class="repo-view-header">
-      <nav class="repo-view-tabs dc-ds-list-tabs" aria-label="Contract operations">
-        <a href="{% url 'contracts:repository' %}" class="dc-ds-choice chip-active">All contracts</a>
-        <a href="{% url 'dashboard' %}" class="dc-ds-choice">My work</a>
-        <a href="{% url 'contracts:approval_request_list' %}" class="dc-ds-choice">Approvals</a>
-        <a href="{% url 'contracts:signature_request_list' %}" class="dc-ds-choice">Signatures</a>
-      </nav>
+      {% include "components/_workspace_tabs.html" with tabs=hub_tabs aria_label="Contract operations" nav_class="repo-view-tabs" %}
       <div class="repo-view-actions">
         <a href="{% url 'contracts:risk_log_list' %}" class="dc-ds-button dc-ds-button--ghost">Risk Register</a>
         <a href="{% url 'contracts:contract_template_picker' %}" class="dc-ds-button dc-ds-button--primary">Start new contract</a>
@@ -211,7 +238,7 @@
             <label><input type="checkbox" data-col-toggle="counterparty" checked> Counterparty</label>
             <label><input type="checkbox" data-col-toggle="stage" checked> Stage</label>
             <label><input type="checkbox" data-col-toggle="owner" checked> Owner</label>
-            <label><input type="checkbox" data-col-toggle="activity" checked> Latest activity</label>
+            <label><input type="checkbox" data-col-toggle="activity"> Latest activity</label>
             <label><input type="checkbox" data-col-toggle="key_date" checked> Key date</label>
             <label><input type="checkbox" data-col-toggle="value" checked> Value</label>
           </div>
@@ -224,7 +251,8 @@
   <section id="repository-filters" class="repo-filter-drawer dc-ds-surface p-3" aria-label="Filters">
     <div class="repo-filter-drawer__header flex items-center justify-between gap-3 mb-2"><h2 class="repo-filter-drawer__title font-semibold">Filters</h2><button type="button" data-action="clear-repository-filters" class="dc-ds-button dc-ds-button--quiet text-sm">Clear filters</button></div>
     <div class="repo-filter-drawer__body">
-      <label>Status<select id="status-filter-select" class="dc-ds-control select-base px-3 py-2 rounded-lg border"><option value="">All statuses</option><option value="DRAFT">Draft</option><option value="IN_REVIEW">Internal review</option><option value="PENDING">Approval</option><option value="APPROVED">Signature</option><option value="ACTIVE">Active</option><option value="EXPIRED">Expired</option></select></label>
+      <label>Status<select id="status-filter-select" class="dc-ds-control select-base px-3 py-2 rounded-lg border"><option value="">All statuses</option><option value="IN_PROGRESS">In progress</option><option value="ACTIVE">Active</option><option value="EXPIRED">Expired</option><option value="TERMINATED">Terminated</option><option value="CANCELLED">Cancelled</option><option value="ARCHIVED">Archived</option></select></label>
+      <label>Stage<select id="stage-filter-select" class="dc-ds-control select-base px-3 py-2 rounded-lg border"><option value="">All stages</option><option value="INTAKE">Intake</option><option value="DRAFTING">Drafting</option><option value="INTERNAL_REVIEW">Internal review</option><option value="NEGOTIATION">Negotiation</option><option value="APPROVAL">Approval</option><option value="SIGNATURE">Signature</option><option value="EXECUTED">Executed</option><option value="OBLIGATION_TRACKING">Obligation tracking</option><option value="RENEWAL">Renewal</option></select></label>
       <label>Type<select id="type-filter-select" class="dc-ds-control select-base px-3 py-2 rounded-lg border"><option value="">All types</option>{% for value, label in contract_types %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></label>
       <label>Owner<select id="owner-filter-select" class="dc-ds-control select-base px-3 py-2 rounded-lg border"><option value="">All owners</option>{% for owner in repository_owners %}<option value="{{ owner.pk }}">{{ owner.get_full_name|default:owner.username }}</option>{% endfor %}</select></label>
       <label>Counterparty<select id="counterparty-filter-select" class="dc-ds-control select-base px-3 py-2 rounded-lg border"><option value="">All counterparties</option>{% for counterparty in repository_counterparties %}<option value="{{ counterparty }}">{{ counterparty }}</option>{% endfor %}</select></label>
@@ -239,7 +267,7 @@
   <div id="bulk-action-bar" class="repo-bulk-bar dc-ds-table-selection"><div class="font-medium c-primary" id="selected-count" aria-live="polite">0 selected</div><div class="flex items-center gap-2 flex-wrap"><button id="repo-bulk-status" class="repo-mini-btn">Change status</button><button id="repo-bulk-export" class="repo-mini-btn">Export CSV</button><button data-action="clear-selection" class="repo-mini-btn">Clear selection</button></div></div>
 
   <div class="dc-ds-table-wrap table-sticky">
-    <table id="contracts-table" class="dc-ds-table w-full text-sm" data-table-core="server" aria-label="Contracts repository">
+    <table id="contracts-table" class="dc-ds-table dc-ds-table--fixed w-full text-sm" data-table-core="server" aria-label="Contracts repository">
       <caption class="sr-only">Contracts repository — sortable and filterable contract records.</caption>
       <thead class="tbl-head">
         <tr>
@@ -247,7 +275,7 @@
           <th class="tbl-th" scope="col" data-col="title" data-column-key="title" aria-sort="none"><button type="button" class="repo-sort-btn" data-sort="title">Contract<span class="repo-sort-ind" aria-hidden="true"></span></button></th>
           <th class="tbl-th" scope="col" data-col="type">Type</th>
           <th class="tbl-th" scope="col" data-col="counterparty">Counterparty</th>
-          <th class="tbl-th" scope="col" data-col="stage" data-column-key="status" aria-sort="none"><button type="button" class="repo-sort-btn" data-sort="status">Stage<span class="repo-sort-ind" aria-hidden="true"></span></button></th>
+          <th class="tbl-th" scope="col" data-col="stage" data-column-key="stage" aria-sort="none"><button type="button" class="repo-sort-btn" data-sort="stage">Stage<span class="repo-sort-ind" aria-hidden="true"></span></button></th>
           <th class="tbl-th" scope="col" data-col="owner">Owner</th>
           <th class="tbl-th" scope="col" data-col="activity" data-column-key="updated" aria-sort="descending"><button type="button" class="repo-sort-btn" data-sort="updated">Latest activity<span class="repo-sort-ind" aria-hidden="true"></span></button></th>
           <th class="tbl-th wq-col-num" scope="col" data-col="key_date">Key date</th>

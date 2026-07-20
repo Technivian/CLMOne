@@ -198,10 +198,17 @@ class UIButtonAndFlowIntegrityTests(TestCase):
 
         detail_response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': Contract.objects.first().pk}))
         self.assertEqual(detail_response.status_code, 200)
-        self.assertContains(detail_response, 'Workflow')
+        # Overview shows the lifecycle track; Workflow tab hosts the machinery.
+        self.assertContains(detail_response, 'Contract lifecycle')
+        self.assertNotContains(detail_response, 'View full workflow')
         self.assertContains(detail_response, 'Contract details')
-        self.assertContains(detail_response, 'Internal activity')
-
+        self.assertContains(detail_response, 'Audit trail')
+        self.assertNotContains(detail_response, 'contract-workflow-reveal')
+        tab_labels = [tab['label'] for tab in detail_response.context['workspace_tabs']]
+        self.assertNotIn('Review', tab_labels)
+        self.assertNotIn('Activity', tab_labels)
+        self.assertIn('Audit trail', tab_labels)
+        self.assertIn('Workflow', tab_labels)
         search_response = self.client.get(reverse('contracts:global_search'), {'q': 'UI Integrity'})
         self.assertEqual(search_response.status_code, 200)
         # Sub-block C: removed a redundant sr-only duplicate of this

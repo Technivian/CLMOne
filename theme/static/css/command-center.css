@@ -518,8 +518,10 @@ body:has(.cc-v3) .dc-ds-shell__topbar .global-search-input {
   line-height: 27px;
   font-weight: 650;
 }
+/* Semantic state: clear = monitored green, setup/action = amber stuck signal.
+   Action required is the stronger amber callout (card tint + left rail). */
 .cc-v3-kpi-value.is-setup-required { color: var(--status-pending-fg); }
-.cc-v3-kpi-value.is-action-required { color: var(--status-danger-fg); }
+.cc-v3-kpi-value.is-action-required { color: var(--status-pending-fg); }
 .cc-v3-kpi-value.is-setup-required::before,
 .cc-v3-kpi-value.is-action-required::before {
   content: "";
@@ -535,8 +537,8 @@ body:has(.cc-v3) .dc-ds-shell__topbar .global-search-input {
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--status-pending-fg) 12%, transparent);
 }
 .cc-v3-kpi-value.is-action-required::before {
-  background: var(--status-danger-fg);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--status-danger-fg) 11%, transparent);
+  background: var(--status-pending-fg);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--status-pending-fg) 16%, transparent);
 }
 
 .cc-v3-rail-card { padding: 20px 20px 0; }
@@ -660,11 +662,17 @@ body:has(.cc-v3) .dc-ds-shell__topbar .global-search-input {
 }
 .cc-v3-kpi:hover { border-color: var(--color-border-default); box-shadow: var(--shadow-card-hover); }
 
-/* Semantic state controls presentation. Clear is monitored green, setup is
-   amber, intervention is red, and an unqualified category stays blue. */
+/* Semantic state controls presentation. Clear is monitored green; setup and
+   action-required share the amber “stuck / needs attention” language, with
+   action-required getting a stronger card tint. */
 .cc-v3-kpi:has(.cc-v3-kpi-value.is-clear) .cc-v3-kpi-icon { background: var(--status-positive-bg); color: var(--status-positive-fg); }
 .cc-v3-kpi:has(.cc-v3-kpi-value.is-setup-required) .cc-v3-kpi-icon { background: var(--status-pending-bg); color: var(--status-pending-fg); }
-.cc-v3-kpi:has(.cc-v3-kpi-value.is-action-required) .cc-v3-kpi-icon { background: var(--status-danger-bg); color: var(--status-danger-fg); }
+.cc-v3-kpi:has(.cc-v3-kpi-value.is-action-required) .cc-v3-kpi-icon { background: var(--status-pending-bg); color: var(--status-pending-fg); }
+.cc-v3-kpi:has(.cc-v3-kpi-value.is-action-required) {
+  border-color: var(--color-status-warning-border, #ECD8B3);
+  border-left: 4px solid var(--color-status-warning, #D8A23D);
+  background: var(--status-pending-bg, #FBF6EC);
+}
 
 .cc-v3-deadlines .dc-ds-setup-list .dc-ds-setup-action {
   border: 1px solid var(--color-border-soft);
@@ -897,10 +905,13 @@ body:has(.cc-v3) .dc-ds-shell__topbar .global-search-input {
 .cc-v3-top-priority-meta { display: flex; flex-wrap: wrap; gap: var(--space-8); align-self: auto; margin-top: 5px; font-size: 11px; line-height: 1.3; }
 .cc-v3-top-priority-meta span + span { margin-top: 0; color: #75ded9; }
 .cc-v3-top-priority-insights { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-16); min-width: 0; }
-.cc-v3-top-priority-detail { min-width: 0; padding-left: var(--space-12); border-left: 1px solid color-mix(in srgb, var(--clmone-white) 13%, transparent); }
+.cc-v3-top-priority-detail { min-width: 0; padding-left: 0; border-left: 0; }
 .cc-v3-top-priority-detail span { margin-bottom: 3px; font-size: 10px; }
 .cc-v3-top-priority-detail strong { font-size: 12px; line-height: 1.35; }
-.cc-v3-top-priority-next { border-color: color-mix(in srgb, #75ded9 45%, transparent); }
+.cc-v3-top-priority-next {
+  padding-left: var(--space-12);
+  border-left: 1px solid color-mix(in srgb, #75ded9 45%, transparent);
+}
 .cc-v3-top-priority-next strong { color: #dffbf8; }
 .cc-v3-portfolio-actions { margin-top: 0; }
 .cc-v3-portfolio-actions .dc-ds-button--primary { min-height: 38px; font-size: 12px; }
@@ -1082,8 +1093,13 @@ body:has(.cc-v3) .dc-ds-shell__topbar .global-search-input {
   gap: var(--space-24);
 }
 .cc-v3-top-priority-detail {
-  padding-left: var(--space-16);
+  padding-left: 0;
+  border-left: 0;
   overflow-wrap: anywhere;
+}
+.cc-v3-top-priority-next {
+  padding-left: var(--space-16);
+  border-left: 1px solid color-mix(in srgb, #75ded9 45%, transparent);
 }
 .cc-v3-top-priority--empty { display: block; }
 .cc-v3-top-priority--empty p:last-child {
@@ -1303,7 +1319,8 @@ body:has(.cc-v3) .dc-ds-shell__topbar .global-search-input {
 }
 .cc-v3-top-priority-context h3 { font-size: 16px; }
 .cc-v3-top-priority-insights { gap: var(--space-16); }
-.cc-v3-top-priority-detail { padding-left: var(--space-14); }
+.cc-v3-top-priority-detail { padding-left: 0; }
+.cc-v3-top-priority-next { padding-left: var(--space-14); }
 .cc-v3-portfolio-actions { padding-top: var(--space-4); }
 
 @media (max-width: 1040px) {
@@ -1384,8 +1401,8 @@ body:has(.cc-v3) .dc-ds-shell__topbar .global-search-input {
 .cc-v3-top-priority-context h3 { font-size: 18px; }
 .cc-v3-top-priority-meta { margin-top: 5px; }
 .cc-v3-top-priority-insights { gap: var(--space-20); }
-.cc-v3-top-priority-detail { padding-left: var(--space-16); }
-.cc-v3-top-priority-detail:first-child { padding-left: 0; }
+.cc-v3-top-priority-detail { padding-left: 0; }
+.cc-v3-top-priority-next { padding-left: var(--space-16); }
 .cc-v3-portfolio-actions {
   padding-top: var(--space-2);
   margin-bottom: var(--space-2);

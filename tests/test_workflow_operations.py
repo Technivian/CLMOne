@@ -124,14 +124,17 @@ class WorkflowOperationsPageTests(TestCase):
         self.assertEqual(response.status_code, 200)
         html = response.content.decode()
         self.assertIn('Workflow Operations', html)
-        self.assertNotIn('Workflow Designer', html)
         self.assertNotIn('summary-grid', html)
         self.assertNotIn('Workflow pipeline', html)
         self.assertIn('Active workflows', html)
         self.assertIn('Approval requests', html)
-        self.assertIn('Routing rules', html)
-        self.assertIn('Templates', html)
+        self.assertNotIn('>Routing rules<', html)
+        self.assertNotIn('>Templates<', html)
         self.assertIn('Start workflow', html)
+        self.assertIn('Columns', html)
+        self.assertIn('Filters', html)
+        self.assertIn('workflow-ops-table', html)
+        self.assertIn('data-col="workflow"', html)
         self.assertIn('Northstar Consulting B.V.', html)
         self.assertNotIn('Northstar Consulting B.V. - Exception', html)
         self.assertIn('Exception', html)
@@ -142,9 +145,14 @@ class WorkflowOperationsPageTests(TestCase):
         self.assertIn('Alex Admin', html)
         self.assertIn('0%', html)
         self.assertIn('workflow-ops-row', html)
-        self.assertContains(response, reverse('contracts:approval_rule_list'))
         self.assertContains(response, reverse('contracts:approval_request_list'))
-        self.assertContains(response, reverse('contracts:workflow_template_list'))
+        # Templates / routing moved to Workflow Designer; ops tabs only keep
+        # the live instance queue.
+        ops_tabs = html.split('aria-label="Workflow operations"', 1)[-1].split('</nav>', 1)[0]
+        self.assertIn('Active workflows', ops_tabs)
+        self.assertIn('Approval requests', ops_tabs)
+        self.assertNotIn('Templates', ops_tabs)
+        self.assertNotIn('Routing rules', ops_tabs)
 
     def test_filters_status_and_type(self):
         response = self.client.get(reverse('contracts:workflow_dashboard'), {
@@ -160,12 +168,45 @@ class WorkflowOperationsPageTests(TestCase):
     def test_related_surfaces_share_operations_tabs(self):
         for name in (
             'contracts:approval_request_list',
-            'contracts:approval_rule_list',
-            'contracts:workflow_template_list',
+            'contracts:workflow_dashboard',
         ):
             response = self.client.get(reverse(name))
             self.assertEqual(response.status_code, 200)
-            self.assertContains(response, 'Active workflows')
-            self.assertContains(response, 'Approval requests')
-            self.assertContains(response, 'Routing rules')
-            self.assertContains(response, 'Templates')
+            html = response.content.decode()
+            self.assertIn('Active workflows', html)
+            self.assertIn('Approval requests', html)
+            ops_tabs = html.split('aria-label="Workflow operations"', 1)[-1].split('</nav>', 1)[0]
+            self.assertNotIn('Templates', ops_tabs)
+            self.assertNotIn('Routing rules', ops_tabs)
+
+    def test_designer_hub_owns_templates_and_routing(self):
+        templates = self.client.get(reverse('contracts:workflow_template_list'))
+        self.assertEqual(templates.status_code, 200)
+        html = templates.content.decode()
+        self.assertIn('Workflow Designer', html)
+        self.assertIn('Create template', html)
+        self.assertIn('Open designer', html)
+        self.assertIn('clm-list-filter-controls', html)
+        self.assertIn('workflow-templates-filters', html)
+        designer_tabs = html.split('aria-label="Workflow Designer"', 1)[-1].split('</nav>', 1)[0]
+        self.assertIn('Templates', designer_tabs)
+        self.assertIn('Routing rules', designer_tabs)
+        self.assertIn('Approval rules', designer_tabs)
+        self.assertIn('Change history', designer_tabs)
+        self.assertNotIn('Active workflows', designer_tabs)
+
+        routing = self.client.get(reverse('contracts:approval_rule_list'))
+        self.assertEqual(routing.status_code, 200)
+        routing_html = routing.content.decode()
+        self.assertIn('Workflow Designer', routing_html)
+        routing_tabs = routing_html.split('aria-label="Workflow Designer"', 1)[-1].split('</nav>', 1)[0]
+        self.assertIn('Templates', routing_tabs)
+        self.assertNotIn('Active workflows', routing_tabs)
+
+        history = self.client.get(reverse('contracts:workflow_designer_history'))
+        self.assertEqual(history.status_code, 200)
+        self.assertContains(history, 'Change history')
+
+        routes = self.client.get(reverse('contracts:workflow_approval_route_list'))
+        self.assertEqual(routes.status_code, 200)
+        self.assertContains(routes, 'Approval Rules')

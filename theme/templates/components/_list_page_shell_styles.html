@@ -145,4 +145,33 @@
     .clm-list-page .clm-list-search-field,
     .clm-list-page .clm-list-actions-stack { flex-basis: 100%; margin-left: 0; }
   }
+
+  /* Shared list-table containment — mirrors Ironclad record columns. */
+  .clm-list-page .dc-ds-table-wrap { overflow-x: auto; }
+  .clm-list-page .dc-ds-table:not(.dc-ds-table--auto) {
+    table-layout: fixed;
+    width: 100%;
+    min-width: 960px;
+  }
+  .clm-list-page .dc-ds-table:not(.dc-ds-table--auto) :is(th, td) {
+    overflow: hidden;
+  }
+  .clm-list-page .dc-ds-table .wq-item-link,
+  .clm-list-page .dc-ds-table .wq-next-action,
+  .clm-list-page .dc-ds-table .obligations-next-action {
+    display: block;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .clm-list-page .dc-ds-table .c-link {
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: top;
+  }
 </style>

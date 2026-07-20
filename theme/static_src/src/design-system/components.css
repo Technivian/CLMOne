@@ -227,6 +227,127 @@
 .dc-ds-list-header { min-width: 0; }
 .dc-ds-list-header__context { min-width: 0; }
 
+/* Canonical workspace navigation tabs (underline pattern).
+   Distinct from lifecycle steppers — tabs change page content only. */
+.dc-ds-workspace-tabs {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-4);
+  min-width: 0;
+  width: 100%;
+  margin: 0 0 var(--space-20);
+  padding: 0;
+  border-bottom: 1px solid var(--line);
+}
+.dc-ds-workspace-tabs__list {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-4);
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+.dc-ds-workspace-tabs__tab {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  min-height: 36px;
+  margin: 0 0 -1px;
+  padding: 8px 12px 10px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink-500);
+  font-size: var(--font-size-small);
+  font-weight: 550;
+  line-height: 1.2;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: none;
+}
+.dc-ds-workspace-tabs__tab:hover {
+  color: var(--ink-900);
+  background: transparent;
+}
+.dc-ds-workspace-tabs__tab:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.dc-ds-workspace-tabs__tab.is-active,
+.dc-ds-workspace-tabs__tab[aria-selected="true"],
+.dc-ds-workspace-tabs__tab[aria-current="page"] {
+  color: var(--seal-dark, var(--primary));
+  font-weight: 700;
+  border-bottom-color: var(--seal, var(--primary));
+  background: transparent;
+}
+.dc-ds-workspace-tabs__tab[aria-disabled="true"],
+.dc-ds-workspace-tabs__tab.is-disabled {
+  color: var(--ink-300);
+  pointer-events: none;
+  cursor: not-allowed;
+}
+.dc-ds-workspace-tabs--section {
+  margin-bottom: var(--space-16);
+}
+.dc-ds-workspace-tabs--section .dc-ds-workspace-tabs__tab {
+  min-height: 32px;
+  padding: 6px 10px 8px;
+  font-size: var(--font-size-small);
+}
+.dc-ds-workspace-tabs__more {
+  position: relative;
+  flex: 0 0 auto;
+  align-self: stretch;
+}
+.dc-ds-workspace-tabs__more > summary {
+  list-style: none;
+  cursor: pointer;
+}
+.dc-ds-workspace-tabs__more > summary::-webkit-details-marker { display: none; }
+.dc-ds-workspace-tabs__more-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 30;
+  min-width: 180px;
+  padding: 6px;
+  display: grid;
+  gap: 2px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--card);
+  box-shadow: var(--shadow-card, 0 8px 24px rgba(11, 23, 40, 0.08));
+}
+.dc-ds-workspace-tabs__more-item {
+  display: block;
+  padding: 8px 12px;
+  border-radius: 8px;
+  color: var(--ink-800);
+  font: var(--text-small);
+  font-weight: 600;
+  text-decoration: none;
+}
+.dc-ds-workspace-tabs__more-item:hover,
+.dc-ds-workspace-tabs__more-item.is-active {
+  background: var(--well);
+  color: var(--seal-dark, var(--primary));
+}
+
+/* List-header placement when tabs sit in the shared list shell. */
+.clm-list-page .clm-list-view-tabs.dc-ds-workspace-tabs {
+  grid-area: tabs;
+  margin-bottom: 0;
+  border-bottom: 0;
+  align-self: end;
+}
+.clm-list-page .clm-list-shell {
+  border-bottom: 1px solid var(--line);
+}
+
 .dc-ds-list-tabs {
   display: flex;
   align-items: center;
@@ -1182,6 +1303,35 @@ body:has(.topbar-page-title:not(:empty)) .dc-ds-page-hero:not(:has(.dc-ds-action
   padding: 10px 16px;
   border-bottom: 1px solid var(--ds-color-border);
   vertical-align: middle;
+}
+
+/* Ironclad-style property columns: each cell owns its width, long values
+   truncate with ellipsis, and full text is exposed via title on hover. */
+.dc-ds-table--fixed {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.dc-ds-table--fixed :is(th, td) {
+  overflow: hidden;
+}
+
+.dc-ds-table-cell-text {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dc-ds-table-cell-text--clamp {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .dc-ds-table tr:last-child td { border-bottom: 0; }

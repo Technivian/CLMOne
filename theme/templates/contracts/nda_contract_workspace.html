@@ -6,10 +6,6 @@
         <p class="dc-ds-workspace__subtitle">{{ workflow.title }} · Mutual NDA · Netherlands · B2B</p>
         <div class="dc-ds-workspace__actions">
           {% if workflow.contract %}<a href="{% url 'contracts:contract_detail' workflow.contract.pk %}" class="dc-ds-button dc-ds-button--link">View contract record</a>{% endif %}
-          <button type="button" class="dc-ds-button dc-ds-button--primary">Send for signature</button>
-          {% if nda_workspace.legal_review_triggered %}<button type="button" class="dc-ds-button dc-ds-button--quiet">Send to Legal Review</button>{% endif %}
-          <button type="button" class="dc-ds-button dc-ds-button--soft">Generate NDA summary</button>
-          <button type="button" class="dc-ds-button dc-ds-button--quiet">Export Word</button>
         </div>
       </div>
       <a class="dc-ds-button dc-ds-button--primary" href="#risk-signals">Review next action</a>
@@ -112,7 +108,7 @@
       </section>
 
       <section class="dc-ds-workspace__surface">
-        <div class="dc-ds-workspace__surface-head"><div class="dc-ds-workspace__surface-title">Audit Trail Preview</div></div>
+        <div class="dc-ds-workspace__surface-head"><div class="dc-ds-workspace__surface-title">Audit history</div></div>
         <div class="dc-ds-workspace__surface-body">
           {% for entry in nda_workspace.audit_preview %}
           <div class="dc-ds-workspace__audit-row">
@@ -120,6 +116,8 @@
             <div class="dc-ds-workspace__audit-meta">{{ entry.meta }}</div>
             <div class="dc-ds-workspace__audit-meta">{{ entry.timestamp|date:"M d, Y H:i" }}</div>
           </div>
+          {% empty %}
+          <p class="dc-ds-workspace__copy">No audit events have been recorded for this workflow yet.</p>
           {% endfor %}
         </div>
       </section>

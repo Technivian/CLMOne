@@ -64,6 +64,34 @@ class SecurityGuardrailsTests(TestCase):
 
     @override_settings(
         RATELIMIT_ENABLED=True,
+        LOGIN_RATE_LIMIT_REQUESTS=2,
+        LOGIN_RATE_LIMIT_WINDOW_SECONDS=60,
+        RATELIMIT_TRUSTED_IPS=(),
+    )
+    def test_successful_login_clears_failed_attempt_counter(self):
+        for _ in range(2):
+            self.client.post(
+                reverse('login'),
+                {'username': 'security-user', 'password': 'wrong-password'},
+                REMOTE_ADDR='203.0.113.11',
+            )
+
+        success = self.client.post(
+            reverse('login'),
+            {'username': 'security-user', 'password': 'testpass123'},
+            REMOTE_ADDR='203.0.113.11',
+        )
+        self.assertEqual(success.status_code, 302)
+
+        blocked_after_success = self.client.post(
+            reverse('login'),
+            {'username': 'security-user', 'password': 'wrong-password'},
+            REMOTE_ADDR='203.0.113.11',
+        )
+        self.assertEqual(blocked_after_success.status_code, 200)
+
+    @override_settings(
+        RATELIMIT_ENABLED=True,
         RATELIMIT_TRUSTED_IPS=(),
     )
     def test_auth_rate_limit_fails_closed_when_cache_errors(self):
@@ -80,7 +108,7 @@ class SecurityGuardrailsTests(TestCase):
                     'password2': 'Mismatch123!',
                 },
                 REMOTE_ADDR='203.0.113.10',
-        )
+            )
 
         self.assertEqual(response.status_code, 503)
         # No internal details (exception class/message) must leak to the client.

@@ -19,6 +19,7 @@ from contracts.models import (
     UserProfile,
     Workflow,
 )
+from contracts.services.finance_approval_policy import get_finance_approval_threshold
 from contracts.services.msa_workflow import (
     FINANCE_APPROVAL_THRESHOLD,
     create_msa_workflow_instance,

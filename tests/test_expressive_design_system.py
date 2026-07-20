@@ -90,8 +90,14 @@ class ExpressiveDesignSystemContractTests(SimpleTestCase):
             '#ffaaa1',
             '#ffd27b',
             '#ffe2a0',
+            # Current command-center reference accents (light-first pilot surface).
+            '#D8A23D',
+            '#ECD8B3',
+            '#FBF6EC',
+            '#f0d59a',
+            '#fff4d6',
         }
-        self.assertTrue(hex_values.issubset(approved_hex_values))
+        self.assertTrue(hex_values.issubset(approved_hex_values), hex_values - approved_hex_values)
 
     def test_command_center_alignment_layer_uses_shared_tokens(self):
         css = (

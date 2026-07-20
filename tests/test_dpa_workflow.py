@@ -12,6 +12,7 @@ from django.urls import reverse
 
 from contracts.models import (
     ApprovalRoute,
+    AuditLog,
     CommandCenterWorkItem,
     Contract,
     ContractTemplate,
@@ -604,19 +605,24 @@ class DPAWorkflowBuilderViewIntegrationTests(TestCase):
         self.assertContains(response, 'Why triggered')
         self.assertContains(response, 'Privacy and transfer risk rules')
 
-    def test_contract_workspace_displays_audit_trail_preview(self):
+    def test_contract_workspace_displays_persisted_audit_history(self):
         self.client_.post(reverse('contracts:dpa_workflow_builder'), self._valid_payload())
         workflow = Workflow.objects.latest('id')
+        AuditLog.objects.create(
+            organization=self.org,
+            user=self.user,
+            action=AuditLog.Action.CREATE,
+            model_name='Workflow',
+            object_id=workflow.pk,
+            object_repr=str(workflow)[:300],
+            event_type='workflow.created',
+            changes={'event': 'workflow.created'},
+        )
 
         response = self.client_.get(reverse('contracts:workflow_detail', kwargs={'pk': workflow.pk}))
-        for event in (
-            'Workflow created',
-            'Approved template applied',
-            'Field values captured',
-            'Risk checks run',
-            'Approval route generated',
-        ):
-            self.assertContains(response, event)
+        self.assertContains(response, 'Audit history')
+        self.assertContains(response, 'Workflow Created')
+        self.assertNotContains(response, 'Approved template applied')
 
     def test_contract_workspace_renders_actions_and_risk_clause_links(self):
         payload = self._valid_payload()
@@ -626,14 +632,18 @@ class DPAWorkflowBuilderViewIntegrationTests(TestCase):
         workflow = Workflow.objects.latest('id')
 
         response = self.client_.get(reverse('contracts:workflow_detail', kwargs={'pk': workflow.pk}))
-        self.assertContains(response, 'Send to Legal Review')
-        self.assertContains(response, 'Send to DPO')
-        self.assertContains(response, 'Generate DPA review memo')
-        self.assertContains(response, 'Export Word')
+        self.assertContains(response, 'View contract record')
         self.assertContains(response, 'Open related clause')
         self.assertContains(response, 'id="processing-details"', html=False)
         self.assertContains(response, 'id="international-transfers"', html=False)
         self.assertContains(response, 'id="subprocessors"', html=False)
+        for hidden in (
+            'Send to Legal Review',
+            'Send to DPO',
+            'Generate DPA review memo',
+            'Export Word',
+        ):
+            self.assertNotContains(response, f'>{hidden}<')
 
 
 class StageOneRoutingTests(TestCase):

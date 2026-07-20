@@ -1,22 +1,226 @@
 {% extends "base.html" %}
 {% block title %}Routing Rules – CLM One{% endblock %}
-{% block authenticated_page_title %}Workflow Operations{% endblock %}
+{% block authenticated_page_title %}Workflow Designer{% endblock %}
 {% block authenticated_page_subtitle %}Define who reviews and approves governed contract decisions.{% endblock %}
 
 {% block content %}
 {% include "components/_list_page_shell_styles.html" %}
 <style nonce="{{ csp_nonce }}">
-  .routing-rules-page .clm-list-shell { margin-bottom: var(--space-12); }
+  /* Match Designer list rhythm (compact count + dense table). */
+  .routing-rules-page .clm-list-summary { --dc-ds-summary-columns: 2; }
+  .routing-rules-page .clm-list-result-count {
+    font-size: 13px; font-weight: 600; color: var(--ink-700, var(--text-secondary));
+    margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent;
+    white-space: nowrap; min-width: 0; line-height: 1.2;
+  }
+  .routing-rules-page.dc-ds-list-page > .dc-ds-filterbar { margin-bottom: calc(-1 * var(--space-8)); }
+  .routing-rules-page.dc-ds-list-page > .clm-list-summary { margin-top: var(--space-12); }
+  .routing-rules-page .dc-ds-table-wrap { overflow-x: auto; overflow-y: visible; }
+  .routing-rules-page #routing-rules-table {
+    min-width: 100%; width: 100%; table-layout: fixed;
+  }
+  .routing-rules-page #routing-rules-table th,
+  .routing-rules-page #routing-rules-table td {
+    vertical-align: top; padding: 16px 12px; overflow: hidden;
+  }
+  .routing-rules-page #routing-rules-table [data-col].is-hidden { display: none; }
+  .routing-rules-page #routing-rules-table th[data-col="name"],
+  .routing-rules-page #routing-rules-table td[data-col="name"] {
+    position: sticky; left: 0; z-index: 2; min-width: 240px; width: 28%;
+    background: var(--card-bg, #fff);
+    box-shadow: 1px 0 0 var(--line, var(--card-border));
+  }
+  .routing-rules-page #routing-rules-table thead th[data-col="name"] { z-index: 5; }
+  .routing-rules-page #routing-rules-table tbody tr:hover td {
+    background: var(--color-surface-table-head, var(--well));
+  }
+  .routing-rules-page #routing-rules-table tbody tr:hover td[data-col="name"] {
+    background: var(--color-surface-table-head, var(--well));
+  }
+  .routing-rules-page #routing-rules-table th[data-col="trigger"],
+  .routing-rules-page #routing-rules-table td[data-col="trigger"] { min-width: 140px; width: 14%; }
+  .routing-rules-page #routing-rules-table th[data-col="value"],
+  .routing-rules-page #routing-rules-table td[data-col="value"] { min-width: 120px; width: 12%; }
+  .routing-rules-page #routing-rules-table th[data-col="step"],
+  .routing-rules-page #routing-rules-table td[data-col="step"] { min-width: 140px; width: 14%; }
+  .routing-rules-page #routing-rules-table th[data-col="sla"],
+  .routing-rules-page #routing-rules-table td[data-col="sla"] {
+    min-width: 96px; width: 10%; white-space: nowrap;
+    font-variant-numeric: tabular-nums; color: var(--ink-700, var(--text-secondary));
+  }
+  .routing-rules-page #routing-rules-table th[data-col="active"],
+  .routing-rules-page #routing-rules-table td[data-col="active"] { min-width: 88px; width: 10%; }
+  .routing-rules-page #routing-rules-table th[data-col="actions"],
+  .routing-rules-page #routing-rules-table td[data-col="actions"] {
+    min-width: 88px; width: 88px; text-align: right; overflow: visible; white-space: nowrap;
+  }
+  .routing-rules-page .routing-rule-name {
+    display: block; min-width: 0; max-width: 100%;
+    color: var(--ink-900, var(--text-primary)); font-size: 13px; font-weight: 700;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .routing-rules-page .routing-rule-cell {
+    display: block; min-width: 0; max-width: 100%;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .routing-rules-page .routing-rules-col-menu { position: relative; }
+  .routing-rules-page .routing-rules-col-menu__panel {
+    display: none; position: absolute; right: 0; top: calc(100% + 6px); z-index: 20;
+    min-width: 180px; padding: 10px; border-radius: 10px;
+  }
+  .routing-rules-page .routing-rules-col-menu.is-open .routing-rules-col-menu__panel { display: grid; gap: 6px; }
+  .routing-rules-page .routing-rules-col-menu__panel label {
+    display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500;
+    color: var(--text-primary); cursor: pointer;
+  }
+  body[data-design-system=casefile]:has(.routing-rules-page) .top-bar .global-search-form { max-width: 248px; flex-basis: 248px; }
+  body[data-design-system=casefile]:has(.routing-rules-page) .top-bar .global-search-input {
+    height: 36px; border: 1px solid transparent !important; background: transparent !important; color: var(--ink-600);
+  }
+  body[data-design-system=casefile]:has(.routing-rules-page) .top-bar .global-search-input:focus-visible {
+    border-color: var(--line) !important; background: var(--card) !important;
+  }
+  body[data-design-system=casefile]:has(.routing-rules-page) .app-footer { display: none; }
+  @media (max-width: 560px) {
+    .routing-rules-page .clm-list-summary { --dc-ds-summary-columns: 1; }
+  }
 </style>
-<div class="dc-ds-page dc-ds-page--wide dc-ds-page-flow dc-ds-list-page clm-list-page routing-rules-page">
-  <header class="clm-list-shell dc-ds-filterbar dc-ds-table-toolbar dc-ds-list-toolbar" aria-label="Workflow operations controls">
+
+<div id="routing-rules-root" class="dc-ds-page dc-ds-page--wide dc-ds-page-flow dc-ds-list-page clm-list-page routing-rules-page">
+  <header class="clm-list-shell dc-ds-filterbar dc-ds-table-toolbar dc-ds-list-toolbar" aria-label="Workflow Designer controls">
     <div class="clm-list-view-header">
-      {% include "components/_workflow_operations_tabs.html" with tabs=ops_tabs %}
+      {% include "components/_workflow_designer_tabs.html" with tabs=designer_tabs %}
       <div class="clm-list-view-actions">
         {% include "contracts/approval_rule_list_actions.html" %}
       </div>
     </div>
+
+    <div class="clm-list-filter-controls">
+      <div class="clm-list-search-field">
+        {% include "design_system/icon.html" with name="search" class_name="clm-list-search-icon" %}
+        <input class="dc-ds-control" type="search" id="routing-rules-search" placeholder="Search routing rules" aria-label="Search routing rules" autocomplete="off">
+      </div>
+      <div class="clm-list-actions-stack">
+        <p id="routing-rules-result-count" class="clm-list-result-count" aria-live="polite">{{ rule_count }} rule{{ rule_count|pluralize }}</p>
+        <div class="routing-rules-col-menu" id="routing-rules-col-menu">
+          <button id="routing-rules-col-toggle" type="button" class="clm-list-filter-toggle dc-ds-button dc-ds-button--ghost" aria-expanded="false" aria-controls="routing-rules-col-panel">Columns</button>
+          <div id="routing-rules-col-panel" class="routing-rules-col-menu__panel dc-ds-surface" role="group" aria-label="Visible columns">
+            <label><input type="checkbox" data-col-toggle="trigger" checked> Trigger</label>
+            <label><input type="checkbox" data-col-toggle="value" checked> Value</label>
+            <label><input type="checkbox" data-col-toggle="step" checked> Step</label>
+            <label><input type="checkbox" data-col-toggle="sla" checked> SLA</label>
+            <label><input type="checkbox" data-col-toggle="active" checked> Active</label>
+          </div>
+        </div>
+      </div>
+    </div>
   </header>
-  {% include "design_system/surface_card.html" with title="Routing rules" labelledby="approval-rule-list" body_template="contracts/approval_rule_list_table.html" %}
+
+  <div class="dc-ds-summary clm-list-summary" aria-label="Routing rules summary">
+    <div class="dc-ds-summary__item {% if active_rule_count %}dc-ds-summary__item--info{% else %}dc-ds-summary__item--clear{% endif %}">
+      <span class="dc-ds-summary__label">Active rules</span>
+      <strong class="dc-ds-summary__value">{{ active_rule_count }}</strong>
+    </div>
+    <div class="dc-ds-summary__item {% if inactive_rule_count %}dc-ds-summary__item--info{% else %}dc-ds-summary__item--clear{% endif %}">
+      <span class="dc-ds-summary__label">Inactive rules</span>
+      <strong class="dc-ds-summary__value">{{ inactive_rule_count }}</strong>
+    </div>
+  </div>
+
+  {% include "contracts/approval_rule_list_table.html" %}
 </div>
+
+<script nonce="{{ csp_nonce }}">
+(function () {
+  var root = document.getElementById('routing-rules-root');
+  if (!root) return;
+
+  var table = document.getElementById('routing-rules-table');
+  var search = document.getElementById('routing-rules-search');
+  var resultCount = document.getElementById('routing-rules-result-count');
+
+  function setResultCount(n) {
+    if (!resultCount) return;
+    var count = Number(n) || 0;
+    resultCount.textContent = count + ' rule' + (count === 1 ? '' : 's');
+  }
+
+  function filterRows() {
+    if (!table || !search) return;
+    var q = (search.value || '').trim().toLowerCase();
+    var visible = 0;
+    table.querySelectorAll('tbody tr[data-rule-row]').forEach(function (row) {
+      var hay = (row.getAttribute('data-search') || '').toLowerCase();
+      var show = !q || hay.indexOf(q) !== -1;
+      row.hidden = !show;
+      if (show) visible += 1;
+    });
+    var empty = table.querySelector('tbody tr.routing-rules-filter-empty');
+    if (empty) empty.hidden = visible > 0 || !q;
+    setResultCount(q ? visible : {{ rule_count|default:0 }});
+  }
+
+  if (search) {
+    search.addEventListener('input', filterRows);
+  }
+
+  var STORAGE_KEY = 'clmone-routing-rules-columns-v1';
+  var DEFAULT_COLS = { trigger: true, value: true, step: true, sla: true, active: true };
+  var colMenu = document.getElementById('routing-rules-col-menu');
+  var colToggle = document.getElementById('routing-rules-col-toggle');
+  var columnVisibility = Object.assign({}, DEFAULT_COLS);
+
+  try {
+    var saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    Object.keys(DEFAULT_COLS).forEach(function (key) {
+      if (typeof saved[key] === 'boolean') columnVisibility[key] = saved[key];
+    });
+  } catch (err) { /* ignore */ }
+
+  function applyColumnVisibility() {
+    if (!table) return;
+    Object.keys(DEFAULT_COLS).forEach(function (key) {
+      var visible = columnVisibility[key] !== false;
+      table.querySelectorAll('[data-col="' + key + '"]').forEach(function (el) {
+        el.classList.toggle('is-hidden', !visible);
+      });
+      var input = root.querySelector('[data-col-toggle="' + key + '"]');
+      if (input) input.checked = visible;
+    });
+  }
+
+  function persistColumns() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(columnVisibility)); } catch (err) { /* ignore */ }
+  }
+
+  if (colToggle && colMenu) {
+    colToggle.addEventListener('click', function () {
+      var open = colMenu.classList.toggle('is-open');
+      colToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    document.addEventListener('click', function (event) {
+      if (!colMenu.contains(event.target)) {
+        colMenu.classList.remove('is-open');
+        colToggle.setAttribute('aria-expanded', 'false');
+      }
+    });
+    document.addEventListener('keydown', function (event) {
+      if (event.key !== 'Escape') return;
+      colMenu.classList.remove('is-open');
+      colToggle.setAttribute('aria-expanded', 'false');
+    });
+  }
+
+  root.querySelectorAll('[data-col-toggle]').forEach(function (input) {
+    input.addEventListener('change', function () {
+      var key = input.getAttribute('data-col-toggle');
+      if (!Object.prototype.hasOwnProperty.call(DEFAULT_COLS, key)) return;
+      columnVisibility[key] = !!input.checked;
+      applyColumnVisibility();
+      persistColumns();
+    });
+  });
+  applyColumnVisibility();
+})();
+</script>
 {% endblock %}

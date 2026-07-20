@@ -103,6 +103,7 @@ def feature_flags(request):
         'GEMINI_AI_ENABLED': getattr(settings, 'GEMINI_AI_ENABLED', False),
         'BILLING_SELF_SERVE_ENABLED': getattr(settings, 'BILLING_SELF_SERVE_ENABLED', True),
         'TRUST_ACCOUNTING_ENABLED': getattr(settings, 'TRUST_ACCOUNTING_ENABLED', True),
+        'CONTROLLED_PILOT_ENABLED': getattr(settings, 'CONTROLLED_PILOT_ENABLED', False),
         'BUILD_SHA': getattr(settings, 'BUILD_SHA', 'unknown'),
         'BUILD_LABEL': getattr(settings, 'BUILD_LABEL', 'commit unknown'),
         'csp_nonce': getattr(request, 'csp_nonce', ''),

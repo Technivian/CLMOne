@@ -1,0 +1,43 @@
+{% comment %}
+  Canonical CLM One workspace navigation tabs.
+
+  Params:
+    tabs          – list of {key, label, url, active, panel_id?}
+    aria_label    – accessible name for the tablist (required)
+    nav_class     – optional extra classes (e.g. clm-list-view-tabs)
+    role_tablist  – true for record shells with tabpanels; false for hub links
+    overflow_at   – optional int; hide tabs beyond this into a More menu (default 0 = auto via CSS/JS)
+{% endcomment %}
+{% with use_roles=role_tablist|default:False %}
+<nav
+  class="dc-ds-workspace-tabs{% if nav_class %} {{ nav_class }}{% endif %}"
+  {% if use_roles %}role="tablist"{% endif %}
+  aria-label="{{ aria_label }}"
+  data-workspace-tabs
+  {% if overflow_at %}data-overflow-at="{{ overflow_at }}"{% endif %}
+>
+  <div class="dc-ds-workspace-tabs__list" data-workspace-tabs-list>
+    {% for tab in tabs %}
+    <a
+      href="{{ tab.url }}"
+      class="dc-ds-workspace-tabs__tab{% if tab.active %} is-active{% endif %}"
+      data-workspace-tab
+      data-tab-key="{{ tab.key }}"
+      {% if use_roles %}
+      role="tab"
+      id="tab-{{ tab.key }}"
+      aria-selected="{% if tab.active %}true{% else %}false{% endif %}"
+      {% if tab.panel_id %}aria-controls="{{ tab.panel_id }}"{% endif %}
+      {% if tab.active %}tabindex="0"{% else %}tabindex="-1"{% endif %}
+      {% else %}
+      {% if tab.active %}aria-current="page"{% endif %}
+      {% endif %}
+    >{{ tab.label }}</a>
+    {% endfor %}
+  </div>
+  <details class="dc-ds-workspace-tabs__more" data-workspace-tabs-more hidden>
+    <summary class="dc-ds-workspace-tabs__tab dc-ds-workspace-tabs__more-toggle" aria-label="More tabs">More</summary>
+    <div class="dc-ds-workspace-tabs__more-panel" role="menu" data-workspace-tabs-more-panel></div>
+  </details>
+</nav>
+{% endwith %}

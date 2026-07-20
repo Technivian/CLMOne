@@ -6,13 +6,37 @@ from django.urls import reverse
 CONTRACT_DETAIL_TABS = (
     ('overview', 'Overview'),
     ('documents', 'Documents'),
-    ('review', 'Review'),
-    ('approvals', 'Approvals'),
+    ('workflow', 'Workflow'),
     ('risks', 'Risks'),
     ('obligations', 'Obligations'),
-    ('activity', 'Activity'),
+    ('activity', 'Audit trail'),
 )
 CONTRACT_DETAIL_TAB_KEYS = {key for key, _ in CONTRACT_DETAIL_TABS}
+CONTRACT_DETAIL_TAB_ALIASES = {
+    'review': 'workflow',
+    'approvals': 'workflow',
+    'audit': 'activity',
+    'audit-trail': 'activity',
+    'audit_trail': 'activity',
+}
+WORKFLOW_SECTIONS = frozenset({'review', 'approvals', 'signatures'})
+
+
+def normalize_contract_detail_tab(raw_tab: str | None) -> str:
+    key = (raw_tab or 'overview').strip().lower()
+    key = CONTRACT_DETAIL_TAB_ALIASES.get(key, key)
+    return key if key in CONTRACT_DETAIL_TAB_KEYS else 'overview'
+
+
+def normalize_workflow_section(raw_section: str | None, *, raw_tab: str | None = None) -> str:
+    """Preserve deep links to review/approvals via ?tab= or ?section=."""
+    section = (raw_section or '').strip().lower()
+    if section in WORKFLOW_SECTIONS:
+        return section
+    tab = (raw_tab or '').strip().lower()
+    if tab in ('review', 'approvals'):
+        return tab
+    return 'review'
 
 _AUDIT_FIELD_LABELS = {
     'title': 'Title',
@@ -72,8 +96,8 @@ def build_overview_progress(
     }
     stage = contract.lifecycle_stage or 'DRAFTING'
     # Collapse post-execution tracking into the final compact step.
-    if stage in ('OBLIGATION_TRACKING', 'RENEWAL', 'ARCHIVED'):
-        mapped = 'EXECUTED' if stage != 'ARCHIVED' else 'EXECUTED'
+    if stage in ('OBLIGATION_TRACKING', 'RENEWAL'):
+        mapped = 'EXECUTED'
     elif stage not in compact_keys:
         mapped = 'DRAFTING'
     else:
@@ -121,11 +145,6 @@ REVIEW_NEEDS_REFRESH = 'Needs refresh'
 REVIEW_COMPLETE = 'Complete'
 
 
-def normalize_contract_detail_tab(raw_tab: str | None) -> str:
-    key = (raw_tab or 'overview').strip().lower()
-    return key if key in CONTRACT_DETAIL_TAB_KEYS else 'overview'
-
-
 def contract_detail_tab_url(contract_pk: int, tab: str) -> str:
     tab = normalize_contract_detail_tab(tab)
     base = reverse('contracts:contract_detail', kwargs={'pk': contract_pk})
@@ -145,6 +164,46 @@ def build_contract_detail_tabs(contract_pk: int, active_tab: str) -> list[dict]:
             'panel_id': f'contract-tab-{key}',
         }
         for key, label in CONTRACT_DETAIL_TABS
+    ]
+
+
+def build_workflow_section_tabs(contract_pk: int, section: str) -> list[dict]:
+    """Secondary Workflow sections (Review findings / Approvals). Not lifecycle stages."""
+    active = section if section in WORKFLOW_SECTIONS else 'review'
+    base = contract_detail_tab_url(contract_pk, 'workflow')
+    sep = '&' if '?' in base else '?'
+    return [
+        {
+            'key': 'review',
+            'label': 'Review findings',
+            'url': f'{base}{sep}section=review',
+            'active': active == 'review',
+        },
+        {
+            'key': 'approvals',
+            'label': 'Approvals',
+            'url': f'{base}{sep}section=approvals',
+            'active': active in ('approvals', 'signatures'),
+        },
+    ]
+
+
+def contract_operations_hub_tabs(*, active: str = 'repository') -> list[dict]:
+    """Shared Contract operations hub links (Repository / My work / Approvals / Signatures)."""
+    tabs = (
+        ('repository', 'All contracts', 'contracts:repository'),
+        ('dashboard', 'My work', 'dashboard'),
+        ('approvals', 'Approvals', 'contracts:approval_request_list'),
+        ('signatures', 'Signatures', 'contracts:signature_request_list'),
+    )
+    return [
+        {
+            'key': key,
+            'label': label,
+            'url': reverse(route),
+            'active': key == active,
+        }
+        for key, label, route in tabs
     ]
 
 
@@ -180,15 +239,12 @@ def build_lifecycle_command_label(contract, *, has_documents: bool) -> tuple[str
     status = contract.status
     stage = contract.lifecycle_stage
 
-    if status == Contract.Status.DRAFT and not has_documents:
-        return 'Draft · Intake incomplete', 'badge-yellow'
+    if status == Contract.Status.IN_PROGRESS and not has_documents:
+        return 'In progress · Intake incomplete', 'badge-yellow'
 
-    if status in (
-        Contract.Status.APPROVED,
-        Contract.Status.ACTIVE,
-        Contract.Status.EXECUTED,
-        Contract.Status.OBLIGATIONS_ACTIVE,
-    ) and stage in (
+    if status == Contract.Status.ACTIVE and stage in (
+        Contract.LifecycleStage.EXECUTED,
+        Contract.LifecycleStage.OBLIGATION_TRACKING,
         'EXECUTED',
         'OBLIGATION_TRACKING',
     ):
@@ -199,18 +255,14 @@ def build_lifecycle_command_label(contract, *, has_documents: bool) -> tuple[str
     if stage == 'OBLIGATION_TRACKING':
         stage_label = 'Obligation tracking'
     badge_class = {
-        Contract.Status.DRAFT: 'badge-gray',
-        Contract.Status.PENDING: 'badge-yellow',
-        Contract.Status.IN_REVIEW: 'badge-blue',
-        Contract.Status.APPROVED: 'badge-green',
+        Contract.Status.IN_PROGRESS: 'badge-blue',
         Contract.Status.ACTIVE: 'badge-green',
-        Contract.Status.EXECUTED: 'badge-green',
-        Contract.Status.OBLIGATIONS_ACTIVE: 'badge-green',
         Contract.Status.EXPIRED: 'badge-yellow',
         Contract.Status.TERMINATED: 'badge-red',
         Contract.Status.CANCELLED: 'badge-gray',
+        Contract.Status.ARCHIVED: 'badge-gray',
     }.get(status, 'badge-gray')
-    return f'{status_label} · {stage_label}', badge_class
+    return f'{status_label} · Currently in {stage_label}', badge_class
 
 
 def format_contract_audit_activity_detail(changes, *, event_type: str | None = None) -> str:
@@ -277,7 +329,7 @@ def get_submit_readiness(
     from contracts.models import Contract
 
     missing = []
-    draft_eligible = can_edit and status == Contract.Status.DRAFT
+    draft_eligible = can_edit and status == Contract.Status.IN_PROGRESS
     if not draft_eligible:
         return {
             'ready': False,
@@ -383,8 +435,11 @@ def build_contract_command(
         from contracts.models import Contract as ContractModel
 
         in_obligation_command = (
-            contract.status in (ContractModel.Status.APPROVED, ContractModel.Status.ACTIVE)
-            and contract.lifecycle_stage in ('EXECUTED', 'OBLIGATION_TRACKING')
+            contract.status == ContractModel.Status.ACTIVE
+            and contract.lifecycle_stage in (
+                ContractModel.LifecycleStage.EXECUTED,
+                ContractModel.LifecycleStage.OBLIGATION_TRACKING,
+            )
         )
         if in_obligation_command:
             primary_action = {

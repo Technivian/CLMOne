@@ -2,55 +2,67 @@
 {% load clmone_format %}
 {% load clmone_components %}
 {% block title %}{{ contract.title }} – CLM One{% endblock %}
-{% block authenticated_page_title %}Contracts{% endblock %}
+{% block authenticated_page_title %}{% endblock %}
 {% block authenticated_page_subtitle %}{% endblock %}
+{% block authenticated_page_context_attrs %} data-suppress-title-promotion{% endblock %}
 {% block authenticated_page_back %}
 <a href="{% url 'contracts:repository' %}" class="topbar-back-link" data-workspace-back aria-label="Back to contracts" title="Back to contracts">
   {% include "design_system/icon.html" with name="arrow-left" %}
+  <span class="topbar-back-label">Back to Contracts</span>
 </a>
 {% endblock %}
 {% block content %}
 
 <main class="dc-ds-workspace dc-ds-workspace--record dc-ds-workspace--command reveal-stagger" aria-label="Contract workspace">
-  <header class="dc-ds-workspace__title-row">
-    <div>
+  <header class="arch-header dc-ds-workspace__title-row">
+    <div class="contract-command-identity">
       <div class="contract-command-title">
         <h1 class="arch-title">{{ contract.title }}</h1>
-        <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ contract.status|contract_status_badge_tone }}">{{ contract.get_status_display }}</span>
-        <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ contract.lifecycle_stage|lifecycle_stage_badge_tone }}">{{ contract.get_lifecycle_stage_display }}</span>
+      </div>
+      <div class="contract-command-badges" aria-label="Contract status and stage">
+        <span class="contract-command-position dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ contract.status|contract_status_badge_tone }}">{{ contract.get_status_display }} · {{ contract.get_lifecycle_stage_display }}</span>
       </div>
       <div class="contract-command-context" aria-label="Contract identity">
-        {% if contract.counterparty %}<span>{{ contract.counterparty }}</span>{% endif %}
-        <span>{{ contract.get_contract_type_display }}</span>
-        <span>Owner: {% if owner %}{{ owner.get_full_name|default:owner.username }}{% else %}Unassigned{% endif %}</span>
-        <span>Updated {{ contract.updated_at|date:"M d, Y" }}</span>
+        <span class="contract-command-meta">
+          <span class="contract-command-meta__label">Owner</span>
+          <span class="contract-command-meta__value contract-command-owner">
+            {% if owner %}
+            <span class="contract-command-owner__avatar" aria-hidden="true">{{ owner.first_name|default:owner.username|first|upper }}</span>
+            {{ owner.get_full_name|default:owner.username }}
+            {% else %}
+            Unassigned
+            {% endif %}
+          </span>
+        </span>
+        <span class="contract-command-meta">
+          <span class="contract-command-meta__label">Updated</span>
+          <span class="contract-command-meta__value">{{ contract.updated_at|date:"j M Y" }}</span>
+        </span>
+        <span class="contract-command-meta">
+          <span class="contract-command-meta__label">Version</span>
+          <span class="contract-command-meta__value">v{% if primary_document %}{{ primary_document.version }}{% else %}1{% endif %}</span>
+        </span>
+        <span class="contract-command-meta">
+          <span class="contract-command-meta__label">Value</span>
+          <span class="contract-command-meta__value">{% if contract.value %}{{ contract.value|money_compact:contract.currency }}{% else %}—{% endif %}</span>
+        </span>
       </div>
     </div>
     <div class="dc-ds-workspace__actions">
       {% if can_edit %}<a href="{% url 'contracts:contract_update' contract.pk %}" class="dc-ds-button dc-ds-button--quiet">Edit</a>{% endif %}
       {% if contract_command.show_primary_action %}
+      {% if active_tab != 'overview' %}
       {% if contract_command.primary_action.mode == 'dialog' %}
       <button type="button" class="dc-ds-button dc-ds-button--primary" data-open-attach-dialog>{{ contract_command.primary_action.label }}</button>
       {% else %}
       <a href="{{ contract_command.primary_action.target }}" class="dc-ds-button dc-ds-button--primary">{{ contract_command.primary_action.label }}</a>
       {% endif %}
       {% endif %}
+      {% endif %}
     </div>
   </header>
 
-  <nav class="dc-ds-workspace__tabs dc-ds-list-tabs contract-command-tabs" role="tablist" aria-label="Contract workspace tabs">
-    {% for tab in workspace_tabs %}
-    <a
-      href="{{ tab.url }}"
-      class="dc-ds-choice{% if tab.active %} chip-active{% endif %}"
-      role="tab"
-      id="tab-{{ tab.key }}"
-      aria-selected="{% if tab.active %}true{% else %}false{% endif %}"
-      aria-controls="{{ tab.panel_id }}"
-      {% if tab.active %}tabindex="0"{% else %}tabindex="-1"{% endif %}
-    >{{ tab.label }}</a>
-    {% endfor %}
-  </nav>
+  {% include "components/_workspace_tabs.html" with tabs=workspace_tabs aria_label="Contract workspace tabs" role_tablist=True nav_class="dc-ds-workspace__tabs" %}
 
   <div class="dc-ds-workspace__layout">
     <div class="dc-ds-workspace__main">
@@ -58,6 +70,9 @@
       <div id="contract-tab-overview" role="tabpanel" aria-labelledby="tab-overview" class="contract-overview">
         {% if contract_command.show_primary_action or current_blockers %}
         <section class="contract-action-card" aria-labelledby="action-needed-heading" role="status">
+          <div class="contract-action-card__icon" aria-hidden="true">
+            {% include "design_system/icon.html" with name="alert-triangle" class_name="contract-action-card__icon-svg" %}
+          </div>
           <div class="contract-action-card__copy">
             <p class="contract-action-card__eyebrow" id="action-needed-heading">Action required</p>
             <p class="contract-action-card__body">{{ contract_command.next_action }}</p>
@@ -72,9 +87,31 @@
         </section>
         {% endif %}
 
+        <section class="contract-overview-panel contract-overview-panel--lifecycle" aria-labelledby="progress-heading">
+          <div class="contract-overview-panel__head">
+            <h2 id="progress-heading" class="contract-overview-panel__title">Contract lifecycle</h2>
+          </div>
+          <span class="sr-only">Progress</span>
+          <ol class="contract-progress-track contract-progress-track--lifecycle" aria-label="Contract progress">
+            {% for step in overview_progress.compact_steps %}
+            <li class="contract-progress-track__step contract-progress-track__step--{{ step.state }}" {% if step.state == 'current' %}aria-current="step"{% endif %}>
+              <span class="contract-progress-track__dot" aria-hidden="true"></span>
+              <span class="contract-progress-track__label">{{ step.label }}</span>
+            </li>
+            {% endfor %}
+          </ol>
+        </section>
+
         <div class="contract-overview-grid">
           <section class="contract-overview-panel" id="contract-details" aria-labelledby="contract-details-heading">
-            <h2 id="contract-details-heading" class="contract-overview-panel__title">Contract details</h2>
+            <div class="contract-overview-panel__head">
+              <h2 id="contract-details-heading" class="contract-overview-panel__title">Contract details</h2>
+              {% if can_edit %}
+              <a href="{% url 'contracts:contract_update' contract.pk %}" class="contract-overview-panel__edit" aria-label="Edit contract details">
+                {% include "design_system/icon.html" with name="edit" class_name="contract-overview-panel__edit-icon" %}
+              </a>
+              {% endif %}
+            </div>
             <dl class="contract-details-dl">
               <div class="contract-details-dl__row"><dt>Type</dt><dd>{{ contract.get_contract_type_display }}</dd></div>
               <div class="contract-details-dl__row"><dt>Counterparty</dt><dd>{{ contract.counterparty|default:"—" }}</dd></div>
@@ -93,70 +130,119 @@
             {% endif %}
           </section>
 
-          <section class="contract-overview-panel" aria-labelledby="progress-heading">
-            <h2 id="progress-heading" class="contract-overview-panel__title">Progress</h2>
-            <ol class="contract-progress-track" aria-label="Contract progress">
-              {% for step in overview_progress.compact_steps %}
-              <li class="contract-progress-track__step contract-progress-track__step--{{ step.state }}" {% if step.state == 'current' %}aria-current="step"{% endif %}>
-                <span class="contract-progress-track__dot" aria-hidden="true"></span>
-                <span class="contract-progress-track__label">{{ step.label }}</span>
+          <section class="contract-overview-panel" aria-labelledby="next-steps-heading">
+            <h2 id="next-steps-heading" class="contract-overview-panel__title">Next steps</h2>
+            <ul class="contract-next-steps">
+              {% if overview_progress.blocking_item %}
+              <li class="contract-next-steps__item">
+                {% if contract_command.primary_action.key == 'attach' and can_edit %}
+                <button type="button" class="contract-next-steps__action" data-open-attach-dialog>
+                  <span class="contract-next-steps__dot contract-next-steps__dot--blocking" aria-hidden="true"></span>
+                  <span class="contract-next-steps__copy">
+                    <span class="contract-next-steps__label">{{ overview_progress.blocking_item }}</span>
+                  </span>
+                  <span class="contract-next-steps__status contract-next-steps__status--blocking">Blocking</span>
+                </button>
+                {% elif contract_command.show_primary_action and contract_command.primary_action.mode == 'link' %}
+                <a href="{{ contract_command.primary_action.target }}" class="contract-next-steps__action">
+                  <span class="contract-next-steps__dot contract-next-steps__dot--blocking" aria-hidden="true"></span>
+                  <span class="contract-next-steps__copy">
+                    <span class="contract-next-steps__label">{{ overview_progress.blocking_item }}</span>
+                  </span>
+                  <span class="contract-next-steps__status contract-next-steps__status--blocking">Blocking</span>
+                </a>
+                {% else %}
+                <a href="?tab=documents" class="contract-next-steps__action">
+                  <span class="contract-next-steps__dot contract-next-steps__dot--blocking" aria-hidden="true"></span>
+                  <span class="contract-next-steps__copy">
+                    <span class="contract-next-steps__label">{{ overview_progress.blocking_item }}</span>
+                  </span>
+                  <span class="contract-next-steps__status contract-next-steps__status--blocking">Blocking</span>
+                </a>
+                {% endif %}
+              </li>
+              {% endif %}
+              {% if overview_progress.next_stage %}
+              <li class="contract-next-steps__item">
+                <a href="{{ workflow_tab_url }}" class="contract-next-steps__action">
+                  <span class="contract-next-steps__dot" aria-hidden="true"></span>
+                  <span class="contract-next-steps__copy">
+                    <span class="contract-next-steps__label">Advance to {{ overview_progress.next_stage }}</span>
+                    <span class="contract-next-steps__meta">Next governed stage</span>
+                  </span>
+                  <span class="contract-next-steps__status">Pending</span>
+                </a>
+              </li>
+              {% endif %}
+              {% if overview_progress.next_milestone %}
+              <li class="contract-next-steps__item">
+                <a href="?tab=obligations" class="contract-next-steps__action">
+                  <span class="contract-next-steps__dot" aria-hidden="true"></span>
+                  <span class="contract-next-steps__copy">
+                    <span class="contract-next-steps__label">{{ overview_progress.next_milestone.label }}</span>
+                    <span class="contract-next-steps__meta">Milestone</span>
+                  </span>
+                  <span class="contract-next-steps__status">Due {{ overview_progress.next_milestone.date|date:"M d, Y" }}</span>
+                </a>
+              </li>
+              {% endif %}
+              {% for task in contract_tasks|slice:":3" %}
+              <li class="contract-next-steps__item">
+                <a href="{% url 'contracts:legal_task_update' task.pk %}" class="contract-next-steps__action">
+                  <span class="contract-next-steps__dot" aria-hidden="true"></span>
+                  <span class="contract-next-steps__copy">
+                    <span class="contract-next-steps__label">{{ task.title }}</span>
+                  </span>
+                  <span class="contract-next-steps__status">{{ task.get_status_display }}</span>
+                </a>
               </li>
               {% endfor %}
-            </ol>
-            <dl class="contract-progress-meta">
-              <div class="contract-progress-meta__row"><dt>Current stage</dt><dd><span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ contract.lifecycle_stage|lifecycle_stage_badge_tone }}">{{ overview_progress.current_stage }}</span></dd></div>
-              <div class="contract-progress-meta__row"><dt>Next step</dt><dd>{{ overview_progress.next_stage }}</dd></div>
-              {% if overview_progress.blocking_item %}
-              <div class="contract-progress-meta__row contract-progress-meta__row--block"><dt>Blocking item</dt><dd>{{ overview_progress.blocking_item }}</dd></div>
+              {% for sig in signature_requests|slice:":2" %}
+              <li class="contract-next-steps__item">
+                <a href="{% url 'contracts:signature_request_detail' sig.pk %}" class="contract-next-steps__action">
+                  <span class="contract-next-steps__dot" aria-hidden="true"></span>
+                  <span class="contract-next-steps__copy">
+                    <span class="contract-next-steps__label">Signature · {{ sig.signer_name }}</span>
+                  </span>
+                  <span class="contract-next-steps__status">{{ sig.get_status_display }}</span>
+                </a>
+              </li>
+              {% endfor %}
+              {% if not overview_progress.blocking_item and not overview_progress.next_stage and not overview_progress.next_milestone and not contract_tasks and not signature_requests %}
+              <li class="contract-next-steps__item contract-next-steps__item--empty">
+                <span class="contract-next-steps__label">No open next steps right now.</span>
+              </li>
               {% endif %}
-              {% if overview_progress.signature_requirement %}
-              <div class="contract-progress-meta__row"><dt>Signature requirement</dt><dd>{{ overview_progress.signature_requirement }}</dd></div>
-              {% endif %}
-              <div class="contract-progress-meta__row"><dt>Next milestone</dt><dd>{% if overview_progress.next_milestone %}{{ overview_progress.next_milestone.label }} · {{ overview_progress.next_milestone.date|date:"M d, Y" }}{% else %}—{% endif %}</dd></div>
-            </dl>
-            <details class="contract-workflow-reveal">
-              <summary>View workflow</summary>
-              <ol class="contract-lifecycle-stepper" aria-label="Full contract lifecycle">
-                {% for step in overview_progress.lifecycle_path %}
-                <li class="contract-lifecycle-step contract-lifecycle-step--{{ step.state }}">
-                  <span class="contract-lifecycle-step__marker" aria-hidden="true"></span>
-                  <span class="contract-lifecycle-step__label">{% if step.state == 'current' %}<strong>{{ step.label }}</strong>{% else %}{{ step.label }}{% endif %}</span>
-                </li>
-                {% endfor %}
-              </ol>
-            </details>
+            </ul>
           </section>
         </div>
 
-        {% if overview_risk_snapshot.findings %}
-        <section class="contract-overview-panel contract-overview-panel--wide" aria-labelledby="risks-decisions-heading">
+        <section class="contract-overview-panel contract-overview-panel--wide" aria-labelledby="overview-activity-heading">
           <div class="contract-overview-panel__head">
-            <h2 id="risks-decisions-heading" class="contract-overview-panel__title">Risks and decisions</h2>
-            <a href="?tab=risks" class="c-link text-sm font-medium">View all risks</a>
+            <h2 id="overview-activity-heading" class="contract-overview-panel__title">Recent activity</h2>
+            <a href="?tab=activity" class="c-link text-sm font-medium">View all →</a>
           </div>
-          <div class="contract-risk-grid">
-            {% for risk in overview_risk_snapshot.findings %}
-            <div class="contract-risk-tile">
-              <span class="contract-risk-tile__dot contract-risk-tile__dot--{% if risk.risk_level == 'CRITICAL' or risk.risk_level == 'HIGH' %}attention{% elif risk.risk_level == 'MEDIUM' %}attention{% else %}success{% endif %}" aria-hidden="true"></span>
-              <div>
-                <strong>{{ risk.title }}</strong>
-                <span>{{ risk.status|risk_status_label }}{% if risk.get_risk_level_display %} · {{ risk.get_risk_level_display }}{% endif %}</span>
+          {% if contract_activity_feed %}
+          <div class="contract-activity-feed">
+            {% for item in contract_activity_feed|slice:":4" %}
+            <a href="?tab=activity" class="contract-activity-feed-row contract-activity-feed-row--link">
+              <div class="contract-activity-feed-main">
+                <div class="contract-activity-feed-head">
+                  <span class="contract-activity-feed-avatar" aria-hidden="true">{{ item.actor_initial }}</span>
+                  <div class="contract-activity-feed-copy">
+                    <div class="contract-activity-feed-title"><strong>{{ item.actor_name }}</strong> {{ item.title }}</div>
+                    <div class="contract-activity-feed-meta">{{ item.timestamp|timesince }} ago</div>
+                  </div>
+                </div>
               </div>
-            </div>
+              <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ item.badge_class|legacy_badge_tone }} contract-activity-feed-badge">{{ item.badge_label }}</span>
+            </a>
             {% endfor %}
           </div>
+          {% else %}
+          <p class="contract-empty">No internal activity recorded for this contract.</p>
+          {% endif %}
         </section>
-        {% endif %}
-
-        {% if signature_requests or contract_tasks %}
-        <section class="contract-overview-panel contract-overview-panel--wide" aria-labelledby="follow-up-heading">
-          <h2 id="follow-up-heading" class="contract-overview-panel__title">Operational follow-up</h2>
-          <dl class="contract-details-dl">
-            {% for task in contract_tasks|slice:":3" %}<div class="contract-details-dl__row"><dt>{{ task.title }}</dt><dd>{{ task.get_status_display }}</dd></div>{% endfor %}
-            {% for sig in signature_requests|slice:":2" %}<div class="contract-details-dl__row"><dt>{{ sig.signer_name }}</dt><dd>{{ sig.get_status_display }}</dd></div>{% endfor %}
-          </dl>
-        </section>
-        {% endif %}
       </div>
 
       {% elif active_tab == 'documents' %}
@@ -174,7 +260,19 @@
         </section>
         {% endif %}
         <section class="dc-ds-workspace__surface" id="document-versions" aria-labelledby="documents-heading">
-          <div class="dc-ds-workspace__surface-head"><div><h2 id="documents-heading" class="dc-ds-workspace__surface-title">Documents &amp; versions</h2><p class="dc-ds-workspace__surface-kicker">The source agreement is the operating record for this contract.</p></div>{% if can_edit %}<button type="button" class="dc-ds-button dc-ds-button--quiet" data-open-attach-dialog>Attach document</button>{% endif %}</div>
+          <div class="dc-ds-workspace__surface-head">
+            <div>
+              <h2 id="documents-heading" class="dc-ds-workspace__surface-title">Documents &amp; versions</h2>
+              <p class="dc-ds-workspace__surface-kicker">The source agreement is the operating record for this contract.</p>
+            </div>
+            {% if can_edit %}
+            <button type="button"
+                    class="dc-ds-button {% if primary_document %}dc-ds-button--quiet{% else %}dc-ds-button--primary{% endif %}"
+                    data-open-attach-dialog>
+              {% if primary_document %}Attach document{% else %}Attach source document{% endif %}
+            </button>
+            {% endif %}
+          </div>
           <div class="dc-ds-workspace__surface-body">{% if primary_document %}<article class="contract-document-hero"><div><a href="{% url 'contracts:document_detail' primary_document.pk %}" class="contract-document-name">{{ primary_document.title }}</a><div class="contract-document-meta"><span>{{ primary_document.get_document_type_display }}</span><span>Version {{ primary_document.version }}</span><span>Source of truth</span><span>Contract review: {{ contract_command.review_label }}</span>{% if primary_document.share_with_counterparty %}<span>Shared with counterparty</span>{% endif %}<span>Updated {{ primary_document.updated_at|date:"M d, Y" }}</span><span>{% if primary_document.uploaded_by %}Uploaded by {{ primary_document.uploaded_by.get_full_name|default:primary_document.uploaded_by.username }}{% else %}Uploader unavailable{% endif %}</span></div></div><div class="contract-document-actions"><a href="{% url 'contracts:document_detail' primary_document.pk %}" class="dc-ds-button dc-ds-button--quiet">Open document</a>{% if documents|length > 1 %}<a href="#document-versions" class="dc-ds-button dc-ds-button--quiet">Compare versions</a>{% endif %}</div></article>{% for doc in documents %}{% if doc.pk != primary_document.pk %}<div class="contract-document-version"><div><a href="{% url 'contracts:document_detail' doc.pk %}" class="contract-document-name">{{ doc.title }}</a><div class="contract-document-meta"><span>Version {{ doc.version }}</span><span>{{ doc.get_status_display }}</span>{% if doc.share_with_counterparty %}<span>Shared with counterparty</span>{% endif %}<span>{{ doc.updated_at|date:"M d, Y" }}</span></div></div><a href="{% url 'contracts:document_detail' doc.pk %}" class="c-link text-xs">Open</a></div>{% endif %}{% endfor %}{% else %}<p class="contract-empty">No document is attached.{% if can_edit %} <button type="button" class="c-link" data-open-attach-dialog>Attach the source document</button>.{% endif %}</p>{% endif %}</div>
         </section>
 
@@ -187,60 +285,112 @@
         </section>
       </div>
 
-      {% elif active_tab == 'review' %}
-      <div id="contract-tab-review" role="tabpanel" aria-labelledby="tab-review">
-        {% if submit_readiness.draft_eligible and submit_readiness.missing and contract_command.review_label != 'Complete' %}
-        <section class="dc-ds-workspace__surface" aria-labelledby="review-prerequisites-heading">
-          <div class="dc-ds-workspace__surface-head"><div><h2 id="review-prerequisites-heading" class="dc-ds-workspace__surface-title">Review prerequisites</h2><p class="dc-ds-workspace__surface-kicker">Complete these before findings can support submission.</p></div></div>
-          <div class="dc-ds-workspace__surface-body">
-            <div class="contract-finding-list" aria-label="Review prerequisites">
-              {% for requirement in submit_readiness.missing %}
-              <div class="contract-finding-row"><div class="contract-finding-copy"><strong>{{ requirement }}</strong></div><span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--attention">Required</span></div>
-              {% endfor %}
+      {% elif active_tab == 'workflow' %}
+      <div id="contract-tab-workflow" role="tabpanel" aria-labelledby="tab-workflow">
+        <section class="dc-ds-workspace__surface" aria-labelledby="full-workflow-heading">
+          <div class="dc-ds-workspace__surface-head">
+            <div>
+              <h2 id="full-workflow-heading" class="dc-ds-workspace__surface-title">Full workflow</h2>
+              <p class="dc-ds-workspace__surface-kicker">Governed stage path and routing requirements for this contract.</p>
             </div>
           </div>
-        </section>
-        {% endif %}
-        <section class="dc-ds-workspace__surface" id="contract-review" aria-labelledby="contract-review-heading">
-          <div class="dc-ds-workspace__surface-head"><div><h2 id="contract-review-heading" class="dc-ds-workspace__surface-title">Contract review</h2><p class="dc-ds-workspace__surface-kicker">Grounded review evidence remains subject to human review.</p></div><span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ contract_command.review_badge_class|legacy_badge_tone }}">{{ contract_command.review_label }}</span></div>
           <div class="dc-ds-workspace__surface-body">
-            {% if uploaded_ai_review %}<p class="contract-empty"><strong>Latest review evidence.</strong> {% if contract_command.review_finding_count %}{{ contract_command.review_finding_count }} potential issue{{ contract_command.review_finding_count|pluralize }} identified.{% else %}No potential issues were found in the clauses reviewed. Human review is still required.{% endif %}{% if contract_command.review_label == 'Needs refresh' %} Refresh this review before relying on its outcome.{% endif %}</p>{% elif documents %}<p class="contract-empty">{% if grounded_check.is_current %}No completed review evidence is available for the current document version. Human review required before findings become binding.{% else %}The contract changed after its last grounded check. Refresh contract review before relying on its outcome.{% endif %}</p>{% else %}<p class="contract-empty">Attach a source document to begin contract review. Human review required before findings become binding.</p>{% endif %}
-            {% if documents %}<div class="contract-utility"><a href="{% url 'contracts:contract_review_workspace' contract.pk %}" class="c-link text-sm font-medium">Open review workspace</a></div>{% endif %}
-            {% if can_edit %}<details class="contract-utility" id="contract-field-review" open><summary>Run review</summary><textarea id="ai-assistant-prompt" class="dc-ds-control dc-ds-control--textarea input-base w-full" rows="2" placeholder="Ask for risk, renewal, and action insights…"></textarea><div class="contract-utility-actions"><button id="ai-assistant-submit" type="button" class="dc-ds-button dc-ds-button--soft">Run review</button><span id="ai-assistant-status" class="text-xs c-muted" role="status" aria-live="polite"></span></div><div id="ai-assistant-error" class="hidden text-xs c-danger mt-2" role="alert"></div><div id="ai-assistant-output" class="hidden space-y-3 mt-3" aria-live="polite" aria-label="Contract review result"></div></details>{% endif %}
+            <ol class="contract-lifecycle-stepper" aria-label="Full contract lifecycle">
+              {% for step in overview_progress.lifecycle_path %}
+              <li class="contract-lifecycle-step contract-lifecycle-step--{{ step.state }}">
+                <span class="contract-lifecycle-step__marker" aria-hidden="true"></span>
+                <span class="contract-lifecycle-step__label">{% if step.state == 'current' %}<strong>{{ step.label }}</strong>{% else %}{{ step.label }}{% endif %}</span>
+              </li>
+              {% endfor %}
+            </ol>
+            <dl class="contract-progress-meta">
+              <div class="contract-progress-meta__row"><dt>Current stage</dt><dd><span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ contract.lifecycle_stage|lifecycle_stage_badge_tone }}">{{ overview_progress.current_stage }}</span></dd></div>
+              <div class="contract-progress-meta__row"><dt>Next step</dt><dd>{{ overview_progress.next_stage }}</dd></div>
+              {% if overview_progress.blocking_item %}
+              <div class="contract-progress-meta__row contract-progress-meta__row--block"><dt>Blocking item</dt><dd>{{ overview_progress.blocking_item }}</dd></div>
+              {% endif %}
+              {% if overview_progress.signature_requirement %}
+              <div class="contract-progress-meta__row"><dt>Signature requirement</dt><dd>{{ overview_progress.signature_requirement }}</dd></div>
+              {% endif %}
+              <div class="contract-progress-meta__row"><dt>Upcoming milestone</dt><dd>{% if overview_progress.next_milestone %}{{ overview_progress.next_milestone.label }} · {{ overview_progress.next_milestone.date|date:"M d, Y" }}{% else %}—{% endif %}</dd></div>
+            </dl>
           </div>
         </section>
 
-        <section class="dc-ds-workspace__surface" aria-labelledby="playbook-usage-heading">
-          <div class="dc-ds-workspace__surface-head"><div><h2 id="playbook-usage-heading" class="dc-ds-workspace__surface-title">Playbook usage</h2><p class="dc-ds-workspace__surface-kicker">Approved clauses marked as used on this contract.</p></div></div>
-          <div class="dc-ds-workspace__surface-body">
-            {% if playbook_usage_summary.has_data %}<p class="contract-empty">{{ playbook_usage_summary.summary }}</p><dl class="contract-detail-list"><div class="contract-detail-row"><dt>Approved clauses used</dt><dd>{{ playbook_usage_summary.unique_clause_count }}</dd></div><div class="contract-detail-row"><dt>Usage events</dt><dd>{{ playbook_usage_summary.event_count }}</dd></div>{% for item in playbook_usage_summary.top_clauses %}<div class="contract-detail-row"><dt>{{ item.title }}</dt><dd>{{ item.count }} use{{ item.count|pluralize }}</dd></div>{% endfor %}</dl>{% else %}<p class="contract-empty">No approved clauses were marked as used on this contract.</p>{% endif %}
-          </div>
-        </section>
-      </div>
+        {% include "components/_workspace_tabs.html" with tabs=workflow_section_tabs aria_label="Workflow sections" nav_class="dc-ds-workspace-tabs--section" %}
 
-      {% elif active_tab == 'approvals' %}
-      <div id="contract-tab-approvals" role="tabpanel" aria-labelledby="tab-approvals">
-        <section class="dc-ds-workspace__surface" id="required-approvals" aria-labelledby="approvals-heading">
-          <div class="dc-ds-workspace__surface-head"><div><h2 id="approvals-heading" class="dc-ds-workspace__surface-title">Approvals</h2><p class="dc-ds-workspace__surface-kicker">Manage the contract-specific approval chain without changing the governed workflow.</p></div><a href="{{ approval_summary.create_url }}" class="contract-head-link">Add approver</a></div>
-          <div class="dc-ds-workspace__surface-body">
-            <div class="contract-approval-summary"><div><strong>{{ approval_summary.label }}</strong><span>Each approver is listed with the current status on the contract record.</span></div></div>
-            {% if approval_requests_all %}<div class="contract-approval-list">{% for approval in approval_requests_all %}<div class="contract-approval-row"><div class="contract-approval-copy"><strong>{{ forloop.counter }}. {{ approval.approval_step|approval_step_label }}</strong><span>{% if approval.assigned_to %}{{ approval.assigned_to.get_full_name|default:approval.assigned_to.username }}{% else %}Unassigned{% endif %}</span></div><div class="contract-approval-controls"><span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ approval.status|approval_status_badge_class|legacy_badge_tone }}">{{ approval.get_status_display }}</span>{% if can_edit and approval_summary.can_edit_chain %}{% if not forloop.first %}<form method="post" action="{% url 'contracts:contract_approval_chain_reorder' contract.pk approval.pk %}">{% csrf_token %}<input type="hidden" name="direction" value="up"><button type="submit" class="dc-ds-button dc-ds-button--quiet">Move up</button></form>{% endif %}{% if not forloop.last %}<form method="post" action="{% url 'contracts:contract_approval_chain_reorder' contract.pk approval.pk %}">{% csrf_token %}<input type="hidden" name="direction" value="down"><button type="submit" class="dc-ds-button dc-ds-button--quiet">Move down</button></form>{% endif %}{% endif %}</div></div>{% endfor %}</div>{% else %}<p class="contract-empty">No approvers have been added yet.</p>{% endif %}
-            {% if can_submit_for_review %}
-            <form method="post" action="{% url 'contracts:contract_submit_for_review' contract.pk %}" class="contract-utility" id="contract-submit-review-form">{% csrf_token %}<label class="form-label" for="reviewer-id">Reviewer</label><select class="dc-ds-control input-base w-full" id="reviewer-id" name="reviewer_id" required><option value="">Select an active workspace reviewer</option>{% for reviewer in reviewer_choices %}<option value="{{ reviewer.pk }}">{{ reviewer.get_full_name|default:reviewer.username }}</option>{% endfor %}</select><label class="form-label" for="submit-comment">Submission note</label><textarea class="dc-ds-control dc-ds-control--textarea input-base w-full" id="submit-comment" name="comment" rows="2" placeholder="What should the reviewer focus on?"></textarea><button type="submit" class="dc-ds-button dc-ds-button--primary">Submit for review</button></form>
-            {% elif submit_readiness.draft_eligible %}
-            <div class="contract-utility" aria-label="Submission requirements">
-              <strong class="contract-subsection-title">Before you can submit for review</strong>
-              <div class="contract-finding-list">
+        {% if workflow_section != 'approvals' %}
+        <div id="contract-tab-review" data-workflow-section="review">
+          {% if submit_readiness.draft_eligible and submit_readiness.missing and contract_command.review_label != 'Complete' %}
+          <section class="dc-ds-workspace__surface" aria-labelledby="review-prerequisites-heading">
+            <div class="dc-ds-workspace__surface-head"><div><h2 id="review-prerequisites-heading" class="dc-ds-workspace__surface-title">Review prerequisites</h2><p class="dc-ds-workspace__surface-kicker">Complete these before findings can support submission.</p></div></div>
+            <div class="dc-ds-workspace__surface-body">
+              <div class="contract-finding-list" aria-label="Review prerequisites">
                 {% for requirement in submit_readiness.missing %}
                 <div class="contract-finding-row"><div class="contract-finding-copy"><strong>{{ requirement }}</strong></div><span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--attention">Required</span></div>
                 {% endfor %}
               </div>
             </div>
-            {% elif can_decide_approval and open_approval %}
-            <form method="post" action="{% url 'contracts:contract_approval_decision' contract.pk open_approval.pk 'approve' %}" class="contract-utility">{% csrf_token %}<label class="form-label" for="decision-comment">Decision comment</label><textarea class="dc-ds-control dc-ds-control--textarea input-base w-full" id="decision-comment" name="comment" rows="3" required></textarea><div class="contract-utility-actions"><button type="submit" class="dc-ds-button dc-ds-button--primary">Approve</button><button type="submit" formaction="{% url 'contracts:contract_approval_decision' contract.pk open_approval.pk 'request-changes' %}" class="dc-ds-button dc-ds-button--soft">Request changes</button><button type="submit" formaction="{% url 'contracts:contract_approval_decision' contract.pk open_approval.pk 'reject' %}" class="dc-ds-button dc-ds-button--quiet">Reject</button></div></form>
-            {% endif %}
-          </div>
-        </section>
+          </section>
+          {% endif %}
+          <section class="dc-ds-workspace__surface" id="contract-review" aria-labelledby="contract-review-heading">
+            <div class="dc-ds-workspace__surface-head"><div><h2 id="contract-review-heading" class="dc-ds-workspace__surface-title">Review findings</h2><p class="dc-ds-workspace__surface-kicker">Grounded review evidence remains subject to human review.</p></div><span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ contract_command.review_badge_class|legacy_badge_tone }}">{{ contract_command.review_label }}</span></div>
+            <div class="dc-ds-workspace__surface-body">
+              {% if uploaded_ai_review %}<p class="contract-empty"><strong>Latest review evidence.</strong> {% if contract_command.review_finding_count %}{{ contract_command.review_finding_count }} potential issue{{ contract_command.review_finding_count|pluralize }} identified.{% else %}No potential issues were found in the clauses reviewed. Human review is still required.{% endif %}{% if contract_command.review_label == 'Needs refresh' %} Refresh this review before relying on its outcome.{% endif %}</p>{% elif documents %}<p class="contract-empty">{% if grounded_check.is_current %}No completed review evidence is available for the current document version. Human review required before findings become binding.{% else %}The contract changed after its last grounded check. Refresh contract review before relying on its outcome.{% endif %}</p>{% else %}<p class="contract-empty">Attach a source document to begin contract review. Human review required before findings become binding.</p>{% endif %}
+              {% if documents %}<div class="contract-utility"><a href="{% url 'contracts:contract_review_workspace' contract.pk %}" class="c-link text-sm font-medium">Open review workspace</a></div>{% endif %}
+              {% if can_edit %}<details class="contract-utility" id="contract-field-review" open><summary>Run review</summary><textarea id="ai-assistant-prompt" class="dc-ds-control dc-ds-control--textarea input-base w-full" rows="2" placeholder="Ask for risk, renewal, and action insights…"></textarea><div class="contract-utility-actions"><button id="ai-assistant-submit" type="button" class="dc-ds-button dc-ds-button--soft">Run review</button><span id="ai-assistant-status" class="text-xs c-muted" role="status" aria-live="polite"></span></div><div id="ai-assistant-error" class="hidden text-xs c-danger mt-2" role="alert"></div><div id="ai-assistant-output" class="hidden space-y-3 mt-3" aria-live="polite" aria-label="Contract review result"></div></details>{% endif %}
+            </div>
+          </section>
+
+          <section class="dc-ds-workspace__surface" aria-labelledby="playbook-usage-heading">
+            <div class="dc-ds-workspace__surface-head"><div><h2 id="playbook-usage-heading" class="dc-ds-workspace__surface-title">Playbook usage</h2><p class="dc-ds-workspace__surface-kicker">Approved clauses marked as used on this contract.</p></div></div>
+            <div class="dc-ds-workspace__surface-body">
+              {% if playbook_usage_summary.has_data %}<p class="contract-empty">{{ playbook_usage_summary.summary }}</p><dl class="contract-detail-list"><div class="contract-detail-row"><dt>Approved clauses used</dt><dd>{{ playbook_usage_summary.unique_clause_count }}</dd></div><div class="contract-detail-row"><dt>Usage events</dt><dd>{{ playbook_usage_summary.event_count }}</dd></div>{% for item in playbook_usage_summary.top_clauses %}<div class="contract-detail-row"><dt>{{ item.title }}</dt><dd>{{ item.count }} use{{ item.count|pluralize }}</dd></div>{% endfor %}</dl>{% else %}<p class="contract-empty">No approved clauses were marked as used on this contract.</p>{% endif %}
+            </div>
+          </section>
+        </div>
+        {% endif %}
+
+        {% if workflow_section == 'approvals' or workflow_section == 'signatures' %}
+        <div id="contract-tab-approvals" data-workflow-section="approvals">
+          <section class="dc-ds-workspace__surface" id="required-approvals" aria-labelledby="approvals-heading">
+            <div class="dc-ds-workspace__surface-head"><div><h2 id="approvals-heading" class="dc-ds-workspace__surface-title">Approvals</h2><p class="dc-ds-workspace__surface-kicker">Manage the contract-specific approval chain without changing the governed workflow.</p></div><a href="{{ approval_summary.create_url }}" class="contract-head-link">Add approver</a></div>
+            <div class="dc-ds-workspace__surface-body">
+              <div class="contract-approval-summary"><div><strong>{{ approval_summary.label }}</strong><span>Each approver is listed with the current status on the contract record.</span></div></div>
+              {% if approval_requests_all %}<div class="contract-approval-list">{% for approval in approval_requests_all %}<div class="contract-approval-row"><div class="contract-approval-copy"><strong>{{ forloop.counter }}. {{ approval.approval_step|approval_step_label }}</strong><span>{% if approval.assigned_to %}{{ approval.assigned_to.get_full_name|default:approval.assigned_to.username }}{% else %}Unassigned{% endif %}</span></div><div class="contract-approval-controls"><span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ approval.status|approval_status_badge_class|legacy_badge_tone }}">{{ approval.get_status_display }}</span>{% if can_edit and approval_summary.can_edit_chain %}{% if not forloop.first %}<form method="post" action="{% url 'contracts:contract_approval_chain_reorder' contract.pk approval.pk %}">{% csrf_token %}<input type="hidden" name="direction" value="up"><button type="submit" class="dc-ds-button dc-ds-button--quiet">Move up</button></form>{% endif %}{% if not forloop.last %}<form method="post" action="{% url 'contracts:contract_approval_chain_reorder' contract.pk approval.pk %}">{% csrf_token %}<input type="hidden" name="direction" value="down"><button type="submit" class="dc-ds-button dc-ds-button--quiet">Move down</button></form>{% endif %}{% endif %}</div></div>{% endfor %}</div>{% else %}<p class="contract-empty">No approvers have been added yet.</p>{% endif %}
+              {% if can_submit_for_review %}
+              <form method="post" action="{% url 'contracts:contract_submit_for_review' contract.pk %}" class="contract-utility" id="contract-submit-review-form">{% csrf_token %}<label class="form-label" for="reviewer-id">Reviewer</label><select class="dc-ds-control input-base w-full" id="reviewer-id" name="reviewer_id" required><option value="">Select an active workspace reviewer</option>{% for reviewer in reviewer_choices %}<option value="{{ reviewer.pk }}">{{ reviewer.get_full_name|default:reviewer.username }}</option>{% endfor %}</select><label class="form-label" for="submit-comment">Submission note</label><textarea class="dc-ds-control dc-ds-control--textarea input-base w-full" id="submit-comment" name="comment" rows="2" placeholder="What should the reviewer focus on?"></textarea><button type="submit" class="dc-ds-button dc-ds-button--primary">Submit for review</button></form>
+              {% elif submit_readiness.draft_eligible %}
+              <div class="contract-utility" aria-label="Submission requirements">
+                <strong class="contract-subsection-title">Before you can submit for review</strong>
+                <div class="contract-finding-list">
+                  {% for requirement in submit_readiness.missing %}
+                  <div class="contract-finding-row"><div class="contract-finding-copy"><strong>{{ requirement }}</strong></div><span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--attention">Required</span></div>
+                  {% endfor %}
+                </div>
+              </div>
+              {% elif can_decide_approval and open_approval %}
+              <form method="post" action="{% url 'contracts:contract_approval_decision' contract.pk open_approval.pk 'approve' %}" class="contract-utility">{% csrf_token %}<label class="form-label" for="decision-comment">Decision comment</label><textarea class="dc-ds-control dc-ds-control--textarea input-base w-full" id="decision-comment" name="comment" rows="3" required></textarea><div class="contract-utility-actions"><button type="submit" class="dc-ds-button dc-ds-button--primary">Approve</button><button type="submit" formaction="{% url 'contracts:contract_approval_decision' contract.pk open_approval.pk 'request-changes' %}" class="dc-ds-button dc-ds-button--soft">Request changes</button><button type="submit" formaction="{% url 'contracts:contract_approval_decision' contract.pk open_approval.pk 'reject' %}" class="dc-ds-button dc-ds-button--quiet">Reject</button></div></form>
+              {% endif %}
+            </div>
+          </section>
+          {% if signature_requests %}
+          <section class="dc-ds-workspace__surface" aria-labelledby="signatures-heading">
+            <div class="dc-ds-workspace__surface-head"><div><h2 id="signatures-heading" class="dc-ds-workspace__surface-title">Signatures</h2><p class="dc-ds-workspace__surface-kicker">Signature routing for this contract.</p></div></div>
+            <div class="dc-ds-workspace__surface-body">
+              <div class="contract-finding-list">
+                {% for sig in signature_requests %}
+                <div class="contract-finding-row">
+                  <div class="contract-finding-copy"><strong>{{ sig.signer_name }}</strong><span>{{ sig.signer_email }}</span></div>
+                  <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--neutral">{{ sig.get_status_display }}</span>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+          </section>
+          {% endif %}
+        </div>
+        {% endif %}
       </div>
 
       {% elif active_tab == 'risks' %}
@@ -278,42 +428,58 @@
       {% elif active_tab == 'activity' %}
       <div id="contract-tab-activity" role="tabpanel" aria-labelledby="tab-activity">
         <section class="dc-ds-workspace__surface" aria-labelledby="activity-heading">
-          <div class="dc-ds-workspace__surface-head"><div><h2 id="activity-heading" class="dc-ds-workspace__surface-title">Activity</h2><p class="dc-ds-workspace__surface-kicker">Audit trail events and internal notes, ordered newest first.</p></div><div class="contract-head-actions"><a href="{% url 'contracts:audit_log_list' %}" class="contract-head-link">Audit trail</a>{% if can_comment %}<button type="button" class="contract-head-link" data-open-note-dialog>Add note</button>{% endif %}</div></div>
+          <div class="dc-ds-workspace__surface-head"><div><h2 id="activity-heading" class="dc-ds-workspace__surface-title">Audit trail</h2><p class="dc-ds-workspace__surface-kicker">Audit trail events and internal notes, ordered newest first.</p></div><div class="contract-head-actions"><a href="{% url 'contracts:audit_log_list' %}" class="contract-head-link">Full audit log</a>{% if can_comment %}<button type="button" class="contract-head-link" data-open-note-dialog>Add note</button>{% endif %}</div></div>
           <div class="dc-ds-workspace__surface-body">{% if contract_activity_feed %}<div class="contract-activity-feed">{% for item in contract_activity_feed %}<div class="contract-activity-feed-row"><div class="contract-activity-feed-main"><div class="contract-activity-feed-head"><span class="contract-activity-feed-avatar" aria-hidden="true">{{ item.actor_initial }}</span><div class="contract-activity-feed-copy"><div class="contract-activity-feed-title"><strong>{{ item.title }}</strong><span class="contract-activity-feed-kind">{{ item.badge_label }}</span></div><div class="contract-activity-feed-meta">{{ item.actor_name }} · {{ item.timestamp|timesince }} ago</div></div></div><p class="contract-activity-feed-text">{{ item.detail|truncatechars:180 }}</p></div><span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ item.badge_class|legacy_badge_tone }} contract-activity-feed-badge">{{ item.badge_label }}</span></div>{% endfor %}</div>{% else %}<p class="contract-empty">No internal activity recorded for this contract.</p>{% endif %}</div>
         </section>
       </div>
       {% endif %}
     </div>
 
-    <aside class="dc-ds-workspace__rail dc-ds-workspace__rail--sticky" aria-label="Contract status and links">
+    <aside class="dc-ds-workspace__rail dc-ds-workspace__rail--sticky" aria-label="Contract status">
       <section class="dc-ds-workspace__surface" aria-labelledby="contract-status-heading">
         <div class="dc-ds-workspace__surface-head">
-          <div><h2 id="contract-status-heading" class="dc-ds-workspace__surface-title">Status</h2></div>
+          <div><h2 id="contract-status-heading" class="dc-ds-workspace__surface-title">Contract at a glance</h2></div>
         </div>
         <div class="dc-ds-workspace__surface-body">
           <dl class="contract-detail-list">
             <div class="contract-detail-row"><dt>Status</dt><dd>{{ contract.get_status_display }}</dd></div>
             <div class="contract-detail-row"><dt>Stage</dt><dd>{{ contract.get_lifecycle_stage_display }}</dd></div>
+            <div class="contract-detail-row"><dt>Document state</dt><dd>{% if primary_document %}{{ primary_document.get_status_display }}{% else %}—{% endif %}</dd></div>
+            <div class="contract-detail-row"><dt>Version</dt><dd>{% if primary_document %}{{ primary_document.version }}{% else %}1{% endif %}</dd></div>
             <div class="contract-detail-row"><dt>Owner</dt><dd>{% if owner %}{{ owner.get_full_name|default:owner.username }}{% else %}Unassigned{% endif %}</dd></div>
             <div class="contract-detail-row"><dt>Counterparty</dt><dd>{{ contract.counterparty|default:"—" }}</dd></div>
             <div class="contract-detail-row"><dt>Value</dt><dd>{% if contract.value %}{{ contract.value|money:contract.currency }}{% else %}—{% endif %}</dd></div>
-            <div class="contract-detail-row"><dt>Next milestone</dt><dd>{% if next_milestone %}{{ next_milestone.label }} · {{ next_milestone.date|date:"M d, Y" }}{% else %}—{% endif %}</dd></div>
+            <div class="contract-detail-row"><dt>Upcoming milestone</dt><dd>{% if next_milestone %}{{ next_milestone.label }} · {{ next_milestone.date|date:"M d, Y" }}{% else %}—{% endif %}</dd></div>
           </dl>
         </div>
       </section>
-      <section class="dc-ds-workspace__surface" aria-labelledby="quick-links-heading">
+      <section class="dc-ds-workspace__surface" aria-labelledby="risk-summary-heading">
         <div class="dc-ds-workspace__surface-head">
-          <div><h2 id="quick-links-heading" class="dc-ds-workspace__surface-title">Quick links</h2></div>
+          <div><h2 id="risk-summary-heading" class="dc-ds-workspace__surface-title">Risk summary</h2></div>
         </div>
         <div class="dc-ds-workspace__surface-body">
-          <nav class="contract-quick-links" aria-label="Contract quick links">
-            <a href="?tab=documents">Documents</a>
-            <a href="?tab=review">Review</a>
-            <a href="?tab=approvals">Approvals</a>
-            <a href="?tab=obligations">Obligations</a>
-            <a href="?tab=activity">Activity</a>
-            {% if can_edit %}<a href="{% url 'contracts:contract_update' contract.pk %}">Edit contract</a>{% endif %}
-          </nav>
+          <div class="contract-risk-summary" data-risk-tone="{{ overview_risk_snapshot.tone }}">
+            {% if overview_risk_snapshot.label %}
+            <p class="contract-risk-summary__status">
+              <span class="contract-risk-summary__dot contract-risk-summary__dot--{{ overview_risk_snapshot.tone }}" aria-hidden="true"></span>
+              <strong>{{ overview_risk_snapshot.label }}</strong>
+            </p>
+            {% if overview_risk_snapshot.findings %}
+            <p class="contract-risk-summary__copy">
+              Top open finding: {{ overview_risk_snapshot.findings.0.title }}.
+            </p>
+            {% else %}
+            <p class="contract-risk-summary__copy">No unresolved risk findings are recorded for this contract.</p>
+            {% endif %}
+            {% else %}
+            <p class="contract-risk-summary__status">
+              <span class="contract-risk-summary__dot contract-risk-summary__dot--neutral" aria-hidden="true"></span>
+              <strong>No intake risk recorded</strong>
+            </p>
+            <p class="contract-risk-summary__copy">Risk status reflects unresolved findings, not an optimistic record-level default.</p>
+            {% endif %}
+            <a href="?tab=risks" class="c-link text-sm font-medium">View risks →</a>
+          </div>
         </div>
       </section>
     </aside>
@@ -367,7 +533,7 @@
   }
 })();
 </script>
-{% if active_tab == 'review' and can_edit %}
+{% if active_tab == 'workflow' and workflow_section != 'approvals' and can_edit %}
 <script nonce="{{ csp_nonce }}">
 (() => {
   const promptField = document.getElementById('ai-assistant-prompt'); const submit = document.getElementById('ai-assistant-submit'); const status = document.getElementById('ai-assistant-status'); const errorBox = document.getElementById('ai-assistant-error'); const output = document.getElementById('ai-assistant-output');

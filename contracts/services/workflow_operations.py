@@ -67,16 +67,22 @@ class WorkflowOperationsFilters:
 
     @property
     def more_filters_active(self) -> bool:
-        return bool(self.exception_only or self.jurisdiction or self.business_unit)
+        # Any non-search filter opens the Filters drawer (Contracts/DPA pattern).
+        return bool(
+            self.status
+            or self.contract_type
+            or self.owner
+            or self.exception_only
+            or self.jurisdiction
+            or self.business_unit
+        )
 
 
 def workflow_operations_tabs(*, active: str) -> list[dict]:
-    """Shared tab strip across the Workflow Operations surfaces."""
+    """Shared tab strip across the Workflow Operations instance queue."""
     items = (
         ('active', 'Active workflows', 'contracts:workflow_dashboard'),
         ('approvals', 'Approval requests', 'contracts:approval_request_list'),
-        ('routing', 'Routing rules', 'contracts:approval_rule_list'),
-        ('templates', 'Templates', 'contracts:workflow_template_list'),
     )
     return [
         {

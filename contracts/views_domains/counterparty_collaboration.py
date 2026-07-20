@@ -286,7 +286,7 @@ def counterparty_collaboration_upload_revision(request, token):
     title = (request.POST.get('title') or '').strip() or upload.name.rsplit('.', 1)[0]
     document = Document.objects.create(
         organization=participant.organization, contract=participant.contract, title=title,
-        document_type=Document.DocType.CONTRACT, status=Document.Status.REVIEW, file=upload,
+        document_type=Document.DocType.CONTRACT, status=Document.Status.DRAFT, file=upload,
         is_confidential=True, share_with_counterparty=True,
     )
     item = CounterpartyCollaborationItem.objects.create(

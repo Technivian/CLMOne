@@ -45,71 +45,21 @@ class ContractLifecycleAuditTests(TestCase):
             created_by=self.owner,
         )
 
-    def test_contract_form_rejects_lifecycle_stage_skip(self):
-        form = ContractForm(
-            instance=self.contract,
-            data={
-                'title': self.contract.title,
-                'contract_type': self.contract.contract_type,
-                'content': self.contract.content,
-                'status': self.contract.status,
-                'counterparty': self.contract.counterparty,
-                'currency': self.contract.currency,
-                'governing_law': self.contract.governing_law,
-                'jurisdiction': self.contract.jurisdiction,
-                'language': self.contract.language,
-                'risk_level': self.contract.risk_level,
-                'data_transfer_flag': self.contract.data_transfer_flag,
-                'dpa_attached': self.contract.dpa_attached,
-                'scc_attached': self.contract.scc_attached,
-                'lifecycle_stage': 'SIGNATURE',
-                'start_date': '',
-                'end_date': '',
-                'renewal_date': '',
-                'auto_renew': '',
-                'notice_period_days': '',
-                'termination_notice_date': '',
-                'client': '',
-                'matter': '',
-            },
-        )
-
-        self.assertFalse(form.is_valid())
-        self.assertIn('lifecycle_stage', form.errors)
+    def test_contract_form_hides_lifecycle_stage_from_edit_form(self):
+        form = ContractForm(instance=self.contract, organization=self.organization)
+        self.assertNotIn('lifecycle_stage', form.fields)
+        self.assertNotIn('status', form.fields)
+        self.assertNotIn('risk_level', form.fields)
 
     def test_contract_update_writes_detailed_lifecycle_audit_log(self):
-        self.client.login(username='owner-user', password='testpass123')
-        response = self.client.post(
-            reverse('contracts:contract_update', kwargs={'pk': self.contract.id}),
-            data={
-                'title': self.contract.title,
-                'contract_type': self.contract.contract_type,
-                'content': self.contract.content,
-                'status': Contract.Status.DRAFT,
-                'counterparty': self.contract.counterparty,
-                'value': '',
-                'currency': self.contract.currency,
-                'governing_law': self.contract.governing_law,
-                'jurisdiction': self.contract.jurisdiction,
-                'language': self.contract.language,
-                'risk_level': self.contract.risk_level,
-                'data_transfer_flag': '',
-                'dpa_attached': '',
-                'scc_attached': '',
-                'lifecycle_stage': 'INTERNAL_REVIEW',
-                'start_date': '',
-                'end_date': '',
-                'renewal_date': '',
-                'auto_renew': '',
-                'notice_period_days': '',
-                'termination_notice_date': '',
-                'client': '',
-                'matter': '',
-            },
-            follow=True,
-        )
+        from contracts.services.contract_lifecycle import get_contract_lifecycle_service
 
-        self.assertEqual(response.status_code, 200)
+        get_contract_lifecycle_service().transition_lifecycle_stage(
+            self.contract,
+            'INTERNAL_REVIEW',
+            self.owner,
+            reason='Move to internal review',
+        )
         self.contract.refresh_from_db()
         self.assertEqual(self.contract.lifecycle_stage, 'INTERNAL_REVIEW')
 
@@ -119,10 +69,9 @@ class ContractLifecycleAuditTests(TestCase):
             model_name='Contract',
             object_id=self.contract.id,
         ).latest('timestamp')
-        self.assertEqual(audit_log.changes['event'], 'contract_lifecycle_stage_changed')
-        self.assertEqual(audit_log.changes['changed_fields'], ['lifecycle_stage'])
-        self.assertEqual(audit_log.changes['field_changes']['lifecycle_stage']['before'], 'DRAFTING')
-        self.assertEqual(audit_log.changes['field_changes']['lifecycle_stage']['after'], 'INTERNAL_REVIEW')
+        self.assertEqual(audit_log.event_type, 'contract.lifecycle_stage_changed')
+        self.assertEqual(audit_log.changes.get('from'), 'DRAFTING')
+        self.assertEqual(audit_log.changes.get('to'), 'INTERNAL_REVIEW')
 
     def test_contract_detail_exposes_lifecycle_guidance_for_renewal_window(self):
         self.contract.end_date = timezone.localdate() + timedelta(days=10)

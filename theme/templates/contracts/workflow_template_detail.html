@@ -24,10 +24,12 @@
                 <h1 class="workspace-title">
                     {{ workflow_template.name }}
                     <span class="dc-ds-badge dc-ds-badge--sm align-middle ml-2 dc-ds-badge--neutral">v{{ workflow_template.version }}</span>
-                    {% if workflow_template.is_active %}
+                    {% if is_incomplete_template %}
+                    <span class="dc-ds-badge dc-ds-badge--sm align-middle ml-2 dc-ds-badge--attention">Draft · Incomplete</span>
+                    {% elif workflow_template.is_active %}
                     <span class="dc-ds-badge dc-ds-badge--sm align-middle ml-2 dc-ds-badge--success">Published</span>
                     {% else %}
-                    <span class="dc-ds-badge dc-ds-badge--sm align-middle ml-2 dc-ds-badge--neutral">Unpublished</span>
+                    <span class="dc-ds-badge dc-ds-badge--sm align-middle ml-2 dc-ds-badge--neutral">Draft</span>
                     {% endif %}
                 </h1>
                 <p class="workspace-subtitle c-muted">{{ workflow_template.description }}</p>
@@ -45,12 +47,8 @@
                 </form>
                 <form method="post" action="{% url 'contracts:workflow_template_publish_toggle' workflow_template.pk %}">
                     {% csrf_token %}
-                    {% if not workflow_template.is_active and not steps %}
-                    {% comment %}
-                    Server-side enforced too (workflow_template_publish_toggle rejects this
-                    even if the disabled attribute were bypassed) — this is a UI hint, not the guard.
-                    {% endcomment %}
-                    <button type="submit" class="dc-ds-button dc-ds-button--quiet inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border opacity-50 cursor-not-allowed" disabled title="Add at least one step before publishing this template.">
+                    {% if not workflow_template.is_active and not can_publish %}
+                    <button type="submit" class="dc-ds-button dc-ds-button--quiet inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border opacity-50 cursor-not-allowed" disabled title="{{ publish_validation.message|default:'Resolve configuration errors before publishing.' }}">
                         Publish
                     </button>
                     {% else %}
@@ -61,6 +59,9 @@
                 </form>
             </div>
         </div>
+        {% if not workflow_template.is_active and publish_validation and not publish_validation.ok %}
+        <div class="msg-error rounded-lg p-3 mt-3 text-sm" role="status">{{ publish_validation.message }}</div>
+        {% endif %}
         <div class="workspace-toolbar">
             <div class="summary-grid w-full">
                 <div class="summary-card">
@@ -84,7 +85,7 @@
 
     <div class="panel overflow-hidden">
         <div class="panel-head">
-            <span class="panel-title">Version History</span>
+            <span id="version-history" class="panel-title">Version History</span>
         </div>
         <div>
             {% for version in template_versions %}

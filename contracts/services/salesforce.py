@@ -345,12 +345,12 @@ def _to_contract_status(raw: Any):
     if value in allowed:
         return value
     aliases = {
-        'OPEN': Contract.Status.DRAFT,
-        'NEGOTIATION': Contract.Status.IN_REVIEW,
+        'OPEN': Contract.Status.IN_PROGRESS,
+        'NEGOTIATION': Contract.Status.IN_PROGRESS,
         'SIGNED': Contract.Status.ACTIVE,
-        'CLOSED': Contract.Status.COMPLETED,
+        'CLOSED': Contract.Status.ACTIVE,
     }
-    return aliases.get(value, Contract.Status.DRAFT)
+    return aliases.get(value, Contract.Status.IN_PROGRESS)
 
 
 def _to_risk_level(raw: Any):

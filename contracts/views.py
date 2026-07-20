@@ -336,6 +336,9 @@ from .views_domains.workflow_management import (
     workflow_activity,
     workflow_template_create,
     workflow_template_clone_version,
+    workflow_template_duplicate,
+    workflow_template_archive,
+    workflow_template_delete,
     workflow_template_restore_version,
     workflow_template_compare,
     workflow_template_detail,
@@ -345,6 +348,8 @@ from .views_domains.workflow_management import (
     workflow_template_publish_toggle,
     workflow_template_step_delete,
     workflow_template_step_reorder,
+    workflow_approval_route_list,
+    workflow_designer_history,
 )
 from config.feature_flags import get_feature_flag, is_feature_redesign_enabled
 

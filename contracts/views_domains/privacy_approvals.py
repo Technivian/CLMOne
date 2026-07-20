@@ -662,11 +662,17 @@ class ApprovalRuleListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListVi
     context_object_name = 'rules'
 
     def get_context_data(self, **kwargs):
-        from contracts.services.workflow_operations import workflow_operations_tabs
+        from contracts.services.workflow_designer import workflow_designer_tabs
 
         context = super().get_context_data(**kwargs)
-        context['ops_tabs'] = workflow_operations_tabs(active='routing')
+        rules = list(context.get('rules') or [])
+        active_count = sum(1 for rule in rules if rule.is_active)
+        context['designer_tabs'] = workflow_designer_tabs(active='routing')
         context['hide_app_footer'] = True
+        context['rules'] = rules
+        context['rule_count'] = len(rules)
+        context['active_rule_count'] = active_count
+        context['inactive_rule_count'] = len(rules) - active_count
         return context
 
 

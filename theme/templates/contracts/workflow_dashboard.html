@@ -3,21 +3,96 @@
 
 {% block title %}Workflow Operations – CLM One{% endblock %}
 {% block authenticated_page_title %}Workflow Operations{% endblock %}
-{% block authenticated_page_subtitle %}Track active contract workflows, approvals, routing, and templates.{% endblock %}
+{% block authenticated_page_subtitle %}Track active contract workflows and approval requests in flight.{% endblock %}
 
 {% block content %}
 {% include "components/_list_page_shell_styles.html" %}
 <style nonce="{{ csp_nonce }}">
+  /* Match Contracts repository list rhythm: quiet count, dense table, sticky title. */
   .workflow-ops-page .clm-list-summary { --dc-ds-summary-columns: 2; }
+  .workflow-ops-page .clm-list-result-count {
+    font-size: 13px; font-weight: 600; color: var(--ink-700, var(--text-secondary));
+    margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent;
+    white-space: nowrap; min-width: 0; line-height: 1.2;
+  }
+  .workflow-ops-page.dc-ds-list-page > .dc-ds-filterbar { margin-bottom: calc(-1 * var(--space-8)); }
+  .workflow-ops-page.dc-ds-list-page > .clm-list-summary { margin-top: var(--space-12); }
+  .workflow-ops-page .dc-ds-table-wrap { overflow-x: auto; overflow-y: visible; }
   .workflow-ops-page .workflow-ops-row { cursor: pointer; }
-  .workflow-ops-page .workflow-ops-row:hover td { background: var(--sidebar-hover); }
+  .workflow-ops-page .workflow-ops-row:hover td { background: var(--color-surface-table-head, var(--well)); }
   .workflow-ops-page .workflow-ops-row:focus-visible { outline: none; box-shadow: inset var(--ds-focus-ring); }
-  .workflow-ops-page .workflow-ops-name { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-  .workflow-ops-page .workflow-ops-name strong { color: var(--ink-900); font-size: 13px; font-weight: 700; }
-  .workflow-ops-page .workflow-ops-name span { color: var(--ink-500); font-size: 12px; }
-  .workflow-ops-page .workflow-ops-badges { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .workflow-ops-page .workflow-ops-name { display: grid; gap: 4px; min-width: 0; }
+  .workflow-ops-page .workflow-ops-title {
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+    overflow: hidden; line-height: 1.35; word-break: break-word;
+    color: var(--ink-900, var(--text-primary)); font-size: 13px; font-weight: 700;
+  }
+  .workflow-ops-page .workflow-ops-meta {
+    display: inline-flex; flex-wrap: nowrap; align-items: center; gap: 6px; min-width: 0;
+  }
+  .workflow-ops-page .workflow-ops-counterparty {
+    color: var(--ink-700, var(--text-secondary)); font-size: 12px; font-weight: 500;
+    display: block; min-width: 0; max-width: 100%;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .workflow-ops-page #workflow-ops-table {
+    min-width: 100%; width: 100%; table-layout: fixed;
+  }
+  .workflow-ops-page #workflow-ops-table th,
+  .workflow-ops-page #workflow-ops-table td {
+    vertical-align: top; padding: 16px 12px; overflow: hidden;
+  }
+  .workflow-ops-page #workflow-ops-table [data-col].is-hidden { display: none; }
+  /* Default visible set fills the row; optional cols share space when enabled. */
+  .workflow-ops-page #workflow-ops-table th[data-col="workflow"],
+  .workflow-ops-page #workflow-ops-table td[data-col="workflow"] {
+    position: sticky; left: 0; z-index: 2; min-width: 240px; width: 28%;
+    background: var(--card-bg, #fff);
+    box-shadow: 1px 0 0 var(--line, var(--card-border));
+  }
+  .workflow-ops-page #workflow-ops-table thead th[data-col="workflow"] { z-index: 5; }
+  .workflow-ops-page .workflow-ops-row:hover td[data-col="workflow"] {
+    background: var(--color-surface-table-head, var(--well));
+  }
+  .workflow-ops-page #workflow-ops-table th[data-col="type"],
+  .workflow-ops-page #workflow-ops-table td[data-col="type"] { min-width: 150px; width: 16%; }
+  .workflow-ops-page #workflow-ops-table th[data-col="stage"],
+  .workflow-ops-page #workflow-ops-table td[data-col="stage"] { min-width: 110px; width: 11%; }
+  .workflow-ops-page #workflow-ops-table th[data-col="owner"],
+  .workflow-ops-page #workflow-ops-table td[data-col="owner"] { min-width: 130px; width: 13%; }
+  .workflow-ops-page #workflow-ops-table th[data-col="key_date"],
+  .workflow-ops-page #workflow-ops-table td[data-col="key_date"],
+  .workflow-ops-page #workflow-ops-table th[data-col="agreement_date"],
+  .workflow-ops-page #workflow-ops-table td[data-col="agreement_date"] {
+    min-width: 104px; width: 10%; white-space: nowrap;
+    font-variant-numeric: tabular-nums; color: var(--ink-700, var(--text-secondary));
+  }
+  .workflow-ops-page #workflow-ops-table th[data-col="value"],
+  .workflow-ops-page #workflow-ops-table td[data-col="value"] {
+    min-width: 112px; width: 10%; white-space: nowrap; text-align: right !important;
+    padding-right: 16px; font-variant-numeric: tabular-nums;
+    color: var(--ink-800, var(--text-primary));
+  }
+  .workflow-ops-page #workflow-ops-table th[data-col="progress"],
+  .workflow-ops-page #workflow-ops-table td[data-col="progress"] { min-width: 140px; width: 12%; }
+  .workflow-ops-page #workflow-ops-table th[data-col="business_unit"],
+  .workflow-ops-page #workflow-ops-table td[data-col="business_unit"],
+  .workflow-ops-page #workflow-ops-table th[data-col="jurisdiction"],
+  .workflow-ops-page #workflow-ops-table td[data-col="jurisdiction"] { min-width: 120px; width: 10%; }
+  .workflow-ops-page #workflow-ops-table th[data-col="actions"],
+  .workflow-ops-page #workflow-ops-table td[data-col="actions"] {
+    min-width: 48px; width: 48px; max-width: 48px; padding-left: 8px; padding-right: 8px;
+    text-align: center; overflow: visible;
+  }
+  .workflow-ops-page .workflow-ops-cell-text {
+    display: block; min-width: 0; max-width: 100%;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .workflow-ops-page .workflow-ops-stage-badge {
+    display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
   .workflow-ops-page .workflow-ops-progress {
-    display: inline-flex; align-items: center; gap: 8px; min-width: 110px;
+    display: inline-flex; align-items: center; gap: 8px; min-width: 110px; max-width: 100%;
     font-variant-numeric: tabular-nums; color: var(--ink-600); font-size: 12px; font-weight: 650;
   }
   .workflow-ops-page .workflow-ops-progress__track {
@@ -26,16 +101,26 @@
   .workflow-ops-page .workflow-ops-progress__fill {
     height: 100%; border-radius: inherit; background: var(--seal);
   }
-  .workflow-ops-page .workflow-ops-inline-filters {
-    display: inline-flex; gap: 8px; flex-wrap: wrap; align-items: center;
+  .workflow-ops-page .workflow-ops-col-menu { position: relative; }
+  .workflow-ops-page .workflow-ops-col-menu__panel {
+    display: none; position: absolute; right: 0; top: calc(100% + 6px); z-index: 20;
+    min-width: 200px; padding: 10px; border-radius: 10px;
   }
-  .workflow-ops-page .workflow-ops-inline-filters .dc-ds-control {
-    min-width: 140px; width: auto;
+  .workflow-ops-page .workflow-ops-col-menu.is-open .workflow-ops-col-menu__panel { display: grid; gap: 6px; }
+  .workflow-ops-page .workflow-ops-col-menu__panel label {
+    display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500;
+    color: var(--text-primary); cursor: pointer;
   }
+  body[data-design-system=casefile]:has(.workflow-ops-page) .top-bar .global-search-form { max-width: 248px; flex-basis: 248px; }
+  body[data-design-system=casefile]:has(.workflow-ops-page) .top-bar .global-search-input {
+    height: 36px; border: 1px solid transparent !important; background: transparent !important; color: var(--ink-600);
+  }
+  body[data-design-system=casefile]:has(.workflow-ops-page) .top-bar .global-search-input:focus-visible {
+    border-color: var(--line) !important; background: var(--card) !important;
+  }
+  body[data-design-system=casefile]:has(.workflow-ops-page) .app-footer { display: none; }
   @media (max-width: 900px) {
     .workflow-ops-page .clm-list-summary { --dc-ds-summary-columns: 2; }
-    .workflow-ops-page .workflow-ops-inline-filters { width: 100%; }
-    .workflow-ops-page .workflow-ops-inline-filters .dc-ds-control { flex: 1 1 140px; }
   }
   @media (max-width: 560px) {
     .workflow-ops-page .clm-list-summary { --dc-ds-summary-columns: 1; }
@@ -59,54 +144,69 @@
           {% include "design_system/icon.html" with name="search" class_name="clm-list-search-icon" %}
           <input class="dc-ds-control" type="search" id="workflow-ops-search" name="q" value="{{ filters.search }}" placeholder="Search workflows" aria-label="Search workflows">
         </div>
-        <div class="workflow-ops-inline-filters">
-          <label class="sr-only" for="workflow-ops-status">Status</label>
-          <select id="workflow-ops-status" class="dc-ds-control" name="status" aria-label="Status">
+        <div class="clm-list-actions-stack">
+          <p class="clm-list-result-count" aria-live="polite">{{ workflow_rows|length }} workflow{{ workflow_rows|length|pluralize }}</p>
+          <div class="workflow-ops-col-menu" id="workflow-ops-col-menu">
+            <button id="workflow-ops-col-toggle" type="button" class="clm-list-filter-toggle dc-ds-button dc-ds-button--ghost" aria-expanded="false" aria-controls="workflow-ops-col-panel">Columns</button>
+            <div id="workflow-ops-col-panel" class="workflow-ops-col-menu__panel dc-ds-surface" role="group" aria-label="Visible columns">
+              <label><input type="checkbox" data-col-toggle="type" checked> Type</label>
+              <label><input type="checkbox" data-col-toggle="stage" checked> Stage</label>
+              <label><input type="checkbox" data-col-toggle="owner" checked> Owner</label>
+              <label><input type="checkbox" data-col-toggle="key_date" checked> Key date</label>
+              <label><input type="checkbox" data-col-toggle="value" checked> Value</label>
+              <label><input type="checkbox" data-col-toggle="progress" checked> Progress</label>
+              <label><input type="checkbox" data-col-toggle="business_unit"> Business unit</label>
+              <label><input type="checkbox" data-col-toggle="jurisdiction"> Jurisdiction</label>
+              <label><input type="checkbox" data-col-toggle="agreement_date"> Agreement date</label>
+            </div>
+          </div>
+          <button id="workflow-ops-filter-toggle" type="button" class="clm-list-filter-toggle dc-ds-button dc-ds-button--ghost" aria-expanded="{% if more_filters_active %}true{% else %}false{% endif %}" aria-controls="workflow-ops-filters">Filters</button>
+        </div>
+      </div>
+    </header>
+
+    <section id="workflow-ops-filters" class="clm-list-filter-drawer dc-ds-surface p-3{% if more_filters_active %} is-open{% endif %}" aria-label="Filters">
+      <div class="clm-list-filter-drawer__header">
+        <h2 class="clm-list-filter-drawer__title">Filters</h2>
+        <a class="dc-ds-button dc-ds-button--quiet text-sm" href="{{ ops_clear_url }}">Clear filters</a>
+      </div>
+      <div class="clm-list-filter-drawer__body">
+        <label for="workflow-ops-status">Status
+          <select id="workflow-ops-status" class="dc-ds-control" name="status">
             <option value="">All statuses</option>
             {% for value, label in status_filter_choices %}
             <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
             {% endfor %}
           </select>
-          <label class="sr-only" for="workflow-ops-type">Contract type</label>
-          <select id="workflow-ops-type" class="dc-ds-control" name="contract_type" aria-label="Contract type">
+        </label>
+        <label for="workflow-ops-type">Contract type
+          <select id="workflow-ops-type" class="dc-ds-control" name="contract_type">
             <option value="">All contract types</option>
             {% for value, label in contract_type_choices %}
             <option value="{{ value }}" {% if filters.contract_type == value %}selected{% endif %}>{{ label }}</option>
             {% endfor %}
           </select>
-          <label class="sr-only" for="workflow-ops-owner">Owner</label>
-          <select id="workflow-ops-owner" class="dc-ds-control" name="owner" aria-label="Owner">
+        </label>
+        <label for="workflow-ops-owner">Owner
+          <select id="workflow-ops-owner" class="dc-ds-control" name="owner">
             <option value="">All owners</option>
             <option value="unassigned" {% if filters.owner == 'unassigned' %}selected{% endif %}>Unassigned</option>
             {% for owner in owner_choices %}
             <option value="{{ owner.pk }}" {% if filters.owner == owner.pk|stringformat:"s" %}selected{% endif %}>{{ owner.get_full_name|default:owner.username }}</option>
             {% endfor %}
           </select>
-        </div>
-        <div class="clm-list-actions-stack">
-          <p class="clm-list-result-count" aria-live="polite">{{ workflow_rows|length }} workflow{{ workflow_rows|length|pluralize }}</p>
-          <button id="workflow-ops-filter-toggle" type="button" class="clm-list-filter-toggle dc-ds-button dc-ds-button--ghost" aria-expanded="{% if more_filters_active %}true{% else %}false{% endif %}" aria-controls="workflow-ops-more-filters">More filters</button>
-        </div>
-      </div>
-    </header>
-
-    <section id="workflow-ops-more-filters" class="clm-list-filter-drawer dc-ds-surface p-3{% if more_filters_active %} is-open{% endif %}" aria-label="More filters">
-      <div class="clm-list-filter-drawer__header">
-        <h2 class="clm-list-filter-drawer__title">More filters</h2>
-        <a class="dc-ds-button dc-ds-button--quiet text-sm" href="{{ ops_clear_url }}">Clear filters</a>
-      </div>
-      <div class="clm-list-filter-drawer__body">
-        <label for="workflow-ops-jurisdiction">Jurisdiction
-          <input id="workflow-ops-jurisdiction" class="dc-ds-control" type="text" name="jurisdiction" value="{{ filters.jurisdiction }}" placeholder="e.g. EU, New York">
-        </label>
-        <label for="workflow-ops-business-unit">Business unit
-          <input id="workflow-ops-business-unit" class="dc-ds-control" type="text" name="business_unit" value="{{ filters.business_unit }}" placeholder="Business unit">
         </label>
         <label for="workflow-ops-exception">Exceptions
           <select id="workflow-ops-exception" class="dc-ds-control" name="exception">
             <option value="">Any</option>
             <option value="1" {% if filters.exception_only %}selected{% endif %}>Exception only</option>
           </select>
+        </label>
+        <label for="workflow-ops-jurisdiction">Jurisdiction
+          <input id="workflow-ops-jurisdiction" class="dc-ds-control" type="text" name="jurisdiction" value="{{ filters.jurisdiction }}" placeholder="e.g. EU, New York">
+        </label>
+        <label for="workflow-ops-business-unit">Business unit
+          <input id="workflow-ops-business-unit" class="dc-ds-control" type="text" name="business_unit" value="{{ filters.business_unit }}" placeholder="Business unit">
         </label>
         <div class="clm-list-filter-drawer__actions">
           <button class="dc-ds-button dc-ds-button--primary" type="submit">Apply filters</button>
@@ -127,44 +227,42 @@
   </div>
 
   <div class="dc-ds-table-wrap">
-    <table class="dc-ds-table w-full text-sm" aria-label="Active workflows">
-      <caption class="sr-only">Active contract workflows with stage, type, jurisdiction, dates, value, owner, and progress.</caption>
+    <table id="workflow-ops-table" class="dc-ds-table dc-ds-table--fixed workflow-ops-table w-full text-sm" aria-label="Active workflows">
+      <caption class="sr-only">Active contract workflows with stage, type, dates, value, owner, and progress.</caption>
       <thead class="tbl-head">
         <tr>
-          <th class="tbl-th" scope="col">Workflow</th>
-          <th class="tbl-th" scope="col">Stage</th>
-          <th class="tbl-th" scope="col">Agreement type</th>
-          <th class="tbl-th" scope="col">Business unit</th>
-          <th class="tbl-th" scope="col">Jurisdiction</th>
-          <th class="tbl-th" scope="col">Agreement date</th>
-          <th class="tbl-th" scope="col">Key date</th>
-          <th class="tbl-th wq-col-num" scope="col">Value</th>
-          <th class="tbl-th" scope="col">Owner</th>
-          <th class="tbl-th" scope="col">Progress</th>
+          <th class="tbl-th" scope="col" data-col="workflow">Workflow</th>
+          <th class="tbl-th" scope="col" data-col="type">Type</th>
+          <th class="tbl-th" scope="col" data-col="stage">Stage</th>
+          <th class="tbl-th" scope="col" data-col="owner">Owner</th>
+          <th class="tbl-th" scope="col" data-col="key_date">Key date</th>
+          <th class="tbl-th wq-col-num" scope="col" data-col="value">Value</th>
+          <th class="tbl-th" scope="col" data-col="progress">Progress</th>
+          <th class="tbl-th" scope="col" data-col="business_unit">Business unit</th>
+          <th class="tbl-th" scope="col" data-col="jurisdiction">Jurisdiction</th>
+          <th class="tbl-th" scope="col" data-col="agreement_date">Agreement date</th>
+          <th class="tbl-th" scope="col" data-col="actions"><span class="sr-only">Actions</span></th>
         </tr>
       </thead>
       <tbody>
         {% for row in workflow_rows %}
         <tr class="workflow-ops-row" data-href="{{ row.detail_url }}" tabindex="0" aria-label="Open {{ row.display_name }}">
-          <td>
+          <td data-col="workflow">
             <div class="workflow-ops-name">
-              <div class="workflow-ops-badges">
-                <strong>{{ row.display_name }}</strong>
+              <span class="workflow-ops-title">{{ row.display_name }}</span>
+              <div class="workflow-ops-meta">
                 {% if row.has_exception %}<span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--attention">Exception</span>{% endif %}
                 {% if row.status != 'ACTIVE' %}<span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--neutral">{{ row.status_label }}</span>{% endif %}
+                <span class="workflow-ops-counterparty" title="{{ row.counterparty }}">{{ row.counterparty }}</span>
               </div>
-              <span>{{ row.counterparty }}</span>
             </div>
           </td>
-          <td><span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--neutral">{{ row.stage }}</span></td>
-          <td>{{ row.agreement_type }}</td>
-          <td>{{ row.business_unit }}</td>
-          <td>{{ row.jurisdiction }}</td>
-          <td>{% if row.agreement_date %}{{ row.agreement_date|date:"j M Y" }}{% else %}—{% endif %}</td>
-          <td>{% if row.key_date %}{{ row.key_date|date:"j M Y" }}{% else %}—{% endif %}</td>
-          <td class="wq-col-num">{% if row.value %}{{ row.value|money:row.currency }}{% else %}—{% endif %}</td>
-          <td>{{ row.owner_label }}</td>
-          <td>
+          <td data-col="type"><span class="workflow-ops-cell-text dc-ds-table-cell-text" title="{{ row.agreement_type }}">{{ row.agreement_type }}</span></td>
+          <td data-col="stage"><span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--neutral workflow-ops-stage-badge">{{ row.stage }}</span></td>
+          <td data-col="owner"><span class="workflow-ops-cell-text dc-ds-table-cell-text" title="{{ row.owner_label }}">{{ row.owner_label }}</span></td>
+          <td data-col="key_date">{% if row.key_date %}{{ row.key_date|date:"j M Y" }}{% else %}—{% endif %}</td>
+          <td class="wq-col-num" data-col="value">{% if row.value %}{{ row.value|money:row.currency }}{% else %}—{% endif %}</td>
+          <td data-col="progress">
             <div class="workflow-ops-progress" aria-label="{{ row.progress_percentage }} percent complete">
               <div class="workflow-ops-progress__track" aria-hidden="true">
                 <div class="workflow-ops-progress__fill" style="width: {{ row.progress_percentage }}%"></div>
@@ -172,10 +270,21 @@
               <span>{{ row.progress_percentage }}%</span>
             </div>
           </td>
+          <td data-col="business_unit"><span class="workflow-ops-cell-text dc-ds-table-cell-text" title="{{ row.business_unit }}">{{ row.business_unit|default:"—" }}</span></td>
+          <td data-col="jurisdiction"><span class="workflow-ops-cell-text dc-ds-table-cell-text" title="{{ row.jurisdiction }}">{{ row.jurisdiction|default:"—" }}</span></td>
+          <td data-col="agreement_date">{% if row.agreement_date %}{{ row.agreement_date|date:"j M Y" }}{% else %}—{% endif %}</td>
+          <td data-col="actions">
+            <details class="wq-kebab repo-row-menu">
+              <summary aria-label="More actions for {{ row.display_name }}" class="wq-kebab-trigger">&#8942;</summary>
+              <div class="wq-kebab-menu">
+                <a href="{{ row.detail_url }}">Open workflow</a>
+              </div>
+            </details>
+          </td>
         </tr>
         {% empty %}
         <tr>
-          <td colspan="10">
+          <td colspan="11">
             {% if filters_active %}
               {% include "design_system/empty_state.html" with icon="search" title="No workflows match these filters" reason="The current search or filters exclude every workflow in this workspace." how="Clear filters to see all active workflows, or start a new workflow for a contract." action_url=ops_clear_url action_label="Clear filters" action_tone="ghost" %}
             {% else %}
@@ -193,28 +302,92 @@
 (function () {
   var root = document.getElementById('workflow-ops-root');
   if (!root) return;
-  var form = document.getElementById('workflow-ops-filters-form');
+
   var filterToggle = document.getElementById('workflow-ops-filter-toggle');
-  var filterDrawer = document.getElementById('workflow-ops-more-filters');
+  var filterDrawer = document.getElementById('workflow-ops-filters');
   if (filterToggle && filterDrawer) {
     filterToggle.addEventListener('click', function () {
       var open = filterDrawer.classList.toggle('is-open');
       filterToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
     });
   }
-  if (form) {
-    ['workflow-ops-status', 'workflow-ops-type', 'workflow-ops-owner'].forEach(function (id) {
-      var control = document.getElementById(id);
-      if (control) control.addEventListener('change', function () { form.submit(); });
+
+  var STORAGE_KEY = 'clmone-workflow-ops-columns-v1';
+  var DEFAULT_COLS = {
+    type: true,
+    stage: true,
+    owner: true,
+    key_date: true,
+    value: true,
+    progress: true,
+    business_unit: false,
+    jurisdiction: false,
+    agreement_date: false
+  };
+  var colMenu = document.getElementById('workflow-ops-col-menu');
+  var colToggle = document.getElementById('workflow-ops-col-toggle');
+  var table = document.getElementById('workflow-ops-table');
+  var columnVisibility = Object.assign({}, DEFAULT_COLS);
+
+  try {
+    var saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    Object.keys(DEFAULT_COLS).forEach(function (key) {
+      if (typeof saved[key] === 'boolean') columnVisibility[key] = saved[key];
+    });
+  } catch (err) { /* ignore corrupt storage */ }
+
+  function applyColumnVisibility() {
+    if (!table) return;
+    Object.keys(DEFAULT_COLS).forEach(function (key) {
+      var visible = columnVisibility[key] !== false;
+      table.querySelectorAll('[data-col="' + key + '"]').forEach(function (el) {
+        el.classList.toggle('is-hidden', !visible);
+      });
+      var input = root.querySelector('[data-col-toggle="' + key + '"]');
+      if (input) input.checked = visible;
     });
   }
+
+  function persistColumns() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(columnVisibility)); } catch (err) { /* ignore */ }
+  }
+
+  if (colToggle && colMenu) {
+    colToggle.addEventListener('click', function () {
+      var open = colMenu.classList.toggle('is-open');
+      colToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    document.addEventListener('click', function (event) {
+      if (!colMenu.contains(event.target)) {
+        colMenu.classList.remove('is-open');
+        colToggle.setAttribute('aria-expanded', 'false');
+      }
+    });
+    document.addEventListener('keydown', function (event) {
+      if (event.key !== 'Escape') return;
+      colMenu.classList.remove('is-open');
+      colToggle.setAttribute('aria-expanded', 'false');
+    });
+  }
+
+  root.querySelectorAll('[data-col-toggle]').forEach(function (input) {
+    input.addEventListener('change', function () {
+      var key = input.getAttribute('data-col-toggle');
+      if (!Object.prototype.hasOwnProperty.call(DEFAULT_COLS, key)) return;
+      columnVisibility[key] = !!input.checked;
+      applyColumnVisibility();
+      persistColumns();
+    });
+  });
+  applyColumnVisibility();
+
   function openRow(row) {
     var href = row && row.getAttribute('data-href');
     if (href) window.location.href = href;
   }
   root.addEventListener('click', function (event) {
     var row = event.target.closest('tr.workflow-ops-row');
-    if (!row || event.target.closest('a, button, input, select, label')) return;
+    if (!row || event.target.closest('a, button, input, select, label, details, summary')) return;
     openRow(row);
   });
   root.addEventListener('keydown', function (event) {

@@ -20,8 +20,20 @@ class ImportResult:
 
 
 class InboundImportService:
-    VALID_STATUSES = {'DRAFT', 'ACTIVE', 'EXPIRED', 'TERMINATED', 'ARCHIVED'}
+    VALID_STATUSES = {
+        'IN_PROGRESS', 'ACTIVE', 'EXPIRED', 'TERMINATED', 'CANCELLED', 'ARCHIVED',
+        # Legacy aliases accepted on import and mapped below
+        'DRAFT', 'PENDING', 'IN_REVIEW', 'APPROVED', 'COMPLETED',
+    }
     VALID_CONTRACT_TYPES = {'NDA', 'SERVICE', 'EMPLOYMENT', 'VENDOR', 'PARTNERSHIP', 'LEASE', 'OTHER'}
+
+    _STATUS_ALIASES = {
+        'DRAFT': 'IN_PROGRESS',
+        'PENDING': 'IN_PROGRESS',
+        'IN_REVIEW': 'IN_PROGRESS',
+        'APPROVED': 'IN_PROGRESS',
+        'COMPLETED': 'ACTIVE',
+    }
 
     def import_contracts_from_csv(self, org, csv_text: str, user, dry_run: bool = False) -> ImportResult:
         reader = csv.DictReader(io.StringIO(csv_text))
@@ -45,12 +57,14 @@ class InboundImportService:
 
             if not dry_run:
                 try:
+                    raw_status = row.get('status', 'IN_PROGRESS').strip().upper() or 'IN_PROGRESS'
+                    status = self._STATUS_ALIASES.get(raw_status, raw_status)
                     Contract.objects.create(
                         organization=org,
                         title=row.get('title', '').strip(),
                         counterparty=row.get('counterparty', '').strip(),
                         contract_type=row.get('contract_type', 'OTHER').strip().upper() or 'OTHER',
-                        status=row.get('status', 'DRAFT').strip().upper() or 'DRAFT',
+                        status=status,
                         start_date=self._parse_date(row.get('start_date')),
                         end_date=self._parse_date(row.get('end_date')),
                         created_by=user,

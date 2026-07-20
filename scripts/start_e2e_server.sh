@@ -10,6 +10,21 @@ fi
 export DJANGO_E2E=1
 export DJANGO_SETTINGS_MODULE="${DJANGO_SETTINGS_MODULE:-config.settings_development}"
 export DATABASE_URL="${E2E_DATABASE_URL:-sqlite:///$ROOT_DIR/e2e.sqlite3}"
+# Isolate e2e from developer .env Redis (often remote Upstash). Use local Redis only when explicitly requested.
+# Empty REDIS_URL must remain set so settings_base._load_dotenv setdefault cannot reinstate .env.
+if [ -n "${E2E_REDIS_URL:-}" ]; then
+  export REDIS_URL="$E2E_REDIS_URL"
+else
+  export REDIS_URL=
+fi
+# Deterministic auth throttle for browser gate tests (forced; do not inherit ambient overrides).
+export LOGIN_RATE_LIMIT_REQUESTS=3
+export LOGIN_RATE_LIMIT_WINDOW_SECONDS=60
+export RATELIMIT_ENABLED=true
+export RATELIMIT_TRUSTED_IPS=
+# Disable live AI provider in e2e so search/draft paths use deterministic fallbacks.
+export GEMINI_API_KEY=
+export GEMINI_AI_ENABLED=false
 
 if [ -z "${E2E_DATABASE_URL:-}" ]; then
   rm -f "$ROOT_DIR/e2e.sqlite3"
@@ -99,6 +114,29 @@ Matter.objects.get_or_create(
     organization=org,
     matter_number='E2E-0001',
     defaults={'title': 'E2E Fixture Matter', 'client': client, 'created_by': user},
+)
+
+# Cross-tenant search exclusion fixture: clause visible only in a foreign org.
+from contracts.models import ClauseTemplate
+foreign_org, _ = Organization.objects.get_or_create(
+    slug='e2e-foreign-tenant',
+    defaults={'name': 'E2E Foreign Tenant', 'workspace_mode': Organization.WorkspaceMode.IN_HOUSE_CLM},
+)
+ClauseTemplate.objects.get_or_create(
+    organization=foreign_org,
+    title='FOREIGN_TENANT_SECRET_CLAUSE_E2E',
+    defaults={
+        'content': 'This clause must never appear in e2e-command-center search results.',
+        'created_by': user,
+    },
+)
+ClauseTemplate.objects.get_or_create(
+    organization=org,
+    title='E2E Local Indemnity Clause',
+    defaults={
+        'content': 'Indemnity and confidentiality obligations for pilot verification search.',
+        'created_by': user,
+    },
 )
 "
 

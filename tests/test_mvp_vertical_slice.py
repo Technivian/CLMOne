@@ -222,9 +222,14 @@ class MVPVerticalSliceTests(TestCase):
         self.assertTrue(obligation.is_completed)
         self.assertEqual(obligation.completed_by, self.owner)
 
+        unlock = self.client.post(
+            reverse('contracts:contract_update', args=[contract.pk]),
+            {'create_new_version': '1'},
+        )
+        self.assertEqual(unlock.status_code, 302)
         enable_dpa = self.client.post(
             reverse('contracts:contract_update', args=[contract.pk]),
-            self.contract_form_data(status=Contract.Status.APPROVED, dpa_attached='on'),
+            self.contract_form_data(dpa_attached='on'),
         )
         self.assertEqual(enable_dpa.status_code, 302)
         pack = DPAReviewPack.objects.get(contract=contract)

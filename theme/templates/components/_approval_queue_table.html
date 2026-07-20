@@ -1,35 +1,35 @@
 {% load clmone_components %}
 {% load clmone_format %}
-<table class="dc-ds-table wq-table" data-table-core="server" data-queue-panel="{{ panel_key }}"{% if not is_active %} hidden{% endif %}>
+<table class="dc-ds-table dc-ds-table--fixed wq-table approvals-table" data-table-core="server" data-queue-panel="{{ panel_key }}"{% if not is_active %} hidden{% endif %} aria-label="Approval requests">
   <caption class="sr-only">Approval requests requiring review or decision.</caption>
-  <thead>
+  <thead class="tbl-head">
     <tr>
-      <th scope="col">Approval / Contract</th>
-      <th scope="col">Stage</th>
-      <th scope="col">Requested by</th>
-      <th scope="col">Assigned to</th>
-      <th scope="col">Latest activity</th>
-      <th scope="col" class="wq-col-num">Due</th>
-      <th scope="col">Status</th>
-      <th scope="col">Next action</th>
-      <th scope="col"><span class="sr-only">Actions</span></th>
+      <th class="tbl-th" scope="col" data-col="title">Approval / Contract</th>
+      <th class="tbl-th" scope="col" data-col="stage">Stage</th>
+      <th class="tbl-th" scope="col" data-col="requester">Requested by</th>
+      <th class="tbl-th" scope="col" data-col="assignee">Assigned to</th>
+      <th class="tbl-th" scope="col" data-col="activity">Latest activity</th>
+      <th class="tbl-th wq-col-num" scope="col" data-col="due">Due</th>
+      <th class="tbl-th" scope="col" data-col="status">Status</th>
+      <th class="tbl-th" scope="col" data-col="next_action">Next action</th>
+      <th class="tbl-th" scope="col" data-col="actions"><span class="sr-only">Actions</span></th>
     </tr>
   </thead>
   <tbody>
     {% for row in rows %}
     <tr>
-      <td>
-        <a href="{{ row.href }}" class="wq-item-link">{{ row.title|truncatechars:44 }}</a>
+      <td data-col="title">
+        <a href="{{ row.href }}" class="wq-item-link" title="{{ row.title }}">{{ row.title }}</a>
         {% if row.meta %}<div class="wq-item-meta">{{ row.meta }}</div>{% endif %}
       </td>
-      <td>{% stage_dots row.contract %}</td>
-      <td>{% assignee_chip row.requester %}</td>
-      <td>{% assignee_chip row.assignee %}</td>
-      <td>{% activity_line row.activity %}</td>
-      <td class="wq-col-num{% if row.due_overdue %} wq-due-overdue{% endif %}">{% if row.due_date %}{{ row.due_date|date:"j M Y" }}{% else %}<span class="c-dim">—</span>{% endif %}</td>
-      <td><span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ row.status_badge_class|legacy_badge_tone }}">{{ row.status_label }}</span></td>
-      <td><span class="wq-next-action">{{ row.next_action }}</span></td>
-      <td class="wq-approval-actions">
+      <td data-col="stage">{% stage_dots row.contract %}</td>
+      <td data-col="requester">{% assignee_chip row.requester %}</td>
+      <td data-col="assignee">{% assignee_chip row.assignee %}</td>
+      <td data-col="activity">{% activity_line row.activity %}</td>
+      <td class="wq-col-num{% if row.due_overdue %} wq-due-overdue{% endif %}" data-col="due">{% if row.due_date %}{{ row.due_date|date:"j M Y" }}{% else %}<span class="c-dim">—</span>{% endif %}</td>
+      <td data-col="status"><span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ row.status_badge_class|legacy_badge_tone }}">{{ row.status_label }}</span></td>
+      <td data-col="next_action"><span class="wq-next-action">{{ row.next_action }}</span></td>
+      <td class="wq-approval-actions" data-col="actions">
         {% if row.can_decide %}
         <button type="button" class="wq-approve-btn" data-approval-action="approve" data-approve-url="{{ row.approve_url }}">Approve</button>
         <button type="button" class="wq-reject-btn" data-approval-action="reject" data-reject-url="{{ row.reject_url }}">Reject</button>

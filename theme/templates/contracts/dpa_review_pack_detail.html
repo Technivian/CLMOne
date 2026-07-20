@@ -7,249 +7,446 @@
 </a>
 {% endblock %}
 {% block content %}
-<style nonce="{{ csp_nonce }}">
-  .dpa-section { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 18px 20px; margin-bottom: 16px; }
-  .dpa-section h3 { font-size: 13px; font-weight: 700; color: var(--text-primary); margin: 0 0 10px; }
-  .dpa-checklist { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px 16px; }
-  .dpa-check-row { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-secondary); }
-  .dpa-check-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-  .dpa-check-dot.on { background: var(--primary); }
-  .dpa-check-dot.off { background: var(--border); }
-  .dpa-owner-chip { display: inline-block; font-size: 11px; padding: 2px 7px; border-radius: 999px; background: var(--surface); border: 1px solid var(--border); color: var(--text-secondary); margin-right: 4px; }
-  .dpa-evidence { margin-top: 8px; padding: 8px 10px; border-left: 3px solid var(--border); background: var(--surface); color: var(--text-secondary); font-size: 12px; line-height: 1.45; }
-  .dpa-risk-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-  .dpa-note { margin-top: 6px; font-size: 12px; color: var(--text-secondary); }
-</style>
-
-<div id="dpa-review-detail-root" class="page-wrap page-wrap-fluid">
-    <div class="arch-header">
-        <div class="arch-header-left">
-            <div class="arch-title-row">
-                <h1 class="arch-title">{{ review_pack.contract.title }}</h1>
-                <span class="dc-ds-badge--{{ review_pack.approval_status|dpa_approval_badge_class|legacy_badge_tone }}">{{ review_pack.get_approval_status_display }}</span>
-            </div>
-            <p class="arch-subtitle">DPA Review Pack{% if review_pack.counterparty %} · {{ review_pack.counterparty.name }}{% endif %}{% if review_pack.reviewer %} · Reviewer: {{ review_pack.reviewer.get_full_name|default:review_pack.reviewer.username }}{% endif %}</p>
-        </div>
-        <div class="arch-header-right">
-            {% if can_edit %}
-            <button type="button" id="dpa-run-analysis-btn" class="dc-ds-button--quiet" data-analyze-url="{% url 'contracts:dpa_review_run_analysis' review_pack.pk %}">Run Analysis</button>
-            <button type="button" id="dpa-generate-memo-btn" class="dc-ds-button--quiet" data-memo-url="{% url 'contracts:dpa_review_generate_memo' review_pack.pk %}">Generate Review Memo</button>
-            {% endif %}
-            <a href="{% url 'contracts:dpa_review_pack_memo' review_pack.pk %}" class="dc-ds-button--quiet">View Memo</a>
-            <a href="{% url 'contracts:contract_detail' review_pack.contract.pk %}" class="dc-ds-button--quiet">View Contract</a>
-        </div>
+<main id="dpa-review-detail-root" class="dc-ds-workspace dc-ds-workspace--record dc-ds-workspace--dpa{% if show_decision_bar %} dc-ds-workspace--dpa-decision{% endif %} reveal-stagger" aria-label="DPA review workspace">
+  <header class="dc-ds-workspace__title-row">
+    <div>
+      <div class="contract-command-title">
+        <h1 class="arch-title">{{ review_pack.contract.title }}</h1>
+        <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ review_pack.approval_status|dpa_approval_badge_class|legacy_badge_tone }}">{{ review_command.status_label }}</span>
+        {% for badge in review_command.risk_badges %}
+        <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ badge.tone }}">{{ badge.label }}</span>
+        {% endfor %}
+      </div>
+      <div class="contract-command-context" aria-label="Review identity">
+        <span>DPA Review</span>
+        {% if review_pack.counterparty %}<span>{{ review_pack.counterparty.name }}</span>{% endif %}
+        <span>Owner: {{ review_command.owner_label }}</span>
+        <span>Updated {{ review_pack.updated_at|date:"M d, Y" }}</span>
+      </div>
     </div>
-    <div id="dpa-analysis-error" class="msg-error rounded-lg p-3 mb-4 text-sm" hidden></div>
-
-    {% if review_pack.last_analyzed_at %}
-    <p class="text-xs c-muted mb-4">Last analyzed {{ review_pack.last_analyzed_at|date:"d M Y H:i" }} — heuristic keyword scan; findings are suggestions for human review, not automatic determinations.</p>
-    {% endif %}
-
-    <div class="dpa-section">
-        <h3>Linked Documents</h3>
-        <p class="text-sm c-muted">Related contracts (MSA/SOW) used for cross-document conflict checks:
-            {% if review_pack.related_contracts.all %}
-                {% for c in review_pack.related_contracts.all %}<a href="{% url 'contracts:contract_detail' c.pk %}" class="c-link">{{ c.title }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}
-            {% else %}<span class="c-dim">None linked</span>{% endif %}
-        </p>
-        {% if review_pack.matter %}<p class="text-xs c-muted mt-1">Matter: {{ review_pack.matter.title }}</p>{% endif %}
-        {% if can_edit and linkable_contracts %}
-        <div class="flex items-center gap-2 mt-2">
-            <select id="dpa-link-contract-select" class="select-base text-xs">
-                {% for c in linkable_contracts %}<option value="{{ c.pk }}">{{ c.title }}</option>{% endfor %}
-            </select>
-            <button type="button" id="dpa-link-contract-btn" class="dc-ds-button dc-ds-button--quiet text-xs" data-link-url="{% url 'contracts:dpa_review_link_related_contract' review_pack.pk %}">Link Contract</button>
-        </div>
+    <div class="dc-ds-workspace__actions">
+      {% if review_command.show_primary_action %}
+        {% if review_command.primary_action.mode == 'analyze' and can_edit %}
+        <button type="button" id="dpa-run-analysis-btn" class="dc-ds-button dc-ds-button--primary" data-analyze-url="{% url 'contracts:dpa_review_run_analysis' review_pack.pk %}">{{ review_command.primary_action.label }}</button>
+        {% else %}
+        <a href="{{ review_command.primary_action.href }}" class="dc-ds-button dc-ds-button--primary">{{ review_command.primary_action.label }}</a>
         {% endif %}
-    </div>
-
-    <div class="dpa-section">
-        <h3>1. Role Qualification</h3>
-        <p class="text-sm c-primary">{{ review_pack.get_role_qualification_display }}</p>
-        {% if review_pack.role_qualification_notes %}<p class="text-xs c-muted mt-1">{{ review_pack.role_qualification_notes }}</p>{% endif %}
-        <p class="text-xs c-muted mt-2">Subprocessors involved: {% if review_pack.subprocessors_involved %}Yes{% else %}No{% endif %}</p>
-    </div>
-
-    <div class="dpa-section">
-        <h3>3. Payroll-Specific Data Categories</h3>
-        <div class="dpa-checklist">
-            {% for label, is_present in payroll_data_fields %}
-            <div class="dpa-check-row"><span class="dpa-check-dot {% if is_present %}on{% else %}off{% endif %}"></span>{{ label }}</div>
-            {% endfor %}
+      {% endif %}
+      <details class="dc-ds-workspace__actions-menu">
+        <summary class="dc-ds-button dc-ds-button--quiet">Actions</summary>
+        <div class="dc-ds-workspace__actions-panel dc-ds-surface" role="menu" aria-label="DPA review actions">
+          {% if can_edit %}
+          <button type="button" id="dpa-run-analysis-menu-btn" class="dc-ds-workspace__actions-item" role="menuitem" data-analyze-url="{% url 'contracts:dpa_review_run_analysis' review_pack.pk %}">Run analysis</button>
+          <button type="button" id="dpa-generate-memo-btn" class="dc-ds-workspace__actions-item" role="menuitem" data-memo-url="{% url 'contracts:dpa_review_generate_memo' review_pack.pk %}">Generate memo</button>
+          {% endif %}
+          <a href="{% url 'contracts:dpa_review_pack_memo' review_pack.pk %}" class="dc-ds-workspace__actions-item" role="menuitem">View memo</a>
+          <a href="{% url 'contracts:contract_detail' review_pack.contract.pk %}" class="dc-ds-workspace__actions-item" role="menuitem">View contract</a>
+          <a href="?tab=documents" class="dc-ds-workspace__actions-item" role="menuitem">Linked documents</a>
+          <a href="?tab=history" class="dc-ds-workspace__actions-item" role="menuitem">Decision history</a>
         </div>
+      </details>
     </div>
+  </header>
 
-    <div class="dpa-section">
-        <h3>4. Subprocessor / Vendor Review</h3>
-        <p class="text-sm c-muted">Prior approval required: {% if review_pack.subprocessor_prior_approval_required %}Yes{% else %}No{% endif %} · General authorization allowed: {% if review_pack.subprocessor_general_authorization_allowed %}Yes{% else %}No{% endif %} · Notification period: {% if review_pack.subprocessor_notification_period_days %}{{ review_pack.subprocessor_notification_period_days }} days{% else %}<span class="c-dim">Not specified</span>{% endif %}</p>
-        {% if review_pack.subprocessors.all %}
-        <p class="text-xs c-muted mt-2">Linked subprocessors: {% for sp in review_pack.subprocessors.all %}{{ sp.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</p>
-        {% endif %}
-    </div>
+  <div id="dpa-analysis-error" class="msg-error rounded-lg p-3 text-sm" hidden></div>
 
-    <div class="dpa-section">
-        <h3>5. International Transfer Review</h3>
-        <p class="text-sm c-muted">Transfers outside EEA: {% if review_pack.transfers_outside_eea %}Yes{% else %}No{% endif %} · Transfer mechanism present: {% if review_pack.transfer_mechanism_present %}Yes{% else %}No{% endif %} · DPO/Security escalation required: {% if review_pack.transfer_escalation_required %}Yes{% else %}No{% endif %}</p>
-    </div>
+  {% include "components/_workspace_tabs.html" with tabs=workspace_tabs aria_label="DPA review tabs" role_tablist=True nav_class="dc-ds-workspace__tabs" %}
 
-    <div class="dpa-section">
-        <h3>6. Security Measures</h3>
-        <div class="dpa-checklist">
-            {% for label, is_present in security_fields %}
-            <div class="dpa-check-row"><span class="dpa-check-dot {% if is_present %}on{% else %}off{% endif %}"></span>{{ label }}</div>
-            {% endfor %}
-        </div>
-        <p class="text-xs c-muted mt-2">Measures are {% if review_pack.security_measures_specific %}described specifically{% else %}described in vague/generic terms{% endif %}.</p>
-    </div>
+  <div class="dc-ds-workspace__layout">
+    <div class="dc-ds-workspace__main">
+      {% if active_tab == 'overview' %}
+      <div id="dpa-tab-overview" role="tabpanel" aria-labelledby="tab-overview" class="contract-overview">
+        <section class="contract-action-card" aria-labelledby="dpa-decision-needed-heading" role="status">
+          <div class="contract-action-card__copy">
+            <p class="contract-action-card__eyebrow" id="dpa-decision-needed-heading">Decision required</p>
+            <p class="contract-action-card__body">{{ review_command.next_action }}</p>
+          </div>
+          {% if review_command.primary_action.mode == 'analyze' and can_edit %}
+          <button type="button" class="dc-ds-button dc-ds-button--primary" data-analyze-trigger data-analyze-url="{% url 'contracts:dpa_review_run_analysis' review_pack.pk %}">{{ review_command.primary_action.label }}</button>
+          {% else %}
+          <a href="{{ review_command.primary_action.href }}" class="dc-ds-button dc-ds-button--primary">{{ review_command.primary_action.label }}</a>
+          {% endif %}
+        </section>
 
-    <div class="dpa-section">
-        <h3>7. Breach Notification</h3>
-        <p class="text-sm c-muted">Deadline: {% if review_pack.breach_notification_deadline_hours %}{{ review_pack.breach_notification_deadline_hours }} hours{% else %}<span class="c-dim">Not specified</span>{% endif %} · Realistic: {% if review_pack.breach_notification_realistic %}Yes{% else %}No{% endif %}</p>
-    </div>
-
-    <div class="dpa-section">
-        <h3>8. Data Subject Request Assistance</h3>
-        <p class="text-sm c-muted">Assistance required: {% if review_pack.dsar_assistance_required %}Yes{% else %}No{% endif %} · Deadline: {% if review_pack.dsar_assistance_deadline_days %}{{ review_pack.dsar_assistance_deadline_days }} days{% else %}<span class="c-dim">Not specified</span>{% endif %} · Chargeable: {% if review_pack.dsar_assistance_chargeable %}Yes{% else %}No{% endif %}</p>
-    </div>
-
-    <div class="dpa-section">
-        <h3>9. Audit Rights</h3>
-        <p class="text-sm c-muted">On-site allowed: {% if review_pack.audit_rights_onsite_allowed %}Yes{% else %}No{% endif %} · Frequency limited: {% if review_pack.audit_rights_frequency_limited %}Yes{% else %}No{% endif %} · Third-party reports accepted: {% if review_pack.audit_third_party_reports_accepted %}Yes{% else %}No{% endif %}</p>
-    </div>
-
-    <div class="dpa-section">
-        <h3>10. Deletion and Return</h3>
-        <p class="text-sm c-muted">Deadline: {% if review_pack.deletion_return_deadline_days %}{{ review_pack.deletion_return_deadline_days }} days{% else %}<span class="c-dim">Not specified</span>{% endif %} · Statutory retention conflict: {% if review_pack.deletion_legal_retention_conflict %}Yes{% else %}No{% endif %} · Certification required: {% if review_pack.deletion_certification_required %}Yes{% else %}No{% endif %}</p>
-    </div>
-
-    <div class="dpa-section">
-        <h3>11. Liability Conflict Detection</h3>
-        <p class="text-sm c-muted">Uncapped: {% if review_pack.liability_uncapped %}Yes{% else %}No{% endif %} · Overrides MSA cap: {% if review_pack.liability_overrides_msa_cap %}Yes{% else %}No{% endif %} · Separate indemnities: {% if review_pack.liability_separate_indemnities %}Yes{% else %}No{% endif %}</p>
-    </div>
-
-    <div class="panel overflow-hidden mb-6">
-        <div class="panel-inner" style="padding-bottom: 0;">
-            <h3 class="text-sm font-bold c-primary mb-2">Risk Items ({{ risk_items|length }})</h3>
-            {% if can_review %}
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-2 mb-3" id="dpa-manual-risk-form" data-create-url="{% url 'contracts:dpa_risk_item_create' review_pack.pk %}">
-                <input class="input-base text-xs" id="dpa-risk-title" type="text" placeholder="Unresolved risk title">
-                <input class="input-base text-xs" id="dpa-risk-description" type="text" placeholder="What remains unresolved?">
-                <select class="select-base text-xs" id="dpa-risk-severity"><option value="MEDIUM">Medium</option><option value="HIGH">High</option><option value="CRITICAL">Critical</option><option value="LOW">Low</option></select>
-                <button type="button" class="dc-ds-button dc-ds-button--quiet text-xs" id="dpa-risk-create">Add unresolved risk</button>
-            </div>
-            {% endif %}
-        </div>
-        <table class="w-full text-sm">
-            <thead class="tbl-head">
-                <tr>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Risk</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Category</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Severity</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Confidence</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Owner</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for risk in risk_items %}
-                <tr class="border-b transition-colors tbl-row">
-                    <td class="px-5 py-3.5">
-                        <div class="font-medium c-primary">{{ risk.title }}</div>
-                        <p class="text-xs mt-0.5 c-muted">{{ risk.description|truncatechars:140 }}</p>
-                        {% if risk.fallback_recommendation %}<p class="text-xs mt-0.5 c-dim">Fallback: {{ risk.fallback_recommendation|truncatechars:120 }}</p>{% endif %}
-                        <div class="dpa-risk-meta">
-                            {% if risk.source_section %}<span class="dc-ds-badge--neutral">{{ risk.source_section }}</span>{% endif %}
-                            {% if risk.source_field %}<span class="dc-ds-badge--neutral">{{ risk.source_field }}</span>{% endif %}
-                            {% if risk.detection_rule %}<span class="dc-ds-badge--neutral">{{ risk.detection_rule }}</span>{% endif %}
-                            {% if risk.conflict_type %}<span class="dc-ds-badge--danger">{{ risk.conflict_type }}</span>{% endif %}
-                        </div>
-                        <div class="dpa-evidence">
-                            <strong>Evidence:</strong> {{ risk.evidence_text|default:'Evidence requires manual verification' }}
-                            {% if risk.related_contract_evidence_text %}<br><strong>Linked MSA evidence:</strong> {{ risk.related_contract_evidence_text }}{% endif %}
-                        </div>
-                        {% for note in risk.notes.all %}
-                        <div class="dpa-note"><strong>{{ note.author.get_full_name|default:note.author.username|default:'Reviewer' }}</strong> · {{ note.created_at|date:"d M Y H:i" }} — {{ note.note }}</div>
-                        {% endfor %}
-                        {% if can_review %}
-                        <div class="mt-2 flex items-center gap-2">
-                            <input class="input-base text-xs dpa-note-input" type="text" placeholder="Add reviewer note" data-note-url="{% url 'contracts:dpa_risk_item_add_note' risk.pk %}">
-                            <button type="button" class="dc-ds-button dc-ds-button--quiet text-xs dpa-note-submit">Add Note</button>
-                        </div>
-                        {% endif %}
-                    </td>
-                    <td class="px-5 py-3.5 tbl-td">{{ risk.get_category_display }}</td>
-                    <td class="px-5 py-3.5"><span class="dc-ds-badge--{{ risk.severity|dpa_severity_badge_class|legacy_badge_tone }}">{{ risk.get_severity_display }}</span></td>
-                    <td class="px-5 py-3.5"><span class="dc-ds-badge--neutral">{{ risk.get_confidence_display }}</span></td>
-                    <td class="px-5 py-3.5">{% for chip in risk.owners|dpa_owner_chips %}<span class="dpa-owner-chip">{{ chip }}</span>{% endfor %}</td>
-                    <td class="px-5 py-3.5">
-                        {% if can_review %}
-                        <select class="select-base text-xs dpa-risk-status-select" data-status-url="{% url 'contracts:dpa_risk_item_set_status' risk.pk %}">
-                            {% for value, label in risk.Status.choices %}
-                            <option value="{{ value }}" {% if risk.status == value %}selected{% endif %}>{{ label }}</option>
-                            {% endfor %}
-                        </select>
-                        {% else %}
-                        {{ risk.get_status_display }}
-                        {% endif %}
-                    </td>
-                </tr>
-                {% empty %}
-                <tr><td colspan="6" class="px-5 py-16 text-center c-muted">No risk items yet — run analysis or add findings manually.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-
-    <div class="panel overflow-hidden mb-6">
-        <div class="panel-inner" style="padding-bottom: 0;">
-            <h3 class="text-sm font-bold c-primary mb-2">Approval History</h3>
-        </div>
-        <table class="w-full text-sm">
-            <thead class="tbl-head">
-                <tr>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">When</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Actor</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Change</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Risk Snapshot</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Comment</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for entry in approval_history %}
-                <tr class="border-b transition-colors tbl-row">
-                    <td class="px-5 py-3.5 tbl-td">{{ entry.created_at|date:"d M Y H:i" }}</td>
-                    <td class="px-5 py-3.5 tbl-td">{{ entry.changed_by.get_full_name|default:entry.changed_by.username|default:'—' }}</td>
-                    <td class="px-5 py-3.5 tbl-td">{{ entry.from_status|default:'—' }} → {{ entry.to_status }}</td>
-                    <td class="px-5 py-3.5 tbl-td">Blockers: {{ entry.unresolved_blocker_count }} · {{ entry.risk_counts_by_severity }}</td>
-                    <td class="px-5 py-3.5 tbl-td">{{ entry.comment|default:'—' }}</td>
-                </tr>
-                {% empty %}
-                <tr><td colspan="5" class="px-5 py-10 text-center c-muted">No approval status changes recorded yet.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-
-    {% if can_approve %}
-    <div class="panel">
-        <div class="panel-inner flex items-center justify-between flex-wrap gap-3">
+        <section class="dc-ds-workspace__surface" aria-labelledby="dpa-review-summary-heading">
+          <div class="dc-ds-workspace__surface-head">
             <div>
-                <h3 class="text-sm font-bold c-primary">Approval Routing</h3>
-                <p class="text-xs c-muted mt-1">Setting this to Approved is a final, human decision — it is never set automatically by analysis.</p>
+              <h2 id="dpa-review-summary-heading" class="dc-ds-workspace__surface-title">Review summary</h2>
+              <p class="dc-ds-workspace__surface-kicker">Role, approval gate, and analysis posture — not raw extraction dumps.</p>
             </div>
-            <div class="flex items-center gap-2">
-                <select id="dpa-approval-select" class="select-base text-sm" data-set-status-url="{% url 'contracts:dpa_review_set_approval_status' review_pack.pk %}">
-                    {% for value, label in review_pack.ApprovalStatus.choices %}
-                    <option value="{{ value }}" {% if review_pack.approval_status == value %}selected{% endif %}>{{ label }}</option>
+          </div>
+          <div class="dc-ds-workspace__surface-body">
+            <dl class="contract-detail-list">
+              <div class="contract-detail-row"><dt>Role</dt><dd>{{ review_pack.get_role_qualification_display }}</dd></div>
+              <div class="contract-detail-row"><dt>Approval status</dt><dd>{{ review_pack.get_approval_status_display }}</dd></div>
+              <div class="contract-detail-row"><dt>Open risks</dt><dd>{{ risk_summary.open }} of {{ risk_summary.total }}</dd></div>
+              <div class="contract-detail-row"><dt>Last analyzed</dt><dd>{% if review_pack.last_analyzed_at %}{{ review_pack.last_analyzed_at|date:"M d, Y H:i" }}{% else %}Not analyzed{% endif %}</dd></div>
+            </dl>
+          </div>
+        </section>
+
+        <section class="dc-ds-workspace__surface" aria-labelledby="dpa-open-risks-heading">
+          <div class="dc-ds-workspace__surface-head">
+            <div>
+              <h2 id="dpa-open-risks-heading" class="dc-ds-workspace__surface-title">Open risks</h2>
+              <p class="dc-ds-workspace__surface-kicker">Highest-severity blockers that still need an owner decision.</p>
+            </div>
+            <div class="contract-head-actions"><a href="?tab=risks" class="contract-head-link">All risks</a></div>
+          </div>
+          <div class="dc-ds-workspace__surface-body">
+            {% if open_risks %}
+            <div class="contract-finding-list">
+              {% for risk in open_risks|slice:":5" %}
+              <div class="contract-finding-row">
+                <div class="contract-finding-copy">
+                  <strong>{{ risk.title }}</strong>
+                  <span>{{ risk.get_category_display }} · {{ risk.get_status_display }}</span>
+                </div>
+                <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ risk.severity|dpa_severity_badge_class|legacy_badge_tone }}">{{ risk.get_severity_display }}</span>
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <p class="contract-empty">No open risks — ready for an approval decision when review is complete.</p>
+            {% endif %}
+          </div>
+        </section>
+
+        <section class="dc-ds-workspace__surface" aria-labelledby="dpa-key-findings-heading">
+          <div class="dc-ds-workspace__surface-head">
+            <div>
+              <h2 id="dpa-key-findings-heading" class="dc-ds-workspace__surface-title">Key findings</h2>
+              <p class="dc-ds-workspace__surface-kicker">Categories that need input or carry active risk.</p>
+            </div>
+            <div class="contract-head-actions"><a href="?tab=findings" class="contract-head-link">All findings</a></div>
+          </div>
+          <div class="dc-ds-workspace__surface-body">
+            {% if key_findings %}
+            <div class="dpa-category-list dpa-category-list--compact">
+              {% for row in key_findings %}
+              <div class="dpa-category-row dpa-category-row--{{ row.state }}">
+                <div class="dpa-category-row__main">
+                  <span class="dpa-category-row__num">{{ row.number }}</span>
+                  <div class="dpa-category-row__copy">
+                    <strong>{{ row.title }}</strong>
+                    <span>{{ row.decision_summary }}</span>
+                  </div>
+                </div>
+                <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ row.state_tone }}">{{ row.state_label }}</span>
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <p class="contract-empty">No blocking findings on review categories.</p>
+            {% endif %}
+          </div>
+        </section>
+      </div>
+      {% elif active_tab == 'findings' %}
+      <div id="dpa-tab-findings" role="tabpanel" aria-labelledby="tab-findings">
+        <section class="dc-ds-workspace__surface" aria-labelledby="dpa-findings-heading">
+          <div class="dc-ds-workspace__surface-head">
+            <div>
+              <h2 id="dpa-findings-heading" class="dc-ds-workspace__surface-title">Review categories</h2>
+              <p class="dc-ds-workspace__surface-kicker">Expand a row for extracted detail. Status reflects risk and decision posture first.</p>
+            </div>
+          </div>
+          <div class="dc-ds-workspace__surface-body">
+            <div class="dpa-category-list">
+              {% for row in review_categories %}
+              <details class="dpa-category-row dpa-category-row--{{ row.state }}"{% if row.state == 'risk' or row.state == 'needs_input' %} open{% endif %}>
+                <summary>
+                  <div class="dpa-category-row__main">
+                    <span class="dpa-category-row__num">{{ row.number }}</span>
+                    <div class="dpa-category-row__copy">
+                      <strong>{{ row.title }}</strong>
+                      <span>{{ row.decision_summary }}</span>
+                    </div>
+                  </div>
+                  <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ row.state_tone }}">{{ row.state_label }}</span>
+                </summary>
+                <div class="dpa-category-row__body">
+                  <dl class="contract-detail-list">
+                    {% for label, value in row.details %}
+                    <div class="contract-detail-row"><dt>{{ label }}</dt><dd>{{ value }}</dd></div>
                     {% endfor %}
-                </select>
-                <input id="dpa-approval-comment" class="input-base text-sm" type="text" placeholder="Decision note">
-                <button type="button" id="dpa-approval-submit" class="dc-ds-button dc-ds-button--primary text-white">Update Status</button>
+                  </dl>
+                  {% if row.risks %}
+                  <div class="dpa-category-row__risks">
+                    <p class="dpa-category-row__risks-label">Linked risks</p>
+                    {% for risk in row.risks %}
+                    <div class="contract-finding-row">
+                      <div class="contract-finding-copy">
+                        <strong>{{ risk.title }}</strong>
+                        <span>{{ risk.get_status_display }} · {{ risk.get_confidence_display }}</span>
+                      </div>
+                      <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ risk.severity|dpa_severity_badge_class|legacy_badge_tone }}">{{ risk.get_severity_display }}</span>
+                    </div>
+                    {% endfor %}
+                  </div>
+                  {% endif %}
+                </div>
+              </details>
+              {% endfor %}
             </div>
-        </div>
+          </div>
+        </section>
+      </div>
+      {% elif active_tab == 'risks' %}
+      <div id="dpa-tab-risks" role="tabpanel" aria-labelledby="tab-risks">
+        <section class="dc-ds-workspace__surface" aria-labelledby="dpa-risks-heading">
+          <div class="dc-ds-workspace__surface-head">
+            <div>
+              <h2 id="dpa-risks-heading" class="dc-ds-workspace__surface-title">Risk items</h2>
+              <p class="dc-ds-workspace__surface-kicker">{{ risk_summary.open }} open · {{ risk_summary.total }} total</p>
+            </div>
+          </div>
+          <div class="dc-ds-workspace__surface-body">
+            {% if can_review %}
+            <div class="dpa-manual-risk" id="dpa-manual-risk-form" data-create-url="{% url 'contracts:dpa_risk_item_create' review_pack.pk %}">
+              <input class="dc-ds-control input-base" id="dpa-risk-title" type="text" placeholder="Unresolved risk title" aria-label="Risk title">
+              <input class="dc-ds-control input-base" id="dpa-risk-description" type="text" placeholder="What remains unresolved?" aria-label="Risk description">
+              <select class="dc-ds-control select-base" id="dpa-risk-severity" aria-label="Severity">
+                <option value="MEDIUM">Medium</option>
+                <option value="HIGH">High</option>
+                <option value="CRITICAL">Critical</option>
+                <option value="LOW">Low</option>
+              </select>
+              <button type="button" class="dc-ds-button dc-ds-button--quiet" id="dpa-risk-create">Add risk</button>
+            </div>
+            {% endif %}
+            {% if risk_items %}
+            <div class="dpa-risk-stack">
+              {% for risk in risk_items %}
+              <article class="dpa-risk-card">
+                <div class="dpa-risk-card__head">
+                  <div class="dpa-risk-card__copy">
+                    <h3>{{ risk.title }}</h3>
+                    <p>{{ risk.get_category_display }}</p>
+                  </div>
+                  <div class="dpa-risk-card__badges">
+                    <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ risk.severity|dpa_severity_badge_class|legacy_badge_tone }}">{{ risk.get_severity_display }}</span>
+                    <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--neutral">{{ risk.get_confidence_display }}</span>
+                  </div>
+                </div>
+                <p class="dpa-risk-card__desc">{{ risk.description|truncatechars:220 }}</p>
+                {% if risk.fallback_recommendation %}<p class="dpa-risk-card__fallback">Fallback: {{ risk.fallback_recommendation|truncatechars:160 }}</p>{% endif %}
+                <div class="dpa-evidence">
+                  <strong>Evidence:</strong> {{ risk.evidence_text|default:'Evidence requires manual verification' }}
+                  {% if risk.related_contract_evidence_text %}<br><strong>Linked MSA evidence:</strong> {{ risk.related_contract_evidence_text }}{% endif %}
+                </div>
+                <div class="dpa-risk-card__meta">
+                  <span>Owners: {% for chip in risk.owners|dpa_owner_chips %}{{ chip }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}</span>
+                  {% if can_review %}
+                  <label class="dpa-risk-card__status">
+                    <span class="u-sr-only">Status</span>
+                    <select class="dc-ds-control select-base dpa-risk-status-select" data-status-url="{% url 'contracts:dpa_risk_item_set_status' risk.pk %}" aria-label="Risk status for {{ risk.title }}">
+                      {% for value, label in risk.Status.choices %}
+                      <option value="{{ value }}" {% if risk.status == value %}selected{% endif %}>{{ label }}</option>
+                      {% endfor %}
+                    </select>
+                  </label>
+                  {% else %}
+                  <span>{{ risk.get_status_display }}</span>
+                  {% endif %}
+                </div>
+                {% for note in risk.notes.all %}
+                <div class="dpa-note"><strong>{{ note.author.get_full_name|default:note.author.username|default:'Reviewer' }}</strong> · {{ note.created_at|date:"d M Y H:i" }} — {{ note.note }}</div>
+                {% endfor %}
+                {% if can_review %}
+                <div class="dpa-note-form">
+                  <input class="dc-ds-control input-base dpa-note-input" type="text" placeholder="Add reviewer note" data-note-url="{% url 'contracts:dpa_risk_item_add_note' risk.pk %}" aria-label="Note for {{ risk.title }}">
+                  <button type="button" class="dc-ds-button dc-ds-button--quiet dpa-note-submit">Add note</button>
+                </div>
+                {% endif %}
+              </article>
+              {% endfor %}
+            </div>
+            {% else %}
+            <p class="contract-empty">No risk items yet — run analysis or add findings manually.</p>
+            {% endif %}
+          </div>
+        </section>
+      </div>
+      {% elif active_tab == 'documents' %}
+      <div id="dpa-tab-documents" role="tabpanel" aria-labelledby="tab-documents">
+        <section class="dc-ds-workspace__surface" aria-labelledby="dpa-documents-heading">
+          <div class="dc-ds-workspace__surface-head">
+            <div>
+              <h2 id="dpa-documents-heading" class="dc-ds-workspace__surface-title">Linked records</h2>
+              <p class="dc-ds-workspace__surface-kicker">Contracts and documents used for cross-document conflict checks.</p>
+            </div>
+          </div>
+          <div class="dc-ds-workspace__surface-body">
+            <dl class="contract-detail-list">
+              <div class="contract-detail-row">
+                <dt>Primary contract</dt>
+                <dd><a href="{% url 'contracts:contract_detail' review_pack.contract.pk %}" class="c-link">{{ review_pack.contract.title }}</a></dd>
+              </div>
+              <div class="contract-detail-row">
+                <dt>Related contracts</dt>
+                <dd>
+                  {% if related_contracts %}
+                    {% for c in related_contracts %}<a href="{% url 'contracts:contract_detail' c.pk %}" class="c-link">{{ c.title }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}
+                  {% else %}None linked{% endif %}
+                </dd>
+              </div>
+              <div class="contract-detail-row">
+                <dt>Matter</dt>
+                <dd>{% if review_pack.matter %}{{ review_pack.matter.title }}{% else %}—{% endif %}</dd>
+              </div>
+              <div class="contract-detail-row">
+                <dt>Documents</dt>
+                <dd>
+                  {% if linked_documents %}
+                    {% for doc in linked_documents %}<a href="{% url 'contracts:document_detail' doc.pk %}" class="c-link">{{ doc.title }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}
+                  {% else %}None linked{% endif %}
+                </dd>
+              </div>
+            </dl>
+            {% if can_edit and linkable_contracts %}
+            <div class="dpa-link-contract">
+              <label class="form-label" for="dpa-link-contract-select">Link related contract</label>
+              <div class="dpa-link-contract__row">
+                <select id="dpa-link-contract-select" class="dc-ds-control select-base">
+                  {% for c in linkable_contracts %}<option value="{{ c.pk }}">{{ c.title }}</option>{% endfor %}
+                </select>
+                <button type="button" id="dpa-link-contract-btn" class="dc-ds-button dc-ds-button--quiet" data-link-url="{% url 'contracts:dpa_review_link_related_contract' review_pack.pk %}">Link contract</button>
+              </div>
+            </div>
+            {% endif %}
+          </div>
+        </section>
+      </div>
+      {% elif active_tab == 'history' %}
+      <div id="dpa-tab-history" role="tabpanel" aria-labelledby="tab-history">
+        <section class="dc-ds-workspace__surface" aria-labelledby="dpa-history-heading">
+          <div class="dc-ds-workspace__surface-head">
+            <div>
+              <h2 id="dpa-history-heading" class="dc-ds-workspace__surface-title">Decision history</h2>
+              <p class="dc-ds-workspace__surface-kicker">Approval status changes with risk snapshot at the time of decision.</p>
+            </div>
+          </div>
+          <div class="dc-ds-workspace__surface-body">
+            {% if approval_history %}
+            <div class="contract-activity-list">
+              {% for entry in approval_history %}
+              <div class="contract-activity-row">
+                <div class="contract-finding-copy">
+                  <strong>{{ entry.from_status|default:'—' }} → {{ entry.to_status }}</strong>
+                  <span>{{ entry.changed_by.get_full_name|default:entry.changed_by.username|default:'—' }} · {{ entry.created_at|date:"d M Y H:i" }}</span>
+                  <span>Blockers: {{ entry.unresolved_blocker_count }} · {{ entry.risk_counts_by_severity }}</span>
+                  {% if entry.comment %}<span>{{ entry.comment }}</span>{% endif %}
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <p class="contract-empty">No approval status changes recorded yet.</p>
+            {% endif %}
+          </div>
+        </section>
+      </div>
+      {% endif %}
     </div>
-    {% endif %}
-</div>
+
+    <aside class="dc-ds-workspace__rail dc-ds-workspace__rail--sticky" aria-label="Review status and links">
+      <section class="dc-ds-workspace__surface" aria-labelledby="dpa-rail-status-heading">
+        <div class="dc-ds-workspace__surface-head">
+          <div><h2 id="dpa-rail-status-heading" class="dc-ds-workspace__surface-title">Status</h2></div>
+        </div>
+        <div class="dc-ds-workspace__surface-body">
+          <dl class="contract-detail-list">
+            <div class="contract-detail-row"><dt>Status</dt><dd>{{ review_command.status_label }}</dd></div>
+            <div class="contract-detail-row"><dt>Role</dt><dd>{{ review_pack.get_role_qualification_display }}</dd></div>
+            <div class="contract-detail-row"><dt>Updated</dt><dd>{{ review_pack.updated_at|date:"M d, Y" }}</dd></div>
+          </dl>
+        </div>
+      </section>
+
+      <section class="dc-ds-workspace__surface" aria-labelledby="dpa-rail-owner-heading">
+        <div class="dc-ds-workspace__surface-head">
+          <div><h2 id="dpa-rail-owner-heading" class="dc-ds-workspace__surface-title">Owner</h2></div>
+        </div>
+        <div class="dc-ds-workspace__surface-body">
+          <p class="dpa-rail-owner">{{ review_command.owner_label }}</p>
+        </div>
+      </section>
+
+      <section class="dc-ds-workspace__surface" aria-labelledby="dpa-rail-risk-heading">
+        <div class="dc-ds-workspace__surface-head">
+          <div><h2 id="dpa-rail-risk-heading" class="dc-ds-workspace__surface-title">Risk summary</h2></div>
+        </div>
+        <div class="dc-ds-workspace__surface-body">
+          <dl class="contract-detail-list">
+            <div class="contract-detail-row"><dt>Open</dt><dd>{{ risk_summary.open }}</dd></div>
+            <div class="contract-detail-row"><dt>Critical</dt><dd>{{ risk_summary.critical }}</dd></div>
+            <div class="contract-detail-row"><dt>High</dt><dd>{{ risk_summary.high }}</dd></div>
+            <div class="contract-detail-row"><dt>Needs input</dt><dd>{{ risk_summary.needs_input }}</dd></div>
+          </dl>
+        </div>
+      </section>
+
+      <section class="dc-ds-workspace__surface" aria-labelledby="dpa-rail-next-heading">
+        <div class="dc-ds-workspace__surface-head">
+          <div><h2 id="dpa-rail-next-heading" class="dc-ds-workspace__surface-title">Next action</h2></div>
+        </div>
+        <div class="dc-ds-workspace__surface-body">
+          <p class="dpa-rail-next">{{ review_command.next_action }}</p>
+        </div>
+      </section>
+
+      <section class="dc-ds-workspace__surface" aria-labelledby="dpa-rail-linked-heading">
+        <div class="dc-ds-workspace__surface-head">
+          <div><h2 id="dpa-rail-linked-heading" class="dc-ds-workspace__surface-title">Linked records</h2></div>
+        </div>
+        <div class="dc-ds-workspace__surface-body">
+          <nav class="contract-quick-links" aria-label="Linked records">
+            <a href="{% url 'contracts:contract_detail' review_pack.contract.pk %}">{{ review_pack.contract.title }}</a>
+            {% for c in related_contracts|slice:":3" %}
+            <a href="{% url 'contracts:contract_detail' c.pk %}">{{ c.title }}</a>
+            {% endfor %}
+            {% if review_pack.matter %}<span class="dpa-rail-muted">Matter: {{ review_pack.matter.title }}</span>{% endif %}
+          </nav>
+        </div>
+      </section>
+
+      <section class="dc-ds-workspace__surface" aria-labelledby="dpa-rail-links-heading">
+        <div class="dc-ds-workspace__surface-head">
+          <div><h2 id="dpa-rail-links-heading" class="dc-ds-workspace__surface-title">Related actions</h2></div>
+        </div>
+        <div class="dc-ds-workspace__surface-body">
+          <nav class="contract-quick-links" aria-label="DPA review related actions">
+            <a href="{% url 'contracts:dpa_review_pack_memo' review_pack.pk %}">Review memo</a>
+            <a href="{% url 'contracts:dpa_review_pack_list' %}">All DPA reviews</a>
+          </nav>
+        </div>
+      </section>
+    </aside>
+  </div>
+
+  {% if show_decision_bar %}
+  <div id="dpa-decision-bar" class="dpa-decision-bar" role="region" aria-label="Approval decision">
+    <div class="dpa-decision-bar__inner">
+      <div class="dpa-decision-bar__copy">
+        <p class="dpa-decision-bar__eyebrow">Approval decision</p>
+        <p class="dpa-decision-bar__hint">Approved is a final human decision — never set by analysis.</p>
+      </div>
+      <div class="dpa-decision-bar__controls">
+        <label class="u-sr-only" for="dpa-approval-comment">Decision note</label>
+        <input id="dpa-approval-comment" class="dc-ds-control input-base" type="text" placeholder="Decision note" autocomplete="off">
+        <label class="u-sr-only" for="dpa-approval-select">Outcome</label>
+        <select id="dpa-approval-select" class="dc-ds-control select-base" data-set-status-url="{% url 'contracts:dpa_review_set_approval_status' review_pack.pk %}">
+          {% for value, label in review_pack.ApprovalStatus.choices %}
+          <option value="{{ value }}" {% if review_pack.approval_status == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        <button type="button" id="dpa-approval-submit" class="dc-ds-button dc-ds-button--primary">Submit decision</button>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</main>
 
 <script nonce="{{ csp_nonce }}">
 (function () {
@@ -257,26 +454,81 @@
     return document.cookie.split('; ').find(function (row) { return row.startsWith('csrftoken='); })?.split('=')[1] || '';
   }
 
-  var analyzeBtn = document.getElementById('dpa-run-analysis-btn');
-  if (analyzeBtn) {
-    analyzeBtn.addEventListener('click', function () {
-      var url = analyzeBtn.getAttribute('data-analyze-url');
-      var errorEl = document.getElementById('dpa-analysis-error');
-      analyzeBtn.disabled = true;
-      errorEl.hidden = true;
+  function errorEl() {
+    return document.getElementById('dpa-analysis-error');
+  }
+
+  function showError(message) {
+    var el = errorEl();
+    if (!el) { return; }
+    el.textContent = message || 'Something went wrong.';
+    el.hidden = false;
+  }
+
+  function runAnalysis(btn) {
+    var url = btn.getAttribute('data-analyze-url');
+    if (!url) { return; }
+    var targets = document.querySelectorAll('[data-analyze-url], #dpa-run-analysis-btn, #dpa-run-analysis-menu-btn, [data-analyze-trigger]');
+    targets.forEach(function (el) { el.disabled = true; });
+    var err = errorEl();
+    if (err) { err.hidden = true; }
+    fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() }, body: '{}' })
+      .then(function (res) { return res.json().then(function (data) { return { ok: res.ok, data: data }; }); })
+      .then(function (result) {
+        if (result.ok) { window.location.reload(); return; }
+        targets.forEach(function (el) { el.disabled = false; });
+        showError((result.data && result.data.error) || 'Analysis failed. Please try again.');
+      })
+      .catch(function () {
+        targets.forEach(function (el) { el.disabled = false; });
+        showError('Network error — please try again.');
+      });
+  }
+
+  document.querySelectorAll('#dpa-run-analysis-btn, #dpa-run-analysis-menu-btn, [data-analyze-trigger]').forEach(function (btn) {
+    btn.addEventListener('click', function () { runAnalysis(btn); });
+  });
+
+  var memoBtn = document.getElementById('dpa-generate-memo-btn');
+  if (memoBtn) {
+    memoBtn.addEventListener('click', function () {
+      var url = memoBtn.getAttribute('data-memo-url');
+      memoBtn.disabled = true;
       fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() }, body: '{}' })
         .then(function (res) { return res.json().then(function (data) { return { ok: res.ok, data: data }; }); })
         .then(function (result) {
-          if (result.ok) { window.location.reload(); return; }
-          analyzeBtn.disabled = false;
-          errorEl.textContent = (result.data && result.data.error) || 'Analysis failed. Please try again.';
-          errorEl.hidden = false;
+          if (result.ok) {
+            window.location.href = '{% url "contracts:dpa_review_pack_memo" review_pack.pk %}';
+            return;
+          }
+          memoBtn.disabled = false;
+          showError((result.data && result.data.error) || 'Memo generation failed.');
         })
         .catch(function () {
-          analyzeBtn.disabled = false;
-          errorEl.textContent = 'Network error — please try again.';
-          errorEl.hidden = false;
+          memoBtn.disabled = false;
+          showError('Network error — please try again.');
         });
+    });
+  }
+
+  var linkBtn = document.getElementById('dpa-link-contract-btn');
+  if (linkBtn) {
+    linkBtn.addEventListener('click', function () {
+      var select = document.getElementById('dpa-link-contract-select');
+      var url = linkBtn.getAttribute('data-link-url');
+      linkBtn.disabled = true;
+      fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+        body: JSON.stringify({ contract_id: select.value }),
+      })
+        .then(function (res) { return res.json().then(function (data) { return { ok: res.ok, data: data }; }); })
+        .then(function (result) {
+          if (result.ok) { window.location.reload(); return; }
+          linkBtn.disabled = false;
+          showError((result.data && result.data.error) || 'Could not link contract.');
+        })
+        .catch(function () { linkBtn.disabled = false; });
     });
   }
 
@@ -295,8 +547,7 @@
         .then(function (result) {
           approvalBtn.disabled = false;
           if (result.ok) { window.location.reload(); return; }
-          errorEl.textContent = (result.data && result.data.error) || 'Status update failed.';
-          errorEl.hidden = false;
+          showError((result.data && result.data.error) || 'Status update failed.');
         })
         .catch(function () { approvalBtn.disabled = false; });
     });
@@ -319,8 +570,7 @@
         .then(function (result) {
           if (result.ok) { window.location.reload(); return; }
           riskCreateBtn.disabled = false;
-          errorEl.textContent = (result.data && result.data.error) || 'Risk could not be added.';
-          errorEl.hidden = false;
+          showError((result.data && result.data.error) || 'Risk could not be added.');
         }).catch(function () { riskCreateBtn.disabled = false; });
     });
   }
@@ -353,6 +603,12 @@
         .then(function () { window.location.reload(); })
         .catch(function () { button.disabled = false; });
     });
+  });
+
+  document.addEventListener('click', function (event) {
+    var menu = document.querySelector('.dc-ds-workspace--dpa .dc-ds-workspace__actions-menu[open]');
+    if (!menu) { return; }
+    if (!menu.contains(event.target)) { menu.removeAttribute('open'); }
   });
 })();
 </script>

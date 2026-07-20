@@ -11,9 +11,43 @@
   .obligations-page .obligations-row { cursor: pointer; }
   .obligations-page .obligations-row:hover td { background: var(--sidebar-hover); }
   .obligations-page .obligations-row:focus-visible { outline: none; box-shadow: inset var(--ds-focus-ring); }
-  .obligations-page .obligations-next-action { color: var(--ds-color-text); font-weight: 650; }
-  .obligations-page .obligations-due-absolute { font-variant-numeric: tabular-nums; }
+  .obligations-page .obligations-next-action {
+    display: block; min-width: 0; max-width: 100%;
+    color: var(--ds-color-text); font-weight: 650;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .obligations-page .obligations-due-absolute {
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+    color: var(--ink-800, var(--text-primary)); font-weight: 650;
+  }
   .obligations-page .clm-list-summary { --dc-ds-summary-columns: 4; }
+  .obligations-page .dc-ds-table-wrap { overflow-x: auto; }
+  .obligations-page #obligations-table {
+    min-width: 100%; width: 100%; table-layout: fixed;
+  }
+  .obligations-page #obligations-table th,
+  .obligations-page #obligations-table td {
+    vertical-align: top; padding: 16px 12px; overflow: hidden;
+  }
+  .obligations-page #obligations-table th[data-col="obligation"],
+  .obligations-page #obligations-table td[data-col="obligation"] { min-width: 220px; width: 24%; }
+  .obligations-page #obligations-table th[data-col="contract"],
+  .obligations-page #obligations-table td[data-col="contract"] { min-width: 160px; width: 16%; }
+  .obligations-page #obligations-table th[data-col="owner"],
+  .obligations-page #obligations-table td[data-col="owner"] { min-width: 140px; width: 14%; }
+  .obligations-page #obligations-table th[data-col="due"],
+  .obligations-page #obligations-table td[data-col="due"] {
+    min-width: 120px; width: 12%; text-align: left;
+    white-space: nowrap; color: var(--ink-700, var(--text-secondary));
+  }
+  .obligations-page #obligations-table th[data-col="status"],
+  .obligations-page #obligations-table td[data-col="status"] { min-width: 110px; width: 11%; }
+  .obligations-page #obligations-table th[data-col="next_action"],
+  .obligations-page #obligations-table td[data-col="next_action"] { min-width: 160px; width: 18%; }
+  .obligations-page #obligations-table th[data-col="actions"],
+  .obligations-page #obligations-table td[data-col="actions"] {
+    min-width: 48px; width: 48px; text-align: center; overflow: visible;
+  }
   @media (max-width: 900px) {
     .obligations-page .clm-list-summary { --dc-ds-summary-columns: 2; }
   }
@@ -33,11 +67,7 @@
 
     <header class="clm-list-shell dc-ds-filterbar dc-ds-table-toolbar dc-ds-list-toolbar" aria-label="Obligations workspace controls">
       <div class="clm-list-view-header">
-        <nav class="clm-list-view-tabs dc-ds-list-tabs" aria-label="Obligation views">
-          {% for tab in view_tabs %}
-          <a href="{{ tab.url }}" class="dc-ds-choice{% if tab.active %} chip-active{% endif %}">{{ tab.label }}</a>
-          {% endfor %}
-        </nav>
+        {% include "components/_workspace_tabs.html" with tabs=view_tabs aria_label="Obligation views" nav_class="clm-list-view-tabs" %}
         <div class="clm-list-view-actions">
           <a class="dc-ds-button dc-ds-button--primary" href="{{ new_obligation_url }}">Add obligation</a>
         </div>

@@ -280,10 +280,11 @@ class BypassPaths(TestCase):
     def test_html_path_cannot_bypass(self):
         c = _contract(self.org, self.user, 'DRAFT')
         r = self.client.post(reverse('contracts:contract_update', args=[c.pk]), {
-            'title': c.title, 'contract_type': 'OTHER', 'content': '', 'status': 'ACTIVE',
+            'title': c.title, 'contract_type': 'OTHER', 'content': 'body', 'status': 'ACTIVE',
             'counterparty': 'X', 'value': '0', 'currency': 'USD',
+            'governing_law': 'Delaware', 'owner': self.user.pk,
             'risk_level': 'LOW', 'lifecycle_stage': 'DRAFTING'})
-        self.assertEqual(r.status_code, 200)  # rejected (DRAFT->ACTIVE)
+        self.assertIn(r.status_code, (200, 302))
         c.refresh_from_db(); self.assertEqual(c.status, 'DRAFT')
 
     def test_bulk_api_cannot_bypass(self):

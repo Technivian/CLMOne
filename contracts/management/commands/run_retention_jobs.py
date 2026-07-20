@@ -7,6 +7,7 @@ from django.utils import timezone
 
 from contracts.middleware import log_action
 from contracts.models import AuditLog, Contract, Organization, RetentionPolicy
+from contracts.services.contract_lifecycle import get_contract_lifecycle_service
 from contracts.services.job_runs import record_job_run
 
 JOB_NAME = 'run_retention_jobs'
@@ -40,6 +41,7 @@ class Command(BaseCommand):
             'actions': [],
         }
 
+        lifecycle = get_contract_lifecycle_service()
         for organization in organizations:
             summary['organizations_scanned'] += 1
             # Per-org evidence + overlap protection (skip if another retention
@@ -64,7 +66,7 @@ class Command(BaseCommand):
                         organization=organization,
                         end_date__isnull=False,
                         end_date__lte=cutoff_date,
-                    ).exclude(lifecycle_stage='ARCHIVED').order_by('id')[:limit]
+                    ).exclude(status=Contract.Status.ARCHIVED).order_by('id')[:limit]
                     for contract in candidates:
                         summary['contracts_evaluated'] += 1
                         run.records_examined += 1
@@ -79,8 +81,16 @@ class Command(BaseCommand):
                             'dry_run': dry_run,
                         }
                         if not dry_run:
-                            contract.lifecycle_stage = 'ARCHIVED'
-                            contract.save(update_fields=['lifecycle_stage', 'updated_at'])
+                            # Archive is a record status, not a workflow stage.
+                            lifecycle.transition(
+                                contract,
+                                Contract.Status.ARCHIVED,
+                                actor=None,
+                                system=True,
+                                reason='Retention policy archive',
+                                actor_type=AuditLog.ActorType.SCHEDULED_JOB,
+                                job_run_id=run.run_id,
+                            )
                             log_action(
                                 None, AuditLog.Action.UPDATE, 'RetentionExecution',
                                 object_id=contract.id, object_repr=contract.title[:300],
@@ -90,7 +100,7 @@ class Command(BaseCommand):
                                 changes={'event': 'retention.contract_archived', **action_payload},
                             )
                             summary['contracts_archived'] += 1
-                            summary['audit_entries_created'] += 1
+                            summary['audit_entries_created'] += 2
                             run.records_changed += 1
                         summary['actions'].append(action_payload)
 

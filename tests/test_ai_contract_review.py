@@ -106,9 +106,13 @@ class UploadedContractAIReviewTests(TestCase):
         )
         self.client.force_login(self.user)
 
-        response = self.client.get(reverse('contracts:contract_detail', args=[self.contract.pk]))
+        response = self.client.get(
+            f"{reverse('contracts:contract_detail', args=[self.contract.pk])}?tab=review"
+        )
 
-        self.assertContains(response, 'Latest upload review')
+        # Intentional product change: review panel copy is "Latest review evidence"
+        # and only renders on the review tab.
+        self.assertContains(response, 'Latest review evidence')
         self.assertContains(response, 'No potential issues were found in the clauses reviewed. Human review is still required.')
         self.assertNotContains(response, 'Extraction has not run')
 

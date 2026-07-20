@@ -11,7 +11,7 @@ from contracts.models import ApprovalRequest, AuditLog, CaseSignal, Deadline, Wo
 # Contract statuses that are "done moving" — a past-due end_date on one of
 # these isn't a missed deadline, it's just history. Shared so Dashboard and
 # Repository flag "overdue" identically.
-TERMINAL_STATUSES = {'COMPLETED', 'EXPIRED', 'TERMINATED', 'CANCELLED'}
+TERMINAL_STATUSES = {'EXPIRED', 'TERMINATED', 'CANCELLED', 'ARCHIVED'}
 
 
 def assignee_map_for_contracts(org, contract_ids):

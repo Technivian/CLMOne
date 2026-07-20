@@ -245,7 +245,7 @@ def _attach_dpa_intake_evidence(*, workflow, organization, user, cleaned_values)
                 contract=workflow.contract,
                 title=title,
                 document_type=Document.DocType.EXHIBIT,
-                status=Document.Status.REVIEW,
+                status=Document.Status.DRAFT,
                 description='Evidence captured during DPA Step 4 operational intake.',
                 uploaded_by=user,
             )
@@ -340,8 +340,9 @@ def create_dpa_workflow_instance(*, organization, user, cleaned_values: dict, re
     contract = Contract(
         title=f"DPA — {cleaned_values.get('counterparty') or 'Untitled counterparty'}",
         contract_type=Contract.ContractType.DPA,
-        status=Contract.Status.DRAFT,
+        status=Contract.Status.IN_PROGRESS,
         created_by=user,
+        lifecycle_stage=Contract.LifecycleStage.DRAFTING,
         risk_level=Contract.RiskLevel.LOW,
     )
     set_organization_on_instance(contract, organization)

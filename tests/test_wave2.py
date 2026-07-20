@@ -208,19 +208,23 @@ class ContractActivationGuardTests(TestCase):
     }
 
     def test_activation_blocked_without_approval(self):
+        from contracts.services.contract_lifecycle import (
+            ContractTransitionError,
+            get_contract_lifecycle_service,
+        )
+
         contract = self._make_contract()
-        url = reverse('contracts:contract_update', kwargs={'pk': contract.pk})
-        response = self.client.post(url, {
-            **self._VALID_FORM_BASE,
-            'title': contract.title,
-            'status': 'ACTIVE',
-        })
+        with self.assertRaises(ContractTransitionError):
+            get_contract_lifecycle_service().transition(
+                contract, Contract.Status.ACTIVE, self.user,
+            )
         contract.refresh_from_db()
         self.assertNotEqual(contract.status, Contract.Status.ACTIVE)
-        self.assertContains(response, 'approved approval request', status_code=200)
 
     def test_activation_allowed_with_approved_request(self):
-        contract = self._make_contract()
+        from contracts.services.contract_lifecycle import get_contract_lifecycle_service
+
+        contract = self._make_contract(status=Contract.Status.APPROVED)
         ApprovalRequest.objects.create(
             organization=self.org,
             contract=contract,
@@ -230,12 +234,9 @@ class ContractActivationGuardTests(TestCase):
             decided_by=self.user,
             decided_at=timezone.now(),
         )
-        url = reverse('contracts:contract_update', kwargs={'pk': contract.pk})
-        response = self.client.post(url, {
-            **self._VALID_FORM_BASE,
-            'title': contract.title,
-            'status': 'ACTIVE',
-        })
+        get_contract_lifecycle_service().transition(
+            contract, Contract.Status.ACTIVE, self.user,
+        )
         contract.refresh_from_db()
         self.assertEqual(contract.status, Contract.Status.ACTIVE)
 
@@ -245,9 +246,10 @@ class ContractActivationGuardTests(TestCase):
         response = self.client.post(url, {
             **self._VALID_FORM_BASE,
             'title': 'Updated Title',
-            'status': 'ACTIVE',
+            'owner': self.user.pk,
         })
         contract.refresh_from_db()
+        self.assertEqual(response.status_code, 302)
         self.assertEqual(contract.title, 'Updated Title')
 
 

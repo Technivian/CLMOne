@@ -165,7 +165,7 @@ class Command(BaseCommand):
                 'title': 'Atlas Workforce Order Confirmation 2026',
                 'contract_type': Contract.ContractType.ORDER_CONFIRMATION,
                 'counterparty': 'Atlas Workforce B.V.',
-                'status': Contract.Status.PENDING,
+                'status': Contract.Status.IN_PROGRESS,
                 'stage': 'APPROVAL',
                 'owner': 'payrollminds_procurement',
                 'value': 42000,
@@ -183,7 +183,7 @@ class Command(BaseCommand):
                 'title': 'Consultancy Services Agreement — HRIS rollout',
                 'contract_type': Contract.ContractType.CONSULTING,
                 'counterparty': 'PeopleOps Advisory B.V.',
-                'status': Contract.Status.IN_REVIEW,
+                'status': Contract.Status.IN_PROGRESS,
                 'stage': 'INTERNAL_REVIEW',
                 'owner': 'payrollminds_legal',
                 'value': 96000,
@@ -200,7 +200,7 @@ class Command(BaseCommand):
                 'title': 'Data Processing Agreement — Cloud payroll',
                 'contract_type': Contract.ContractType.DPA,
                 'counterparty': 'CloudPay Europe S.à r.l.',
-                'status': Contract.Status.IN_REVIEW,
+                'status': Contract.Status.IN_PROGRESS,
                 'stage': 'NEGOTIATION',
                 'owner': 'payrollminds_legal',
                 'value': None,
@@ -224,7 +224,7 @@ class Command(BaseCommand):
                 'title': 'Mutual NDA — FinTalent partnership',
                 'contract_type': Contract.ContractType.NDA,
                 'counterparty': 'FinTalent Group B.V.',
-                'status': Contract.Status.DRAFT,
+                'status': Contract.Status.IN_PROGRESS,
                 'stage': 'DRAFTING',
                 'owner': 'payrollminds_procurement',
                 'value': None,
@@ -298,21 +298,21 @@ class Command(BaseCommand):
             (
                 msa,
                 (
-                    (1, Contract.Status.IN_REVIEW, 'Initial negotiated draft', 'Initial commercial draft uploaded for legal review.'),
+                    (1, Contract.Status.IN_PROGRESS, 'Initial negotiated draft', 'Initial commercial draft uploaded for legal review.'),
                     (2, Contract.Status.ACTIVE, msa.content, 'Executed terms and final commercial schedule.'),
                 ),
             ),
             (
                 order_confirmation,
-                ((1, Contract.Status.PENDING, order_confirmation.content, 'Order confirmation routed for Legal and Finance approval.'),),
+                ((1, Contract.Status.IN_PROGRESS, order_confirmation.content, 'Order confirmation routed for Legal and Finance approval.'),),
             ),
             (
                 dpa,
-                ((1, Contract.Status.IN_REVIEW, dpa.content, 'Counterparty DPA imported and privacy review opened.'),),
+                ((1, Contract.Status.IN_PROGRESS, dpa.content, 'Counterparty DPA imported and privacy review opened.'),),
             ),
             (
                 consultancy,
-                ((1, Contract.Status.IN_REVIEW, consultancy.content, 'First internal review draft.'),),
+                ((1, Contract.Status.IN_PROGRESS, consultancy.content, 'First internal review draft.'),),
             ),
         ):
             for version_number, status, content, summary in snapshots:
@@ -333,7 +333,7 @@ class Command(BaseCommand):
             title='Payrollminds MSA — negotiated draft',
             filename='payrollminds-msa-v1-negotiated-draft.pdf',
             version=1,
-            status=Document.Status.REVIEW,
+            status=Document.Status.DRAFT,
             lines=(
                 'Counterparty: Atlas Workforce B.V.',
                 'Version: 1 - negotiated draft',
@@ -361,7 +361,7 @@ class Command(BaseCommand):
             title='Atlas Workforce Order Confirmation 2026',
             filename='atlas-workforce-order-confirmation-2026.pdf',
             version=1,
-            status=Document.Status.REVIEW,
+            status=Document.Status.DRAFT,
             lines=(
                 'Governing agreement: Payrollminds Master Services Agreement.',
                 'Implementation and managed payroll services.',
@@ -374,7 +374,7 @@ class Command(BaseCommand):
             title='CloudPay Europe DPA — counterparty paper',
             filename='cloudpay-europe-dpa-counterparty-paper.pdf',
             version=1,
-            status=Document.Status.REVIEW,
+            status=Document.Status.DRAFT,
             lines=(
                 'Payroll data processing for Payrollminds customers and employees.',
                 'Breach notification: within 24 hours.',
@@ -387,7 +387,7 @@ class Command(BaseCommand):
             title='HRIS rollout consultancy agreement — internal draft',
             filename='hris-rollout-consultancy-draft.pdf',
             version=1,
-            status=Document.Status.REVIEW,
+            status=Document.Status.DRAFT,
             lines=(
                 'Counterparty: PeopleOps Advisory B.V.',
                 'Scope: discovery, configuration, testing, and go-live.',

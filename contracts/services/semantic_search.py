@@ -1,7 +1,7 @@
 """Semantic clause search — uses Google Gemini Flash to rerank results by query relevance.
 
-Falls back to a keyword/synonym ranker when GEMINI_API_KEY is not configured,
-so the search UI stays functional in local dev without credentials.
+Falls back to a keyword/synonym ranker when the provider is unavailable or returns
+an invalid payload, so search stays tenant-scoped and usable in local dev.
 """
 
 from __future__ import annotations
@@ -10,7 +10,7 @@ import json
 import logging
 import os
 import re
-from typing import Iterable
+from typing import Any, Iterable
 
 from contracts.models import ClauseTemplate
 
@@ -20,6 +20,14 @@ logger = logging.getLogger(__name__)
 def _gemini_model() -> str:
     from django.conf import settings
     return getattr(settings, 'GEMINI_MODEL', 'gemini-3.5-flash')
+
+
+def _semantic_provider_enabled() -> bool:
+    from django.conf import settings
+    if not getattr(settings, 'GEMINI_AI_ENABLED', True):
+        return False
+    return bool(os.getenv("GEMINI_API_KEY", "").strip())
+
 
 _MAX_CANDIDATES = 40  # cap prompt size for the reranking call
 
@@ -61,15 +69,93 @@ def rank_clause_templates_semantic(
         relevant first, already truncated to ``limit`` and filtered by relevance.
         Callers must paginate the list, not call queryset methods on it.
       - Empty/blank query or empty candidate set returns ``[]`` (never raises).
+      - Provider failures always fall back to tenant-scoped keyword ranking.
     """
     clause_list = list(clauses)
     if not clause_list or not query or not str(query).strip():
         return []
 
-    if not os.getenv("GEMINI_API_KEY", "").strip():
+    e2e_result = _e2e_semantic_fixture(clause_list, query, limit=limit, min_score=min_score)
+    if e2e_result is not None:
+        return e2e_result
+
+    if not _semantic_provider_enabled():
         return _keyword_rank(clause_list, query, limit=limit, min_score=min_score)
 
-    return _llm_rank(clause_list, query, limit=limit)
+    try:
+        return _llm_rank(clause_list, query, limit=limit)
+    except Exception:
+        logger.warning("ai semantic_search: provider call failed; using keyword fallback", exc_info=True)
+        return _keyword_rank(clause_list, query, limit=limit, min_score=0.0)
+
+
+def _e2e_semantic_fixture(clause_list, query, *, limit: int, min_score: float):
+    """DJANGO_E2E-only fixtures so browser tests can exercise provider-shape paths.
+
+    Query format: ``e2e_fixture:<name>`` where name is one of
+    valid | list | malformed | empty | error | timeout | keyword.
+    Returns ``None`` when fixtures are inactive.
+    """
+    from django.conf import settings
+
+    if not getattr(settings, 'DJANGO_E2E', False):
+        return None
+    raw = str(query).strip().lower()
+    if not raw.startswith('e2e_fixture:'):
+        return None
+    name = raw.split(':', 1)[1].strip()
+    if name in {'empty'}:
+        return []
+    if name in {'malformed', 'error', 'timeout', 'keyword'}:
+        # Simulate provider failure / bad payload → safe keyword fallback.
+        logger.warning('ai semantic_search: e2e fixture %s; using keyword fallback', name)
+        return _keyword_rank(clause_list, 'indemnity confidentiality privacy', limit=limit, min_score=0.0)
+    if name in {'valid', 'list'}:
+        # Deterministic reordering without calling the provider.
+        return list(reversed(clause_list))[:limit]
+    return _keyword_rank(clause_list, query, limit=limit, min_score=min_score)
+
+
+def _extract_ranked_indices(payload: Any) -> list[int] | None:
+    """Normalize documented provider payload shapes to ranked index integers."""
+    if payload is None:
+        return None
+
+    if isinstance(payload, list):
+        if not payload:
+            return []
+        if all(isinstance(item, int) for item in payload):
+            return [item for item in payload if isinstance(item, int)]
+        if all(isinstance(item, dict) for item in payload):
+            indices: list[int] = []
+            for item in payload:
+                if not isinstance(item, dict):
+                    continue
+                idx = item.get('index', item.get('idx', item.get('ranked_index')))
+                if isinstance(idx, int):
+                    indices.append(idx)
+            return indices
+        return None
+
+    if isinstance(payload, dict):
+        for key in ('ranked_indices', 'indices', 'results', 'rankings'):
+            if key in payload:
+                nested = _extract_ranked_indices(payload.get(key))
+                if nested is not None:
+                    return nested
+        return None
+
+    return None
+
+
+def _parse_provider_payload(raw_text: str) -> list[int] | None:
+    if not raw_text or not str(raw_text).strip():
+        return None
+    try:
+        payload = json.loads(raw_text)
+    except (ValueError, TypeError):
+        return None
+    return _extract_ranked_indices(payload)
 
 
 # ---------------------------------------------------------------------------
@@ -101,13 +187,10 @@ def _llm_rank(clauses: list[ClauseTemplate], query: str, *, limit: int) -> list[
         config=types.GenerateContentConfig(response_mime_type='application/json'),
     )
 
-    try:
-        data = json.loads(response.text)
-    except (ValueError, TypeError):
-        logger.warning("ai semantic_search: could not parse rerank response")
+    ranked_indices = _parse_provider_payload(getattr(response, 'text', '') or '')
+    if ranked_indices is None:
+        logger.warning("ai semantic_search: invalid rerank payload shape; using keyword fallback")
         return _keyword_rank(clauses, query, limit=limit, min_score=0.0)
-
-    ranked_indices = data.get("ranked_indices", [])
 
     result: list[ClauseTemplate] = []
     seen: set[int] = set()

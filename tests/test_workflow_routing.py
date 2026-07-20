@@ -210,8 +210,9 @@ class WorkflowRoutingTests(TestCase):
 
         dashboard = self.client.get(reverse('contracts:workflow_dashboard'))
         self.assertEqual(dashboard.status_code, 200)
-        self.assertContains(dashboard, reverse('contracts:approval_rule_list'))
+        # Ops dashboard keeps Approvals; routing rules live under Workflow Designer.
         self.assertContains(dashboard, reverse('contracts:approval_request_list'))
+        self.assertNotContains(dashboard, reverse('contracts:approval_rule_list'))
 
         detail = self.client.get(reverse('contracts:workflow_detail', kwargs={'pk': workflow.pk}))
         self.assertEqual(detail.status_code, 200)

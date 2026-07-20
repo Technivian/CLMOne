@@ -45,6 +45,10 @@ EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
 
 # Make integrations explicitly inert so no test can reach the network.
 GEMINI_AI_ENABLED = False
+# Pilot lock must never leak from an operator shell into hermetic tests.
+CONTROLLED_PILOT_ENABLED = False
+BILLING_SELF_SERVE_ENABLED = True
+TRUST_ACCOUNTING_ENABLED = True
 
 # Run RQ jobs synchronously in tests (no Redis required).
 RQ_QUEUES = {

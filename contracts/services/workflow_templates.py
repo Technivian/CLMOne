@@ -82,6 +82,7 @@ def clone_template_version(
         description=description if description is not None else template.description,
         organization=template.organization,
         category=category or template.category,
+        contract_type=template.contract_type,
         version=next_version,
         parent_template=template,
         is_active=is_active,

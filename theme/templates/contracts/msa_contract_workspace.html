@@ -58,9 +58,12 @@
     </div>
   </section>
 
-  <nav class="dc-ds-workspace__tabs" aria-label="MSA workspace panels">
-    <button type="button" role="tab" aria-selected="true" aria-controls="msa-drafting-pane" data-workspace-tab="msa-drafting-pane">Guided drafting</button>
-    <button type="button" role="tab" aria-selected="false" aria-controls="msa-preview-pane" data-workspace-tab="msa-preview-pane">Contract preview</button>
+  {# In-page MSA panes: underline tabs; buttons because panes are not routed. #}
+  <nav class="dc-ds-workspace-tabs" role="tablist" aria-label="MSA workspace panels">
+    <div class="dc-ds-workspace-tabs__list">
+      <button type="button" class="dc-ds-workspace-tabs__tab is-active" role="tab" aria-selected="true" aria-controls="msa-drafting-pane" data-msa-pane="msa-drafting-pane">Guided drafting</button>
+      <button type="button" class="dc-ds-workspace-tabs__tab" role="tab" aria-selected="false" aria-controls="msa-preview-pane" data-msa-pane="msa-preview-pane">Contract preview</button>
+    </div>
   </nav>
 
   <div class="dc-ds-workspace__layout" data-workspace-layout>
@@ -166,16 +169,18 @@ document.addEventListener('click', function (event) {
     return;
   }
 
-  var tab = event.target.closest('[data-workspace-tab]');
+  var tab = event.target.closest('[data-msa-pane]');
   if (tab) {
     var workspace = document.querySelector('[data-workspace-layout]');
     if (!workspace) return;
     workspace.classList.add('has-tabs');
-    document.querySelectorAll('[data-workspace-tab]').forEach(function (button) {
-      button.setAttribute('aria-selected', String(button === tab));
+    document.querySelectorAll('[data-msa-pane]').forEach(function (button) {
+      var active = button === tab;
+      button.setAttribute('aria-selected', String(active));
+      button.classList.toggle('is-active', active);
     });
     workspace.querySelectorAll('.dc-ds-workspace__pane').forEach(function (pane) {
-      pane.classList.toggle('is-active', pane.id === tab.getAttribute('data-workspace-tab'));
+      pane.classList.toggle('is-active', pane.id === tab.getAttribute('data-msa-pane'));
     });
     return;
   }
@@ -192,8 +197,10 @@ document.addEventListener('click', function (event) {
     workspace.querySelectorAll('.dc-ds-workspace__pane').forEach(function (pane) {
       pane.classList.toggle('is-active', pane.id === 'msa-preview-pane');
     });
-    document.querySelectorAll('[data-workspace-tab]').forEach(function (button) {
-      button.setAttribute('aria-selected', String(button.getAttribute('data-workspace-tab') === 'msa-preview-pane'));
+    document.querySelectorAll('[data-msa-pane]').forEach(function (button) {
+      var active = button.getAttribute('data-msa-pane') === 'msa-preview-pane';
+      button.setAttribute('aria-selected', String(active));
+      button.classList.toggle('is-active', active);
     });
   }
   document.querySelectorAll('.dc-ds-workspace__clause.is-linked').forEach(function (node) {

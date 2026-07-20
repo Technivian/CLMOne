@@ -117,6 +117,7 @@ MIDDLEWARE = [
     'contracts.middleware.OrganizationMiddleware',
     'contracts.middleware.RequestContextMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'contracts.middleware.ControlledPilotScopeMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'contracts.middleware.SecurityHeadersMiddleware',
 ]
@@ -535,6 +536,11 @@ GEMINI_AI_ENABLED = _bool_env('GEMINI_AI_ENABLED', default=bool(GEMINI_API_KEY))
 # is made atomic — roadmap B8), shrinking the critical path to pilot.
 BILLING_SELF_SERVE_ENABLED = _bool_env('BILLING_SELF_SERVE_ENABLED', default=True)
 TRUST_ACCOUNTING_ENABLED = _bool_env('TRUST_ACCOUNTING_ENABLED', default=True)
+# Controlled internal pilot lock: when true, middleware + nav hide/block
+# excluded surfaces (billing, law-firm modules, freeform create, signatures,
+# unrestricted AI entry points, unfinished integrations). Default false so
+# hermetic tests and general development remain unaffected.
+CONTROLLED_PILOT_ENABLED = _bool_env('CONTROLLED_PILOT_ENABLED', default=False)
 
 STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY', '').strip()
 STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY', '').strip()

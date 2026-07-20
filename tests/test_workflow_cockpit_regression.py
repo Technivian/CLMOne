@@ -113,7 +113,7 @@ class WorkflowCockpitRegressionTests(TestCase):
                 'Generated DPA Draft',
                 'DPA',
                 'Approval Route',
-                'Audit Trail Preview',
+                'Audit history',
                 get_dpa_workflow_template,
             ),
             (

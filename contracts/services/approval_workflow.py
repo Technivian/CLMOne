@@ -223,12 +223,14 @@ class ApprovalWorkflowService:
                 if ar.rule_id:
                     ar.rule = step_data.get('rule')
                 created.append(_to_dto(ar))
-            if actor is not None and created and contract.status == Contract.Status.DRAFT:
+            if actor is not None and created and contract.status == Contract.Status.IN_PROGRESS:
                 from contracts.services.contract_lifecycle import get_contract_lifecycle_service
-                get_contract_lifecycle_service().transition(
+                get_contract_lifecycle_service().apply_operational_position(
                     contract,
-                    Contract.Status.PENDING,
-                    actor,
+                    status=Contract.Status.IN_PROGRESS,
+                    lifecycle_stage=Contract.LifecycleStage.APPROVAL,
+                    actor=actor,
+                    system=True,
                     reason='Approval workflow initiated',
                 )
         return created
@@ -265,8 +267,10 @@ class ApprovalWorkflowService:
 
         if not can_access_contract_action(actor, contract, ContractAction.EDIT):
             raise ApprovalAccessDenied('Only the contract owner or a workspace admin can submit it.', 403)
-        if contract.status not in {Contract.Status.DRAFT, Contract.Status.PENDING}:
-            raise ValueError(f'Only a draft or pending contract can be submitted; current status is {contract.status}.')
+        if contract.status != Contract.Status.IN_PROGRESS:
+            raise ValueError(
+                f'Only an in-progress contract can be submitted; current status is {contract.status}.'
+            )
         if reviewer.pk == (contract.owner_id or contract.created_by_id):
             raise ApprovalAccessDenied('The reviewer must be different from the contract owner.', 400)
         if not OrganizationMembership.objects.filter(
@@ -280,9 +284,9 @@ class ApprovalWorkflowService:
 
         with transaction.atomic():
             locked_contract = Contract.objects.select_for_update().get(pk=contract.pk)
-            if locked_contract.status not in {Contract.Status.DRAFT, Contract.Status.PENDING}:
+            if locked_contract.status != Contract.Status.IN_PROGRESS:
                 raise ValueError(
-                    f'Only a draft or pending contract can be submitted; current status is {locked_contract.status}.'
+                    f'Only an in-progress contract can be submitted; current status is {locked_contract.status}.'
                 )
             # Submission always records a deterministic field/risk check against
             # the locked record, so the review workflow never relies on a stale
@@ -328,11 +332,13 @@ class ApprovalWorkflowService:
                     'comment': comment.strip(),
                 },
             )
-            if locked_contract.status == Contract.Status.DRAFT:
-                get_contract_lifecycle_service().transition(
+            if locked_contract.lifecycle_stage != Contract.LifecycleStage.APPROVAL:
+                get_contract_lifecycle_service().apply_operational_position(
                     locked_contract,
-                    Contract.Status.PENDING,
-                    actor,
+                    status=Contract.Status.IN_PROGRESS,
+                    lifecycle_stage=Contract.LifecycleStage.APPROVAL,
+                    actor=actor,
+                    system=True,
                     reason='Submitted for approval',
                     request=request,
                 )
@@ -390,32 +396,22 @@ class ApprovalWorkflowService:
                     contract_id=ar.contract_id,
                     status__in=[ApprovalRequest.Status.PENDING, ApprovalRequest.Status.ESCALATED],
                 ).exclude(pk=ar.pk).exists()
-                target_contract_status = {
-                    'approve': Contract.Status.PENDING if pending_other_approvals else Contract.Status.APPROVED,
-                    'reject': Contract.Status.CANCELLED,
-                    'request_changes': Contract.Status.DRAFT,
-                }[action]
+                # Record status stays IN_PROGRESS through approval; workflow stage
+                # advances. Reject cancels the record. Request-changes returns to drafting.
                 if isinstance(ar.contract, Contract):
                     from contracts.services.contract_lifecycle import get_contract_lifecycle_service
                     lifecycle = get_contract_lifecycle_service()
-                    # Older/manual approval requests can exist while their
-                    # contract is still DRAFT. Normalize that persisted state
-                    # through the same lifecycle graph before applying the
-                    # decision; never jump DRAFT -> APPROVED directly.
-                    if ar.contract.status == Contract.Status.DRAFT and action == 'approve':
-                        ar.contract = lifecycle.transition(
-                            ar.contract,
-                            Contract.Status.PENDING,
-                            actor,
-                            system=True,
-                            actor_type=AuditLog.ActorType.HUMAN,
-                            reason='Normalized legacy approval submission',
+                    if action == 'approve':
+                        target_stage = (
+                            Contract.LifecycleStage.APPROVAL
+                            if pending_other_approvals
+                            else Contract.LifecycleStage.SIGNATURE
                         )
-                    if target_contract_status != ar.contract.status:
-                        lifecycle.transition(
+                        lifecycle.apply_operational_position(
                             ar.contract,
-                            target_contract_status,
-                            actor,
+                            status=Contract.Status.IN_PROGRESS,
+                            lifecycle_stage=target_stage,
+                            actor=actor,
                             system=True,
                             actor_type=AuditLog.ActorType.HUMAN,
                             reason=comments or (
@@ -423,10 +419,29 @@ class ApprovalWorkflowService:
                                 if pending_other_approvals else 'All required approvals recorded.'
                             ),
                         )
-                    if action == 'approve':
                         Contract.objects.filter(pk=ar.contract_id).update(
                             approved_by=actor,
                             approved_at=timezone.now(),
+                        )
+                    elif action == 'reject':
+                        if ar.contract.status != Contract.Status.CANCELLED:
+                            lifecycle.transition(
+                                ar.contract,
+                                Contract.Status.CANCELLED,
+                                actor,
+                                system=True,
+                                actor_type=AuditLog.ActorType.HUMAN,
+                                reason=comments or 'Approval rejected.',
+                            )
+                    elif action == 'request_changes':
+                        lifecycle.apply_operational_position(
+                            ar.contract,
+                            status=Contract.Status.IN_PROGRESS,
+                            lifecycle_stage=Contract.LifecycleStage.DRAFTING,
+                            actor=actor,
+                            system=True,
+                            actor_type=AuditLog.ActorType.HUMAN,
+                            reason=comments or 'Changes requested; returned to drafting.',
                         )
                 _audit_approval_decision(
                     ar,

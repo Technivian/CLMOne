@@ -19,12 +19,13 @@ generic document store, a marketing site, or an AI demonstration.
 
 When sources disagree, use this order:
 
-1. `DESIGN_CONSTITUTION.md` (the CLM One Governance Charter).
-2. [Frontend Architecture](ARCHITECTURE.md).
-3. `theme/static/css/clmone-tokens.css`.
-4. Live components under `theme/templates/design_system/` and canonical
+1. [`GOVERNANCE_CHARTER.md`](../../GOVERNANCE_CHARTER.md) (the CLM One Governance Charter).
+2. [`DESIGN_CONSTITUTION.md`](../../DESIGN_CONSTITUTION.md) — historical CMS Aegis v1.5 snapshot only.
+3. [Frontend Architecture](ARCHITECTURE.md).
+4. `theme/static/css/clmone-tokens.css`.
+5. Live components under `theme/templates/design_system/` and canonical
    `.dc-ds-*` CSS under `theme/static_src/src/design-system/components.css`.
-5. Older redesign plans, audits, and screenshots as historical context only.
+6. Older redesign plans, audits, and screenshots as historical context only.
 
 Phase 6 (authenticated legacy retirement + anti-drift) is recorded in
 [PHASE_6_LEGACY_RETIREMENT.md](PHASE_6_LEGACY_RETIREMENT.md) and

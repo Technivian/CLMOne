@@ -144,6 +144,21 @@ _MAX_UPLOAD_BYTES = 50 * 1024 * 1024  # 50 MB
 _REVIEW_STEP_LABELS = ('Uploaded', 'Extracting', 'Classifying', 'Matching playbook', 'AI reviewing', 'Review ready')
 
 
+def _apply_document_review_contract_state(contract, *, status, lifecycle_stage=None, actor=None, request=None, reason=''):
+    from contracts.services.contract_lifecycle import apply_contract_operational_position
+    if not contract:
+        return
+    apply_contract_operational_position(
+        contract,
+        status=status,
+        lifecycle_stage=lifecycle_stage,
+        actor=actor,
+        system=True,
+        reason=reason,
+        request=request,
+    )
+
+
 def _review_steps(current_step, *, blocked=False):
     """Return a dependency-aware processing timeline without implying success."""
     current_index = _REVIEW_STEP_LABELS.index(current_step) if current_step in _REVIEW_STEP_LABELS else 0
@@ -338,7 +353,8 @@ def document_upload_api(request):
             'end_date': end_date,
             'governing_law': (request.POST.get('governing_law') or '').strip(),
             'dpa_attached': request.POST.get('dpa_attached') in {'1', 'true', 'True', 'on'},
-            'status': Contract.Status.UPLOADED,
+            'status': Contract.Status.IN_PROGRESS,
+            'lifecycle_stage': Contract.LifecycleStage.INTAKE,
         }
 
     doc_type = request.POST.get('document_type', Document.DocType.OTHER)
@@ -380,6 +396,12 @@ def document_upload_api(request):
             )
             document.file = uploaded_file
             document.save()  # triggers SHA256 hash + OCR queue in Document.save()
+            if prior_document and prior_document.status in {
+                Document.Status.FINAL,
+                Document.Status.EXECUTED,
+            }:
+                prior_document.status = Document.Status.SUPERSEDED
+                prior_document.save(update_fields=['status', 'updated_at'])
             if contract and prior_document:
                 get_version_service().create_version(
                     contract, changed_by=request.user,
@@ -579,9 +601,14 @@ def _run_uploaded_contract_review(*, request, organization, document, review_run
             'message': 'The agreement was uploaded, but no readable text was found for AI review.',
         })
         if document.contract_id:
-            document.contract.status = Contract.Status.NEEDS_INPUT
-            document.contract.lifecycle_stage = 'INTERNAL_REVIEW'
-            document.contract.save(update_fields=['status', 'lifecycle_stage', 'updated_at'])
+            _apply_document_review_contract_state(
+                document.contract,
+                status=Contract.Status.IN_PROGRESS,
+                lifecycle_stage='INTERNAL_REVIEW',
+                actor=request.user,
+                request=request,
+                reason='document_review_missing_text',
+            )
         update_run(DocumentReviewRun.Status.AI_REVIEW_INCOMPLETE, 'Extracting', message=review['message'])
         record_outcome()
         return review
@@ -599,9 +626,14 @@ def _run_uploaded_contract_review(*, request, organization, document, review_run
             'pending_confirmations': pending_confirmations,
         })
         if document.contract_id:
-            document.contract.status = Contract.Status.NEEDS_INPUT
-            document.contract.lifecycle_stage = 'INTERNAL_REVIEW'
-            document.contract.save(update_fields=['status', 'lifecycle_stage', 'updated_at'])
+            _apply_document_review_contract_state(
+                document.contract,
+                status=Contract.Status.IN_PROGRESS,
+                lifecycle_stage='INTERNAL_REVIEW',
+                actor=request.user,
+                request=request,
+                reason='document_review_missing_text',
+            )
         update_run(DocumentReviewRun.Status.CLASSIFICATION_REQUIRED, 'Classifying', message=review['message'])
         record_outcome()
         return review
@@ -612,9 +644,14 @@ def _run_uploaded_contract_review(*, request, organization, document, review_run
             'pending_confirmations': ['Review playbook'],
         })
         if document.contract_id:
-            document.contract.status = Contract.Status.NEEDS_INPUT
-            document.contract.lifecycle_stage = 'INTERNAL_REVIEW'
-            document.contract.save(update_fields=['status', 'lifecycle_stage', 'updated_at'])
+            _apply_document_review_contract_state(
+                document.contract,
+                status=Contract.Status.IN_PROGRESS,
+                lifecycle_stage='INTERNAL_REVIEW',
+                actor=request.user,
+                request=request,
+                reason='document_review_missing_text',
+            )
         update_run(DocumentReviewRun.Status.PLAYBOOK_REQUIRED, 'Matching playbook', message=review['message'])
         record_outcome()
         return review
@@ -627,8 +664,14 @@ def _run_uploaded_contract_review(*, request, organization, document, review_run
 
     try:
         if document.contract_id:
-            document.contract.status = Contract.Status.AI_REVIEW_IN_PROGRESS
-            document.contract.save(update_fields=['status', 'updated_at'])
+            _apply_document_review_contract_state(
+                document.contract,
+                status=Contract.Status.IN_PROGRESS,
+                lifecycle_stage='INTERNAL_REVIEW',
+                actor=request.user,
+                request=request,
+                reason='document_review_started',
+            )
         update_run(DocumentReviewRun.Status.AI_REVIEW_IN_PROGRESS, 'AI reviewing')
         result = review_uploaded_contract(
             document=document,
@@ -665,12 +708,14 @@ def _run_uploaded_contract_review(*, request, organization, document, review_run
         })
 
         if document.contract_id:
-            document.contract.status = (
-                Contract.Status.HUMAN_REVIEW_IN_PROGRESS
-                if result.flags_created else Contract.Status.AI_REVIEW_READY
+            _apply_document_review_contract_state(
+                document.contract,
+                status=Contract.Status.IN_PROGRESS,
+                lifecycle_stage='INTERNAL_REVIEW',
+                actor=request.user,
+                request=request,
+                reason='document_review_completed',
             )
-            document.contract.lifecycle_stage = 'INTERNAL_REVIEW'
-            document.contract.save(update_fields=['status', 'lifecycle_stage', 'updated_at'])
         update_run(
             DocumentReviewRun.Status.READY,
             'Review ready',
@@ -697,9 +742,14 @@ def _run_uploaded_contract_review(*, request, organization, document, review_run
 
     if review['status'] != 'completed':
         if document.contract_id:
-            document.contract.status = Contract.Status.NEEDS_INPUT
-            document.contract.lifecycle_stage = 'INTERNAL_REVIEW'
-            document.contract.save(update_fields=['status', 'lifecycle_stage', 'updated_at'])
+            _apply_document_review_contract_state(
+                document.contract,
+                status=Contract.Status.IN_PROGRESS,
+                lifecycle_stage='INTERNAL_REVIEW',
+                actor=request.user,
+                request=request,
+                reason='document_review_missing_text',
+            )
         update_run(DocumentReviewRun.Status.AI_REVIEW_INCOMPLETE, 'AI reviewing', message=review['message'])
 
     record_outcome()
@@ -982,9 +1032,14 @@ def contract_review_finding_action_api(request, contract_id, finding_id):
     elif action == 'accept_redline':
         finding.status = ContractReviewFinding.Status.IN_PROGRESS
         finding.redline_draft = str(payload.get('redline') or finding.suggested_redline or '').strip()
-        contract.status = Contract.Status.NEGOTIATION_IN_PROGRESS
-        contract.lifecycle_stage = 'NEGOTIATION'
-        contract.save(update_fields=['status', 'lifecycle_stage', 'updated_at'])
+        _apply_document_review_contract_state(
+            contract,
+            status=Contract.Status.IN_PROGRESS,
+            lifecycle_stage='NEGOTIATION',
+            actor=request.user,
+            request=request,
+            reason='review_finding_accept_redline',
+        )
         updates.extend(['status', 'redline_draft'])
     elif action == 'edit_redline':
         finding.redline_draft = str(payload.get('redline') or '').strip()
@@ -1008,8 +1063,14 @@ def contract_review_finding_action_api(request, contract_id, finding_id):
         updates.append('status')
     elif action == 'request_information':
         finding.status = ContractReviewFinding.Status.INFORMATION_REQUESTED
-        contract.status = Contract.Status.INFORMATION_REQUIRED
-        contract.save(update_fields=['status', 'updated_at'])
+        _apply_document_review_contract_state(
+            contract,
+            status=Contract.Status.IN_PROGRESS,
+            lifecycle_stage='INTERNAL_REVIEW',
+            actor=request.user,
+            request=request,
+            reason='review_finding_request_information',
+        )
         updates.append('status')
     elif action == 'create_exception':
         finding.status = ContractReviewFinding.Status.EXCEPTION_REQUESTED
@@ -1022,8 +1083,14 @@ def contract_review_finding_action_api(request, contract_id, finding_id):
                 'comments': 'Decide the specific policy deviation recorded in this AI review finding. This is not an approval of the full contract.',
             },
         )
-        contract.status = Contract.Status.INTERNAL_APPROVAL_REQUIRED
-        contract.save(update_fields=['status', 'updated_at'])
+        _apply_document_review_contract_state(
+            contract,
+            status=Contract.Status.IN_PROGRESS,
+            lifecycle_stage='APPROVAL',
+            actor=request.user,
+            request=request,
+            reason='review_finding_exception_requested',
+        )
         updates.append('status')
     elif action == 'resolve':
         finding.status = ContractReviewFinding.Status.RESOLVED
@@ -1112,9 +1179,14 @@ def contract_review_confirm_api(request, contract_id):
             'comments': 'Confirm that the completed AI review outcome has been assessed. This is a specific human confirmation, not an automatic contract approval.',
         },
     )
-    contract.status = Contract.Status.INTERNAL_APPROVAL_REQUIRED
-    contract.lifecycle_stage = 'APPROVAL'
-    contract.save(update_fields=['status', 'lifecycle_stage', 'updated_at'])
+    _apply_document_review_contract_state(
+        contract,
+        status=Contract.Status.IN_PROGRESS,
+        lifecycle_stage='APPROVAL',
+        actor=request.user,
+        request=request,
+        reason='ai_review_human_confirmation_requested',
+    )
     log_action(
         request.user,
         AuditLog.Action.CREATE if created else AuditLog.Action.UPDATE,

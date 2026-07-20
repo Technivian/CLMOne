@@ -97,7 +97,7 @@
     .lp-hero-ctas { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
     @media (min-width: 640px) { .lp-hero-ctas { flex-direction: row; } }
 
-    /* Product frame — a faithful, lightweight Command Center preview. */
+    /* Product frame — current Command Center screenshot. */
     .lp-shot-wrap { max-width: 980px; margin: 84px auto 0; }
     .lp-shot {
         border-radius: 14px; overflow: hidden;
@@ -109,56 +109,7 @@
     .lp-shot-url { flex: 1; margin: 0 16px; border-radius: 6px; padding: 4px 12px; font-size: 11px; text-align: center; background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.35); max-width: 240px; margin-left: auto; margin-right: auto; }
     .lp-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
     .lp-dot-red { background: #FF5F57; } .lp-dot-yellow { background: #FFBD2E; } .lp-dot-green { background: #28C840; }
-    .lp-shot-svg { display: block; width: 100%; background: #0D1117; }
-    .lp-command-preview {
-        display: grid; grid-template-columns: 166px minmax(0, 1fr); min-height: 458px;
-        background: var(--lp-paper); color: var(--lp-ink); text-align: left;
-    }
-    .lp-command-preview + .lp-shot-svg { display: none; }
-    .lp-command-sidebar { padding: 22px 14px; background: #0B1728; color: #DCE7F7; }
-    .lp-command-brand { display: flex; align-items: center; gap: 9px; margin: 0 0 28px; color: #fff; font-size: 13px; font-weight: 750; }
-    .lp-command-brand-mark { width: 24px; height: 24px; object-fit: contain; }
-    .lp-command-nav { display: grid; gap: 4px; }
-    .lp-command-nav span { display: block; padding: 9px 10px; border-radius: 7px; color: #AAB8CD; font-size: 11px; font-weight: 600; }
-    .lp-command-nav .is-active { background: #1B365F; color: #fff; }
-    .lp-command-nav-label { margin: 22px 10px 7px; color: #7385A0; font-size: 8px; font-weight: 750; letter-spacing: .11em; }
-    .lp-command-main { padding: 22px; min-width: 0; }
-    .lp-command-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
-    .lp-command-top strong { font-size: 15px; letter-spacing: -.015em; }
-    .lp-command-top span { color: var(--lp-ink-soft); font-size: 10px; }
-    .lp-command-user { display: flex; align-items: center; gap: 7px; color: var(--lp-ink-soft); font-size: 10px; }
-    .lp-command-avatar { width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; background: #E3F5F4; color: #12706F; font-size: 9px; font-weight: 800; }
-    .lp-command-hero { position: relative; overflow: hidden; min-height: 144px; padding: 21px; border-radius: 12px; background: linear-gradient(118deg, #0CB2E3, #0870D5 62%, #0B59C6); color: #fff; }
-    .lp-command-hero::after { content: ""; position: absolute; right: -36px; top: -48px; width: 168px; height: 168px; border: 20px solid rgba(255,255,255,.15); border-radius: 50%; }
-    .lp-command-hero small { position: relative; z-index: 1; display: block; margin-bottom: 8px; font-size: 9px; font-weight: 750; letter-spacing: .1em; text-transform: uppercase; }
-    .lp-command-hero h3 { position: relative; z-index: 1; max-width: 310px; margin: 0; font-size: clamp(18px, 2.2vw, 25px); line-height: 1.1; letter-spacing: -.025em; }
-    .lp-command-hero p { position: relative; z-index: 1; max-width: 300px; margin: 8px 0 0; color: rgba(255,255,255,.84); font-size: 10px; line-height: 1.45; }
-    .lp-command-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; margin: 16px 0; }
-    .lp-command-metric { min-height: 74px; padding: 12px; border: 1px solid var(--lp-line); border-radius: 10px; background: #fff; }
-    .lp-command-metric span { display: block; color: var(--lp-ink-soft); font-size: 9px; line-height: 1.25; }
-    .lp-command-metric strong { display: block; margin-top: 8px; color: var(--lp-ink); font-size: 22px; line-height: 1; letter-spacing: -.035em; }
-    .lp-command-metric:nth-child(1) strong { color: #168C8C; }
-    .lp-command-metric:nth-child(2) strong { color: #3478C7; }
-    .lp-command-metric:nth-child(3) strong { color: #D99A2B; }
-    .lp-command-metric:nth-child(4) strong { color: #C4423D; }
-    .lp-command-grid { display: grid; grid-template-columns: 1.3fr .9fr; gap: 12px; }
-    .lp-command-panel { overflow: hidden; border: 1px solid var(--lp-line); border-radius: 10px; background: #fff; }
-    .lp-command-panel-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid var(--lp-line-soft); }
-    .lp-command-panel-head strong { font-size: 11px; }
-    .lp-command-panel-head span { color: #12706F; font-size: 9px; font-weight: 700; }
-    .lp-command-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--lp-line-soft); }
-    .lp-command-row:last-child { border-bottom: 0; }
-    .lp-command-row strong { display: block; font-size: 10px; }
-    .lp-command-row small { display: block; margin-top: 3px; color: var(--lp-ink-soft); font-size: 8px; }
-    .lp-command-pill { align-self: center; padding: 4px 7px; border-radius: 999px; background: #E3F5F4; color: #12706F; font-size: 8px; font-weight: 750; white-space: nowrap; }
-    .lp-command-pill.is-warning { background: #FBF1DE; color: #A76500; }
-    @media (max-width: 640px) {
-        .lp-command-preview { grid-template-columns: 1fr; }
-        .lp-command-sidebar { display: none; }
-        .lp-command-main { padding: 16px; }
-        .lp-command-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-        .lp-command-grid { grid-template-columns: 1fr; }
-    }
+    .lp-shot-image { display: block; width: 100%; height: auto; background: var(--lp-paper); }
 
     /* Section headers */
     .lp-kicker { color: var(--lp-navy); margin-bottom: 14px; display: block; }
@@ -206,37 +157,44 @@
     .lp-life-col p  { font-size: 13px; line-height: 1.6; color: var(--lp-ink-soft); margin: 0; }
     .lp-life-col .lp-eyebrow { color: var(--lp-sand-deep); display: block; margin-bottom: 10px; }
 
-    /* Feature cards */
-    /* Capability ledger — a bordered index, not an icon-card grid */
-    .lp-cap-ledger { text-align: left; margin-top: 48px; background: var(--lp-card); border: 1px solid var(--lp-line); border-radius: 14px; overflow: hidden; transition: border-color 180ms ease, box-shadow 180ms ease; }
-    .lp-cap-row { display: flex; gap: 20px; align-items: flex-start; padding: 26px 30px; border-bottom: 1px solid var(--lp-line-soft); transition: background-color 160ms ease, padding-left 160ms ease; }
-    .lp-cap-row:last-child { border-bottom: none; }
-    .lp-cap-tag {
-        flex-shrink: 0; width: 40px; height: 40px; border-radius: 8px; margin-top: 2px;
-        border: 1px solid var(--lp-line); display: flex; align-items: center; justify-content: center;
-        font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
-        font-size: 12px; font-weight: 700; letter-spacing: 0.02em; color: var(--lp-ink-soft);
+    /* Core capability panels — same record vocabulary as the product workspace */
+    .lp-cap-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 48px; text-align: left; }
+    @media (min-width: 768px) { .lp-cap-grid { grid-template-columns: repeat(3, 1fr); } }
+    .lp-cap-panel {
+        display: flex; flex-direction: column; gap: 12px; min-height: 290px;
+        background: var(--lp-card); border: 1px solid var(--lp-line); border-radius: 14px; padding: 28px 24px;
+        transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
     }
-    .lp-cap-tag.seal { border-color: var(--lp-seal); color: var(--lp-seal); }
-    .lp-cap-body h3 { font-size: 16px; font-weight: 800; color: var(--lp-ink); margin: 0 0 6px; }
-    .lp-cap-body p  { font-size: 13.5px; line-height: 1.6; color: var(--lp-ink-soft); margin: 0; }
+    .lp-cap-panel .lp-eyebrow { color: var(--lp-seal); display: block; }
+    .lp-cap-panel h3 { font-size: 15px; font-weight: 800; color: var(--lp-ink); margin: 0; letter-spacing: -0.01em; }
+    .lp-cap-panel p { flex: 1; margin: 0; font-size: 13px; line-height: 1.65; color: var(--lp-ink-soft); }
+    .lp-cap-signals { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 16px; border-top: 1px solid var(--lp-line-soft); }
+    .lp-cap-signal {
+        padding: 5px 10px; border-radius: 999px; border: 1px solid var(--lp-line);
+        background: var(--lp-paper-deep); color: var(--lp-ink-soft);
+        font-size: 11px; font-weight: 650; line-height: 1.2;
+    }
+    .lp-cap-panel.is-accent { border-color: color-mix(in srgb, var(--lp-seal) 38%, var(--lp-line)); background: color-mix(in srgb, var(--lp-seal) 4%, var(--lp-card)); }
+    .lp-cap-panel.is-accent .lp-cap-signal { border-color: color-mix(in srgb, var(--lp-seal) 24%, var(--lp-line)); color: var(--lp-navy-deep); background: #E3F5F4; }
 
-    /* Module table — the same convention the product's own repository
-       table uses (mono uppercase headers, hairline rows, no icon tiles). */
-    .lp-mod-table-wrap { margin-top: 48px; text-align: left; background: var(--lp-card); border: 1px solid var(--lp-line); border-radius: 14px; overflow: hidden; transition: border-color 180ms ease, box-shadow 180ms ease; }
-    .lp-mod-table { width: 100%; border-collapse: collapse; }
-    .lp-mod-table thead th {
-        font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
-        font-size: 10.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
-        color: var(--lp-mute); text-align: left; padding: 12px 28px;
-        background: var(--lp-paper-deep); border-bottom: 1px solid var(--lp-line);
+    /* Module grid — operational tiles, not a generic coverage table */
+    .lp-mod-grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 48px; text-align: left; }
+    @media (min-width: 640px) { .lp-mod-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (min-width: 1024px) { .lp-mod-grid { grid-template-columns: repeat(4, 1fr); } }
+    .lp-mod-tile {
+        display: flex; flex-direction: column; gap: 8px; min-height: 128px;
+        background: var(--lp-card); border: 1px solid var(--lp-line); border-radius: 12px; padding: 18px 18px 16px;
+        transition: transform 160ms ease, border-color 160ms ease, background-color 160ms ease;
     }
-    .lp-mod-table td { padding: 14px 28px; border-bottom: 1px solid var(--lp-line-soft); }
-    .lp-mod-table tr:last-child td { border-bottom: none; }
-    .lp-mod-table tbody tr { transition: background-color 160ms ease; }
-    .lp-mname { font-size: 14px; font-weight: 700; color: var(--lp-ink); }
-    .lp-mname.seal { color: var(--lp-seal); }
-    .lp-msub { font-size: 13px; color: var(--lp-mute); }
+    .lp-mod-tile__tag {
+        font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--lp-mute);
+    }
+    .lp-mod-tile__name { font-size: 14px; font-weight: 800; color: var(--lp-ink); letter-spacing: -0.01em; }
+    .lp-mod-tile__cov { margin-top: auto; font-size: 12.5px; line-height: 1.45; color: var(--lp-ink-soft); }
+    .lp-mod-tile.is-seal { border-color: color-mix(in srgb, var(--lp-seal) 36%, var(--lp-line)); background: color-mix(in srgb, var(--lp-seal) 3%, var(--lp-card)); }
+    .lp-mod-tile.is-seal .lp-mod-tile__name { color: var(--lp-seal); }
+    .lp-mod-tile.is-seal .lp-mod-tile__tag { color: var(--lp-navy-deep); }
 
     /* Security */
     .lp-sec-card { background: var(--lp-card); border: 1px solid var(--lp-line); border-radius: 18px; padding: 52px 32px; margin-top: 0; transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease; }
@@ -275,10 +233,10 @@
         .lp-proof-card:hover { transform: translateY(-4px); box-shadow: 0 14px 26px rgba(11,23,40,.12); }
         .lp-life-card:hover,
         .lp-sec-card:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--lp-navy) 44%, var(--lp-line)); box-shadow: 0 14px 30px rgba(11,23,40,.07); }
-        .lp-cap-ledger:hover,
-        .lp-mod-table-wrap:hover { border-color: color-mix(in srgb, var(--lp-navy) 36%, var(--lp-line)); box-shadow: 0 12px 28px rgba(11,23,40,.055); }
-        .lp-cap-row:hover { padding-left: 34px; background: color-mix(in srgb, var(--lp-navy) 5%, var(--lp-card)); }
-        .lp-mod-table tbody tr:hover { background: color-mix(in srgb, var(--lp-green) 7%, var(--lp-card)); }
+        .lp-cap-panel:hover,
+        .lp-mod-tile:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--lp-navy) 38%, var(--lp-line)); box-shadow: 0 12px 28px rgba(11,23,40,.055); }
+        .lp-cap-panel.is-accent:hover { border-color: color-mix(in srgb, var(--lp-seal) 48%, var(--lp-line)); }
+        .lp-mod-tile.is-seal:hover { border-color: color-mix(in srgb, var(--lp-seal) 48%, var(--lp-line)); }
         .lp-sec-stat:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--lp-navy) 38%, var(--lp-line)); background: var(--lp-card); }
     }
     @media (prefers-reduced-motion: reduce) {
@@ -334,245 +292,7 @@
                         <span class="lp-dot lp-dot-green"></span>
                         <div class="lp-shot-url">app.clmone.com/dashboard</div>
                     </div>
-                    <div class="lp-command-preview" role="img" aria-label="CLM One Command Center showing a workspace health feature panel, contract metrics, and a priority queue">
-                        <aside class="lp-command-sidebar" aria-hidden="true">
-                            <p class="lp-command-brand"><img src="{% static 'brand/clm-one-mark-reversed-tight.svg' %}" alt="" aria-hidden="true" class="lp-command-brand-mark">CLM One</p>
-                            <nav class="lp-command-nav">
-                                <span class="is-active">Command Center</span>
-                                <span>Contracts</span>
-                                <span>Workflows</span>
-                                <span>Approvals</span>
-                                <span>Documents</span>
-                            </nav>
-                            <p class="lp-command-nav-label">GOVERNANCE</p>
-                            <nav class="lp-command-nav">
-                                <span>Risk register</span>
-                                <span>Compliance</span>
-                                <span>Audit trail</span>
-                            </nav>
-                        </aside>
-                        <div class="lp-command-main" aria-hidden="true">
-                            <div class="lp-command-top">
-                                <div><strong>Command Center</strong><span> &nbsp;Your legal operations workspace</span></div>
-                                <span class="lp-command-user"><span class="lp-command-avatar">H</span>Haroon</span>
-                            </div>
-                            <section class="lp-command-hero">
-                                <small>Workspace health</small>
-                                <h3>Your contract operations are on track.</h3>
-                                <p>Stay ahead of approvals, renewal dates, and policy-backed governance from one place.</p>
-                            </section>
-                            <div class="lp-command-metrics">
-                                <div class="lp-command-metric"><span>Active contracts</span><strong>128</strong></div>
-                                <div class="lp-command-metric"><span>In review</span><strong>17</strong></div>
-                                <div class="lp-command-metric"><span>Renewals due</span><strong>14</strong></div>
-                                <div class="lp-command-metric"><span>Needs attention</span><strong>3</strong></div>
-                            </div>
-                            <div class="lp-command-grid">
-                                <section class="lp-command-panel">
-                                    <div class="lp-command-panel-head"><strong>Today’s legal priorities</strong><span>View queue</span></div>
-                                    <div class="lp-command-row"><div><strong>MSA with Acme Corp.</strong><small>Approval requested · due today</small></div><span class="lp-command-pill">Review</span></div>
-                                    <div class="lp-command-row"><div><strong>Renewal — Northstar Ltd.</strong><small>Contract expires in 23 days</small></div><span class="lp-command-pill is-warning">Renewal</span></div>
-                                </section>
-                                <section class="lp-command-panel">
-                                    <div class="lp-command-panel-head"><strong>Governance</strong><span>Healthy</span></div>
-                                    <div class="lp-command-row"><div><strong>Approvals on track</strong><small>17 active routes</small></div></div>
-                                    <div class="lp-command-row"><div><strong>Audit trail current</strong><small>All events captured</small></div></div>
-                                </section>
-                            </div>
-                        </div>
-                    </div>
-                    <svg viewBox="0 0 880 480" xmlns="http://www.w3.org/2000/svg" class="lp-shot-svg" role="img" aria-label="CLM One dashboard showing approvals, deadlines, and contract risk in one view">
-                        <defs>
-                            <linearGradient id="lc-fade" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stop-color="#0D1117" stop-opacity="0"/>
-                                <stop offset="100%" stop-color="#0D1117" stop-opacity="1"/>
-                            </linearGradient>
-                            <linearGradient id="av-grad" x1="0" y1="0" x2="1" y2="1">
-                                <stop offset="0%" stop-color="#CF7248"/>
-                                <stop offset="100%" stop-color="#7c3aed"/>
-                            </linearGradient>
-                        </defs>
-                        <!-- Sidebar -->
-                        <rect x="0" y="0" width="155" height="480" fill="#111827"/>
-                        <rect x="154" y="0" width="1" height="480" fill="rgba(255,255,255,0.05)"/>
-                        <rect x="12" y="12" width="20" height="20" rx="5" fill="#CF7248"/>
-                        <text x="38" y="26" font-family="system-ui,sans-serif" font-size="10" font-weight="700" fill="white">CLM One</text>
-                        <rect x="7" y="44" width="141" height="24" rx="5" fill="rgba(37,99,235,0.15)"/>
-                        <rect x="18" y="52" width="6" height="6" rx="1" fill="#E29368"/>
-                        <text x="30" y="60" font-family="system-ui,sans-serif" font-size="9.5" fill="rgba(255,255,255,0.9)">Dashboard</text>
-                        <rect x="18" y="77" width="6" height="6" rx="1" fill="rgba(255,255,255,0.2)"/>
-                        <text x="30" y="85" font-family="system-ui,sans-serif" font-size="9.5" fill="rgba(255,255,255,0.4)">Contracts</text>
-                        <rect x="18" y="95" width="6" height="6" rx="1" fill="rgba(255,255,255,0.2)"/>
-                        <text x="30" y="103" font-family="system-ui,sans-serif" font-size="9.5" fill="rgba(255,255,255,0.4)">Workflows</text>
-                        <rect x="18" y="113" width="6" height="6" rx="1" fill="rgba(255,255,255,0.2)"/>
-                        <text x="30" y="121" font-family="system-ui,sans-serif" font-size="9.5" fill="rgba(255,255,255,0.4)">Approvals</text>
-                        <rect x="18" y="131" width="6" height="6" rx="1" fill="rgba(255,255,255,0.2)"/>
-                        <text x="30" y="139" font-family="system-ui,sans-serif" font-size="9.5" fill="rgba(255,255,255,0.4)">Documents</text>
-                        <text x="12" y="162" font-family="system-ui,sans-serif" font-size="7.5" font-weight="700" fill="rgba(255,255,255,0.2)" letter-spacing="0.5">RISK &amp; COMPLIANCE</text>
-                        <rect x="18" y="169" width="6" height="6" rx="1" fill="rgba(255,255,255,0.2)"/>
-                        <text x="30" y="177" font-family="system-ui,sans-serif" font-size="9.5" fill="rgba(255,255,255,0.4)">Risk Register</text>
-                        <rect x="18" y="187" width="6" height="6" rx="1" fill="rgba(255,255,255,0.2)"/>
-                        <text x="30" y="195" font-family="system-ui,sans-serif" font-size="9.5" fill="rgba(255,255,255,0.4)">Compliance</text>
-                        <rect x="18" y="205" width="6" height="6" rx="1" fill="rgba(255,255,255,0.2)"/>
-                        <text x="30" y="213" font-family="system-ui,sans-serif" font-size="9.5" fill="rgba(255,255,255,0.4)">Audit Trail</text>
-                        <!-- Welcome hero card -->
-                        <rect x="163" y="8" width="709" height="46" rx="8" fill="#161b22" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
-                        <text x="179" y="26" font-family="system-ui,sans-serif" font-size="12" font-weight="800" fill="white">Welcome back, Haroon</text>
-                        <text x="179" y="41" font-family="system-ui,sans-serif" font-size="9.5" fill="rgba(255,255,255,0.35)">Here's what's happening in your legal operations workspace.</text>
-                        <rect x="791" y="14" width="73" height="22" rx="6" fill="#CF7248"/>
-                        <text x="827" y="29" font-family="system-ui,sans-serif" font-size="9.5" font-weight="600" fill="white" text-anchor="middle">+ New Contract</text>
-                        <!-- Left: Needs your attention -->
-                        <rect x="163" y="62" width="330" height="186" rx="8" fill="#161b22" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
-                        <text x="179" y="82" font-family="system-ui,sans-serif" font-size="10.5" font-weight="700" fill="white">Needs your attention</text>
-                        <line x1="163" y1="92" x2="493" y2="92" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
-                        <rect x="179" y="97" width="20" height="20" rx="5" fill="rgba(239,68,68,0.12)"/>
-                        <text x="189" y="110" font-family="system-ui,sans-serif" font-size="8" fill="#E08A78" text-anchor="middle" font-weight="800">!</text>
-                        <text x="207" y="109" font-family="system-ui,sans-serif" font-size="11" font-weight="800" fill="#E08A78">3</text>
-                        <text x="220" y="108" font-family="system-ui,sans-serif" font-size="9.5" fill="rgba(255,255,255,0.75)">pending approvals</text>
-                        <text x="220" y="119" font-family="system-ui,sans-serif" font-size="8" fill="rgba(255,255,255,0.3)">Waiting for your approval</text>
-                        <text x="477" y="111" font-family="system-ui,sans-serif" font-size="12" fill="rgba(255,255,255,0.2)">›</text>
-                        <line x1="179" y1="124" x2="485" y2="124" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
-                        <rect x="179" y="129" width="20" height="20" rx="5" fill="rgba(249,115,22,0.12)"/>
-                        <text x="189" y="142" font-family="system-ui,sans-serif" font-size="9" fill="#D9A75B" text-anchor="middle">▲</text>
-                        <text x="207" y="140" font-family="system-ui,sans-serif" font-size="11" font-weight="800" fill="#D9A75B">2</text>
-                        <text x="220" y="139" font-family="system-ui,sans-serif" font-size="9.5" fill="rgba(255,255,255,0.75)">contracts expiring within 30 days</text>
-                        <text x="220" y="150" font-family="system-ui,sans-serif" font-size="8" fill="rgba(255,255,255,0.3)">Requires renewal or action</text>
-                        <text x="477" y="142" font-family="system-ui,sans-serif" font-size="12" fill="rgba(255,255,255,0.2)">›</text>
-                        <line x1="179" y1="155" x2="485" y2="155" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
-                        <rect x="179" y="160" width="20" height="20" rx="5" fill="rgba(234,179,8,0.12)"/>
-                        <text x="189" y="173" font-family="system-ui,sans-serif" font-size="9" fill="#D9A75B" text-anchor="middle">●</text>
-                        <text x="207" y="172" font-family="system-ui,sans-serif" font-size="11" font-weight="800" fill="#D9A75B">1</text>
-                        <text x="220" y="171" font-family="system-ui,sans-serif" font-size="9.5" fill="rgba(255,255,255,0.75)">overdue deadline</text>
-                        <text x="220" y="182" font-family="system-ui,sans-serif" font-size="8" fill="rgba(255,255,255,0.3)">Past due — immediate action needed</text>
-                        <text x="477" y="174" font-family="system-ui,sans-serif" font-size="12" fill="rgba(255,255,255,0.2)">›</text>
-                        <line x1="179" y1="187" x2="485" y2="187" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
-                        <rect x="179" y="192" width="20" height="20" rx="5" fill="rgba(168,85,247,0.12)"/>
-                        <text x="189" y="205" font-family="system-ui,sans-serif" font-size="8" fill="#B79BD8" text-anchor="middle" font-weight="700">✦</text>
-                        <text x="207" y="203" font-family="system-ui,sans-serif" font-size="11" font-weight="800" fill="#B79BD8">1</text>
-                        <text x="220" y="202" font-family="system-ui,sans-serif" font-size="9.5" fill="rgba(255,255,255,0.75)">high-risk contract</text>
-                        <text x="220" y="213" font-family="system-ui,sans-serif" font-size="8" fill="rgba(255,255,255,0.3)">Requires risk review</text>
-                        <text x="477" y="205" font-family="system-ui,sans-serif" font-size="12" fill="rgba(255,255,255,0.2)">›</text>
-                        <line x1="163" y1="220" x2="493" y2="220" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
-                        <text x="179" y="236" font-family="system-ui,sans-serif" font-size="9.5" font-weight="600" fill="#CF7248">Go to My Work Queue →</text>
-                        <!-- Right: My Work Queue -->
-                        <rect x="499" y="62" width="373" height="186" rx="8" fill="#161b22" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
-                        <text x="515" y="82" font-family="system-ui,sans-serif" font-size="10.5" font-weight="700" fill="white">My Work Queue</text>
-                        <text x="734" y="82" font-family="system-ui,sans-serif" font-size="8.5" fill="rgba(255,255,255,0.3)">4 items</text>
-                        <text x="776" y="82" font-family="system-ui,sans-serif" font-size="8.5" fill="#CF7248" font-weight="600">View all</text>
-                        <line x1="499" y1="92" x2="872" y2="92" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
-                        <text x="515" y="108" font-family="system-ui,sans-serif" font-size="7.5" font-weight="700" fill="rgba(255,255,255,0.25)">ITEM</text>
-                        <text x="714" y="108" font-family="system-ui,sans-serif" font-size="7.5" font-weight="700" fill="rgba(255,255,255,0.25)">TYPE</text>
-                        <text x="766" y="108" font-family="system-ui,sans-serif" font-size="7.5" font-weight="700" fill="rgba(255,255,255,0.25)">STATUS</text>
-                        <line x1="499" y1="113" x2="872" y2="113" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
-                        <text x="515" y="129" font-family="system-ui,sans-serif" font-size="9.5" fill="rgba(255,255,255,0.8)">MSA with Acme Corp.</text>
-                        <text x="515" y="141" font-family="system-ui,sans-serif" font-size="7.5" fill="rgba(255,255,255,0.25)">ACME-2024-0015</text>
-                        <text x="714" y="135" font-family="system-ui,sans-serif" font-size="9" fill="rgba(255,255,255,0.4)">Approval</text>
-                        <rect x="763" y="124" width="80" height="14" rx="7" fill="rgba(239,68,68,0.15)"/>
-                        <text x="803" y="134" font-family="system-ui,sans-serif" font-size="7.5" fill="#E08A78" text-anchor="middle">Pending my approval</text>
-                        <line x1="499" y1="148" x2="872" y2="148" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
-                        <text x="515" y="164" font-family="system-ui,sans-serif" font-size="9.5" fill="rgba(255,255,255,0.8)">NDA with Globex Inc.</text>
-                        <text x="515" y="176" font-family="system-ui,sans-serif" font-size="7.5" fill="rgba(255,255,255,0.25)">GLOBEX-2024-0021</text>
-                        <text x="714" y="170" font-family="system-ui,sans-serif" font-size="9" fill="rgba(255,255,255,0.4)">Signature</text>
-                        <rect x="763" y="159" width="72" height="14" rx="7" fill="rgba(249,115,22,0.15)"/>
-                        <text x="799" y="169" font-family="system-ui,sans-serif" font-size="7.5" fill="#D9A75B" text-anchor="middle">Pending signature</text>
-                        <line x1="499" y1="183" x2="872" y2="183" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
-                        <text x="515" y="199" font-family="system-ui,sans-serif" font-size="9.5" fill="rgba(255,255,255,0.8)">SOW — Marketing Project</text>
-                        <text x="515" y="211" font-family="system-ui,sans-serif" font-size="7.5" fill="rgba(255,255,255,0.25)">SOW-2024-0032</text>
-                        <text x="714" y="205" font-family="system-ui,sans-serif" font-size="9" fill="rgba(255,255,255,0.4)">Approval</text>
-                        <rect x="763" y="194" width="66" height="14" rx="7" fill="rgba(96,165,250,0.15)"/>
-                        <text x="796" y="204" font-family="system-ui,sans-serif" font-size="7.5" fill="#D9A75B" text-anchor="middle">Pending approval</text>
-                        <!-- KPI strip (5 cards w=137 gap=6) -->
-                        <rect x="163" y="256" width="137" height="72" rx="8" fill="#161b22" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
-                        <text x="179" y="283" font-family="system-ui,sans-serif" font-size="22" font-weight="900" fill="#CF7248">128</text>
-                        <text x="179" y="298" font-family="system-ui,sans-serif" font-size="8.5" fill="rgba(255,255,255,0.4)">Active contracts</text>
-                        <rect x="179" y="306" width="36" height="13" rx="4" fill="rgba(59,130,246,0.1)"/>
-                        <text x="197" y="316" font-family="system-ui,sans-serif" font-size="7.5" fill="#55CDB7" text-anchor="middle">↑ Active</text>
-                        <rect x="306" y="256" width="137" height="72" rx="8" fill="#161b22" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
-                        <text x="322" y="283" font-family="system-ui,sans-serif" font-size="22" font-weight="900" fill="#D9A75B">17</text>
-                        <text x="322" y="298" font-family="system-ui,sans-serif" font-size="8.5" fill="rgba(255,255,255,0.4)">Pending approvals</text>
-                        <rect x="322" y="306" width="38" height="13" rx="4" fill="rgba(245,158,11,0.1)"/>
-                        <text x="341" y="316" font-family="system-ui,sans-serif" font-size="7.5" fill="#fbbf24" text-anchor="middle">In review</text>
-                        <rect x="449" y="256" width="137" height="72" rx="8" fill="#161b22" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
-                        <text x="465" y="283" font-family="system-ui,sans-serif" font-size="22" font-weight="900" fill="#B79BD8">23</text>
-                        <text x="465" y="298" font-family="system-ui,sans-serif" font-size="8.5" fill="rgba(255,255,255,0.4)">Pending signatures</text>
-                        <rect x="465" y="306" width="50" height="13" rx="4" fill="rgba(168,85,247,0.1)"/>
-                        <text x="490" y="316" font-family="system-ui,sans-serif" font-size="7.5" fill="#B79BD8" text-anchor="middle">Awaiting sign</text>
-                        <rect x="592" y="256" width="137" height="72" rx="8" fill="#161b22" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
-                        <text x="608" y="283" font-family="system-ui,sans-serif" font-size="22" font-weight="900" fill="#D9A75B">14</text>
-                        <text x="608" y="298" font-family="system-ui,sans-serif" font-size="8.5" fill="rgba(255,255,255,0.4)">Expiring within 30d</text>
-                        <rect x="608" y="306" width="56" height="13" rx="4" fill="rgba(249,115,22,0.1)"/>
-                        <text x="636" y="316" font-family="system-ui,sans-serif" font-size="7.5" fill="#D9A75B" text-anchor="middle">⚠ Needs action</text>
-                        <rect x="735" y="256" width="137" height="72" rx="8" fill="#161b22" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
-                        <text x="751" y="283" font-family="system-ui,sans-serif" font-size="22" font-weight="900" fill="#E08A78">7</text>
-                        <text x="751" y="298" font-family="system-ui,sans-serif" font-size="8.5" fill="rgba(255,255,255,0.4)">High-risk contracts</text>
-                        <rect x="751" y="306" width="52" height="13" rx="4" fill="rgba(239,68,68,0.1)"/>
-                        <text x="777" y="316" font-family="system-ui,sans-serif" font-size="7.5" fill="#E08A78" text-anchor="middle">High / Critical</text>
-                        <!-- Bottom row (3 cards w=232 gap=6) -->
-                        <!-- Lifecycle chart -->
-                        <rect x="163" y="336" width="232" height="116" rx="8" fill="#161b22" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
-                        <text x="179" y="354" font-family="system-ui,sans-serif" font-size="10" font-weight="700" fill="white">Contract lifecycle</text>
-                        <line x1="163" y1="360" x2="395" y2="360" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
-                        <circle cx="213" cy="415" r="30" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="10"/>
-                        <path d="M 213 385 A 30 30 0 1 1 197.1 440.4" fill="none" stroke="#CF7248" stroke-width="10" stroke-linecap="round"/>
-                        <path d="M 197.1 440.4 A 30 30 0 0 1 186.8 429.5" fill="none" stroke="#D9A75B" stroke-width="10" stroke-linecap="round"/>
-                        <path d="M 186.8 429.5 A 30 30 0 0 1 183.5 409.3" fill="none" stroke="#A855F7" stroke-width="10" stroke-linecap="round"/>
-                        <path d="M 183.5 409.3 A 30 30 0 0 1 205.7 385.9" fill="none" stroke="#374151" stroke-width="10" stroke-linecap="round"/>
-                        <path d="M 205.7 385.9 A 30 30 0 0 1 213 385" fill="none" stroke="#6B7280" stroke-width="10" stroke-linecap="round"/>
-                        <text x="213" y="412" font-family="system-ui,sans-serif" font-size="11" font-weight="800" fill="white" text-anchor="middle">128</text>
-                        <text x="213" y="423" font-family="system-ui,sans-serif" font-size="7" fill="rgba(255,255,255,0.3)" text-anchor="middle">contracts</text>
-                        <circle cx="255" cy="374" r="3.5" fill="#CF7248"/>
-                        <text x="263" y="377" font-family="system-ui,sans-serif" font-size="8" fill="rgba(255,255,255,0.5)">Active</text>
-                        <text x="340" y="377" font-family="system-ui,sans-serif" font-size="8" font-weight="700" fill="rgba(255,255,255,0.7)">128</text>
-                        <circle cx="255" cy="390" r="3.5" fill="#D9A75B"/>
-                        <text x="263" y="393" font-family="system-ui,sans-serif" font-size="8" fill="rgba(255,255,255,0.5)">Pending Appr.</text>
-                        <text x="340" y="393" font-family="system-ui,sans-serif" font-size="8" font-weight="700" fill="rgba(255,255,255,0.7)">17</text>
-                        <circle cx="255" cy="406" r="3.5" fill="#A855F7"/>
-                        <text x="263" y="409" font-family="system-ui,sans-serif" font-size="8" fill="rgba(255,255,255,0.5)">Pending Sign.</text>
-                        <text x="340" y="409" font-family="system-ui,sans-serif" font-size="8" font-weight="700" fill="rgba(255,255,255,0.7)">23</text>
-                        <circle cx="255" cy="422" r="3.5" fill="#374151"/>
-                        <text x="263" y="425" font-family="system-ui,sans-serif" font-size="8" fill="rgba(255,255,255,0.5)">Draft</text>
-                        <text x="340" y="425" font-family="system-ui,sans-serif" font-size="8" font-weight="700" fill="rgba(255,255,255,0.7)">38</text>
-                        <!-- Expiring soon -->
-                        <rect x="401" y="336" width="232" height="116" rx="8" fill="#161b22" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
-                        <text x="417" y="354" font-family="system-ui,sans-serif" font-size="10" font-weight="700" fill="white">Contracts expiring soon</text>
-                        <text x="590" y="354" font-family="system-ui,sans-serif" font-size="8.5" fill="#CF7248" font-weight="600">View all</text>
-                        <line x1="401" y1="360" x2="633" y2="360" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
-                        <text x="417" y="378" font-family="system-ui,sans-serif" font-size="9.5" fill="rgba(255,255,255,0.8)">MSA with TechCorp</text>
-                        <text x="417" y="389" font-family="system-ui,sans-serif" font-size="7.5" fill="rgba(255,255,255,0.3)">Jun 15, 2026</text>
-                        <rect x="576" y="370" width="44" height="14" rx="7" fill="rgba(249,115,22,0.15)"/>
-                        <text x="598" y="380" font-family="system-ui,sans-serif" font-size="7.5" fill="#D9A75B" text-anchor="middle">23 days</text>
-                        <line x1="417" y1="397" x2="627" y2="397" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
-                        <text x="417" y="411" font-family="system-ui,sans-serif" font-size="9.5" fill="rgba(255,255,255,0.8)">SaaS Agreement — CloudCo</text>
-                        <text x="417" y="422" font-family="system-ui,sans-serif" font-size="7.5" fill="rgba(255,255,255,0.3)">Jun 22, 2026</text>
-                        <rect x="576" y="403" width="44" height="14" rx="7" fill="rgba(249,115,22,0.15)"/>
-                        <text x="598" y="413" font-family="system-ui,sans-serif" font-size="7.5" fill="#D9A75B" text-anchor="middle">30 days</text>
-                        <line x1="417" y1="430" x2="627" y2="430" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
-                        <text x="417" y="444" font-family="system-ui,sans-serif" font-size="9.5" fill="rgba(255,255,255,0.8)">Support Agreement — NetSys</text>
-                        <text x="417" y="455" font-family="system-ui,sans-serif" font-size="7.5" fill="rgba(255,255,255,0.3)">Jun 28, 2026</text>
-                        <rect x="576" y="436" width="44" height="14" rx="7" fill="rgba(249,115,22,0.15)"/>
-                        <text x="598" y="446" font-family="system-ui,sans-serif" font-size="7.5" fill="#D9A75B" text-anchor="middle">36 days</text>
-                        <!-- Recent activity -->
-                        <rect x="639" y="336" width="233" height="116" rx="8" fill="#161b22" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
-                        <text x="655" y="354" font-family="system-ui,sans-serif" font-size="10" font-weight="700" fill="white">Recent activity</text>
-                        <text x="829" y="354" font-family="system-ui,sans-serif" font-size="8.5" fill="#CF7248" font-weight="600">View all</text>
-                        <line x1="639" y1="360" x2="872" y2="360" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
-                        <circle cx="657" cy="378" r="8" fill="url(#av-grad)"/>
-                        <text x="657" y="381" font-family="system-ui,sans-serif" font-size="7" fill="white" text-anchor="middle" font-weight="700">H</text>
-                        <text x="671" y="375" font-family="system-ui,sans-serif" font-size="9" fill="rgba(255,255,255,0.75)">Contract created</text>
-                        <text x="671" y="386" font-family="system-ui,sans-serif" font-size="7.5" fill="rgba(255,255,255,0.25)">SOW — Marketing  · 2h ago</text>
-                        <line x1="655" y1="395" x2="866" y2="395" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
-                        <circle cx="657" cy="410" r="8" fill="url(#av-grad)"/>
-                        <text x="657" y="413" font-family="system-ui,sans-serif" font-size="7" fill="white" text-anchor="middle" font-weight="700">H</text>
-                        <text x="671" y="407" font-family="system-ui,sans-serif" font-size="9" fill="rgba(255,255,255,0.75)">Approval completed</text>
-                        <text x="671" y="418" font-family="system-ui,sans-serif" font-size="7.5" fill="rgba(255,255,255,0.25)">NDA with FutureTech  · 5h ago</text>
-                        <line x1="655" y1="427" x2="866" y2="427" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
-                        <circle cx="657" cy="442" r="8" fill="url(#av-grad)"/>
-                        <text x="657" y="445" font-family="system-ui,sans-serif" font-size="7" fill="white" text-anchor="middle" font-weight="700">H</text>
-                        <text x="671" y="439" font-family="system-ui,sans-serif" font-size="9" fill="rgba(255,255,255,0.75)">Signature completed</text>
-                        <text x="671" y="450" font-family="system-ui,sans-serif" font-size="7.5" fill="rgba(255,255,255,0.25)">DPA with SecureIT  · 1d ago</text>
-                        <!-- Bottom fade -->
-                        <rect x="155" y="408" width="725" height="72" fill="url(#lc-fade)"/>
-                    </svg>
+                    <img src="{% static 'marketing/command-center-dashboard-preview.png' %}" alt="CLM One Command Center showing contract portfolio health, operational queues, governance controls, and recent matters" class="lp-shot-image" width="1440" height="1000" loading="eager" decoding="async">
                 </div>
             </div>
         </div>
@@ -652,28 +372,38 @@
         <div class="lp-wrap lp-center">
             <span class="lp-eyebrow lp-kicker">Core capabilities</span>
             <h2 class="lp-h2">Built for contract teams</h2>
-            <div class="lp-cap-ledger">
-                <div class="lp-cap-row">
-                    <span class="lp-cap-tag">CR</span>
-                    <div class="lp-cap-body">
-                        <h3>Contract Repository</h3>
-                        <p>Track agreements, counterparties, source documents, versions, and related contracts.</p>
+            <p class="lp-section-sub">Three operating surfaces — record, route, and govern — using the same workspace language as the product.</p>
+            <div class="lp-cap-grid">
+                <article class="lp-cap-panel">
+                    <span class="lp-eyebrow">Record</span>
+                    <h3>Contract repository</h3>
+                    <p>Every agreement lives as a workspace record with counterparty context, source documents, version history, and linked contracts — not a folder of PDFs.</p>
+                    <div class="lp-cap-signals" aria-label="Repository capabilities">
+                        <span class="lp-cap-signal">Source document</span>
+                        <span class="lp-cap-signal">Version compare</span>
+                        <span class="lp-cap-signal">Related records</span>
                     </div>
-                </div>
-                <div class="lp-cap-row">
-                    <span class="lp-cap-tag seal">AO</span>
-                    <div class="lp-cap-body">
-                        <h3>Approvals &amp; Obligations</h3>
-                        <p>Route decisions to accountable owners and keep renewal, regulatory, and operational commitments visible.</p>
+                </article>
+                <article class="lp-cap-panel is-accent">
+                    <span class="lp-eyebrow">Operate</span>
+                    <h3>Approvals &amp; obligations</h3>
+                    <p>Route decisions to accountable owners, surface renewal and regulatory dates, and keep follow-ups owned until they are complete.</p>
+                    <div class="lp-cap-signals" aria-label="Operations capabilities">
+                        <span class="lp-cap-signal">Approval chain</span>
+                        <span class="lp-cap-signal">Obligation workspace</span>
+                        <span class="lp-cap-signal">Renewal alerts</span>
                     </div>
-                </div>
-                <div class="lp-cap-row">
-                    <span class="lp-cap-tag">DG</span>
-                    <div class="lp-cap-body">
-                        <h3>Data &amp; Risk Governance</h3>
-                        <p>Review data-processing terms, resolve evidence-backed risks, and maintain accountable outcomes.</p>
+                </article>
+                <article class="lp-cap-panel">
+                    <span class="lp-eyebrow">Govern</span>
+                    <h3>Data &amp; risk governance</h3>
+                    <p>Run DPA reviews, capture contract review evidence, and tie open findings to owners before they become silent contract risk.</p>
+                    <div class="lp-cap-signals" aria-label="Governance capabilities">
+                        <span class="lp-cap-signal">DPA review packs</span>
+                        <span class="lp-cap-signal">Contract review</span>
+                        <span class="lp-cap-signal">Risk register</span>
                     </div>
-                </div>
+                </article>
             </div>
         </div>
     </section>
@@ -682,23 +412,48 @@
         <div class="lp-wrap lp-center">
             <span class="lp-eyebrow lp-kicker">Complete suite</span>
             <h2 class="lp-h2">Everything your team needs</h2>
-            <p class="lp-section-sub">Eight integrated modules covering every part of contract lifecycle management.</p>
-            <div class="lp-mod-table-wrap">
-                <table class="lp-mod-table">
-                    <thead>
-                        <tr><th>Module</th><th>Coverage</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td class="lp-mname">Contracts</td><td class="lp-msub">Full lifecycle</td></tr>
-                        <tr><td class="lp-mname">Documents</td><td class="lp-msub">Version control</td></tr>
-                        <tr><td class="lp-mname seal">DPA Reviews</td><td class="lp-msub">Privacy governance</td></tr>
-                        <tr><td class="lp-mname">Deadlines</td><td class="lp-msub">Never miss one</td></tr>
-                        <tr><td class="lp-mname">Obligations</td><td class="lp-msub">Owned follow-up</td></tr>
-                        <tr><td class="lp-mname">Workflows</td><td class="lp-msub">Automated</td></tr>
-                        <tr><td class="lp-mname">Analytics</td><td class="lp-msub">Real-time data</td></tr>
-                        <tr><td class="lp-mname">Audit Trail</td><td class="lp-msub">Full history</td></tr>
-                    </tbody>
-                </table>
+            <p class="lp-section-sub">Eight integrated modules on one operational canvas — each with a clear job in the lifecycle.</p>
+            <div class="lp-mod-grid" role="list" aria-label="CLM One modules">
+                <article class="lp-mod-tile" role="listitem">
+                    <span class="lp-mod-tile__tag">Workspace</span>
+                    <h3 class="lp-mod-tile__name">Contracts</h3>
+                    <p class="lp-mod-tile__cov">Draft through archive on one tracked lifecycle path.</p>
+                </article>
+                <article class="lp-mod-tile" role="listitem">
+                    <span class="lp-mod-tile__tag">Record</span>
+                    <h3 class="lp-mod-tile__name">Documents</h3>
+                    <p class="lp-mod-tile__cov">Attach source files, compare versions, and share with counterparties.</p>
+                </article>
+                <article class="lp-mod-tile is-seal" role="listitem">
+                    <span class="lp-mod-tile__tag">Governance</span>
+                    <h3 class="lp-mod-tile__name">DPA Reviews</h3>
+                    <p class="lp-mod-tile__cov">Structured privacy review with SCC position and subprocessors.</p>
+                </article>
+                <article class="lp-mod-tile" role="listitem">
+                    <span class="lp-mod-tile__tag">Operations</span>
+                    <h3 class="lp-mod-tile__name">Deadlines</h3>
+                    <p class="lp-mod-tile__cov">Notice periods and key dates surfaced before they lapse.</p>
+                </article>
+                <article class="lp-mod-tile" role="listitem">
+                    <span class="lp-mod-tile__tag">Operations</span>
+                    <h3 class="lp-mod-tile__name">Obligations</h3>
+                    <p class="lp-mod-tile__cov">Owned follow-ups scoped to each contract record.</p>
+                </article>
+                <article class="lp-mod-tile" role="listitem">
+                    <span class="lp-mod-tile__tag">Workspace</span>
+                    <h3 class="lp-mod-tile__name">Workflows</h3>
+                    <p class="lp-mod-tile__cov">Governed approval routes without rebuilding the record.</p>
+                </article>
+                <article class="lp-mod-tile" role="listitem">
+                    <span class="lp-mod-tile__tag">Insight</span>
+                    <h3 class="lp-mod-tile__name">Analytics</h3>
+                    <p class="lp-mod-tile__cov">Portfolio signals from live contract data, not stale exports.</p>
+                </article>
+                <article class="lp-mod-tile" role="listitem">
+                    <span class="lp-mod-tile__tag">Governance</span>
+                    <h3 class="lp-mod-tile__name">Audit Trail</h3>
+                    <p class="lp-mod-tile__cov">Every decision and change tied to a verifiable event log.</p>
+                </article>
             </div>
         </div>
     </section>

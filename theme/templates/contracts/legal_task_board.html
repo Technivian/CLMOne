@@ -33,16 +33,19 @@
   {# ── Workflow queue (primary object) ───────────────────── #}
   <div class="tasks-queue-card">
     <div class="tasks-tabs-wrap">
-      <nav class="wq-tabs" role="tablist" aria-label="Task queue views">
-        {% for tab in queue_tabs %}
-        <button type="button"
-                class="wq-tab{% if forloop.first %} wq-tab-active{% endif %}"
-                data-queue-tab="{{ tab.key }}"
-                role="tab"
-                aria-selected="{% if forloop.first %}true{% else %}false{% endif %}">
-          {{ tab.label }} <span class="wq-tab-count">{{ tab.rows|length }}</span>
-        </button>
-        {% endfor %}
+      {# Client-side queue panels: underline pattern; buttons keep live counts without routing. #}
+      <nav class="dc-ds-workspace-tabs dc-ds-workspace-tabs--section wq-tabs" role="tablist" aria-label="Task queue views">
+        <div class="dc-ds-workspace-tabs__list">
+          {% for tab in queue_tabs %}
+          <button type="button"
+                  class="dc-ds-workspace-tabs__tab{% if forloop.first %} is-active wq-tab-active{% endif %}"
+                  data-queue-tab="{{ tab.key }}"
+                  role="tab"
+                  aria-selected="{% if forloop.first %}true{% else %}false{% endif %}">
+            {{ tab.label }} <span class="approvals-queue-count wq-tab-count">{{ tab.rows|length }}</span>
+          </button>
+          {% endfor %}
+        </div>
       </nav>
     </div>
     <div class="tasks-queue-body">
@@ -57,13 +60,14 @@
 <script nonce="{{ csp_nonce }}">
 (function () {
   /* Saved-view tabs — same client-side switch as Dashboard/Repository/Approvals, no page reload. */
-  var tabs = document.querySelectorAll('.wq-tab[data-queue-tab]');
+  var tabs = document.querySelectorAll('[data-queue-tab]');
   var panels = document.querySelectorAll('table.wq-table[data-queue-panel]');
   tabs.forEach(function (tab) {
     tab.addEventListener('click', function () {
       var key = tab.getAttribute('data-queue-tab');
       tabs.forEach(function (t) {
         var active = t === tab;
+        t.classList.toggle('is-active', active);
         t.classList.toggle('wq-tab-active', active);
         t.setAttribute('aria-selected', active ? 'true' : 'false');
       });

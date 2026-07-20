@@ -8,16 +8,20 @@ from typing import List, Optional
 from enum import Enum
 
 class ContractStatus(Enum):
-    DRAFT = "DRAFT"
-    ACTIVE = "ACTIVE" 
+    IN_PROGRESS = "IN_PROGRESS"
+    ACTIVE = "ACTIVE"
     EXPIRED = "EXPIRED"
     TERMINATED = "TERMINATED"
+    CANCELLED = "CANCELLED"
+    ARCHIVED = "ARCHIVED"
+
 
 @dataclass
 class ListParams:
     """Parameters for contract listing"""
     q: str = ""
     status: Optional[List[str]] = None
+    lifecycle_stage: Optional[List[str]] = None
     contract_type: Optional[List[str]] = None
     owner: Optional[List[str]] = None
     counterparty: Optional[List[str]] = None
@@ -35,6 +39,8 @@ class ListParams:
     def __post_init__(self):
         if self.status is None:
             self.status = []
+        if self.lifecycle_stage is None:
+            self.lifecycle_stage = []
         if self.contract_type is None:
             self.contract_type = []
         if self.owner is None:
@@ -83,6 +89,10 @@ class ContractData:
     stage_display_full: str = ""
     has_exception: bool = False
     next_action: str = ""
+    # Primary document state (artifact maturity — separate from record status).
+    document_state: str = ""
+    document_state_display: str = ""
+    document_state_badge_tone: str = ""
 
     def to_dict(self):
         """Convert to dictionary for JSON serialization"""

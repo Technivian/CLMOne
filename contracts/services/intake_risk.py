@@ -18,7 +18,9 @@ RISK_INPUT_FIELDS = (
     'contract_type', 'governing_law', 'jurisdiction', 'start_date', 'end_date',
     'paper_source',
 )
-HIGH_VALUE_THRESHOLD = Decimal('100000')
+from contracts.services.finance_approval_policy import get_finance_approval_threshold
+
+HIGH_VALUE_THRESHOLD = get_finance_approval_threshold()
 HIGH_VALUE_CRITICAL_THRESHOLD = Decimal('500000')
 LONG_DURATION_DAYS = 365 * 3
 STANDARD_LAW_TERMS = ('delaware', 'new york', 'england', 'wales')

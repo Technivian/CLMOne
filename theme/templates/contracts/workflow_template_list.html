@@ -1,78 +1,262 @@
 {% extends "base.html" %}
 {% block title %}Workflow Templates – CLM One{% endblock %}
-{% block authenticated_page_title %}Workflow Operations{% endblock %}
-{% block authenticated_page_subtitle %}Reusable workflow definitions for review, approval, and signature.{% endblock %}
+{% block authenticated_page_title %}Workflow Designer{% endblock %}
+{% block authenticated_page_subtitle %}Author reusable templates, routing, and approval rules for governed contract work.{% endblock %}
 
 {% block content %}
 {% include "components/_list_page_shell_styles.html" %}
 <style nonce="{{ csp_nonce }}">
-  .workflow-templates-page .clm-list-shell { margin-bottom: var(--space-12); }
+  .workflow-templates-page .clm-list-result-count {
+    font-size: 13px; font-weight: 600; color: var(--ink-700, var(--text-secondary));
+    margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent;
+    white-space: nowrap; min-width: 0; line-height: 1.2;
+  }
+  .workflow-templates-page.dc-ds-list-page > form > .dc-ds-filterbar { margin-bottom: calc(-1 * var(--space-8)); }
+  .workflow-templates-page .template-card-grid {
+    display: grid; grid-template-columns: 1fr; gap: var(--space-12);
+    margin-top: var(--space-16);
+  }
+  @media (min-width: 768px) {
+    .workflow-templates-page .template-card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (min-width: 1100px) {
+    .workflow-templates-page .template-card-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
   .workflow-templates-page .template-card {
-    display: flex; flex-direction: column; gap: var(--space-12);
+    position: relative; display: flex; flex-direction: column; gap: var(--space-10);
     min-height: 100%; padding: var(--space-16);
+    border: 1px solid var(--line); border-radius: var(--radius-subpanel, 12px);
+    background: var(--card); text-decoration: none; color: inherit;
+    transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+  }
+  .workflow-templates-page .template-card:hover,
+  .workflow-templates-page .template-card:focus-within {
+    border-color: color-mix(in srgb, var(--primary) 35%, var(--line));
+    box-shadow: var(--shadow-card, 0 8px 24px rgba(11,23,40,.06));
+  }
+  .workflow-templates-page .template-card:focus-visible {
+    outline: 3px solid var(--focus-ring); outline-offset: 2px;
   }
   .workflow-templates-page .template-card__head {
-    display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-12);
+    display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-8);
   }
-  .workflow-templates-page .template-card__head h3 { margin: 0; font: var(--text-section); color: var(--ink-900); }
-  .workflow-templates-page .template-card__meta { color: var(--ink-500); font: var(--text-small); }
-  .workflow-templates-page .template-preview-list { display: grid; gap: 4px; color: var(--ink-700); font: var(--text-small); }
+  .workflow-templates-page .template-card__title {
+    margin: 0; font: var(--text-section); color: var(--ink-900); letter-spacing: -0.01em;
+  }
+  .workflow-templates-page .template-card__type {
+    margin: 4px 0 0; color: var(--ink-500); font: var(--text-small);
+  }
+  .workflow-templates-page .template-card__badges {
+    display: inline-flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end;
+  }
+  .workflow-templates-page .template-card__path {
+    margin: 0; color: var(--ink-700); font: var(--text-small); line-height: 1.45;
+  }
+  .workflow-templates-page .template-card__meta {
+    display: grid; gap: 4px; color: var(--ink-500); font: var(--text-meta);
+  }
   .workflow-templates-page .template-card__foot {
-    display: flex; align-items: center; justify-content: space-between; gap: var(--space-12);
-    margin-top: auto; padding-top: var(--space-12); border-top: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: space-between; gap: var(--space-8);
+    margin-top: auto; padding-top: var(--space-12); border-top: 1px solid var(--hairline, var(--line));
+  }
+  .workflow-templates-page .template-card__cta {
+    color: var(--seal-dark, var(--primary)); font: var(--text-small); font-weight: 700;
+  }
+  .workflow-templates-page .template-card__menu { position: relative; z-index: 2; }
+  .workflow-templates-page .template-card__menu > summary {
+    list-style: none; cursor: pointer; min-width: 32px; min-height: 32px;
+    display: inline-grid; place-items: center; border: 1px solid var(--line);
+    border-radius: var(--radius-control, 8px); background: var(--card); color: var(--ink-700);
+  }
+  .workflow-templates-page .template-card__menu > summary::-webkit-details-marker { display: none; }
+  .workflow-templates-page .template-card__menu > summary:focus-visible {
+    outline: 3px solid var(--focus-ring); outline-offset: 2px;
+  }
+  .workflow-templates-page .template-card__menu-panel {
+    position: absolute; right: 0; top: calc(100% + 6px); z-index: 20;
+    min-width: 200px; padding: 6px; display: grid; gap: 2px;
+    border: 1px solid var(--line); border-radius: 10px; background: var(--card);
+    box-shadow: var(--shadow-card, 0 8px 24px rgba(11,23,40,.08));
+  }
+  .workflow-templates-page .template-card__menu-item {
+    display: block; width: 100%; padding: 8px 12px; border: 0; border-radius: 8px;
+    background: transparent; color: var(--ink-900); font: inherit; font-size: 13px;
+    font-weight: 600; text-align: left; text-decoration: none; cursor: pointer;
+  }
+  .workflow-templates-page .template-card__menu-item:hover { background: var(--well); }
+  .workflow-templates-page .template-card__menu-item--danger { color: var(--status-danger-fg, #8a1f1f); }
+  .workflow-templates-page .template-card__menu form { margin: 0; }
+  .workflow-templates-page .template-card__flag {
+    display: inline-flex; align-items: center; gap: 6px;
+    color: var(--status-pending-fg, #8a5a00); font: var(--text-meta); font-weight: 650;
   }
 </style>
 
-<div class="dc-ds-page dc-ds-page--wide dc-ds-page-flow dc-ds-list-page clm-list-page workflow-templates-page">
-  <header class="clm-list-shell dc-ds-filterbar dc-ds-table-toolbar dc-ds-list-toolbar" aria-label="Workflow operations controls">
-    <div class="clm-list-view-header">
-      {% include "components/_workflow_operations_tabs.html" with tabs=ops_tabs %}
-      <div class="clm-list-view-actions">
-        <a href="{% url 'contracts:workflow_template_create' %}" class="dc-ds-button dc-ds-button--primary">Create template</a>
-      </div>
-    </div>
-  </header>
+<div id="workflow-templates-root" class="dc-ds-page dc-ds-page--wide dc-ds-page-flow dc-ds-list-page clm-list-page workflow-templates-page">
+  {% url 'contracts:workflow_template_list' as templates_url %}
 
-  <p class="clm-list-result-count" aria-live="polite">{{ workflow_templates|length }} template{{ workflow_templates|length|pluralize }}</p>
-  <p class="profile-page__muted" style="margin:0 0 var(--space-12); color: var(--ink-500); font: var(--text-small);">
-    Open a template to use Workflow Designer for stages, conditions, versioning, testing, and publishing.
-  </p>
-
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-    {% for template in workflow_templates %}
-    <a href="{% url 'contracts:workflow_template_detail' template.pk %}" class="dc-ds-surface template-card" style="text-decoration:none">
-      <div class="template-card__head">
-        <h3>{{ template.name }}</h3>
-        <div class="flex items-center gap-2">
-          <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--neutral">v{{ template.version }}</span>
-          {% if template.is_active %}
-          <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--success">Published</span>
-          {% else %}
-          <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--neutral">Unpublished</span>
-          {% endif %}
+  <form method="get" action="{{ templates_url }}" id="workflow-templates-filters-form">
+    <header class="clm-list-shell dc-ds-filterbar dc-ds-table-toolbar dc-ds-list-toolbar" aria-label="Workflow Designer controls">
+      <div class="clm-list-view-header">
+        {% include "components/_workflow_designer_tabs.html" with tabs=designer_tabs %}
+        <div class="clm-list-view-actions">
+          <a href="{% url 'contracts:workflow_template_create' %}" class="dc-ds-button dc-ds-button--primary">Create template</a>
         </div>
       </div>
-      {% if template.description %}<p class="template-card__meta">{{ template.description }}</p>{% endif %}
-      <div class="template-card__meta">{{ template.steps.count }} step{{ template.steps.count|pluralize }}</div>
-      <div class="template-preview-list">
-        {% for step in template.steps.all|slice:":3" %}
-        <div>{{ step.order }}. {{ step.name }}</div>
-        {% endfor %}
-        {% if template.steps.count > 3 %}
-        <div class="template-card__meta">+{{ template.steps.count|add:"-3" }} more</div>
+
+      <div class="clm-list-filter-controls">
+        <div class="clm-list-search-field">
+          {% include "design_system/icon.html" with name="search" class_name="clm-list-search-icon" %}
+          <input
+            class="dc-ds-control"
+            type="search"
+            id="workflow-templates-search"
+            name="q"
+            value="{{ filter_q }}"
+            placeholder="Search templates"
+            aria-label="Search templates"
+          >
+        </div>
+        <div class="clm-list-actions-stack">
+          <p class="clm-list-result-count" aria-live="polite">{{ result_count }} template{{ result_count|pluralize }}</p>
+          <button
+            id="workflow-templates-filter-toggle"
+            type="button"
+            class="clm-list-filter-toggle dc-ds-button dc-ds-button--ghost"
+            aria-expanded="{% if more_filters_active %}true{% else %}false{% endif %}"
+            aria-controls="workflow-templates-filters"
+          >Filters</button>
+        </div>
+      </div>
+    </header>
+
+    <section
+      id="workflow-templates-filters"
+      class="clm-list-filter-drawer dc-ds-surface p-3{% if more_filters_active %} is-open{% endif %}"
+      aria-label="Filters"
+    >
+      <div class="clm-list-filter-drawer__header">
+        <h2 class="clm-list-filter-drawer__title">Filters</h2>
+        <a class="dc-ds-button dc-ds-button--quiet text-sm" href="{{ templates_url }}">Clear filters</a>
+      </div>
+      <div class="clm-list-filter-drawer__body">
+        <label for="workflow-templates-type">Contract type
+          <select id="workflow-templates-type" class="dc-ds-control" name="contract_type">
+            <option value="">All types</option>
+            {% for value, label in category_choices %}
+            <option value="{{ value }}" {% if filter_contract_type == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label for="workflow-templates-status">Status
+          <select id="workflow-templates-status" class="dc-ds-control" name="status">
+            <option value="">All statuses</option>
+            <option value="published" {% if filter_status == 'published' %}selected{% endif %}>Published</option>
+            <option value="draft" {% if filter_status == 'draft' %}selected{% endif %}>Draft</option>
+            <option value="incomplete" {% if filter_status == 'incomplete' %}selected{% endif %}>Incomplete</option>
+          </select>
+        </label>
+        <label for="workflow-templates-owner">Owner
+          <select id="workflow-templates-owner" class="dc-ds-control" name="owner">
+            <option value="">All owners</option>
+            <option value="workspace" {% if filter_owner == 'workspace' %}selected{% endif %}>Workspace</option>
+            <option value="system" {% if filter_owner == 'system' %}selected{% endif %}>System</option>
+            <option value="unassigned" {% if filter_owner == 'unassigned' %}selected{% endif %}>Unassigned stages</option>
+          </select>
+        </label>
+        <label for="workflow-templates-sort">Sort
+          <select id="workflow-templates-sort" class="dc-ds-control" name="sort">
+            <option value="updated" {% if filter_sort == 'updated' %}selected{% endif %}>Recently updated</option>
+            <option value="name" {% if filter_sort == 'name' %}selected{% endif %}>Name</option>
+            <option value="status" {% if filter_sort == 'status' %}selected{% endif %}>Status</option>
+            <option value="version" {% if filter_sort == 'version' %}selected{% endif %}>Version</option>
+          </select>
+        </label>
+        <div class="clm-list-filter-drawer__actions">
+          <button class="dc-ds-button dc-ds-button--primary" type="submit">Apply filters</button>
+        </div>
+      </div>
+    </section>
+  </form>
+
+  <div class="template-card-grid">
+    {% for card in template_cards %}
+    <article class="dc-ds-surface template-card">
+      <a href="{{ card.designer_url }}" class="template-card__link-cover" aria-label="Open designer for {{ card.name }}" style="position:absolute; inset:0; z-index:1;"></a>
+      <div class="template-card__head">
+        <div>
+          <h3 class="template-card__title">{{ card.name }}</h3>
+          <p class="template-card__type">{{ card.contract_type_label }}</p>
+        </div>
+        <div class="template-card__badges">
+          <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ card.status_tone }}">{{ card.status_label }}</span>
+          <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--neutral">{{ card.version_label }}</span>
+        </div>
+      </div>
+      <p class="template-card__path">{{ card.stage_path }}</p>
+      <div class="template-card__meta">
+        <div>Owner: {{ card.owner_label }}</div>
+        <div>Updated {{ card.updated_at|date:"j M Y" }} · {{ card.editor_label }}</div>
+        <div>{{ card.active_workflow_count }} active workflow{{ card.active_workflow_count|pluralize }}</div>
+        {% if card.has_unpublished_changes %}
+        <div class="template-card__flag">Unpublished changes</div>
         {% endif %}
       </div>
       <div class="template-card__foot">
-        <span class="template-card__meta">Created {{ template.created_at|date:"j M Y" }}</span>
-        <span class="c-link text-sm font-semibold">Open in Designer →</span>
+        <span class="template-card__cta">Open designer →</span>
+        <details class="template-card__menu">
+          <summary aria-label="More actions for {{ card.name }}">⋯</summary>
+          <div class="template-card__menu-panel" role="menu">
+            <a href="{{ card.designer_url }}" class="template-card__menu-item" role="menuitem">Open designer</a>
+            <form method="post" action="{% url 'contracts:workflow_template_duplicate' card.template.pk %}" role="none">{% csrf_token %}
+              <button type="submit" class="template-card__menu-item" role="menuitem">Duplicate</button>
+            </form>
+            <form method="post" action="{% url 'contracts:workflow_template_clone_version' card.template.pk %}" role="none">{% csrf_token %}
+              <button type="submit" class="template-card__menu-item" role="menuitem">New version</button>
+            </form>
+            <a href="{{ card.designer_url }}#version-history" class="template-card__menu-item" role="menuitem">View versions</a>
+            <a href="{% url 'contracts:workflow_template_preview' card.template.pk %}" class="template-card__menu-item" role="menuitem">Test</a>
+            {% if card.is_published %}
+            <form method="post" action="{% url 'contracts:workflow_template_archive' card.template.pk %}" role="none">{% csrf_token %}
+              <button type="submit" class="template-card__menu-item" role="menuitem">Archive</button>
+            </form>
+            {% endif %}
+            {% if card.can_delete %}
+            <form method="post" action="{% url 'contracts:workflow_template_delete' card.template.pk %}" role="none" onsubmit="return confirm('Delete this template? This cannot be undone.');">{% csrf_token %}
+              <button type="submit" class="template-card__menu-item template-card__menu-item--danger" role="menuitem">Delete</button>
+            </form>
+            {% endif %}
+          </div>
+        </details>
       </div>
-    </a>
+    </article>
     {% empty %}
     {% url 'contracts:workflow_template_create' as workflow_template_create_url %}
-    <div class="col-span-full">
+    <div class="col-span-full" style="grid-column: 1 / -1;">
       {% include "design_system/empty_state.html" with icon="workflow" title="No workflow templates yet" reason="This workspace has no reusable approval or review blueprint." how="Templates appear here after an administrator defines the stages, owners, and routing rules in Workflow Designer." action_url=workflow_template_create_url action_label="Create first template" %}
     </div>
     {% endfor %}
   </div>
 </div>
+<script nonce="{{ csp_nonce }}">
+(function () {
+  var root = document.getElementById('workflow-templates-root');
+  if (!root) return;
+
+  var filterToggle = document.getElementById('workflow-templates-filter-toggle');
+  var filterDrawer = document.getElementById('workflow-templates-filters');
+  if (filterToggle && filterDrawer) {
+    filterToggle.addEventListener('click', function () {
+      var open = filterDrawer.classList.toggle('is-open');
+      filterToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+  }
+
+  document.addEventListener('click', function (event) {
+    root.querySelectorAll('.template-card__menu[open]').forEach(function (menu) {
+      if (!menu.contains(event.target)) menu.removeAttribute('open');
+    });
+  });
+})();
+</script>
 {% endblock %}

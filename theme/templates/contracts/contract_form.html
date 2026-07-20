@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load clmone_format %}
-{% block title %}{% if form.instance.pk %}Edit Contract{% else %}New Contract{% endif %} – CLM One{% endblock %}
-{% block authenticated_page_title %}{% if form.instance.pk %}Edit Contract{% else %}New Contract Request{% endif %}{% endblock %}
+{% block title %}{% if form.instance.pk %}Edit contract details{% else %}New Contract{% endif %} – CLM One{% endblock %}
+{% block authenticated_page_title %}{% if form.instance.pk %}Edit contract details{% else %}New Contract Request{% endif %}{% endblock %}
 {% block authenticated_page_back %}
 {% if form.instance.pk %}
 <a href="{% url 'contracts:contract_detail' form.instance.pk %}" class="topbar-back-link" data-workspace-back aria-label="Back to contract" title="Back to contract">
@@ -15,11 +15,18 @@
 {% endblock %}
 {% block authenticated_page_actions %}
 <div class="topbar-page-actions" id="contract-form-top-actions">
+  {% if form.instance.pk %}
+  <a href="{% url 'contracts:contract_detail' form.instance.pk %}" class="dc-ds-button dc-ds-button--link">Cancel</a>
+  {% if edit_governance and edit_governance.governed_fields_readonly %}
+  <button type="submit" form="contract-form" name="create_new_version" value="1" class="dc-ds-button dc-ds-button--quiet">Create new version</button>
+  <a href="{{ amendment_create_url }}" class="dc-ds-button dc-ds-button--quiet">Create amendment</a>
+  {% endif %}
+  <button type="submit" form="contract-form" class="dc-ds-button dc-ds-button--primary" id="submit-contract-btn">Save changes</button>
+  {% else %}
   <a href="{% url 'contracts:repository' %}" class="dc-ds-button dc-ds-button--link">Cancel</a>
   <button type="submit" form="contract-form" name="preview_draft" value="1" class="dc-ds-button dc-ds-button--quiet">Save draft</button>
-  <button type="submit" form="contract-form" class="dc-ds-button dc-ds-button--primary">
-    {% if form.instance.pk %}Update Contract{% else %}Create contract{% endif %}
-  </button>
+  <button type="submit" form="contract-form" class="dc-ds-button dc-ds-button--primary" id="submit-contract-btn">Create contract</button>
+  {% endif %}
 </div>
 {% endblock %}
 {% block content %}
@@ -27,7 +34,61 @@
 /* editor-page header: compact 20px title (Ironclad designer convention) */
 .page-wrap.contract-form-page { padding: 10px 4px 24px 10px; }
 .contract-form-page .arch-workspace-main {
-  padding-bottom: 120px;
+  padding-bottom: 140px;
+}
+.cform-governed-warning {
+  display: none;
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-status-warning-border);
+  border-radius: 8px;
+  background: var(--status-pending-bg);
+  color: var(--status-pending-fg);
+  font: var(--text-small);
+}
+.cform-governed-warning.is-visible { display: block; }
+.cform-rail-kv {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+.cform-rail-kv div { min-width: 0; }
+.cform-rail-kv dt {
+  margin: 0 0 2px;
+  color: var(--ink-500);
+  font: var(--text-meta);
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.cform-rail-kv dd {
+  margin: 0;
+  color: var(--ink-900);
+  font: var(--text-small);
+  line-height: 1.4;
+}
+.cform-rail-issues {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.cform-rail-issues li {
+  position: relative;
+  padding-left: 12px;
+  color: var(--status-pending-fg);
+  font: var(--text-small);
+  line-height: 1.4;
+}
+.cform-rail-issues li + li { margin-top: 6px; }
+.cform-rail-issues li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
 }
 .contract-form-page {
   --cform-shell-rail-width: 225px;
@@ -576,24 +637,28 @@ body.nav-collapsed .cform-bottom-actions {
       {# ── Main content ──────────────────────────────────────── #}
       <div class="arch-workspace-main space-y-4">
 
-        {# Compact intake context — workflow stepper is opt-in #}
+        {# Compact context — intake for create, contract state for edit #}
         <div class="cform-context-bar cform-stepper">
-          <div class="cform-context-bar__row" aria-label="Contract request status">
-            <h2 class="cform-command-title">Contract intake</h2>
+          <div class="cform-context-bar__row" aria-label="{% if form.instance.pk %}Contract edit context{% else %}Contract request status{% endif %}">
             {% if form.instance.pk %}
+            <h2 class="cform-command-title">Edit contract details</h2>
             <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ form.instance.status|contract_status_badge_tone }} cform-stepper-badge">{{ form.instance.get_status_display }}</span>
-            {% else %}
-            <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--progress cform-stepper-badge">In progress</span>
-            {% endif %}
-            <span class="cform-context-bar__meta">Owner: <strong>{% if form.instance.pk and form.instance.owner %}{{ form.instance.owner.get_full_name|default:form.instance.owner.username }}{% else %}{{ request.user.get_full_name|default:request.user.username }}{% endif %}</strong></span>
+            <span class="cform-context-bar__meta">Stage · <strong>{{ form.instance.get_lifecycle_stage_display }}</strong></span>
             <span class="cform-context-bar__sep" aria-hidden="true">·</span>
-            {% if form.instance.pk %}
-            <span class="cform-context-bar__meta" id="command-stage">Stage · {{ form.instance.get_lifecycle_stage_display }}</span>
-            {% else %}
-            <span class="cform-context-bar__meta" id="command-stage">Stage 1 of 6 · Intake</span>
+            <span class="cform-context-bar__meta">Version · <strong>{{ edit_governance.current_version }}</strong></span>
+            {% if edit_governance.validation_issues %}
+            <span class="cform-context-bar__sep" aria-hidden="true">·</span>
+            <span class="cform-context-bar__meta">{{ edit_governance.validation_issues|length }} validation issue{{ edit_governance.validation_issues|length|pluralize }}</span>
             {% endif %}
+            {% else %}
+            <h2 class="cform-command-title">Contract intake</h2>
+            <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--progress cform-stepper-badge">In progress</span>
+            <span class="cform-context-bar__meta">Owner: <strong>{{ request.user.get_full_name|default:request.user.username }}</strong></span>
+            <span class="cform-context-bar__sep" aria-hidden="true">·</span>
+            <span class="cform-context-bar__meta" id="command-stage">Stage 1 of 6 · Intake</span>
             <span class="cform-context-bar__sep" aria-hidden="true">·</span>
             <span class="cform-context-bar__meta" id="command-progress">0 of 8 required fields complete</span>
+            {% endif %}
             <span class="cform-context-bar__sep" aria-hidden="true">·</span>
             <details class="cform-workflow-reveal">
               <summary>View workflow</summary>
@@ -641,17 +706,23 @@ body.nav-collapsed .cform-bottom-actions {
           </div>
         </div>
 
-        {# Contract identity: the minimum useful request record #}
+        {% if form.instance.pk %}
+        <div class="cform-governed-warning" id="cform-governed-warning" role="status" aria-live="polite">
+          These changes will recalculate risk and may alter the approval route.
+        </div>
+        {% endif %}
+
+        {# Contract identity #}
         <section class="dc-ds-surface cform-intake-panel" aria-labelledby="contract-identity-heading">
           <div class="cform-panel-head">
             <div class="cform-panel-head-title-row">
               <span class="cform-panel-num" aria-hidden="true">1</span>
               <div>
-                <div class="arch-section-label">Request intake</div>
+                <div class="arch-section-label">{% if form.instance.pk %}Contract details{% else %}Request intake{% endif %}</div>
                 <h2 id="contract-identity-heading" class="cform-panel-title">Contract identity</h2>
               </div>
             </div>
-            <span class="cform-panel-meta">Required to create</span>
+            <span class="cform-panel-meta">{% if form.instance.pk %}{% if edit_governance.governed_fields_readonly %}Metadata editable{% else %}Revision unlocked{% endif %}{% else %}Required to create{% endif %}</span>
           </div>
           <div class="cform-panel-body">
             <div class="cform-section-grid">
@@ -940,6 +1011,73 @@ body.nav-collapsed .cform-bottom-actions {
 
       {# ── Context sidebar ───────────────────────────────────── #}
       <div class="arch-workspace-sidebar">
+        {% if form.instance.pk and edit_governance %}
+        <div class="dc-ds-surface cform-rail-card">
+          <div class="cform-rail-head">
+            <div class="arch-section-label">Contract state</div>
+          </div>
+          <div class="cform-rail-body">
+            <dl class="cform-rail-kv">
+              <div>
+                <dt>Contract state</dt>
+                <dd>{{ form.instance.get_status_display }}</dd>
+              </div>
+              <div>
+                <dt>Current stage</dt>
+                <dd>{{ form.instance.get_lifecycle_stage_display }}</dd>
+              </div>
+              <div>
+                <dt>Version</dt>
+                <dd>{{ edit_governance.current_version }}</dd>
+              </div>
+              <div>
+                <dt>Change impact</dt>
+                <dd>{{ edit_governance.change_impact }}</dd>
+              </div>
+              <div>
+                <dt>Risk reassessment</dt>
+                <dd>
+                  {% include "design_system/status_badge.html" with label=edit_governance.risk_state.label tone=edit_governance.risk_state.tone size="sm" %}
+                  <span class="c-muted text-xs" style="display:block;margin-top:4px;">{{ edit_governance.risk_state.detail }}</span>
+                </dd>
+              </div>
+              <div>
+                <dt>Approval impact</dt>
+                <dd>{{ edit_governance.approval_impact }}</dd>
+              </div>
+              <div>
+                <dt>Validation issues</dt>
+                <dd>
+                  {% if edit_governance.validation_issues %}
+                  <ul class="cform-rail-issues">
+                    {% for issue in edit_governance.validation_issues %}
+                    <li>{{ issue }}</li>
+                    {% endfor %}
+                  </ul>
+                  {% else %}
+                  <span class="c-muted">No open validation issues</span>
+                  {% endif %}
+                </dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+
+        <div class="dc-ds-surface cform-rail-card">
+          <div class="cform-rail-head">
+            <div class="arch-section-label">Original configuration</div>
+            <p class="text-xs c-muted mt-1">Read-only after creation</p>
+          </div>
+          <div class="cform-rail-body">
+            <dl class="cform-rail-kv">
+              <div><dt>Starting template</dt><dd>{{ edit_governance.setup_readonly.template_name }}</dd></div>
+              <div><dt>Playbook</dt><dd>{{ edit_governance.setup_readonly.playbook|default:"—" }}</dd></div>
+              <div><dt>Contract type</dt><dd>{{ edit_governance.setup_readonly.contract_type }}</dd></div>
+              <div><dt>Paper source</dt><dd>{{ edit_governance.setup_readonly.paper_source }}</dd></div>
+            </dl>
+          </div>
+        </div>
+        {% else %}
         <div class="dc-ds-surface cform-rail-card">
           <div class="cform-rail-head">
             <div class="arch-completion-label">Readiness</div>
@@ -1009,19 +1147,26 @@ body.nav-collapsed .cform-bottom-actions {
             </div>
           </div>
         </div>
+        {% endif %}
 
       </div>
 
     </div>{# /arch-workspace-grid #}
 
-    {% if not form.instance.pk %}
-    <div class="cform-bottom-actions" id="contract-form-sticky-actions" aria-label="Contract request actions">
+    <div class="cform-bottom-actions is-docked-hidden" id="contract-form-sticky-actions" aria-label="{% if form.instance.pk %}Contract edit actions{% else %}Contract request actions{% endif %}" aria-hidden="true">
       <div class="cform-bottom-actions__cluster">
+        {% if form.instance.pk %}
+        {% if edit_governance and edit_governance.governed_fields_readonly %}
+        <button type="submit" name="create_new_version" value="1" class="dc-ds-button dc-ds-button--quiet">Create new version</button>
+        <a href="{{ amendment_create_url }}" class="dc-ds-button dc-ds-button--quiet">Create amendment</a>
+        {% endif %}
+        <button type="submit" class="dc-ds-button dc-ds-button--primary" id="submit-contract-btn-sticky">Save changes</button>
+        {% else %}
         <button type="submit" name="preview_draft" value="1" class="dc-ds-button dc-ds-button--quiet">Save draft</button>
-        <button type="submit" class="dc-ds-button dc-ds-button--primary" id="submit-contract-btn">Create contract</button>
+        <button type="submit" class="dc-ds-button dc-ds-button--primary">Create contract</button>
+        {% endif %}
       </div>
     </div>
-    {% endif %}
 
   </form>
 
@@ -1153,7 +1298,9 @@ contract_type change — no per-keystroke request needed.
     const selectedTemplateName = launchSetupCard?.dataset.selectedTemplateName || '';
     const canViewApprovalRouting = launchSetupCard?.dataset.canViewApprovalRouting === 'true';
     const calculateNoticeDeadline = {% if form.instance.pk %}false{% else %}true{% endif %};
-    if (!form || !countEl || !barEl || !listEl) return;
+    const isEditMode = {% if form.instance.pk %}true{% else %}false{% endif %};
+    const governedWarning = document.getElementById('cform-governed-warning');
+    if (!form) return;
 
     if (topActions && stickyActions && 'IntersectionObserver' in window) {
         const actionObserver = new IntersectionObserver(function (entries) {
@@ -1163,6 +1310,26 @@ contract_type change — no per-keystroke request needed.
         }, { threshold: 0.1 });
         actionObserver.observe(topActions);
     }
+
+    if (isEditMode && governedWarning) {
+        const baseline = {};
+        form.querySelectorAll('[data-governed-field="true"]').forEach(function (el) {
+            baseline[el.name] = el.type === 'checkbox' ? el.checked : el.value;
+        });
+        function syncGovernedWarning() {
+            let changed = false;
+            form.querySelectorAll('[data-governed-field="true"]').forEach(function (el) {
+                const current = el.type === 'checkbox' ? el.checked : el.value;
+                if (String(current) !== String(baseline[el.name])) changed = true;
+            });
+            governedWarning.classList.toggle('is-visible', changed);
+        }
+        form.addEventListener('input', syncGovernedWarning);
+        form.addEventListener('change', syncGovernedWarning);
+    }
+
+    // Edit mode uses the governance rail instead of intake readiness widgets.
+    if (!countEl || !barEl || !listEl) return;
 
     // Contract Launch Setup: recommended template, playbook, review/approval
     // route, and required fields per contract type — computed server-side
@@ -1221,7 +1388,7 @@ contract_type change — no per-keystroke request needed.
         const approvalRoute = setup ? setup.approval_route : 'Select a contract type to determine approval routing.';
         if (missing.length) {
             return {
-                label: 'Risk not assessed',
+                label: {% if form.instance.pk %}'Risk assessment incomplete'{% else %}'Risk not assessed'{% endif %},
                 reasons: ['Complete the risk inputs before relying on a preliminary risk result.'],
                 missing: missing,
                 reviewRoute: reviewRoute,

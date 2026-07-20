@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from datetime import datetime
 
 from django.utils import timezone
@@ -7,6 +8,8 @@ from django.utils.dateparse import parse_datetime
 
 from contracts.models import AuditLog, SignatureRequest
 from contracts.services.signature_audit import log_signature_packet_completed, log_signature_packet_sent
+
+logger = logging.getLogger(__name__)
 
 
 class ESignReconciliationError(RuntimeError):
@@ -150,6 +153,20 @@ def transition_signature_request(
                 request_ids=packet_request_ids,
                 request_count=len(packet_request_ids),
             )
+            if signature_request.contract_id:
+                from contracts.services.contract_lifecycle import activate_contract
+                try:
+                    activate_contract(
+                        signature_request.contract,
+                        actor=actor,
+                        system=True,
+                        reason='All signature requests completed',
+                    )
+                except Exception:
+                    logger.exception(
+                        'activate_contract_failed contract_id=%s',
+                        signature_request.contract_id,
+                    )
     return {
         'from_status': from_status,
         'to_status': new_status,

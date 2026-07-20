@@ -53,7 +53,7 @@ class Command(BaseCommand):
                 run.detail = {'dry_run': dry_run}
                 candidates = (
                     Contract.objects.filter(organization=organization)
-                    .exclude(lifecycle_stage='ARCHIVED')
+                    .exclude(status=Contract.Status.ARCHIVED)
                     .order_by('id')[:limit]
                 )
                 for contract in candidates:

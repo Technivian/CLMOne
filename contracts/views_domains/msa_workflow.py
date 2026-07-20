@@ -13,6 +13,7 @@ from django.views import View
 
 from contracts.models import ApprovalRule, Contract, FieldDefinition, OrganizationMembership, Workflow, WorkflowStep
 from contracts.permissions import ContractAction, can_access_contract_action
+from contracts.services.finance_approval_policy import get_finance_approval_threshold
 from contracts.services.msa_workflow import (
     create_msa_document_artifact,
     create_msa_workflow_instance,
@@ -78,6 +79,7 @@ class MSAWorkflowBuilderView(LoginRequiredMixin, View):
             'approval_route': approval_route,
             'clause_library_count': get_clause_library_count(organization, 'MSA'),
             'gemini_ai_enabled': False,
+            'finance_approval_threshold': int(get_finance_approval_threshold()),
             'errors': errors or {},
             'posted': posted or {},
         }

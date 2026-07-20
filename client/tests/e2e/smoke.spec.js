@@ -68,7 +68,7 @@ test('redesigned workspace shells render on key frontend pages', async ({ page }
     },
     {
       path: '/contracts/workflows/templates/',
-      title: /Workflow Operations/,
+      title: /Workflow Designer/,
       summaryText: /Create template|No workflow templates yet/,
       marker: '.workflow-templates-page',
       shell: '.workflow-templates-page',

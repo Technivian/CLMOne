@@ -104,6 +104,28 @@ test('DPA four-step builder validates, generates, and opens the contract record'
   await expect(page.getByText(counterparty).first()).toBeVisible();
   await expect(page.getByText('Generated DPA Draft').first()).toBeVisible();
   await expect(page.getByRole('link', { name: 'View contract record' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Send to Legal Review' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Export Word' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Generate DPA review memo' })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Review next action' })).toHaveCount(0);
+
+  await page.getByRole('tab', { name: 'Activity' }).click();
+  await expect(page.locator('[data-workspace-rail-pane="activity"]')).toBeVisible();
+  await expect(page.locator('body')).toContainText(/Audit|generated|No audit|created|DPA/i);
+
+  await page.getByRole('tab', { name: 'Review' }).click();
+  const clauseLink = page.locator('[data-clause-link]').first();
+  if (await clauseLink.count()) {
+    await clauseLink.click();
+  }
+
+  await page.getByRole('link', { name: 'View contract record' }).click();
+  await expect(page).toHaveURL(/\/contracts\/\d+\/?$/);
+  await page.reload();
+  await expect(page.getByText(counterparty).first()).toBeVisible();
+  await page.goBack();
+  await expect(page).toHaveURL(/\/contracts\/workflows\/\d+/);
+  await expect(page.getByRole('link', { name: 'View contract record' })).toBeVisible();
 
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.locator('.dc-ds-workspace')).toBeVisible();
@@ -116,10 +138,5 @@ test('DPA four-step builder validates, generates, and opens the contract record'
   await recordLink.click();
   await expect(page).toHaveURL(/\/contracts\/\d+\/?$/);
   await expect(page.locator('.dc-ds-workspace--record')).toBeVisible();
-  await expect(page.locator('.dc-ds-workspace__metadata-grid')).toBeVisible();
   await expect(page.getByText(counterparty).first()).toBeVisible();
-  await expect(page.getByText('Next action & blockers').first()).toBeVisible();
-  const primary = page.locator('.dc-ds-workspace--record .dc-ds-button--primary').first();
-  await primary.focus();
-  await expect(primary).toBeFocused();
 });

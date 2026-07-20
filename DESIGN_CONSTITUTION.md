@@ -1,7 +1,15 @@
 # DESIGN CONSTITUTION - CMS Aegis
 
+> **HISTORICAL — SUPERSEDED**
+>
+> Superseded by [`GOVERNANCE_CHARTER.md`](GOVERNANCE_CHARTER.md) on 2026-07-20
+> per [ADR-0009](docs/adr/0009-governance-charter-supersession.md).
+>
+> Retained for traceability only. **Do not implement** requirements from this
+> file when they conflict with the current CLM One Governance Charter.
+
 Version: 1.5
-Status: Mandatory
+Status: Historical (superseded)
 Last amended: 2026-07-07 (§15 — Pipeline Governance: single-PR rule for token+template changes, exceptions convention)
 Purpose: enforce one coherent enterprise-grade product language across all pages
 

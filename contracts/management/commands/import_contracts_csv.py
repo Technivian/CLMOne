@@ -77,7 +77,19 @@ class Command(BaseCommand):
             contract.title = title
             contract.counterparty = counterparty
             contract.contract_type = data.get('contract_type', contract.contract_type)
-            contract.status = data.get('status', contract.status)
+            raw_status = data.get('status', contract.status)
+            status_aliases = {
+                'DRAFT': Contract.Status.IN_PROGRESS,
+                'PENDING': Contract.Status.IN_PROGRESS,
+                'IN_REVIEW': Contract.Status.IN_PROGRESS,
+                'APPROVED': Contract.Status.IN_PROGRESS,
+                'COMPLETED': Contract.Status.ACTIVE,
+            }
+            allowed = {choice for choice, _ in Contract.Status.choices}
+            if raw_status:
+                mapped = status_aliases.get(str(raw_status).strip().upper(), str(raw_status).strip().upper())
+                if mapped in allowed:
+                    contract.status = mapped
             contract.currency = data.get('currency', contract.currency)
             contract.governing_law = data.get('governing_law', contract.governing_law)
             contract.jurisdiction = data.get('jurisdiction', contract.jurisdiction)
