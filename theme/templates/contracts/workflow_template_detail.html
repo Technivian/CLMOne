@@ -4,14 +4,7 @@
 {% block authenticated_page_subtitle %}Configure reusable workflow definitions, conditions, stages, versioning, testing, and publishing.{% endblock %}
 {% block content %}
 <style nonce="{{ csp_nonce }}">
-.version-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--card-border); transition: background 0.15s; }
-.version-row:hover { background: var(--sidebar-hover); }
 .step-row { padding: 16px 20px; border-bottom: 1px solid var(--card-border); }
-.activity-card { border-radius: 8px; border: 1px solid var(--card-border); padding: 12px; }
-.preview-tbl-wrap { overflow-x: auto; border: 1px solid var(--card-border); border-radius: 12px; }
-.preview-tbl-wrap table { min-width: 100%; border-collapse: collapse; }
-.preview-tbl-wrap tbody { }
-.preview-tbl { border-color: var(--card-border); }
 .preview-tr-start { background: var(--primary-subtle); }
 .preview-tr-complete { background: rgba(34,197,94,0.08); }
 .preview-tr-skip { background: rgba(107,114,128,0.08); opacity: 0.7; }
@@ -87,37 +80,64 @@
         <div class="panel-head">
             <span id="version-history" class="panel-title">Version History</span>
         </div>
-        <div>
-            {% for version in template_versions %}
-            <div class="version-row">
-                <div>
-                    <div class="flex items-center gap-2">
-                        <a href="{% url 'contracts:workflow_template_detail' version.pk %}" class="font-medium c-primary hover:underline">Version {{ version.version }}</a>
-                        {% if version.pk == workflow_template.pk %}
-                        <span class="dc-ds-badge--progress">Current</span>
-                        {% endif %}
-                        {% if version.parent_template_id %}
-                        <span class="dc-ds-badge--neutral">Derived</span>
-                        {% endif %}
-                    </div>
-                    <p class="text-sm c-muted mt-1">{{ version.description }}</p>
-                </div>
-                <div class="flex items-center gap-4 flex-shrink-0">
-                    {% if version.pk != workflow_template.pk %}
-                    <a href="{% url 'contracts:workflow_template_compare' workflow_template.pk version.pk %}" class="text-xs font-medium c-link">Compare</a>
-                    {% endif %}
-                    <span class="text-xs c-muted">Created {{ version.created_at|date:"M d, Y" }}</span>
-                    {% if version.pk != workflow_template.pk %}
-                    <form method="post" action="{% url 'contracts:workflow_template_restore_version' version.pk %}">
-                        {% csrf_token %}
-                        <button type="submit" class="text-xs font-medium c-link">Restore</button>
-                    </form>
-                    {% endif %}
-                </div>
-            </div>
-            {% empty %}
-            <div class="empty-state">No version history available.</div>
-            {% endfor %}
+        <div class="dc-ds-table-wrap" style="border:0;border-radius:0;">
+            <table class="dc-ds-table" aria-label="Workflow template versions">
+                <caption class="sr-only">Version history for {{ workflow_template.name }}</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Version</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Summary</th>
+                        <th scope="col">Created</th>
+                        <th scope="col" data-col="actions"><span class="sr-only">Actions</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for version in template_versions %}
+                    <tr{% if version.pk == workflow_template.pk %} class="is-row-active"{% endif %}>
+                        <td>
+                            <a href="{% url 'contracts:workflow_template_detail' version.pk %}" class="font-medium c-primary hover:underline">v{{ version.version }}</a>
+                        </td>
+                        <td>
+                            {% if version.pk == workflow_template.pk %}
+                            <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--progress">Current</span>
+                            {% endif %}
+                            {% if version.is_active %}
+                            <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--success">Published</span>
+                            {% else %}
+                            <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--neutral">Draft</span>
+                            {% endif %}
+                            {% if version.parent_template_id %}
+                            <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--neutral">Derived</span>
+                            {% endif %}
+                        </td>
+                        <td><span class="dc-ds-table-cell-text">{{ version.description|default:"—" }}</span></td>
+                        <td>{{ version.created_at|date:"j M Y" }}</td>
+                        <td data-col="actions">
+                            <details class="wq-kebab">
+                                <summary class="wq-kebab-trigger" aria-label="Actions for version {{ version.version }}">⋯</summary>
+                                <div class="wq-kebab-menu" role="menu">
+                                    <a href="{% url 'contracts:workflow_template_detail' version.pk %}" class="wq-kebab-action" role="menuitem">View version</a>
+                                    {% if version.pk != workflow_template.pk %}
+                                    <a href="{% url 'contracts:workflow_template_compare' workflow_template.pk version.pk %}" class="wq-kebab-action" role="menuitem">Compare</a>
+                                    <form method="post" action="{% url 'contracts:workflow_template_restore_version' version.pk %}" role="none">
+                                        {% csrf_token %}
+                                        <button type="submit" class="wq-kebab-action" role="menuitem">Restore</button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            </details>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5">
+                            {% include "design_system/empty_state.html" with icon="workflow" title="No version history" reason="Version history appears after the first workflow template is saved." how="Create a new version from a published template to start tracking revisions." class_name="dc-ds-empty--compact" %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 
@@ -255,43 +275,36 @@
                         <p class="text-xs c-muted">{{ preview_result.active_step_count }} active · {{ preview_result.skipped_step_count }} skipped</p>
                     </div>
                 </div>
-                <div class="preview-tbl-wrap">
-                    <table class="min-w-full divide-y preview-tbl">
-                        <thead class="tbl-head">
+                <div class="dc-ds-table-wrap">
+                    <table class="dc-ds-table" aria-label="Workflow template preview results">
+                        <caption class="sr-only">Preview routing results for {{ workflow_template.name }}</caption>
+                        <thead>
                             <tr>
-                                <th class="tbl-th px-4 py-3 text-left text-xs uppercase tracking-wider">Order</th>
-                                <th class="tbl-th px-4 py-3 text-left text-xs uppercase tracking-wider">Step</th>
-                                <th class="tbl-th px-4 py-3 text-left text-xs uppercase tracking-wider">Kind</th>
-                                <th class="tbl-th px-4 py-3 text-left text-xs uppercase tracking-wider">Condition</th>
-                                <th class="tbl-th px-4 py-3 text-left text-xs uppercase tracking-wider">Status</th>
-                                <th class="tbl-th px-4 py-3 text-left text-xs uppercase tracking-wider">Reason</th>
-                                <th class="tbl-th px-4 py-3 text-left text-xs uppercase tracking-wider">Assignee</th>
-                                <th class="tbl-th px-4 py-3 text-left text-xs uppercase tracking-wider">SLA</th>
+                                <th scope="col" data-numeric>Order</th>
+                                <th scope="col">Step</th>
+                                <th scope="col">Kind</th>
+                                <th scope="col">Condition</th>
+                                <th scope="col">Status</th>
+                                <th scope="col">Reason</th>
+                                <th scope="col">Assignee</th>
+                                <th scope="col">SLA</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for step in preview_result.preview_steps %}
                             <tr class="{% if step.preview_status == 'WOULD_START' %}preview-tr-start{% elif step.preview_status == 'WOULD_COMPLETE_AUTOMATICALLY' %}preview-tr-complete{% elif step.preview_status == 'WOULD_SKIP' %}preview-tr-skip{% endif %}">
-                                <td class="px-4 py-3 text-sm c-muted">{{ step.order }}</td>
-                                <td class="px-4 py-3 text-sm c-primary font-medium">{{ step.name }}</td>
-                                <td class="px-4 py-3 text-sm c-muted">{{ step.step_kind }}</td>
-                                <td class="px-4 py-3 text-sm c-muted">{{ step.condition_expression|default:'—' }}</td>
-                                <td class="px-4 py-3 text-sm">
-                                    <span class="
-                                        {% if step.preview_status == 'WOULD_START' %}dc-ds-badge--progress
-                                        {% elif step.preview_status == 'WOULD_COMPLETE_AUTOMATICALLY' %}dc-ds-badge--success
-                                        {% elif step.preview_status == 'WOULD_SKIP' %}dc-ds-badge--neutral
-                                        {% else %}dc-ds-badge--attention{% endif %}">
+                                <td data-numeric>{{ step.order }}</td>
+                                <td class="font-medium">{{ step.name }}</td>
+                                <td>{{ step.step_kind }}</td>
+                                <td><span class="dc-ds-table-cell-text">{{ step.condition_expression|default:'—' }}</span></td>
+                                <td>
+                                    <span class="dc-ds-badge dc-ds-badge--sm {% if step.preview_status == 'WOULD_START' %}dc-ds-badge--progress{% elif step.preview_status == 'WOULD_COMPLETE_AUTOMATICALLY' %}dc-ds-badge--success{% elif step.preview_status == 'WOULD_SKIP' %}dc-ds-badge--neutral{% else %}dc-ds-badge--attention{% endif %}">
                                         {{ step.preview_status }}
                                     </span>
                                 </td>
-                                <td class="px-4 py-3 text-sm c-muted">{{ step.reason }}</td>
-                                <td class="px-4 py-3 text-sm c-muted">
-                                    {% if step.resolved_assignee %}{{ step.resolved_assignee }}{% else %}—{% endif %}
-                                </td>
-                                <td class="px-4 py-3 text-sm c-muted">
-                                    {% if step.sla_hours %}{{ step.sla_hours }}h{% else %}—{% endif %}
-                                </td>
+                                <td><span class="dc-ds-table-cell-text">{{ step.reason }}</span></td>
+                                <td>{% if step.resolved_assignee %}{{ step.resolved_assignee }}{% else %}—{% endif %}</td>
+                                <td>{% if step.sla_hours %}{{ step.sla_hours }}h{% else %}—{% endif %}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -302,31 +315,49 @@
         </div>
     </div>
 
-    <div class="panel">
+    <div class="panel overflow-hidden">
         <div class="panel-head flex items-center justify-between gap-3">
             <span class="panel-title">Activity History</span>
             <a href="{{ workflow_template_activity_url }}" class="text-xs font-medium c-link">View all activity</a>
         </div>
-        <div class="panel-inner space-y-3 text-sm">
-            {% for entry in workflow_template_audit_feed %}
-            <div class="activity-card">
-                <div class="flex items-center justify-between gap-3">
-                    <span class="{{ entry.action_class }}">{{ entry.action }}</span>
-                    <span class="text-xs c-muted">{{ entry.timestamp|date:"M d, H:i" }}</span>
-                </div>
-                <div class="mt-2 font-medium c-primary">{{ entry.summary }}</div>
-                <div class="mt-1 text-xs c-muted">{{ entry.actor }}</div>
-                {% if entry.changed_fields %}
-                <div class="mt-2 flex flex-wrap gap-2">
-                    {% for field in entry.changed_fields %}
-                    <span class="dc-ds-badge--neutral">{{ field }}</span>
+        <div class="dc-ds-table-wrap" style="border:0;border-radius:0;">
+            <table class="dc-ds-table" aria-label="Workflow template activity">
+                <caption class="sr-only">Recent activity for {{ workflow_template.name }}</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Timestamp</th>
+                        <th scope="col">Actor</th>
+                        <th scope="col">Action</th>
+                        <th scope="col">Summary</th>
+                        <th scope="col">Changed fields</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in workflow_template_audit_feed %}
+                    <tr>
+                        <td><time datetime="{{ entry.timestamp|date:'c' }}">{{ entry.timestamp|date:"j M Y H:i" }}</time></td>
+                        <td>{{ entry.actor }}</td>
+                        <td><span class="{{ entry.action_class }}">{{ entry.action }}</span></td>
+                        <td><span class="dc-ds-table-cell-text">{{ entry.summary }}</span></td>
+                        <td>
+                            {% if entry.changed_fields %}
+                                {% for field in entry.changed_fields %}
+                                <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--neutral">{{ field }}</span>
+                                {% endfor %}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5">
+                            {% include "design_system/empty_state.html" with icon="clock" title="No activity recorded" reason="Creation, publication, edits, and tests appear here automatically." how="Open this template after publishing or editing to see the audit trail." class_name="dc-ds-empty--compact" %}
+                        </td>
+                    </tr>
                     {% endfor %}
-                </div>
-                {% endif %}
-            </div>
-            {% empty %}
-            <div class="empty-state">No activity recorded yet.</div>
-            {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 
