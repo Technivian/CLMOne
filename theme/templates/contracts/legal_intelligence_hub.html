@@ -45,24 +45,25 @@
     </div>
 </div>
 
-<div class="panel overflow-hidden">
-    <table class="w-full text-sm">
-        <thead class="tbl-head">
+<div class="dc-ds-table-wrap">
+    <table class="dc-ds-table" aria-label="Legal intelligence signals">
+        <caption class="sr-only">Contract risks, DPA findings, approvals, and deadlines across matters</caption>
+        <thead>
             <tr>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Severity</th>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Signal</th>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Source</th>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Matter/Client</th>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Owner</th>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Status</th>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Due/Age</th>
-                <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Action</th>
+                <th scope="col">Severity</th>
+                <th scope="col">Signal</th>
+                <th scope="col">Source</th>
+                <th scope="col">Matter/Client</th>
+                <th scope="col">Owner</th>
+                <th scope="col">Status</th>
+                <th scope="col">Due/Age</th>
+                <th scope="col" data-col="actions"><span class="sr-only">Actions</span></th>
             </tr>
         </thead>
         <tbody>
             {% for signal in legal_signals %}
-            <tr class="border-b transition-colors tbl-row">
-                <td class="px-5 py-3.5">
+            <tr>
+                <td>
                     {% if signal.severity %}
                     <span class="
                         {% if signal.severity == 'CRITICAL' %}dc-ds-badge--danger
@@ -75,20 +76,20 @@
                     <span class="c-dim">—</span>
                     {% endif %}
                 </td>
-                <td class="px-5 py-3.5">
+                <td>
                     <div class="font-medium c-primary">
                         {{ signal.title }}
                         {% if signal.is_conflict %}<span class="dc-ds-badge--danger">Cross-doc conflict</span>{% endif %}
                     </div>
                     {% if signal.summary %}<p class="text-xs mt-0.5 c-muted">{{ signal.summary|truncatechars:88 }}</p>{% endif %}
                 </td>
-                <td class="px-5 py-3.5 tbl-td">
+                <td>
                     {% if signal.source_type == 'contract_risk' %}Contract Risk
                     {% elif signal.source_type == 'dpa_risk' %}DPA Risk
                     {% elif signal.source_type == 'approval' %}Approval
                     {% elif signal.source_type == 'deadline' %}Deadline{% endif %}
                 </td>
-                <td class="px-5 py-3.5 tbl-td">
+                <td>
                     {% if signal.matter %}
                     <a href="{% url 'contracts:matter_detail' signal.matter.pk %}" class="c-link">{{ signal.matter.title }}</a>
                     {% elif signal.counterparty %}
@@ -97,7 +98,7 @@
                     <span class="c-dim">Unlinked</span>
                     {% endif %}
                 </td>
-                <td class="px-5 py-3.5">
+                <td>
                     {% if signal.owner %}
                     {% assignee_chip signal.owner %}
                     {% elif signal.owners_csv %}
@@ -106,20 +107,20 @@
                     <span class="c-dim">Unassigned</span>
                     {% endif %}
                 </td>
-                <td class="px-5 py-3.5">
+                <td>
                     <span class="dc-ds-badge--neutral">{{ signal.status_display }}</span>
                 </td>
-                <td class="px-5 py-3.5 tbl-td">
+                <td>
                     {% if signal.due_date %}{{ signal.due_date|due_countdown }}{% else %}{{ signal.updated_at|date:"d M Y" }}{% endif %}
                 </td>
-                <td class="px-5 py-3.5 text-right">
+                <td data-col="actions">
                     <a href="{{ signal.source_url }}"
                        class="dc-ds-button dc-ds-button--quiet text-xs font-medium px-2.5 py-1 rounded-md border transition-opacity hover:opacity-80">View</a>
                 </td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="8" class="px-5 py-20 text-center">
+                <td colspan="8">
                     <div class="flex flex-col items-center gap-3">
                         <div class="w-12 h-12 rounded-full flex items-center justify-center surface-bubble">
                             <svg class="w-6 h-6 c-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
