@@ -238,12 +238,26 @@ class DesignSystemPhaseTwoATests(SimpleTestCase):
             'clause_template_list.html': ('dc-ds-table-wrap', 'dc-ds-table', 'design_system/empty_state.html'),
             'approval_request_list.html': ('dc-ds-table-wrap',),
             'approval_rule_list_table.html': ('dc-ds-table-wrap', 'dc-ds-table'),
+            # Phase 3C closeout — remaining primary lists + workflow/dashboard.
+            'matter_list.html': ('dc-ds-table-wrap', 'dc-ds-table', 'design_system/empty_state.html'),
+            'client_list.html': ('dc-ds-table-wrap', 'dc-ds-table', 'design_system/empty_state.html'),
+            'counterparty_list.html': ('dc-ds-table-wrap', 'dc-ds-table', 'design_system/empty_state.html'),
+            'invoice_list.html': ('dc-ds-table-wrap', 'dc-ds-table', 'design_system/empty_state.html'),
+            'risk_log_list.html': ('dc-ds-table-wrap', 'dc-ds-table', 'design_system/empty_state.html'),
+            'dsar_list.html': ('dc-ds-table-wrap', 'dc-ds-table', 'design_system/empty_state.html'),
+            'deadline_list.html': ('dc-ds-table-wrap', 'dc-ds-table', 'design_system/empty_state.html'),
+            'legal_intelligence_hub.html': ('dc-ds-table-wrap', 'dc-ds-table'),
+            'workflow_template_detail.html': ('dc-ds-table-wrap', 'dc-ds-table', 'design_system/empty_state.html'),
         }
         for template_name, required in expectations.items():
             content = (templates / template_name).read_text()
             for value in required:
                 with self.subTest(template=template_name, value=value):
                     self.assertIn(value, content)
+        dashboard = (self.root / 'theme' / 'templates' / 'dashboard.html').read_text()
+        self.assertIn('dc-ds-table-wrap', dashboard)
+        self.assertIn('dc-ds-table', dashboard)
+        self.assertNotIn('cc-v3-table', dashboard)
         repository_js = (self.root / 'theme' / 'static' / 'js' / 'clmone-repository.js').read_text()
         self.assertIn('dc-ds-table-state', repository_js)
         self.assertIn('aria-selected', repository_js)
