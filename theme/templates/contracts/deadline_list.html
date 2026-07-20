@@ -28,38 +28,39 @@
       </div>
     </div>
     <div class="dc-ds-table-wrap">
-      <table class="dc-ds-table">
-        <thead class="tbl-head">
+      <table class="dc-ds-table" aria-label="Deadlines">
+        <caption class="sr-only">Deadlines with type, priority, due date, assignee, and status.</caption>
+        <thead>
           <tr>
-            <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Deadline</th>
-            <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Type</th>
-            <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Priority</th>
-            <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Due Date</th>
-            <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Assigned To</th>
-            <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Status</th>
-            <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th"><span class="sr-only">Actions</span></th>
+            <th scope="col">Deadline</th>
+            <th scope="col">Type</th>
+            <th scope="col">Priority</th>
+            <th scope="col">Due Date</th>
+            <th scope="col">Assigned To</th>
+            <th scope="col">Status</th>
+            <th scope="col" data-col="actions"><span class="sr-only">Actions</span></th>
           </tr>
         </thead>
         <tbody>
           {% for deadline in deadlines %}
           {# Preserve overdue row tinting: exception-state signal; preserve until semantic token available #}
-          <tr class="border-b transition-colors tbl-row {% if deadline.is_overdue %}row-overdue{% endif %}">
-            <td class="px-5 py-3.5 tbl-td">
+          <tr{% if deadline.is_overdue %} class="row-overdue"{% endif %}>
+            <td>
               <div class="text-sm font-medium c-primary">{{ deadline.title|truncatechars:40 }}</div>
               {% if deadline.matter %}<div class="item-meta">{{ deadline.matter.matter_number }}</div>{% endif %}
             </td>
-            <td class="px-5 py-3.5 tbl-td">{{ deadline.get_deadline_type_display }}</td>
-            <td class="px-5 py-3.5 tbl-td">
+            <td>{{ deadline.get_deadline_type_display }}</td>
+            <td>
               <span class="dc-ds-badge dc-ds-badge--sm {% if deadline.priority == 'CRITICAL' %}dc-ds-badge--danger{% elif deadline.priority == 'HIGH' or deadline.priority == 'MEDIUM' %}dc-ds-badge--attention{% else %}dc-ds-badge--neutral{% endif %}">{{ deadline.get_priority_display }}</span>
             </td>
-            <td class="px-5 py-3.5 tbl-td {% if deadline.is_overdue %}overdue-date font-medium{% endif %}">{{ deadline.due_date|date:"M d, Y" }}</td>
-            <td class="px-5 py-3.5 tbl-td">{{ deadline.assigned_to.get_full_name|default:"Unassigned" }}</td>
-            <td class="px-5 py-3.5 tbl-td">
+            <td{% if deadline.is_overdue %} class="overdue-date font-medium"{% endif %}>{{ deadline.due_date|date:"M d, Y" }}</td>
+            <td>{{ deadline.assigned_to.get_full_name|default:"Unassigned" }}</td>
+            <td>
               {% if deadline.is_completed %}<span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--success">Done</span>
               {% elif deadline.is_overdue %}<span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--danger">Overdue</span>
               {% else %}<span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--neutral">{{ deadline.days_remaining }}d left</span>{% endif %}
             </td>
-            <td class="px-5 py-3.5 tbl-td wq-col-action">
+            <td data-col="actions">
               <details class="wq-kebab">
                 <summary aria-label="Actions for {{ deadline.title|truncatechars:50 }}" class="wq-kebab-trigger">
                   <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.7"></circle><circle cx="12" cy="12" r="1.7"></circle><circle cx="12" cy="19" r="1.7"></circle></svg>
