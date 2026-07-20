@@ -345,29 +345,90 @@ class WorkflowDesignerCanvasTests(TestCase):
         self.assertEqual(response.context['active_tab'], 'test')
         self.assertIsNotNone(response.context['preview_result'])
         body = response.content.decode()
-        self.assertIn('Matched route', body)
-        self.assertIn('Triggered conditions', body)
-        self.assertIn('Skipped steps', body)
+        self.assertIn('Overview', body)
         self.assertIn('Assignments', body)
-        self.assertIn('SLA and escalation', body)
+        self.assertIn('Conditions', body)
+        self.assertIn('SLA &amp; escalation', body)
+        self.assertIn('Blocking issues', body)
+        self.assertIn('role="tablist"', body)
         self.assertIn('Standard NDA', body)
         self.assertIn('High-risk international transfer', body)
+        self.assertIn('wf-test-form__actions is-sticky', body)
+        self.assertIn('data-test-drawer-toggle', body)
+        self.assertIn('data-test-route', body)
         self.assertNotIn('Simulate routing without affecting live contracts.', body)
         self.assertNotIn('id_status', body)
         self.assertNotIn('wf-test-sim-badge', body)
         self.assertNotIn('>Simulation</', body)
         self.assertNotIn('Completed ·', body)
         self.assertNotIn('steps would run', body)
+        self.assertNotIn('Assignments resolved', body)
         result = response.context['preview_result']
         self.assertTrue(result.simulation_completed)
-        self.assertIn(result.result_tone, {'pass', 'blocked', 'fail'})
+        self.assertIn(result.result_tone, {'pass', 'warning', 'blocked', 'fail'})
+        self.assertTrue(result.final_outcome_label)
+        self.assertEqual(result.banner_title, result.banner_title.strip())
         if result.execution_blocked:
             self.assertIn('Simulation completed with blocking issues', body)
             self.assertIn('View blocking issues', body)
             self.assertIn('Assignments evaluated', body)
-            self.assertIn('execution would be blocked', body.lower())
+            self.assertIn('execution blocked', body.lower())
+            self.assertIn('unresolved assignment', body.lower())
+            self.assertEqual(
+                len([issue for issue in result.blocking_issues if 'assignment' in issue.issue.lower()]),
+                result.unresolved_assignment_count,
+            )
+            self.assertNotIn('Assignments resolved', body)
+            self.assertNotIn('No blocking issues for this scenario.', body)
+            self.assertNotIn('would complete</', body)
+            self.assertIn('is-blocking', body)
+            self.assertNotIn('is-complete', body)
         else:
-            self.assertIn('Simulation completed — executable', body)
+            self.assertIn('Simulation completed successfully', body)
+            self.assertIn('is-complete', body)
+
+    def test_simulation_result_semantics_are_consistent(self):
+        response = self.client.post(
+            reverse('contracts:workflow_template_preview', args=[self.template.pk]),
+            data={
+                'contract_type': 'MSA',
+                'value': '5000',
+                'jurisdiction': 'Netherlands',
+                'governing_law': 'Netherlands',
+                'data_transfer_flag': '',
+                'risk_level': 'LOW',
+                'counterparty_name': 'Acme',
+                'scenario_name': 'Consistency check',
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        result = response.context['preview_result']
+        body = response.content.decode()
+        self.assertIsNotNone(result)
+        self.assertTrue(result.final_outcome_label)
+        self.assertIn(f'wf-test-result-metrics__value">{result.active_step_count}</span>', body)
+        self.assertIn(f'wf-test-result-metrics__value">{result.skipped_step_count}</span>', body)
+        self.assertIn(f'wf-test-result-metrics__value">{result.unresolved_assignment_count}</span>', body)
+        self.assertIn('unresolved assignment', body)
+        self.assertIn(result.execution_outcome_label, body)
+        self.assertIn(result.final_outcome_label, body)
+        self.assertIn('wf-test-form__scroll', body)
+        self.assertIn('wf-test-route-scroll', body)
+        if result.unresolved_assignment_count:
+            self.assertTrue(result.execution_blocked)
+            self.assertEqual(result.execution_outcome_label, 'Execution blocked')
+            self.assertEqual(result.final_outcome_label, 'execution blocked')
+            assignment_issues = [
+                issue for issue in result.blocking_issues if 'assignment' in issue.issue.lower()
+            ]
+            self.assertEqual(len(assignment_issues), result.unresolved_assignment_count)
+            self.assertIn(result.blocking_summary_label, body)
+            self.assertNotIn('Assignments resolved', body)
+            self.assertNotIn('No blocking issues', body)
+        self.assertIn('Contract context', body)
+        self.assertIn('Risk context', body)
+        self.assertIn('Processing context', body)
+        self.assertIn('Scenario identity', body)
 
     def test_save_named_scenario(self):
         blocked = self.client.post(

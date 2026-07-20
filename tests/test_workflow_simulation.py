@@ -177,16 +177,17 @@ class WorkflowSimulationTests(TestCase):
             },
         )
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Matched route')
-        self.assertContains(response, 'Triggered conditions')
+        self.assertContains(response, 'Overview')
+        self.assertContains(response, 'Assignments')
+        self.assertContains(response, 'Conditions')
         self.assertIsNotNone(response.context['preview_result'])
         self.assertGreater(response.context['preview_result'].active_step_count, 0)
-        self.assertIn(response.context['preview_result'].result_tone, {'pass', 'blocked', 'fail'})
+        self.assertIn(response.context['preview_result'].result_tone, {'pass', 'warning', 'blocked', 'fail'})
         body = response.content.decode()
         self.assertIn('Simulation completed', body)
         self.assertNotIn('Completed ·', body)
         self.assertNotIn('steps would run', body)
-        self.assertNotIn('Assignments resolved</strong> — for each', body)
+        self.assertNotIn('Assignments resolved', body)
 
     def test_cross_tenant_preview_is_blocked(self):
         self.client.force_login(self.other_user)
@@ -239,6 +240,14 @@ class WorkflowSimulationTests(TestCase):
         self.assertGreater(result.unresolved_assignment_count, 0)
         self.assertTrue(result.execution_blocked)
         self.assertEqual(result.result_tone, 'blocked')
-        self.assertEqual(result.execution_outcome_label, 'Blocked before launch')
-        self.assertIn('unresolved assignments', result.final_outcome_label)
+        self.assertEqual(result.execution_outcome_label, 'Execution blocked')
+        self.assertEqual(result.final_outcome_label, 'execution blocked')
+        self.assertEqual(result.banner_title, 'Simulation completed with blocking issues')
+        self.assertTrue(result.blocking_issues)
+        self.assertEqual(
+            len([issue for issue in result.blocking_issues if 'assignment' in issue.issue.lower()]),
+            result.unresolved_assignment_count,
+        )
         self.assertTrue(any('Assignment unresolved' in message for message in result.validation_messages))
+        self.assertIn('unresolved', result.assignments_summary_label)
+        self.assertIn('required assignment', result.blocking_summary_label)

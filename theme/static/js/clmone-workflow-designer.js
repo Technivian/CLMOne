@@ -618,15 +618,49 @@
 
       const TEST_SCROLL_KEY = storageKey(root, 'test-scroll');
       const TEST_PRESET_KEY = storageKey(root, 'test-preset');
-      const inputsPane = root.querySelector('.wf-test-pane--inputs');
+      const TEST_PANEL_KEY = storageKey(root, 'test-panel-collapsed');
+      const formScroll = root.querySelector('.wf-test-form__scroll');
       const resultsPane = root.querySelector('[data-test-results-pane]');
+      const scenarioPanel = root.querySelector('[data-test-scenario-panel]');
+      const drawerToggle = root.querySelector('[data-test-drawer-toggle]');
+      const drawerBackdrop = root.querySelector('[data-test-drawer-backdrop]');
+      const collapseBtn = root.querySelector('[data-test-panel-collapse]');
+
+      const setDrawerOpen = (open) => {
+        scenarioPanel?.classList.toggle('is-drawer-open', open);
+        drawerToggle?.setAttribute('aria-expanded', open ? 'true' : 'false');
+        if (drawerBackdrop) {
+          if (open) drawerBackdrop.removeAttribute('hidden');
+          else drawerBackdrop.setAttribute('hidden', '');
+        }
+      };
+
+      const setPanelCollapsed = (collapsed) => {
+        root.classList.toggle('is-test-panel-collapsed', collapsed);
+        collapseBtn?.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+        if (collapseBtn) collapseBtn.textContent = collapsed ? 'Expand' : 'Collapse';
+        try {
+          sessionStorage.setItem(TEST_PANEL_KEY, collapsed ? '1' : '0');
+        } catch (_err) { /* ignore */ }
+      };
+
+      drawerToggle?.addEventListener('click', () => {
+        const open = !scenarioPanel?.classList.contains('is-drawer-open');
+        setDrawerOpen(open);
+      });
+      drawerBackdrop?.addEventListener('click', () => setDrawerOpen(false));
+      collapseBtn?.addEventListener('click', () => {
+        setPanelCollapsed(!root.classList.contains('is-test-panel-collapsed'));
+      });
+      try {
+        if (sessionStorage.getItem(TEST_PANEL_KEY) === '1') setPanelCollapsed(true);
+      } catch (_err) { /* ignore */ }
 
       const persistTestChrome = () => {
         try {
           sessionStorage.setItem(TEST_SCROLL_KEY, JSON.stringify({
-            inputs: inputsPane?.scrollTop || 0,
+            inputs: formScroll?.scrollTop || 0,
             results: resultsPane?.scrollTop || 0,
-            page: window.scrollY || 0,
           }));
           const activePreset = root.querySelector('[data-load-scenario].is-active');
           if (activePreset) {
@@ -639,7 +673,7 @@
         try {
           const scroll = JSON.parse(sessionStorage.getItem(TEST_SCROLL_KEY) || 'null');
           if (scroll) {
-            if (inputsPane) inputsPane.scrollTop = scroll.inputs || 0;
+            if (formScroll) formScroll.scrollTop = scroll.inputs || 0;
             if (resultsPane) resultsPane.scrollTop = scroll.results || 0;
           }
           const preset = sessionStorage.getItem(TEST_PRESET_KEY) || '';
@@ -654,16 +688,61 @@
       };
 
       testForm.addEventListener('submit', persistTestChrome);
-      inputsPane?.addEventListener('scroll', persistTestChrome, { passive: true });
+      formScroll?.addEventListener('scroll', persistTestChrome, { passive: true });
       resultsPane?.addEventListener('scroll', persistTestChrome, { passive: true });
       window.requestAnimationFrame(restoreTestChrome);
 
-      root.querySelector('[data-view-blocking-issues]')?.addEventListener('click', (event) => {
-        const target = document.getElementById('wf-test-blocking-issues');
-        if (!target) return;
+      const activateResultTab = (tabId) => {
+        const tabs = Array.from(root.querySelectorAll('[data-result-tab]'));
+        const panels = Array.from(root.querySelectorAll('[data-result-panel]'));
+        tabs.forEach((tab) => {
+          const selected = tab.dataset.resultTab === tabId;
+          tab.setAttribute('aria-selected', selected ? 'true' : 'false');
+          tab.tabIndex = selected ? 0 : -1;
+        });
+        panels.forEach((panel) => {
+          const selected = panel.dataset.resultPanel === tabId;
+          if (selected) panel.removeAttribute('hidden');
+          else panel.setAttribute('hidden', '');
+        });
+      };
+
+      const tablist = root.querySelector('[data-result-tabs] [role="tablist"]');
+      tablist?.addEventListener('click', (event) => {
+        const tab = event.target.closest('[data-result-tab]');
+        if (!tab) return;
+        activateResultTab(tab.dataset.resultTab);
+      });
+      tablist?.addEventListener('keydown', (event) => {
+        const tabs = Array.from(root.querySelectorAll('[data-result-tab]'));
+        const current = document.activeElement?.closest?.('[data-result-tab]');
+        if (!current || !tabs.length) return;
+        const index = tabs.indexOf(current);
+        let next = index;
+        if (event.key === 'ArrowRight' || event.key === 'ArrowDown') next = (index + 1) % tabs.length;
+        else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') next = (index - 1 + tabs.length) % tabs.length;
+        else if (event.key === 'Home') next = 0;
+        else if (event.key === 'End') next = tabs.length - 1;
+        else return;
         event.preventDefault();
+        tabs[next].focus();
+        activateResultTab(tabs[next].dataset.resultTab);
+      });
+
+      root.querySelector('[data-view-blocking-issues]')?.addEventListener('click', (event) => {
+        event.preventDefault();
+        activateResultTab('blocking');
+        const target = document.getElementById('wf-test-blocking-issues')
+          || root.querySelector('[data-result-panel="blocking"]');
+        if (!target) return;
         target.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
         if (typeof target.focus === 'function') target.focus({ preventScroll: true });
+      });
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && scenarioPanel?.classList.contains('is-drawer-open')) {
+          setDrawerOpen(false);
+        }
       });
     }
 

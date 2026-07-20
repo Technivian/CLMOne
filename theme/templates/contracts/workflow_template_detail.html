@@ -577,32 +577,48 @@
   </dialog>
 
   {% elif active_tab == 'test' %}
-  <section class="wf-test-workspace" aria-labelledby="wf-test-heading">
-    <div class="wf-designer-panel__head wf-designer-panel__head--compact">
-      <h2 id="wf-test-heading">Test</h2>
-      {% if template_versions|length > 1 %}
-      <label class="wf-test-version-select">
-        <span class="form-label">Switch version</span>
-        <select class="form-control" data-test-version-switch aria-label="Select version to test">
-          {% for version in template_versions %}
-          <option value="{% url 'contracts:workflow_template_detail' version.pk %}?tab=test" {% if version.pk == workflow_template.pk %}selected{% endif %}>
-            v{{ version.version }} · {% if version.is_active %}Published{% else %}Draft{% endif %}
-          </option>
-          {% endfor %}
-        </select>
-      </label>
-      {% endif %}
+  <section class="wf-test-workspace" aria-labelledby="wf-test-heading" data-test-workspace>
+    <div class="wf-test-workspace__chrome">
+      <div class="wf-designer-panel__head wf-designer-panel__head--compact">
+        <h2 id="wf-test-heading">Test</h2>
+        {% if template_versions|length > 1 %}
+        <label class="wf-test-version-select">
+          <span class="form-label">Switch version</span>
+          <select class="form-control" data-test-version-switch aria-label="Select version to test">
+            {% for version in template_versions %}
+            <option value="{% url 'contracts:workflow_template_detail' version.pk %}?tab=test" {% if version.pk == workflow_template.pk %}selected{% endif %}>
+              v{{ version.version }} · {% if version.is_active %}Published{% else %}Draft{% endif %}
+            </option>
+            {% endfor %}
+          </select>
+        </label>
+        {% endif %}
+      </div>
+      <button type="button" class="dc-ds-button dc-ds-button--quiet wf-test-drawer-toggle" data-test-drawer-toggle aria-controls="wf-test-scenario-panel" aria-expanded="false">
+        Scenario
+      </button>
     </div>
-    <div class="wf-test-presets" role="group" aria-label="Scenario presets">
-      {% for scenario in default_test_scenarios %}
-      <button type="button" class="dc-ds-button dc-ds-button--quiet" data-load-scenario data-scenario-key="{{ scenario.key }}" data-scenario-name="{{ scenario.name }}" aria-pressed="false">{{ scenario.name }}</button>
-      {% endfor %}
-      {% for scenario in saved_scenarios %}
-      <button type="button" class="dc-ds-button dc-ds-button--quiet" data-load-scenario data-scenario-name="{{ scenario.name }}" aria-pressed="false">{{ scenario.name }}</button>
-      {% endfor %}
-    </div>
+    <div class="wf-test-drawer-backdrop" data-test-drawer-backdrop hidden></div>
     <div class="wf-test-layout">
-      <div class="wf-test-pane wf-test-pane--inputs">
+      <aside
+        id="wf-test-scenario-panel"
+        class="wf-test-pane wf-test-pane--inputs"
+        data-test-scenario-panel
+        aria-label="Scenario configuration"
+      >
+        <div class="wf-test-pane__collapse-bar">
+          <button type="button" class="dc-ds-button dc-ds-button--quiet" data-test-panel-collapse aria-expanded="true" aria-controls="wf-test-scenario-panel" title="Collapse scenario panel">
+            Collapse
+          </button>
+        </div>
+        <div class="wf-test-presets" role="group" aria-label="Scenario presets">
+          {% for scenario in default_test_scenarios %}
+          <button type="button" class="dc-ds-button dc-ds-button--quiet" data-load-scenario data-scenario-key="{{ scenario.key }}" data-scenario-name="{{ scenario.name }}" aria-pressed="false">{{ scenario.name }}</button>
+          {% endfor %}
+          {% for scenario in saved_scenarios %}
+          <button type="button" class="dc-ds-button dc-ds-button--quiet" data-load-scenario data-scenario-name="{{ scenario.name }}" aria-pressed="false">{{ scenario.name }}</button>
+          {% endfor %}
+        </div>
         <form
           id="wf-test-scenario-form"
           method="post"
@@ -612,194 +628,258 @@
         >
           {% csrf_token %}
           <input type="hidden" name="scenario_ran" value="{% if preview_result %}1{% else %}0{% endif %}" data-scenario-ran>
-          <fieldset class="wf-test-group">
-            <legend>Contract context</legend>
-            <div class="wf-field">
-              <label class="form-label" for="{{ preview_form.contract_type.id_for_label }}">{{ preview_form.contract_type.label }}</label>
-              {{ preview_form.contract_type }}
-            </div>
-            <div class="wf-field">
-              <label class="form-label" for="{{ preview_form.counterparty_name.id_for_label }}">{{ preview_form.counterparty_name.label }}</label>
-              {{ preview_form.counterparty_name }}
-            </div>
-            <div class="wf-field wf-field--currency">
-              <label class="form-label" for="{{ preview_form.value.id_for_label }}">{{ preview_form.value.label }}</label>
-              <div class="wf-currency">
-                <span class="wf-currency__prefix" aria-hidden="true">€</span>
-                {{ preview_form.value }}
+          <div class="wf-test-form__scroll">
+            <details class="wf-test-group" open>
+              <summary>Contract context</summary>
+              <div class="wf-test-group__body">
+                <div class="wf-field">
+                  <label class="form-label" for="{{ preview_form.contract_type.id_for_label }}">{{ preview_form.contract_type.label }}</label>
+                  {{ preview_form.contract_type }}
+                </div>
+                <div class="wf-field">
+                  <label class="form-label" for="{{ preview_form.counterparty_name.id_for_label }}">{{ preview_form.counterparty_name.label }}</label>
+                  {{ preview_form.counterparty_name }}
+                </div>
+                <div class="wf-field wf-field--currency">
+                  <label class="form-label" for="{{ preview_form.value.id_for_label }}">{{ preview_form.value.label }}</label>
+                  <div class="wf-currency">
+                    <span class="wf-currency__prefix" aria-hidden="true">€</span>
+                    {{ preview_form.value }}
+                  </div>
+                </div>
+                {% if show_status_field and preview_form.status %}
+                <div class="wf-field">
+                  <label class="form-label" for="{{ preview_form.status.id_for_label }}">{{ preview_form.status.label }}</label>
+                  {{ preview_form.status }}
+                </div>
+                {% endif %}
               </div>
-            </div>
-            {% if show_status_field and preview_form.status %}
-            <div class="wf-field">
-              <label class="form-label" for="{{ preview_form.status.id_for_label }}">{{ preview_form.status.label }}</label>
-              {{ preview_form.status }}
-            </div>
-            {% endif %}
-          </fieldset>
-          <fieldset class="wf-test-group">
-            <legend>Risk context</legend>
-            <div class="wf-field">
-              <label class="form-label" for="{{ preview_form.risk_level.id_for_label }}">{{ preview_form.risk_level.label }}</label>
-              {{ preview_form.risk_level }}
-            </div>
-          </fieldset>
-          <fieldset class="wf-test-group">
-            <legend>Processing context</legend>
-            <div class="wf-field">
-              <label class="form-label" for="{{ preview_form.jurisdiction.id_for_label }}">{{ preview_form.jurisdiction.label }}</label>
-              {{ preview_form.jurisdiction }}
-            </div>
-            <div class="wf-field">
-              <label class="form-label" for="{{ preview_form.governing_law.id_for_label }}">{{ preview_form.governing_law.label }}</label>
-              {{ preview_form.governing_law }}
-            </div>
-            <div class="wf-field">
-              <label class="wf-switch" for="{{ preview_form.data_transfer_flag.id_for_label }}">
-                {{ preview_form.data_transfer_flag }}
-                <span class="wf-switch__track" aria-hidden="true"></span>
-                <span class="wf-switch__label">{{ preview_form.data_transfer_flag.label }}</span>
-              </label>
-            </div>
-          </fieldset>
-          <fieldset class="wf-test-group">
-            <legend>Scenario identity</legend>
-            <div class="wf-field">
-              <label class="form-label" for="{{ preview_form.scenario_name.id_for_label }}">{{ preview_form.scenario_name.label }}</label>
-              {{ preview_form.scenario_name }}
-            </div>
-          </fieldset>
+            </details>
+            <details class="wf-test-group" open>
+              <summary>Risk context</summary>
+              <div class="wf-test-group__body">
+                <div class="wf-field">
+                  <label class="form-label" for="{{ preview_form.risk_level.id_for_label }}">{{ preview_form.risk_level.label }}</label>
+                  {{ preview_form.risk_level }}
+                </div>
+              </div>
+            </details>
+            <details class="wf-test-group" open>
+              <summary>Processing context</summary>
+              <div class="wf-test-group__body">
+                <div class="wf-field">
+                  <label class="form-label" for="{{ preview_form.jurisdiction.id_for_label }}">{{ preview_form.jurisdiction.label }}</label>
+                  {{ preview_form.jurisdiction }}
+                </div>
+                <div class="wf-field">
+                  <label class="form-label" for="{{ preview_form.governing_law.id_for_label }}">{{ preview_form.governing_law.label }}</label>
+                  {{ preview_form.governing_law }}
+                </div>
+                <div class="wf-field">
+                  <label class="wf-switch" for="{{ preview_form.data_transfer_flag.id_for_label }}">
+                    {{ preview_form.data_transfer_flag }}
+                    <span class="wf-switch__track" aria-hidden="true"></span>
+                    <span class="wf-switch__label">{{ preview_form.data_transfer_flag.label }}</span>
+                  </label>
+                </div>
+              </div>
+            </details>
+            <details class="wf-test-group" open>
+              <summary>Scenario identity</summary>
+              <div class="wf-test-group__body">
+                <div class="wf-field">
+                  <label class="form-label" for="{{ preview_form.scenario_name.id_for_label }}">{{ preview_form.scenario_name.label }}</label>
+                  {{ preview_form.scenario_name }}
+                </div>
+              </div>
+            </details>
+          </div>
           <div class="wf-test-form__actions is-sticky">
             <button type="submit" class="dc-ds-button dc-ds-button--primary" name="intent" value="run">Run scenario</button>
             <button type="submit" class="dc-ds-button dc-ds-button--quiet" formaction="{% url 'contracts:workflow_template_scenario_save' workflow_template.pk %}" name="intent" value="save" data-save-scenario {% if not preview_result %}disabled{% endif %} title="{% if not preview_result %}Run the scenario and provide a scenario name to enable saving{% else %}Save this simulation for reuse{% endif %}">Save scenario</button>
             <p class="wf-test-save-hint" data-save-hint>{% if not preview_result %}Save is available after you run a scenario with a scenario name.{% else %}Provide a scenario name to save this run.{% endif %}</p>
           </div>
         </form>
-      </div>
+      </aside>
       <div class="wf-test-pane wf-test-pane--results" aria-live="polite" data-test-results-pane>
         {% if preview_result %}
-        <div
-          class="wf-test-result-banner {% if preview_result.result_tone == 'pass' %}is-pass{% elif preview_result.result_tone == 'fail' %}is-fail{% else %}is-blocked{% endif %}"
-          role="status"
-        >
-          <p class="wf-test-result-banner__title">
-            {% if preview_result.result_tone == 'pass' %}
-              Simulation completed — executable
-            {% elif preview_result.result_tone == 'fail' %}
-              Simulation failed
-            {% else %}
-              Simulation completed with blocking issues
+        <div class="wf-test-results-stack">
+          <div
+            class="wf-test-result-banner {% if preview_result.result_tone == 'pass' %}is-pass{% elif preview_result.result_tone == 'warning' %}is-warning{% elif preview_result.result_tone == 'fail' %}is-fail{% else %}is-blocked{% endif %}"
+            role="status"
+            data-sim-status
+          >
+            <p class="wf-test-result-banner__title">{{ preview_result.banner_title }}</p>
+            <p class="wf-test-result-banner__subtitle visually-hidden">
+              Simulation {% if preview_result.simulation_completed %}completed{% else %}incomplete{% endif %}.
+              Workflow {% if preview_result.execution_blocked %}not executable{% else %}executable{% endif %}.
+            </p>
+            <ul class="wf-test-result-metrics" aria-label="Simulation summary metrics">
+              <li><span class="wf-test-result-metrics__value">{{ preview_result.active_step_count }}</span> step{{ preview_result.active_step_count|pluralize }} triggered</li>
+              <li><span class="wf-test-result-metrics__value">{{ preview_result.skipped_step_count }}</span> step{{ preview_result.skipped_step_count|pluralize }} skipped</li>
+              <li><span class="wf-test-result-metrics__value">{{ preview_result.unresolved_assignment_count }}</span> unresolved assignment{{ preview_result.unresolved_assignment_count|pluralize }}</li>
+              <li><span class="wf-test-result-metrics__label">Execution outcome</span> {{ preview_result.execution_outcome_label }}</li>
+            </ul>
+          </div>
+          <div class="wf-test-result-actions">
+            {% if preview_result.execution_blocked %}
+            <button type="button" class="dc-ds-button dc-ds-button--quiet" data-view-blocking-issues>View blocking issues</button>
             {% endif %}
-          </p>
-          <ul class="wf-test-result-banner__stats">
-            <li>Route evaluated</li>
-            <li>{{ preview_result.active_step_count }} step{{ preview_result.active_step_count|pluralize }} triggered</li>
-            <li>{{ preview_result.skipped_step_count }} step{{ preview_result.skipped_step_count|pluralize }} skipped</li>
-            {% if preview_result.unresolved_assignment_count %}
-            <li>{{ preview_result.unresolved_assignment_count }} assignment{{ preview_result.unresolved_assignment_count|pluralize }} unresolved</li>
-            {% else %}
-            <li>Assignments resolved</li>
+            {% if show_create_version %}
+            <form method="post" action="{% url 'contracts:workflow_template_clone_version' workflow_template.pk %}" class="wf-test-result-actions__form">
+              {% csrf_token %}
+              <button type="submit" class="dc-ds-button {% if preview_result.execution_blocked %}dc-ds-button--primary{% else %}dc-ds-button--quiet{% endif %}">{% if preview_result.execution_blocked %}Create corrected version{% else %}{{ create_version_label }}{% endif %}</button>
+            </form>
+            {% elif can_edit_template and preview_result.execution_blocked %}
+            <a href="?tab=design" class="dc-ds-button dc-ds-button--primary">Open Design to correct</a>
             {% endif %}
-            <li>Execution outcome: {{ preview_result.execution_outcome_label }}</li>
-          </ul>
-        </div>
-        <div class="wf-test-result-actions">
-          {% if preview_result.execution_blocked %}
-          <a href="#wf-test-blocking-issues" class="dc-ds-button dc-ds-button--quiet" data-view-blocking-issues>View blocking issues</a>
-          {% endif %}
-          {% if show_create_version %}
-          <form method="post" action="{% url 'contracts:workflow_template_clone_version' workflow_template.pk %}" class="wf-test-result-actions__form">
-            {% csrf_token %}
-            <button type="submit" class="dc-ds-button {% if preview_result.execution_blocked %}dc-ds-button--primary{% else %}dc-ds-button--quiet{% endif %}">{% if preview_result.execution_blocked %}Create corrected version{% else %}{{ create_version_label }}{% endif %}</button>
-          </form>
-          {% elif can_edit_template and preview_result.execution_blocked %}
-          <a href="?tab=design" class="dc-ds-button dc-ds-button--primary">Open Design to correct</a>
-          {% endif %}
-        </div>
-        <ol class="wf-test-trace" aria-label="Execution trace">
-          <li><strong>Input evaluated</strong> — scenario fields applied to routing rules</li>
-          <li><strong>Conditions checked</strong> — {% if preview_result.matched_conditions %}{{ preview_result.matched_conditions|length }} matched{% else %}none matched{% endif %}</li>
-          <li><strong>Matching branch selected</strong> — {% if preview_result.resulting_route %}{{ preview_result.resulting_route|join:" → " }}{% else %}no actionable path{% endif %}</li>
-          <li><strong>Steps triggered</strong> — {{ preview_result.active_step_count }}</li>
-          <li><strong>Steps skipped</strong> — {{ preview_result.skipped_step_count }}</li>
-          <li><strong>Assignments evaluated</strong> — {% if preview_result.unresolved_assignment_count %}{{ preview_result.unresolved_assignment_count }} unresolved{% else %}all resolved{% endif %}</li>
-          <li><strong>SLA and escalation outcome</strong> — projected from step configuration</li>
-          <li><strong>Final outcome</strong> — {{ preview_result.final_outcome_label }}</li>
-        </ol>
-        <div class="wf-test-path" aria-label="Simulated workflow path">
-          <span class="wf-test-path__node is-start">Start</span>
-          {% for step in preview_result.preview_steps %}
-          <span class="wf-test-path__edge" aria-hidden="true"></span>
-          <span class="wf-test-path__node {% if step.would_apply %}is-triggered{% else %}is-skipped{% endif %}">
-            {{ step.name }}
-            <small>{% if step.would_apply %}Triggered{% else %}Skipped{% endif %}</small>
-          </span>
-          {% endfor %}
-          <span class="wf-test-path__edge" aria-hidden="true"></span>
-          <span class="wf-test-path__node is-end {% if preview_result.execution_blocked %}is-blocking{% else %}is-triggered{% endif %}">
-            {% if preview_result.execution_blocked %}Blocked{% else %}Complete{% endif %}
-          </span>
-        </div>
-        <div class="wf-test-results">
-          <article class="wf-test-card">
-            <h3>Matched route</h3>
-            {% if preview_result.resulting_route %}
-            <ol class="wf-test-route">
-              <li>Start</li>
-              {% for name in preview_result.resulting_route %}<li>{{ name }}</li>{% endfor %}
-              <li>{% if preview_result.execution_blocked %}Blocked{% else %}Complete{% endif %}</li>
+          </div>
+          <div class="wf-test-route-scroll" tabindex="0" aria-label="Evaluated workflow route">
+            <ol class="wf-test-path" data-test-route>
+              <li class="wf-test-path__node is-start" tabindex="0">
+                <span class="wf-test-path__name">Start</span>
+              </li>
+              {% for step in preview_result.preview_steps %}
+              <li class="wf-test-path__edge" aria-hidden="true"></li>
+              <li
+                class="wf-test-path__node {% if step.would_apply %}{% if not step.assignment_resolved and step.step_kind != 'AUTOMATION' and step.step_kind != 'AUTOMATIC' %}is-blocking{% else %}is-triggered{% endif %}{% else %}is-skipped{% endif %}"
+                tabindex="0"
+                data-route-step="{{ step.step_id }}"
+                aria-label="{{ step.name }}: {% if step.would_apply %}{% if not step.assignment_resolved and step.step_kind != 'AUTOMATION' and step.step_kind != 'AUTOMATIC' %}Blocking{% else %}Triggered{% endif %}{% else %}Skipped{% endif %}"
+              >
+                <span class="wf-test-path__name">{% if not step.would_apply %}<s>{{ step.name }}</s>{% else %}{{ step.name }}{% endif %}</span>
+                <small class="wf-test-path__state">
+                  {% if step.would_apply %}
+                    {% if not step.assignment_resolved and step.step_kind != 'AUTOMATION' and step.step_kind != 'AUTOMATIC' %}Blocking{% else %}Triggered{% endif %}
+                  {% else %}
+                    Skipped
+                  {% endif %}
+                </small>
+              </li>
+              {% endfor %}
+              <li class="wf-test-path__edge" aria-hidden="true"></li>
+              <li
+                class="wf-test-path__node is-end {% if preview_result.execution_blocked %}is-blocking{% else %}is-complete{% endif %}"
+                tabindex="0"
+                aria-label="{% if preview_result.execution_blocked %}Complete blocked{% else %}Complete{% endif %}"
+              >
+                <span class="wf-test-path__name">Complete</span>
+                <small class="wf-test-path__state">{% if preview_result.execution_blocked %}Blocked{% else %}Ready{% endif %}</small>
+              </li>
             </ol>
-            {% else %}<p class="c-muted">No steps would run.</p>{% endif %}
-          </article>
-          <article class="wf-test-card">
-            <h3>Triggered conditions</h3>
-            {% if preview_result.matched_conditions %}
-            <ul>{% for item in preview_result.matched_conditions %}<li>{{ item }}</li>{% endfor %}</ul>
-            {% else %}<p class="c-muted">No conditional steps matched.</p>{% endif %}
-          </article>
-          <article class="wf-test-card">
-            <h3>Skipped steps</h3>
-            <ul>
-              {% for step in preview_result.preview_steps %}
-                {% if not step.would_apply %}<li>{{ step.reason }}</li>{% endif %}
-              {% empty %}
-              <li class="c-muted">None</li>
-              {% endfor %}
-            </ul>
-          </article>
-          <article class="wf-test-card">
-            <h3>Assignments</h3>
-            <ul>
-              {% for step in preview_result.preview_steps %}
-                {% if step.would_apply and step.step_kind != 'AUTOMATION' and step.step_kind != 'AUTOMATIC' %}
-                <li>{{ step.name }} — {% if step.assignment_resolved %}{{ step.resolved_assignee }}{% else %}<span class="wf-test-unresolved">{{ step.resolved_assignee|default:"Unresolved" }}</span>{% endif %}</li>
+          </div>
+          <div class="wf-test-detail-tabs" data-result-tabs>
+            <div class="wf-test-detail-tabs__list" role="tablist" aria-label="Simulation result details">
+              <button type="button" class="wf-test-detail-tabs__tab" role="tab" id="wf-test-tab-overview" aria-controls="wf-test-panel-overview" aria-selected="true" tabindex="0" data-result-tab="overview">Overview</button>
+              <button type="button" class="wf-test-detail-tabs__tab" role="tab" id="wf-test-tab-assignments" aria-controls="wf-test-panel-assignments" aria-selected="false" tabindex="-1" data-result-tab="assignments">Assignments</button>
+              <button type="button" class="wf-test-detail-tabs__tab" role="tab" id="wf-test-tab-conditions" aria-controls="wf-test-panel-conditions" aria-selected="false" tabindex="-1" data-result-tab="conditions">Conditions</button>
+              <button type="button" class="wf-test-detail-tabs__tab" role="tab" id="wf-test-tab-sla" aria-controls="wf-test-panel-sla" aria-selected="false" tabindex="-1" data-result-tab="sla">SLA &amp; escalation</button>
+              <button type="button" class="wf-test-detail-tabs__tab" role="tab" id="wf-test-tab-blocking" aria-controls="wf-test-panel-blocking" aria-selected="false" tabindex="-1" data-result-tab="blocking">Blocking issues</button>
+            </div>
+            <div class="wf-test-detail-tabs__panels">
+              <div class="wf-test-detail-panel" role="tabpanel" id="wf-test-panel-overview" aria-labelledby="wf-test-tab-overview" data-result-panel="overview">
+                <dl class="wf-test-overview">
+                  <div>
+                    <dt>Matched route</dt>
+                    <dd>{% if preview_result.resulting_route %}{{ preview_result.resulting_route|join:" → " }}{% else %}No actionable path{% endif %}</dd>
+                  </div>
+                  <div>
+                    <dt>Steps triggered</dt>
+                    <dd>{{ preview_result.active_step_count }}</dd>
+                  </div>
+                  <div>
+                    <dt>Steps skipped</dt>
+                    <dd>{{ preview_result.skipped_step_count }}</dd>
+                  </div>
+                  <div>
+                    <dt>Assignments evaluated</dt>
+                    <dd>{{ preview_result.assignments_summary_label }}</dd>
+                  </div>
+                  <div>
+                    <dt>Final outcome</dt>
+                    <dd data-final-outcome>{{ preview_result.final_outcome_label }}</dd>
+                  </div>
+                </dl>
+              </div>
+              <div class="wf-test-detail-panel" role="tabpanel" id="wf-test-panel-assignments" aria-labelledby="wf-test-tab-assignments" data-result-panel="assignments" hidden>
+                <ul class="wf-test-detail-list">
+                  {% for step in preview_result.preview_steps %}
+                    {% if step.would_apply and step.step_kind != 'AUTOMATION' and step.step_kind != 'AUTOMATIC' %}
+                    <li>
+                      <strong>{{ step.name }}</strong>
+                      —
+                      {% if step.assignment_resolved %}
+                        {{ step.resolved_assignee }}
+                      {% else %}
+                        <span class="wf-test-unresolved">{{ step.resolved_assignee|default:"Unresolved" }}</span>
+                      {% endif %}
+                    </li>
+                    {% endif %}
+                  {% empty %}
+                  <li class="c-muted">No triggered assignments.</li>
+                  {% endfor %}
+                </ul>
+              </div>
+              <div class="wf-test-detail-panel" role="tabpanel" id="wf-test-panel-conditions" aria-labelledby="wf-test-tab-conditions" data-result-panel="conditions" hidden>
+                <ul class="wf-test-detail-list">
+                  {% if preview_result.condition_evaluations %}
+                    {% for item in preview_result.condition_evaluations %}<li>{{ item }}</li>{% endfor %}
+                  {% else %}
+                    <li class="c-muted">No conditions were evaluated for this route.</li>
+                  {% endif %}
+                </ul>
+              </div>
+              <div class="wf-test-detail-panel" role="tabpanel" id="wf-test-panel-sla" aria-labelledby="wf-test-tab-sla" data-result-panel="sla" hidden>
+                <ul class="wf-test-detail-list wf-test-detail-list--sla">
+                  {% for step in preview_result.preview_steps %}
+                    {% if step.would_apply %}
+                    <li>
+                      <strong>{{ step.name }}</strong>
+                      <span>SLA: {% if step.sla_hours is not None %}{{ step.sla_hours }}h{% else %}<em>Missing configuration</em>{% endif %}</span>
+                      <span>Escalation: {% if step.escalation_after_hours is not None %}{{ step.escalation_after_hours }}h{% else %}<em>Missing configuration</em>{% endif %}</span>
+                      <span>Projected deadline: {{ step.projected_deadline_label }}</span>
+                    </li>
+                    {% endif %}
+                  {% empty %}
+                  <li class="c-muted">No triggered steps with SLA configuration.</li>
+                  {% endfor %}
+                </ul>
+              </div>
+              <div class="wf-test-detail-panel" role="tabpanel" id="wf-test-panel-blocking" aria-labelledby="wf-test-tab-blocking" data-result-panel="blocking" hidden tabindex="-1">
+                <p class="wf-test-blocking-summary" data-blocking-summary>{{ preview_result.blocking_summary_label }}</p>
+                {% if preview_result.blocking_issues %}
+                <ul class="wf-test-blocking-list" id="wf-test-blocking-issues">
+                  {% for issue in preview_result.blocking_issues %}
+                  <li class="wf-test-blocking-item">
+                    {% if issue.step_name %}<p class="wf-test-blocking-item__step">{{ issue.step_name }}</p>{% endif %}
+                    <p class="wf-test-blocking-item__issue"><strong>Issue</strong> — {{ issue.issue }}</p>
+                    <p><strong>Impact</strong> — {{ issue.impact }}</p>
+                    <p><strong>Recommended action</strong> — {{ issue.recommended_action }}</p>
+                    {% if issue.design_url %}
+                    <a class="wf-test-blocking-item__link" href="{{ issue.design_url }}{% if issue.focus_field %}&amp;focus={{ issue.focus_field }}{% endif %}">Open related configuration</a>
+                    {% endif %}
+                  </li>
+                  {% endfor %}
+                </ul>
+                {% else %}
+                <p class="c-muted" id="wf-test-blocking-issues">No blocking issues for this scenario.</p>
                 {% endif %}
-              {% endfor %}
-            </ul>
-          </article>
-          <article class="wf-test-card">
-            <h3>SLA and escalation</h3>
-            <ul>
-              {% for step in preview_result.preview_steps %}
-                {% if step.would_apply %}
-                <li>{{ step.name }} — SLA {{ step.sla_hours|default:"—" }}h / Escalation {{ step.escalation_after_hours|default:"—" }}h</li>
-                {% endif %}
-              {% endfor %}
-            </ul>
-          </article>
-          <article class="wf-test-card" id="wf-test-blocking-issues" tabindex="-1">
-            <h3>Blocking issues</h3>
-            {% if preview_result.validation_messages %}
-            <ul>{% for item in preview_result.validation_messages %}<li>{{ item }}</li>{% endfor %}</ul>
-            {% else %}
-            <p class="c-muted">No blocking issues for this scenario.</p>
-            {% endif %}
-          </article>
+              </div>
+            </div>
+          </div>
+          <p class="wf-test-version-label">Testing workflow version v{{ workflow_template.version }} · {% if is_published %}Published{% else %}Draft{% endif %}</p>
         </div>
-        <p class="wf-test-version-label">Testing workflow version v{{ workflow_template.version }} · {% if is_published %}Published{% else %}Draft{% endif %}</p>
         {% else %}
         <div class="wf-test-empty" role="status">
           <p class="wf-test-empty__title">No simulation yet</p>
-          <p>Enter scenario data and run the simulation to inspect routing, assignments, conditions, SLA outcomes, and blocking issues.</p>
+          <p>Enter scenario data and run the simulation to inspect:</p>
+          <ul>
+            <li>Routing</li>
+            <li>Conditions</li>
+            <li>Assignments</li>
+            <li>SLA outcomes</li>
+            <li>Blocking issues</li>
+          </ul>
           <p class="wf-test-empty__note">Simulations never create or alter live contracts.</p>
         </div>
         {% endif %}
