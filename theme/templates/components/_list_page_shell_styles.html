@@ -1,0 +1,148 @@
+<style nonce="{{ csp_nonce }}">
+  /* Shared Contracts-style list shell for DPA Reviews and Obligations. */
+  .clm-list-page .clm-list-shell {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "tabs actions" "tools tools";
+    gap: var(--space-10) var(--space-16);
+    width: 100%;
+    padding: 0 0 var(--space-12);
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    border-radius: 0;
+    background: transparent;
+  }
+  .clm-list-page .clm-list-view-header { display: contents; }
+  .clm-list-page .clm-list-view-tabs {
+    grid-area: tabs;
+    align-self: center;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .clm-list-page .clm-list-view-actions {
+    grid-area: actions;
+    justify-self: end;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 0 0 auto;
+  }
+  .clm-list-page .clm-list-filter-controls {
+    grid-area: tools;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+    width: 100%;
+  }
+  .clm-list-page .clm-list-filter-controls > * { min-width: 0; }
+  .clm-list-page .clm-list-search-field {
+    flex: 1 1 420px;
+    min-width: 240px;
+    position: relative;
+  }
+  .clm-list-page .clm-list-search-field .clm-list-search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    pointer-events: none;
+    color: var(--ink-500);
+  }
+  .clm-list-page .clm-list-search-field .dc-ds-control {
+    width: 100%;
+    padding-left: 36px;
+  }
+  .clm-list-page .clm-list-actions-stack {
+    flex: 0 0 auto;
+    margin-left: auto;
+    display: inline-flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .clm-list-page .clm-list-filter-toggle {
+    flex: 0 0 auto;
+    color: var(--ink-600);
+    background: transparent;
+    font-weight: 600;
+  }
+  .clm-list-page .clm-list-secondary-link {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-600);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .clm-list-page .clm-list-secondary-link:hover { color: var(--primary); }
+  .clm-list-page .clm-list-filter-drawer {
+    display: none;
+    width: 100%;
+    max-width: none;
+    margin-bottom: var(--space-12);
+  }
+  .clm-list-page .clm-list-filter-drawer.is-open { display: block; }
+  .clm-list-page .clm-list-filter-drawer__body {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .clm-list-page .clm-list-filter-drawer label {
+    display: grid;
+    gap: 5px;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 650;
+  }
+  .clm-list-page .clm-list-filter-drawer select { min-width: 0; }
+  .clm-list-page .clm-list-filter-drawer__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .clm-list-page .clm-list-filter-drawer__title { font-size: 14px; font-weight: 600; }
+  .clm-list-page .clm-list-filter-drawer__actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+    margin-top: 4px;
+  }
+  .clm-list-page .clm-list-summary {
+    margin: 0 0 var(--space-12);
+  }
+  .clm-list-page .clm-list-summary .dc-ds-summary__note { display: none; }
+  .clm-list-page .clm-list-result-count {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ink-800);
+    margin: 0;
+    padding: 6px 10px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-control, 8px);
+    background: var(--well, var(--surface-2));
+    white-space: nowrap;
+    min-width: 0;
+    line-height: 1.2;
+  }
+  @media (max-width: 1100px) {
+    .clm-list-page .clm-list-filter-drawer__body { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 700px) {
+    .clm-list-page .clm-list-shell {
+      grid-template-columns: 1fr;
+      grid-template-areas: "tabs" "actions" "tools";
+    }
+    .clm-list-page .clm-list-view-actions { width: 100%; flex-wrap: wrap; }
+    .clm-list-page .clm-list-filter-drawer__body { grid-template-columns: 1fr; }
+    .clm-list-page .clm-list-search-field,
+    .clm-list-page .clm-list-actions-stack { flex-basis: 100%; margin-left: 0; }
+  }
+</style>

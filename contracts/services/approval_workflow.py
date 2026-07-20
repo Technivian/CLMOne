@@ -243,16 +243,21 @@ class ApprovalWorkflowService:
         rule: ApprovalRule | None = None,
         comment: str = '',
         request=None,
+        enforce_review_readiness: bool = True,
     ) -> ApprovalRequestDTO:
         """Submit a draft/pending contract into one accountable review step.
 
         ``approval_step`` and ``rule`` keep the generic workflow as the single
         approval mechanism while allowing governed MSA routes to submit Legal
         and Finance requests independently.
+
+        When ``enforce_review_readiness`` is True (default for the contract
+        detail path), a source document and Complete contract review are required.
         """
         from contracts.middleware import log_action
         from contracts.models import OrganizationMembership
         from contracts.permissions import ContractAction, can_access_contract_action
+        from contracts.services.contract_detail_workspace import assert_contract_submit_ready
         from contracts.services.contract_lifecycle import (
             get_contract_lifecycle_service,
             record_contract_grounded_check,
@@ -270,6 +275,8 @@ class ApprovalWorkflowService:
             is_active=True,
         ).exists():
             raise ApprovalAccessDenied('Reviewer must be an active member of this workspace.', 400)
+        if enforce_review_readiness:
+            assert_contract_submit_ready(contract)
 
         with transaction.atomic():
             locked_contract = Contract.objects.select_for_update().get(pk=contract.pk)

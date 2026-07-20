@@ -21,15 +21,28 @@ class CLMOneRepository {
             expiring_within_days: null
         };
         this.currentUser = { role: 'admin' };
+        this.columnVisibility = {
+            type: true,
+            counterparty: true,
+            stage: true,
+            owner: true,
+            activity: true,
+            key_date: true,
+            value: true,
+        };
+        this.columnStorageKey = 'clmone-repo-columns';
         
         this.init();
     }
     
     init() {
+        this.loadColumnVisibility();
         this.setupEventListeners();
         this.setupKeyboardShortcuts();
         this.loadFromURL();
         this.syncControlsToFilters();
+        this.syncSortHeaders();
+        this.applyColumnVisibility();
         this.renderFilterChips();
         this.updateQuickFilterState();
         this.loadContracts();
@@ -52,25 +65,20 @@ class CLMOneRepository {
             });
         }
         
-        // Sort change
+        // Sort change (hidden select kept for URL/state sync)
         const sortSelect = document.getElementById('sort-select');
         if (sortSelect) {
             sortSelect.addEventListener('change', (e) => {
-                this.filters.sort = e.target.value;
-                this.filters.page = 1;
-                this.renderFilterChips();
-                this.updateQuickFilterState();
-                this.loadContracts();
-                this.updateURL();
+                this.applySort(e.target.value);
             });
         }
 
-        document.querySelectorAll('[data-status-filter]').forEach((button) => {
-            button.addEventListener('click', () => this.applyStatusFilter(button.dataset.statusFilter || ''));
+        document.querySelectorAll('.repo-sort-btn[data-sort]').forEach((button) => {
+            button.addEventListener('click', () => this.toggleColumnSort(button.dataset.sort));
         });
 
-        document.querySelectorAll('[data-rail-view]').forEach((button) => {
-            button.addEventListener('click', () => this.applyRailView(button.dataset.railView || 'all'));
+        document.querySelectorAll('[data-status-filter]').forEach((button) => {
+            button.addEventListener('click', () => this.applyStatusFilter(button.dataset.statusFilter || ''));
         });
 
         const filterToggle = document.getElementById('repo-filter-toggle');
@@ -81,6 +89,31 @@ class CLMOneRepository {
                 filterToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
             });
         }
+
+        const colMenu = document.getElementById('repo-col-menu');
+        const colToggle = document.getElementById('repo-col-toggle');
+        if (colMenu && colToggle) {
+            colToggle.addEventListener('click', () => {
+                const open = colMenu.classList.toggle('is-open');
+                colToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+            });
+            colMenu.querySelectorAll('[data-col-toggle]').forEach((input) => {
+                input.addEventListener('change', () => {
+                    const key = input.getAttribute('data-col-toggle');
+                    if (!key || !(key in this.columnVisibility)) return;
+                    this.columnVisibility[key] = input.checked;
+                    this.persistColumnVisibility();
+                    this.applyColumnVisibility();
+                });
+            });
+        }
+
+        document.addEventListener('click', (event) => {
+            if (colMenu && colToggle && !colMenu.contains(event.target)) {
+                colMenu.classList.remove('is-open');
+                colToggle.setAttribute('aria-expanded', 'false');
+            }
+        });
 
         const bindSelectFilter = (id, apply) => {
             const control = document.getElementById(id);
@@ -161,6 +194,14 @@ class CLMOneRepository {
             
             if (e.key === 'Escape') {
                 this.closeDetailsDrawer();
+                const filterDrawer = document.getElementById('repository-filters');
+                const filterToggle = document.getElementById('repo-filter-toggle');
+                if (filterDrawer) filterDrawer.classList.remove('is-open');
+                if (filterToggle) filterToggle.setAttribute('aria-expanded', 'false');
+                const colMenu = document.getElementById('repo-col-menu');
+                const colToggle = document.getElementById('repo-col-toggle');
+                if (colMenu) colMenu.classList.remove('is-open');
+                if (colToggle) colToggle.setAttribute('aria-expanded', 'false');
             }
             
             if (e.key === 'n' && !e.ctrlKey && !e.metaKey) {
@@ -201,6 +242,7 @@ class CLMOneRepository {
         if (sortSelect) {
             sortSelect.value = this.filters.sort;
         }
+        this.syncSortHeaders();
         const statusSelect = document.getElementById('status-filter-select');
         if (statusSelect) statusSelect.value = this.filters.status.length === 1 ? this.filters.status[0] : '';
         const typeSelect = document.getElementById('type-filter-select');
@@ -227,35 +269,80 @@ class CLMOneRepository {
         this.loadContracts();
     }
 
-    // Quick views are a compact front for the same status and expiry filters
-    // available in the Filters and views drawer.
-    applyRailView(key) {
-        if (key === 'active') {
-            this.filters.status = ['ACTIVE'];
-            this.filters.expiring_within_days = null;
-        } else if (key === 'draft') {
-            this.filters.status = ['DRAFT'];
-            this.filters.expiring_within_days = null;
-        } else if (key === 'expiring_30d') {
-            this.filters.status = [];
-            this.filters.expiring_within_days = 30;
-        } else {
-            this.filters.status = [];
-            this.filters.expiring_within_days = null;
-        }
+    applySort(sort) {
+        this.filters.sort = sort || 'updated_desc';
         this.filters.page = 1;
+        this.syncControlsToFilters();
         this.renderFilterChips();
         this.updateQuickFilterState();
-        this.updateURL();
         this.loadContracts();
+        this.updateURL();
     }
 
-    computeActiveRailKey() {
-        if (this.filters.expiring_within_days) return 'expiring_30d';
-        if (this.filters.status.length === 1 && this.filters.status[0] === 'ACTIVE') return 'active';
-        if (this.filters.status.length === 1 && this.filters.status[0] === 'DRAFT') return 'draft';
-        if (this.filters.status.length === 0) return 'all';
-        return null;
+    toggleColumnSort(column) {
+        let next = 'updated_desc';
+        if (column === 'title') {
+            next = 'title';
+        } else if (column === 'status') {
+            next = 'status';
+        } else if (column === 'updated') {
+            next = this.filters.sort === 'updated_desc' ? 'updated_asc' : 'updated_desc';
+        }
+        this.applySort(next);
+    }
+
+    syncSortHeaders() {
+        const table = document.getElementById('contracts-table');
+        if (!table) return;
+        const sort = this.filters.sort || 'updated_desc';
+        const mapping = {
+            title: { key: 'title', direction: 'ascending' },
+            status: { key: 'status', direction: 'ascending' },
+            updated_desc: { key: 'updated', direction: 'descending' },
+            updated_asc: { key: 'updated', direction: 'ascending' },
+        };
+        const active = mapping[sort] || mapping.updated_desc;
+        if (window.CLMOne && window.CLMOne.dataTable && typeof window.CLMOne.dataTable.setSort === 'function') {
+            window.CLMOne.dataTable.setSort(table, active.key, active.direction);
+            return;
+        }
+        table.querySelectorAll('[data-column-key]').forEach((header) => {
+            const isActive = header.getAttribute('data-column-key') === active.key;
+            header.setAttribute('aria-sort', isActive ? active.direction : 'none');
+        });
+    }
+
+    loadColumnVisibility() {
+        try {
+            const raw = window.localStorage.getItem(this.columnStorageKey);
+            if (!raw) return;
+            const parsed = JSON.parse(raw);
+            Object.keys(this.columnVisibility).forEach((key) => {
+                if (typeof parsed[key] === 'boolean') this.columnVisibility[key] = parsed[key];
+            });
+        } catch (error) {
+            // Ignore storage failures and keep defaults.
+        }
+        document.querySelectorAll('[data-col-toggle]').forEach((input) => {
+            const key = input.getAttribute('data-col-toggle');
+            if (key && key in this.columnVisibility) input.checked = this.columnVisibility[key];
+        });
+    }
+
+    persistColumnVisibility() {
+        try {
+            window.localStorage.setItem(this.columnStorageKey, JSON.stringify(this.columnVisibility));
+        } catch (error) {
+            // Ignore storage failures.
+        }
+    }
+
+    applyColumnVisibility() {
+        Object.entries(this.columnVisibility).forEach(([key, visible]) => {
+            document.querySelectorAll(`[data-col="${key}"]`).forEach((cell) => {
+                cell.classList.toggle('is-hidden', !visible);
+            });
+        });
     }
 
     updateQuickFilterState() {
@@ -263,13 +350,6 @@ class CLMOneRepository {
         document.querySelectorAll('[data-status-filter]').forEach((button) => {
             const isActive = !this.filters.expiring_within_days && (button.dataset.statusFilter || '') === activeStatus;
             button.classList.toggle('chip-active', isActive);
-            button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
-        });
-
-        const activeRailKey = this.computeActiveRailKey();
-        document.querySelectorAll('[data-rail-view]').forEach((button) => {
-            const isActive = (button.dataset.railView || 'all') === activeRailKey;
-            button.classList.toggle('active', isActive);
             button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
         });
     }
@@ -347,7 +427,7 @@ class CLMOneRepository {
     // Same markup/CSS contract as components/_assignee_chip.html.
     renderAssigneeChip(name, initial) {
         if (!name) {
-            return '<span class="assignee-chip assignee-chip-empty"><span class="assignee-chip-avatar assignee-chip-avatar-empty" aria-hidden="true"></span><span class="assignee-chip-name">Unassigned</span></span>';
+            return '<span class="assignee-chip assignee-chip-empty"><span class="assignee-chip-avatar assignee-chip-avatar-empty" aria-hidden="true"></span><span class="assignee-chip-name repo-empty-label">Unassigned</span></span>';
         }
         const shownInitial = initial || name.slice(0, 1).toUpperCase();
         return `<span class="assignee-chip"><span class="assignee-chip-avatar avatar-gradient-bg">${this.escapeHtml(shownInitial)}</span><span class="assignee-chip-name">${this.escapeHtml(name)}</span></span>`;
@@ -355,9 +435,42 @@ class CLMOneRepository {
 
     // Same markup/CSS contract as components/_activity_line.html.
     renderActivityLine(text, time, initial) {
-        if (!text) return '<span class="c-dim">No recent activity</span>';
+        if (!text) return '<span class="repo-empty-label">No recent activity</span>';
         const shownInitial = initial || 'S';
-        return `<div class="activity-line"><span class="activity-line-avatar avatar-gradient-bg">${this.escapeHtml(shownInitial)}</span><div class="activity-line-body"><div class="activity-line-desc">${this.escapeHtml(text)}</div><div class="activity-line-time">${this.escapeHtml(time || '')}</div></div></div>`;
+        const full = String(text).trim();
+        const tokens = full.split(/\s+/);
+        let body = this.escapeHtml(full);
+        // activity_line_parts always builds "{actor} {verb} {object}" — keep
+        // actor + verb visible and let the trailing object ellipsize first.
+        if (tokens.length >= 3) {
+            const objectLabel = tokens.pop();
+            const verb = tokens.pop();
+            const actor = tokens.join(' ');
+            body = `<span class="activity-line-actor">${this.escapeHtml(actor)}</span>`
+                + `<span class="activity-line-action"> ${this.escapeHtml(verb)} ${this.escapeHtml(objectLabel)}</span>`;
+        }
+        return `<div class="activity-line"><span class="activity-line-avatar avatar-gradient-bg">${this.escapeHtml(shownInitial)}</span><div class="activity-line-body"><div class="activity-line-desc" title="${this.escapeHtml(full)}">${body}</div><div class="activity-line-time">${this.escapeHtml(time || '')}</div></div></div>`;
+    }
+
+    renderStatusMeta(contract) {
+        const status = this.escapeHtml(contract.status_display || contract.status || '');
+        if (contract.has_exception) {
+            return `<span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--attention repo-exception-badge">Exception</span><span class="repo-status-sep" aria-hidden="true">·</span><span class="text-sm repo-muted-text">${status}</span>`;
+        }
+        return `<span class="text-sm repo-muted-text">${status}</span>`;
+    }
+
+    renderStageBadge(contract) {
+        const shortLabel = contract.stage_display || 'Drafting';
+        const fullLabel = contract.stage_display_full || shortLabel;
+        const titleAttr = fullLabel !== shortLabel ? ` title="${this.escapeHtml(fullLabel)}"` : ` title="${this.escapeHtml(fullLabel)}"`;
+        return `<span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--${contract.stage_badge_tone || 'neutral'} repo-stage-badge"${titleAttr}>${this.escapeHtml(shortLabel)}</span>`;
+    }
+
+    renderTypeCell(contract) {
+        const shortLabel = contract.contract_type_short || contract.contract_type_display || 'Other';
+        const fullLabel = contract.contract_type_display || shortLabel;
+        return `<span class="repo-type-label" title="${this.escapeHtml(fullLabel)}">${this.escapeHtml(shortLabel)}</span>`;
     }
 
     renderContracts(result) {
@@ -388,7 +501,7 @@ class CLMOneRepository {
                         <div class="dc-ds-actions dc-ds-empty__actions">
                             ${hasActiveFilters
                                 ? '<button type="button" class="dc-ds-button dc-ds-button--primary" data-action="clear-repository-filters">Clear filters</button>'
-                            : '<a href="/contracts/new/" class="dc-ds-button dc-ds-button--primary">Add contract</a>'}
+                            : '<a href="/contracts/new/" class="dc-ds-button dc-ds-button--primary">Start new contract</a>'}
                         </div>
                     </div>
                 </td></tr>
@@ -397,40 +510,43 @@ class CLMOneRepository {
             if (clearFiltersButton) {
                 clearFiltersButton.addEventListener('click', () => this.clearRepositoryFilters());
             }
+            this.updateResultCount(0);
             return;
         }
 
         tbody.innerHTML = result.contracts.map(contract => `
-            <tr class="contract-row hover:bg-hover cursor-pointer" data-contract-id="${contract.id}" aria-selected="false">
-                <td class="px-3 py-2">
+            <tr class="contract-row cursor-pointer" data-contract-id="${contract.id}" aria-selected="false">
+                <td class="repo-cell" data-col="select">
                     <input type="checkbox" class="contract-checkbox" value="${contract.id}" aria-label="Select ${this.escapeHtml(contract.title)}">
                 </td>
-                <td class="px-3 py-2">
-                    <div class="font-medium">${this.escapeHtml(contract.title)}</div>
-                    <div class="text-sm text-muted">${this.escapeHtml(contract.status_display || contract.status)}</div>
+                <td class="repo-cell" data-col="title">
+                    <div class="repo-title-stack">
+                      <div class="font-medium repo-contract-title">${this.escapeHtml(contract.title)}</div>
+                      <div class="repo-title-meta">${this.renderStatusMeta(contract)}</div>
+                    </div>
                 </td>
-                <td class="px-3 py-2">
-                    ${this.escapeHtml(contract.contract_type_display || 'Other')}
+                <td class="repo-cell" data-col="type">
+                    ${this.renderTypeCell(contract)}
                 </td>
-                <td class="px-3 py-2">
+                <td class="repo-cell" data-col="counterparty">
                     ${this.escapeHtml(contract.counterparty || '—')}
                 </td>
-                <td class="px-3 py-2">
-                    <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--${contract.stage_badge_tone || 'neutral'}">${this.escapeHtml(contract.stage_display || 'Drafting')}</span>
+                <td class="repo-cell" data-col="stage">
+                    ${this.renderStageBadge(contract)}
                 </td>
-                <td class="px-3 py-2">
+                <td class="repo-cell" data-col="owner">
                     ${this.renderAssigneeChip(contract.assignee_name, contract.assignee_initial)}
                 </td>
-                <td class="px-3 py-2">
+                <td class="repo-cell" data-col="activity">
                     ${this.renderActivityLine(contract.latest_activity_text, contract.latest_activity_time, contract.latest_activity_initial)}
                 </td>
-                <td class="px-3 py-2 text-muted wq-col-num${contract.due_overdue ? ' wq-due-overdue' : ''}">
-                    ${contract.end_date_display ? this.escapeHtml(contract.end_date_display) : '<span class="c-dim">—</span>'}
+                <td class="repo-cell repo-key-date${contract.due_overdue ? ' wq-due-overdue' : ''}" data-col="key_date">
+                    ${contract.end_date_display ? this.escapeHtml(contract.end_date_display) : '<span class="repo-empty-label">—</span>'}
                 </td>
-                <td class="px-3 py-2 text-muted wq-col-num">
+                <td class="repo-cell repo-value" data-col="value">
                     ${contract.value_display || '—'}
                 </td>
-                <td class="px-3 py-2">
+                <td class="repo-cell repo-actions-cell" data-col="actions">
                     <a href="/contracts/${contract.id}/" class="repo-row-action" aria-label="Open ${this.escapeHtml(contract.title)}">⋯</a>
                 </td>
             </tr>
@@ -463,6 +579,9 @@ class CLMOneRepository {
                 this.updateBulkActionBar();
             });
         });
+
+        this.applyColumnVisibility();
+        this.updateResultCount(Number(result?.total_count || result.contracts.length));
     }
     
     updateBulkActionBar() {
@@ -514,6 +633,13 @@ class CLMOneRepository {
         this.loadContracts();
     }
 
+    updateResultCount(totalCount) {
+        const countEl = document.getElementById('repo-result-count');
+        if (!countEl) return;
+        const count = Number(totalCount || 0);
+        countEl.textContent = `${count} contract${count === 1 ? '' : 's'}`;
+    }
+
     updatePagination(result) {
         const container = document.getElementById('pagination-container');
         if (!container) return;
@@ -521,13 +647,10 @@ class CLMOneRepository {
         const currentPage = Number(result?.page || 1);
         const totalPages = Number(result?.total_pages || 1);
         const totalCount = Number(result?.total_count || 0);
+        this.updateResultCount(totalCount);
 
         if (totalPages <= 1) {
-            container.innerHTML = `
-                <div class="text-sm repo-muted-text">
-                    ${totalCount} result${totalCount === 1 ? '' : 's'}
-                </div>
-            `;
+            container.innerHTML = '';
             return;
         }
 
@@ -537,7 +660,7 @@ class CLMOneRepository {
         container.innerHTML = `
             <div class="dc-ds-table-pagination">
                 <div class="text-sm repo-muted-text">
-                    ${totalCount} result${totalCount === 1 ? '' : 's'} · Page ${currentPage} of ${totalPages}
+                    Page ${currentPage} of ${totalPages}
                 </div>
                 <div class="dc-ds-table-pagination__actions">
                     <button id="repo-page-prev" type="button" class="repo-mini-btn" aria-label="Previous page" ${prevDisabled ? 'disabled' : ''}>Previous</button>

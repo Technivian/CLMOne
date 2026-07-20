@@ -299,8 +299,12 @@ class CrossTenantNegative(_Base):
         except NoReverseMatch:
             url = reverse('contracts:operations_dashboard')
         r = self.c.get(url)
-        if r.status_code == 200 and 'recent_job_runs' in getattr(r, 'context', {} or {}):
-            self.assertNotIn(self.jobrun_b, list(r.context['recent_job_runs']))
+        context = getattr(r, 'context', None) or {}
+        if r.status_code == 200 and 'scheduled_rows' in context:
+            scheduled_ids = {row['id'] for row in context['scheduled_rows']}
+            self.assertNotIn(self.jobrun_b.id, scheduled_ids)
+        elif r.status_code == 200 and 'recent_job_runs' in context:
+            self.assertNotIn(self.jobrun_b, list(context['recent_job_runs']))
 
     def test_guessed_and_altered_org_switch(self):
         # Attempt to switch the active org to a non-member org (altered identifier).

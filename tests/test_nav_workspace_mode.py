@@ -26,7 +26,6 @@ STANDARD_NAV_LABELS = [
     'Contracts',
     'DPA Reviews',
     'Obligations',
-    'Admin',
 ]
 
 OLD_LAYOUT_NAV_LABELS = [
@@ -166,11 +165,16 @@ class StandardNavTests(TestCase):
         self.assertRegex(content, rf'<a href="{href}" class="nav-link[^\"]*\bactive\b')
         self.assertIn('Command Center', content)
 
-    def test_admin_group_uses_the_aligned_settings_icon(self):
+    def test_profile_menu_exposes_settings_and_operations_for_owner(self):
         response = self.owner_client.get(reverse('dashboard'))
-        content = sidebar_html(response)
-        self.assertIn('nav-icon-svg--admin', content)
-
+        body = response.content.decode()
+        self.assertIn('href="' + reverse('profile') + '"', body)
+        self.assertIn('profile-menu-header__name', body)
+        self.assertNotIn('role="menuitem">Account</a>', body)
+        self.assertIn('role="menuitem">Settings</a>', body)
+        self.assertIn('role="menuitem">Operations</a>', body)
+        self.assertIn('role="menuitem">Notifications</a>', body)
+        self.assertNotIn('nav-icon-svg--admin', sidebar_html(response))
     def test_sidebar_uses_distinct_nav_icons(self):
         response = self.owner_client.get(reverse('dashboard'))
         content = sidebar_html(response)
@@ -181,11 +185,10 @@ class StandardNavTests(TestCase):
             'nav-icon-svg--contracts',
             'nav-icon-svg--dpa-reviews',
             'nav-icon-svg--obligations',
-            'nav-icon-svg--admin',
         ):
             self.assertIn(class_name, content)
+        self.assertNotIn('nav-icon-svg--admin', content)
         self.assertNotIn('nav-icon-svg--settings', content)
-
     def test_new_contract_links_to_contract_type_picker(self):
         response = self.owner_client.get(reverse('dashboard'))
         content = sidebar_html(response)

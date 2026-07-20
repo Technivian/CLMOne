@@ -40,7 +40,8 @@ class DefaultLanguageConsistencyTests(TestCase):
         response = self.client.get(reverse('dashboard'))
         content = response.content.decode()
         self.assertIn('title="Team"', content)
-        self.assertIn('title="Settings"', content)
+        self.assertIn('role="menuitem">Settings</a>', content)
+        self.assertNotIn('title="Settings"', content)
         self.assertIn('title="Notifications"', content)
         self.assertIn('>Sign out<', content)
 

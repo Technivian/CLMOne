@@ -1,0 +1,41 @@
+{% if scheduled_rows %}
+<div class="dc-ds-table-wrap">
+  <table class="dc-ds-table w-full text-sm" aria-label="Scheduled job runs">
+    <thead>
+      <tr>
+        <th scope="col">Job</th>
+        <th scope="col">Status</th>
+        <th scope="col">Started</th>
+        <th scope="col">Examined</th>
+        <th scope="col">Changed</th>
+        <th scope="col">Notified</th>
+        <th scope="col">Evidence</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for run in scheduled_rows %}
+      <tr>
+        <td>
+          <div class="font-medium">{{ run.job_name }}</div>
+          <div class="text-xs c-muted font-mono">{{ run.run_id|truncatechars:13 }}</div>
+        </td>
+        <td>{% include "design_system/status_badge.html" with label=run.status_display tone=run.status_tone size="sm" %}</td>
+        <td>{{ run.started_at|date:"d M Y H:i" }}</td>
+        <td>{{ run.records_examined }}</td>
+        <td>{{ run.records_changed }}</td>
+        <td>{{ run.notifications_created }}</td>
+        <td>
+          {% if run.error_summary %}
+          <span class="c-danger text-sm">{{ run.error_summary|truncatechars:80 }}</span>
+          {% else %}
+          <span class="c-muted text-sm">Clean</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+{% include "design_system/empty_state.html" with title="No scheduled runs yet" copy="Nightly and periodic jobs will appear here with examined/changed counts." how="Run an operational drill or wait for the next scheduled cycle." actions_template="contracts/operations_dashboard_schedules_empty_actions.html" %}
+{% endif %}

@@ -360,10 +360,23 @@ class DesignSystemTests(TestCase):
         self.assertIn('repo-filter-drawer', repository)
         self.assertNotIn('dc-ds-summary', repository)
 
-        for relative_path in ('dpa_review_pack_list.html', 'obligations_workspace.html'):
-            content = (template_root / relative_path).read_text()
-            self.assertIn('dc-ds-scaffold--with-rail', content, relative_path)
-            self.assertIn('dc-ds-summary--vertical', content, relative_path)
+        obligations = (template_root / 'obligations_workspace.html').read_text()
+        self.assertNotIn('dc-ds-scaffold--with-rail', obligations)
+        self.assertNotIn('dc-ds-summary--vertical', obligations)
+        self.assertIn('dc-ds-summary', obligations)
+        self.assertIn('obligations-summary', obligations)
+        self.assertIn('clm-list-shell', obligations)
+        self.assertIn('clm-list-filter-drawer', obligations)
+        self.assertNotIn('dc-ds-surface__title', obligations)
+
+        dpa_list = (template_root / 'dpa_review_pack_list.html').read_text()
+        self.assertNotIn('dc-ds-scaffold--with-rail', dpa_list)
+        self.assertIn('dc-ds-summary', dpa_list)
+        self.assertIn('dpa-review-summary', dpa_list)
+        self.assertIn('clm-list-shell', dpa_list)
+        self.assertIn('clm-list-filter-drawer', dpa_list)
+        self.assertNotIn('dc-ds-summary--vertical', dpa_list)
+        self.assertNotIn('Active reviews', dpa_list)
 
     def test_workspace_and_document_views_inherit_shared_layout_rules(self):
         root = Path(settings.BASE_DIR)

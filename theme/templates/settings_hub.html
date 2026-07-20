@@ -1,8 +1,42 @@
 {% extends 'base.html' %}
 {% block title %}Settings – CLM One{% endblock %}
 {% block authenticated_page_title %}Settings{% endblock %}
-{% block authenticated_page_subtitle %}Manage workspace access, governance, and compliance configuration.{% endblock %}
+{% block authenticated_page_subtitle %}Manage personal preferences, workspace configuration, security and governance.{% endblock %}
 
 {% block content %}
-{% include "design_system/page_scaffold.html" with main_template="settings_hub_content.html" wide=True %}
+<style nonce="{{ csp_nonce }}">
+  /* Settings hub owns only group rhythm and card badge composition. */
+  .settings-hub-page .settings-hub-group + .settings-hub-group {
+    margin-top: var(--space-24);
+  }
+  .settings-hub-page .settings-hub-group__title {
+    margin: 0 0 var(--space-12);
+    color: var(--ink-900);
+    font: var(--text-heading);
+  }
+  .settings-hub-page .dc-ds-setup-action__title-row {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-8);
+    flex-wrap: wrap;
+  }
+  .settings-hub-page .dc-ds-setup-action__title-row .dc-ds-badge {
+    flex: 0 0 auto;
+  }
+</style>
+
+<div id="settings-hub-root" class="dc-ds-page dc-ds-page--wide dc-ds-page-flow settings-hub-page">
+  {% for group in settings_groups %}
+  <section class="settings-hub-group" aria-labelledby="settings-group-{{ group.id }}">
+    <h2 class="settings-hub-group__title" id="settings-group-{{ group.id }}">{{ group.title }}</h2>
+    <div class="dc-ds-card-grid dc-ds-card-grid--3">
+      {% for item in group.cards %}
+      {% include "design_system/setup_action.html" with href=item.href icon=item.icon label=item.label copy=item.copy badge_label=item.badge_label %}
+      {% endfor %}
+    </div>
+  </section>
+  {% empty %}
+  <p class="dc-ds-subtitle">No configuration areas are available for your account.</p>
+  {% endfor %}
+</div>
 {% endblock %}

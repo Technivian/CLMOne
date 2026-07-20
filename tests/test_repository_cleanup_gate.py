@@ -19,14 +19,22 @@ class RepositoryFilterMarkupTests(TestCase):
         )
         self.client.login(username='rail_user', password='testpass123')
 
-    def test_compact_views_are_real_buttons_with_data_attributes(self):
+    def test_filters_drawer_exists_without_duplicated_quick_views(self):
         response = self.client.get(reverse('contracts:repository'))
         self.assertEqual(response.status_code, 200)
         html = response.content.decode()
-        for key in ('all', 'active', 'draft'):
-            self.assertIn(f'data-rail-view="{key}"', html)
         self.assertIn('id="repository-filters"', html)
+        self.assertNotIn('data-rail-view=', html)
+        self.assertNotIn('Quick views', html)
         self.assertNotIn('dc-ds-scaffold--with-rail', html)
+        self.assertIn('Risk Register', html)
+        self.assertIn('dc-ds-button--ghost">Risk Register</a>', html)
+        self.assertIn('Start new contract', html)
+        self.assertNotIn('repo-split-btn', html)
+        self.assertNotIn('More new contract options', html)
+        self.assertNotIn('Upload existing agreement', html)
+        self.assertNotIn('>Add contract<', html)
+        self.assertNotIn('>Risks</a>', html)
 
     def test_no_placeholder_assignment_control_is_rendered(self):
         response = self.client.get(reverse('contracts:repository'))
@@ -49,18 +57,37 @@ class RepositoryFilterMarkupTests(TestCase):
             'Clear filters',
             'No governed agreements have been added',
             'Uploaded agreements and governed drafts appear here automatically',
-            'Add contract',
+            'Start new contract',
         ):
             self.assertIn(copy, js)
 
-    def test_repository_selected_controls_use_accessible_pressed_state(self):
+    def test_repository_table_controls_expose_sort_and_column_visibility(self):
         response = self.client.get(reverse('contracts:repository'))
         html = response.content.decode()
-        self.assertIn('data-rail-view="all" aria-pressed="true"', html)
+        self.assertIn('id="repo-result-count"', html)
+        self.assertIn('id="repo-col-toggle"', html)
+        self.assertIn('data-sort="title"', html)
+        self.assertIn('data-sort="updated"', html)
+        self.assertIn('>Owner</', html)
+        self.assertIn('>Type</', html)
+        self.assertIn('min-width: 1200px', html)
+        self.assertIn('position: sticky; left: 44px', html)
+        self.assertIn('repo-result-count', html)
+        self.assertIn('background: transparent', html)
 
         with open('theme/static/js/clmone-repository.js') as source:
             js = source.read()
-        self.assertIn("setAttribute('aria-pressed'", js)
+        self.assertIn('applyColumnVisibility', js)
+        self.assertIn('updateResultCount', js)
+        self.assertIn('repo-contract-title', js)
+        self.assertIn('renderStatusMeta', js)
+        self.assertIn('repo-status-sep', js)
+        self.assertIn('repo-type-label', js)
+        self.assertIn('repo-empty-label', js)
+        self.assertIn('min-width: 145px', html)
+        self.assertIn('min-width: 230px', html)
+        self.assertIn('padding: 16px 12px', html)
+        self.assertNotIn('data-col="next_action"', js)
 
 
 class RepositoryExpiringFilterTests(TestCase):

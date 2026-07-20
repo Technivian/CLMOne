@@ -1,84 +1,324 @@
 {% extends 'base.html' %}
 {% block title %}DPA Reviews – CLM One{% endblock %}
 {% block authenticated_page_title %}DPA Reviews{% endblock %}
-{% block authenticated_page_subtitle %}Monitor privacy terms, approval readiness, and unresolved data-protection risk.{% endblock %}
+{% block authenticated_page_subtitle %}Work the open DPA review queue — unresolved roles, risks, and decisions.{% endblock %}
 {% block content %}
+{% include "components/_list_page_shell_styles.html" %}
 <style nonce="{{ csp_nonce }}">
-  /* DPA Reviews owns only record-specific link treatment; page layout,
-     summary, surfaces, state, and rhythm are shared primitives. */
   .dpa-review-page .dpa-review-contract-link { color: var(--ds-color-text); font-weight: 780; text-decoration: none; }
   .dpa-review-page .dpa-review-contract-link:hover { color: var(--ds-color-action); }
   .dpa-review-page .dpa-review-contract-link:focus-visible { outline: none; box-shadow: var(--ds-focus-ring); border-radius: var(--ds-radius-sm); }
-  .dpa-review-page .dpa-review-counterparty { margin-top: 2px; color: var(--ds-color-text-muted); font-size: var(--ds-text-xs); }
+  .dpa-review-page .dpa-review-row { cursor: pointer; }
+  .dpa-review-page .dpa-review-row:hover td { background: var(--sidebar-hover); }
+  .dpa-review-page .dpa-review-row:focus-visible { outline: none; box-shadow: inset var(--ds-focus-ring); }
+  .dpa-review-page .dpa-review-next-action { color: var(--ds-color-text); font-weight: 650; }
+  .dpa-review-page .dpa-review-counterparty {
+    margin-top: 2px; font-size: 12px; font-weight: 500; color: var(--ink-600, var(--text-muted));
+    line-height: 1.3; word-break: break-word;
+  }
+  .dpa-review-page .dpa-review-agreement-title {
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+    overflow: hidden; line-height: 1.35; word-break: break-word;
+  }
+  .dpa-review-page .dpa-review-role { display: block; max-width: 11rem; line-height: 1.35; word-break: break-word; }
+  .dpa-review-page .dpa-review-stack {
+    display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; max-width: 12rem;
+  }
+  .dpa-review-page .clm-list-summary { --dc-ds-summary-columns: 3; }
+  .dpa-review-page .dpa-col-menu { position: relative; }
+  .dpa-review-page .dpa-col-menu__panel {
+    display: none; position: absolute; right: 0; top: calc(100% + 6px); z-index: 20;
+    min-width: 200px; padding: 10px; border-radius: 10px;
+  }
+  .dpa-review-page .dpa-col-menu.is-open .dpa-col-menu__panel { display: grid; gap: 6px; }
+  .dpa-review-page .dpa-col-menu__panel label {
+    display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500;
+    color: var(--text-primary); cursor: pointer;
+  }
+  .dpa-review-page .dc-ds-table-wrap { overflow-x: auto; }
+  .dpa-review-page #dpa-reviews-table {
+    min-width: 1200px; width: 100%; table-layout: fixed;
+  }
+  .dpa-review-page #dpa-reviews-table [data-col].is-hidden { display: none; }
+  .dpa-review-page #dpa-reviews-table th[data-col="agreement"],
+  .dpa-review-page #dpa-reviews-table td[data-col="agreement"] {
+    position: sticky; left: 0; z-index: 2; min-width: 280px; width: 26%;
+    background: var(--card-bg, var(--ds-color-surface, #fff));
+    box-shadow: 1px 0 0 var(--line, var(--card-border));
+  }
+  .dpa-review-page #dpa-reviews-table thead th[data-col="agreement"] { z-index: 5; }
+  .dpa-review-page #dpa-reviews-table th[data-col="role"],
+  .dpa-review-page #dpa-reviews-table td[data-col="role"] { min-width: 140px; width: 12%; }
+  .dpa-review-page #dpa-reviews-table th[data-col="review"],
+  .dpa-review-page #dpa-reviews-table td[data-col="review"] { min-width: 150px; width: 14%; }
+  .dpa-review-page #dpa-reviews-table th[data-col="owner"],
+  .dpa-review-page #dpa-reviews-table td[data-col="owner"] { min-width: 120px; width: 12%; }
+  .dpa-review-page #dpa-reviews-table th[data-col="next_action"],
+  .dpa-review-page #dpa-reviews-table td[data-col="next_action"] { min-width: 260px; width: 28%; }
+  .dpa-review-page #dpa-reviews-table th[data-col="updated"],
+  .dpa-review-page #dpa-reviews-table td[data-col="updated"] { min-width: 96px; width: 7%; white-space: nowrap; }
+  .dpa-review-page #dpa-reviews-table th[data-col="actions"],
+  .dpa-review-page #dpa-reviews-table td[data-col="actions"] {
+    min-width: 48px; width: 48px; text-align: right; position: sticky; right: 0; z-index: 2;
+    background: var(--card-bg, var(--ds-color-surface, #fff));
+  }
+  .dpa-review-page #dpa-reviews-table thead th[data-col="actions"] { z-index: 5; }
+  .dpa-review-page .dpa-review-row:hover td[data-col="agreement"],
+  .dpa-review-page .dpa-review-row:hover td[data-col="actions"] { background: var(--sidebar-hover); }
+  @media (max-width: 900px) {
+    .dpa-review-page .clm-list-summary { --dc-ds-summary-columns: 1; }
+  }
 </style>
 
-<div id="dpa-review-root" class="dc-ds-page dc-ds-page--wide dc-ds-page-flow dpa-review-page">
-    {% url 'contracts:contract_template_picker' as new_dpa_contract_url %}
-    <div class="dc-ds-scaffold dc-ds-scaffold--with-rail">
-    <section class="dc-ds-scaffold__main dc-ds-surface" aria-labelledby="dpa-review-packs-title">
-        <div class="dc-ds-surface__head">
-            <div>
-                <h2 class="dc-ds-surface__title" id="dpa-review-packs-title">Review packs</h2>
-                <p class="dc-ds-subtitle">Governed DPA records with role qualification, unresolved risks, and approval readiness.</p>
-            </div>
-            <div class="dc-ds-surface__head-actions">
-                <a class="dc-ds-button dc-ds-button--ghost" href="{{ playbook_url }}">Open DPA playbook</a>
-            </div>
+<div id="dpa-review-root" class="dc-ds-page dc-ds-page--wide dc-ds-page-flow dc-ds-list-page clm-list-page dpa-review-page">
+  {% url 'contracts:dpa_workflow_builder' as start_dpa_fallback_url %}
+  {% url 'contracts:dpa_review_pack_list' as dpa_list_url %}
+
+  <form method="get" action="{{ dpa_list_url }}" id="dpa-review-filters-form">
+    <header class="clm-list-shell dc-ds-filterbar dc-ds-table-toolbar dc-ds-list-toolbar" aria-label="DPA review workspace controls">
+      <div class="clm-list-view-header">
+        <nav class="clm-list-view-tabs dc-ds-list-tabs" aria-label="DPA review views">
+          <a href="{{ dpa_list_url }}" class="dc-ds-choice{% if not selected_status and not selected_severity %} chip-active{% endif %}">All reviews</a>
+          <a href="{{ dpa_list_url }}?status=UNDER_REVIEW" class="dc-ds-choice{% if selected_status == 'UNDER_REVIEW' %} chip-active{% endif %}">Needs decision</a>
+          <a href="{{ dpa_list_url }}?severity=CRITICAL" class="dc-ds-choice{% if selected_severity == 'CRITICAL' %} chip-active{% endif %}">Critical risks</a>
+        </nav>
+        <div class="clm-list-view-actions">
+          {% if can_manage_playbook %}
+          <a class="dc-ds-button dc-ds-button--ghost" href="{{ playbook_url }}">Manage playbook</a>
+          {% endif %}
+          <a class="dc-ds-button dc-ds-button--primary" href="{{ start_dpa_url|default:start_dpa_fallback_url }}">Start DPA review</a>
         </div>
-        <div class="dc-ds-table-wrap">
-            <table class="dc-ds-table" data-table-core="server">
-                <caption class="sr-only">DPA review packs with role qualification, unresolved risks, approval status, and most recent update.</caption>
-                <thead>
-                    <tr>
-                        <th scope="col">DPA / contract</th>
-                        <th scope="col">Role qualification</th>
-                        <th scope="col" data-numeric>Unresolved risks</th>
-                        <th scope="col">Approval status</th>
-                        <th scope="col" data-numeric>Updated</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for row in review_pack_rows %}
-                    <tr>
-                        <td>
-                            <a href="{% url 'contracts:dpa_review_pack_detail' row.pack.pk %}" class="dpa-review-contract-link">{{ row.pack.contract.title }}</a>
-                            {% if row.pack.counterparty %}<div class="dpa-review-counterparty">{{ row.pack.counterparty.name }}</div>{% endif %}
-                        </td>
-                        <td>{{ row.pack.get_role_qualification_display }}</td>
-                        <td data-numeric><span class="dc-ds-badge dc-ds-badge--{{ row.risk_tone }}">{{ row.unresolved_risk_count }} open</span></td>
-                        <td><span class="dc-ds-badge dc-ds-badge--{{ row.approval_tone }}">{{ row.pack.get_approval_status_display }}</span></td>
-                        <td data-numeric>{{ row.pack.updated_at|date:"d M Y" }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="5">
-                            {% include "design_system/empty_state.html" with icon="shield" title="No DPA review packs yet" reason="No governed contract in this workspace currently carries a Data Processing Agreement." how="Review packs appear automatically when a DPA contract enters the governed workflow." action_url=new_dpa_contract_url action_label="Create DPA contract" class_name="dc-ds-empty--compact" %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+      </div>
+
+      <div class="clm-list-filter-controls">
+        <div class="clm-list-search-field">
+          {% include "design_system/icon.html" with name="search" class_name="clm-list-search-icon" %}
+          <input class="dc-ds-control" type="search" id="dpa-review-search" name="q" value="{{ search_query }}" placeholder="Search DPA, counterparty, or owner">
         </div>
+        <div class="clm-list-actions-stack">
+          <p class="clm-list-result-count" aria-live="polite">{{ review_pack_rows|length }} review{{ review_pack_rows|length|pluralize }}</p>
+          <div class="dpa-col-menu" id="dpa-col-menu">
+            <button id="dpa-col-toggle" type="button" class="clm-list-filter-toggle dc-ds-button dc-ds-button--ghost" aria-expanded="false" aria-controls="dpa-col-panel">Columns</button>
+            <div id="dpa-col-panel" class="dpa-col-menu__panel dc-ds-surface" role="group" aria-label="Visible columns">
+              <label><input type="checkbox" data-col-toggle="role" checked> Processing role</label>
+              <label><input type="checkbox" data-col-toggle="review" checked> Review</label>
+              <label><input type="checkbox" data-col-toggle="owner" checked> Owner</label>
+              <label><input type="checkbox" data-col-toggle="updated" checked> Updated</label>
+            </div>
+          </div>
+          <button id="dpa-filter-toggle" type="button" class="clm-list-filter-toggle dc-ds-button dc-ds-button--ghost" aria-expanded="{% if search_query or selected_status or selected_role or selected_severity or selected_owner %}true{% else %}false{% endif %}" aria-controls="dpa-review-filters">Filters</button>
+        </div>
+      </div>
+    </header>
+
+    <section id="dpa-review-filters" class="clm-list-filter-drawer dc-ds-surface p-3{% if search_query or selected_status or selected_role or selected_severity or selected_owner %} is-open{% endif %}" aria-label="Filters">
+      <div class="clm-list-filter-drawer__header">
+        <h2 class="clm-list-filter-drawer__title">Filters</h2>
+        <a class="dc-ds-button dc-ds-button--quiet text-sm" href="{{ dpa_list_url }}">Clear filters</a>
+      </div>
+      <div class="clm-list-filter-drawer__body">
+        <label for="dpa-filter-status">Review status
+          <select id="dpa-filter-status" class="dc-ds-control" name="status">
+            <option value="">All statuses</option>
+            {% for value, label in review_status_choices %}
+            <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label for="dpa-filter-role">Processing role
+          <select id="dpa-filter-role" class="dc-ds-control" name="role">
+            <option value="">All roles</option>
+            {% for value, label in processing_role_choices %}
+            <option value="{{ value }}" {% if selected_role == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label for="dpa-filter-severity">Risk severity
+          <select id="dpa-filter-severity" class="dc-ds-control" name="severity">
+            <option value="">All severities</option>
+            {% for value, label in risk_severity_choices %}
+            <option value="{{ value }}" {% if selected_severity == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label for="dpa-filter-owner">Owner
+          <select id="dpa-filter-owner" class="dc-ds-control" name="owner">
+            <option value="">All owners</option>
+            <option value="unassigned" {% if selected_owner == 'unassigned' %}selected{% endif %}>Unassigned</option>
+            {% for owner in owner_choices %}
+            <option value="{{ owner.pk }}" {% if selected_owner == owner.pk|stringformat:"s" %}selected{% endif %}>{{ owner.get_full_name|default:owner.username }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <div class="clm-list-filter-drawer__actions">
+          <button class="dc-ds-button dc-ds-button--primary" type="submit">Apply filters</button>
+        </div>
+      </div>
     </section>
-    <aside class="dc-ds-scaffold__rail" aria-label="DPA review summary">
-        <div class="dc-ds-summary dc-ds-summary--vertical">
-            <div class="dc-ds-summary__item dc-ds-summary__item--info">
-                <span class="dc-ds-summary__label">Review packs</span>
-                <strong class="dc-ds-summary__value">{{ total_packs }}</strong>
-                <span class="dc-ds-summary__note">Governed DPA records</span>
-            </div>
-            <div class="dc-ds-summary__item {% if pending_approval_count %}dc-ds-summary__item--info{% else %}dc-ds-summary__item--clear{% endif %}">
-                <span class="dc-ds-summary__label">Awaiting decision</span>
-                <strong class="dc-ds-summary__value">{% if pending_approval_count %}{{ pending_approval_count }} active{% else %}Clear{% endif %}</strong>
-                <span class="dc-ds-summary__note">Draft or under review</span>
-            </div>
-            <div class="dc-ds-summary__item {% if open_critical_risk_count %}dc-ds-summary__item--danger{% else %}dc-ds-summary__item--clear{% endif %}">
-                <span class="dc-ds-summary__label">Critical risk</span>
-                <strong class="dc-ds-summary__value">{% if open_critical_risk_count %}{{ open_critical_risk_count }} intervention{{ open_critical_risk_count|pluralize }}{% else %}Clear{% endif %}</strong>
-                <span class="dc-ds-summary__note">Open critical findings</span>
-            </div>
-        </div>
-    </aside>
+  </form>
+
+  <div class="dc-ds-summary clm-list-summary dpa-review-summary" aria-label="DPA review queue summary">
+    <div class="dc-ds-summary__item {% if needs_decision_count %}dc-ds-summary__item--info{% else %}dc-ds-summary__item--clear{% endif %}">
+      <span class="dc-ds-summary__label">Needs decision</span>
+      <strong class="dc-ds-summary__value">{{ needs_decision_count }}</strong>
     </div>
+    <div class="dc-ds-summary__item {% if open_risk_count %}dc-ds-summary__item--info{% else %}dc-ds-summary__item--clear{% endif %}">
+      <span class="dc-ds-summary__label">Open risks</span>
+      <strong class="dc-ds-summary__value">{{ open_risk_count }}</strong>
+    </div>
+    <div class="dc-ds-summary__item {% if open_critical_risk_count %}dc-ds-summary__item--danger{% else %}dc-ds-summary__item--clear{% endif %}">
+      <span class="dc-ds-summary__label">Critical risks</span>
+      <strong class="dc-ds-summary__value">{{ open_critical_risk_count }}</strong>
+    </div>
+  </div>
+
+  <div class="dc-ds-table-wrap">
+    <table id="dpa-reviews-table" class="dc-ds-table" data-table-core="server">
+      <caption class="sr-only">Active DPA reviews with agreement, processing role, review state, owner, next action, and most recent update.</caption>
+      <thead>
+        <tr>
+          <th scope="col" data-col="agreement">Agreement</th>
+          <th scope="col" data-col="role">Processing role</th>
+          <th scope="col" data-col="review">Review</th>
+          <th scope="col" data-col="owner">Owner</th>
+          <th scope="col" data-col="next_action">Next action</th>
+          <th scope="col" data-col="updated" data-numeric>Updated</th>
+          <th scope="col" data-col="actions"><span class="sr-only">Actions</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in review_pack_rows %}
+        <tr class="dpa-review-row" data-href="{{ row.detail_url }}" tabindex="0" role="link" aria-label="Open review pack for {{ row.pack.contract.title }}">
+          <td data-col="agreement">
+            <a href="{{ row.detail_url }}" class="dpa-review-contract-link dpa-review-agreement-title">{{ row.pack.contract.title }}</a>
+            <div class="dpa-review-counterparty">{% if row.pack.counterparty %}{{ row.pack.counterparty.name }}{% else %}No counterparty{% endif %}</div>
+          </td>
+          <td data-col="role">
+            {% if row.role_is_ambiguous %}
+            <span class="dc-ds-badge dc-ds-badge--attention">{{ row.role_label }}</span>
+            {% else %}
+            <span class="dpa-review-role">{{ row.role_label }}</span>
+            {% endif %}
+          </td>
+          <td data-col="review">
+            <span class="dpa-review-stack">
+              <span class="dc-ds-badge dc-ds-badge--{{ row.risk_tone }}">{{ row.unresolved_risk_count }} open</span>
+              <span class="dc-ds-badge dc-ds-badge--{{ row.approval_tone }}">{{ row.review_status_label }}</span>
+            </span>
+          </td>
+          <td data-col="owner">{{ row.owner_label }}</td>
+          <td data-col="next_action"><span class="dpa-review-next-action">{{ row.next_action }}</span></td>
+          <td data-col="updated" data-numeric>{{ row.pack.updated_at|date:"j M Y" }}</td>
+          <td data-col="actions">
+            <details class="wq-kebab">
+              <summary aria-label="More actions for {{ row.pack.contract.title }}" class="wq-kebab-trigger">&#8942;</summary>
+              <div class="wq-kebab-menu">
+                <a href="{{ row.detail_url }}">Open review</a>
+                <a href="{{ row.memo_url }}">View memo</a>
+                <a href="{{ row.contract_url }}">View contract record</a>
+              </div>
+            </details>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7">
+            {% include "design_system/empty_state.html" with icon="shield" title="No active DPA reviews" reason="No governed contract in this workspace currently carries a Data Processing Agreement." how="Start a DPA review to open a review pack, or upload an existing DPA into the repository." action_url=start_dpa_url action_label="Start DPA review" class_name="dc-ds-empty--compact" %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
+<script nonce="{{ csp_nonce }}">
+(function () {
+  var root = document.getElementById('dpa-review-root');
+  if (!root) return;
+  var filterToggle = document.getElementById('dpa-filter-toggle');
+  var filterDrawer = document.getElementById('dpa-review-filters');
+  if (filterToggle && filterDrawer) {
+    filterToggle.addEventListener('click', function () {
+      var open = filterDrawer.classList.toggle('is-open');
+      filterToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+  }
+
+  var STORAGE_KEY = 'clmone-dpa-review-columns';
+  var DEFAULT_COLS = { role: true, review: true, owner: true, updated: true };
+  var colMenu = document.getElementById('dpa-col-menu');
+  var colToggle = document.getElementById('dpa-col-toggle');
+  var table = document.getElementById('dpa-reviews-table');
+  var columnVisibility = Object.assign({}, DEFAULT_COLS);
+
+  try {
+    var saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    Object.keys(DEFAULT_COLS).forEach(function (key) {
+      if (typeof saved[key] === 'boolean') columnVisibility[key] = saved[key];
+    });
+  } catch (err) { /* ignore corrupt storage */ }
+
+  function applyColumnVisibility() {
+    if (!table) return;
+    Object.keys(DEFAULT_COLS).forEach(function (key) {
+      var visible = columnVisibility[key] !== false;
+      table.querySelectorAll('[data-col="' + key + '"]').forEach(function (el) {
+        el.classList.toggle('is-hidden', !visible);
+      });
+      var input = root.querySelector('[data-col-toggle="' + key + '"]');
+      if (input) input.checked = visible;
+    });
+  }
+
+  function persistColumns() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(columnVisibility)); } catch (err) { /* ignore */ }
+  }
+
+  if (colToggle && colMenu) {
+    colToggle.addEventListener('click', function () {
+      var open = colMenu.classList.toggle('is-open');
+      colToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    document.addEventListener('click', function (event) {
+      if (!colMenu.contains(event.target)) {
+        colMenu.classList.remove('is-open');
+        colToggle.setAttribute('aria-expanded', 'false');
+      }
+    });
+    document.addEventListener('keydown', function (event) {
+      if (event.key !== 'Escape') return;
+      colMenu.classList.remove('is-open');
+      colToggle.setAttribute('aria-expanded', 'false');
+    });
+  }
+
+  root.querySelectorAll('[data-col-toggle]').forEach(function (input) {
+    input.addEventListener('change', function () {
+      var key = input.getAttribute('data-col-toggle');
+      if (!Object.prototype.hasOwnProperty.call(DEFAULT_COLS, key)) return;
+      columnVisibility[key] = !!input.checked;
+      applyColumnVisibility();
+      persistColumns();
+    });
+  });
+  applyColumnVisibility();
+
+  function openRow(row) {
+    var href = row && row.getAttribute('data-href');
+    if (href) window.location.href = href;
+  }
+  root.addEventListener('click', function (event) {
+    var row = event.target.closest('tr.dpa-review-row');
+    if (!row || event.target.closest('a, button, input, select, label, details, summary')) return;
+    openRow(row);
+  });
+  root.addEventListener('keydown', function (event) {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    var row = event.target.closest('tr.dpa-review-row');
+    if (!row || event.target !== row) return;
+    event.preventDefault();
+    openRow(row);
+  });
+})();
+</script>
 {% endblock %}

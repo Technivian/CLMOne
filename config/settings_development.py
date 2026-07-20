@@ -10,11 +10,33 @@ if not ALLOWED_HOSTS:
     ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '0.0.0.0', 'testserver']
 
 CSRF_TRUSTED_ORIGINS.extend([
+    'http://localhost:8060',
+    'http://127.0.0.1:8060',
+    'https://localhost:8060',
+    'https://127.0.0.1:8060',
     'https://*.replit.dev',
     'https://*.repl.co',
     'https://*.riker.replit.dev',
     'https://*.riker.replit.dev:8060',
 ])
+
+# Django 5.2 always wraps template loaders in cached.Loader, so HTML edits stay
+# invisible until the worker restarts. In local development, read templates from
+# disk on every request so browser reload shows template changes immediately.
+if DEBUG:
+    TEMPLATES = [
+        {
+            **TEMPLATES[0],
+            'APP_DIRS': False,
+            'OPTIONS': {
+                **TEMPLATES[0]['OPTIONS'],
+                'loaders': [
+                    'django.template.loaders.filesystem.Loader',
+                    'django.template.loaders.app_directories.Loader',
+                ],
+            },
+        }
+    ]
 
 INSTALLED_APPS.append('django_browser_reload')
 MIDDLEWARE.append('django_browser_reload.middleware.BrowserReloadMiddleware')

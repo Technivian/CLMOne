@@ -1,0 +1,39 @@
+{% if incidents %}
+<div class="dc-ds-table-wrap">
+  <table class="dc-ds-table w-full text-sm" aria-label="Open operational alerts">
+    <thead>
+      <tr>
+        <th scope="col">Severity</th>
+        <th scope="col">Issue</th>
+        <th scope="col">Impact</th>
+        <th scope="col">Owner</th>
+        <th scope="col">Status</th>
+        <th scope="col">Recommended action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for incident in incidents %}
+      <tr>
+        <td>
+          {% if incident.severity == 'P1' %}
+            {% include "design_system/status_badge.html" with label=incident.severity tone="danger" size="sm" %}
+          {% else %}
+            {% include "design_system/status_badge.html" with label=incident.severity tone="attention" size="sm" %}
+          {% endif %}
+        </td>
+        <td>
+          <div class="font-medium">{{ incident.title }}</div>
+          <div class="text-xs c-muted">{{ incident.code }}</div>
+        </td>
+        <td>{{ incident.impact }}</td>
+        <td>{{ incident.owner }}</td>
+        <td>{{ incident.status }}</td>
+        <td>{{ incident.recommended_action }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+{% include "design_system/empty_state.html" with title="No open alerts" copy="Alert policy is OK. Scheduler, database, and 5xx rate are within thresholds." %}
+{% endif %}

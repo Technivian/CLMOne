@@ -1,10 +1,7 @@
-"""Tests for the Contract Detail Record Shell + Tabs block.
+"""Tests for the Contract Detail workspace.
 
-Covers: shared shell/header rhythm, the enhanced metadata header (StageDots,
-AssigneeChip for the derived owner, risk badge, key dates), approved tab
-labels with banned jargon removed, Documents/Workflow/Activity tab content
-reusing existing data only, real (non-fake) primary actions, and copy free
-of raw enums/ISO timestamps/model names.
+Covers: persistent header, ?tab= routing, action gating, blocker split,
+Contract review terminology, single-column overview, and duplicate-state removal.
 """
 import re
 
@@ -33,9 +30,18 @@ from contracts.models import (
     RiskLog,
     SignatureRequest,
 )
+from contracts.services.contract_detail_workspace import contract_detail_tab_url
 
 ISO_TIMESTAMP_RE = re.compile(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}')
 BANNED_JARGON = ('Action Cockpit', 'Case Flow', 'Target Stage', 'Operational scan', 'Packet command center')
+LEGACY_REVIEW_LABELS = (
+    'AI review summary',
+    'AI review complete',
+    'Manual review required',
+    'Review refresh required',
+    'No document to review',
+    'AI review:',
+)
 
 
 def page_body(html):
@@ -44,6 +50,13 @@ def page_body(html):
     page body never renders them."""
     end = html.find('id="djDebug"')
     return html[:end] if end != -1 else html
+
+
+def detail_url(pk, tab=None):
+    url = reverse('contracts:contract_detail', kwargs={'pk': pk})
+    if tab and tab != 'overview':
+        return f'{url}?tab={tab}'
+    return url
 
 
 class ContractDetailShellTests(TestCase):
@@ -59,16 +72,16 @@ class ContractDetailShellTests(TestCase):
         )
 
     def test_renders_for_member(self):
-        response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
+        response = self.client.get(detail_url(self.contract.pk))
         self.assertEqual(response.status_code, 200)
 
     def test_uses_shared_page_wrap_shell(self):
-        response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
+        response = self.client.get(detail_url(self.contract.pk))
         self.assertContains(response, 'dc-ds-shell')
         self.assertContains(response, 'dc-ds-workspace--record')
 
     def test_uses_shared_page_header_pattern(self):
-        response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
+        response = self.client.get(detail_url(self.contract.pk))
         self.assertContains(response, 'arch-header')
         self.assertContains(response, 'arch-title')
 
@@ -81,34 +94,41 @@ class ContractDetailShellTests(TestCase):
             contract=self.contract,
             uploaded_by=self.user,
         )
-        response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
-        self.assertContains(response, 'dc-ds-workspace--record')
-        self.assertContains(response, 'contract-document-hero')
-        self.assertContains(response, 'data-open-note-dialog')
-        self.assertContains(response, 'id="contract-note-dialog"')
+        docs = self.client.get(detail_url(self.contract.pk, 'documents'))
+        self.assertContains(docs, 'dc-ds-workspace--record')
+        self.assertContains(docs, 'contract-document-hero')
+        activity = self.client.get(detail_url(self.contract.pk, 'activity'))
+        self.assertContains(activity, 'data-open-note-dialog')
+        self.assertContains(activity, 'id="contract-note-dialog"')
 
-    def test_contract_workspace_sections_present(self):
-        response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
+    def test_contract_workspace_tabs_and_overview_sections_present(self):
+        response = self.client.get(detail_url(self.contract.pk))
         body = page_body(response.content.decode())
-        for label in ('Next action &amp; blockers', 'AI review summary', 'Open findings', 'Approval summary', 'Documents &amp; versions', 'Internal activity'):
+        self.assertIn('role="tablist"', body)
+        for label in ('Overview', 'Documents', 'Review', 'Approvals', 'Risks', 'Obligations', 'Activity'):
             self.assertIn(label, body)
+        for label in ('Contract details', 'Progress', 'Action required'):
+            self.assertIn(label, body)
+        self.assertIn('contract-overview-grid', body)
+        self.assertIn('dc-ds-workspace__rail--sticky', body)
+        self.assertIn('Quick links', body)
 
     def test_banned_jargon_is_absent(self):
-        response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
+        response = self.client.get(detail_url(self.contract.pk))
         body = page_body(response.content.decode())
         for phrase in BANNED_JARGON:
             self.assertNotIn(phrase, body, f'Found banned jargon "{phrase}" in Contract Detail body')
 
     def test_open_findings_section_uses_empty_state_when_no_risks_exist(self):
-        response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
+        response = self.client.get(detail_url(self.contract.pk, 'risks'))
         body = page_body(response.content.decode())
         self.assertIn('No unresolved risk findings are recorded', body)
 
     def test_open_findings_section_shows_linked_risks(self):
         RiskLog.objects.create(title='Linked risk', description='d', contract=self.contract, created_by=self.user)
-        response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
+        response = self.client.get(detail_url(self.contract.pk, 'risks'))
         body = page_body(response.content.decode())
-        self.assertIn('Open findings', body)
+        self.assertIn('Risks', body)
         self.assertIn('Linked risk', body)
 
     def test_agreement_family_shows_governing_and_linked_contract_records(self):
@@ -121,17 +141,13 @@ class ContractDetailShellTests(TestCase):
             created_by=self.user,
         )
 
-        parent_response = self.client.get(
-            reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}),
-        )
+        parent_response = self.client.get(detail_url(self.contract.pk))
         parent_body = page_body(parent_response.content.decode())
         self.assertIn('Related records', parent_body)
         self.assertIn(order_confirmation.title, parent_body)
         self.assertIn('Purchase Order', parent_body)
 
-        child_response = self.client.get(
-            reverse('contracts:contract_detail', kwargs={'pk': order_confirmation.pk}),
-        )
+        child_response = self.client.get(detail_url(order_confirmation.pk))
         child_body = page_body(child_response.content.decode())
         self.assertIn('Governing agreement', child_body)
         self.assertIn(self.contract.title, child_body)
@@ -152,23 +168,22 @@ class ContractDetailMetadataHeaderTests(TestCase):
         )
 
     def test_header_shows_key_metadata_fields(self):
-        response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
+        response = self.client.get(detail_url(self.contract.pk))
         body = page_body(response.content.decode())
         self.assertIn('Header Contract', body)
         self.assertIn('Active', body)
-        self.assertIn('Northwind Logistics LLC', body)
-        self.assertIn('$125,000.00', body)
-        self.assertIn('High risk', body)
-        self.assertIn('dc-ds-workspace__metadata-grid', body)
-        self.assertIn('Current stage', body)
         self.assertIn('Negotiation', body)
+        self.assertIn('Northwind Logistics LLC', body)
+        self.assertIn('Owner: Rowan', body)
+        self.assertIn('Updated', body)
+        self.assertNotIn('dc-ds-workspace__metadata-grid', body)
 
-    def test_header_uses_command_summary_without_metadata_grid(self):
-        response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
+    def test_header_omits_duplicate_command_summary_grid(self):
+        response = self.client.get(detail_url(self.contract.pk))
         body = page_body(response.content.decode())
-        self.assertIn('aria-label="Contract command summary"', body)
-        for label in ('Current stage', 'Next action', 'Owner', 'Review status', 'Approval status', 'Expiry / renewal'):
-            self.assertIn(f'>{label}</span>', body)
+        self.assertNotIn('aria-label="Contract command summary"', body)
+        self.assertNotIn('dc-ds-workspace__metadata-grid', body)
+        self.assertIn('aria-label="Contract identity"', body)
 
     def test_phase_one_summary_shows_paper_source_and_workflow_checklist(self):
         reviewer = User.objects.create_user(username='cdetail_route_reviewer', password='testpass123')
@@ -185,16 +200,20 @@ class ContractDetailMetadataHeaderTests(TestCase):
             assigned_to=reviewer,
         )
 
-        response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
-        body = page_body(response.content.decode())
-        self.assertIn('Workflow checklist', body)
-        self.assertIn('Record basics', body)
-        self.assertIn('Paper source', body)
-        self.assertIn('Our paper', body)
-        self.assertIn('Approval summary', body)
-        self.assertIn('0 of 1 approved', body)
-        self.assertIn('Add approver', body)
-        self.assertIn(reverse('contracts:approval_request_create') + f'?contract={self.contract.pk}', body)
+        overview = self.client.get(detail_url(self.contract.pk))
+        overview_body = page_body(overview.content.decode())
+        self.assertIn('Progress', overview_body)
+        self.assertIn('View workflow', overview_body)
+        self.assertIn('Paper source', overview_body)
+        self.assertIn('Our paper', overview_body)
+        self.assertNotIn('Workflow checklist', overview_body)
+
+        approvals = self.client.get(detail_url(self.contract.pk, 'approvals'))
+        approvals_body = page_body(approvals.content.decode())
+        self.assertIn('Approvals', approvals_body)
+        self.assertIn('0 of 1 approved', approvals_body)
+        self.assertIn('Add approver', approvals_body)
+        self.assertIn(reverse('contracts:approval_request_create') + f'?contract={self.contract.pk}', approvals_body)
 
     def test_phase_one_summary_shows_playbook_usage_summary(self):
         clause = ClauseTemplate.objects.create(
@@ -219,7 +238,7 @@ class ContractDetailMetadataHeaderTests(TestCase):
             performed_by=self.owner,
         )
 
-        response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
+        response = self.client.get(detail_url(self.contract.pk, 'review'))
         body = page_body(response.content.decode())
         self.assertIn('Playbook usage', body)
         self.assertIn('1 approved clause used across 2 recorded events.', body)
@@ -232,7 +251,7 @@ class ContractDetailMetadataHeaderTests(TestCase):
             title='Follow up', deadline_type='CONTRACT', contract=self.contract,
             assigned_to=self.owner, due_date=timezone.localdate(), is_completed=False,
         )
-        response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
+        response = self.client.get(detail_url(self.contract.pk))
         body = page_body(response.content.decode())
         self.assertIn('Rowan', body)
 
@@ -240,7 +259,7 @@ class ContractDetailMetadataHeaderTests(TestCase):
         self.contract.owner = None
         self.contract.created_by = None
         self.contract.save(update_fields=['owner', 'created_by', 'updated_at'])
-        response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
+        response = self.client.get(detail_url(self.contract.pk))
         body = page_body(response.content.decode())
         self.assertIn('Unassigned', body)
 
@@ -257,19 +276,26 @@ class ContractDetailActionsTests(TestCase):
             status=Contract.Status.DRAFT, created_by=self.user,
         )
 
-    def test_draft_has_one_submit_primary_and_no_signature_shortcut(self):
-        response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
+    def test_draft_without_document_uses_attach_primary_not_submit(self):
+        response = self.client.get(detail_url(self.contract.pk))
         body = page_body(response.content.decode())
         self.assertIn(reverse('contracts:contract_update', kwargs={'pk': self.contract.pk}), body)
-        self.assertIn('Submit for review', body)
+        self.assertIn('Attach source document', body)
         self.assertNotIn(reverse('contracts:signature_request_create'), body)
-        self.assertIn('Run grounded check', body)
+        approvals = self.client.get(detail_url(self.contract.pk, 'approvals'))
+        approvals_body = page_body(approvals.content.decode())
+        self.assertNotIn('id="contract-submit-review-form"', approvals_body)
+        self.assertIn('Attach a source document.', approvals_body)
 
     def test_signature_action_appears_only_after_all_approvals(self):
         reviewer = User.objects.create_user(username='cdetail_reviewer', password='testpass123')
         OrganizationMembership.objects.create(
             organization=self.organization, user=reviewer,
             role=OrganizationMembership.Role.MEMBER, is_active=True,
+        )
+        Document.objects.create(
+            organization=self.organization, title='Signed path source', document_type=Document.DocType.CONTRACT,
+            version=1, contract=self.contract, uploaded_by=self.user,
         )
         self.contract.status = Contract.Status.APPROVED
         self.contract.save(update_fields=['status', 'updated_at'])
@@ -279,7 +305,7 @@ class ContractDetailActionsTests(TestCase):
             assigned_to=reviewer,
         )
 
-        response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
+        response = self.client.get(detail_url(self.contract.pk))
         body = page_body(response.content.decode())
         self.assertIn(reverse('contracts:signature_request_create'), body)
         self.assertIn('Prepare signature request', body)
@@ -293,9 +319,14 @@ class ContractDetailActionsTests(TestCase):
         self.assertEqual(response.context['form'].initial.get('contract'), self.contract.pk)
 
     def test_grounded_check_endpoint_still_wired(self):
-        response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
+        Document.objects.create(
+            organization=self.organization, title='Review source', document_type=Document.DocType.CONTRACT,
+            version=1, contract=self.contract, uploaded_by=self.user,
+        )
+        response = self.client.get(detail_url(self.contract.pk, 'review'))
         body = page_body(response.content.decode())
         self.assertIn(reverse('contracts:contract_ai_assistant', kwargs={'pk': self.contract.pk}), body)
+        self.assertIn('Run review', body)
 
     def test_manual_grounded_check_persists_freshness_evidence(self):
         response = self.client.post(
@@ -310,8 +341,8 @@ class ContractDetailActionsTests(TestCase):
             object_id=self.contract.pk,
             event_type='contract.grounded_check_completed',
         ).exists())
-        detail = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
-        self.assertEqual(detail.context['grounded_check']['label'], 'Current')
+        detail = self.client.get(detail_url(self.contract.pk))
+        self.assertEqual(detail.context['grounded_check']['label'], 'Complete')
 
 
 class CounterpartyCollaborationTests(TestCase):
@@ -345,7 +376,7 @@ class CounterpartyCollaborationTests(TestCase):
         self.assertTrue(participant.can_view_documents)
         self.assertTrue(participant.can_comment)
         self.assertFalse(participant.can_upload_revisions)
-        detail = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
+        detail = self.client.get(detail_url(self.contract.pk, 'documents'))
         self.assertContains(detail, 'Counterparty collaboration')
         self.assertContains(detail, participant.email)
         self.assertContains(detail, 'Invite counterparty')
@@ -430,13 +461,13 @@ class ContractDetailDocumentsTabTests(TestCase):
         )
 
     def test_documents_surface_shows_empty_state_without_giant_panel(self):
-        response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
+        response = self.client.get(detail_url(self.contract.pk, 'documents'))
         body = page_body(response.content.decode())
         self.assertIn('No document is attached.', body)
         self.assertIn('Attach the source document', body)
 
     def test_attach_document_is_an_in_page_dialog(self):
-        response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
+        response = self.client.get(detail_url(self.contract.pk, 'documents'))
         body = page_body(response.content.decode())
 
         self.assertIn('id="contract-attach-dialog"', body)
@@ -453,7 +484,7 @@ class ContractDetailDocumentsTabTests(TestCase):
             },
         )
 
-        self.assertRedirects(response, reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
+        self.assertRedirects(response, contract_detail_tab_url(self.contract.pk, 'documents'))
         document = Document.objects.get(title='Attached agreement')
         self.assertEqual(document.contract, self.contract)
         self.assertEqual(document.uploaded_by, self.uploader)
@@ -463,14 +494,14 @@ class ContractDetailDocumentsTabTests(TestCase):
             organization=self.organization, title='MSA Final', document_type=Document.DocType.CONTRACT,
             version=2, contract=self.contract, uploaded_by=self.uploader,
         )
-        response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
+        response = self.client.get(detail_url(self.contract.pk, 'documents'))
         body = page_body(response.content.decode())
         self.assertIn('MSA Final', body)
         self.assertIn('Contract Document', body)
         self.assertIn('Version 2', body)
         self.assertIn('Casey', body)
 
-    def test_workspace_uses_command_strip_and_document_surface(self):
+    def test_workspace_uses_tabs_and_document_surface(self):
         Document.objects.create(
             organization=self.organization,
             title='Primary Agreement',
@@ -479,14 +510,19 @@ class ContractDetailDocumentsTabTests(TestCase):
             contract=self.contract,
             uploaded_by=self.uploader,
         )
-        response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
-        body = page_body(response.content.decode())
-        self.assertIn('dc-ds-workspace__metadata-grid', body)
-        self.assertIn('Current stage', body)
-        self.assertIn('Next action', body)
-        self.assertIn('Review status', body)
-        self.assertIn('contract-document-hero', body)
-        self.assertIn('dc-ds-workspace--record', body)
+        overview = self.client.get(detail_url(self.contract.pk))
+        overview_body = page_body(overview.content.decode())
+        self.assertIn('role="tablist"', overview_body)
+        self.assertIn('contract-command-tabs', overview_body)
+        self.assertIn('dc-ds-workspace__rail--sticky', overview_body)
+        self.assertIn('Contract details', overview_body)
+        self.assertIn('Progress', overview_body)
+        self.assertIn('Quick links', overview_body)
+        self.assertNotIn('dc-ds-workspace__metadata-grid', overview_body)
+        docs = self.client.get(detail_url(self.contract.pk, 'documents'))
+        docs_body = page_body(docs.content.decode())
+        self.assertIn('contract-document-hero', docs_body)
+        self.assertIn('dc-ds-workspace--record', docs_body)
 
 
 class ContractDetailWorkflowTabTests(TestCase):
@@ -504,9 +540,9 @@ class ContractDetailWorkflowTabTests(TestCase):
         )
 
     def test_required_approvals_shows_empty_state_when_nothing_exists(self):
-        response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
+        response = self.client.get(detail_url(self.contract.pk, 'approvals'))
         body = page_body(response.content.decode())
-        self.assertIn('Approval summary', body)
+        self.assertIn('Approvals', body)
         self.assertIn('No approvers have been added yet.', body)
         self.assertIn('Add approver', body)
 
@@ -557,12 +593,14 @@ class ContractDetailWorkflowTabTests(TestCase):
             title='Review indemnification', description='d', contract=self.contract,
             assigned_to=self.assignee, due_date=timezone.localdate(), status=LegalTask.Status.PENDING,
         )
-        response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
-        body = page_body(response.content.decode())
-        self.assertIn('Legal Review', body)
-        self.assertIn('Alex Signer', body)
-        self.assertIn('Review indemnification', body)
-        self.assertIn('Jordan', body)
+        approvals = self.client.get(detail_url(self.contract.pk, 'approvals'))
+        approvals_body = page_body(approvals.content.decode())
+        self.assertIn('Legal Review', approvals_body)
+        self.assertIn('Jordan', approvals_body)
+        overview = self.client.get(detail_url(self.contract.pk))
+        overview_body = page_body(overview.content.decode())
+        self.assertIn('Alex Signer', overview_body)
+        self.assertIn('Review indemnification', overview_body)
 
 
 class ContractDetailActivityTabTests(TestCase):
@@ -578,7 +616,7 @@ class ContractDetailActivityTabTests(TestCase):
         )
 
     def test_activity_tab_shows_empty_state(self):
-        response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
+        response = self.client.get(detail_url(self.contract.pk, 'activity'))
         body = page_body(response.content.decode())
         self.assertIn('No internal activity recorded for this contract.', body)
 
@@ -587,7 +625,7 @@ class ContractDetailActivityTabTests(TestCase):
             self.user, 'UPDATE', 'Contract', self.contract.id, str(self.contract),
             changes={'event': 'contract_updated'}, organization=self.organization,
         )
-        response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
+        response = self.client.get(detail_url(self.contract.pk, 'activity'))
         body = page_body(response.content.decode())
         self.assertIn('Sam', body)
         self.assertNotIn('UPDATE', body)
@@ -604,9 +642,9 @@ class ContractDetailActivityTabTests(TestCase):
             self.user, 'UPDATE', 'Contract', self.contract.id, str(self.contract),
             changes={'event': 'contract_updated'}, organization=self.organization,
         )
-        response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
+        response = self.client.get(detail_url(self.contract.pk, 'activity'))
         body = page_body(response.content.decode())
-        self.assertIn('Internal activity', body)
+        self.assertIn('Activity', body)
         self.assertIn('Redline note', body)
         self.assertIn('Internal note', body)
         self.assertIn('Audit', body)
@@ -651,16 +689,23 @@ class ContractDetailStateConsistencyTests(TestCase):
         )
 
     def test_open_high_risk_overrides_low_record_badge_and_blocks_signature(self):
+        Document.objects.create(
+            organization=self.organization, title='State source', document_type=Document.DocType.CONTRACT,
+            version=1, contract=self.contract, uploaded_by=self.user,
+        )
         RiskLog.objects.create(
             title='Unresolved indemnity exposure', description='d', contract=self.contract,
             risk_level=RiskLog.RiskLevel.HIGH, status=RiskLog.Status.OPEN, created_by=self.user,
         )
-        response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
+        response = self.client.get(detail_url(self.contract.pk))
         body = page_body(response.content.decode())
-        self.assertIn('High-risk findings open', body)
         self.assertIn('Resolve blockers', body)
-        self.assertIn('Resolve high or critical open risk findings before signature routing.', body)
-        self.assertNotIn('Low risk</span>', body)
+        self.assertIn('Unresolved indemnity exposure', body)
+        self.assertIn('Signature requirement', body)
+        self.assertIn('At least one approval is required before signature routing.', body)
+        risks = self.client.get(detail_url(self.contract.pk, 'risks'))
+        risks_body = page_body(risks.content.decode())
+        self.assertIn('Unresolved indemnity exposure', risks_body)
 
 
 class ContractDetailCrossTenantIsolationTests(TestCase):
@@ -678,5 +723,217 @@ class ContractDetailCrossTenantIsolationTests(TestCase):
     def test_other_org_member_gets_404(self):
         client = TestClient()
         client.login(username='cdetail_iso_b', password='testpass123')
-        response = client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract_a.pk}))
+        response = client.get(detail_url(self.contract_a.pk))
         self.assertEqual(response.status_code, 404)
+
+
+class ContractDetailWorkspaceGatingTests(TestCase):
+    def setUp(self):
+        self.organization = Organization.objects.create(name='Gate Firm', slug='cdetail-gate-firm')
+        self.owner = User.objects.create_user(username='cdetail_gate_owner', password='testpass123')
+        self.reviewer = User.objects.create_user(username='cdetail_gate_reviewer', password='testpass123')
+        OrganizationMembership.objects.create(organization=self.organization, user=self.owner, role=OrganizationMembership.Role.MEMBER, is_active=True)
+        OrganizationMembership.objects.create(organization=self.organization, user=self.reviewer, role=OrganizationMembership.Role.MEMBER, is_active=True)
+        self.client = TestClient()
+        self.client.login(username='cdetail_gate_owner', password='testpass123')
+        self.contract = Contract.objects.create(
+            organization=self.organization, title='Gate Contract', content='Seed',
+            status=Contract.Status.DRAFT, created_by=self.owner, owner=self.owner,
+        )
+
+    def test_submit_post_rejected_without_document_and_review(self):
+        response = self.client.post(
+            reverse('contracts:contract_submit_for_review', kwargs={'pk': self.contract.pk}),
+            {'reviewer_id': self.reviewer.pk, 'comment': 'Please review'},
+        )
+        self.assertRedirects(response, contract_detail_tab_url(self.contract.pk, 'approvals'))
+        self.assertFalse(ApprovalRequest.objects.filter(contract=self.contract).exists())
+        follow = self.client.get(contract_detail_tab_url(self.contract.pk, 'approvals'))
+        body = page_body(follow.content.decode())
+        self.assertIn('Attach a source document', body)
+
+    def test_submit_form_appears_only_when_review_is_complete(self):
+        Document.objects.create(
+            organization=self.organization, title='Gate source', document_type=Document.DocType.CONTRACT,
+            version=1, contract=self.contract, uploaded_by=self.owner,
+        )
+        blocked = self.client.get(detail_url(self.contract.pk, 'approvals'))
+        blocked_body = page_body(blocked.content.decode())
+        self.assertNotIn('id="contract-submit-review-form"', blocked_body)
+        self.assertIn('Run contract review.', blocked_body)
+
+        self.client.post(
+            reverse('contracts:contract_ai_assistant', kwargs={'pk': self.contract.pk}),
+            data='{"prompt": "ready"}',
+            content_type='application/json',
+        )
+        ready = self.client.get(detail_url(self.contract.pk, 'approvals'))
+        ready_body = page_body(ready.content.decode())
+        self.assertIn('id="contract-submit-review-form"', ready_body)
+        overview = self.client.get(detail_url(self.contract.pk))
+        self.assertEqual(overview.context['contract_command']['primary_action']['label'], 'Submit for review')
+
+
+class ContractDetailTabRoutingTests(TestCase):
+    def setUp(self):
+        self.organization = Organization.objects.create(name='Tab Firm', slug='cdetail-tab-firm')
+        self.user = User.objects.create_user(username='cdetail_tab_user', password='testpass123')
+        OrganizationMembership.objects.create(organization=self.organization, user=self.user, role=OrganizationMembership.Role.MEMBER, is_active=True)
+        self.client = TestClient()
+        self.client.login(username='cdetail_tab_user', password='testpass123')
+        self.contract = Contract.objects.create(
+            organization=self.organization, title='Tab Contract', content='Seed',
+            status=Contract.Status.DRAFT, created_by=self.user,
+        )
+
+    def test_each_tab_renders_its_panel(self):
+        expectations = {
+            'overview': 'Contract details',
+            'documents': 'Documents &amp; versions',
+            'review': 'Contract review',
+            'approvals': 'Approvals',
+            'risks': 'Risks',
+            'obligations': 'Obligations',
+            'activity': 'Activity',
+        }
+        for tab, heading in expectations.items():
+            response = self.client.get(detail_url(self.contract.pk, tab))
+            body = page_body(response.content.decode())
+            self.assertEqual(response.context['active_tab'], tab)
+            self.assertIn(heading, body)
+            self.assertIn(f'id="contract-tab-{tab}"', body)
+
+    def test_invalid_tab_falls_back_to_overview(self):
+        response = self.client.get(detail_url(self.contract.pk) + '?tab=not-a-tab')
+        self.assertEqual(response.context['active_tab'], 'overview')
+        body = page_body(response.content.decode())
+        self.assertIn('id="contract-tab-overview"', body)
+
+
+class ContractDetailTerminologyAndBlockerTests(TestCase):
+    def setUp(self):
+        self.organization = Organization.objects.create(name='Term Firm', slug='cdetail-term-firm')
+        self.user = User.objects.create_user(username='cdetail_term_user', password='testpass123')
+        OrganizationMembership.objects.create(organization=self.organization, user=self.user, role=OrganizationMembership.Role.MEMBER, is_active=True)
+        self.client = TestClient()
+        self.client.login(username='cdetail_term_user', password='testpass123')
+        self.contract = Contract.objects.create(
+            organization=self.organization, title='Term Contract', content='Seed',
+            status=Contract.Status.DRAFT, created_by=self.user,
+        )
+
+    def test_contract_review_terminology_and_legacy_labels_absent(self):
+        Document.objects.create(
+            organization=self.organization, title='Term source', document_type=Document.DocType.CONTRACT,
+            version=1, contract=self.contract, uploaded_by=self.user,
+        )
+        response = self.client.get(detail_url(self.contract.pk, 'review'))
+        body = page_body(response.content.decode())
+        self.assertIn('Contract review', body)
+        self.assertIn('Not started', body)
+        self.assertIn('Run review', body)
+        for legacy in LEGACY_REVIEW_LABELS:
+            self.assertNotIn(legacy, body)
+
+    def test_signature_blockers_live_under_later_while_attach_is_next(self):
+        response = self.client.get(detail_url(self.contract.pk))
+        body = page_body(response.content.decode())
+        self.assertIn('Attach source document', body)
+        self.assertIn('Action required', body)
+        self.assertIn('contract-action-card', body)
+        self.assertIn('Signature requirement', body)
+        self.assertIn('The contract must be fully approved before signature routing.', body)
+        self.assertEqual(response.context['contract_command']['primary_action']['label'], 'Attach source document')
+        self.assertEqual(response.context['contract_command']['lifecycle_label'], 'Draft · Intake incomplete')
+        self.assertTrue(any('approved' in item.lower() for item in response.context['later_workflow_requirements']))
+        self.assertIn('View workflow', body)
+        self.assertNotIn('contract-action-summary', body)
+        self.assertIn('dc-ds-workspace__rail--sticky', body)
+
+    def test_duplicate_state_labels_removed_from_header_and_overview(self):
+        response = self.client.get(detail_url(self.contract.pk))
+        body = page_body(response.content.decode())
+        self.assertNotIn('dc-ds-workspace__metadata-grid', body)
+        self.assertNotIn('>Lifecycle</dt>', body)
+        self.assertNotIn('Workflow checklist', body)
+        self.assertIn('dc-ds-workspace__rail--sticky', body)
+        self.assertIn('>Status</dt>', body)
+        self.assertIn('>Stage</dt>', body)
+        self.assertIn('Quick links', body)
+        self.assertIn('contract-command-tabs', body)
+        self.assertIn('contract-overview-grid', body)
+        self.assertIn('contract-progress-track', body)
+        self.assertIn('Current stage', body)
+        self.assertIn('Next milestone', body)
+        css = open('theme/static_src/src/global-shell/workspaces.css').read()
+        self.assertIn('--page-max-width', css)
+        self.assertIn('dc-ds-workspace__rail--sticky', css)
+        self.assertIn('contract-action-card', css)
+        self.assertIn('contract-progress-track', css)
+        self.assertIn('font: var(--text-heading)', css)
+        self.assertIn('gap: var(--space-24)', css)
+
+
+class ContractDetailLifecycleCommandLabelTests(TestCase):
+    def setUp(self):
+        self.organization = Organization.objects.create(name='Lifecycle Firm', slug='cdetail-lifecycle-firm')
+        self.user = User.objects.create_user(username='cdetail_lifecycle_user', password='testpass123')
+        OrganizationMembership.objects.create(
+            organization=self.organization, user=self.user, role=OrganizationMembership.Role.MEMBER, is_active=True,
+        )
+        self.client = TestClient()
+        self.client.login(username='cdetail_lifecycle_user', password='testpass123')
+
+    def test_draft_without_document_shows_intake_incomplete(self):
+        contract = Contract.objects.create(
+            organization=self.organization, title='Intake Contract', content='Seed',
+            status=Contract.Status.DRAFT, created_by=self.user,
+        )
+        response = self.client.get(detail_url(contract.pk))
+        body = page_body(response.content.decode())
+        self.assertIn('Draft', body)
+        self.assertEqual(response.context['contract_command']['lifecycle_label'], 'Draft · Intake incomplete')
+        self.assertIn('Action required', body)
+
+    def test_approved_obligation_tracking_shows_active_label(self):
+        contract = Contract.objects.create(
+            organization=self.organization, title='Active Obligation Contract', content='Seed',
+            status=Contract.Status.APPROVED, lifecycle_stage='OBLIGATION_TRACKING', created_by=self.user,
+        )
+        Document.objects.create(
+            organization=self.organization, title='Executed source', document_type=Document.DocType.CONTRACT,
+            version=1, contract=contract, uploaded_by=self.user,
+        )
+        response = self.client.get(detail_url(contract.pk))
+        body = page_body(response.content.decode())
+        self.assertIn('Approved', body)
+        self.assertIn('Obligation Tracking', body)
+        self.assertEqual(response.context['contract_command']['lifecycle_label'], 'Active · Obligation tracking')
+        self.assertIn('Progress', body)
+
+class ContractDetailActivityDetailTests(TestCase):
+    def test_audit_detail_names_changed_fields(self):
+        from contracts.services.contract_detail_workspace import format_contract_audit_activity_detail
+
+        detail = format_contract_audit_activity_detail({
+            'status': {'before': 'DRAFT', 'after': 'APPROVED'},
+            'counterparty': {'before': '', 'after': 'Acme'},
+        })
+        self.assertIn('Status changed from DRAFT to APPROVED', detail)
+        self.assertIn('Counterparty changed from — to Acme', detail)
+
+    def test_audit_detail_names_workflow_and_document_events(self):
+        from contracts.services.contract_detail_workspace import format_contract_audit_activity_detail
+
+        self.assertEqual(
+            format_contract_audit_activity_detail({'event': 'contract.approval_chain_reordered'}),
+            'Approval chain order updated.',
+        )
+        self.assertIn(
+            'Document affected',
+            format_contract_audit_activity_detail({'document_title': 'MSA v2'}),
+        )
+        self.assertIn(
+            'Decision recorded',
+            format_contract_audit_activity_detail({'decision': 'approve'}),
+        )

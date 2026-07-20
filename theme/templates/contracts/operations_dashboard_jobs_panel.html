@@ -1,0 +1,58 @@
+{% include "design_system/surface_card.html" with title="Background jobs" meta_template="contracts/operations_dashboard_recent_jobs_meta.html" body_template="contracts/operations_dashboard_jobs_table.html" %}
+
+{% if selected_job_row %}
+<dialog class="ops-job-dialog" id="ops-job-dialog" open aria-labelledby="ops-job-dialog-title">
+  <div class="ops-job-dialog__head">
+    <div>
+      <h2 class="ops-job-dialog__title" id="ops-job-dialog-title">{{ selected_job_row.job_type }}</h2>
+      <p class="text-sm c-muted mb-0">Job #{{ selected_job_row.id }} · {{ selected_job_row.trigger }}</p>
+    </div>
+    <a class="dc-ds-button dc-ds-button--ghost dc-ds-button--sm" href="{% url 'operations_dashboard' %}?tab=jobs" aria-label="Close job details">Close</a>
+  </div>
+  <div class="ops-job-dialog__body">
+    <dl class="ops-job-dialog__grid text-sm">
+      <div><dt class="c-muted">Status</dt><dd>{% include "design_system/status_badge.html" with label=selected_job_row.status_display tone=selected_job_row.status_tone size="sm" %}</dd></div>
+      <div><dt class="c-muted">Started</dt><dd>{{ selected_job_row.started_at|date:"d M Y H:i"|default:"—" }}</dd></div>
+      <div><dt class="c-muted">Duration</dt><dd>{{ selected_job_row.duration }}</dd></div>
+      <div><dt class="c-muted">Attempts</dt><dd>{{ selected_job_row.attempts }}</dd></div>
+    </dl>
+    {% if selected_job_row.error_message %}
+    <div class="mt-4">
+      <h3 class="text-sm font-medium mb-1">Error</h3>
+      <pre class="code-block text-xs rounded-lg p-3 overflow-x-auto c-danger" role="region" aria-label="Job error">{{ selected_job_row.error_message }}</pre>
+    </div>
+    {% endif %}
+    {% if selected_job_row.result %}
+    <div class="mt-4">
+      <h3 class="text-sm font-medium mb-1">Result</h3>
+      <pre class="code-block text-xs rounded-lg p-3 overflow-x-auto" role="region" aria-label="Job result">{{ selected_job_row.result }}</pre>
+    </div>
+    {% endif %}
+    <div class="mt-4">
+      <h3 class="text-sm font-medium mb-2">Audit evidence</h3>
+      {% if selected_job_audit %}
+      <ul class="ops-audit-list text-sm">
+        {% for entry in selected_job_audit %}
+        <li>
+          <span class="font-medium">{{ entry.get_action_display }}</span>
+          <span class="c-muted">· {{ entry.timestamp|date:"d M Y H:i" }}</span>
+          {% if entry.user %}<span class="c-muted">· {{ entry.user.get_full_name|default:entry.user.username }}</span>{% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="text-sm c-muted mb-0">No audit entries for this job yet. Retries and drills are recorded here.</p>
+      {% endif %}
+      <a class="c-link text-sm mt-2 inline-block" href="{% url 'operations_dashboard' %}?tab=audit">Open Audit tab</a>
+    </div>
+    {% if selected_job_row.can_retry %}
+    <form class="mt-4" method="post" action="{% url 'operations_dashboard' %}" data-confirm="Retry failed job {{ selected_job_row.job_type }} (#{{ selected_job_row.id }})?">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="retry_job">
+      <input type="hidden" name="job_id" value="{{ selected_job_row.id }}">
+      <button type="submit" class="dc-ds-button dc-ds-button--primary">Retry failed job</button>
+    </form>
+    {% endif %}
+  </div>
+</dialog>
+{% endif %}

@@ -661,6 +661,14 @@ class ApprovalRuleListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListVi
     template_name = 'contracts/approval_rule_list.html'
     context_object_name = 'rules'
 
+    def get_context_data(self, **kwargs):
+        from contracts.services.workflow_operations import workflow_operations_tabs
+
+        context = super().get_context_data(**kwargs)
+        context['ops_tabs'] = workflow_operations_tabs(active='routing')
+        context['hide_app_footer'] = True
+        return context
+
 
 class ApprovalRuleCreateView(TenantScopedFormMixin, TenantAssignCreateMixin, LoginRequiredMixin, CreateView):
     model = ApprovalRule
@@ -702,8 +710,12 @@ class ApprovalRequestListView(TenantScopedQuerysetMixin, LoginRequiredMixin, Lis
         keep reading the plain org-scoped/optionally status-filtered
         queryset exactly as before. `queue_tabs` is additive.
         """
+        from contracts.services.workflow_operations import workflow_operations_tabs
+
         context = super().get_context_data(**kwargs)
         context['queue_tabs'] = self._build_queue_tabs()
+        context['ops_tabs'] = workflow_operations_tabs(active='approvals')
+        context['hide_app_footer'] = True
         return context
 
     def _build_queue_tabs(self):
@@ -755,6 +767,19 @@ class ApprovalRequestListView(TenantScopedQuerysetMixin, LoginRequiredMixin, Lis
                 ) if p]
                 if contract and contract.value:
                     meta_parts.append(money(contract.value, contract.currency))
+                step_label = approval_step_label(approval.approval_step)
+                if approval.status in ('PENDING', 'ESCALATED') and overdue:
+                    next_action = f'Resolve overdue {step_label}'
+                elif approval.status == 'ESCALATED':
+                    next_action = f'Resolve escalated {step_label}'
+                elif approval.status == 'PENDING':
+                    next_action = f'Decide on {step_label}'
+                elif approval.status == 'APPROVED':
+                    next_action = 'View approval record'
+                elif approval.status == 'REJECTED':
+                    next_action = 'Revise after rejection'
+                else:
+                    next_action = 'Open approval'
                 rows.append({
                     'id': approval.pk,
                     'title': contract.title if contract else f'Approval #{approval.pk}',
@@ -768,6 +793,7 @@ class ApprovalRequestListView(TenantScopedQuerysetMixin, LoginRequiredMixin, Lis
                     'due_overdue': overdue,
                     'status_label': approval.get_status_display(),
                     'status_badge_class': approval_status_badge_class(approval.status),
+                    'next_action': next_action,
                     # actor_can_decide() checks authorization only; a decision on an
                     # already-APPROVED/REJECTED row would still be rejected by the
                     # API's own status guard (ApprovalWorkflowService._decide), but

@@ -41,6 +41,13 @@ body[data-design-system="casefile"] .topbar-page-context {
   overflow: hidden;
 }
 
+/* Title-row CTAs (e.g. New Contract Request) need room beside the page title. */
+body[data-design-system="casefile"] .topbar-page-context:has(.topbar-page-actions) {
+  max-width: min(920px, 100%);
+  flex: 1 1 720px;
+  overflow: visible;
+}
+
 body[data-design-system="casefile"] .topbar-page-context:has(.topbar-page-title:empty) {
   display: none;
 }
@@ -254,13 +261,31 @@ body[data-design-system="casefile"] .ctp-page .ctp-badge-row {
   margin: 12px 0 16px;
 }
 
+body[data-design-system="casefile"] .ctp-toolbar {
+  margin-bottom: var(--space-16);
+}
+
+body[data-design-system="casefile"] .ctp-sections {
+  gap: var(--space-16);
+}
+
+body[data-design-system="casefile"] .ctp-section-title {
+  color: var(--ink-500);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 body[data-design-system="casefile"] .ctp-entry-grid {
-  gap: 16px;
+  gap: 12px;
 }
 
 body[data-design-system="casefile"] .ctp-entry-card {
-  gap: 12px;
-  padding: 16px;
+  gap: 8px;
+  min-height: 160px;
+  padding: 12px;
   border-top-width: 1px;
   border-color: var(--color-border-soft);
   border-radius: var(--radius-subpanel);
@@ -268,27 +293,34 @@ body[data-design-system="casefile"] .ctp-entry-card {
 }
 
 body[data-design-system="casefile"] .ctp-entry-card:hover {
-  border-color: var(--color-status-success-border);
-  background: var(--card);
+  border-color: color-mix(in srgb, var(--seal) 48%, var(--color-border-soft));
+  background: color-mix(in srgb, var(--seal) 7%, var(--card));
   box-shadow: var(--shadow-card-hover);
-  transform: translateY(-2px);
+  transform: translateY(-1px);
+}
+
+body[data-design-system="casefile"] .ctp-entry-card:focus-visible {
+  border-color: var(--seal);
+  background: color-mix(in srgb, var(--seal) 5%, var(--card));
+  box-shadow: 0 0 0 3px var(--focus-ring);
+  transform: none;
 }
 
 body[data-design-system="casefile"] .ctp-entry-icon {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: var(--radius-control);
   background: var(--seal-bg);
 }
 
 body[data-design-system="casefile"] .ctp-entry-icon svg {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
 }
 
 body[data-design-system="casefile"] .ctp-entry-title {
-  font-size: 16px;
-  line-height: 24px;
+  font-size: 15px;
+  line-height: 22px;
   font-weight: 600;
   letter-spacing: 0;
 }
@@ -296,25 +328,22 @@ body[data-design-system="casefile"] .ctp-entry-title {
 body[data-design-system="casefile"] .ctp-entry-desc {
   min-height: 0;
   color: var(--ink-500);
-  font-size: 13px;
-  line-height: 18px;
+  font-size: 12.5px;
+  line-height: 17px;
 }
 
 body[data-design-system="casefile"] .ctp-entry-meta {
-  gap: var(--space-8);
+  gap: var(--space-4);
   margin-top: auto;
-  padding: var(--space-12) 0 0;
+  padding: var(--space-8) 0 0;
   border: 0;
   border-top: 1px solid var(--hairline);
   background: transparent;
 }
 
-body[data-design-system="casefile"] .ctp-entry-cta {
-  width: fit-content;
-  min-height: 36px;
-  margin-top: 0;
-  padding-inline: 12px;
-  box-shadow: 0 1px 2px color-mix(in srgb, var(--seal-dark) 16%, transparent);
+body[data-design-system="casefile"] .ctp-entry-card[hidden],
+body[data-design-system="casefile"] .ctp-section[hidden] {
+  display: none !important;
 }
 
 /* Repository-wide compatibility contract. Product pages may keep their

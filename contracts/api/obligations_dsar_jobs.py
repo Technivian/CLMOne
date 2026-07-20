@@ -435,6 +435,21 @@ def job_retry_api(request, job_id: int):
     job.save(update_fields=[
         'status', 'attempt_count', 'error_message', 'dead_lettered_at', 'scheduled_at',
     ])
+    log_action(
+        request.user,
+        AuditLog.Action.UPDATE,
+        'BackgroundJob',
+        object_id=job.id,
+        object_repr=str(job),
+        changes={
+            'event': 'background_job_retried',
+            'organization_id': organization.id if organization else None,
+            'job_type': job.job_type,
+            'source': 'api',
+        },
+        request=request,
+        organization=organization,
+    )
     return JsonResponse({'ok': True, 'job': _job_to_dict(job)})
 
 

@@ -840,6 +840,12 @@ body:has(.topbar-page-title:not(:empty)) .dc-ds-page-hero:not(:has(.dc-ds-action
 .dc-ds-setup-action__icon .dc-ds-icon { width: 15px; height: 15px; }
 .dc-ds-setup-action__copy strong,
 .dc-ds-setup-action__copy small { display: block; }
+.dc-ds-setup-action__title-row {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+}
 .dc-ds-setup-action__copy strong { color: var(--ink-900); font-size: var(--font-size-meta); font-weight: 650; }
 .dc-ds-setup-action__copy small { margin-top: 2px; color: var(--ink-500); font-size: var(--font-size-eyebrow); line-height: 1.35; }
 .dc-ds-setup-action__arrow { display: grid; place-items: center; color: var(--color-feature-action); }

@@ -50,7 +50,8 @@ adopt_existing_dev_server() {
   fi
 
   start_proc "dev server" "logs/devserver.pid" "logs/devserver.log" \
-    "$ROOT_DIR/.venv/bin/python" -u manage.py runserver 0.0.0.0:${dev_port} --noreload
+    env DATABASE_URL= DJANGO_SETTINGS_MODULE=config.settings_development DJANGO_DEBUG=true \
+    "$ROOT_DIR/.venv/bin/python" -u manage.py runserver 0.0.0.0:${dev_port}
 }
 
 adopt_existing_dev_server

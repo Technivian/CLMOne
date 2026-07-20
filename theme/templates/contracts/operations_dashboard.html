@@ -1,8 +1,79 @@
 {% extends "base.html" %}
 {% load clmone_format %}
-{% block title %}Operations Dashboard – CLM One{% endblock %}
+{% block title %}Operations – CLM One{% endblock %}
 {% block authenticated_page_title %}Operations{% endblock %}
-{% block authenticated_page_subtitle %}Monitor legal workload, queues, and service performance.{% endblock %}
+{% block authenticated_page_subtitle %}{{ page_subtitle }}{% endblock %}
+
+{% block page_css %}
+<style nonce="{{ csp_nonce }}">
+  .ops-queue-health {
+    display: grid;
+    grid-template-columns: minmax(12rem, 0.9fr) minmax(0, 1.4fr);
+    gap: var(--space-16);
+    align-items: start;
+  }
+  .ops-queue-health__counts {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-12);
+    margin: 0;
+  }
+  .ops-queue-health__counts dt {
+    color: var(--ink-500);
+    font: var(--text-small);
+    margin: 0 0 4px;
+  }
+  .ops-queue-health__counts dd {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .ops-incident-grid,
+  .ops-job-dialog__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-12) var(--space-16);
+    margin: 0;
+  }
+  .ops-incident-grid dt,
+  .ops-job-dialog__grid dt { margin: 0 0 2px; }
+  .ops-incident-grid dd,
+  .ops-job-dialog__grid dd { margin: 0; }
+  .ops-job-dialog {
+    width: min(40rem, calc(100vw - 2rem));
+    max-height: min(80vh, 40rem);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-surface);
+    padding: 0;
+    background: var(--surface);
+    color: var(--ink-900);
+  }
+  .ops-job-dialog::backdrop { background: rgba(15, 23, 42, 0.35); }
+  .ops-job-dialog__head,
+  .ops-job-dialog__body { padding: var(--space-16) var(--space-20); }
+  .ops-job-dialog__head {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-12);
+    align-items: flex-start;
+    border-bottom: 1px solid var(--line);
+  }
+  .ops-job-dialog__title { margin: 0; font-size: 1.05rem; }
+  .ops-audit-list { list-style: none; margin: 0; padding: 0; }
+  .ops-audit-list li + li { margin-top: 6px; }
+  .dc-ds-table tr.is-selected { background: var(--ds-color-trust-soft); }
+  .dc-ds-surface + .dc-ds-surface { margin-top: var(--space-16); }
+  @media (max-width: 720px) {
+    .ops-queue-health,
+    .ops-queue-health__counts,
+    .ops-incident-grid,
+    .ops-job-dialog__grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
 
 {% block content %}
 {% include "design_system/page_scaffold.html" with main_template="contracts/operations_dashboard_content.html" wide=True %}

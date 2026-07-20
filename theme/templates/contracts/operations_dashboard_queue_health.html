@@ -1,0 +1,12 @@
+<div class="ops-queue-health" data-health="{{ queue_health.health }}">
+  <div class="ops-queue-health__status">
+    {% include "design_system/status_badge.html" with label=queue_health.label tone=queue_health.badge_tone size="sm" %}
+    <p class="text-sm c-muted mt-2 mb-0">{{ queue_health.summary }}</p>
+  </div>
+  <dl class="ops-queue-health__counts" aria-label="Background job counts">
+    <div><dt>Pending</dt><dd>{{ queue_health.pending }}</dd></div>
+    <div><dt>Running</dt><dd>{{ queue_health.running }}</dd></div>
+    <div><dt>Completed</dt><dd>{{ queue_health.completed }}</dd></div>
+    <div><dt>Failed</dt><dd class="{% if queue_health.failed %}c-danger{% endif %}">{{ queue_health.failed }}</dd></div>
+  </dl>
+</div>

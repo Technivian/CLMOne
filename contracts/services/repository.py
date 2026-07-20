@@ -21,10 +21,47 @@ from contracts.services.queue_rows import (
 )
 from contracts.templatetags.clmone_format import (
     contract_status_badge_tone,
+    contract_type_short_label,
     lifecycle_stage_badge_tone,
     lifecycle_steps,
     money,
 )
+from contracts.services.workflow_operations import split_exception_from_title
+
+
+# Compact next-action verbs for repository payloads (hidden on All contracts;
+# surfaces that need them — My work / Approvals — can reuse the same wording).
+_REPO_NEXT_ACTION = {
+    'DRAFTING': 'Continue drafting',
+    'INTERNAL_REVIEW': 'Complete internal review',
+    'NEGOTIATION': 'Resolve open negotiation points',
+    'APPROVAL': 'Review approval route',
+    'SIGNATURE': 'Send for signature',
+    'EXECUTED': 'Track obligations',
+    'OBLIGATION_TRACKING': 'Track obligations',
+    'RENEWAL': 'Review renewal',
+}
+
+# Compact stage badges for the dense repository table; full label stays in tooltip.
+_REPO_STAGE_SHORT = {
+    'OBLIGATION_TRACKING': 'Obligations',
+    'INTERNAL_REVIEW': 'Internal review',
+    'RENEWAL': 'Renewal',
+}
+
+
+def _repository_next_action(contract, *, has_exception: bool) -> str:
+    if has_exception:
+        return 'Review exception'
+    if contract.risk_level in (Contract.RiskLevel.HIGH, Contract.RiskLevel.CRITICAL):
+        return 'Review risk signals'
+    return _REPO_NEXT_ACTION.get(contract.lifecycle_stage, 'Open contract')
+
+
+def _repository_stage_label(contract) -> tuple[str, str]:
+    full = contract.get_lifecycle_stage_display()
+    short = _REPO_STAGE_SHORT.get(contract.lifecycle_stage, full)
+    return short, full
 
 
 class BulkUpdateValidationError(Exception):
@@ -60,12 +97,25 @@ class DjangoRepositoryService:
         end_date = getattr(contract, 'end_date', None)
         due_overdue = bool(end_date and end_date < date.today() and contract.status not in TERMINAL_STATUSES)
 
+        raw_title = contract.title or ''
+        raw_counterparty = getattr(contract, 'counterparty', '') or ''
+        display_title, title_exception = split_exception_from_title(raw_title)
+        if raw_counterparty:
+            display_counterparty, counterparty_exception = split_exception_from_title(raw_counterparty)
+        else:
+            display_counterparty, counterparty_exception = '', False
+        show_exception_badge = title_exception or counterparty_exception
+
+        type_display = contract.get_contract_type_display()
+        type_short = contract_type_short_label(contract.contract_type, type_display)
+        stage_short, stage_full = _repository_stage_label(contract)
+
         kwargs = dict(
             id=str(contract.id),
-            title=contract.title,
+            title=display_title,
             status=contract.status,
             status_display=contract.get_status_display(),
-            counterparty=getattr(contract, 'counterparty', ''),
+            counterparty=display_counterparty,
             value=float(contract.value) if hasattr(contract, 'value') and contract.value else None,
             start_date=contract.start_date.isoformat() if hasattr(contract, 'start_date') and contract.start_date else None,
             end_date=end_date.isoformat() if end_date else None,
@@ -82,10 +132,14 @@ class DjangoRepositoryService:
             latest_activity_time=activity_time,
             latest_activity_initial=activity_initial,
             value_display=money(contract.value, getattr(contract, 'currency', 'USD') or 'USD'),
-            end_date_display=date_filter(end_date, 'd M Y') if end_date else None,
+            end_date_display=date_filter(end_date, 'j M Y') if end_date else None,
             due_overdue=due_overdue,
-            contract_type_display=contract.get_contract_type_display(),
-            stage_display=contract.get_lifecycle_stage_display(),
+            contract_type_display=type_display,
+            contract_type_short=type_short,
+            stage_display=stage_short,
+            stage_display_full=stage_full,
+            has_exception=show_exception_badge,
+            next_action=_repository_next_action(contract, has_exception=show_exception_badge),
         )
         if content is not None:
             kwargs['content'] = content

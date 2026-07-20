@@ -1,0 +1,9 @@
+<section class="mb-6" aria-label="Critical operational issues">
+  {% for incident in incidents %}
+    {% if incident.severity == 'P1' %}
+      {% include "design_system/attention_banner.html" with tone="danger" role="alert" title=incident.title body_template="contracts/operations_dashboard_incident_body.html" %}
+    {% else %}
+      {% include "design_system/attention_banner.html" with tone="attention" role="alert" title=incident.title body_template="contracts/operations_dashboard_incident_body.html" %}
+    {% endif %}
+  {% endfor %}
+</section>

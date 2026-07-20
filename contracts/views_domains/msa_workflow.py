@@ -163,6 +163,7 @@ def msa_submit_for_review(request, pk, approval_step):
             rule=rule,
             comment=(request.POST.get('comment') or '').strip(),
             request=request,
+            enforce_review_readiness=False,
         )
     except (ApprovalAccessDenied, ValueError) as exc:
         messages.error(request, str(exc))

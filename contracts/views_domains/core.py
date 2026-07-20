@@ -15,7 +15,7 @@ from django.contrib.auth.views import (
 from django.conf import settings
 from django.core.cache import cache
 from django.core.mail import send_mail
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
@@ -23,8 +23,10 @@ from django.utils.decorators import method_decorator
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
+from django.views.decorators.http import require_http_methods
 from django.views.generic import FormView, View
 from django.contrib.auth import get_user_model
+from django.core.management import call_command
 
 from contracts.forms import UserProfileForm, RegistrationForm, LoginForm
 
@@ -38,6 +40,16 @@ def _safe_next(request, fallback='/dashboard/') -> str:
 from contracts.models import AuditLog, BackgroundJob, Case, CaseMatter, Client, Deadline, Invoice, Notification, OrganizationMembership, OrgPolicy, RiskLog, TimeEntry, TrustAccount, UserProfile, Workflow, CaseSignal, ApprovalRequest, SignatureRequest, DSARRequest, Document
 from contracts.middleware import log_action
 from contracts.observability import db_health_snapshot, request_metrics_snapshot, scheduler_health_snapshot, evaluate_alert_policy
+from contracts.permissions import can_manage_organization
+from contracts.services.operations_dashboard import (
+    build_incidents,
+    build_metric_cards,
+    build_queue_health,
+    operations_audit_events,
+    relative_updated_label,
+    scheduled_status_tone,
+    serialize_job_row,
+)
 from contracts.tenancy import get_user_organization, scope_queryset_for_organization
 
 User = get_user_model()
@@ -82,43 +94,224 @@ def health_check(request):
     )
 
 
+OPERATIONS_TABS = ('overview', 'jobs', 'schedules', 'alerts', 'audit')
+
+
+def _operations_redirect(tab='overview', job_id=None):
+    url = reverse('operations_dashboard')
+    params = {}
+    if tab and tab != 'overview':
+        params['tab'] = tab
+    if job_id:
+        params['job'] = job_id
+        params['tab'] = 'jobs'
+    if params:
+        return f'{url}?{urlencode(params)}'
+    return url
+
+
 @login_required
+@require_http_methods(['GET', 'POST'])
 def operations_dashboard(request):
     org = get_user_organization(request.user)
     if not org:
         messages.error(request, 'No active organization found.')
         return redirect('settings_hub')
 
-    recent_jobs = BackgroundJob.objects.filter(organization=org).order_by('-created_at')[:12]
-    job_counts = {
-        'pending': BackgroundJob.objects.filter(organization=org, status=BackgroundJob.Status.PENDING).count(),
-        'running': BackgroundJob.objects.filter(organization=org, status=BackgroundJob.Status.RUNNING).count(),
-        'completed': BackgroundJob.objects.filter(organization=org, status=BackgroundJob.Status.COMPLETED).count(),
-        'failed': BackgroundJob.objects.filter(organization=org, status=BackgroundJob.Status.FAILED).count(),
-    }
-    # Scheduled-job run evidence so operators can see whether nightly/periodic
-    # jobs actually ran for this tenant — and any failures — without DB access.
+    if not can_manage_organization(request.user, org):
+        return HttpResponseForbidden('Only organization owners/admins can access Operations.')
+
+    tab = (request.GET.get('tab') or 'overview').lower()
+    if tab not in OPERATIONS_TABS:
+        tab = 'overview'
+
+    if request.method == 'POST':
+        action = (request.POST.get('action') or '').strip()
+        if action == 'run_drill':
+            alert_exit_code = 0
+            try:
+                call_command('run_operational_drill')
+            except SystemExit as exc:
+                # P1/P2 from evaluate_observability_alerts is drill evidence, not a failed action.
+                alert_exit_code = int(getattr(exc, 'code', 0) or 0)
+            summary = cache.get('operations_drill.last_summary') or (
+                'Queued reminder/OCR work, processed pending jobs, and evaluated alert policy.'
+            )
+            if alert_exit_code == 2 and 'P1' not in summary:
+                summary += ' Alert policy reported P1.'
+            elif alert_exit_code == 1 and 'P2' not in summary:
+                summary += ' Alert policy reported P2.'
+            # Durable evidence — cache is best-effort (Redis IGNORE_EXCEPTIONS can drop writes).
+            cache.set('operations_drill.last_run_iso', timezone.now().isoformat(), timeout=None)
+            cache.set('operations_drill.last_summary', summary, timeout=None)
+            log_action(
+                request.user,
+                AuditLog.Action.UPDATE,
+                'BackgroundJob',
+                object_repr='Operational drill',
+                changes={
+                    'event': 'operations_drill_run',
+                    'organization_id': org.id,
+                    'summary': summary,
+                    'alert_exit_code': alert_exit_code,
+                },
+                request=request,
+                organization=org,
+            )
+            if alert_exit_code == 2:
+                messages.warning(request, 'Operational drill completed with P1 alerts. Review the Alerts tab.')
+            elif alert_exit_code == 1:
+                messages.warning(request, 'Operational drill completed with P2 alerts. Review the Alerts tab.')
+            else:
+                messages.success(request, 'Operational drill completed. Queue and alert evidence refreshed.')
+            return redirect(_operations_redirect(tab='overview'))
+
+        if action == 'retry_job':
+            job_id = request.POST.get('job_id')
+            job = get_object_or_404(BackgroundJob, id=job_id, organization=org)
+            if job.status != BackgroundJob.Status.FAILED:
+                messages.error(request, f'Job {job.id} is {job.status}, not FAILED.')
+            else:
+                job.status = BackgroundJob.Status.PENDING
+                job.attempt_count = 0
+                job.error_message = ''
+                job.dead_lettered_at = None
+                job.scheduled_at = timezone.now()
+                job.save(update_fields=[
+                    'status', 'attempt_count', 'error_message', 'dead_lettered_at', 'scheduled_at',
+                ])
+                log_action(
+                    request.user,
+                    AuditLog.Action.UPDATE,
+                    'BackgroundJob',
+                    object_id=job.id,
+                    object_repr=str(job),
+                    changes={
+                        'event': 'background_job_retried',
+                        'organization_id': org.id,
+                        'job_type': job.job_type,
+                    },
+                    request=request,
+                    organization=org,
+                )
+                messages.success(request, f'Re-queued {job.job_type} (#{job.id}).')
+            return redirect(_operations_redirect(tab='jobs', job_id=job.id))
+
+        messages.error(request, 'Unknown Operations action.')
+        return redirect(_operations_redirect(tab=tab))
+
     from contracts.models import ScheduledJobRun
+
+    job_qs = BackgroundJob.objects.filter(organization=org).select_related('created_by')
+    recent_jobs = list(job_qs.order_by('-created_at')[:50])
+    job_counts = {
+        'pending': job_qs.filter(status=BackgroundJob.Status.PENDING).count(),
+        'running': job_qs.filter(status=BackgroundJob.Status.RUNNING).count(),
+        'completed': job_qs.filter(status=BackgroundJob.Status.COMPLETED).count(),
+        'failed': job_qs.filter(status=BackgroundJob.Status.FAILED).count(),
+    }
     org_runs = ScheduledJobRun.objects.filter(organization=org)
-    recent_job_runs = list(org_runs.order_by('-started_at')[:12])
+    recent_job_runs = list(org_runs.order_by('-started_at')[:25])
     failed_job_runs_24h = org_runs.filter(
         status__in=[ScheduledJobRun.Status.FAILED, ScheduledJobRun.Status.PARTIAL],
         started_at__gte=timezone.now() - timedelta(hours=24),
     ).count()
+
+    scheduler = scheduler_health_snapshot()
+    database = db_health_snapshot()
+    request_metrics = request_metrics_snapshot()
+    alerts = evaluate_alert_policy()
+    now = timezone.now()
+
+    selected_job = None
+    selected_job_row = None
+    selected_job_audit = []
+    job_param = request.GET.get('job')
+    if job_param:
+        selected_job = job_qs.filter(id=job_param).first()
+        if selected_job:
+            selected_job_row = serialize_job_row(selected_job)
+            selected_job_audit = list(
+                AuditLog.objects.filter(organization=org, model_name='BackgroundJob', object_id=selected_job.id)
+                .select_related('user')
+                .order_by('-timestamp')[:10]
+            )
+
+    job_rows = [serialize_job_row(job) for job in recent_jobs]
+    scheduled_rows = [
+        {
+            'id': run.id,
+            'job_name': run.job_name,
+            'status': run.status,
+            'status_display': run.get_status_display(),
+            'status_tone': scheduled_status_tone(run.status),
+            'started_at': run.started_at,
+            'finished_at': run.finished_at,
+            'records_examined': run.records_examined,
+            'records_changed': run.records_changed,
+            'notifications_created': run.notifications_created,
+            'error_summary': run.error_summary or '',
+            'run_id': str(run.run_id),
+        }
+        for run in recent_job_runs
+    ]
+
+    drill_state = {
+        'last_run_iso': cache.get('operations_drill.last_run_iso'),
+        'last_summary': cache.get('operations_drill.last_summary'),
+    }
+    if not drill_state['last_run_iso']:
+        latest_drill = (
+            AuditLog.objects.filter(
+                organization=org,
+                changes__event='operations_drill_run',
+            )
+            .order_by('-timestamp')
+            .first()
+        )
+        if latest_drill:
+            drill_state = {
+                'last_run_iso': latest_drill.timestamp.isoformat(),
+                'last_summary': (latest_drill.changes or {}).get('summary') or '',
+            }
+
     context = {
         'organization': org,
-        'scheduler': scheduler_health_snapshot(),
-        'database': db_health_snapshot(),
-        'request_metrics': request_metrics_snapshot(),
-        'alerts': evaluate_alert_policy(),
+        'hide_app_footer': True,
+        'active_tab': tab,
+        'operations_tabs': [
+            {'id': 'overview', 'label': 'Overview'},
+            {'id': 'jobs', 'label': 'Jobs'},
+            {'id': 'schedules', 'label': 'Schedules'},
+            {'id': 'alerts', 'label': 'Alerts'},
+            {'id': 'audit', 'label': 'Audit'},
+        ],
+        'scheduler': scheduler,
+        'database': database,
+        'request_metrics': request_metrics,
+        'alerts': alerts,
+        'metric_cards': build_metric_cards(
+            scheduler=scheduler,
+            database=database,
+            alerts=alerts,
+            request_metrics=request_metrics,
+        ),
+        'incidents': build_incidents(alerts=alerts, failed_job_runs_24h=failed_job_runs_24h),
+        'queue_health': build_queue_health(job_counts),
         'job_counts': job_counts,
-        'recent_jobs': recent_jobs,
-        'recent_job_runs': recent_job_runs,
+        'job_rows': job_rows,
+        'scheduled_rows': scheduled_rows,
         'failed_job_runs_24h': failed_job_runs_24h,
-        'drill_state': {
-            'last_run_iso': cache.get('operations_drill.last_run_iso'),
-            'last_summary': cache.get('operations_drill.last_summary'),
-        },
+        'operations_audit': operations_audit_events(org),
+        'selected_job': selected_job,
+        'selected_job_row': selected_job_row,
+        'selected_job_audit': selected_job_audit,
+        'last_updated_at': now,
+        'last_updated_label': relative_updated_label(now),
+        'page_subtitle': (
+            f'Queue health, scheduler status, and operational evidence for {org.name}.'
+        ),
+        'drill_state': drill_state,
     }
     return render(request, 'contracts/operations_dashboard.html', context)
 

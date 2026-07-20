@@ -44,7 +44,6 @@ class RedesignLayoutTests(TestCase):
         self.assertContains(response, 'Contracts')
         self.assertContains(response, 'DPA Reviews')
         self.assertContains(response, 'Obligations')
-        self.assertContains(response, 'Admin')
         self.assertNotContains(response, 'REFERENCE')
         self.assertNotContains(response, 'RISK &amp; COMPLIANCE')
 

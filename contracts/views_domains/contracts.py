@@ -72,13 +72,14 @@ from contracts.services.command_center import (
     group_recommended_actions,
     rank_command_center_rows,
 )
-from contracts.services.contract_launch_setup import get_entry_cards, get_launch_setup_map
+from contracts.services.contract_launch_setup import get_entry_card_sections, get_launch_setup_map
 from contracts.services.intake_risk import assess_intake_risk, intake_risk_client_policy
 from contracts.services.intake_routing import intake_routing_client_policy
 from contracts.services.draft_cockpit import get_governance_panel
 from contracts.templatetags.clmone_format import (
     contract_status_badge_tone,
     legacy_badge_class_for_tone,
+    lifecycle_steps,
 )
 from contracts.tenancy import get_user_organization, scope_queryset_for_organization, set_organization_on_instance
 from contracts.view_support import (
@@ -90,6 +91,16 @@ from contracts.services.contract_lifecycle import (
     build_contract_audit_changes,
     get_signature_routing_blockers,
     record_contract_grounded_check,
+)
+from contracts.services.contract_detail_workspace import (
+    build_contract_command,
+    build_contract_detail_tabs,
+    build_overview_progress,
+    contract_detail_tab_url,
+    derive_contract_review_status,
+    format_contract_audit_activity_detail,
+    get_submit_readiness,
+    normalize_contract_detail_tab,
 )
 from contracts.services.ai_policy import evaluate_prompt
 from contracts.services.ai_actions import build_action_plan, execute_action_plan
@@ -269,7 +280,7 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
             request=request,
         )
         messages.success(request, f'Document "{document.title}" attached to this contract.')
-        return redirect('contracts:contract_detail', pk=self.object.pk)
+        return redirect(contract_detail_tab_url(self.object.pk, 'documents'))
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -369,7 +380,6 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
             ).order_by('-timestamp').first()
             if document_ids else None
         )
-        ctx['can_submit_for_review'] = ctx['can_edit'] and case_record.status == Contract.Status.DRAFT
         check_log = AuditLog.objects.filter(
             organization=org,
             model_name='Contract',
@@ -380,7 +390,7 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
         ctx['grounded_check'] = {
             'last_run_at': check_log.timestamp if check_log else None,
             'is_current': check_is_current,
-            'label': 'Current' if check_is_current else 'Needs refresh',
+            'label': 'Complete' if check_is_current else 'Needs refresh',
         }
         ctx['signature_routing_blockers'] = get_signature_routing_blockers(case_record)
         ctx['can_route_for_signature'] = ctx['can_edit'] and not ctx['signature_routing_blockers']
@@ -410,20 +420,8 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
                 actor_initial = 'S'
             return actor_name, actor_initial
 
-        def _audit_detail(changes):
-            if not changes:
-                return 'Recorded in the audit trail.'
-            if changes.get('event') == 'contract.approval_chain_reordered':
-                return 'Approval chain order updated.'
-            if 'status' in changes and isinstance(changes['status'], dict):
-                before = changes['status'].get('before') or 'previous value'
-                after = changes['status'].get('after') or 'new value'
-                return f'Status changed from {before} to {after}.'
-            if 'approval_step' in changes and isinstance(changes['approval_step'], dict):
-                before = changes['approval_step'].get('before') or 'previous step'
-                after = changes['approval_step'].get('after') or 'new step'
-                return f'Approver changed from {before} to {after}.'
-            return 'Recorded in the audit trail.'
+        def _audit_detail(changes, event_type=None):
+            return format_contract_audit_activity_detail(changes, event_type=event_type)
 
         for log in activity_entries:
             actor_name, actor_initial = _actor_snapshot(log.user)
@@ -433,7 +431,7 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
                 'actor_name': actor_name,
                 'actor_initial': actor_initial,
                 'title': f'{actor_name} {log.get_action_display().lower()} {object_type_label(log.model_name)}',
-                'detail': _audit_detail(log.changes or {}),
+                'detail': _audit_detail(log.changes or {}, getattr(log, 'event_type', None)),
                 'badge_label': 'Audit',
                 'badge_class': 'badge-gray',
                 'log': log,
@@ -455,6 +453,7 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
             })
         activity_feed.sort(key=lambda item: item['timestamp'], reverse=True)
         ctx['contract_activity_feed'] = activity_feed[:12]
+        ctx['recent_activity_feed'] = activity_feed[:5]
         ctx['negotiation_threads'] = negotiation_threads
         collaboration_participants = list(
             case_record.counterparty_collaboration_participants.select_related('invited_by').all()[:20]
@@ -536,6 +535,26 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
                 f'{"s" if playbook_usage_count != 1 else ""}.'
             ),
         }
+        review_changes = (ctx['uploaded_ai_review'].changes if ctx['uploaded_ai_review'] else {}) or {}
+        review_completed = review_changes.get('review_status') == 'completed'
+        review_finding_count = int(review_changes.get('finding_count') or 0)
+        has_documents = bool(ctx['documents'])
+        review_label, review_badge_class = derive_contract_review_status(
+            has_documents=has_documents,
+            review_completed=review_completed,
+            check_is_current=check_is_current,
+            has_grounded_check=bool(check_log),
+            has_uploaded_review=bool(ctx['uploaded_ai_review']),
+        )
+        submit_readiness = get_submit_readiness(
+            can_edit=ctx['can_edit'],
+            status=case_record.status,
+            has_documents=has_documents,
+            review_status=review_label,
+            has_reviewer_choices=ctx['reviewer_choices'].exists(),
+        )
+        ctx['submit_readiness'] = submit_readiness
+        ctx['can_submit_for_review'] = submit_readiness['ready']
         ctx['workflow_checklist'] = [
             {
                 'label': 'Record basics',
@@ -544,10 +563,10 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
                 'detail': 'Title, counterparty, owner and paper source are captured.',
             },
             {
-                'label': 'Paper source',
-                'status': paper_source_label,
-                'badge_class': 'badge-green' if paper_source_complete else 'badge-gray',
-                'detail': 'Used to set intake expectations and review routing.',
+                'label': 'Contract review',
+                'status': review_label,
+                'badge_class': review_badge_class,
+                'detail': 'Grounded evidence must match the current source document.',
             },
             {
                 'label': 'Approval route',
@@ -560,23 +579,12 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
                 'detail': 'Shows whether the contract has a recorded approval chain.',
             },
             {
-                'label': 'Current stage',
-                'status': case_record.get_lifecycle_stage_display(),
-                'badge_class': 'badge-blue',
-                'detail': f"Next stage: {ctx['lifecycle_guidance']['next_stage']}",
+                'label': 'Paper source',
+                'status': paper_source_label,
+                'badge_class': 'badge-green' if paper_source_complete else 'badge-gray',
+                'detail': 'Used to set intake expectations and review routing.',
             },
         ]
-        review_changes = (ctx['uploaded_ai_review'].changes if ctx['uploaded_ai_review'] else {}) or {}
-        review_completed = review_changes.get('review_status') == 'completed'
-        review_finding_count = int(review_changes.get('finding_count') or 0)
-        if not check_is_current:
-            review_label, review_badge_class = 'Review refresh required', 'badge-yellow'
-        elif review_completed:
-            review_label, review_badge_class = 'AI review complete', 'badge-green'
-        elif ctx['documents']:
-            review_label, review_badge_class = 'Manual review required', 'badge-yellow'
-        else:
-            review_label, review_badge_class = 'No document to review', 'badge-gray'
 
         if ctx['high_risk_findings']:
             risk_label, risk_badge_class = 'High-risk findings open', 'badge-red'
@@ -618,58 +626,72 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
             else:
                 risk_label = f'{case_record.get_risk_level_display()} risk'
                 risk_badge_class = {
-                Contract.RiskLevel.CRITICAL: 'badge-red',
-                Contract.RiskLevel.HIGH: 'badge-yellow',
-                Contract.RiskLevel.MEDIUM: 'badge-blue',
-                Contract.RiskLevel.LOW: 'badge-green',
+                    Contract.RiskLevel.CRITICAL: 'badge-red',
+                    Contract.RiskLevel.HIGH: 'badge-yellow',
+                    Contract.RiskLevel.MEDIUM: 'badge-blue',
+                    Contract.RiskLevel.LOW: 'badge-green',
                 }.get(case_record.risk_level, 'badge-gray')
 
-        # The command model is the one source for header badges, the summary
-        # strip and the next-action surface.  In particular, a fresh AI review
-        # cannot be shown when the deterministic record check is stale, and
-        # high-risk findings always outrank the contract-level risk setting.
-        if ctx['high_risk_findings']:
-            primary_action = {'label': 'Resolve blockers', 'target': '#open-findings', 'mode': 'anchor'}
-            next_action = 'Resolve open high-risk findings before routing for signature.'
-        elif ctx['can_decide_approval'] and ctx['open_approval']:
-            primary_action = {'label': 'Record review decision', 'target': '#required-approvals', 'mode': 'anchor'}
-            next_action = 'Record the outstanding approval decision.'
-        elif ctx['can_submit_for_review']:
-            primary_action = {'label': 'Submit for review', 'target': '#required-approvals', 'mode': 'anchor'}
-            next_action = 'Select a reviewer and submit this contract for review.'
-        elif ctx['can_route_for_signature']:
-            primary_action = {
-                'label': 'Prepare signature request',
-                'target': reverse('contracts:signature_request_create'),
-                'mode': 'link',
-            }
-            next_action = 'Prepare the approved agreement for signature.'
-        else:
-            primary_action = {'label': 'Review contract', 'target': '#ai-review', 'mode': 'anchor'}
-            next_action = ctx['lifecycle_guidance']['action']
+        ctx['contract_command'] = build_contract_command(
+            contract=case_record,
+            has_documents=has_documents,
+            review_status=review_label,
+            review_badge_class=review_badge_class,
+            review_finding_count=review_finding_count,
+            high_risk_findings=ctx['high_risk_findings'],
+            open_findings=ctx['open_findings'],
+            can_decide_approval=ctx['can_decide_approval'],
+            open_approval=ctx['open_approval'],
+            can_submit_for_review=ctx['can_submit_for_review'],
+            can_route_for_signature=ctx['can_route_for_signature'],
+            can_edit=ctx['can_edit'],
+            lifecycle_guidance=ctx['lifecycle_guidance'],
+            pending_approvals=pending_approvals,
+            approval_requests=approval_requests,
+            signature_routing_blockers=ctx['signature_routing_blockers'],
+            risk_label=risk_label,
+            risk_badge_class=risk_badge_class,
+        )
+        ctx['current_blockers'] = ctx['contract_command']['current_blockers']
+        ctx['later_workflow_requirements'] = ctx['contract_command']['later_workflow_requirements']
+        ctx['lifecycle_command_label'] = ctx['contract_command']['lifecycle_label']
+        ctx['lifecycle_command_badge_class'] = ctx['contract_command']['lifecycle_badge_class']
 
-        if pending_approvals:
-            approval_label, approval_badge_class = f'{len(pending_approvals)} approval(s) pending', 'badge-yellow'
-        elif approval_requests and all(
-            approval.status == ApprovalRequest.Status.APPROVED for approval in approval_requests
-        ):
-            approval_label, approval_badge_class = 'Approvals complete', 'badge-green'
-        elif approval_requests:
-            approval_label, approval_badge_class = 'Approval action required', 'badge-yellow'
-        else:
-            approval_label, approval_badge_class = 'Not requested', 'badge-gray'
-        ctx['contract_command'] = {
-            'review_label': review_label,
-            'review_badge_class': review_badge_class,
-            'review_finding_count': review_finding_count,
-            'risk_label': risk_label,
-            'risk_badge_class': risk_badge_class,
-            'next_action': next_action,
-            'primary_action': primary_action,
-            'approval_label': approval_label,
-            'approval_badge_class': approval_badge_class,
-            'pending_approval_count': len(pending_approvals),
+        active_tab = normalize_contract_detail_tab(self.request.GET.get('tab'))
+        ctx['active_tab'] = active_tab
+        ctx['workspace_tabs'] = build_contract_detail_tabs(case_record.pk, active_tab)
+        ctx['overview_tab_url'] = contract_detail_tab_url(case_record.pk, 'overview')
+        ctx['contract_obligations'] = list(
+            case_record.deadlines.select_related('assigned_to').order_by('due_date', 'pk')[:20]
+        )
+        upcoming_items = []
+        if case_record.renewal_date:
+            upcoming_items.append({'label': 'Renewal', 'date': case_record.renewal_date})
+        if case_record.end_date:
+            upcoming_items.append({'label': 'Expiry', 'date': case_record.end_date})
+        for deadline in ctx['deadlines']:
+            upcoming_items.append({'label': deadline.title, 'date': deadline.due_date})
+        upcoming_items.sort(key=lambda item: item['date'] or date.max)
+        ctx['upcoming_dates'] = upcoming_items[:5]
+        ctx['next_milestone'] = upcoming_items[0] if upcoming_items else None
+        ctx['obligations_workspace_url'] = (
+            f"{reverse('contracts:obligations_workspace')}?contract={case_record.pk}"
+        )
+        ctx['overview_risk_snapshot'] = {
+            'label': risk_label,
+            'badge_class': risk_badge_class,
+            'findings': list(ctx['open_findings'][:3]),
+            'high_risk_count': len(ctx['high_risk_findings']),
+            'open_count': len(ctx['open_findings']),
         }
+        ctx['lifecycle_path'] = lifecycle_steps(case_record)
+        ctx['overview_progress'] = build_overview_progress(
+            case_record,
+            lifecycle_path=ctx['lifecycle_path'],
+            next_milestone=ctx['next_milestone'],
+            current_blockers=ctx['current_blockers'],
+            later_workflow_requirements=ctx['later_workflow_requirements'],
+        )
         return ctx
 
 
@@ -773,6 +795,7 @@ def upload_signed_contract(request):
         'matters': Matter.objects.filter(organization=organization).order_by('title')[:100],
         'ai_review_available': ai_review_available,
         'ai_review_unavailable_reason': ai_review_unavailable_reason,
+        'hide_app_footer': True,
     })
 
 
@@ -899,6 +922,11 @@ def contract_review_workspace(request, pk):
         organization=organization,
     ).order_by('-timestamp')[:20]
     review_state = _document_review_state(contract, document, review_run, finding_count=findings.count())
+    workspace_tabs = build_contract_detail_tabs(contract.pk, 'review')
+    for tab in workspace_tabs:
+        if tab['key'] == 'review':
+            tab['url'] = reverse('contracts:contract_review_workspace', kwargs={'pk': contract.pk})
+            break
     return render(request, 'contracts/contract_review_workspace.html', {
         'contract': contract,
         'review_run': review_run,
@@ -911,6 +939,9 @@ def contract_review_workspace(request, pk):
         'review_state': review_state,
         'playbooks': ClausePlaybook.objects.filter(organization=organization, is_active=True).order_by('name'),
         'contract_types': Contract.ContractType.choices,
+        'workspace_tabs': workspace_tabs,
+        'can_edit': can_access_contract_action(request.user, contract, ContractAction.EDIT),
+        'hide_app_footer': True,
     })
 
 
@@ -930,7 +961,8 @@ def _document_review_state(contract, document, review_run, *, finding_count):
     type_confirmed = contract.contract_type != Contract.ContractType.OTHER
     law_confirmed = bool((contract.governing_law or '').strip() and metadata.get('governing_law_confirmed'))
     value_confirmed = contract.value is not None and bool(metadata.get('value_confirmed'))
-    payment_confirmed = bool(metadata.get('payment_terms_confirmed'))
+    payment_hint = bool((metadata.get('payment_terms') or '').strip())
+    payment_confirmed = bool(metadata.get('payment_terms_confirmed')) if payment_hint else True
     playbook_confirmed = bool(governance.get('approved_playbook_matched') or governance.get('selected_playbook_id'))
     analysis_completed = bool(governance.get('ai_analysis_completed'))
     blockers = []
@@ -942,7 +974,7 @@ def _document_review_state(contract, document, review_run, *, finding_count):
         blockers.append({'key': 'governing_law', 'label': 'Governing law', 'state': 'Not confidently extracted', 'action': 'Confirm'})
     if not value_confirmed:
         blockers.append({'key': 'value', 'label': 'Contract value', 'state': 'Not confidently extracted', 'action': 'Confirm'})
-    if not payment_confirmed:
+    if payment_hint and not payment_confirmed:
         blockers.append({'key': 'payment_terms', 'label': 'Payment terms', 'state': 'Not confidently extracted', 'action': 'Confirm'})
     if not playbook_confirmed:
         blockers.append({'key': 'playbook', 'label': 'Review playbook', 'state': 'Not matched', 'action': 'Select playbook'})
@@ -955,17 +987,17 @@ def _document_review_state(contract, document, review_run, *, finding_count):
     ready = prerequisites_complete and analysis_completed
     current_status = review_run.status if review_run else DocumentReviewRun.Status.UPLOADED
     if not extraction_complete:
-        status_label, status_class = 'AI review incomplete', 'badge-red'
+        status_label, status_class, status_badge_tone = 'AI review incomplete', 'badge-red', 'danger'
     elif not prerequisites_complete:
-        status_label, status_class = 'Needs input', 'badge-yellow'
+        status_label, status_class, status_badge_tone = 'Needs input', 'badge-yellow', 'attention'
     elif current_status == DocumentReviewRun.Status.AI_REVIEW_IN_PROGRESS:
-        status_label, status_class = 'AI review in progress', 'badge-blue'
+        status_label, status_class, status_badge_tone = 'AI review in progress', 'badge-blue', 'progress'
     elif ready and contract.status == Contract.Status.HUMAN_REVIEW_IN_PROGRESS:
-        status_label, status_class = 'Human review in progress', 'badge-blue'
+        status_label, status_class, status_badge_tone = 'Human review in progress', 'badge-blue', 'progress'
     elif ready:
-        status_label, status_class = 'AI review ready', 'badge-green'
+        status_label, status_class, status_badge_tone = 'AI review ready', 'badge-green', 'success'
     else:
-        status_label, status_class = 'AI review incomplete', 'badge-red'
+        status_label, status_class, status_badge_tone = 'AI review incomplete', 'badge-red', 'danger'
     if not extraction_complete:
         current_step = 'Extracting'
     elif not classification_complete:
@@ -991,6 +1023,7 @@ def _document_review_state(contract, document, review_run, *, finding_count):
     return {
         'status_label': status_label,
         'status_class': status_class,
+        'status_badge_tone': status_badge_tone,
         'stage_label': 'Internal review' if not ready else contract.get_lifecycle_stage_display(),
         'primary_action': 'Start human review' if ready else ('Run AI review' if prerequisites_complete else 'Resolve review blockers'),
         'message': (
@@ -1032,14 +1065,24 @@ def contract_template_picker(request):
         # DPA, MSA, and NDA are the governed drafting reference flows — their
         # cards start dedicated workflow builders instead of the legacy
         # generic intake form. Other curated cards stay unchanged.
-        context['entry_cards'] = get_entry_cards(
-            start_url_for=lambda ct: (
-                reverse('contracts:dpa_workflow_builder') if ct == Contract.ContractType.DPA
-                else reverse('contracts:msa_workflow_builder') if ct == Contract.ContractType.MSA
-                else reverse('contracts:nda_workflow_builder') if ct == Contract.ContractType.NDA
-                else f"{reverse('contracts:contract_create')}?type={ct}"
-            )
+        def start_url_for(ct):
+            if ct == Contract.ContractType.DPA:
+                return reverse('contracts:dpa_workflow_builder')
+            if ct == Contract.ContractType.MSA:
+                return reverse('contracts:msa_workflow_builder')
+            if ct == Contract.ContractType.NDA:
+                return reverse('contracts:nda_workflow_builder')
+            return f"{reverse('contracts:contract_create')}?type={ct}"
+
+        org = get_user_organization(request.user)
+        context['entry_sections'] = get_entry_card_sections(
+            start_url_for=start_url_for,
+            organization=org,
+            user=request.user,
         )
+        context['entry_cards'] = [
+            card for section in context['entry_sections'] for card in section.cards
+        ]
     return render(request, 'contracts/contract_template_picker.html', context)
 
 
@@ -1379,7 +1422,8 @@ def contract_submit_for_review(request, pk):
         messages.error(request, str(exc))
     else:
         messages.success(request, f'Contract submitted to {reviewer.get_full_name() or reviewer.username}.')
-    return redirect('contracts:contract_detail', pk=contract.pk)
+    from contracts.services.contract_detail_workspace import contract_detail_tab_url
+    return redirect(contract_detail_tab_url(contract.pk, 'approvals'))
 
 
 @login_required
@@ -1918,6 +1962,7 @@ def dashboard(request):
                     contract_status_badge_tone(contract.status)
                 ),
                 'action_label': _QUEUE_ACTION_LABELS.get(contract.lifecycle_stage, 'View'),
+                'next_action': _QUEUE_ACTION_LABELS.get(contract.lifecycle_stage, 'Open'),
                 'current_stage': COMPACT_LIFECYCLE_LABELS.get(
                     contract.lifecycle_stage,
                     contract.get_lifecycle_stage_display(),
@@ -1959,6 +2004,7 @@ def dashboard(request):
                 'status_label': r['status_label'],
                 'status_badge_class': r['status_badge_class'],
                 'action_label': _QUEUE_ACTION_LABELS.get(r['contract'].lifecycle_stage, 'View') if r['contract'] else 'Open',
+                'next_action': _QUEUE_ACTION_LABELS.get(r['contract'].lifecycle_stage, 'Open') if r['contract'] else 'Open',
             })
         return rows
 

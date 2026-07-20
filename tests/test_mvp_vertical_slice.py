@@ -74,6 +74,23 @@ class MVPVerticalSliceTests(TestCase):
         self.client.logout()
         self.assertTrue(self.client.login(username=user.username, password=self.password))
 
+    def prepare_contract_for_submit(self, contract, actor):
+        if not contract.documents.filter(is_deleted=False).exists():
+            Document.objects.create(
+                organization=self.org,
+                title=f'{contract.title} source',
+                document_type=Document.DocType.CONTRACT,
+                version=1,
+                contract=contract,
+                uploaded_by=actor,
+                file=SimpleUploadedFile('source.txt', b'agreement body', content_type='text/plain'),
+            )
+        self.client.post(
+            reverse('contracts:contract_ai_assistant', args=[contract.pk]),
+            data='{"prompt": "ready for review"}',
+            content_type='application/json',
+        )
+
     def test_required_acceptance_journey_updates_every_persisted_surface(self):
         self.login(self.owner)
 
@@ -103,6 +120,7 @@ class MVPVerticalSliceTests(TestCase):
         self.assertEqual(repository.json()['contracts'][0]['id'], str(contract.pk))
         self.assertEqual(self.client.get(reverse('contracts:contract_detail', args=[contract.pk])).status_code, 200)
 
+        self.prepare_contract_for_submit(contract, self.owner)
         submitted = self.client.post(
             reverse('contracts:contract_submit_for_review', args=[contract.pk]),
             {'reviewer_id': self.reviewer.pk, 'comment': 'Please check confidentiality scope.'},
@@ -135,6 +153,7 @@ class MVPVerticalSliceTests(TestCase):
         self.assertEqual(first_approval.status, ApprovalRequest.Status.CHANGES_REQUESTED)
 
         self.login(self.owner)
+        self.prepare_contract_for_submit(contract, self.owner)
         resubmitted = self.client.post(
             reverse('contracts:contract_submit_for_review', args=[contract.pk]),
             {'reviewer_id': self.reviewer.pk, 'comment': 'Updated to a two-year residual period.'},

@@ -91,7 +91,7 @@ class RedesignComponentsTestCase(TestCase):
         self.assertContains(response, 'Contracts')
         self.assertContains(response, 'DPA Reviews')
         self.assertContains(response, 'Obligations')
-        self.assertContains(response, 'Admin')
+        self.assertContains(response, 'role="menuitem">Settings</a>')
         self.assertNotContains(response, 'RISK &amp; COMPLIANCE')
 
     def test_accessibility_and_responsive_markers(self):

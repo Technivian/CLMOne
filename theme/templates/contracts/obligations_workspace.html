@@ -3,57 +3,163 @@
 
 {% block title %}Obligations – CLM One{% endblock %}
 {% block authenticated_page_title %}Obligations{% endblock %}
-{% block authenticated_page_subtitle %}Track contractual commitments, trigger dates, and required follow-up.{% endblock %}
+{% block authenticated_page_subtitle %}Work contractual commitments by urgency — due dates, owners, and next actions.{% endblock %}
 
 {% block content %}
+{% include "components/_list_page_shell_styles.html" %}
 <style nonce="{{ csp_nonce }}">
-  /* The table wrapper is the only obligation-specific composition rule;
-     layout, summary, state, and rhythm are shared primitives. */
-  .obligations-page .obligations-table .dc-ds-surface__body { padding: 0; }
+  .obligations-page .obligations-row { cursor: pointer; }
+  .obligations-page .obligations-row:hover td { background: var(--sidebar-hover); }
+  .obligations-page .obligations-row:focus-visible { outline: none; box-shadow: inset var(--ds-focus-ring); }
+  .obligations-page .obligations-next-action { color: var(--ds-color-text); font-weight: 650; }
+  .obligations-page .obligations-due-absolute { font-variant-numeric: tabular-nums; }
+  .obligations-page .clm-list-summary { --dc-ds-summary-columns: 4; }
+  @media (max-width: 900px) {
+    .obligations-page .clm-list-summary { --dc-ds-summary-columns: 2; }
+  }
+  @media (max-width: 560px) {
+    .obligations-page .clm-list-summary { --dc-ds-summary-columns: 1; }
+  }
 </style>
 
-<div id="obligations-workspace-root" class="dc-ds-page dc-ds-page--wide dc-ds-page-flow obligations-page">
+<div id="obligations-workspace-root" class="dc-ds-page dc-ds-page--wide dc-ds-page-flow dc-ds-list-page clm-list-page obligations-page">
   {% url 'contracts:deadline_create' as new_obligation_url %}
+  {% url 'contracts:obligations_workspace' as obligations_url %}
 
-  <div class="dc-ds-scaffold dc-ds-scaffold--with-rail">
-  <section class="dc-ds-scaffold__main dc-ds-surface obligations-table" aria-labelledby="all-obligations-title">
-    <div class="dc-ds-surface__head">
-      <div>
-        <h2 class="dc-ds-surface__title" id="all-obligations-title">All obligations</h2>
-        <p class="dc-ds-subtitle">Every tracked obligation across your contracts and matters, earliest due date first.</p>
+  <form method="get" action="{{ obligations_url }}" id="obligations-filters-form">
+    {% if selected_view and selected_view != 'all' %}
+    <input type="hidden" name="view" value="{{ selected_view }}">
+    {% endif %}
+
+    <header class="clm-list-shell dc-ds-filterbar dc-ds-table-toolbar dc-ds-list-toolbar" aria-label="Obligations workspace controls">
+      <div class="clm-list-view-header">
+        <nav class="clm-list-view-tabs dc-ds-list-tabs" aria-label="Obligation views">
+          {% for tab in view_tabs %}
+          <a href="{{ tab.url }}" class="dc-ds-choice{% if tab.active %} chip-active{% endif %}">{{ tab.label }}</a>
+          {% endfor %}
+        </nav>
+        <div class="clm-list-view-actions">
+          <a class="dc-ds-button dc-ds-button--primary" href="{{ new_obligation_url }}">Add obligation</a>
+        </div>
       </div>
-      <div class="dc-ds-surface__head-actions">
-        <a class="dc-ds-button dc-ds-button--primary" href="{{ new_obligation_url }}">New Obligation</a>
+
+      <div class="clm-list-filter-controls">
+        <div class="clm-list-search-field">
+          {% include "design_system/icon.html" with name="search" class_name="clm-list-search-icon" %}
+          <input class="dc-ds-control" type="search" id="obligations-search" name="q" value="{{ search_query }}" placeholder="Search obligations">
+        </div>
+        <div class="clm-list-actions-stack">
+          <p class="clm-list-result-count" aria-live="polite">{{ obligations|length }} obligation{{ obligations|length|pluralize }}</p>
+          <button id="obligations-filter-toggle" type="button" class="clm-list-filter-toggle dc-ds-button dc-ds-button--ghost" aria-expanded="{% if filters_active %}true{% else %}false{% endif %}" aria-controls="obligations-filters">Filters</button>
+        </div>
       </div>
+    </header>
+
+    <section id="obligations-filters" class="clm-list-filter-drawer dc-ds-surface p-3{% if filters_active %} is-open{% endif %}" aria-label="Filters">
+      <div class="clm-list-filter-drawer__header">
+        <h2 class="clm-list-filter-drawer__title">Filters</h2>
+        <a class="dc-ds-button dc-ds-button--quiet text-sm" href="{% if selected_view and selected_view != 'all' %}{{ obligations_url }}?view={{ selected_view }}{% else %}{{ obligations_url }}{% endif %}">Clear filters</a>
+      </div>
+      <div class="clm-list-filter-drawer__body">
+        <label for="obligations-filter-status">Status
+          <select id="obligations-filter-status" class="dc-ds-control" name="status">
+            <option value="">All statuses</option>
+            {% for value, label in status_filter_choices %}
+            <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label for="obligations-filter-owner">Owner
+          <select id="obligations-filter-owner" class="dc-ds-control" name="owner">
+            <option value="">All owners</option>
+            <option value="unassigned" {% if selected_owner == 'unassigned' %}selected{% endif %}>Unassigned</option>
+            {% for owner in owner_choices %}
+            <option value="{{ owner.pk }}" {% if selected_owner == owner.pk|stringformat:"s" %}selected{% endif %}>{{ owner.get_full_name|default:owner.username }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label for="obligations-filter-contract">Contract
+          <select id="obligations-filter-contract" class="dc-ds-control" name="contract">
+            <option value="">All contracts</option>
+            {% for contract in contract_choices %}
+            <option value="{{ contract.pk }}" {% if selected_contract == contract.pk|stringformat:"s" %}selected{% endif %}>{{ contract.title|truncatechars:40 }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label for="obligations-filter-type">Obligation type
+          <select id="obligations-filter-type" class="dc-ds-control" name="type">
+            <option value="">All types</option>
+            {% for value, label in type_filter_choices %}
+            <option value="{{ value }}" {% if selected_type == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label for="obligations-filter-due">Due period
+          <select id="obligations-filter-due" class="dc-ds-control" name="due">
+            <option value="">Any due period</option>
+            {% for value, label in due_period_choices %}
+            <option value="{{ value }}" {% if selected_due == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <div class="clm-list-filter-drawer__actions">
+          <button class="dc-ds-button dc-ds-button--primary" type="submit">Apply filters</button>
+        </div>
+      </div>
+    </section>
+  </form>
+
+  <div class="dc-ds-summary clm-list-summary obligations-summary" aria-label="Obligation queue summary">
+    <div class="dc-ds-summary__item {% if obligations_overdue_count %}dc-ds-summary__item--danger{% else %}dc-ds-summary__item--clear{% endif %}">
+      <span class="dc-ds-summary__label">Overdue</span>
+      <strong class="dc-ds-summary__value">{{ obligations_overdue_count }}</strong>
     </div>
-    <div class="dc-ds-surface__body dc-ds-table-wrap">
-      {% include 'components/_obligations_matrix_table.html' %}
+    <div class="dc-ds-summary__item {% if obligations_due_within_30_count %}dc-ds-summary__item--info{% else %}dc-ds-summary__item--clear{% endif %}">
+      <span class="dc-ds-summary__label">Due within 30 days</span>
+      <strong class="dc-ds-summary__value">{{ obligations_due_within_30_count }}</strong>
     </div>
-  </section>
-  <aside class="dc-ds-scaffold__rail" aria-label="Obligation summary">
-    <div class="dc-ds-summary dc-ds-summary--vertical">
-      <div class="dc-ds-summary__item {% if obligations_overdue_count %}dc-ds-summary__item--danger{% else %}dc-ds-summary__item--clear{% endif %}">
-        <span class="dc-ds-summary__label">Overdue</span>
-        <strong class="dc-ds-summary__value">{% if obligations_overdue_count %}{{ obligations_overdue_count }} intervention{{ obligations_overdue_count|pluralize }}{% else %}Clear{% endif %}</strong>
-        <span class="dc-ds-summary__note">Past due and not met</span>
-      </div>
-      <div class="dc-ds-summary__item {% if obligations_breach_risk_count %}dc-ds-summary__item--danger{% else %}dc-ds-summary__item--clear{% endif %}">
-        <span class="dc-ds-summary__label">Breach risk</span>
-        <strong class="dc-ds-summary__value">{% if obligations_breach_risk_count %}{{ obligations_breach_risk_count }} intervention{{ obligations_breach_risk_count|pluralize }}{% else %}Clear{% endif %}</strong>
-        <span class="dc-ds-summary__note">Inside the reminder window</span>
-      </div>
-      <div class="dc-ds-summary__item dc-ds-summary__item--info">
-        <span class="dc-ds-summary__label">Pending action</span>
-        <strong class="dc-ds-summary__value">{{ obligations_pending_count }}</strong>
-        <span class="dc-ds-summary__note">Open outside reminder window</span>
-      </div>
-      <div class="dc-ds-summary__item dc-ds-summary__item--clear">
-        <span class="dc-ds-summary__label">Met</span>
-        <strong class="dc-ds-summary__value">{{ obligations_met_count }}</strong>
-        <span class="dc-ds-summary__note">Completed obligations</span>
-      </div>
+    <div class="dc-ds-summary__item {% if obligations_at_risk_count %}dc-ds-summary__item--danger{% else %}dc-ds-summary__item--clear{% endif %}">
+      <span class="dc-ds-summary__label">At risk</span>
+      <strong class="dc-ds-summary__value">{{ obligations_at_risk_count }}</strong>
     </div>
-  </aside>
+    <div class="dc-ds-summary__item dc-ds-summary__item--clear">
+      <span class="dc-ds-summary__label">Completed</span>
+      <strong class="dc-ds-summary__value">{{ obligations_completed_count }}</strong>
+    </div>
+  </div>
+
+  <div class="dc-ds-table-wrap">
+    {% include 'components/_obligations_matrix_table.html' %}
   </div>
 </div>
+<script nonce="{{ csp_nonce }}">
+(function () {
+  var root = document.getElementById('obligations-workspace-root');
+  if (!root) return;
+  var filterToggle = document.getElementById('obligations-filter-toggle');
+  var filterDrawer = document.getElementById('obligations-filters');
+  if (filterToggle && filterDrawer) {
+    filterToggle.addEventListener('click', function () {
+      var open = filterDrawer.classList.toggle('is-open');
+      filterToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+  }
+  function openRow(row) {
+    var href = row && row.getAttribute('data-href');
+    if (href) window.location.href = href;
+  }
+  root.addEventListener('click', function (event) {
+    var row = event.target.closest('tr.obligations-row');
+    if (!row || event.target.closest('a, button, input, select, label, details, summary')) return;
+    openRow(row);
+  });
+  root.addEventListener('keydown', function (event) {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    var row = event.target.closest('tr.obligations-row');
+    if (!row || event.target !== row) return;
+    event.preventDefault();
+    openRow(row);
+  });
+})();
+</script>
 {% endblock %}

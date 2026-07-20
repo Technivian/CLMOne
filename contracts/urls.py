@@ -52,6 +52,7 @@ urlpatterns = [
     path('api/analytics/executive/presets/', api_views.executive_dashboard_presets_api, name='executive_dashboard_presets_api'),
     path('api/analytics/executive/presets/<int:preset_id>/', api_views.executive_dashboard_preset_delete_api, name='executive_dashboard_preset_delete_api'),
     path('api/documents/upload/', api_views.document_upload_api, name='document_upload_api'),
+    path('api/documents/extract-preview/', api_views.document_extract_preview_api, name='document_extract_preview_api'),
     path('api/contracts/<str:contract_id>/ai-extract/', api_views.contract_ai_extract_api, name='contract_ai_extract_api'),
     path('api/contracts/<str:contract_id>/ai-extract/<int:span_id>/review/', api_views.ai_extraction_span_review_api, name='ai_extraction_span_review_api'),
     path('api/contracts/<str:contract_id>/review-findings/<int:finding_id>/action/', api_views.contract_review_finding_action_api, name='contract_review_finding_action_api'),

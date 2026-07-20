@@ -315,33 +315,53 @@ class NewContractRequestPageTests(_LaunchSetupFixtureMixin, TestCase):
         self.assertNotIn('submit-contract-btn" disabled', content)
 
     def test_new_request_workflow_header_is_intake_first_and_compact(self):
-        """The new-request strip is an intake flow, not a contract draft."""
+        """The new-request strip is a compact intake context bar."""
+        self.user.first_name = 'Alex'
+        self.user.last_name = 'Admin'
+        self.user.save(update_fields=['first_name', 'last_name'])
+
         response = self._get()
         content = response.content.decode()
-        workflow_start = content.index('aria-label="Contract lifecycle: intake in progress"')
-        workflow_end = content.index('<div class="arch-workspace-grid">', workflow_start)
+        workflow_start = content.index('class="cform-context-bar cform-stepper"')
+        workflow_end = content.index('id="contract-identity-heading"', workflow_start)
         workflow = content[workflow_start:workflow_end]
 
-        self.assertIn('Intake in progress', content)
+        self.assertIn('Contract intake', workflow)
+        self.assertIn('In progress', workflow)
+        self.assertIn('Owner: <strong>Alex Admin</strong>', workflow)
+        self.assertIn('Stage 1 of 6 · Intake', workflow)
+        self.assertIn('id="command-progress"', workflow)
+        self.assertIn('required fields complete', workflow)
+        self.assertIn('View workflow', workflow)
+        self.assertIn('cform-workflow-reveal', workflow)
+        self.assertNotIn('cform-kicker', workflow)
+        self.assertNotIn('>Workflow<', workflow)
+        self.assertNotIn('cform-command-stats', workflow)
+        self.assertNotIn('cform-command-meta', workflow)
+        self.assertNotIn('command-next-action', workflow)
+        self.assertNotIn('command-blocker', workflow)
+        self.assertNotIn('Next <strong', workflow)
+        self.assertNotIn('Remaining <strong', workflow)
+        self.assertNotIn('Capture the parties, commercial terms, and review path needed to open this request.', workflow)
         self.assertNotIn('Complete the required intake fields to create the contract and begin drafting.', content)
-        self.assertIn('<span class="cform-stat-label">Owner</span>', content)
-        self.assertIn('<span class="cform-stat-label">Next action</span>', content)
-        self.assertIn('<span class="cform-stat-label">Remaining</span>', content)
-        self.assertIn('margin-bottom: 4px;', content)
-
+        # Full lifecycle is present but collapsed behind View workflow.
+        self.assertNotIn('<details class="cform-workflow-reveal" open', workflow)
         expected_stages = ('Intake', 'Drafting', 'Internal review', 'Negotiation', 'Approval', 'Signature')
-        stage_positions = [workflow.index(f'<span class="lc-label">{stage}</span>') for stage in expected_stages]
-        self.assertEqual(stage_positions, sorted(stage_positions))
-        current_stage = workflow[workflow.index('lc-step lc-current'):workflow.index('</div>', workflow.index('lc-step lc-current'))]
-        self.assertIn('<span class="lc-label">Intake</span>', current_stage)
-        self.assertNotIn('<span class="lc-label">Drafting</span>', current_stage)
+        for stage in expected_stages:
+            self.assertIn(f'<span class="lc-label">{stage}</span>', workflow)
+        # Actions live in the shell title row with New Contract Request.
+        self.assertIn('id="contract-form-top-actions"', content)
+        self.assertIn('topbar-page-actions', content)
+        self.assertIn('form="contract-form"', content)
 
     def test_new_request_create_ctas_use_standard_teal_button_treatment(self):
         response = self._get()
         content = response.content.decode()
 
-        # Form CTAs only (shell topbar also uses --primary).
-        self.assertEqual(content.count('type="submit" class="dc-ds-button dc-ds-button--primary'), 2)
+        # Form CTAs only (shell topbar also uses --primary for New Contract).
+        self.assertEqual(content.count('id="submit-contract-btn"'), 1)
+        self.assertIn('form="contract-form" class="dc-ds-button dc-ds-button--primary"', content)
+        self.assertIn('id="submit-contract-btn">Create contract</button>', content)
         self.assertNotIn('btn-cta', content)
         self.assertNotIn('cform-create-cta', content)
         self.assertNotIn('var(--copper-700)', content)

@@ -99,6 +99,7 @@ from contracts.api.analytics import (
 )
 from contracts.api.documents_ai import (
     document_upload_api,
+    document_extract_preview_api,
     contract_ai_extract_api,
     ai_extraction_span_review_api,
     contract_review_finding_action_api,

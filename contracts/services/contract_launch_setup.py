@@ -19,8 +19,11 @@ falls through to a broken/empty state; `OTHER` and the blank placeholder
 value both explicitly resist recommending a template (see get_launch_setup
 docstring) rather than guessing.
 """
+from collections import Counter
 from dataclasses import asdict, dataclass, field
-from typing import Dict, List, Optional
+from typing import Callable, Dict, List, Optional, Tuple
+
+from django.contrib.auth.models import AbstractBaseUser
 
 from contracts.models import Contract, ContractTemplate
 from contracts.services.contract_policies import get_required_fields_for_contract_type
@@ -65,28 +68,92 @@ DEFAULT_COPY = {
 # is a plain-language summary of the same review_route/approval_route
 # copy above, meant to be scannable on a card, not a new source of truth.
 CARD_META = {
-    Contract.ContractType.MSA: {'draft_minutes': 5, 'typical_approvals': 'Legal, Finance', 'icon': 'file'},
-    Contract.ContractType.DPA: {'draft_minutes': 4, 'typical_approvals': 'Legal, DPO', 'icon': 'shield'},
-    Contract.ContractType.NDA: {'draft_minutes': 2, 'typical_approvals': 'Legal optional', 'icon': 'document'},
-    Contract.ContractType.SOW: {'draft_minutes': 6, 'typical_approvals': 'Legal, Finance', 'icon': 'list'},
-    Contract.ContractType.VENDOR: {'draft_minutes': 7, 'typical_approvals': 'Legal, Procurement', 'icon': 'briefcase'},
-    Contract.ContractType.AMENDMENT: {'draft_minutes': 3, 'typical_approvals': 'Legal', 'icon': 'edit'},
-    Contract.ContractType.SAAS: {'draft_minutes': 6, 'typical_approvals': 'Legal, Security', 'icon': 'cloud'},
+    Contract.ContractType.MSA: {
+        'draft_minutes': 5, 'typical_approvals': 'Legal and Finance review', 'icon': 'file',
+    },
+    Contract.ContractType.DPA: {
+        'draft_minutes': 4, 'typical_approvals': 'Legal and DPO review', 'icon': 'shield',
+    },
+    Contract.ContractType.NDA: {
+        'draft_minutes': 2, 'typical_approvals': 'Legal review if triggered', 'icon': 'document',
+    },
+    Contract.ContractType.SOW: {
+        'draft_minutes': 6, 'typical_approvals': 'Legal and Finance review', 'icon': 'list',
+    },
+    Contract.ContractType.VENDOR: {
+        'draft_minutes': 7, 'typical_approvals': 'Legal and Finance review', 'icon': 'briefcase',
+    },
+    Contract.ContractType.PURCHASE_ORDER: {
+        'draft_minutes': 4, 'typical_approvals': 'Legal review if triggered', 'icon': 'list',
+    },
+    Contract.ContractType.ORDER_CONFIRMATION: {
+        'draft_minutes': 3, 'typical_approvals': 'No review required', 'icon': 'document',
+    },
+    Contract.ContractType.AMENDMENT: {
+        'draft_minutes': 3, 'typical_approvals': 'Legal review if triggered', 'icon': 'edit',
+    },
+    Contract.ContractType.SAAS: {
+        'draft_minutes': 6, 'typical_approvals': 'Legal and DPO review', 'icon': 'cloud',
+    },
+    Contract.ContractType.OTHER: {
+        'draft_minutes': 5, 'typical_approvals': 'Legal review if triggered', 'icon': 'file',
+    },
 }
-DEFAULT_CARD_META = {'draft_minutes': 5, 'typical_approvals': 'Legal', 'icon': 'file'}
+DEFAULT_CARD_META = {
+    'draft_minutes': 5, 'typical_approvals': 'Legal review if triggered', 'icon': 'file',
+}
 
-# Cards shown on the New Contract entry screen, in display order — a
-# curated subset (not all 19 ContractType values), matching the six
-# highest-traffic types. "Other" and the rest stay reachable via the full
-# dropdown on the resulting form, same as before this feature existed.
-ENTRY_CARD_TYPES = [
-    Contract.ContractType.MSA,
-    Contract.ContractType.DPA,
-    Contract.ContractType.NDA,
+# Default recommended shelf when the workspace has no personal signal yet.
+DEFAULT_RECOMMENDED_TYPES = (
     Contract.ContractType.SOW,
-    Contract.ContractType.VENDOR,
-    Contract.ContractType.AMENDMENT,
-    Contract.ContractType.SAAS,
+    Contract.ContractType.NDA,
+    Contract.ContractType.DPA,
+)
+
+# Category sections on the New Contract entry screen (recommended is built
+# separately from recent-request signal). Curated subset; remaining types
+# stay reachable via the create-form dropdown.
+CATEGORY_CARD_SECTIONS = (
+    (
+        'commercial',
+        'Commercial',
+        (
+            Contract.ContractType.MSA,
+            Contract.ContractType.SAAS,
+            Contract.ContractType.OTHER,
+        ),
+    ),
+    (
+        'procurement',
+        'Procurement',
+        (
+            Contract.ContractType.VENDOR,
+            Contract.ContractType.PURCHASE_ORDER,
+            Contract.ContractType.ORDER_CONFIRMATION,
+        ),
+    ),
+    (
+        'contract_changes',
+        'Contract changes',
+        (
+            Contract.ContractType.AMENDMENT,
+        ),
+    ),
+)
+
+# Backward-compatible alias used by older imports/tests.
+ENTRY_CARD_SECTIONS = (
+    ('recommended', 'Recommended', DEFAULT_RECOMMENDED_TYPES),
+    *CATEGORY_CARD_SECTIONS,
+)
+
+ENTRY_CARD_TYPES = [
+    *DEFAULT_RECOMMENDED_TYPES,
+    *[
+        contract_type
+        for _key, _label, types in CATEGORY_CARD_SECTIONS
+        for contract_type in types
+    ],
 ]
 
 # Shown in the "Selected setup" card's template/playbook rows in place of
@@ -235,8 +302,11 @@ CARD_DESCRIPTIONS = {
     Contract.ContractType.NDA: 'Create mutual or one-way confidentiality agreements from approved language.',
     Contract.ContractType.SOW: 'Draft scope, deliverables, milestones, pricing, and acceptance terms.',
     Contract.ContractType.VENDOR: 'Generate supplier terms with liability, renewal, and compliance controls.',
+    Contract.ContractType.PURCHASE_ORDER: 'Capture purchase terms against an approved commercial baseline.',
+    Contract.ContractType.ORDER_CONFIRMATION: 'Confirm order terms with light-touch governance before fulfilment.',
     Contract.ContractType.AMENDMENT: 'Amend an existing agreement with controlled clause changes.',
     Contract.ContractType.SAAS: 'Draft subscription terms with data security, uptime, and processing checks.',
+    Contract.ContractType.OTHER: 'Start a governed intake when no more specific agreement type fits.',
 }
 
 CARD_TITLES = {
@@ -245,8 +315,11 @@ CARD_TITLES = {
     Contract.ContractType.NDA: 'NDA',
     Contract.ContractType.SOW: 'SOW',
     Contract.ContractType.VENDOR: 'Supplier Agreement',
+    Contract.ContractType.PURCHASE_ORDER: 'Purchase Order',
+    Contract.ContractType.ORDER_CONFIRMATION: 'Order Confirmation',
     Contract.ContractType.AMENDMENT: 'Addendum',
     Contract.ContractType.SAAS: 'SaaS Agreement',
+    Contract.ContractType.OTHER: 'Other',
 }
 
 
@@ -259,30 +332,199 @@ class ContractTypeEntryCard:
     template_name: Optional[str]
     draft_minutes: int
     typical_approvals: str
+    expected_review: str
     start_url: str
+    section_key: str
+    section_label: str
 
 
-def get_entry_cards(start_url_for=None) -> List[ContractTypeEntryCard]:
-    """The New Contract entry screen's type cards, in display order.
+@dataclass
+class ContractTypeEntrySection:
+    key: str
+    label: str
+    cards: List[ContractTypeEntryCard]
+    reason: str = ''
+    columns: int = 3
 
-    `start_url_for(contract_type)` builds the "Start draft" href for a card
+
+@dataclass
+class RecommendationShelf:
+    contract_types: Tuple[str, ...]
+    label: str
+    reason: str
+
+
+def _display_name(user: Optional[AbstractBaseUser]) -> str:
+    if user is None:
+        return ''
+    full_name = (getattr(user, 'get_full_name', lambda: '')() or '').strip()
+    if full_name:
+        return full_name.split()[0]
+    return (getattr(user, 'username', '') or '').strip()
+
+
+def get_recommendation_shelf(
+    organization=None,
+    user: Optional[AbstractBaseUser] = None,
+    *,
+    limit: int = 3,
+) -> RecommendationShelf:
+    """Build a reasoned recommended shelf from recent personal requests.
+
+    Falls back to organisation defaults when the actor has no useful history
+    yet, so the shelf never looks empty or arbitrarily curated.
+    """
+    eligible = list(dict.fromkeys(ENTRY_CARD_TYPES))
+    first_name = _display_name(user)
+
+    if organization is not None and user is not None and getattr(user, 'is_authenticated', False):
+        recent_types = list(
+            Contract.objects.filter(organization=organization, created_by=user)
+            .exclude(contract_type='')
+            .order_by('-created_at')
+            .values_list('contract_type', flat=True)[:24]
+        )
+        ranked = [
+            contract_type
+            for contract_type, _count in Counter(recent_types).most_common()
+            if contract_type in eligible
+        ]
+        if ranked:
+            chosen = tuple((ranked + [t for t in DEFAULT_RECOMMENDED_TYPES if t not in ranked])[:limit])
+            who = first_name or 'you'
+            return RecommendationShelf(
+                contract_types=chosen,
+                label='Recommended',
+                reason=f'Recommended for {who} based on your recent requests.',
+            )
+
+        org_ranked = [
+            contract_type
+            for contract_type, _count in Counter(
+                Contract.objects.filter(organization=organization)
+                .exclude(contract_type='')
+                .order_by('-created_at')
+                .values_list('contract_type', flat=True)[:40]
+            ).most_common()
+            if contract_type in eligible
+        ]
+        if org_ranked:
+            chosen = tuple((org_ranked + [t for t in DEFAULT_RECOMMENDED_TYPES if t not in org_ranked])[:limit])
+            return RecommendationShelf(
+                contract_types=chosen,
+                label='Recommended',
+                reason='Organisation defaults based on recent workspace requests.',
+            )
+
+    return RecommendationShelf(
+        contract_types=DEFAULT_RECOMMENDED_TYPES[:limit],
+        label='Recommended',
+        reason='Organisation defaults for common governed intakes.',
+    )
+
+
+def _build_entry_card(
+    contract_type: str,
+    *,
+    section_key: str,
+    section_label: str,
+    start_url_for: Optional[Callable[[str], str]] = None,
+) -> ContractTypeEntryCard:
+    setup = get_launch_setup_for_type(contract_type)
+    meta = CARD_META.get(contract_type, DEFAULT_CARD_META)
+    href = start_url_for(contract_type) if start_url_for else f'?type={contract_type}'
+    expected_review = meta['typical_approvals']
+    return ContractTypeEntryCard(
+        contract_type=contract_type,
+        title=CARD_TITLES.get(contract_type, setup.contract_type_label),
+        description=CARD_DESCRIPTIONS.get(contract_type, ''),
+        icon=meta['icon'],
+        template_name=setup.template.name if setup.template else None,
+        draft_minutes=meta['draft_minutes'],
+        typical_approvals=expected_review,
+        expected_review=expected_review,
+        start_url=href,
+        section_key=section_key,
+        section_label=section_label,
+    )
+
+
+def _section_columns(card_count: int) -> int:
+    """Prefer a consistent three-column grid; fall back to two when a
+    category cannot fill three tracks without a visible hole."""
+    if card_count <= 0:
+        return 3
+    if card_count >= 3 and card_count % 3 == 0:
+        return 3
+    if card_count == 1:
+        return 1
+    return 2
+
+
+def get_entry_cards(
+    start_url_for=None,
+    *,
+    organization=None,
+    user: Optional[AbstractBaseUser] = None,
+) -> List[ContractTypeEntryCard]:
+    """The New Contract entry screen's type cards, in section display order.
+
+    `start_url_for(contract_type)` builds the "Start request" href for a card
     — injected rather than reversed here so this stays a plain service
     function with no `django.urls` dependency. Falls back to a bare query
     string if the caller doesn't supply one (e.g. for tests).
     """
-    cards = []
-    for contract_type in ENTRY_CARD_TYPES:
-        setup = get_launch_setup_for_type(contract_type)
-        meta = CARD_META.get(contract_type, DEFAULT_CARD_META)
-        href = start_url_for(contract_type) if start_url_for else f'?type={contract_type}'
-        cards.append(ContractTypeEntryCard(
-            contract_type=contract_type,
-            title=CARD_TITLES.get(contract_type, setup.contract_type_label),
-            description=CARD_DESCRIPTIONS.get(contract_type, ''),
-            icon=meta['icon'],
-            template_name=setup.template.name if setup.template else None,
-            draft_minutes=meta['draft_minutes'],
-            typical_approvals=meta['typical_approvals'],
-            start_url=href,
+    sections = get_entry_card_sections(
+        start_url_for=start_url_for,
+        organization=organization,
+        user=user,
+    )
+    return [card for section in sections for card in section.cards]
+
+
+def get_entry_card_sections(
+    start_url_for=None,
+    *,
+    organization=None,
+    user: Optional[AbstractBaseUser] = None,
+) -> List[ContractTypeEntrySection]:
+    """Grouped New Contract entry cards for sectioned rendering."""
+    shelf = get_recommendation_shelf(organization=organization, user=user)
+    sections: List[ContractTypeEntrySection] = []
+
+    recommended_cards = [
+        _build_entry_card(
+            contract_type,
+            section_key='recommended',
+            section_label=shelf.label,
+            start_url_for=start_url_for,
+        )
+        for contract_type in shelf.contract_types
+    ]
+    if recommended_cards:
+        sections.append(ContractTypeEntrySection(
+            key='recommended',
+            label=shelf.label,
+            cards=recommended_cards,
+            reason=shelf.reason,
+            columns=_section_columns(len(recommended_cards)),
         ))
-    return cards
+
+    for section_key, section_label, types in CATEGORY_CARD_SECTIONS:
+        section_cards = [
+            _build_entry_card(
+                contract_type,
+                section_key=section_key,
+                section_label=section_label,
+                start_url_for=start_url_for,
+            )
+            for contract_type in types
+        ]
+        if section_cards:
+            sections.append(ContractTypeEntrySection(
+                key=section_key,
+                label=section_label,
+                cards=section_cards,
+                columns=_section_columns(len(section_cards)),
+            ))
+    return sections

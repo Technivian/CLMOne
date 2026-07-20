@@ -71,7 +71,9 @@ class NavSectionGroupingTests(TestCase):
     def test_settings_link_still_present_for_all_roles(self):
         for client in (self.member_client, self.admin_client, self.owner_client):
             response = client.get(reverse('dashboard'))
-            self.assertContains(response, 'Settings')
+            self.assertContains(response, 'role="menuitem">Settings</a>')
+            self.assertNotContains(response, 'class="nav-group"')
+            self.assertNotContains(response, '>Admin</span>')
 
     # ---- server-side enforcement is independent of nav visibility ----
 

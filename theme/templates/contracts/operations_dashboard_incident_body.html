@@ -1,0 +1,12 @@
+<div class="ops-incident-meta">
+  <p class="text-sm mb-2">
+    <span class="dc-ds-badge dc-ds-badge--sm {% if incident.severity == 'P1' %}dc-ds-badge--danger{% else %}dc-ds-badge--attention{% endif %}">{{ incident.severity }}</span>
+    <span class="c-muted"> · {{ incident.code }}</span>
+  </p>
+  <dl class="ops-incident-grid text-sm">
+    <div><dt class="c-muted">Impact</dt><dd>{{ incident.impact }}</dd></div>
+    <div><dt class="c-muted">Owner</dt><dd>{{ incident.owner }}</dd></div>
+    <div><dt class="c-muted">Status</dt><dd>{{ incident.status }}</dd></div>
+    <div><dt class="c-muted">Recommended action</dt><dd>{{ incident.recommended_action }}</dd></div>
+  </dl>
+</div>

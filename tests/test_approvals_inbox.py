@@ -448,7 +448,11 @@ class ApprovalsShellConvergenceTests(TestCase):
     def test_uses_shared_list_scaffold(self):
         response = self.client.get(reverse('contracts:approval_request_list'))
         html = response.content.decode()
-        self.assertIn('dc-ds-page--wide dc-ds-page-flow dc-ds-list-page approvals-page', html)
+        self.assertIn('dc-ds-page--wide', html)
+        self.assertIn('dc-ds-page-flow', html)
+        self.assertIn('dc-ds-list-page', html)
+        self.assertIn('approvals-page', html)
+        self.assertIn('>Next action</th>', html)
 
     def test_no_longer_defines_its_own_private_shell_dimensions(self):
         response = self.client.get(reverse('contracts:approval_request_list'))
@@ -462,5 +466,6 @@ class ApprovalsShellConvergenceTests(TestCase):
     def test_uses_shared_list_header_pattern(self):
         response = self.client.get(reverse('contracts:approval_request_list'))
         html = response.content.decode()
-        self.assertIn('dc-ds-list-header', html)
-        self.assertIn('topbar-page-title">Approvals', html)
+        self.assertIn('clm-list-shell', html)
+        self.assertIn('dc-ds-list-toolbar', html)
+        self.assertIn('topbar-page-title">Workflow Operations', html)

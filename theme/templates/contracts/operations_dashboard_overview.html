@@ -1,0 +1,9 @@
+{% include "contracts/operations_dashboard_kpis.html" %}
+
+{% include "design_system/surface_card.html" with title="Queue health" meta_template="contracts/operations_dashboard_queue_meta.html" body_template="contracts/operations_dashboard_queue_health.html" %}
+
+{% with job_rows=job_rows|slice:":12" %}
+{% include "design_system/surface_card.html" with title="Recent jobs" meta_template="contracts/operations_dashboard_recent_jobs_meta.html" body_template="contracts/operations_dashboard_jobs_table.html" %}
+{% endwith %}
+
+{% include "design_system/surface_card.html" with title="Operational drill" meta_template="contracts/operations_dashboard_drill_meta.html" body_template="contracts/operations_dashboard_drill.html" %}

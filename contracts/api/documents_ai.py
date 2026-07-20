@@ -156,19 +156,99 @@ def _review_steps(current_step, *, blocked=False):
     return steps
 
 
+def _payment_terms_are_confirmed(metadata):
+    """Payment terms only block when the agreement produced a term to confirm."""
+    metadata = metadata or {}
+    hint = (metadata.get('payment_terms') or '').strip()
+    if not hint:
+        return True
+    return bool(metadata.get('payment_terms_confirmed'))
+
+
+def _classification_pending_labels(contract, metadata):
+    """Human-readable classification fields still needing confirmation."""
+    metadata = metadata or {}
+    pending = []
+    if not (contract.counterparty or '').strip():
+        pending.append('Counterparty')
+    if contract.contract_type == Contract.ContractType.OTHER:
+        pending.append('Contract type')
+    if not ((contract.governing_law or '').strip() and metadata.get('governing_law_confirmed')):
+        pending.append('Governing law')
+    if not (contract.value is not None and metadata.get('value_confirmed')):
+        pending.append('Contract value')
+    if not _payment_terms_are_confirmed(metadata):
+        pending.append('Payment terms')
+    return pending
+
+
+def _seed_upload_confirmation_metadata(contract, document):
+    """Treat Upload & Review form values as the first confirmation pass."""
+    metadata = {}
+    try:
+        text = document.ocr_review.extracted_text or ''
+    except Exception:
+        text = ''
+    if (text or '').strip():
+        metadata.update(_metadata_from_text(text))
+    if (contract.governing_law or '').strip():
+        metadata['governing_law_confirmed'] = True
+    if contract.value is not None:
+        metadata['value_confirmed'] = True
+    # Payment terms are not collected on the upload form. Keep any extracted
+    # hint for the review workspace, but do not block AI on a second pass.
+    metadata['payment_terms_confirmed'] = True
+    return metadata
+
+
 def _metadata_from_text(text):
     """Conservative extraction hints: surfaced for confirmation, never silently approved."""
-    import re
+    from contracts.services.agreement_metadata_extract import metadata_hints_from_text
 
-    value_match = re.search(r'(?:(?:USD|EUR|GBP|\$|€|£)\s?)([\d,]+(?:\.\d{2})?)', text, re.I)
-    law_match = re.search(r'governed by the laws? of ([^.\n;]+)', text, re.I)
-    payment_match = re.search(r'(?:payment|invoice)[^.\n]{0,100}', text, re.I)
-    return {
-        'governing_law': law_match.group(1).strip() if law_match else '',
-        'value': value_match.group(1).replace(',', '') if value_match else '',
-        'payment_terms': payment_match.group(0).strip() if payment_match else '',
-        'confidence': 'Confirm extracted information before relying on it.',
-    }
+    hints = metadata_hints_from_text(text)
+    import re
+    payment_match = re.search(r'(?:payment|invoice)[^.\n]{0,100}', text or '', re.I)
+    hints['payment_terms'] = payment_match.group(0).strip() if payment_match else ''
+    return hints
+
+
+@login_required
+@require_http_methods(['POST'])
+def document_extract_preview_api(request):
+    """Dry-run metadata extraction for Upload & Review after file selection.
+
+    Does not create a Document or Contract — returns confirmation-ready field
+    hints with confidence labels for the client to populate the form.
+    """
+    from contracts.services.agreement_metadata_extract import (
+        extract_agreement_metadata,
+        extract_text_from_upload,
+    )
+
+    organization = get_user_organization(request.user)
+    if organization is None:
+        return _error_response(request, 'No organization found for this user.', 400)
+
+    uploaded_file = request.FILES.get('file')
+    if uploaded_file is None:
+        return _error_response(request, 'No file provided.', 400)
+
+    if uploaded_file.size > _MAX_UPLOAD_BYTES:
+        return _error_response(request, f'File exceeds maximum size of {_MAX_UPLOAD_BYTES // (1024*1024)} MB.', 413)
+
+    import os
+    filename = uploaded_file.name or ''
+    ext = os.path.splitext(filename)[1].lower()
+    if ext not in _ALLOWED_UPLOAD_EXTENSIONS:
+        return _error_response(
+            request,
+            f'File type {ext!r} is not supported. Allowed: {", ".join(sorted(_ALLOWED_UPLOAD_EXTENSIONS))}',
+            415,
+        )
+
+    text, source = extract_text_from_upload(uploaded_file, filename)
+    result = extract_agreement_metadata(text, filename=filename, extraction_source=source)
+    return JsonResponse({'ok': True, 'extraction': result.to_dict()})
 
 
 @login_required
@@ -315,6 +395,7 @@ def document_upload_api(request):
                     current_step='Uploaded',
                     progress_steps=_review_steps('Uploaded'),
                     review_objective=(request.POST.get('review_objective') or '').strip(),
+                    extracted_metadata=_seed_upload_confirmation_metadata(contract, document),
                     primary_next_action='Extract document text and prepare the review for human confirmation.',
                 )
             log_action(
@@ -443,6 +524,7 @@ def _run_uploaded_contract_review(*, request, organization, document, review_run
         )
 
     def update_run(status, step, *, message='', model='', metadata=None, playbook_matched=None, analysis_completed=False, citation_count=None):
+        review['current_step'] = step
         if review_run is None:
             return
         review_run.status = status
@@ -506,20 +588,15 @@ def _run_uploaded_contract_review(*, request, organization, document, review_run
 
     review_metadata = review_run.extracted_metadata or {} if review_run else {}
     review_governance = review_run.governance_sources or {} if review_run else {}
-    classification_confirmed = bool(
-        document.contract_id
-        and (document.contract.counterparty or '').strip()
-        and document.contract.contract_type != Contract.ContractType.OTHER
-        and (document.contract.governing_law or '').strip()
-        and document.contract.value is not None
-        and review_metadata.get('governing_law_confirmed')
-        and review_metadata.get('value_confirmed')
-        and review_metadata.get('payment_terms_confirmed')
-    )
+    pending_confirmations = _classification_pending_labels(document.contract, review_metadata) if document.contract_id else [
+        'Counterparty', 'Contract type', 'Governing law', 'Contract value',
+    ]
+    classification_confirmed = not pending_confirmations
     if not classification_confirmed:
         review.update({
             'status': 'needs-input',
             'message': 'Contract classification and required metadata must be confirmed before AI review can begin.',
+            'pending_confirmations': pending_confirmations,
         })
         if document.contract_id:
             document.contract.status = Contract.Status.NEEDS_INPUT
@@ -532,6 +609,7 @@ def _run_uploaded_contract_review(*, request, organization, document, review_run
         review.update({
             'status': 'playbook-required',
             'message': 'Select an approved contract playbook before AI review can begin.',
+            'pending_confirmations': ['Review playbook'],
         })
         if document.contract_id:
             document.contract.status = Contract.Status.NEEDS_INPUT
@@ -1009,7 +1087,7 @@ def contract_review_confirm_api(request, contract_id):
         and contract.value is not None
         and review_metadata.get('governing_law_confirmed')
         and review_metadata.get('value_confirmed')
-        and review_metadata.get('payment_terms_confirmed')
+        and _payment_terms_are_confirmed(review_metadata)
     )
     if not review_is_ready:
         return _error_response(request, 'Resolve the review blockers and complete AI analysis before starting human review.', 409)

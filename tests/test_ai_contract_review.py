@@ -111,3 +111,68 @@ class UploadedContractAIReviewTests(TestCase):
         self.assertContains(response, 'Latest upload review')
         self.assertContains(response, 'No potential issues were found in the clauses reviewed. Human review is still required.')
         self.assertNotContains(response, 'Extraction has not run')
+
+    def test_needs_input_review_exposes_classifying_current_step(self):
+        """Progress must stop on Classifying when metadata confirmation is still required."""
+        from contracts.api.documents_ai import _run_uploaded_contract_review
+        from contracts.models import DocumentOCRReview, DocumentReviewRun, OrgPolicy
+
+        OrgPolicy.objects.create(organization=self.organization, ai_features_enabled=True)
+        DocumentOCRReview.objects.create(
+            organization=self.organization,
+            document=self.document,
+            status=DocumentOCRReview.Status.VERIFIED,
+            extracted_text='This agreement is governed by Dutch law.',
+            confidence_score='99.00',
+            source='text-extraction',
+        )
+        review_run = DocumentReviewRun.objects.create(
+            organization=self.organization,
+            contract=self.contract,
+            document=self.document,
+            status=DocumentReviewRun.Status.UPLOADED,
+            current_step='Uploaded',
+        )
+        self.client.force_login(self.user)
+        request = self.client.request().wsgi_request
+        request.user = self.user
+
+        review = _run_uploaded_contract_review(
+            request=request,
+            organization=self.organization,
+            document=self.document,
+            review_run=review_run,
+        )
+
+        self.assertEqual(review['status'], 'needs-input')
+        self.assertEqual(review['current_step'], 'Classifying')
+        self.assertIn('Counterparty', review['pending_confirmations'])
+        review_run.refresh_from_db()
+        self.assertEqual(review_run.current_step, 'Classifying')
+        self.assertEqual(review_run.status, DocumentReviewRun.Status.CLASSIFICATION_REQUIRED)
+
+    def test_upload_confirmation_metadata_treats_form_values_as_confirmed(self):
+        from contracts.api.documents_ai import _classification_pending_labels, _seed_upload_confirmation_metadata
+        from contracts.models import DocumentOCRReview
+
+        self.contract.counterparty = 'Acme Corp'
+        self.contract.contract_type = Contract.ContractType.MSA
+        self.contract.governing_law = 'Netherlands'
+        self.contract.value = Decimal('12000.00')
+        self.contract.save()
+        DocumentOCRReview.objects.create(
+            organization=self.organization,
+            document=self.document,
+            status=DocumentOCRReview.Status.VERIFIED,
+            extracted_text='Payment is due within 30 days of invoice. This agreement is governed by Dutch law.',
+            confidence_score='99.00',
+            source='text-extraction',
+        )
+
+        metadata = _seed_upload_confirmation_metadata(self.contract, self.document)
+
+        self.assertTrue(metadata.get('governing_law_confirmed'))
+        self.assertTrue(metadata.get('value_confirmed'))
+        self.assertTrue(metadata.get('payment_terms_confirmed'))
+        self.assertTrue((metadata.get('payment_terms') or '').strip())
+        self.assertEqual(_classification_pending_labels(self.contract, metadata), [])

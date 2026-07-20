@@ -256,6 +256,8 @@ class MSAWorkflowBuilderIntegrationTests(TestCase):
             'Risk monitoring',
             'Approval route',
             'Audit details',
+            'Review Finance approval route',
+            'Actions',
             'Send to Legal Review',
             'Send to Finance',
             'Download MSA summary',
@@ -266,8 +268,25 @@ class MSAWorkflowBuilderIntegrationTests(TestCase):
             'Msa Template Applied',
             'Payrollminds B.V.',
             'nina.client@northwind.example',
+            'Commercial review',
+            'Active stage owner',
+            'Exception',
         ):
             self.assertContains(workspace, text)
+        self.assertContains(workspace, 'MSA ·')
+        self.assertNotContains(workspace, 'Enterprise Services MSA · Netherlands · B2B</p>')
+        msa = workspace.context['msa_workspace']
+        self.assertEqual(msa['timeline'], [
+            'Intake', 'Drafting', 'Commercial review', 'Legal review',
+            'Finance approval', 'Signature', 'Active',
+        ])
+        self.assertIn(msa['primary_cta'], (
+            'Review Finance approval route',
+            'Review privacy scope and linked DPA need',
+            'Review MSA risk signals',
+            'Review generated MSA draft',
+        ))
+        self.assertTrue(any(section.get('state') for section in msa['document_sections']))
 
     def test_invalid_client_contact_email_returns_clear_error(self):
         payload = self._valid_payload()
@@ -287,6 +306,7 @@ class MSAWorkflowBuilderIntegrationTests(TestCase):
         workspace = self.client_.get(reverse('contracts:workflow_detail', kwargs={'pk': workflow.pk}))
         self.assertContains(workspace, 'Payment-term deviation')
         self.assertContains(workspace, 'Send to Finance')
+        self.assertContains(workspace, 'Review Finance approval route')
 
     def test_command_center_row_links_back_to_generated_workspace(self):
         self.client_.post(reverse('contracts:msa_workflow_builder'), self._valid_payload())

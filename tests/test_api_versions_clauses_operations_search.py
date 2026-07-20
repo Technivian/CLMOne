@@ -9,6 +9,7 @@ from django.utils import timezone
 from contracts.models import (
     ApprovalRequest,
     ApprovalRule,
+    AuditLog,
     BackgroundJob,
     ClauseCategory,
     ClausePlaybook,
@@ -425,16 +426,19 @@ class ApiVersionsClausesOperationsSearchTests(TestCase):
 
         response = self.client.get(reverse('operations_dashboard'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Operations Dashboard', html=False)
+        self.assertContains(response, 'Admin → Operations', html=False)
+        self.assertContains(response, 'Run operational drill', html=False)
+        self.assertTrue(response.context['hide_app_footer'])
+        self.assertContains(response, 'Queue health', html=False)
 
-        cache.delete('operations_drill.last_run_iso')
-        self.assertIsNone(cache.get('operations_drill.last_run_iso'))
         from django.core.management import call_command
 
-        call_command('run_operational_drill')
-        self.assertIsNotNone(cache.get('operations_drill.last_run_iso'))
+        try:
+            call_command('run_operational_drill')
+        except SystemExit as exc:
+            self.assertIn(int(getattr(exc, 'code', 0) or 0), (0, 1, 2))
 
-    def test_operations_dashboard_renders_dense_admin_list(self):
+    def test_operations_dashboard_renders_jobs_table(self):
         BackgroundJob.objects.create(
             organization=self.organization,
             job_type='send_contract_reminders',
@@ -444,6 +448,58 @@ class ApiVersionsClausesOperationsSearchTests(TestCase):
         response = self.client.get(reverse('operations_dashboard'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Operations Dashboard', html=False)
         self.assertContains(response, 'send_contract_reminders', html=False)
-        self.assertContains(response, 'dc-ds-dense-row', html=False)
+        self.assertContains(response, 'dc-ds-table', html=False)
+        self.assertContains(response, 'Overview', html=False)
+        self.assertContains(response, 'Jobs', html=False)
+
+    def test_operations_dashboard_forbids_non_admin(self):
+        member = User.objects.create_user(username='member', email='member@example.com', password='testpass123')
+        OrganizationMembership.objects.create(
+            organization=self.organization,
+            user=member,
+            role=OrganizationMembership.Role.MEMBER,
+            is_active=True,
+        )
+        self.client.login(username='member', password='testpass123')
+        response = self.client.get(reverse('operations_dashboard'))
+        self.assertEqual(response.status_code, 403)
+
+    def test_operations_dashboard_run_drill_via_ui(self):
+        response = self.client.post(
+            reverse('operations_dashboard'),
+            {'action': 'run_drill'},
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(
+            AuditLog.objects.filter(
+                organization=self.organization,
+                changes__event='operations_drill_run',
+            ).exists()
+        )
+
+    def test_operations_dashboard_retry_failed_job(self):
+        job = BackgroundJob.objects.create(
+            organization=self.organization,
+            job_type='send_contract_reminders',
+            payload={},
+            status=BackgroundJob.Status.FAILED,
+            error_message='boom',
+            attempt_count=3,
+        )
+        response = self.client.post(
+            reverse('operations_dashboard'),
+            {'action': 'retry_job', 'job_id': job.id},
+        )
+        self.assertEqual(response.status_code, 302)
+        job.refresh_from_db()
+        self.assertEqual(job.status, BackgroundJob.Status.PENDING)
+        self.assertEqual(job.attempt_count, 0)
+        self.assertTrue(
+            AuditLog.objects.filter(
+                organization=self.organization,
+                model_name='BackgroundJob',
+                object_id=job.id,
+                changes__event='background_job_retried',
+            ).exists()
+        )

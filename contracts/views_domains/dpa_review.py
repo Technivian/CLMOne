@@ -13,7 +13,7 @@ DPAApprovalHistoryEntry.
 import json
 
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Q
+from django.db.models import Exists, OuterRef, Q
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -64,10 +64,88 @@ DPA_APPROVAL_TRANSITIONS = {
 }
 
 
+_RESOLVED_RISK_STATUSES = frozenset({
+    DPARiskItem.Status.RESOLVED,
+    DPARiskItem.Status.ACCEPTED_RISK,
+    DPARiskItem.Status.FALSE_POSITIVE,
+})
+
+_APPROVAL_GATE_STATUSES = frozenset({
+    DPAReviewPack.ApprovalStatus.UNDER_REVIEW,
+    DPAReviewPack.ApprovalStatus.ESCALATED,
+})
+
+_REVIEW_STATUS_TONES = {
+    DPAReviewPack.ApprovalStatus.DRAFT: 'neutral',
+    DPAReviewPack.ApprovalStatus.UNDER_REVIEW: 'progress',
+    DPAReviewPack.ApprovalStatus.ESCALATED: 'danger',
+    DPAReviewPack.ApprovalStatus.APPROVED: 'success',
+    DPAReviewPack.ApprovalStatus.REJECTED: 'danger',
+}
+
+
+def _unresolved_risks(pack):
+    return [risk for risk in pack.risk_items.all() if risk.status not in _RESOLVED_RISK_STATUSES]
+
+
+def _next_action_for_pack(pack, unresolved_risks, critical_risk_count):
+    """Surface the highest-priority unresolved work for the review queue."""
+    if pack.role_qualification == DPAReviewPack.RoleQualification.AMBIGUOUS:
+        return 'Resolve role qualification'
+    if critical_risk_count:
+        return 'Address critical risks'
+    if unresolved_risks:
+        return 'Resolve open risks'
+    if pack.approval_status == DPAReviewPack.ApprovalStatus.DRAFT:
+        return 'Start review'
+    if pack.approval_status == DPAReviewPack.ApprovalStatus.UNDER_REVIEW:
+        return 'Complete approval decision'
+    if pack.approval_status == DPAReviewPack.ApprovalStatus.ESCALATED:
+        return 'Resolve escalation'
+    if pack.approval_status == DPAReviewPack.ApprovalStatus.REJECTED:
+        return 'Revise after rejection'
+    return 'View review pack'
+
+
+def _review_status_label(pack):
+    """Use approval wording only when the pack is sitting at an approval gate."""
+    if pack.approval_status == DPAReviewPack.ApprovalStatus.UNDER_REVIEW:
+        return 'Awaiting approval'
+    if pack.approval_status == DPAReviewPack.ApprovalStatus.ESCALATED:
+        return 'Escalated for approval'
+    return pack.get_approval_status_display()
+
+
+# Short queue labels — long model displays wrap poorly in compact table cells.
+_ROLE_LIST_LABELS = {
+    DPAReviewPack.RoleQualification.AMBIGUOUS: 'Role unclear',
+    DPAReviewPack.RoleQualification.CONTROLLER_PROCESSOR: 'Controller / Processor',
+    DPAReviewPack.RoleQualification.JOINT_CONTROLLER: 'Joint controller',
+    DPAReviewPack.RoleQualification.INDEPENDENT_CONTROLLER: 'Independent controller',
+}
+
+_REVIEW_STATUS_LIST_LABELS = {
+    DPAReviewPack.ApprovalStatus.UNDER_REVIEW: 'Awaiting approval',
+    DPAReviewPack.ApprovalStatus.ESCALATED: 'Escalated',
+}
+
+
+def _role_list_label(pack):
+    return _ROLE_LIST_LABELS.get(
+        pack.role_qualification,
+        pack.get_role_qualification_display(),
+    )
+
+
+def _review_status_list_label(pack):
+    return _REVIEW_STATUS_LIST_LABELS.get(
+        pack.approval_status,
+        _review_status_label(pack),
+    )
+
+
 class DPAReviewPackListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
-    """DPA dashboard: role qualification, processing scope, transfer/
-    subprocessor risk, security, breach notification, audit, deletion,
-    liability conflicts, and approval status — one row per DPA review pack."""
+    """Operational DPA review queue: unresolved work, filters, and next actions."""
     model = DPAReviewPack
     template_name = 'contracts/dpa_review_pack_list.html'
     context_object_name = 'review_packs'
@@ -76,59 +154,127 @@ class DPAReviewPackListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListV
         org = get_user_organization(self.request.user)
         if not org:
             return DPAReviewPack.objects.none()
-        return (
+        qs = (
             DPAReviewPack.objects.filter(organization=org)
             .select_related('contract', 'counterparty', 'reviewer')
             .prefetch_related('risk_items')
             .order_by('-updated_at')
         )
+        params = self.request.GET
+        search = (params.get('q') or '').strip()
+        if search:
+            qs = qs.filter(
+                Q(contract__title__icontains=search)
+                | Q(counterparty__name__icontains=search)
+                | Q(reviewer__first_name__icontains=search)
+                | Q(reviewer__last_name__icontains=search)
+                | Q(reviewer__username__icontains=search)
+            )
+        status = (params.get('status') or '').strip()
+        if status in {choice.value for choice in DPAReviewPack.ApprovalStatus}:
+            qs = qs.filter(approval_status=status)
+        role = (params.get('role') or '').strip()
+        if role in {choice.value for choice in DPAReviewPack.RoleQualification}:
+            qs = qs.filter(role_qualification=role)
+        owner = (params.get('owner') or '').strip()
+        if owner == 'unassigned':
+            qs = qs.filter(reviewer__isnull=True)
+        elif owner.isdigit():
+            qs = qs.filter(reviewer_id=int(owner))
+        severity = (params.get('severity') or '').strip()
+        if severity in {choice.value for choice in DPARiskItem.Severity}:
+            open_severity = DPARiskItem.objects.filter(
+                review_pack_id=OuterRef('pk'),
+                severity=severity,
+            ).exclude(status__in=_RESOLVED_RISK_STATUSES)
+            qs = qs.filter(Exists(open_severity))
+        return qs
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        packs = ctx['review_packs']
+        packs = list(ctx['review_packs'])
+        org = get_user_organization(self.request.user)
+        # Metrics reflect the full org queue so the strip stays an operational
+        # pulse even when the table is filtered.
+        all_packs = list(
+            DPAReviewPack.objects.filter(organization=org)
+            .prefetch_related('risk_items')
+            .select_related('reviewer')
+        ) if org else []
+
         ctx['playbook_url'] = reverse('contracts:dpa_playbook_list')
-        ctx['total_packs'] = len(packs)
-        ctx['pending_approval_count'] = sum(1 for p in packs if p.approval_status in (DPAReviewPack.ApprovalStatus.DRAFT, DPAReviewPack.ApprovalStatus.UNDER_REVIEW))
-        ctx['escalated_count'] = sum(1 for p in packs if p.approval_status == DPAReviewPack.ApprovalStatus.ESCALATED)
+        ctx['start_dpa_url'] = reverse('contracts:dpa_workflow_builder')
+        ctx['upload_dpa_url'] = reverse('contracts:upload_signed_contract')
+        ctx['can_manage_playbook'] = bool(org and can_manage_organization(self.request.user, org))
+        ctx['total_packs'] = len(all_packs)
+        ctx['needs_decision_count'] = sum(
+            1 for p in all_packs
+            if p.approval_status in (
+                DPAReviewPack.ApprovalStatus.DRAFT,
+                DPAReviewPack.ApprovalStatus.UNDER_REVIEW,
+            )
+        )
+        # Keep the legacy key for existing callers/tests.
+        ctx['pending_approval_count'] = ctx['needs_decision_count']
+        ctx['escalated_count'] = sum(
+            1 for p in all_packs if p.approval_status == DPAReviewPack.ApprovalStatus.ESCALATED
+        )
+        open_risks = [
+            risk for pack in all_packs for risk in _unresolved_risks(pack)
+        ]
+        ctx['open_risk_count'] = len(open_risks)
         ctx['open_critical_risk_count'] = sum(
-            1 for p in packs for r in p.risk_items.all()
-            if r.status == DPARiskItem.Status.OPEN and r.severity == DPARiskItem.Severity.CRITICAL
+            1 for risk in open_risks if risk.severity == DPARiskItem.Severity.CRITICAL
         )
 
-        # The list is a compact scan surface, so it needs presentation-ready
-        # counts and semantic tones without teaching the template about model
-        # enums. The underlying queryset remains available as `review_packs`
-        # for compatibility with existing callers and tests.
-        approval_tones = {
-            DPAReviewPack.ApprovalStatus.DRAFT: 'neutral',
-            DPAReviewPack.ApprovalStatus.UNDER_REVIEW: 'progress',
-            DPAReviewPack.ApprovalStatus.ESCALATED: 'danger',
-            DPAReviewPack.ApprovalStatus.APPROVED: 'success',
-            DPAReviewPack.ApprovalStatus.REJECTED: 'danger',
-        }
-        resolved_risk_statuses = {
-            DPARiskItem.Status.RESOLVED,
-            DPARiskItem.Status.ACCEPTED_RISK,
-            DPARiskItem.Status.FALSE_POSITIVE,
-        }
+        params = self.request.GET
+        ctx['search_query'] = (params.get('q') or '').strip()
+        ctx['selected_status'] = (params.get('status') or '').strip()
+        ctx['selected_role'] = (params.get('role') or '').strip()
+        ctx['selected_severity'] = (params.get('severity') or '').strip()
+        ctx['selected_owner'] = (params.get('owner') or '').strip()
+        ctx['review_status_choices'] = DPAReviewPack.ApprovalStatus.choices
+        ctx['processing_role_choices'] = DPAReviewPack.RoleQualification.choices
+        ctx['risk_severity_choices'] = DPARiskItem.Severity.choices
+        owner_options = []
+        seen_owners = set()
+        for pack in all_packs:
+            if pack.reviewer_id and pack.reviewer_id not in seen_owners:
+                seen_owners.add(pack.reviewer_id)
+                owner_options.append(pack.reviewer)
+        owner_options.sort(key=lambda u: (u.get_full_name() or u.username).lower())
+        ctx['owner_choices'] = owner_options
+
         rows = []
         for pack in packs:
-            unresolved_risks = [
-                risk for risk in pack.risk_items.all()
-                if risk.status not in resolved_risk_statuses
-            ]
+            unresolved_risks = _unresolved_risks(pack)
             critical_risk_count = sum(
                 1 for risk in unresolved_risks
                 if risk.severity == DPARiskItem.Severity.CRITICAL
             )
+            role_is_ambiguous = (
+                pack.role_qualification == DPAReviewPack.RoleQualification.AMBIGUOUS
+            )
+            at_approval_gate = pack.approval_status in _APPROVAL_GATE_STATUSES
             rows.append({
                 'pack': pack,
+                'detail_url': reverse('contracts:dpa_review_pack_detail', kwargs={'pk': pack.pk}),
+                'memo_url': reverse('contracts:dpa_review_pack_memo', kwargs={'pk': pack.pk}),
+                'contract_url': reverse('contracts:contract_detail', kwargs={'pk': pack.contract_id}),
                 'unresolved_risk_count': len(unresolved_risks),
                 'critical_risk_count': critical_risk_count,
-                # An unresolved risk is an active intervention, regardless of
-                # severity. Amber is reserved for incomplete/unmeasured setup.
                 'risk_tone': 'danger' if unresolved_risks else 'success',
-                'approval_tone': approval_tones.get(pack.approval_status, 'neutral'),
+                'approval_tone': _REVIEW_STATUS_TONES.get(pack.approval_status, 'neutral'),
+                'review_status_label': _review_status_list_label(pack),
+                'at_approval_gate': at_approval_gate,
+                'role_label': _role_list_label(pack),
+                'role_tone': 'attention' if role_is_ambiguous else 'neutral',
+                'role_is_ambiguous': role_is_ambiguous,
+                'owner_label': (
+                    (pack.reviewer.get_full_name() or pack.reviewer.username)
+                    if pack.reviewer_id else 'Unassigned'
+                ),
+                'next_action': _next_action_for_pack(pack, unresolved_risks, critical_risk_count),
             })
         ctx['review_pack_rows'] = rows
         return ctx

@@ -187,6 +187,19 @@ trust_root_ca_openssl() {
 
 start_server() {
   mkdir -p "$LOG_DIR"
+  # Local HTTPS must always use development settings so templates re-read on
+  # request and Python modules can hot-reload. The checkout .env may set
+  # DJANGO_ENV=production for deploy parity; that must not freeze the page.
+  export DATABASE_URL="${DATABASE_URL:-}"
+  export DJANGO_SETTINGS_MODULE="${DJANGO_SETTINGS_MODULE:-config.settings_development}"
+  export DJANGO_DEBUG="${DJANGO_DEBUG:-true}"
+
+  # --reload: pick up Python/view/templatetag edits without a manual restart.
+  # --reload-include '*.py': HTML/CSS templates already re-read when DEBUG=true;
+  #   avoiding process restarts on template saves keeps django-browser-reload's
+  #   SSE connection from blocking every save.
+  # --timeout-graceful-shutdown 1: force-kill on reload even if an SSE client
+  #   (django-browser-reload) is still connected.
   local cmd=(
     "$ROOT_DIR/.venv/bin/python" -m uvicorn config.asgi:application
     --host "$HOST"
@@ -194,11 +207,20 @@ start_server() {
     --ssl-keyfile "$LEAF_KEY"
     --ssl-certfile "$LEAF_CERT"
     --lifespan off
+    --reload
+    --reload-include "*.py"
+    --reload-dir "$ROOT_DIR/contracts"
+    --reload-dir "$ROOT_DIR/config"
+    --reload-dir "$ROOT_DIR/theme"
+    --timeout-graceful-shutdown 1
   )
 
   if [[ "$MODE" == "background" ]]; then
     : > "$LOG_FILE"
-    nohup "${cmd[@]}" >> "$LOG_FILE" 2>&1 &
+    nohup env DATABASE_URL="$DATABASE_URL" \
+      DJANGO_SETTINGS_MODULE="$DJANGO_SETTINGS_MODULE" \
+      DJANGO_DEBUG="$DJANGO_DEBUG" \
+      "${cmd[@]}" >> "$LOG_FILE" 2>&1 &
     local pid=$!
     echo "$pid" > "$PID_FILE"
 
@@ -222,12 +244,15 @@ start_server() {
       return 1
     fi
 
-    echo "HTTPS dev server started in background (pid $pid)."
+    echo "HTTPS dev server started in background (pid $pid) with auto-reload."
     echo "URL: https://$HOST:$PORT/"
     echo "Log: $LOG_FILE"
   else
-  echo "Starting HTTPS dev server on https://$HOST:$PORT/"
-  exec "${cmd[@]}"
+  echo "Starting HTTPS dev server on https://$HOST:$PORT/ (auto-reload enabled)"
+  exec env DATABASE_URL="$DATABASE_URL" \
+    DJANGO_SETTINGS_MODULE="$DJANGO_SETTINGS_MODULE" \
+    DJANGO_DEBUG="$DJANGO_DEBUG" \
+    "${cmd[@]}"
   fi
 }
 

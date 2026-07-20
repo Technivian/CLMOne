@@ -76,9 +76,6 @@
                 <a href="{% url 'contracts:organization_team' %}" class="nav-icon-link" title="Team">
                     {% include "design_system/icon.html" with name="users" class_name="nav-icon-svg" %}
                 </a>
-                <a href="{% url 'settings_hub' %}" class="nav-icon-link" title="Settings">
-                    {% include "design_system/icon.html" with name="settings" class_name="nav-icon-svg" %}
-                </a>
                 <a href="{% url 'contracts:notification_list' %}" class="nav-icon-link" title="Notifications">
                     {% include "design_system/icon.html" with name="bell" class_name="nav-icon-svg" %}
                     {% if UNREAD_NOTIFICATIONS %}
@@ -90,7 +87,7 @@
                     <span class="topbar-new-label">New Contract</span>
                 </a>
                 <div class="nav-separator"></div>
-                <div class="profile-box" id="profileBox">
+                    <div class="profile-box" id="profileBox">
                     <button type="button" class="profile-trigger" id="profileTrigger" aria-haspopup="true" aria-expanded="false">
                         <div class="avatar-circle">
                             {{ user.first_name|default:user.username|slice:":1"|upper }}
@@ -98,14 +95,7 @@
                         <span class="username-text">{{ user.first_name|default:user.username }}</span>
                         {% include "design_system/icon.html" with name="chevron-down" class_name="profile-caret" %}
                     </button>
-                    <div class="profile-menu" id="profileMenu" role="menu">
-                        <a href="{% url 'profile' %}" class="profile-menu-item" role="menuitem">Profile</a>
-                        <div class="profile-menu-sep"></div>
-                        <form method="post" action="{% url 'logout' %}" class="logout-form">
-                            {% csrf_token %}
-                            <button type="submit" class="profile-menu-item profile-menu-danger" role="menuitem">Sign out</button>
-                        </form>
-                    </div>
+                    {% include "components/_profile_menu.html" %}
                 </div>
             {% else %}
                 <a href="{% url 'login' %}" class="auth-link">Sign in</a>
@@ -198,6 +188,7 @@
                         {% endif %}
                         {% endblock %}
                         <h1 class="dc-ds-shell__page-title topbar-page-title">{% block authenticated_page_title %}{% endblock %}</h1>
+                        {% block authenticated_page_actions %}{% endblock %}
                     </div>
                     <p class="dc-ds-shell__page-subtitle topbar-page-subtitle">{% block authenticated_page_subtitle %}{% endblock %}</p>
                 </div>
@@ -234,29 +225,19 @@
                         <span class="navbar-badge">{{ UNREAD_NOTIFICATIONS }}</span>
                         {% endif %}
                     </a>
-                    <a href="{% url 'settings_hub' %}" class="nav-icon-link" title="Settings">
-                        {% include "design_system/icon.html" with name="settings" class_name="nav-icon-svg" %}
-                    </a>
                     <a href="{% url 'contracts:contract_template_picker' %}" class="dc-ds-button dc-ds-button--primary topbar-new-contract" aria-label="New Contract" title="New Contract">
                         {% include "design_system/icon.html" with name="plus" %}
                         <span class="topbar-new-label">New Contract</span>
                     </a>
                     <div class="profile-box" id="profileBox">
-                        <button type="button" class="profile-trigger" id="profileTrigger" aria-haspopup="true" aria-expanded="false">
+                        <button type="button" class="profile-trigger" id="profileTrigger" aria-haspopup="true" aria-expanded="false" aria-controls="profileMenu">
                             <div class="avatar-circle">
                                 {{ user.first_name|default:user.username|slice:":1"|upper }}
                             </div>
                             <span class="username-text">{{ user.first_name|default:user.username }}</span>
                             {% include "design_system/icon.html" with name="chevron-down" class_name="profile-caret" %}
                         </button>
-                        <div class="profile-menu" id="profileMenu" role="menu">
-                            <a href="{% url 'profile' %}" class="profile-menu-item" role="menuitem">Profile</a>
-                            <div class="profile-menu-sep"></div>
-                            <form method="post" action="{% url 'logout' %}" class="logout-form">
-                                {% csrf_token %}
-                                <button type="submit" class="profile-menu-item profile-menu-danger" role="menuitem">Sign out</button>
-                            </form>
-                        </div>
+                        {% include "components/_profile_menu.html" %}
                     </div>
                 </div>
             </div>

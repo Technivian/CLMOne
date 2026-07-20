@@ -158,8 +158,8 @@ test('critical redesigned workflow path works end-to-end', async ({ page }) => {
   await expect(page.getByRole('link', { name: contractTitle })).toBeVisible();
 
   await page.goto('/contracts/workflows/');
-  await expect(page.locator('.workspace-main.hero-shell').first()).toBeVisible();
-  await expect(page.getByText(/Workflow pipeline/).first()).toBeVisible();
+  await expect(page.locator('#workflow-ops-root').first()).toBeVisible();
+  await expect(page.getByText(/Active workflows/).first()).toBeVisible();
   const workflowCreateResponse = await page.goto('/contracts/workflows/create/');
   expect(workflowCreateResponse).not.toBeNull();
   expect(workflowCreateResponse.status()).toBeLessThan(400);
@@ -174,8 +174,8 @@ test('critical redesigned workflow path works end-to-end', async ({ page }) => {
   await expect(page.getByText(/Workflow Steps & Ownership/).first()).toBeVisible();
 
   await page.goto('/contracts/workflows/templates/');
-  await expect(page.locator('.workspace-main.hero-shell').first()).toBeVisible();
-  await expect(page.getByText(/Workflow Templates/).first()).toBeVisible();
+  await expect(page.locator('.workflow-templates-page').first()).toBeVisible();
+  await expect(page.getByText(/Templates/).first()).toBeVisible();
   const templateCreateResponse = await page.goto('/contracts/workflows/templates/create/');
   expect(templateCreateResponse).not.toBeNull();
   expect(templateCreateResponse.status()).toBeLessThan(400);

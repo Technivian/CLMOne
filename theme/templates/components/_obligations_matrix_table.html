@@ -4,16 +4,17 @@
   <thead>
     <tr>
       <th>Obligation</th>
-      <th>Source</th>
-      <th>Responsible Party</th>
-      <th class="wq-col-num">Due Date</th>
-      <th>Compliance Status</th>
-      <th class="wq-col-action">Actions</th>
+      <th>Source contract</th>
+      <th>Owner</th>
+      <th class="wq-col-num">Due date</th>
+      <th>Status</th>
+      <th>Next action</th>
+      <th class="wq-col-action"><span class="sr-only">Actions</span></th>
     </tr>
   </thead>
   <tbody>
     {% for obligation in obligations %}
-    <tr>
+    <tr class="obligations-row" data-href="{% url 'contracts:deadline_update' obligation.pk %}" tabindex="0" role="link" aria-label="Open obligation {{ obligation.title|truncatechars:50 }}">
       <td>
         <a href="{% url 'contracts:deadline_update' obligation.pk %}" class="wq-item-link">{{ obligation.title|truncatechars:60 }}</a>
         <div class="wq-item-meta">{{ obligation.get_deadline_type_display }}</div>
@@ -28,11 +29,15 @@
         {% endif %}
       </td>
       <td>{% include 'components/_assignee_chip.html' with user=obligation.assigned_to %}</td>
-      <td class="wq-col-num{% if obligation.is_overdue %} wq-due-overdue{% endif %}">{{ obligation.due_date|due_countdown }}</td>
-      <td><span class=" dc-ds-badge--{{ obligation|obligation_compliance_badge_class|legacy_badge_tone }}">{{ obligation|obligation_compliance_label }}</span></td>
+      <td class="wq-col-num{% if obligation.is_overdue %} wq-due-overdue{% endif %}">
+        <div class="obligations-due-absolute">{{ obligation.due_date|date:"j M Y" }}</div>
+        <div class="wq-item-meta">{{ obligation.due_date|due_relative_label }}</div>
+      </td>
+      <td><span class="dc-ds-badge dc-ds-badge--{{ obligation|obligation_compliance_badge_class|legacy_badge_tone }}">{{ obligation|obligation_compliance_label }}</span></td>
+      <td><span class="obligations-next-action">{{ obligation.next_action }}</span></td>
       <td class="wq-col-action">
         <details class="wq-kebab obligation-actions-menu">
-          <summary aria-label="Actions for {{ obligation.title|truncatechars:50 }}" class="wq-kebab-trigger">
+          <summary aria-label="More actions for {{ obligation.title|truncatechars:50 }}" class="wq-kebab-trigger">
             <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.7"></circle><circle cx="12" cy="12" r="1.7"></circle><circle cx="12" cy="19" r="1.7"></circle></svg>
           </summary>
           <div class="wq-kebab-menu">
@@ -54,7 +59,7 @@
     </tr>
     {% empty %}
     <tr>
-      <td colspan="6">
+      <td colspan="7">
         {% url 'contracts:deadline_create' as create_obligation_url %}
         {% include "design_system/empty_state.html" with icon="calendar" title="No obligations are being tracked" reason="No renewal, notice, delivery, or compliance commitment has been added yet." how="Obligations appear here when they are created directly or extracted from governed contracts." action_url=create_obligation_url action_label="Add first obligation" class_name="dc-ds-empty--compact" %}
       </td>

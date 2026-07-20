@@ -332,6 +332,40 @@ _LIFECYCLE_PATH = [
 ]
 
 
+# Compact contract-type labels for dense tables. Full display name stays on
+# title/tooltip; these keep Type from wrapping into multi-line cells.
+_CONTRACT_TYPE_SHORT = {
+    'NDA': 'NDA',
+    'NON_COMPETE': 'Non-Compete',
+    'MSA': 'MSA',
+    'SOW': 'SOW',
+    'SUBCONTRACTOR_SOW': 'Subcontractor SOW',
+    'CONSULTING': 'Consulting',
+    'EMPLOYMENT': 'Employment',
+    'LEASE': 'Lease',
+    'LICENSE': 'License',
+    'SAAS': 'SaaS',
+    'TERMS_OF_SERVICE': 'Terms of Service',
+    'VENDOR': 'Vendor Agreement',
+    'PURCHASE_ORDER': 'Purchase Order',
+    'PARTNERSHIP': 'Partnership',
+    'RESELLER': 'Reseller',
+    'SETTLEMENT': 'Settlement',
+    'AMENDMENT': 'Amendment',
+    'DPA': 'DPA',
+    'BAA': 'BAA',
+    'OTHER': 'Other',
+}
+
+
+def contract_type_short_label(contract_type, full_display=''):
+    """Return a compact type label for table cells; prefer known shorts."""
+    key = (contract_type or '').strip().upper()
+    if key in _CONTRACT_TYPE_SHORT:
+        return _CONTRACT_TYPE_SHORT[key]
+    return (full_display or contract_type or 'Other').strip() or 'Other'
+
+
 @register.filter
 def money(value, currency='USD'):
     """125000 -> '$125,000.00'. Unparsable/empty values render as an em dash."""
@@ -539,36 +573,54 @@ def contract_risk_badge_class(risk_level):
 
 
 _OBLIGATION_COMPLIANCE_LABELS = {
-    'MET': 'Met',
+    'COMPLETED': 'Completed',
     'OVERDUE': 'Overdue',
-    'BREACH_RISK': 'Breach Risk',
-    'PENDING': 'Pending Action',
+    'AT_RISK': 'At risk',
+    'DUE_SOON': 'Due soon',
+    'PENDING': 'Pending',
+    'WAIVED': 'Waived',
+    # Legacy aliases kept so older call sites/tests resolve during migration.
+    'MET': 'Completed',
+    'BREACH_RISK': 'At risk',
 }
 
 _OBLIGATION_COMPLIANCE_BADGES = {
-    'MET': 'badge-green',
+    'COMPLETED': 'badge-green',
     'OVERDUE': 'badge-red',
-    'BREACH_RISK': 'badge-red',
+    'AT_RISK': 'badge-red',
+    'DUE_SOON': 'badge-yellow',
     'PENDING': 'badge-blue',
+    'WAIVED': 'badge-gray',
+    'MET': 'badge-green',
+    'BREACH_RISK': 'badge-red',
 }
+
+_OBLIGATION_DUE_SOON_DAYS = 30
 
 
 @register.filter
 def obligation_compliance_status(deadline):
-    """Deadline -> derived compliance status key.
+    """Deadline -> derived operational status key.
 
     There is no stored status field for this — it's computed from
     is_completed/is_overdue/days_remaining/reminder_days so the Obligations
     workspace always reflects the deadline's current state, not a value that
     can go stale.
     """
-    if not deadline or deadline.is_completed:
-        return 'MET'
+    if not deadline:
+        return 'PENDING'
+    if deadline.is_completed:
+        return 'COMPLETED'
     if deadline.is_overdue:
         return 'OVERDUE'
     days_left = deadline.days_remaining
-    if days_left is not None and days_left <= deadline.reminder_days:
-        return 'BREACH_RISK'
+    if days_left is None:
+        return 'PENDING'
+    reminder_days = deadline.reminder_days if deadline.reminder_days is not None else 7
+    if days_left <= reminder_days:
+        return 'AT_RISK'
+    if days_left <= _OBLIGATION_DUE_SOON_DAYS:
+        return 'DUE_SOON'
     return 'PENDING'
 
 
@@ -583,6 +635,25 @@ def obligation_compliance_badge_class(deadline):
     """Deadline -> canonical badge class for its derived compliance status."""
     return _OBLIGATION_COMPLIANCE_BADGES.get(obligation_compliance_status(deadline), 'badge-gray')
 
+
+@register.filter
+def due_relative_label(value):
+    """Date -> relative urgency label paired with an absolute date in the UI.
+
+    Examples: 'Overdue by 2 days', 'Due today', 'Due in 11 days'.
+    """
+    if not value:
+        return '—'
+    from datetime import date as date_cls
+    today = date_cls.today()
+    d = value.date() if hasattr(value, 'date') else value
+    delta = (d - today).days
+    if delta < 0:
+        days = abs(delta)
+        return f'Overdue by {days} day{"s" if days != 1 else ""}'
+    if delta == 0:
+        return 'Due today'
+    return f'Due in {delta} day{"s" if delta != 1 else ""}'
 
 @register.filter
 def dpa_severity_badge_class(severity):

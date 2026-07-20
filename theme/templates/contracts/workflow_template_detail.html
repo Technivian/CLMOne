@@ -1,5 +1,7 @@
 {% extends "base.html" %}
-{% block title %}{{ workflow_template.name }} - Workflow Template{% endblock %}
+{% block title %}{{ workflow_template.name }} – Workflow Designer{% endblock %}
+{% block authenticated_page_title %}Workflow Designer{% endblock %}
+{% block authenticated_page_subtitle %}Configure reusable workflow definitions, conditions, stages, versioning, testing, and publishing.{% endblock %}
 {% block content %}
 <style nonce="{{ csp_nonce }}">
 .version-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--card-border); transition: background 0.15s; }
@@ -18,6 +20,7 @@
     <div class="workspace-main hero-shell mb-6">
         <div class="workspace-main-head">
             <div>
+                <p class="dc-ds-eyebrow" style="margin:0 0 var(--space-6); color: var(--ink-500); font: var(--text-meta); font-weight: 700; letter-spacing: .04em; text-transform: uppercase;">Workflow Designer</p>
                 <h1 class="workspace-title">
                     {{ workflow_template.name }}
                     <span class="dc-ds-badge dc-ds-badge--sm align-middle ml-2 dc-ds-badge--neutral">v{{ workflow_template.version }}</span>

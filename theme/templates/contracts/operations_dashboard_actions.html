@@ -1,1 +1,9 @@
-<a href="{% url 'settings_hub' %}" class="dc-ds-button dc-ds-button--ghost">Back to settings</a>
+<div class="dc-ds-actions" style="flex-wrap: wrap; align-items: center; gap: var(--space-8);">
+  <span class="dc-ds-list-meta" aria-live="polite">{{ last_updated_label }}</span>
+  <a class="dc-ds-button dc-ds-button--ghost" href="{% url 'operations_dashboard' %}{% if active_tab and active_tab != 'overview' %}?tab={{ active_tab }}{% endif %}">Refresh</a>
+  <form method="post" action="{% url 'operations_dashboard' %}" data-confirm="Run an operational drill now? This queues reminder/OCR work, processes pending jobs, and evaluates alert policy.">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="run_drill">
+    <button type="submit" class="dc-ds-button dc-ds-button--primary">Run operational drill</button>
+  </form>
+</div>

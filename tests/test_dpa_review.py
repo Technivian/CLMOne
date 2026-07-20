@@ -411,16 +411,42 @@ class DPAReviewPackViewTests(TestCase):
         client.login(username='dpa_member', password='testpass123')
         response = client.get(reverse('contracts:dpa_review_pack_list'))
         body = response.content.decode()
-        self.assertIn('dc-ds-page dc-ds-page--wide dc-ds-page-flow dpa-review-page', body)
+        self.assertIn('dc-ds-page dc-ds-page--wide dc-ds-page-flow dc-ds-list-page clm-list-page dpa-review-page', body)
         self.assertIn('topbar-page-title', body)
         self.assertIn('DPA Reviews', body)
         self.assertNotIn('<header class="dc-ds-page-hero', body)
-        self.assertIn('dc-ds-scaffold dc-ds-scaffold--with-rail', body)
-        self.assertIn('dc-ds-summary dc-ds-summary--vertical', body)
-        self.assertIn('dc-ds-surface', body)
+        self.assertNotIn('dc-ds-scaffold--with-rail', body)
+        self.assertIn('dc-ds-summary clm-list-summary dpa-review-summary', body)
+        self.assertNotIn('dc-ds-summary--vertical', body)
+        self.assertIn('Needs decision', body)
+        self.assertIn('Open risks', body)
+        self.assertIn('Critical risks', body)
+        self.assertIn('Start DPA review', body)
+        self.assertNotIn('Open DPA playbook', body)
+        self.assertIn('clm-list-shell', body)
+        self.assertIn('clm-list-filter-drawer', body)
+        self.assertIn('dc-ds-list-toolbar', body)
         self.assertIn('dc-ds-table', body)
+        self.assertIn('Next action', body)
+        self.assertNotIn('Active reviews', body)
         self.assertNotIn('class="kpi-card', body)
         self.assertNotIn('class="panel overflow-hidden"', body)
+
+    def test_list_hides_manage_playbook_from_members(self):
+        client = TestClient()
+        client.login(username='dpa_member', password='testpass123')
+        response = client.get(reverse('contracts:dpa_review_pack_list'))
+        body = response.content.decode()
+        self.assertFalse(response.context['can_manage_playbook'])
+        self.assertNotIn('Manage playbook', body)
+
+    def test_list_shows_manage_playbook_to_admins(self):
+        client = TestClient()
+        client.login(username=self.admin.username, password='testpass123')
+        response = client.get(reverse('contracts:dpa_review_pack_list'))
+        body = response.content.decode()
+        self.assertTrue(response.context['can_manage_playbook'])
+        self.assertIn('Manage playbook', body)
 
     def test_list_exposes_semantic_row_counts_and_badges(self):
         DPARiskItem.objects.create(
@@ -445,11 +471,57 @@ class DPAReviewPackViewTests(TestCase):
         client.login(username='dpa_member', password='testpass123')
         response = client.get(reverse('contracts:dpa_review_pack_list'))
         self.assertEqual(response.status_code, 200)
+        body = response.content.decode()
         row = response.context['review_pack_rows'][0]
         self.assertEqual(row['unresolved_risk_count'], 1)
         self.assertEqual(row['critical_risk_count'], 1)
         self.assertEqual(row['risk_tone'], 'danger')
         self.assertEqual(row['approval_tone'], 'neutral')
+        self.assertEqual(row['next_action'], 'Resolve role qualification')
+        self.assertEqual(row['review_status_label'], 'Draft')
+        self.assertIn('dc-ds-badge--attention', body)
+        self.assertIn('Role unclear', body)
+        self.assertIn('dc-ds-badge--attention">Role unclear</span>', body)
+        self.assertEqual(response.context['needs_decision_count'], 1)
+        self.assertEqual(response.context['open_risk_count'], 1)
+        self.assertEqual(response.context['open_critical_risk_count'], 1)
+        self.assertIn('1 open', body)
+        self.assertEqual(row['role_label'], 'Role unclear')
+        self.assertEqual(row['review_status_label'], 'Draft')
+        self.assertIn('data-col="agreement"', body)
+        self.assertIn('>Agreement</th>', body)
+        self.assertIn('>Review</th>', body)
+        self.assertIn('>Next action</th>', body)
+        self.assertNotIn('>DPA / contract</th>', body)
+        self.assertNotIn('>Counterparty</th>', body)
+        self.assertNotIn('>Open risks</th>', body)
+        self.assertNotIn('>Review status</th>', body)
+        self.assertIn('id="dpa-col-toggle"', body)
+        self.assertIn('Open review', body)
+        self.assertIn('View memo', body)
+        self.assertIn('View contract record', body)
+        self.assertIn('wq-kebab', body)
+        self.assertIn('min-width: 1200px', body)
+        self.assertIn('position: sticky; left: 0', body)
+
+    def test_list_filters_by_review_status_and_role(self):
+        other = DPAReviewPack.objects.create(
+            organization=self.organization,
+            contract=self.contract,
+            created_by=self.admin,
+            approval_status=DPAReviewPack.ApprovalStatus.APPROVED,
+            role_qualification=DPAReviewPack.RoleQualification.CONTROLLER_PROCESSOR,
+        )
+        client = TestClient()
+        client.login(username='dpa_member', password='testpass123')
+        response = client.get(
+            reverse('contracts:dpa_review_pack_list'),
+            {'status': 'DRAFT', 'role': 'AMBIGUOUS'},
+        )
+        self.assertEqual(response.status_code, 200)
+        ids = [row['pack'].id for row in response.context['review_pack_rows']]
+        self.assertIn(self.review_pack.id, ids)
+        self.assertNotIn(other.id, ids)
 
     def test_detail_view_renders_for_member(self):
         client = TestClient()

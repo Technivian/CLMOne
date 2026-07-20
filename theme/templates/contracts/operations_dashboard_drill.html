@@ -1,6 +1,15 @@
-<p class="text-sm c-muted mb-4">Use the drill command to queue work, process reminders/text-extraction jobs, and capture operational evidence.</p>
-<pre class="code-block text-xs rounded-lg p-4 overflow-x-auto" role="region" aria-label="Drill command">./.venv/bin/python manage.py run_operational_drill</pre>
+<p class="text-sm c-muted mb-3">
+  Run a governed operational drill to queue reminder/OCR work, process pending jobs, and evaluate alert policy.
+  Evidence is written to cache and the Audit tab.
+</p>
 {% if drill_state.last_run_iso %}
-<p class="item-meta mt-4">Last drill: {{ drill_state.last_run_iso }}</p>
-<p class="text-sm c-muted mt-1">{{ drill_state.last_summary }}</p>
+<p class="item-meta mb-1">Last drill: {{ drill_state.last_run_iso }}</p>
+<p class="text-sm c-muted mb-3">{{ drill_state.last_summary }}</p>
+{% else %}
+<p class="text-sm c-muted mb-3">No drill has been recorded yet for this environment.</p>
 {% endif %}
+<form method="post" action="{% url 'operations_dashboard' %}" data-confirm="Run an operational drill now? This queues reminder/OCR work, processes pending jobs, and evaluates alert policy.">
+  {% csrf_token %}
+  <input type="hidden" name="action" value="run_drill">
+  <button type="submit" class="dc-ds-button dc-ds-button--primary">Run operational drill</button>
+</form>

@@ -63,6 +63,9 @@ class DpaStep4OperationalEvidenceTests(TestCase):
     def test_step4_replaces_legacy_legal_authoring_controls(self):
         response = self.client.get(f'{reverse("contracts:dpa_workflow_builder")}?step=4')
         self.assertContains(response, 'Security documentation upload')
+        self.assertContains(response, 'dpa-dropzone')
+        self.assertContains(response, 'dpa-step-track')
+        self.assertContains(response, 'Choose a file or drag it here')
         self.assertContains(response, 'Breach-notification commitment')
         self.assertContains(response, 'Standard DPA liability position accepted?')
         self.assertNotContains(response, 'Fallback liability position')

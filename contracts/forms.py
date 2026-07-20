@@ -50,26 +50,63 @@ TAILWIND_FILE = FORM_FILE
 
 
 class UserProfileForm(forms.ModelForm):
-    """Self-service identity and contact details.
+    """Self-service identity, contact, and account preference details.
 
     Workspace roles and legacy professional/billing fields remain in the data
     model for compatibility, but are intentionally not editable from the
     product account experience.
     """
+    TIMEZONE_CHOICES = [
+        ('UTC', 'UTC'),
+        ('Europe/Amsterdam', 'Europe/Amsterdam'),
+        ('Europe/London', 'Europe/London'),
+        ('Europe/Berlin', 'Europe/Berlin'),
+        ('Europe/Paris', 'Europe/Paris'),
+        ('America/New_York', 'America/New_York'),
+        ('America/Chicago', 'America/Chicago'),
+        ('America/Los_Angeles', 'America/Los_Angeles'),
+        ('Asia/Singapore', 'Asia/Singapore'),
+        ('Asia/Tokyo', 'Asia/Tokyo'),
+    ]
+
     first_name = forms.CharField(max_length=30, required=False, widget=forms.TextInput(attrs={'class': FORM_CONTROL}))
     last_name = forms.CharField(max_length=30, required=False, widget=forms.TextInput(attrs={'class': FORM_CONTROL}))
     email = forms.EmailField(required=False, widget=forms.EmailInput(attrs={'class': FORM_CONTROL}))
 
     class Meta:
         model = UserProfile
-        fields = ['phone', 'department']
+        fields = [
+            'phone',
+            'department',
+            'language',
+            'timezone',
+            'date_format',
+            'notify_contract_updates',
+            'notify_workflow_events',
+            'notify_security_alerts',
+        ]
         widgets = {
             'phone': forms.TextInput(attrs={'class': FORM_CONTROL}),
             'department': forms.TextInput(attrs={'class': FORM_CONTROL}),
+            'language': forms.Select(attrs={'class': FORM_CONTROL}),
+            'timezone': forms.Select(attrs={'class': FORM_CONTROL}),
+            'date_format': forms.Select(attrs={'class': FORM_CONTROL}),
+            'notify_contract_updates': forms.CheckboxInput(attrs={'class': 'dc-ds-check'}),
+            'notify_workflow_events': forms.CheckboxInput(attrs={'class': 'dc-ds-check'}),
+            'notify_security_alerts': forms.CheckboxInput(attrs={'class': 'dc-ds-check'}),
+        }
+        labels = {
+            'timezone': 'Time zone',
+            'date_format': 'Date format',
+            'notify_contract_updates': 'Contract updates',
+            'notify_workflow_events': 'Workflow events',
+            'notify_security_alerts': 'Security alerts',
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['timezone'].widget.choices = self.TIMEZONE_CHOICES
+        self.fields['timezone'].choices = self.TIMEZONE_CHOICES
         if self.instance and self.instance.user_id and not self.is_bound:
             self.initial.update({
                 'first_name': self.instance.user.first_name,
@@ -322,6 +359,10 @@ class DeadlineForm(forms.ModelForm):
         model = Deadline
         fields = ['title', 'description', 'deadline_type', 'priority', 'due_date',
                   'due_time', 'reminder_days', 'matter', 'contract', 'assigned_to']
+        labels = {
+            'assigned_to': 'Owner',
+            'deadline_type': 'Obligation type',
+        }
         widgets = {
             'title': forms.TextInput(attrs={'class': TAILWIND_INPUT}),
             'description': forms.Textarea(attrs={'class': TAILWIND_TEXTAREA, 'rows': 3}),

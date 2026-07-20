@@ -135,11 +135,13 @@ def toggle_dd_item(request, pk):
 def profile(request):
     profile_obj = None
     form = None
+    organization = None
     mfa_required = False
     mfa_admin_user = False
     membership = None
     security_error = ''
     recovery_codes_preview = request.session.pop('mfa_recovery_codes_preview', None)
+    show_mfa_setup = False
     if request.user.is_authenticated:
         profile_obj, _ = UserProfile.objects.get_or_create(user=request.user)
         organization = get_user_organization(request.user)
@@ -152,16 +154,51 @@ def profile(request):
         mfa_admin_user = bool(membership and membership.role in [
             OrganizationMembership.Role.OWNER, OrganizationMembership.Role.ADMIN,
         ])
+        show_mfa_setup = (
+            request.GET.get('mfa') == 'setup'
+            or request.session.get('mfa_setup_started')
+            or bool(profile_obj.mfa_enrollment_code_hash)
+        )
         if request.method == 'POST':
             action = request.POST.get('action', 'save')
-            form = UserProfileForm(request.POST, instance=profile_obj)
+            if action == 'start_mfa_setup':
+                request.session['mfa_setup_started'] = True
+                return redirect(f"{reverse('profile')}?mfa=setup")
             if action == 'send_mfa_code':
+                request.session['mfa_setup_started'] = True
                 enrollment_code = profile_obj.issue_mfa_enrollment_code()
                 from contracts.services.notifications import send_mfa_code_email
                 send_mfa_code_email(request.user, enrollment_code)
                 messages.success(request, 'Verification code sent to your email address.')
-                return redirect('profile')
-            if action == 'generate_mfa_recovery_codes':
+                return redirect(f"{reverse('profile')}?mfa=setup")
+            if action == 'verify_mfa':
+                request.session['mfa_setup_started'] = True
+                enrollment_code = (request.POST.get('mfa_enrollment_code') or '').strip()
+                if not profile_obj.verify_mfa_enrollment_code(enrollment_code):
+                    security_error = 'Enter the 6-digit verification code sent to your email.'
+                    show_mfa_setup = True
+                    form = UserProfileForm(instance=profile_obj)
+                else:
+                    request.session.pop('mfa_setup_started', None)
+                    request.session['mfa_verified'] = True
+                    log_action(
+                        request.user,
+                        AuditLog.Action.UPDATE,
+                        'UserProfile',
+                        object_id=profile_obj.id,
+                        object_repr=str(profile_obj),
+                        changes={'event': 'mfa_enrolled', 'organization_id': getattr(organization, 'id', None)},
+                        request=request,
+                    )
+                    try:
+                        from contracts.services.notifications import send_mfa_enrolled_notification
+                        send_mfa_enrolled_notification(request.user)
+                    except Exception:
+                        import logging
+                        logging.getLogger(__name__).exception('mfa_enrolled_notification failed user=%s', request.user.pk)
+                    messages.success(request, 'Multi-factor authentication enrolled successfully.')
+                    return redirect('profile')
+            elif action == 'generate_mfa_recovery_codes':
                 recovery_codes = profile_obj.issue_mfa_recovery_codes()
                 request.session['mfa_recovery_codes_preview'] = recovery_codes
                 log_action(
@@ -173,7 +210,6 @@ def profile(request):
                     changes={'event': 'mfa_recovery_codes_generated', 'count': len(recovery_codes), 'organization_id': getattr(organization, 'id', None)},
                     request=request,
                 )
-                # Notify user that new codes were generated (no code values in email).
                 try:
                     from contracts.services.notifications import send_mfa_recovery_codes_regenerated_notification
                     send_mfa_recovery_codes_regenerated_notification(request.user)
@@ -182,61 +218,95 @@ def profile(request):
                     logging.getLogger(__name__).exception('recovery_codes_regenerated_notification failed user=%s', request.user.pk)
                 messages.success(request, 'Recovery codes generated. Save them now; they will only be shown once.')
                 return redirect('profile')
-            if form.is_valid():
-                profile_obj = form.save(commit=False)
-                request.user.first_name = form.cleaned_data.get('first_name', '')
-                request.user.last_name = form.cleaned_data.get('last_name', '')
-                request.user.email = form.cleaned_data.get('email', '')
-                # Preserve legacy API compatibility for existing integrations
-                # posting these values while keeping them out of the account UI.
-                if 'bio' in request.POST:
-                    profile_obj.bio = request.POST.get('bio', '')
-                profile_obj.save()
-                request.user.save()
+            elif action == 'save' or action not in {
+                'start_mfa_setup', 'send_mfa_code', 'verify_mfa', 'generate_mfa_recovery_codes',
+            }:
+                # Identity and preferences live in separate cards. When the identity
+                # card posts without preference fields, seed them from the instance
+                # so ModelForm validation does not clear or reject them.
+                post_data = request.POST.copy()
+                if 'language' not in post_data:
+                    post_data['language'] = profile_obj.language
+                    post_data['timezone'] = profile_obj.timezone
+                    post_data['date_format'] = profile_obj.date_format
+                    if profile_obj.notify_contract_updates:
+                        post_data['notify_contract_updates'] = 'on'
+                    if profile_obj.notify_workflow_events:
+                        post_data['notify_workflow_events'] = 'on'
+                    if profile_obj.notify_security_alerts:
+                        post_data['notify_security_alerts'] = 'on'
+                form = UserProfileForm(post_data, instance=profile_obj)
+                if form.is_valid():
+                    profile_obj = form.save(commit=False)
+                    request.user.first_name = form.cleaned_data.get('first_name', '')
+                    request.user.last_name = form.cleaned_data.get('last_name', '')
+                    request.user.email = form.cleaned_data.get('email', '')
+                    # Preserve legacy API compatibility for integrations posting bio.
+                    if 'bio' in request.POST:
+                        profile_obj.bio = request.POST.get('bio', '')
+                    profile_obj.save()
+                    request.user.save()
 
-                security_action = action == 'verify_mfa' or 'mfa_enabled' in request.POST
-                if security_action:
-                    enrollment_code = (request.POST.get('mfa_enrollment_code') or '').strip()
-                    recovery_code = (request.POST.get('mfa_recovery_code') or '').strip()
-                    already_enrolled = bool(profile_obj.mfa_enabled and profile_obj.mfa_verified_at)
-                    if recovery_code:
-                        from contracts.services.recovery_codes import consume_recovery_code
-                        if consume_recovery_code(profile_obj, recovery_code, request=request, organization=organization):
-                            profile_obj.mfa_enabled = True
-                            profile_obj.mfa_verified_at = timezone.now()
-                            profile_obj.save()
-                            messages.success(request, 'Recovery code accepted and MFA enrollment refreshed.')
+                    # Legacy security posts (mfa_enabled / recovery code) remain supported
+                    # for tests and integrations; the UI uses dedicated MFA actions.
+                    security_action = action == 'verify_mfa' or 'mfa_enabled' in request.POST
+                    if security_action:
+                        enrollment_code = (request.POST.get('mfa_enrollment_code') or '').strip()
+                        recovery_code = (request.POST.get('mfa_recovery_code') or '').strip()
+                        already_enrolled = bool(profile_obj.mfa_enabled and profile_obj.mfa_verified_at)
+                        if recovery_code:
+                            from contracts.services.recovery_codes import consume_recovery_code
+                            if consume_recovery_code(
+                                profile_obj, recovery_code, request=request, organization=organization,
+                            ):
+                                profile_obj.mfa_enabled = True
+                                profile_obj.mfa_verified_at = timezone.now()
+                                profile_obj.save()
+                                messages.success(request, 'Recovery code accepted and MFA enrollment refreshed.')
+                                return redirect('profile')
+                            security_error = (
+                                'The recovery code could not be verified. '
+                                'Try another code or request new recovery codes.'
+                            )
+                        if already_enrolled and not enrollment_code:
+                            messages.success(request, 'Account updated successfully.')
                             return redirect('profile')
-                        security_error = 'The recovery code could not be verified. Try another code or request new recovery codes.'
-                    if already_enrolled and not enrollment_code:
+                        if not profile_obj.verify_mfa_enrollment_code(enrollment_code):
+                            security_error = security_error or (
+                                'Enter the 6-digit verification code sent to your email.'
+                            )
+                            show_mfa_setup = True
+                        else:
+                            request.session['mfa_verified'] = True
+                            request.session.pop('mfa_setup_started', None)
+                            log_action(
+                                request.user,
+                                AuditLog.Action.UPDATE,
+                                'UserProfile',
+                                object_id=profile_obj.id,
+                                object_repr=str(profile_obj),
+                                changes={
+                                    'event': 'mfa_enrolled',
+                                    'organization_id': getattr(organization, 'id', None),
+                                },
+                                request=request,
+                            )
+                            try:
+                                from contracts.services.notifications import send_mfa_enrolled_notification
+                                send_mfa_enrolled_notification(request.user)
+                            except Exception:
+                                import logging
+                                logging.getLogger(__name__).exception(
+                                    'mfa_enrolled_notification failed user=%s', request.user.pk
+                                )
+                            messages.success(request, 'Multi-factor authentication enrolled successfully.')
+                            return redirect('profile')
+                    else:
                         messages.success(request, 'Account updated successfully.')
                         return redirect('profile')
-                    if not profile_obj.verify_mfa_enrollment_code(enrollment_code):
-                        security_error = security_error or 'Enter the 6-digit verification code sent to your email.'
-                    else:
-                        # Completing enrollment verifies this session.
-                        request.session['mfa_verified'] = True
-                        log_action(
-                            request.user,
-                            AuditLog.Action.UPDATE,
-                            'UserProfile',
-                            object_id=profile_obj.id,
-                            object_repr=str(profile_obj),
-                            changes={'event': 'mfa_enrolled', 'organization_id': getattr(organization, 'id', None)},
-                            request=request,
-                        )
-                        try:
-                            from contracts.services.notifications import send_mfa_enrolled_notification
-                            send_mfa_enrolled_notification(request.user)
-                        except Exception:
-                            import logging
-                            logging.getLogger(__name__).exception('mfa_enrolled_notification failed user=%s', request.user.pk)
-                        messages.success(request, 'Profile updated successfully and MFA enrolled.')
-                        return redirect('profile')
-                else:
-                    messages.success(request, 'Account updated successfully.')
-                    return redirect('profile')
         else:
+            form = UserProfileForm(instance=profile_obj)
+        if form is None:
             form = UserProfileForm(instance=profile_obj)
     return render(request, 'profile.html', {
         'form': form,
@@ -247,6 +317,8 @@ def profile(request):
         'mfa_admin_user': mfa_admin_user,
         'security_error': security_error,
         'recovery_codes_preview': recovery_codes_preview,
+        'show_mfa_setup': show_mfa_setup and not (profile_obj and profile_obj.mfa_enabled),
+        'hide_app_footer': True,
     })
 
 
@@ -317,7 +389,112 @@ def identity_telemetry_dashboard(request):
 
 @login_required
 def settings_hub(request):
-    return render(request, 'settings_hub.html')
+    """Compact configuration landing hub for personal, workspace, and governance settings."""
+    organization = get_user_organization(request.user)
+    can_manage = bool(organization and can_manage_organization(request.user, organization))
+
+    def card(*, label, copy, url_name, icon, admin_only=False):
+        return {
+            'label': label,
+            'copy': copy,
+            'href': reverse(url_name),
+            'icon': icon,
+            'admin_only': admin_only,
+            'badge_label': 'Admin only' if admin_only else '',
+        }
+
+    personal = [
+        card(
+            label='Profile',
+            copy='Update your name, contact details, and account preferences.',
+            url_name='profile',
+            icon='users',
+        ),
+        card(
+            label='Notifications',
+            copy='Review alerts and manage how you stay informed.',
+            url_name='contracts:notification_list',
+            icon='bell',
+        ),
+    ]
+    workspace = [
+        card(
+            label='Team and roles',
+            copy='Invite members and manage workspace roles.',
+            url_name='contracts:organization_team',
+            icon='user-plus',
+            admin_only=True,
+        ),
+        card(
+            label='Contract types',
+            copy='Configure governed contract types and launch workflows.',
+            url_name='contracts:workflow_template_list',
+            icon='briefcase',
+        ),
+        card(
+            label='Templates',
+            copy='Maintain reusable clause and agreement templates.',
+            url_name='contracts:clause_template_list',
+            icon='file-text',
+        ),
+        card(
+            label='Playbooks',
+            copy='Define preferred positions and negotiation guidance.',
+            url_name='contracts:dpa_playbook_list',
+            icon='list',
+        ),
+        card(
+            label='Approval policies',
+            copy='Set routing rules for review and approval decisions.',
+            url_name='contracts:approval_rule_list',
+            icon='workflow',
+        ),
+        card(
+            label='Integrations',
+            copy='Connect identity providers, SCIM, and outbound webhooks.',
+            url_name='organization_identity_settings',
+            icon='cloud',
+            admin_only=True,
+        ),
+    ]
+    security = [
+        card(
+            label='Authentication',
+            copy='Control MFA policy and workspace authentication requirements.',
+            url_name='organization_security_settings',
+            icon='shield',
+            admin_only=True,
+        ),
+        card(
+            label='Active sessions',
+            copy='Review and revoke signed-in devices and browser sessions.',
+            url_name='organization_session_audit',
+            icon='clock',
+            admin_only=True,
+        ),
+        card(
+            label='Audit activity',
+            copy='Inspect organization-level activity and governance events.',
+            url_name='contracts:organization_activity',
+            icon='archive',
+            admin_only=True,
+        ),
+    ]
+
+    def visible(cards):
+        return [item for item in cards if not item['admin_only'] or can_manage]
+
+    settings_groups = [
+        {'id': 'personal', 'title': 'Personal', 'cards': visible(personal)},
+        {'id': 'workspace', 'title': 'Workspace', 'cards': visible(workspace)},
+        {'id': 'security', 'title': 'Security and governance', 'cards': visible(security)},
+    ]
+    settings_groups = [group for group in settings_groups if group['cards']]
+
+    return render(request, 'settings_hub.html', {
+        'can_manage_settings': can_manage,
+        'settings_groups': settings_groups,
+    })
 
 
 @login_required

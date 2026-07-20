@@ -1,84 +1,78 @@
 {% extends "base.html" %}
 {% block title %}Workflow Templates – CLM One{% endblock %}
+{% block authenticated_page_title %}Workflow Operations{% endblock %}
+{% block authenticated_page_subtitle %}Reusable workflow definitions for review, approval, and signature.{% endblock %}
+
 {% block content %}
-<div class="page-wrap reveal-stagger">
-    <div class="workspace-main hero-shell mb-6">
-        <div class="workspace-main-head">
-            <div>
-                <h1 class="workspace-title">Workflow Templates</h1>
-                <p class="workspace-subtitle">Manage reusable workflow blueprints for review, negotiation, approval, and signature.</p>
-                <div class="workspace-kicker-row">
-                    <span class="workspace-kicker"><strong>{{ workflow_templates|length }}</strong> templates available</span>
-                    <span class="workspace-kicker"><strong>Reusable</strong> operational design patterns</span>
-                </div>
-            </div>
-            <div class="workspace-tools">
-                <a href="{% url 'contracts:workflow_dashboard' %}" class="dc-ds-button dc-ds-button--quiet inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border">Back to Workflows</a>
-                <a href="{% url 'contracts:workflow_template_create' %}" class="dc-ds-button dc-ds-button--primary inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90">
-                    <svg class="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                    Create Template
-                </a>
-            </div>
-        </div>
-        <div class="workspace-toolbar">
-            <div class="summary-grid w-full">
-                <div class="summary-card">
-                    <div class="summary-label">Templates</div>
-                    <div class="summary-value">{{ workflow_templates|length }}</div>
-                    <div class="summary-meta">Available in this workspace</div>
-                </div>
-                <div class="summary-card">
-                    <div class="summary-label">Primary use</div>
-                    <div class="summary-value">Reuse</div>
-                    <div class="summary-meta">Standardize repeatable workflow design</div>
-                </div>
-                <div class="summary-card">
-                    <div class="summary-label">Next move</div>
-                    <div class="summary-value">Create template</div>
-                    <div class="summary-meta">Add a new workflow blueprint or revise an existing one</div>
-                </div>
-            </div>
-        </div>
+{% include "components/_list_page_shell_styles.html" %}
+<style nonce="{{ csp_nonce }}">
+  .workflow-templates-page .clm-list-shell { margin-bottom: var(--space-12); }
+  .workflow-templates-page .template-card {
+    display: flex; flex-direction: column; gap: var(--space-12);
+    min-height: 100%; padding: var(--space-16);
+  }
+  .workflow-templates-page .template-card__head {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-12);
+  }
+  .workflow-templates-page .template-card__head h3 { margin: 0; font: var(--text-section); color: var(--ink-900); }
+  .workflow-templates-page .template-card__meta { color: var(--ink-500); font: var(--text-small); }
+  .workflow-templates-page .template-preview-list { display: grid; gap: 4px; color: var(--ink-700); font: var(--text-small); }
+  .workflow-templates-page .template-card__foot {
+    display: flex; align-items: center; justify-content: space-between; gap: var(--space-12);
+    margin-top: auto; padding-top: var(--space-12); border-top: 1px solid var(--line);
+  }
+</style>
+
+<div class="dc-ds-page dc-ds-page--wide dc-ds-page-flow dc-ds-list-page clm-list-page workflow-templates-page">
+  <header class="clm-list-shell dc-ds-filterbar dc-ds-table-toolbar dc-ds-list-toolbar" aria-label="Workflow operations controls">
+    <div class="clm-list-view-header">
+      {% include "components/_workflow_operations_tabs.html" with tabs=ops_tabs %}
+      <div class="clm-list-view-actions">
+        <a href="{% url 'contracts:workflow_template_create' %}" class="dc-ds-button dc-ds-button--primary">Create template</a>
+      </div>
     </div>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {% for template in workflow_templates %}
-        <div class="panel">
-            <div class="panel-inner">
-            <div class="flex items-start justify-between gap-3 mb-2">
-                <h3 class="text-lg font-semibold c-primary">{{ template.name }}</h3>
-                <div class="flex items-center gap-2">
-                    <span class="dc-ds-badge--neutral">v{{ template.version }}</span>
-                    {% if template.is_active %}
-                    <span class="dc-ds-badge--success">Published</span>
-                    {% else %}
-                    <span class="dc-ds-badge--neutral">Unpublished</span>
-                    {% endif %}
-                </div>
-            </div>
-            {% if template.description %}
-            <p class="c-muted text-sm mb-4">{{ template.description }}</p>
-            {% endif %}
-            <div class="text-sm c-muted mb-4">{{ template.steps.count }} step{{ template.steps.count|pluralize }}</div>
-            <div class="template-preview-list">
-                {% for step in template.steps.all|slice:":3" %}
-                <div class="template-preview-item">{{ step.order }}. {{ step.name }}</div>
-                {% endfor %}
-                {% if template.steps.count > 3 %}
-                <div class="text-xs c-muted">+{{ template.steps.count|add:"-3" }} more</div>
-                {% endif %}
-            </div>
-            <div class="mt-4 pt-4 border-t border-gray-200 flex justify-between items-center">
-                <span class="text-xs c-muted">Created {{ template.created_at|date:"M d, Y" }}</span>
-                <a href="{% url 'contracts:workflow_template_detail' template.pk %}" class="text-sm font-medium c-link">View</a>
-            </div>
-            </div>
+  </header>
+
+  <p class="clm-list-result-count" aria-live="polite">{{ workflow_templates|length }} template{{ workflow_templates|length|pluralize }}</p>
+  <p class="profile-page__muted" style="margin:0 0 var(--space-12); color: var(--ink-500); font: var(--text-small);">
+    Open a template to use Workflow Designer for stages, conditions, versioning, testing, and publishing.
+  </p>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    {% for template in workflow_templates %}
+    <a href="{% url 'contracts:workflow_template_detail' template.pk %}" class="dc-ds-surface template-card" style="text-decoration:none">
+      <div class="template-card__head">
+        <h3>{{ template.name }}</h3>
+        <div class="flex items-center gap-2">
+          <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--neutral">v{{ template.version }}</span>
+          {% if template.is_active %}
+          <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--success">Published</span>
+          {% else %}
+          <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--neutral">Unpublished</span>
+          {% endif %}
         </div>
-        {% empty %}
-        {% url 'contracts:workflow_template_create' as workflow_template_create_url %}
-        <div class="col-span-full">
-            {% include "design_system/empty_state.html" with icon="workflow" title="No workflow templates yet" reason="This workspace has no reusable approval or review blueprint." how="Templates appear here after an administrator defines the stages, owners, and routing rules." action_url=workflow_template_create_url action_label="Create first template" %}
-        </div>
+      </div>
+      {% if template.description %}<p class="template-card__meta">{{ template.description }}</p>{% endif %}
+      <div class="template-card__meta">{{ template.steps.count }} step{{ template.steps.count|pluralize }}</div>
+      <div class="template-preview-list">
+        {% for step in template.steps.all|slice:":3" %}
+        <div>{{ step.order }}. {{ step.name }}</div>
         {% endfor %}
+        {% if template.steps.count > 3 %}
+        <div class="template-card__meta">+{{ template.steps.count|add:"-3" }} more</div>
+        {% endif %}
+      </div>
+      <div class="template-card__foot">
+        <span class="template-card__meta">Created {{ template.created_at|date:"j M Y" }}</span>
+        <span class="c-link text-sm font-semibold">Open in Designer →</span>
+      </div>
+    </a>
+    {% empty %}
+    {% url 'contracts:workflow_template_create' as workflow_template_create_url %}
+    <div class="col-span-full">
+      {% include "design_system/empty_state.html" with icon="workflow" title="No workflow templates yet" reason="This workspace has no reusable approval or review blueprint." how="Templates appear here after an administrator defines the stages, owners, and routing rules in Workflow Designer." action_url=workflow_template_create_url action_label="Create first template" %}
     </div>
+    {% endfor %}
+  </div>
 </div>
 {% endblock %}

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}New Contract – CLM One{% endblock %}
 {% block authenticated_page_title %}{% if selected_type %}New {{ selected_type_label }}{% else %}New Contract{% endif %}{% endblock %}
-{% block authenticated_page_subtitle %}{% if selected_type %}Choose an approved template or begin a controlled blank draft.{% else %}Choose a governed contract type and approved workflow.{% endif %}{% endblock %}
+{% block authenticated_page_subtitle %}{% if selected_type %}Choose an approved template or begin a controlled blank draft.{% else %}Choose an agreement type to start from an approved template, or upload third-party paper for review.{% endif %}{% endblock %}
 {% block authenticated_page_back %}
 <a href="{% url 'contracts:repository' %}" class="topbar-back-link" data-workspace-back aria-label="Back to contracts" title="Back to contracts">
   {% include "design_system/icon.html" with name="arrow-left" %}
@@ -15,39 +15,103 @@
   .ctp-card-title { font-size: var(--ds-text-md); font-weight: 760; color: var(--ds-color-text); }
   .ctp-card-sub { font-size: var(--ds-text-sm); color: var(--ds-color-text-secondary); margin-top: var(--ds-space-1); line-height: var(--ds-line-base); }
   .ctp-card-blank { border-style: dashed; }
-  /* Entry-card grid (Stage 1: "What are you creating?") */
-  .ctp-entry-card {
-    position: relative; display: flex; flex-direction: column; gap: var(--space-12);
-    min-height: 212px; padding: var(--space-16); text-decoration: none;
+
+  .ctp-toolbar {
+    display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-12);
+    margin-bottom: var(--space-20);
   }
-  .ctp-entry-heading { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: var(--space-12); align-items: start; }
+  .ctp-search-wrap { flex: 1 1 auto; min-width: 0; }
+  .ctp-search { width: 100%; }
+  .ctp-toolbar-action { flex: 0 0 auto; }
+
+  .ctp-sections { display: flex; flex-direction: column; gap: var(--space-20); }
+  .ctp-section { display: flex; flex-direction: column; gap: var(--space-12); }
+  .ctp-section[hidden] { display: none; }
+  .ctp-section-heading { display: grid; gap: var(--space-4); }
+  .ctp-section-title {
+    margin: 0; font: var(--text-heading); font-size: var(--font-size-small, 13px);
+    font-weight: 650; letter-spacing: 0.02em; text-transform: uppercase;
+    color: var(--ink-500);
+  }
+  .ctp-section-reason {
+    margin: 0; color: var(--ink-500); font: var(--text-small); font-size: 12.5px; line-height: 17px;
+    text-transform: none; letter-spacing: 0; font-weight: 500;
+  }
+
+  .ctp-entry-grid {
+    display: grid;
+    gap: var(--space-12);
+    justify-content: start;
+    align-items: stretch;
+  }
+  .ctp-entry-grid[data-cols="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .ctp-entry-grid[data-cols="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ctp-entry-grid[data-cols="1"] { grid-template-columns: minmax(0, 1fr); max-width: 360px; }
+
+  .ctp-entry-card {
+    position: relative; display: flex; flex-direction: column; gap: var(--space-8);
+    min-height: 164px; padding: var(--space-12); text-decoration: none;
+    color: inherit; outline: none; cursor: pointer;
+    transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease, background-color .15s ease;
+  }
+  .ctp-entry-card[hidden] { display: none; }
+  .ctp-entry-heading { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: var(--space-10); align-items: start; }
   .ctp-entry-icon {
-    width: 40px; height: 40px; border-radius: var(--radius-control); background: var(--seal-bg); color: var(--seal-dark);
+    width: 36px; height: 36px; border-radius: var(--radius-control); background: var(--seal-bg); color: var(--seal-dark);
     display: flex; align-items: center; justify-content: center; transition: background .15s, color .15s;
   }
-  .ctp-entry-icon .dc-ds-icon { width: 18px; height: 18px; }
-  .ctp-entry-title { font: var(--text-heading); color: var(--ink-900); }
-  .ctp-entry-desc { margin-top: var(--space-4); color: var(--ink-500); font: var(--text-small); }
+  .ctp-entry-icon .dc-ds-icon { width: 16px; height: 16px; }
+  .ctp-entry-title { font: var(--text-heading); color: var(--ink-900); font-size: 15px; line-height: 22px; }
+  .ctp-entry-desc { margin-top: var(--space-2); color: var(--ink-500); font: var(--text-small); font-size: 12.5px; line-height: 17px; }
   .ctp-entry-meta {
-    display: flex; flex-direction: column; gap: var(--space-4); margin-top: auto; padding-top: var(--space-8);
+    display: flex; flex-direction: column; gap: var(--space-2); margin-top: auto; padding-top: var(--space-8);
     border-top: 1px solid var(--hairline); color: var(--ink-500); font: var(--text-meta);
   }
   .ctp-entry-meta-row { display: flex; justify-content: space-between; gap: var(--ds-space-2); }
   .ctp-entry-meta-row span { color: var(--ink-500); }
-  .ctp-entry-meta-row b { max-width: 65%; color: var(--ink-700); font-size: var(--font-size-meta); font-weight: 600; text-align: right; }
+  .ctp-entry-meta-row b { max-width: 62%; color: var(--ink-700); font-size: var(--font-size-meta); font-weight: 600; text-align: right; }
   .ctp-entry-cta {
-    width: fit-content; min-height: 36px; margin-top: 0;
+    width: fit-content; min-height: 32px; margin-top: 0; pointer-events: none;
   }
-  /* A hover lift gives feedback without making a route look selected. */
   .ctp-entry-card.dc-ds-surface--interactive:hover {
-    border-color: var(--hairline);
+    border-color: color-mix(in srgb, var(--seal) 48%, var(--hairline));
+    background: color-mix(in srgb, var(--seal) 7%, var(--card, #fff));
+    box-shadow: var(--shadow-card-hover, 0 8px 20px rgba(15, 23, 42, 0.08));
+    transform: translateY(-1px);
   }
-  @media (min-width: 1025px) {
-    /* The seventh route is centred so the incomplete final grid row is deliberate. */
-    .ctp-entry-grid > :last-child:nth-child(3n + 1) { grid-column: 2; }
+  .ctp-entry-card.dc-ds-surface--interactive:focus-visible {
+    border-color: var(--seal);
+    background: color-mix(in srgb, var(--seal) 5%, var(--card, #fff));
+    box-shadow: 0 0 0 3px var(--focus-ring);
+    transform: none;
   }
-  /* No 'unsafe-inline' in style-src: style="" attributes are silently
-     dropped, so this section header's spacing/size lives here instead. */
+
+  .ctp-search-empty {
+    margin: 0; padding: var(--space-16); border: 1px dashed var(--hairline);
+    border-radius: var(--radius-subpanel, var(--radius-control));
+    color: var(--ink-500); font: var(--text-small); background: var(--well, transparent);
+  }
+  .ctp-search-empty[hidden] { display: none; }
+
+  @media (max-width: 1024px) {
+    .ctp-entry-grid[data-cols="3"],
+    .ctp-entry-grid[data-cols="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .ctp-entry-grid[data-cols="1"] { max-width: none; }
+  }
+  @media (max-width: 640px) {
+    .ctp-toolbar { align-items: stretch; }
+    .ctp-search-wrap { flex-basis: 100%; }
+    .ctp-toolbar-action { width: 100%; }
+    .ctp-toolbar-action .dc-ds-button { width: 100%; justify-content: center; }
+    .ctp-entry-grid[data-cols="3"],
+    .ctp-entry-grid[data-cols="2"],
+    .ctp-entry-grid[data-cols="1"] { grid-template-columns: 1fr; max-width: none; }
+    .ctp-entry-card { min-height: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ctp-entry-card { transition: none; }
+    .ctp-entry-card.dc-ds-surface--interactive:hover { transform: none; }
+  }
 </style>
 
 <div class="dc-ds-page dc-ds-page--wide dc-ds-page-flow ctp-page">
@@ -76,30 +140,105 @@
   </div>
 
   {% else %}
-  <div class="ctp-entry-grid dc-ds-card-grid dc-ds-card-grid--3">
-    {% for card in entry_cards %}
-    <a href="{{ card.start_url }}" class="ctp-entry-card dc-ds-surface dc-ds-surface--interactive">
-      <div class="ctp-entry-heading">
-        <div class="ctp-entry-icon">
-          {% include "design_system/icon.html" with name=card.icon class_name="dc-ds-icon" %}
-        </div>
-        <div>
-          <div class="ctp-entry-title">{{ card.title }}</div>
-          <div class="ctp-entry-desc">{{ card.description }}</div>
-        </div>
+  <div class="ctp-toolbar" role="search" aria-label="Agreement type filters">
+    <div class="ctp-search-wrap">
+      <label class="sr-only" for="ctp-type-search">Search agreement types</label>
+      <input
+        id="ctp-type-search"
+        class="dc-ds-control ctp-search"
+        type="search"
+        placeholder="Search agreement types…"
+        autocomplete="off"
+        data-ctp-search
+        aria-controls="ctp-entry-sections"
+      >
+    </div>
+    <div class="ctp-toolbar-action">
+      <a href="{% url 'contracts:upload_signed_contract' %}" class="dc-ds-button dc-ds-button--primary">Upload &amp; review agreement</a>
+    </div>
+  </div>
+
+  <div id="ctp-entry-sections" class="ctp-sections" data-ctp-sections>
+    {% for section in entry_sections %}
+    <section class="ctp-section" data-ctp-section data-section-key="{{ section.key }}" aria-labelledby="ctp-section-{{ section.key }}">
+      <div class="ctp-section-heading">
+        <h2 id="ctp-section-{{ section.key }}" class="ctp-section-title">{{ section.label }}</h2>
       </div>
-      <div class="ctp-entry-meta">
-        <div class="ctp-entry-meta-row"><span>Template</span><b>{{ card.template_name|default:"Approved template route" }}</b></div>
-        <div class="ctp-entry-meta-row"><span>Approval route</span><b>{{ card.typical_approvals }}</b></div>
+      <div class="ctp-entry-grid" data-cols="{{ section.columns }}">
+        {% for card in section.cards %}
+        <a
+          href="{{ card.start_url }}"
+          class="ctp-entry-card dc-ds-surface dc-ds-surface--interactive"
+          data-ctp-card
+          data-contract-type="{{ card.contract_type }}"
+          data-search="{{ card.title }} {{ card.contract_type }} {{ card.description }} {{ card.template_name|default:'' }} {{ card.expected_review }}"
+          aria-label="Start {{ card.title }} request"
+        >
+          <div class="ctp-entry-heading">
+            <div class="ctp-entry-icon" aria-hidden="true">
+              {% include "design_system/icon.html" with name=card.icon class_name="dc-ds-icon" %}
+            </div>
+            <div>
+              <div class="ctp-entry-title">{{ card.title }}</div>
+              <div class="ctp-entry-desc">{{ card.description }}</div>
+            </div>
+          </div>
+          <div class="ctp-entry-meta">
+            <div class="ctp-entry-meta-row"><span>Starting template</span><b>{{ card.template_name|default:"Approved template route" }}</b></div>
+            <div class="ctp-entry-meta-row"><span>Expected review</span><b>{{ card.expected_review }}</b></div>
+          </div>
+          <span class="ctp-entry-cta dc-ds-button dc-ds-button--primary" aria-hidden="true">Start request &rarr;</span>
+        </a>
+        {% endfor %}
       </div>
-      <span class="ctp-entry-cta dc-ds-button dc-ds-button--primary">Start draft &rarr;</span>
-    </a>
+    </section>
     {% empty %}
-    {% url 'contracts:document_create' as upload_contract_url %}
-    {% include "design_system/empty_state.html" with icon="upload" title="No governed contract types are available" reason="This workspace has no enabled contract-launch configuration." how="Contract types appear here after an administrator enables a governed workflow; signed agreements can still enter through upload." action_url=upload_contract_url action_label="Upload an agreement" class_name="dc-ds-empty--activation" %}
+    {% url 'contracts:upload_signed_contract' as upload_contract_url %}
+    {% include "design_system/empty_state.html" with icon="upload" title="No governed contract types are available" reason="This workspace has no enabled contract-launch configuration." how="Contract types appear here after an administrator enables a governed workflow; third-party paper can still enter through upload and review." action_url=upload_contract_url action_label="Upload & review agreement" class_name="dc-ds-empty--activation" %}
     {% endfor %}
   </div>
+  <p class="ctp-search-empty" data-ctp-search-empty hidden role="status">No agreement types match your search.</p>
   {% endif %}
 
 </div>
+{% if not selected_type %}
+<script nonce="{{ csp_nonce }}">
+(function () {
+  var input = document.querySelector('[data-ctp-search]');
+  var sectionsRoot = document.querySelector('[data-ctp-sections]');
+  var empty = document.querySelector('[data-ctp-search-empty]');
+  if (!input || !sectionsRoot) return;
+
+  function cardMatches(haystack, term) {
+    if (!term) return true;
+    var words = haystack.toLowerCase().split(/[^a-z0-9+]+/).filter(Boolean);
+    return term.toLowerCase().split(/\s+/).filter(Boolean).every(function (part) {
+      return words.some(function (word) {
+        return word === part || word.indexOf(part) === 0;
+      });
+    });
+  }
+
+  function filterCards() {
+    var term = (input.value || '').trim();
+    var visibleCount = 0;
+    sectionsRoot.querySelectorAll('[data-ctp-section]').forEach(function (section) {
+      var visibleInSection = 0;
+      section.querySelectorAll('[data-ctp-card]').forEach(function (card) {
+        var haystack = card.getAttribute('data-search') || '';
+        var match = cardMatches(haystack, term);
+        card.hidden = !match;
+        if (match) visibleInSection += 1;
+      });
+      section.hidden = visibleInSection === 0;
+      visibleCount += visibleInSection;
+    });
+    if (empty) empty.hidden = visibleCount > 0;
+  }
+
+  input.addEventListener('input', filterCards);
+  input.addEventListener('search', filterCards);
+})();
+</script>
+{% endif %}
 {% endblock %}

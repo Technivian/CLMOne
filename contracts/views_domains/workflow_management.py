@@ -83,6 +83,14 @@ class WorkflowTemplateListView(TenantScopedQuerysetMixin, LoginRequiredMixin, Li
         org = self.get_organization()
         return _workflow_template_queryset_for_organization(org)
 
+    def get_context_data(self, **kwargs):
+        from contracts.services.workflow_operations import workflow_operations_tabs
+
+        context = super().get_context_data(**kwargs)
+        context['ops_tabs'] = workflow_operations_tabs(active='templates')
+        context['hide_app_footer'] = True
+        return context
+
 
 class WorkflowTemplateDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailView):
     model = WorkflowTemplate
@@ -441,16 +449,50 @@ def workflow_template_publish_toggle(request, pk):
 
 @login_required
 def workflow_dashboard(request):
+    from django.urls import reverse
+
+    from contracts.services.workflow_operations import (
+        active_workflow_count,
+        annotate_workflow_operations_queryset,
+        build_workflow_operations_rows,
+        clear_filters_url,
+        filter_workflow_operations_queryset,
+        pending_approval_count,
+        workflow_operations_tabs,
+        WorkflowOperationsFilters,
+    )
+    from contracts.view_support import organization_user_queryset
+
     organization = get_user_organization(request.user)
-    workflows = get_scoped_queryset_for_request(request, Workflow).select_related('contract').order_by('-created_at')
-    approval_requests = ApprovalRequest.objects.filter(organization=organization).select_related('contract', 'assigned_to', 'rule').order_by('-created_at')[:10] if organization else ApprovalRequest.objects.none()
-    approval_rule_count = ApprovalRule.objects.filter(organization=organization, is_active=True).count() if organization else 0
+    filters = WorkflowOperationsFilters.from_request(request)
+    base_qs = annotate_workflow_operations_queryset(
+        get_scoped_queryset_for_request(request, Workflow).order_by('-created_at')
+    )
+    active_count = active_workflow_count(base_qs)
+    pending_approvals = pending_approval_count(organization)
+    filtered_qs = filter_workflow_operations_queryset(base_qs, filters)
+    workflow_rows = build_workflow_operations_rows(
+        filtered_qs[:200],
+        exception_only=filters.exception_only,
+    )
+    ops_url = reverse('contracts:workflow_dashboard')
     context = {
-        'workflows': workflows,
-        'approval_requests': approval_requests,
-        'approval_rule_count': approval_rule_count,
+        'workflow_rows': workflow_rows,
+        'workflows': filtered_qs,  # compatibility for existing callers/tests
+        'filters': filters,
+        'filters_active': filters.active,
+        'more_filters_active': filters.more_filters_active,
+        'active_workflow_count': active_count,
+        'pending_approval_count': pending_approvals,
+        'status_filter_choices': Workflow.Status.choices,
+        'contract_type_choices': Contract.ContractType.choices,
+        'owner_choices': list(organization_user_queryset(organization)) if organization else [],
+        'ops_tabs': workflow_operations_tabs(active='active'),
+        'ops_clear_url': clear_filters_url(ops_url),
+        'workflow_create_url': reverse('contracts:workflow_create'),
         'approval_rules_url': reverse_lazy('contracts:approval_rule_list'),
         'approval_requests_url': reverse_lazy('contracts:approval_request_list'),
+        'hide_app_footer': True,
     }
     return render(request, 'contracts/workflow_dashboard.html', context)
 
@@ -1165,6 +1207,7 @@ def _msa_document_sections(draft_content, values, risk_codes=None):
             tone = 'ai'
             fields = ['Services description', 'Statement of Work required', 'Deliverables defined', 'Acceptance criteria required']
             section_id = 'services'
+            value_keys = ['services_description', 'sow_required', 'deliverables_defined', 'acceptance_criteria_required']
         elif '2. Fees and Payment' in paragraph:
             title = 'Fees and Payment'
             source = 'Risk-triggered fallback' if 'nonstandard_payment_terms' in risk_codes else 'Approved template'
@@ -1172,6 +1215,7 @@ def _msa_document_sections(draft_content, values, risk_codes=None):
             tone = 'risk' if 'nonstandard_payment_terms' in risk_codes else 'template'
             fields = ['Contract value', 'Currency', 'Payment terms']
             section_id = 'fees-payment'
+            value_keys = ['value', 'currency', 'payment_terms']
         elif '3. Term and Renewal' in paragraph:
             title = 'Term and Renewal'
             source = 'Risk-triggered fallback' if values.get('auto_renewal_included') or str(values.get('renewal_type', '')).lower() == 'auto-renew' else 'Approved template'
@@ -1179,6 +1223,7 @@ def _msa_document_sections(draft_content, values, risk_codes=None):
             tone = 'risk' if values.get('auto_renewal_included') or str(values.get('renewal_type', '')).lower() == 'auto-renew' else 'template'
             fields = ['Initial term', 'Renewal type', 'Termination notice period']
             section_id = 'term-renewal'
+            value_keys = ['initial_term', 'renewal_type', 'termination_notice_period']
         elif '4. Liability' in paragraph:
             title = 'Liability'
             source = 'Risk-triggered fallback' if values.get('liability_cap_nonstandard') else 'Approved clause library'
@@ -1186,6 +1231,7 @@ def _msa_document_sections(draft_content, values, risk_codes=None):
             tone = 'risk' if values.get('liability_cap_nonstandard') else 'library'
             fields = ['Liability cap']
             section_id = 'liability'
+            value_keys = ['liability_cap']
         elif '5. Intellectual Property' in paragraph:
             title = 'Intellectual Property'
             source = 'Risk-triggered fallback' if values.get('ip_ownership_nonstandard') else 'Approved clause library'
@@ -1193,6 +1239,7 @@ def _msa_document_sections(draft_content, values, risk_codes=None):
             tone = 'risk' if values.get('ip_ownership_nonstandard') else 'library'
             fields = ['IP ownership']
             section_id = 'intellectual-property'
+            value_keys = ['ip_ownership']
         elif '6. Data Protection' in paragraph:
             title = 'Data Protection'
             source = 'AI-assisted suggestion' if values.get('personal_data_involved') or values.get('services_involve_personal_data') else 'Approved template'
@@ -1200,6 +1247,7 @@ def _msa_document_sections(draft_content, values, risk_codes=None):
             tone = 'ai' if values.get('personal_data_involved') or values.get('services_involve_personal_data') else 'template'
             fields = ['Personal data involved']
             section_id = 'data-protection'
+            value_keys = ['personal_data_involved']
         elif '7. Governing Law' in paragraph:
             title = 'Governing Law'
             source = 'Risk-triggered fallback' if values.get('governing_law_nonpreferred') or ('netherlands' not in str(values.get('governing_law', '')).lower() and values.get('governing_law')) else 'Approved template'
@@ -1207,9 +1255,11 @@ def _msa_document_sections(draft_content, values, risk_codes=None):
             tone = 'risk' if values.get('governing_law_nonpreferred') or ('netherlands' not in str(values.get('governing_law', '')).lower() and values.get('governing_law')) else 'template'
             fields = ['Governing law', 'Jurisdiction']
             section_id = 'governing-law'
+            value_keys = ['governing_law', 'jurisdiction']
         else:
             fields = ['Counterparty name', 'Effective date'] if index == 0 else []
             section_id = 'generated-msa-draft' if index == 0 else f'msa-clause-{index}'
+            value_keys = ['counterparty', 'start_date'] if index == 0 else []
         sections.append({
             'title': title,
             'content': paragraph,
@@ -1217,9 +1267,97 @@ def _msa_document_sections(draft_content, values, risk_codes=None):
             'source_detail': source_detail,
             'tone': tone,
             'fields': fields,
+            'value_keys': value_keys,
             'section_id': section_id,
+            'has_exception': tone == 'risk',
+            'has_changes': tone in {'ai', 'risk'},
         })
     return sections
+
+
+MSA_LIFECYCLE_STAGES = (
+    'Intake',
+    'Drafting',
+    'Commercial review',
+    'Legal review',
+    'Finance approval',
+    'Signature',
+    'Active',
+)
+
+MSA_STAGE_ALIASES = {
+    'Intake': 'Intake',
+    'Draft': 'Drafting',
+    'AI Draft': 'Drafting',
+    'Drafting': 'Drafting',
+    'Draft generation': 'Drafting',
+    'Commercial Review': 'Commercial review',
+    'Commercial review': 'Commercial review',
+    'Legal Review': 'Legal review',
+    'Legal review': 'Legal review',
+    'Legal approval': 'Legal review',
+    'Finance Review': 'Finance approval',
+    'Finance Approval': 'Finance approval',
+    'Finance approval': 'Finance approval',
+    'Approval': 'Signature',
+    'Signature': 'Signature',
+    'Repository': 'Active',
+    'Active': 'Active',
+}
+
+MSA_SECTION_STATE_TONES = {
+    'Exception': 'danger',
+    'Needs input': 'attention',
+    'Pending review': 'progress',
+    'Approved': 'success',
+    'Complete': 'success',
+}
+
+
+def _msa_normalize_stage(stage_name):
+    if not stage_name:
+        return 'Drafting'
+    return MSA_STAGE_ALIASES.get(stage_name, stage_name)
+
+
+def _msa_section_needs_input(value_keys, values):
+    if not value_keys:
+        return False
+    for key in value_keys:
+        value = values.get(key)
+        if value in (None, '', [], {}):
+            return True
+    return False
+
+
+def _msa_enrich_document_sections(sections, *, values, risk_cards, current_stage):
+    exception_anchors = {
+        card['section_anchor']
+        for card in risk_cards
+        if card.get('status') == 'Open' and card.get('section_anchor')
+    }
+    review_stages = {'Commercial review', 'Legal review', 'Finance approval'}
+    approved_stages = {'Signature', 'Active'}
+
+    enriched = []
+    for section in sections:
+        section = dict(section)
+        has_exception = section['section_id'] in exception_anchors or section.get('has_exception')
+        needs_input = _msa_section_needs_input(section.get('value_keys') or [], values)
+        if has_exception:
+            state = 'Exception'
+        elif needs_input:
+            state = 'Needs input'
+        elif current_stage in approved_stages and not has_exception:
+            state = 'Approved'
+        elif current_stage in review_stages and (section.get('has_changes') or section.get('tone') in {'ai', 'risk'}):
+            state = 'Pending review'
+        else:
+            state = 'Complete'
+        section['state'] = state
+        section['state_tone'] = MSA_SECTION_STATE_TONES[state]
+        enriched.append(section)
+    return enriched
 
 
 def _msa_audit_preview(workflow):
@@ -1266,9 +1404,19 @@ def _msa_workspace_context(workflow, actor=None):
     risk_codes = {signal.code for signal in risk_signals}
     draft_document = DraftDocument.objects.filter(workflow=workflow, is_current=True).order_by('-version').first()
     template_routes = list(ApprovalRoute.objects.filter(workflow_template=workflow.template).order_by('order')) if workflow.template_id else []
-    current_step = WorkflowStep.objects.filter(workflow=workflow, status=WorkflowStep.Status.IN_PROGRESS).order_by('order').first()
+    current_step = (
+        WorkflowStep.objects.filter(workflow=workflow, status=WorkflowStep.Status.IN_PROGRESS)
+        .select_related('assigned_to')
+        .order_by('order')
+        .first()
+    )
     if current_step is None:
-        current_step = WorkflowStep.objects.filter(workflow=workflow, status=WorkflowStep.Status.PENDING).order_by('order').first()
+        current_step = (
+            WorkflowStep.objects.filter(workflow=workflow, status=WorkflowStep.Status.PENDING)
+            .select_related('assigned_to')
+            .order_by('order')
+            .first()
+        )
 
     if {'finance_approval_required', 'nonstandard_payment_terms'} & risk_codes:
         next_action = 'Review Finance approval route'
@@ -1279,17 +1427,67 @@ def _msa_workspace_context(workflow, actor=None):
     else:
         next_action = 'Review generated MSA draft'
 
+    raw_stage = current_step.name if current_step else 'Drafting'
+    current_stage = _msa_normalize_stage(raw_stage)
+    if current_stage not in MSA_LIFECYCLE_STAGES:
+        current_stage = 'Commercial review' if risk_signals else 'Drafting'
+    active_timeline_index = MSA_LIFECYCLE_STAGES.index(current_stage)
+
+    owner = (
+        workflow.created_by.get_full_name() or workflow.created_by.username
+        if workflow.created_by else 'Unassigned'
+    )
+    if current_step and current_step.assigned_to_id:
+        stage_owner = current_step.assigned_to.get_full_name() or current_step.assigned_to.username
+    else:
+        stage_owner = owner
+    stage_status = current_step.get_status_display() if current_step else 'In progress'
+
+    risk_level = _risk_level_for_signals(risk_signals)
+    risk_cards = [_msa_risk_detail_for_signal(signal) for signal in risk_signals]
+    open_exceptions = sum(1 for card in risk_cards if card.get('status') == 'Open')
+    document_sections = _msa_enrich_document_sections(
+        _msa_document_sections(draft_document.content if draft_document else '', values, risk_codes),
+        values=values,
+        risk_cards=risk_cards,
+        current_stage=current_stage,
+    )
+
+    counterparty = (
+        values.get('counterparty')
+        or (workflow.contract.counterparty if workflow.contract_id else '')
+        or 'Counterparty pending'
+    )
+    risk_badge_tone = {
+        'Low': 'success',
+        'Medium': 'attention',
+        'High': 'danger',
+        'Critical': 'danger',
+    }.get(risk_level, 'neutral')
+
     return {
         'values': values,
-        'current_stage': current_step.name if current_step else 'AI Draft',
-        'owner': workflow.created_by.get_full_name() or workflow.created_by.username if workflow.created_by else 'Unassigned',
-        'risk_level': _risk_level_for_signals(risk_signals),
+        'display_title': f'MSA · {counterparty}',
+        'counterparty': counterparty,
+        'current_stage': current_stage,
+        'owner': owner,
+        'risk_level': risk_level,
+        'risk_badge_label': f'{risk_level} risk',
+        'risk_badge_tone': risk_badge_tone,
+        'open_exceptions': open_exceptions,
+        'open_exceptions_label': (
+            f'{open_exceptions} open exception{"s" if open_exceptions != 1 else ""}'
+            if open_exceptions else 'No open exceptions'
+        ),
         'next_action': next_action,
-        'timeline': ['Intake', 'AI Draft', 'Commercial Review', 'Legal Review', 'Finance Approval', 'Signature', 'Repository'],
-        'active_timeline_index': 2 if risk_signals else 1,
+        'primary_cta': next_action,
+        'timeline': list(MSA_LIFECYCLE_STAGES),
+        'active_timeline_index': active_timeline_index,
+        'active_stage_owner': stage_owner,
+        'active_stage_status': stage_status,
         'draft_document': draft_document,
-        'document_sections': _msa_document_sections(draft_document.content if draft_document else '', values, risk_codes),
-        'risk_cards': [_msa_risk_detail_for_signal(signal) for signal in risk_signals],
+        'document_sections': document_sections,
+        'risk_cards': risk_cards,
         'approval_cards': _msa_approval_cards(workflow, values, risk_codes, actor=actor),
         'finance_approval_triggered': bool({'finance_approval_required', 'nonstandard_payment_terms'} & risk_codes),
         'template_routes': template_routes,
@@ -1604,5 +1802,11 @@ def _build_workflow_editor_context(form, organization):
 
 @login_required
 def workflow_template_list(request):
+    from contracts.services.workflow_operations import workflow_operations_tabs
+
     templates = _workflow_template_queryset_for_organization(get_user_organization(request.user))
-    return render(request, 'contracts/workflow_template_list.html', {'workflow_templates': templates})
+    return render(request, 'contracts/workflow_template_list.html', {
+        'workflow_templates': templates,
+        'ops_tabs': workflow_operations_tabs(active='templates'),
+        'hide_app_footer': True,
+    })

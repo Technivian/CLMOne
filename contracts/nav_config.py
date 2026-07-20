@@ -9,8 +9,6 @@ surface instead of mixing migrated and legacy pages in the sidebar.
 """
 from django.utils.safestring import mark_safe
 
-from .permissions import can_manage_organization
-
 
 def _nav_icon(name, body):
     return mark_safe(
@@ -42,11 +40,6 @@ _ICON_TASK = _nav_icon(
     'obligations',
     '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/><path d="m8.5 14.5 2 2 4-4"/>'
 )
-_ICON_SETTINGS = _nav_icon(
-    'admin',
-    '<rect x="5" y="5" width="14" height="14" rx="3"/>'
-    '<path d="M9 9h6M9 12h6M9 15h6"/>'
-)
 _ICON_DPA_REVIEWS = _nav_icon(
     'dpa-reviews',
     '<path d="M12 3.5 6 6.2v4.1c0 4.2 2.6 7.7 6 9.5 3.4-1.8 6-5.3 6-9.5V6.2z"/><path d="m9.5 12.1 1.7 1.7 3.4-3.7"/><path d="M8.8 8.8h6.4"/>'
@@ -55,10 +48,6 @@ _ICON_DPA_REVIEWS = _nav_icon(
 
 def _always(user, organization):
     return True
-
-
-def _can_manage(user, organization):
-    return can_manage_organization(user, organization)
 
 
 _STANDARD_NAV = [
@@ -78,16 +67,6 @@ _STANDARD_NAV = [
      'active': lambda n: bool(n) and 'dpa_review' in n, 'visible': _always},
     {'kind': 'item', 'label': 'Obligations', 'url_name': 'contracts:obligations_workspace', 'icon': _ICON_TASK,
      'active': lambda n: bool(n) and ('obligations' in n or 'deadline' in n), 'visible': _always},
-    {'kind': 'group', 'label': 'Admin', 'icon': _ICON_SETTINGS, 'visible': _always, 'children': [
-        {'label': 'Settings', 'url_name': 'settings_hub',
-         'active': lambda n: n == 'settings_hub', 'visible': _always},
-        {'label': 'Team', 'url_name': 'contracts:organization_team',
-         'active': lambda n: n == 'organization_team', 'visible': _always},
-        {'label': 'Security', 'url_name': 'organization_security_settings',
-         'active': lambda n: n in ('organization_security_settings', 'organization_identity_settings'), 'visible': _can_manage},
-        {'label': 'Session Audit', 'url_name': 'organization_session_audit',
-         'active': lambda n: n == 'organization_session_audit', 'visible': _can_manage},
-    ]},
 ]
 
 

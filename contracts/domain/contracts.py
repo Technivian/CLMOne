@@ -78,7 +78,11 @@ class ContractData:
     end_date_display: Optional[str] = None
     due_overdue: bool = False
     contract_type_display: str = ""
+    contract_type_short: str = ""
     stage_display: str = ""
+    stage_display_full: str = ""
+    has_exception: bool = False
+    next_action: str = ""
 
     def to_dict(self):
         """Convert to dictionary for JSON serialization"""

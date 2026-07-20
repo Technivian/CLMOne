@@ -76,7 +76,7 @@
 .cform-route-step-note { font-size: 9px; color: var(--text-muted); margin-top: 1px; }
 
 /* Phase 5G: shared DPA intake chrome (overlaps NDA/MSA builder field/panel rhythm). */
-.dpa-intake { display:grid; grid-template-columns:220px minmax(0, 1fr); gap:var(--space-32); width:100%; max-width:1180px; margin:0 auto; }
+.dpa-intake { display:grid; grid-template-columns:minmax(0, 1fr); gap:var(--space-16); width:100%; max-width:1180px; margin:0 auto; }
 .dpa-step-card { border:1px solid var(--color-border-soft); border-radius:var(--radius-subpanel); background:var(--card); box-shadow:var(--shadow-card); padding:var(--space-24); }
 .dpa-step-eyebrow { margin:0 0 var(--space-8); color:var(--seal-dark); font:var(--text-eyebrow); }
 .dpa-step-title { margin:0; color:var(--ink-900); font:var(--text-section); }
@@ -132,7 +132,7 @@
 @media (min-width:1000px) { .dpa-field-grid { grid-template-columns:repeat(3, minmax(0, 1fr)); } }
 @media (max-width:900px) { .dpa-review-grid { grid-template-columns:1fr; } }
 @media (max-width:700px) {
-  .dpa-intake { grid-template-columns:1fr; gap:var(--space-16); }
+  .dpa-intake { gap:var(--space-16); }
   .dpa-field-grid { grid-template-columns:1fr; }
   .dpa-field--wide { grid-column:auto; }
   .dpa-form-actions { flex-wrap:wrap; }

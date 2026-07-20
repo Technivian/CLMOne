@@ -1,241 +1,229 @@
-
 {% extends 'base.html' %}
+{% load clmone_format %}
 
-{% block title %}Workflow Dashboard – CLM One{% endblock %}
+{% block title %}Workflow Operations – CLM One{% endblock %}
+{% block authenticated_page_title %}Workflow Operations{% endblock %}
+{% block authenticated_page_subtitle %}Track active contract workflows, approvals, routing, and templates.{% endblock %}
 
 {% block content %}
-<div class="page-wrap reveal-stagger">
-    <div class="workspace-main hero-shell mb-6">
-        <div class="workspace-main-head">
-            <div>
-                <h1 class="workspace-title">Workflow Designer</h1>
-                <p class="workspace-subtitle">Track and manage contract workflows across review, negotiation, signature, and execution.</p>
-                <div class="workspace-kicker-row">
-                    <span class="workspace-kicker"><strong>{{ workflows|length }}</strong> workflows in view</span>
-                    <span class="workspace-kicker"><strong>{{ request.GET.status|default:'All statuses' }}</strong> active status filter</span>
-                    <span class="workspace-kicker"><strong>{{ request.GET.contract_type|default:'All contract types' }}</strong> contract scope</span>
-                </div>
-            </div>
-            <div class="workspace-tools">
-                <button id="filters-toggle-btn" aria-expanded="false" aria-controls="filters-panel" class="dc-ds-button dc-ds-button--quiet inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border">
-                    Filters
-                </button>
-            </div>
-        </div>
-        <div class="workspace-toolbar">
-            <div class="summary-grid w-full">
-                <div class="summary-card">
-                    <div class="summary-label">Visible workflows</div>
-                    <div class="summary-value">{{ workflows|length }}</div>
-                    <div class="summary-meta">Current page selection</div>
-                </div>
-                <div class="summary-card">
-                    <div class="summary-label">Current search</div>
-                    <div class="summary-value">{% if request.GET.search %}{{ request.GET.search }}{% else %}All records{% endif %}</div>
-                    <div class="summary-meta">Search and filter context</div>
-                </div>
-                <div class="summary-card">
-                    <div class="summary-label">Next step</div>
-                    <div class="summary-value">Start workflow</div>
-                    <div class="summary-meta">Launch a new sequence or refine templates</div>
-                </div>
-            </div>
-            <div class="workspace-tools">
-                <a href="{% url 'contracts:workflow_create' %}" class="dc-ds-button dc-ds-button--primary inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg">
-                    <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                    </svg>
-                    Start workflow
-                </a>
-                <a href="{{ approval_rules_url }}" class="dc-ds-button dc-ds-button--quiet inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border">
-                    Approval rules
-                </a>
-                <a href="{{ approval_requests_url }}" class="dc-ds-button dc-ds-button--quiet inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border">
-                    Approval requests
-                </a>
-                <a href="{% url 'contracts:workflow_template_list' %}" class="dc-ds-button dc-ds-button--quiet inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border">
-                    Templates
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <div class="summary-grid mb-6">
-        <div class="summary-card">
-            <div class="summary-label">Active routing rules</div>
-            <div class="summary-value">{{ approval_rule_count }}</div>
-            <div class="summary-meta">Approval rules that can auto-create routing requests</div>
-        </div>
-        <div class="summary-card">
-            <div class="summary-label">Recent approval requests</div>
-            <div class="summary-value">{{ approval_requests|length }}</div>
-            <div class="summary-meta">Current routing output across workflows</div>
-        </div>
-    </div>
-
-    <div class="panel hidden mb-6" id="filters-panel" aria-hidden="true">
-        <div class="panel-inner">
-            <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div>
-                    <label class="form-label block mb-1">Search</label>
-                    <input type="text" name="search" value="{{ request.GET.search }}" placeholder="Search workflows..." class="input-base w-full">
-                </div>
-                <div>
-                    <label class="form-label block mb-1">Status</label>
-                    <select name="status" class="select-base w-full">
-                        <option value="">All Statuses</option>
-                        <option value="ACTIVE" {% if request.GET.status == 'ACTIVE' %}selected{% endif %}>Active</option>
-                        <option value="COMPLETED" {% if request.GET.status == 'COMPLETED' %}selected{% endif %}>Completed</option>
-                        <option value="ON_HOLD" {% if request.GET.status == 'ON_HOLD' %}selected{% endif %}>On Hold</option>
-                        <option value="CANCELLED" {% if request.GET.status == 'CANCELLED' %}selected{% endif %}>Cancelled</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="form-label block mb-1">Contract Type</label>
-                    <select name="contract_type" class="select-base w-full">
-                        <option value="">All Types</option>
-                        <option value="NDA" {% if request.GET.contract_type == 'NDA' %}selected{% endif %}>NDA</option>
-                        <option value="MSA" {% if request.GET.contract_type == 'MSA' %}selected{% endif %}>MSA</option>
-                        <option value="SOW" {% if request.GET.contract_type == 'SOW' %}selected{% endif %}>SOW</option>
-                        <option value="EMPLOYMENT" {% if request.GET.contract_type == 'EMPLOYMENT' %}selected{% endif %}>Employment</option>
-                    </select>
-                </div>
-                <div class="flex items-end gap-2">
-                    <button type="submit" class="dc-ds-button dc-ds-button--primary text-white w-full">Apply Filters</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div class="panel overflow-hidden">
-        <div class="panel-head">
-            <div class="panel-head-inner">
-                <div class="dot dot-blue"></div>
-                <span class="panel-title">Workflow pipeline</span>
-            </div>
-            <span class="panel-link">{{ workflows|length }} in view</span>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="tbl-table min-w-full">
-                <thead class="tbl-head">
-                    <tr>
-                        <th class="tbl-th px-6 py-3 text-left text-xs uppercase tracking-wider">Workflow Name</th>
-                        <th class="tbl-th px-6 py-3 text-left text-xs uppercase tracking-wider">Stage</th>
-                        <th class="tbl-th px-6 py-3 text-left text-xs uppercase tracking-wider">Agreement Date</th>
-                        <th class="tbl-th px-6 py-3 text-left text-xs uppercase tracking-wider">Jurisdiction</th>
-                        <th class="tbl-th px-6 py-3 text-left text-xs uppercase tracking-wider">Projected Value</th>
-                        <th class="tbl-th px-6 py-3 text-left text-xs uppercase tracking-wider">Effective Date</th>
-                        <th class="tbl-th px-6 py-3 text-left text-xs uppercase tracking-wider">Business Unit</th>
-                        <th class="tbl-th px-6 py-3 text-left text-xs uppercase tracking-wider">Progress</th>
-                    </tr>
-                </thead>
-                <tbody class="tbl-body">
-                    {% for workflow in workflows %}
-                    <tr class="tbl-row">
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="flex items-center">
-                                <span class="status-dot mr-3
-                                    {% if workflow.status == 'ACTIVE' %}green
-                                    {% elif workflow.status == 'COMPLETED' %}blue
-                                    {% elif workflow.status == 'ON_HOLD' %}yellow
-                                    {% else %}gray{% endif %}">
-                                </span>
-                                <div>
-                                    <a href="{% url 'contracts:workflow_detail' workflow.pk %}" class="c-link font-medium">
-                                        {{ workflow.contract.title }}
-                                    </a>
-                                    <div class="item-meta">{{ workflow.contract.counterparty }}</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="
-                                {% if workflow.current_stage == 'Internal Review' %}dc-ds-badge--attention
-                                {% elif workflow.current_stage == 'External Review' %}dc-ds-badge--progress
-                                {% elif workflow.current_stage == 'Negotiation' %}dc-ds-badge--special
-                                {% elif workflow.current_stage == 'Signature' %}dc-ds-badge--success
-                                {% elif workflow.current_stage == 'Execution' %}dc-ds-badge--neutral
-                                {% else %}dc-ds-badge--neutral{% endif %}">
-                                {{ workflow.current_stage }}
-                            </span>
-                        </td>
-                        <td class="tbl-td px-6 py-4 whitespace-nowrap text-sm">
-                            {{ workflow.contract.milestone_date|date:"M d, Y"|default:"—" }}
-                        </td>
-                        <td class="tbl-td px-6 py-4 whitespace-nowrap text-sm">
-                            {{ workflow.contract.get_jurisdiction_display }}
-                        </td>
-                        <td class="tbl-td px-6 py-4 whitespace-nowrap text-sm">
-                            {% if workflow.contract.value %}
-                                ${{ workflow.contract.value|floatformat:2 }}
-                            {% else %}
-                                —
-                            {% endif %}
-                        </td>
-                        <td class="tbl-td px-6 py-4 whitespace-nowrap text-sm">
-                            {{ workflow.projected_completion|date:"M d, Y"|default:"—" }}
-                        </td>
-                        <td class="tbl-td px-6 py-4 whitespace-nowrap text-sm">
-                            {{ workflow.contract.get_contract_type_display }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="flex items-center">
-                                <div class="progress-bar-bg mr-2">
-                                    <div class="progress-bar-fill workflow-progress-fill" data-width="{{ workflow.progress_percentage }}"></div>
-                                </div>
-                                <span class="text-sm c-muted">{{ workflow.progress_percentage }}%</span>
-                            </div>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="8" class="empty-state">
-                            No workflows found. <a href="{% url 'contracts:contract_template_picker' %}" class="c-link">Create a contract</a> to start a workflow.
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    {% if is_paginated %}
-    <div class="flex items-center justify-between">
-        <p class="text-sm c-muted">
-            Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} workflows
-        </p>
-        <div class="flex gap-2">
-            {% if page_obj.has_previous %}
-                <a href="?page={{ page_obj.previous_page_number }}" class="dc-ds-button dc-ds-button--quiet inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg border">Previous</a>
-            {% endif %}
-            {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}" class="dc-ds-button dc-ds-button--quiet inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg border">Next</a>
-            {% endif %}
-        </div>
-    </div>
-    {% endif %}
-</div>
-
+{% include "components/_list_page_shell_styles.html" %}
 <style nonce="{{ csp_nonce }}">
-.tbl-table { border-collapse: collapse; }
-.tbl-body tr { border-bottom: 1px solid var(--card-border); }
-.tbl-row:hover { background: var(--sidebar-hover); }
+  .workflow-ops-page .clm-list-summary { --dc-ds-summary-columns: 2; }
+  .workflow-ops-page .workflow-ops-row { cursor: pointer; }
+  .workflow-ops-page .workflow-ops-row:hover td { background: var(--sidebar-hover); }
+  .workflow-ops-page .workflow-ops-row:focus-visible { outline: none; box-shadow: inset var(--ds-focus-ring); }
+  .workflow-ops-page .workflow-ops-name { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .workflow-ops-page .workflow-ops-name strong { color: var(--ink-900); font-size: 13px; font-weight: 700; }
+  .workflow-ops-page .workflow-ops-name span { color: var(--ink-500); font-size: 12px; }
+  .workflow-ops-page .workflow-ops-badges { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .workflow-ops-page .workflow-ops-progress {
+    display: inline-flex; align-items: center; gap: 8px; min-width: 110px;
+    font-variant-numeric: tabular-nums; color: var(--ink-600); font-size: 12px; font-weight: 650;
+  }
+  .workflow-ops-page .workflow-ops-progress__track {
+    flex: 1 1 auto; height: 6px; border-radius: 999px; background: var(--well); overflow: hidden;
+  }
+  .workflow-ops-page .workflow-ops-progress__fill {
+    height: 100%; border-radius: inherit; background: var(--seal);
+  }
+  .workflow-ops-page .workflow-ops-inline-filters {
+    display: inline-flex; gap: 8px; flex-wrap: wrap; align-items: center;
+  }
+  .workflow-ops-page .workflow-ops-inline-filters .dc-ds-control {
+    min-width: 140px; width: auto;
+  }
+  @media (max-width: 900px) {
+    .workflow-ops-page .clm-list-summary { --dc-ds-summary-columns: 2; }
+    .workflow-ops-page .workflow-ops-inline-filters { width: 100%; }
+    .workflow-ops-page .workflow-ops-inline-filters .dc-ds-control { flex: 1 1 140px; }
+  }
+  @media (max-width: 560px) {
+    .workflow-ops-page .clm-list-summary { --dc-ds-summary-columns: 1; }
+  }
 </style>
 
+<div id="workflow-ops-root" class="dc-ds-page dc-ds-page--wide dc-ds-page-flow dc-ds-list-page clm-list-page workflow-ops-page">
+  {% url 'contracts:workflow_dashboard' as ops_url %}
+
+  <form method="get" action="{{ ops_url }}" id="workflow-ops-filters-form">
+    <header class="clm-list-shell dc-ds-filterbar dc-ds-table-toolbar dc-ds-list-toolbar" aria-label="Workflow operations controls">
+      <div class="clm-list-view-header">
+        {% include "components/_workflow_operations_tabs.html" with tabs=ops_tabs %}
+        <div class="clm-list-view-actions">
+          <a class="dc-ds-button dc-ds-button--primary" href="{{ workflow_create_url }}">Start workflow</a>
+        </div>
+      </div>
+
+      <div class="clm-list-filter-controls">
+        <div class="clm-list-search-field">
+          {% include "design_system/icon.html" with name="search" class_name="clm-list-search-icon" %}
+          <input class="dc-ds-control" type="search" id="workflow-ops-search" name="q" value="{{ filters.search }}" placeholder="Search workflows" aria-label="Search workflows">
+        </div>
+        <div class="workflow-ops-inline-filters">
+          <label class="sr-only" for="workflow-ops-status">Status</label>
+          <select id="workflow-ops-status" class="dc-ds-control" name="status" aria-label="Status">
+            <option value="">All statuses</option>
+            {% for value, label in status_filter_choices %}
+            <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+          <label class="sr-only" for="workflow-ops-type">Contract type</label>
+          <select id="workflow-ops-type" class="dc-ds-control" name="contract_type" aria-label="Contract type">
+            <option value="">All contract types</option>
+            {% for value, label in contract_type_choices %}
+            <option value="{{ value }}" {% if filters.contract_type == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+          <label class="sr-only" for="workflow-ops-owner">Owner</label>
+          <select id="workflow-ops-owner" class="dc-ds-control" name="owner" aria-label="Owner">
+            <option value="">All owners</option>
+            <option value="unassigned" {% if filters.owner == 'unassigned' %}selected{% endif %}>Unassigned</option>
+            {% for owner in owner_choices %}
+            <option value="{{ owner.pk }}" {% if filters.owner == owner.pk|stringformat:"s" %}selected{% endif %}>{{ owner.get_full_name|default:owner.username }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="clm-list-actions-stack">
+          <p class="clm-list-result-count" aria-live="polite">{{ workflow_rows|length }} workflow{{ workflow_rows|length|pluralize }}</p>
+          <button id="workflow-ops-filter-toggle" type="button" class="clm-list-filter-toggle dc-ds-button dc-ds-button--ghost" aria-expanded="{% if more_filters_active %}true{% else %}false{% endif %}" aria-controls="workflow-ops-more-filters">More filters</button>
+        </div>
+      </div>
+    </header>
+
+    <section id="workflow-ops-more-filters" class="clm-list-filter-drawer dc-ds-surface p-3{% if more_filters_active %} is-open{% endif %}" aria-label="More filters">
+      <div class="clm-list-filter-drawer__header">
+        <h2 class="clm-list-filter-drawer__title">More filters</h2>
+        <a class="dc-ds-button dc-ds-button--quiet text-sm" href="{{ ops_clear_url }}">Clear filters</a>
+      </div>
+      <div class="clm-list-filter-drawer__body">
+        <label for="workflow-ops-jurisdiction">Jurisdiction
+          <input id="workflow-ops-jurisdiction" class="dc-ds-control" type="text" name="jurisdiction" value="{{ filters.jurisdiction }}" placeholder="e.g. EU, New York">
+        </label>
+        <label for="workflow-ops-business-unit">Business unit
+          <input id="workflow-ops-business-unit" class="dc-ds-control" type="text" name="business_unit" value="{{ filters.business_unit }}" placeholder="Business unit">
+        </label>
+        <label for="workflow-ops-exception">Exceptions
+          <select id="workflow-ops-exception" class="dc-ds-control" name="exception">
+            <option value="">Any</option>
+            <option value="1" {% if filters.exception_only %}selected{% endif %}>Exception only</option>
+          </select>
+        </label>
+        <div class="clm-list-filter-drawer__actions">
+          <button class="dc-ds-button dc-ds-button--primary" type="submit">Apply filters</button>
+        </div>
+      </div>
+    </section>
+  </form>
+
+  <div class="dc-ds-summary clm-list-summary" aria-label="Workflow operations summary">
+    <div class="dc-ds-summary__item {% if active_workflow_count %}dc-ds-summary__item--info{% else %}dc-ds-summary__item--clear{% endif %}">
+      <span class="dc-ds-summary__label">Active workflows</span>
+      <strong class="dc-ds-summary__value">{{ active_workflow_count }}</strong>
+    </div>
+    <a class="dc-ds-summary__item {% if pending_approval_count %}dc-ds-summary__item--info{% else %}dc-ds-summary__item--clear{% endif %}" href="{{ approval_requests_url }}" style="text-decoration:none">
+      <span class="dc-ds-summary__label">Pending approvals</span>
+      <strong class="dc-ds-summary__value">{{ pending_approval_count }}</strong>
+    </a>
+  </div>
+
+  <div class="dc-ds-table-wrap">
+    <table class="dc-ds-table w-full text-sm" aria-label="Active workflows">
+      <caption class="sr-only">Active contract workflows with stage, type, jurisdiction, dates, value, owner, and progress.</caption>
+      <thead class="tbl-head">
+        <tr>
+          <th class="tbl-th" scope="col">Workflow</th>
+          <th class="tbl-th" scope="col">Stage</th>
+          <th class="tbl-th" scope="col">Agreement type</th>
+          <th class="tbl-th" scope="col">Business unit</th>
+          <th class="tbl-th" scope="col">Jurisdiction</th>
+          <th class="tbl-th" scope="col">Agreement date</th>
+          <th class="tbl-th" scope="col">Key date</th>
+          <th class="tbl-th wq-col-num" scope="col">Value</th>
+          <th class="tbl-th" scope="col">Owner</th>
+          <th class="tbl-th" scope="col">Progress</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in workflow_rows %}
+        <tr class="workflow-ops-row" data-href="{{ row.detail_url }}" tabindex="0" aria-label="Open {{ row.display_name }}">
+          <td>
+            <div class="workflow-ops-name">
+              <div class="workflow-ops-badges">
+                <strong>{{ row.display_name }}</strong>
+                {% if row.has_exception %}<span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--attention">Exception</span>{% endif %}
+                {% if row.status != 'ACTIVE' %}<span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--neutral">{{ row.status_label }}</span>{% endif %}
+              </div>
+              <span>{{ row.counterparty }}</span>
+            </div>
+          </td>
+          <td><span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--neutral">{{ row.stage }}</span></td>
+          <td>{{ row.agreement_type }}</td>
+          <td>{{ row.business_unit }}</td>
+          <td>{{ row.jurisdiction }}</td>
+          <td>{% if row.agreement_date %}{{ row.agreement_date|date:"j M Y" }}{% else %}—{% endif %}</td>
+          <td>{% if row.key_date %}{{ row.key_date|date:"j M Y" }}{% else %}—{% endif %}</td>
+          <td class="wq-col-num">{% if row.value %}{{ row.value|money:row.currency }}{% else %}—{% endif %}</td>
+          <td>{{ row.owner_label }}</td>
+          <td>
+            <div class="workflow-ops-progress" aria-label="{{ row.progress_percentage }} percent complete">
+              <div class="workflow-ops-progress__track" aria-hidden="true">
+                <div class="workflow-ops-progress__fill" style="width: {{ row.progress_percentage }}%"></div>
+              </div>
+              <span>{{ row.progress_percentage }}%</span>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="10">
+            {% if filters_active %}
+              {% include "design_system/empty_state.html" with icon="search" title="No workflows match these filters" reason="The current search or filters exclude every workflow in this workspace." how="Clear filters to see all active workflows, or start a new workflow for a contract." action_url=ops_clear_url action_label="Clear filters" action_tone="ghost" %}
+            {% else %}
+              {% include "design_system/empty_state.html" with icon="workflow" title="No active workflows yet" reason="Workflows appear here when contracts are launched into a governed review path." how="Start a workflow from an existing contract, or create a new contract from the template picker." action_url=workflow_create_url action_label="Start workflow" %}
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
 <script nonce="{{ csp_nonce }}">
-function toggleFilters() {
-    const panel = document.getElementById('filters-panel');
-    const btn = document.getElementById('filters-toggle-btn');
-    const isHidden = panel.classList.toggle('hidden');
-    panel.setAttribute('aria-hidden', isHidden ? 'true' : 'false');
-    btn.setAttribute('aria-expanded', isHidden ? 'false' : 'true');
-}
-
-document.getElementById('filters-toggle-btn').addEventListener('click', toggleFilters);
-
-document.querySelectorAll('.workflow-progress-fill[data-width]').forEach((bar) => {
-    const width = Number(bar.dataset.width || 0);
-    bar.style.width = `${Math.max(0, Math.min(100, width))}%`;
-});
+(function () {
+  var root = document.getElementById('workflow-ops-root');
+  if (!root) return;
+  var form = document.getElementById('workflow-ops-filters-form');
+  var filterToggle = document.getElementById('workflow-ops-filter-toggle');
+  var filterDrawer = document.getElementById('workflow-ops-more-filters');
+  if (filterToggle && filterDrawer) {
+    filterToggle.addEventListener('click', function () {
+      var open = filterDrawer.classList.toggle('is-open');
+      filterToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+  }
+  if (form) {
+    ['workflow-ops-status', 'workflow-ops-type', 'workflow-ops-owner'].forEach(function (id) {
+      var control = document.getElementById(id);
+      if (control) control.addEventListener('change', function () { form.submit(); });
+    });
+  }
+  function openRow(row) {
+    var href = row && row.getAttribute('data-href');
+    if (href) window.location.href = href;
+  }
+  root.addEventListener('click', function (event) {
+    var row = event.target.closest('tr.workflow-ops-row');
+    if (!row || event.target.closest('a, button, input, select, label')) return;
+    openRow(row);
+  });
+  root.addEventListener('keydown', function (event) {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    var row = event.target.closest('tr.workflow-ops-row');
+    if (!row || event.target !== row) return;
+    event.preventDefault();
+    openRow(row);
+  });
+})();
 </script>
 {% endblock %}

@@ -111,27 +111,31 @@ test('MSA governed drafting cockpit generates a workflow workspace and dashboard
   await page.click('#submit-msa-btn');
 
   await expect(page).toHaveURL(/\/contracts\/workflows\/\d+\/?$/);
-  await expect(page.getByText('Workflow Timeline')).toBeVisible();
+  await expect(page.getByText('Lifecycle')).toBeVisible();
   await expect(page.getByText(counterparty).first()).toBeVisible();
-  await expect(page.getByText('Generated MSA draft').first()).toBeVisible();
-  await page.getByRole('button', { name: /Active exceptions/ }).click();
+  await expect(page.getByRole('heading', { name: new RegExp(`MSA · ${counterparty}`) })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Review Finance approval route|Review MSA risk|Review privacy|Review generated MSA/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Actions' }).click();
+  await expect(page.getByRole('menuitem', { name: 'Send to Legal Review' })).toBeVisible();
+  await expect(page.getByRole('menuitem', { name: 'Send to Finance' })).toBeVisible();
+  await expect(page.getByRole('menuitem', { name: 'Download MSA summary' })).toBeVisible();
+  await expect(page.getByRole('menuitem', { name: 'Export Word' })).toBeVisible();
+  await page.getByRole('button', { name: /open exception/i }).click();
   const governanceDrawer = page.getByRole('dialog', { name: 'Governance details' });
   await expect(governanceDrawer.getByRole('heading', { name: 'Risk monitoring' })).toBeVisible();
   await expect(governanceDrawer.getByRole('heading', { name: 'Approval route' })).toBeVisible();
   await expect(governanceDrawer.getByRole('heading', { name: 'Audit details' })).toBeVisible();
   await governanceDrawer.getByRole('button', { name: 'Close governance details' }).click();
-  await expect(page.getByRole('button', { name: 'Send to Legal Review' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Send to Finance' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Download MSA summary' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Export Word' })).toBeVisible();
 
   const dataProtectionStep = page.locator('.dc-ds-workspace__drafting-step').filter({ hasText: 'Data Protection' });
   await dataProtectionStep.locator('summary').click();
+  await expect(dataProtectionStep.locator('.dc-ds-badge')).toBeVisible();
   await dataProtectionStep.locator('[data-clause-link="data-protection"]').click();
   await expect(page.locator('#data-protection')).toHaveClass(/is-linked/);
 
-  await expect(page.getByRole('link', { name: 'View contract record' })).toBeVisible();
-  await page.getByRole('link', { name: 'View contract record' }).click();
+  await page.getByRole('button', { name: 'Actions' }).click();
+  await expect(page.getByRole('menuitem', { name: 'View contract record' })).toBeVisible();
+  await page.getByRole('menuitem', { name: 'View contract record' }).click();
   await expect(page).toHaveURL(/\/contracts\/\d+\/?$/);
   await expect(page.locator('.dc-ds-workspace--record')).toBeVisible();
   await expect(page.getByText(counterparty).first()).toBeVisible();

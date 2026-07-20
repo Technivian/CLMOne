@@ -1,0 +1,48 @@
+{% load clmone_format %}
+{% if job_rows %}
+<div class="dc-ds-table-wrap">
+  <table class="dc-ds-table w-full text-sm" aria-label="Background jobs">
+    <thead>
+      <tr>
+        <th scope="col">Job</th>
+        <th scope="col">Status</th>
+        <th scope="col">Started</th>
+        <th scope="col">Duration</th>
+        <th scope="col">Attempts</th>
+        <th scope="col">Trigger</th>
+        <th scope="col">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for job in job_rows %}
+      <tr{% if selected_job_row and selected_job_row.id == job.id %} class="is-selected"{% endif %}>
+        <td>
+          <div class="font-medium">{{ job.job_type }}</div>
+          <div class="text-xs c-muted">#{{ job.id }}</div>
+        </td>
+        <td>{% include "design_system/status_badge.html" with label=job.status_display tone=job.status_tone size="sm" %}</td>
+        <td>{{ job.started_at|date:"d M Y H:i"|default:"—" }}</td>
+        <td>{{ job.duration }}</td>
+        <td>{{ job.attempts }}</td>
+        <td>{{ job.trigger }}</td>
+        <td>
+          <div class="flex items-center gap-2 flex-wrap">
+            <a class="dc-ds-button dc-ds-button--ghost dc-ds-button--sm" href="{% url 'operations_dashboard' %}?tab=jobs&amp;job={{ job.id }}">Details</a>
+            {% if job.can_retry %}
+            <form method="post" action="{% url 'operations_dashboard' %}" data-confirm="Retry failed job {{ job.job_type }} (#{{ job.id }})?">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="retry_job">
+              <input type="hidden" name="job_id" value="{{ job.id }}">
+              <button type="submit" class="dc-ds-button dc-ds-button--quiet dc-ds-button--sm">Retry</button>
+            </form>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+{% include "design_system/empty_state.html" with title="No background jobs yet" copy="Queue health is clear. Run an operational drill to generate reminder and extraction work evidence." action_url="" action_label="" %}
+{% endif %}

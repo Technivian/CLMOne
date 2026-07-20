@@ -191,6 +191,25 @@ class UserProfile(models.Model):
     mfa_enrollment_code_sent_at = models.DateTimeField(null=True, blank=True)
     mfa_recovery_code_hashes = models.JSONField(default=list, blank=True)
     session_revocation_counter = models.PositiveIntegerField(default=0)
+    # Account preferences — self-service presentation and notification controls.
+    class Language(models.TextChoices):
+        EN = 'en', 'English'
+        NL = 'nl', 'Nederlands'
+        DE = 'de', 'Deutsch'
+        FR = 'fr', 'Français'
+
+    class DateFormat(models.TextChoices):
+        DMY_LONG = 'd M Y', '31 Jan 2026'
+        ISO = 'Y-m-d', '2026-01-31'
+        MDY = 'm/d/Y', '01/31/2026'
+        DMY = 'd/m/Y', '31/01/2026'
+
+    language = models.CharField(max_length=8, choices=Language.choices, default=Language.EN)
+    timezone = models.CharField(max_length=64, default='UTC')
+    date_format = models.CharField(max_length=16, choices=DateFormat.choices, default=DateFormat.DMY_LONG)
+    notify_contract_updates = models.BooleanField(default=True)
+    notify_workflow_events = models.BooleanField(default=True)
+    notify_security_alerts = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

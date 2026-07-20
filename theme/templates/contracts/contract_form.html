@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load clmone_format %}
 {% block title %}{% if form.instance.pk %}Edit Contract{% else %}New Contract{% endif %} – CLM One{% endblock %}
+{% block authenticated_page_title %}{% if form.instance.pk %}Edit Contract{% else %}New Contract Request{% endif %}{% endblock %}
 {% block authenticated_page_back %}
 {% if form.instance.pk %}
 <a href="{% url 'contracts:contract_detail' form.instance.pk %}" class="topbar-back-link" data-workspace-back aria-label="Back to contract" title="Back to contract">
@@ -12,11 +13,18 @@
 </a>
 {% endif %}
 {% endblock %}
+{% block authenticated_page_actions %}
+<div class="topbar-page-actions" id="contract-form-top-actions">
+  <a href="{% url 'contracts:repository' %}" class="dc-ds-button dc-ds-button--link">Cancel</a>
+  <button type="submit" form="contract-form" name="preview_draft" value="1" class="dc-ds-button dc-ds-button--quiet">Save draft</button>
+  <button type="submit" form="contract-form" class="dc-ds-button dc-ds-button--primary">
+    {% if form.instance.pk %}Update Contract{% else %}Create contract{% endif %}
+  </button>
+</div>
+{% endblock %}
 {% block content %}
 <style nonce="{{ csp_nonce }}">
 /* editor-page header: compact 20px title (Ironclad designer convention) */
-.arch-header .arch-title { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
-.arch-header { margin-bottom: 4px; }
 .page-wrap.contract-form-page { padding: 10px 4px 24px 10px; }
 .contract-form-page .arch-workspace-main {
   padding-bottom: 120px;
@@ -35,133 +43,77 @@ body.nav-collapsed .contract-form-page {
 }
 .cform-template-banner strong { font-weight: 700; }
 .cform-template-banner svg { width: 16px; height: 16px; color: var(--primary); flex-shrink: 0; }
-/* CLM command strip: workflow-first, restrained Ironclad-style density */
-.cform-stepper {
-  background: transparent;
-  border: 0;
-  border-radius: 0;
-  padding: 0;
-  margin-bottom: 16px;
+/* Compact intake context bar — single row; workflow is opt-in */
+.cform-context-bar {
+  margin: 0 0 10px;
 }
-.cform-stepper-head {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 16px;
-  align-items: start;
-  padding: 8px 16px 2px;
-  border-bottom: 0;
-  background: transparent;
-  border-radius: 0;
-  box-shadow: none;
-}
-.cform-stepper-title-row {
+.cform-context-bar__row {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
   flex-wrap: wrap;
-}
-.cform-kicker {
-  color: var(--primary);
-  font-size: 11px;
-  line-height: 1;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  align-items: center;
+  gap: 6px 8px;
+  min-width: 0;
 }
 .cform-command-title {
-  margin-top: 4px;
+  margin: 0;
   color: var(--text-primary);
-  font-size: 18px;
+  font-size: 14px;
   line-height: 1.25;
-  font-weight: 800;
+  font-weight: 750;
   letter-spacing: -0.01em;
 }
 .cform-stepper-badge {
-  margin-top: 4px;
   flex: none;
 }
-.cform-command-copy {
-  margin-top: 10px;
-  color: var(--text-secondary);
-  font-size: 13px;
-  line-height: 1.45;
+.cform-context-bar__meta {
+  margin: 0;
+  color: var(--ink-500);
+  font: var(--text-small);
+  line-height: 1.35;
 }
-.cform-command-stats {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin-top: 2px;
-  border: 1px solid var(--card-border);
-  border-radius: 9px;
-  overflow: hidden;
-  background: var(--surface-alt);
+.cform-context-bar__meta strong {
+  color: var(--ink-800);
+  font-weight: 650;
 }
-.cform-command-stat {
-  min-width: 0;
-  padding: 10px 12px;
-  background: var(--card-bg);
-  border-left: 1px solid var(--card-border);
-  display: grid;
-  grid-template-columns: 28px minmax(0, 1fr);
-  gap: 8px;
-  align-items: center;
+.cform-context-bar__sep {
+  color: var(--ink-300);
+  user-select: none;
 }
-.cform-command-stat:first-child { border-left: 0; }
-.cform-command-stat-icon {
-  width: 28px;
-  height: 28px;
-  border-radius: 999px;
-  display: grid;
-  place-items: center;
-  background: var(--surface-alt);
-  color: var(--text-muted);
-  flex-shrink: 0;
+.cform-workflow-reveal {
+  margin: 0;
 }
-.cform-command-stat-icon svg {
-  width: 14px;
-  height: 14px;
+.cform-workflow-reveal[open] {
+  flex: 1 1 100%;
 }
-.cform-command-stat-copy {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-.cform-stat-label {
-  color: var(--text-muted);
-  font-size: 9.5px;
-  line-height: 1;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-.cform-stat-value {
-  display: block;
-  color: var(--text-primary);
-  font-size: 12px;
-  line-height: 1.2;
-  font-weight: 800;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.cform-stat-meta {
-  color: var(--text-muted);
-  font-size: 11px;
-  line-height: 1.2;
+.cform-workflow-reveal > summary {
+  list-style: none;
+  display: inline;
+  cursor: pointer;
+  color: var(--ink-600);
+  font: var(--text-small);
   font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.cform-workflow-reveal > summary::-webkit-details-marker { display: none; }
+.cform-workflow-reveal > summary:hover,
+.cform-workflow-reveal > summary:focus-visible {
+  color: var(--ink-900);
+}
+.cform-workflow-reveal[open] > summary {
+  color: var(--ink-800);
 }
 .cform-path {
-  padding: 4px 8px 2px;
+  padding: 10px 0 0;
   background: transparent;
 }
 .cform-stepper .lc-track {
   position: relative;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
   align-items: start;
   width: 100%;
-  padding: 2px 0 0;
+  padding: 0;
 }
 .cform-stepper .lc-step {
   position: relative;
@@ -171,16 +123,16 @@ body.nav-collapsed .contract-form-page {
   flex-direction: column;
   align-items: center;
   gap: 0;
-  padding: 0 4px;
+  padding: 0 2px;
 }
 .cform-stepper .lc-step::before { content: none; }
 .cform-stepper .lc-step:not(:last-child)::after {
   content: "";
   position: absolute;
   z-index: 0;
-  top: 9px;
-  left: calc(50% + 8px);
-  width: calc(100% - 16px);
+  top: 8px;
+  left: calc(50% + 7px);
+  width: calc(100% - 14px);
   height: 2px;
   background: var(--line);
   border-radius: 999px;
@@ -189,8 +141,8 @@ body.nav-collapsed .contract-form-page {
 .cform-stepper .lc-dot {
   position: relative;
   z-index: 1;
-  width: 26px;
-  height: 26px;
+  width: 18px;
+  height: 18px;
   border-radius: 999px;
   border: 0;
   background: var(--surface-alt);
@@ -198,37 +150,30 @@ body.nav-collapsed .contract-form-page {
   display: grid;
   place-items: center;
   box-sizing: border-box;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 800;
   line-height: 1;
-  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05), 0 0 0 1px rgba(16, 24, 40, 0.04);
+  box-shadow: 0 0 0 1px rgba(16, 24, 40, 0.06);
 }
-.cform-stepper .lc-current .lc-dot {
-  background: var(--seal);
-  color: var(--clmone-white);
-  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.02);
-}
-.cform-stepper .lc-upcoming .lc-dot {
-  background: var(--surface-alt);
-}
+.cform-stepper .lc-current .lc-dot,
 .cform-stepper .lc-done .lc-dot {
   background: var(--seal);
   color: var(--clmone-white);
-  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.02);
+  box-shadow: none;
 }
 .cform-stepper .lc-done .lc-dot::after {
   content: "✓";
   color: var(--clmone-white);
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 800;
   line-height: 1;
 }
 .cform-stepper .lc-label {
   display: block;
-  margin-top: 5px;
+  margin-top: 4px;
   color: var(--text-secondary);
-  font-size: 11.5px;
-  line-height: 1.25;
+  font-size: 11px;
+  line-height: 1.2;
   font-weight: 650;
   text-align: center;
   letter-spacing: 0;
@@ -239,9 +184,7 @@ body.nav-collapsed .contract-form-page {
 .cform-stepper .lc-done .lc-label {
   color: var(--text-primary);
 }
-.cform-stepper .lc-current .lc-label {
-  font-weight: 800;
-}
+.cform-stepper .lc-current .lc-label { font-weight: 800; }
 .cform-stepper .lc-done .lc-label { color: var(--ink-700); }
 .cform-intake-panel {
   background: var(--card-bg);
@@ -427,8 +370,6 @@ body.nav-collapsed .contract-form-page {
 
 @media (max-width: 1200px) {
   .page-wrap.contract-form-page { min-width: 1120px; }
-  .cform-stepper-head { grid-template-columns: 1fr; }
-  .cform-command-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 /* Ironclad-like density overrides for this workspace */
 .contract-form-page .arch-workspace-main > * + * { margin-top: 14px !important; }
@@ -468,17 +409,13 @@ body.nav-collapsed .contract-form-page {
   margin-bottom: 6px;
 }
 @media (max-width: 760px) {
-  .cform-command-stats,
   .cform-checkbox-row { grid-template-columns: 1fr; }
   .cform-section-grid { grid-template-columns: 1fr; }
   .cform-field,
   .cform-field-third,
   .cform-field-full { grid-column: 1 / -1; }
-  .cform-path { padding: 14px; }
-  .cform-stepper .lc-track { grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)); }
-  .cform-command-stats { grid-template-columns: 1fr; }
-  .cform-command-stat { border-left: 0; border-top: 1px solid var(--card-border); }
-  .cform-command-stat:first-child { border-top: 0; }
+  .cform-path { padding: 8px 0 0; }
+  .cform-stepper .lc-track { grid-template-columns: repeat(auto-fit, minmax(72px, 1fr)); }
   .contract-form-page .arch-workspace-main {
     padding-bottom: 148px;
   }
@@ -626,27 +563,6 @@ body.nav-collapsed .cform-bottom-actions {
     {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
     {% csrf_token %}
 
-  {# ── Page header ──────────────────────────────────────────── #}
-  <div class="arch-header">
-    <div class="arch-header-left">
-      <div class="arch-title-row">
-        <h1 class="arch-title">
-          {% if form.instance.pk %}Edit Contract{% else %}New Contract Request{% endif %}
-        </h1>
-        {% if form.instance.pk %}
-        <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ form.instance.status|contract_status_badge_tone }}">{{ form.instance.get_status_display }}</span>
-        {% endif %}
-      </div>
-    </div>
-    <div class="arch-header-right" id="contract-form-top-actions">
-      <a href="{% url 'contracts:repository' %}" class="dc-ds-button dc-ds-button--link">Cancel</a>
-      <button type="submit" name="preview_draft" value="1" class="dc-ds-button dc-ds-button--quiet">Save draft</button>
-      <button type="submit" class="dc-ds-button dc-ds-button--primary">
-        {% if form.instance.pk %}Update Contract{% else %}Create contract{% endif %}
-      </button>
-    </div>
-  </div>
-
   {% if selected_template %}
   <div class="cform-template-banner">
     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h6l5 5v11a2 2 0 01-2 2z"/></svg>
@@ -654,108 +570,76 @@ body.nav-collapsed .cform-bottom-actions {
   </div>
   {% endif %}
 
-  {# ── Lifecycle stepper — real stages for edits, canonical path for new #}
-  <div class="cform-stepper">
-    <div class="cform-stepper-head">
-        <div class="cform-stepper-title-block">
-        <div class="cform-kicker">Workflow</div>
-        <div class="cform-stepper-title-row">
-          <div class="cform-command-title">Contract intake</div>
-          {% if form.instance.pk %}
-          <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ form.instance.status|contract_status_badge_tone }} cform-stepper-badge">{{ form.instance.get_status_display }}</span>
-          {% else %}
-          <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--success cform-stepper-badge">Intake in progress</span>
-          {% endif %}
-        </div>
-      </div>
-      <div class="cform-command-stats" aria-label="Contract request status">
-        <div class="cform-command-stat">
-          <span class="cform-command-stat-icon" aria-hidden="true">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <circle cx="12" cy="8.5" r="3.25" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></circle>
-              <path d="M5.5 19a6.5 6.5 0 0 1 13 0" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-            </svg>
-          </span>
-          <span class="cform-command-stat-copy">
-            <span class="cform-stat-label">Owner</span>
-            <span class="cform-stat-value">Requester</span>
-          </span>
-        </div>
-        <div class="cform-command-stat">
-          <span class="cform-command-stat-icon" aria-hidden="true">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <rect x="5.5" y="4.5" width="13" height="15" rx="2.5" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></rect>
-              <path d="M9 4.5h6" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-              <path d="M9 11h6M9 15h4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-            </svg>
-          </span>
-          <span class="cform-command-stat-copy">
-            <span class="cform-stat-label">Next action</span>
-            <span class="cform-stat-value" id="command-next-action">Complete intake</span>
-          </span>
-        </div>
-        <div class="cform-command-stat">
-          <span class="cform-command-stat-icon" aria-hidden="true">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="8.5" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></circle>
-              <path d="M12 8v4.25" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-              <circle cx="12" cy="15.5" r="1" fill="currentColor" stroke="none"></circle>
-            </svg>
-          </span>
-          <span class="cform-command-stat-copy">
-            <span class="cform-stat-label">Remaining</span>
-            <span class="cform-stat-value" id="command-blocker">Required fields</span>
-          </span>
-        </div>
-      </div>
-    </div>
-    <div class="cform-path">
-    {% if form.instance.pk %}
-    {% lifecycle_steps form.instance as lc_steps %}
-    <div class="lc-track" role="list" aria-label="Contract lifecycle: currently {{ form.instance.get_lifecycle_stage_display }}">
-      {% for step in lc_steps %}
-      <div class="lc-step lc-{{ step.state }}" role="listitem" {% if step.state == 'current' %}aria-current="step"{% endif %}>
-        <span class="lc-dot" aria-hidden="true">{{ forloop.counter }}</span>
-        <span class="lc-label">{{ step.label }}</span>
-      </div>
-      {% endfor %}
-    </div>
-    {% else %}
-    <div class="lc-track" role="list" aria-label="Contract lifecycle: intake in progress">
-      <div class="lc-step lc-current" role="listitem" aria-current="step">
-        <span class="lc-dot" aria-hidden="true">1</span>
-        <span class="lc-label">Intake</span>
-      </div>
-      <div class="lc-step lc-upcoming" role="listitem">
-        <span class="lc-dot" aria-hidden="true">2</span>
-        <span class="lc-label">Drafting</span>
-      </div>
-      <div class="lc-step lc-upcoming" role="listitem">
-        <span class="lc-dot" aria-hidden="true">3</span>
-        <span class="lc-label">Internal review</span>
-      </div>
-      <div class="lc-step lc-upcoming" role="listitem">
-        <span class="lc-dot" aria-hidden="true">4</span>
-        <span class="lc-label">Negotiation</span>
-      </div>
-      <div class="lc-step lc-upcoming" role="listitem">
-        <span class="lc-dot" aria-hidden="true">5</span>
-        <span class="lc-label">Approval</span>
-      </div>
-      <div class="lc-step lc-upcoming" role="listitem">
-        <span class="lc-dot" aria-hidden="true">6</span>
-        <span class="lc-label">Signature</span>
-      </div>
-    </div>
-    {% endif %}
-    </div>
-  </div>
-
   {# ── Workspace form body ──────────────────────────────────── #}
     <div class="arch-workspace-grid">
 
       {# ── Main content ──────────────────────────────────────── #}
-      <div class="arch-workspace-main space-y-6">
+      <div class="arch-workspace-main space-y-4">
+
+        {# Compact intake context — workflow stepper is opt-in #}
+        <div class="cform-context-bar cform-stepper">
+          <div class="cform-context-bar__row" aria-label="Contract request status">
+            <h2 class="cform-command-title">Contract intake</h2>
+            {% if form.instance.pk %}
+            <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ form.instance.status|contract_status_badge_tone }} cform-stepper-badge">{{ form.instance.get_status_display }}</span>
+            {% else %}
+            <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--progress cform-stepper-badge">In progress</span>
+            {% endif %}
+            <span class="cform-context-bar__meta">Owner: <strong>{% if form.instance.pk and form.instance.owner %}{{ form.instance.owner.get_full_name|default:form.instance.owner.username }}{% else %}{{ request.user.get_full_name|default:request.user.username }}{% endif %}</strong></span>
+            <span class="cform-context-bar__sep" aria-hidden="true">·</span>
+            {% if form.instance.pk %}
+            <span class="cform-context-bar__meta" id="command-stage">Stage · {{ form.instance.get_lifecycle_stage_display }}</span>
+            {% else %}
+            <span class="cform-context-bar__meta" id="command-stage">Stage 1 of 6 · Intake</span>
+            {% endif %}
+            <span class="cform-context-bar__sep" aria-hidden="true">·</span>
+            <span class="cform-context-bar__meta" id="command-progress">0 of 8 required fields complete</span>
+            <span class="cform-context-bar__sep" aria-hidden="true">·</span>
+            <details class="cform-workflow-reveal">
+              <summary>View workflow</summary>
+              <div class="cform-path">
+              {% if form.instance.pk %}
+              {% lifecycle_steps form.instance as lc_steps %}
+              <div class="lc-track" role="list" aria-label="Contract lifecycle: currently {{ form.instance.get_lifecycle_stage_display }}">
+                {% for step in lc_steps %}
+                <div class="lc-step lc-{{ step.state }}" role="listitem" {% if step.state == 'current' %}aria-current="step"{% endif %}>
+                  <span class="lc-dot" aria-hidden="true">{{ forloop.counter }}</span>
+                  <span class="lc-label">{{ step.label }}</span>
+                </div>
+                {% endfor %}
+              </div>
+              {% else %}
+              <div class="lc-track" role="list" aria-label="Contract lifecycle: intake in progress">
+                <div class="lc-step lc-current" role="listitem" aria-current="step">
+                  <span class="lc-dot" aria-hidden="true">1</span>
+                  <span class="lc-label">Intake</span>
+                </div>
+                <div class="lc-step lc-upcoming" role="listitem">
+                  <span class="lc-dot" aria-hidden="true">2</span>
+                  <span class="lc-label">Drafting</span>
+                </div>
+                <div class="lc-step lc-upcoming" role="listitem">
+                  <span class="lc-dot" aria-hidden="true">3</span>
+                  <span class="lc-label">Internal review</span>
+                </div>
+                <div class="lc-step lc-upcoming" role="listitem">
+                  <span class="lc-dot" aria-hidden="true">4</span>
+                  <span class="lc-label">Negotiation</span>
+                </div>
+                <div class="lc-step lc-upcoming" role="listitem">
+                  <span class="lc-dot" aria-hidden="true">5</span>
+                  <span class="lc-label">Approval</span>
+                </div>
+                <div class="lc-step lc-upcoming" role="listitem">
+                  <span class="lc-dot" aria-hidden="true">6</span>
+                  <span class="lc-label">Signature</span>
+                </div>
+              </div>
+              {% endif %}
+              </div>
+            </details>
+          </div>
+        </div>
 
         {# Contract identity: the minimum useful request record #}
         <section class="dc-ds-surface cform-intake-panel" aria-labelledby="contract-identity-heading">
@@ -1252,8 +1136,7 @@ contract_type change — no per-keystroke request needed.
     const sublabelEl = document.getElementById('completion-sublabel');
     const barEl      = document.getElementById('completion-bar');
     const listEl     = document.getElementById('missing-fields-list');
-    const blockerEl  = document.getElementById('command-blocker');
-    const nextActionEl = document.getElementById('command-next-action');
+    const progressEl = document.getElementById('command-progress');
     const routeTitle = document.querySelector('[data-route-title="legal"]');
     const routeCopy = document.querySelector('[data-route-copy="legal"]');
     const submitBtn = document.getElementById('submit-contract-btn');
@@ -1608,7 +1491,6 @@ contract_type change — no per-keystroke request needed.
 
     function updateRouting(missing, type, setup) {
         const assessment = intakeRiskAssessment(type, setup);
-        const nextAction = missing.length ? 'Complete intake' : 'Create contract';
         const reviewerReasons = [];
         const approverReasons = [];
         const thirdPartyPaper = field('paper_source')?.value === 'COUNTERPARTY_PAPER';
@@ -1657,7 +1539,15 @@ contract_type change — no per-keystroke request needed.
                 : 'Approval is required by the configured policy.';
             routeCopy.textContent = reviewText + ' Approval: ' + approvalText;
         }
-        if (nextActionEl) nextActionEl.textContent = nextAction;
+    }
+
+    function updateProgressLabel(filledCount, totalCount) {
+        if (!progressEl) return;
+        if (totalCount === 0) {
+            progressEl.textContent = 'No required fields detected';
+            return;
+        }
+        progressEl.textContent = filledCount + ' of ' + totalCount + ' required fields complete';
     }
 
     function update() {
@@ -1678,7 +1568,7 @@ contract_type change — no per-keystroke request needed.
             countEl.textContent = '—';
             sublabelEl.textContent = 'No required fields detected';
             listEl.innerHTML = '';
-            if (blockerEl) blockerEl.textContent = 'Complete';
+            updateProgressLabel(0, 0);
             updateRouting([], type, setup);
             return;
         }
@@ -1689,15 +1579,14 @@ contract_type change — no per-keystroke request needed.
         countEl.textContent    = filled.length + ' of ' + total;
         sublabelEl.textContent = 'required fields completed';
         barEl.style.width      = pct + '%';
+        updateProgressLabel(filled.length, total);
 
         if (missing.length === 0) {
             listEl.innerHTML = '<div class="flex items-center gap-2 text-xs cform-success-row"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>All required fields complete</div>';
-            if (blockerEl) blockerEl.textContent = 'Complete';
         } else {
             listEl.innerHTML = missing.map(el =>
                 '<div class="arch-missing-item"><div class="arch-missing-dot"></div>' + getLabelFor(el) + '</div>'
             ).join('');
-            if (blockerEl) blockerEl.textContent = missing.length + ' required fields';
         }
         updateRouting(missing, type, setup);
     }

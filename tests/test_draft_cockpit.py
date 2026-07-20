@@ -32,14 +32,81 @@ User = get_user_model()
 
 
 class EntryCardsTests(TestCase):
-    def test_returns_the_curated_types_in_order(self):
+    def test_returns_the_curated_types_in_section_order(self):
         cards = get_entry_cards()
         self.assertEqual(
             [c.contract_type for c in cards],
-            [Contract.ContractType.MSA, Contract.ContractType.DPA, Contract.ContractType.NDA,
-             Contract.ContractType.SOW, Contract.ContractType.VENDOR, Contract.ContractType.AMENDMENT,
-             Contract.ContractType.SAAS],
+            [
+                Contract.ContractType.SOW,
+                Contract.ContractType.NDA,
+                Contract.ContractType.DPA,
+                Contract.ContractType.MSA,
+                Contract.ContractType.SAAS,
+                Contract.ContractType.OTHER,
+                Contract.ContractType.VENDOR,
+                Contract.ContractType.PURCHASE_ORDER,
+                Contract.ContractType.ORDER_CONFIRMATION,
+                Contract.ContractType.AMENDMENT,
+            ],
         )
+
+    def test_cards_are_grouped_into_expected_sections(self):
+        from contracts.services.contract_launch_setup import get_entry_card_sections
+
+        sections = get_entry_card_sections()
+        self.assertEqual(
+            [(section.key, section.label, [c.contract_type for c in section.cards]) for section in sections],
+            [
+                ('recommended', 'Recommended', [
+                    Contract.ContractType.SOW,
+                    Contract.ContractType.NDA,
+                    Contract.ContractType.DPA,
+                ]),
+                ('commercial', 'Commercial', [
+                    Contract.ContractType.MSA,
+                    Contract.ContractType.SAAS,
+                    Contract.ContractType.OTHER,
+                ]),
+                ('procurement', 'Procurement', [
+                    Contract.ContractType.VENDOR,
+                    Contract.ContractType.PURCHASE_ORDER,
+                    Contract.ContractType.ORDER_CONFIRMATION,
+                ]),
+                ('contract_changes', 'Contract changes', [Contract.ContractType.AMENDMENT]),
+            ],
+        )
+        recommended = sections[0]
+        self.assertTrue(recommended.reason)
+        self.assertEqual(recommended.columns, 3)
+        self.assertEqual(sections[1].columns, 3)
+        self.assertEqual(sections[2].columns, 3)
+        self.assertEqual(sections[3].columns, 1)
+
+    def test_recommendations_prefer_the_users_recent_requests(self):
+        from contracts.services.contract_launch_setup import get_recommendation_shelf
+
+        org = Organization.objects.create(name='Rec Org', slug='rec-org')
+        user = User.objects.create_user(
+            username='alex', password='testpass123!', first_name='Alex', last_name='Rivera',
+        )
+        OrganizationMembership.objects.create(
+            organization=org, user=user, role=OrganizationMembership.Role.OWNER, is_active=True,
+        )
+        for contract_type in (
+            Contract.ContractType.MSA,
+            Contract.ContractType.MSA,
+            Contract.ContractType.VENDOR,
+            Contract.ContractType.NDA,
+        ):
+            Contract.objects.create(
+                organization=org, title=f'{contract_type} request', content='seed',
+                contract_type=contract_type, created_by=user,
+            )
+
+        shelf = get_recommendation_shelf(organization=org, user=user)
+        self.assertEqual(shelf.contract_types[0], Contract.ContractType.MSA)
+        self.assertIn(Contract.ContractType.VENDOR, shelf.contract_types)
+        self.assertEqual(shelf.reason, 'Recommended for Alex based on your recent requests.')
 
     def test_card_shows_real_recommended_template_name(self):
         ContractTemplate.objects.create(name='Standard MSA', contract_type=Contract.ContractType.MSA, body='x', is_active=True)
@@ -65,6 +132,13 @@ class EntryCardsTests(TestCase):
         for card in get_entry_cards():
             with self.subTest(contract_type=card.contract_type):
                 self.assertTrue(card.description)
+
+    def test_every_card_exposes_expected_review_metadata(self):
+        for card in get_entry_cards():
+            with self.subTest(contract_type=card.contract_type):
+                self.assertTrue(card.expected_review)
+                self.assertEqual(card.expected_review, card.typical_approvals)
+                self.assertNotIn('Legal optional', card.expected_review)
 
 
 class GetPreviewTemplateBodyTests(TestCase):
@@ -208,7 +282,10 @@ class ContractTemplatePickerEntryCardsPageTests(TestCase):
     def test_entry_cards_render_with_expected_titles(self):
         response = self.client_.get(reverse('contracts:contract_template_picker'))
         self.assertEqual(response.status_code, 200)
-        for title in ('MSA', 'DPA', 'NDA', 'SOW', 'Supplier Agreement', 'Addendum'):
+        for title in (
+            'MSA', 'DPA', 'NDA', 'SOW', 'Supplier Agreement', 'Addendum', 'SaaS Agreement',
+            'Other', 'Purchase Order', 'Order Confirmation',
+        ):
             self.assertContains(response, title)
         for promotional_badge in (
             'AI-powered drafting',
@@ -216,6 +293,41 @@ class ContractTemplatePickerEntryCardsPageTests(TestCase):
             'Full audit trail',
         ):
             self.assertNotContains(response, promotional_badge)
+
+    def test_entry_page_uses_premium_copy_sections_and_metadata(self):
+        response = self.client_.get(reverse('contracts:contract_template_picker'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            'Choose an agreement type to start from an approved template, or upload third-party paper for review.',
+        )
+        self.assertContains(response, 'Search agreement types…')
+        self.assertContains(response, 'Upload &amp; review agreement')
+        self.assertContains(response, reverse('contracts:upload_signed_contract'))
+        for section in ('Recommended', 'Commercial', 'Procurement', 'Contract changes'):
+            self.assertContains(response, section)
+        self.assertNotContains(response, 'Recommended for you')
+        self.assertNotContains(response, 'based on your recent requests')
+        self.assertNotContains(response, 'Organisation defaults')
+        self.assertContains(response, 'Starting template')
+        self.assertContains(response, 'Expected review')
+        self.assertContains(response, 'Start request')
+        self.assertContains(response, 'dc-ds-button--primary')
+        self.assertContains(response, 'Legal review if triggered')
+        self.assertNotContains(response, 'Legal optional')
+        self.assertNotContains(response, 'Start contract')
+        self.assertNotContains(response, 'Start draft')
+        self.assertNotContains(response, 'Approval route')
+
+    def test_entry_cards_expose_accessible_labels_and_search_control(self):
+        response = self.client_.get(reverse('contracts:contract_template_picker'))
+        self.assertContains(response, 'id="ctp-type-search"')
+        self.assertContains(response, 'aria-label="Start SOW request"')
+        self.assertContains(response, 'aria-label="Start NDA request"')
+        self.assertContains(response, 'aria-label="Start DPA request"')
+        self.assertContains(response, 'role="search"')
+        self.assertContains(response, 'aria-controls="ctp-entry-sections"')
+        self.assertContains(response, 'data-cols="3"')
 
     def test_selecting_a_type_still_shows_the_template_list(self):
         response = self.client_.get(reverse('contracts:contract_template_picker'), {'type': 'NDA'})

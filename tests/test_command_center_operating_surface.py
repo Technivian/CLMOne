@@ -173,7 +173,7 @@ class CommandCenterProductionSurfaceTests(TestCase):
         self.assertContains(response, 'Health score unavailable')
         self.assertContains(response, 'No contracts monitored yet')
         self.assertContains(response, 'Add first contract')
-        self.assertContains(response, 'Upload existing agreement')
+        self.assertContains(response, 'Upload &amp; review agreement')
         self.assertNotContains(response, 'Getting started')
         self.assertContains(response, 'No active issues')
         self.assertContains(response, 'Monitored queues are clear.')

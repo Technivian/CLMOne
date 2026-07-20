@@ -2,9 +2,9 @@
 workspace (contracts:obligations_workspace), replacing the deadline_list
 stopgap the in_house_clm nav used to point at.
 
-Covers: derived compliance status (Met/Overdue/Breach Risk/Pending Action),
-polymorphic contract/matter source resolution, tenant scoping, and that the
-nav taxonomy now points Obligations at the real view.
+Covers: derived operational status (Completed/Overdue/At risk/Due soon/Pending),
+polymorphic contract/matter source resolution, tenant scoping, queue filters,
+and that the nav taxonomy now points Obligations at the real view.
 """
 from datetime import timedelta
 
@@ -24,6 +24,7 @@ from contracts.models import (
 )
 from contracts.nav_config import get_nav_for
 from contracts.templatetags.clmone_format import (
+    due_relative_label,
     obligation_compliance_badge_class,
     obligation_compliance_label,
     obligation_compliance_status,
@@ -49,32 +50,43 @@ class ObligationComplianceStatusTests(TestCase):
         defaults.update(overrides)
         return Deadline(**defaults)
 
-    def test_completed_is_met(self):
+    def test_completed_is_completed(self):
         d = self._deadline(is_completed=True, due_date=_today() - timedelta(days=5))
-        self.assertEqual(obligation_compliance_status(d), 'MET')
+        self.assertEqual(obligation_compliance_status(d), 'COMPLETED')
 
     def test_past_due_incomplete_is_overdue(self):
         d = self._deadline(due_date=_today() - timedelta(days=1))
         self.assertEqual(obligation_compliance_status(d), 'OVERDUE')
 
-    def test_inside_reminder_window_is_breach_risk(self):
+    def test_inside_reminder_window_is_at_risk(self):
         d = self._deadline(due_date=_today() + timedelta(days=3), reminder_days=7)
-        self.assertEqual(obligation_compliance_status(d), 'BREACH_RISK')
+        self.assertEqual(obligation_compliance_status(d), 'AT_RISK')
 
-    def test_outside_reminder_window_is_pending(self):
-        d = self._deadline(due_date=_today() + timedelta(days=30), reminder_days=7)
+    def test_within_thirty_days_outside_reminder_is_due_soon(self):
+        d = self._deadline(due_date=_today() + timedelta(days=20), reminder_days=7)
+        self.assertEqual(obligation_compliance_status(d), 'DUE_SOON')
+
+    def test_outside_due_soon_window_is_pending(self):
+        d = self._deadline(due_date=_today() + timedelta(days=90), reminder_days=7)
         self.assertEqual(obligation_compliance_status(d), 'PENDING')
 
     def test_labels_and_badge_classes_cover_every_status(self):
         cases = {
-            'MET': (self._deadline(is_completed=True), 'Met', 'badge-green'),
+            'COMPLETED': (self._deadline(is_completed=True), 'Completed', 'badge-green'),
             'OVERDUE': (self._deadline(due_date=_today() - timedelta(days=1)), 'Overdue', 'badge-red'),
-            'BREACH_RISK': (self._deadline(due_date=_today() + timedelta(days=1), reminder_days=7), 'Breach Risk', 'badge-red'),
-            'PENDING': (self._deadline(due_date=_today() + timedelta(days=90), reminder_days=7), 'Pending Action', 'badge-blue'),
+            'AT_RISK': (self._deadline(due_date=_today() + timedelta(days=1), reminder_days=7), 'At risk', 'badge-red'),
+            'DUE_SOON': (self._deadline(due_date=_today() + timedelta(days=20), reminder_days=7), 'Due soon', 'badge-yellow'),
+            'PENDING': (self._deadline(due_date=_today() + timedelta(days=90), reminder_days=7), 'Pending', 'badge-blue'),
         }
         for status, (deadline, label, badge_class) in cases.items():
+            self.assertEqual(obligation_compliance_status(deadline), status)
             self.assertEqual(obligation_compliance_label(deadline), label)
             self.assertEqual(obligation_compliance_badge_class(deadline), badge_class)
+
+    def test_due_relative_label(self):
+        self.assertEqual(due_relative_label(_today() - timedelta(days=2)), 'Overdue by 2 days')
+        self.assertEqual(due_relative_label(_today()), 'Due today')
+        self.assertEqual(due_relative_label(_today() + timedelta(days=11)), 'Due in 11 days')
 
 
 class ObligationsWorkspaceViewTests(TestCase):
@@ -100,17 +112,21 @@ class ObligationsWorkspaceViewTests(TestCase):
 
         self.overdue = Deadline.objects.create(
             title='Overdue Filing', contract=self.contract, due_date=_today() - timedelta(days=2),
-            reminder_days=7, assigned_to=self.user,
+            reminder_days=7, assigned_to=self.user, deadline_type=Deadline.DeadlineType.FILING,
         )
-        self.breach_risk = Deadline.objects.create(
+        self.at_risk = Deadline.objects.create(
             title='Upcoming Renewal Notice', matter=self.matter, due_date=_today() + timedelta(days=2),
-            reminder_days=7,
+            reminder_days=7, deadline_type=Deadline.DeadlineType.RENEWAL,
+        )
+        self.due_soon = Deadline.objects.create(
+            title='Mid-horizon SLA Review', contract=self.contract, due_date=_today() + timedelta(days=20),
+            reminder_days=7, deadline_type=Deadline.DeadlineType.SLA,
         )
         self.pending = Deadline.objects.create(
             title='Distant Review', contract=self.contract, due_date=_today() + timedelta(days=90),
-            reminder_days=7,
+            reminder_days=7, deadline_type=Deadline.DeadlineType.OTHER,
         )
-        self.met = Deadline.objects.create(
+        self.completed = Deadline.objects.create(
             title='Filed Already', contract=self.contract, due_date=_today() - timedelta(days=10),
             reminder_days=7, is_completed=True, completed_at=timezone.now(),
         )
@@ -128,16 +144,60 @@ class ObligationsWorkspaceViewTests(TestCase):
         content = response.content.decode()
         self.assertIn('Overdue Filing', content)
         self.assertIn('Upcoming Renewal Notice', content)
+        self.assertIn('Mid-horizon SLA Review', content)
         self.assertIn('Distant Review', content)
         self.assertIn('Filed Already', content)
         self.assertNotIn('Not My Org', content)
+        self.assertNotIn('dc-ds-scaffold--with-rail', content)
+        self.assertIn('Source contract', content)
+        self.assertIn('Next action', content)
+        self.assertIn('Mark completed', content)
+        self.assertIn('Review renewal notice', content)
+        self.assertIn('Review service report', content)
 
     def test_status_counts(self):
         response = self.client_.get(reverse('contracts:obligations_workspace'))
         self.assertEqual(response.context['obligations_overdue_count'], 1)
-        self.assertEqual(response.context['obligations_breach_risk_count'], 1)
+        self.assertEqual(response.context['obligations_at_risk_count'], 1)
+        self.assertEqual(response.context['obligations_due_soon_count'], 1)
         self.assertEqual(response.context['obligations_pending_count'], 1)
+        self.assertEqual(response.context['obligations_completed_count'], 1)
+        self.assertEqual(response.context['obligations_due_within_30_count'], 2)
+        self.assertEqual(response.context['obligations_breach_risk_count'], 1)
         self.assertEqual(response.context['obligations_met_count'], 1)
+
+    def test_kpi_strip_shows_numeric_counts(self):
+        response = self.client_.get(reverse('contracts:obligations_workspace'))
+        content = response.content.decode()
+        self.assertIn('Due within 30 days', content)
+        self.assertIn('At risk', content)
+        self.assertNotIn('Breach risk', content)
+        self.assertNotIn('>Clear<', content)
+
+    def test_my_obligations_view(self):
+        response = self.client_.get(reverse('contracts:obligations_workspace'), {'view': 'mine'})
+        titles = [o.title for o in response.context['obligations']]
+        self.assertEqual(titles, ['Overdue Filing'])
+
+    def test_overdue_view(self):
+        response = self.client_.get(reverse('contracts:obligations_workspace'), {'view': 'overdue'})
+        titles = [o.title for o in response.context['obligations']]
+        self.assertEqual(titles, ['Overdue Filing'])
+
+    def test_status_and_owner_filters(self):
+        response = self.client_.get(
+            reverse('contracts:obligations_workspace'),
+            {'status': 'AT_RISK'},
+        )
+        titles = [o.title for o in response.context['obligations']]
+        self.assertEqual(titles, ['Upcoming Renewal Notice'])
+
+        response = self.client_.get(
+            reverse('contracts:obligations_workspace'),
+            {'owner': str(self.user.pk)},
+        )
+        titles = [o.title for o in response.context['obligations']]
+        self.assertEqual(titles, ['Overdue Filing'])
 
     def test_contract_source_takes_priority_and_links(self):
         response = self.client_.get(reverse('contracts:obligations_workspace'))
@@ -154,10 +214,11 @@ class ObligationsWorkspaceViewTests(TestCase):
         response = anon.get(reverse('contracts:obligations_workspace'))
         self.assertEqual(response.status_code, 302)
 
-    def test_new_obligation_cta_present(self):
+    def test_add_obligation_cta_present(self):
         response = self.client_.get(reverse('contracts:obligations_workspace'))
-        self.assertContains(response, 'New Obligation')
+        self.assertContains(response, 'Add obligation')
         self.assertContains(response, reverse('contracts:deadline_create'))
+        self.assertNotContains(response, 'New Obligation')
 
 
 class ObligationsNavTests(TestCase):

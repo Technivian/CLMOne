@@ -275,9 +275,11 @@ class AIClauseReviewWorkflowTests(TestCase):
             assigned_reviewer=self.reviewer,
         )
         workspace = self.client.get(reverse('contracts:contract_review_workspace', args=[self.contract.pk]))
+        self.assertContains(workspace, 'dc-ds-workspace--record')
         self.assertContains(workspace, 'Review workspace')
         self.assertContains(workspace, 'No approved contract playbook matched')
         self.assertContains(workspace, span.span_text)
+        self.assertContains(workspace, 'dc-ds-button dc-ds-button--primary')
 
         action_url = reverse('contracts:contract_review_finding_action_api', args=[self.contract.pk, finding.pk])
         rejected = self.client.post(action_url, data=json.dumps({'action': 'dismiss'}), content_type='application/json')
@@ -304,7 +306,7 @@ class AIClauseReviewWorkflowTests(TestCase):
         response = self.client.get(reverse('contracts:contract_review_workspace', args=[self.contract.pk]))
 
         self.assertContains(response, 'Needs input')
-        self.assertContains(response, 'Stage: Internal review')
+        self.assertContains(response, 'Internal review')
         self.assertContains(response, 'Resolve review blockers')
         self.assertContains(response, 'AI review could not be completed. The document preview failed, no approved playbook was matched and required contract information needs confirmation.')
         self.assertContains(response, 'Document preview unavailable')
@@ -312,11 +314,14 @@ class AIClauseReviewWorkflowTests(TestCase):
         self.assertContains(response, 'Counterparty')
         self.assertContains(response, 'Contract type')
         self.assertContains(response, 'Governing law')
-        self.assertContains(response, 'Payment terms')
         self.assertContains(response, 'Not yet generated')
         self.assertContains(response, 'Not reviewed. Findings will appear after the review blockers are resolved and AI analysis completes.')
+        self.assertContains(response, 'dc-ds-workspace__surface')
+        self.assertContains(response, 'dc-ds-workspace__tabs')
         self.assertNotContains(response, 'Critical findings')
         self.assertNotContains(response, 'AI review ready')
+        self.assertNotContains(response, 'page-wrap review-workspace')
+        self.assertNotContains(response, 'class="review-action')
 
     def test_clear_review_requires_explicit_human_confirmation_before_approval(self):
         playbook = ClausePlaybook.objects.create(

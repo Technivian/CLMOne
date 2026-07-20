@@ -1,14 +1,27 @@
-{% with subtitle="Queue health, request metrics, scheduler status, and drills for "|add:organization.name %}
-  {% include "design_system/page_hero.html" with eyebrow="Operations" title="Operations Dashboard" subtitle=subtitle actions_template="contracts/operations_dashboard_actions.html" %}
-{% endwith %}
+{% include "design_system/page_hero.html" with eyebrow="Admin → Operations" title="Operations" subtitle=page_subtitle actions_template="contracts/operations_dashboard_actions.html" %}
 
-{% include "contracts/operations_dashboard_kpis.html" %}
+<nav class="dc-ds-list-tabs mb-4" aria-label="Operations sections">
+  {% for tab in operations_tabs %}
+  <a
+    class="dc-ds-choice{% if active_tab == tab.id %} chip-active{% endif %}"
+    href="{% url 'operations_dashboard' %}{% if tab.id != 'overview' %}?tab={{ tab.id }}{% endif %}"
+    {% if active_tab == tab.id %}aria-current="page"{% endif %}
+  >{{ tab.label }}</a>
+  {% endfor %}
+</nav>
 
-<div class="dash-grid dash-grid-2 mb-6">
-  {% include "design_system/surface_card.html" with title="Background jobs" meta_template="contracts/operations_dashboard_job_counts_meta.html" body_template="contracts/operations_dashboard_job_counts.html" %}
-  {% include "design_system/surface_card.html" with title="Drill automation" meta_template="contracts/operations_dashboard_drill_meta.html" body_template="contracts/operations_dashboard_drill.html" %}
-</div>
+{% if incidents %}
+  {% include "contracts/operations_dashboard_incidents.html" %}
+{% endif %}
 
-{% include "design_system/surface_card.html" with title="Recent jobs" meta_template="contracts/operations_dashboard_recent_jobs_meta.html" body_template="contracts/operations_dashboard_recent_jobs.html" %}
-
-{% include "design_system/surface_card.html" with title="Scheduled job runs" meta_template="contracts/operations_dashboard_scheduled_runs_meta.html" body_template="contracts/operations_dashboard_scheduled_runs.html" %}
+{% if active_tab == 'overview' %}
+  {% include "contracts/operations_dashboard_overview.html" %}
+{% elif active_tab == 'jobs' %}
+  {% include "contracts/operations_dashboard_jobs_panel.html" %}
+{% elif active_tab == 'schedules' %}
+  {% include "contracts/operations_dashboard_schedules_panel.html" %}
+{% elif active_tab == 'alerts' %}
+  {% include "contracts/operations_dashboard_alerts_panel.html" %}
+{% elif active_tab == 'audit' %}
+  {% include "contracts/operations_dashboard_audit_panel.html" %}
+{% endif %}

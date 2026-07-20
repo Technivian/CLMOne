@@ -1,0 +1,5 @@
+<nav class="clm-list-view-tabs dc-ds-list-tabs" aria-label="Workflow operations">
+  {% for tab in tabs %}
+  <a href="{{ tab.url }}" class="dc-ds-choice{% if tab.active %} chip-active{% endif %}"{% if tab.active %} aria-current="page"{% endif %}>{{ tab.label }}</a>
+  {% endfor %}
+</nav>

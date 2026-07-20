@@ -1,0 +1,28 @@
+{% if operations_audit %}
+<div class="dc-ds-table-wrap">
+  <table class="dc-ds-table w-full text-sm" aria-label="Operations audit events">
+    <thead>
+      <tr>
+        <th scope="col">When</th>
+        <th scope="col">Actor</th>
+        <th scope="col">Action</th>
+        <th scope="col">Object</th>
+        <th scope="col">Event</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for entry in operations_audit %}
+      <tr>
+        <td>{{ entry.timestamp|date:"d M Y H:i" }}</td>
+        <td>{% if entry.user %}{{ entry.user.get_full_name|default:entry.user.username }}{% else %}{{ entry.get_actor_type_display }}{% endif %}</td>
+        <td>{% include "design_system/status_badge.html" with label=entry.get_action_display tone="neutral" size="sm" %}</td>
+        <td>{{ entry.object_repr|truncatechars:48|default:entry.model_name }}</td>
+        <td class="text-xs c-muted">{% if entry.changes.event %}{{ entry.changes.event }}{% elif entry.job_run_id %}job_run {{ entry.job_run_id }}{% else %}—{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+{% include "design_system/empty_state.html" with title="No operations audit events yet" copy="Retries and operational drills will appear here as governed evidence." %}
+{% endif %}

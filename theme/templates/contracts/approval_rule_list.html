@@ -1,8 +1,22 @@
 {% extends "base.html" %}
-{% block title %}Approval Rules – CLM One{% endblock %}
-{% block authenticated_page_title %}Approval Rules{% endblock %}
+{% block title %}Routing Rules – CLM One{% endblock %}
+{% block authenticated_page_title %}Workflow Operations{% endblock %}
 {% block authenticated_page_subtitle %}Define who reviews and approves governed contract decisions.{% endblock %}
 
 {% block content %}
-{% include "design_system/page_scaffold.html" with main_template="contracts/approval_rule_list_content.html" wide=True flow=True scaffold_class_name="dc-ds-list-page" %}
+{% include "components/_list_page_shell_styles.html" %}
+<style nonce="{{ csp_nonce }}">
+  .routing-rules-page .clm-list-shell { margin-bottom: var(--space-12); }
+</style>
+<div class="dc-ds-page dc-ds-page--wide dc-ds-page-flow dc-ds-list-page clm-list-page routing-rules-page">
+  <header class="clm-list-shell dc-ds-filterbar dc-ds-table-toolbar dc-ds-list-toolbar" aria-label="Workflow operations controls">
+    <div class="clm-list-view-header">
+      {% include "components/_workflow_operations_tabs.html" with tabs=ops_tabs %}
+      <div class="clm-list-view-actions">
+        {% include "contracts/approval_rule_list_actions.html" %}
+      </div>
+    </div>
+  </header>
+  {% include "design_system/surface_card.html" with title="Routing rules" labelledby="approval-rule-list" body_template="contracts/approval_rule_list_table.html" %}
+</div>
 {% endblock %}

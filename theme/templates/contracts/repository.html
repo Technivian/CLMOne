@@ -8,50 +8,171 @@
 {% block content %}
 <style nonce="{{ csp_nonce }}">
   .repo-page .dc-ds-surface { box-shadow: none; }
-  .repo-page .table-sticky { overflow-y: hidden; }
-  .repo-page .table-sticky .tbl-head th { background: var(--card-bg); }
+  .repo-page .table-sticky { overflow-x: auto; overflow-y: visible; }
+  .repo-page .table-sticky .tbl-head th { background: var(--card-bg); top: 0; z-index: 4; }
+  .repo-page #contracts-table {
+    min-width: 1200px; width: 100%; table-layout: fixed;
+  }
+  .repo-page #contracts-table th,
+  .repo-page #contracts-table td {
+    vertical-align: top;
+  }
+  .repo-page #contracts-table th.tbl-th,
+  .repo-page #contracts-table td.repo-cell {
+    padding: 16px 12px;
+  }
   .repo-page #contracts-table tbody tr.wq-row-selected td,
   .repo-page #contracts-table tbody tr.wq-row-selected:hover td { background: var(--primary-subtle); }
+  .repo-page #contracts-table tbody tr:hover:not(.wq-row-selected) td { background: var(--color-surface-table-head, var(--well)); }
   .repo-page #contracts-table tbody td .font-medium { font-size: 13px; font-weight: 700; color: var(--text-primary); }
-  .repo-page #contracts-table tbody td .text-sm, .repo-page .repo-muted-text { color: var(--ink-600); }
-  .repo-page #contracts-table tbody td .text-sm { font-size: 12px; margin-top: 2px; }
-  body[data-design-system=casefile] .repo-page .repo-filter-shell { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "tabs actions" "tools tools"; gap: var(--space-10) var(--space-16); width: 100%; padding: 0 0 var(--space-12); border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: transparent; }
+  .repo-page #contracts-table tbody td .text-sm, .repo-page .repo-muted-text { color: var(--ink-700, var(--text-secondary)); }
+  .repo-page #contracts-table tbody td .text-sm { font-size: 12px; margin-top: 0; }
+  .repo-page .repo-empty-label {
+    color: var(--ink-700, var(--text-secondary)); font-size: 12.5px; font-weight: 550;
+  }
+  .repo-page .assignee-chip-empty .assignee-chip-name.repo-empty-label { color: var(--ink-700, var(--text-secondary)); }
+  .repo-page #contracts-table th[data-col="select"],
+  .repo-page #contracts-table td[data-col="select"] {
+    position: sticky; left: 0; z-index: 3; width: 44px; min-width: 44px; max-width: 44px;
+    background: var(--card-bg, #fff); padding-left: 12px; padding-right: 8px;
+  }
+  .repo-page #contracts-table thead th[data-col="select"] { z-index: 6; }
+  .repo-page #contracts-table th[data-col="title"],
+  .repo-page #contracts-table td[data-col="title"] {
+    position: sticky; left: 44px; z-index: 3; min-width: 260px; width: 24%;
+    background: var(--card-bg, #fff);
+    box-shadow: 1px 0 0 var(--line, var(--card-border));
+  }
+  .repo-page #contracts-table thead th[data-col="title"] { z-index: 6; }
+  .repo-page #contracts-table tbody tr:hover:not(.wq-row-selected) td[data-col="select"],
+  .repo-page #contracts-table tbody tr:hover:not(.wq-row-selected) td[data-col="title"] {
+    background: var(--color-surface-table-head, var(--well));
+  }
+  .repo-page #contracts-table tbody tr.wq-row-selected td[data-col="select"],
+  .repo-page #contracts-table tbody tr.wq-row-selected td[data-col="title"] {
+    background: var(--primary-subtle);
+  }
+  .repo-page .repo-title-stack { display: grid; gap: 4px; min-width: 0; }
+  .repo-page .repo-title-meta {
+    display: inline-flex; flex-wrap: nowrap; align-items: center; gap: 6px; min-width: 0;
+  }
+  .repo-page .repo-status-sep {
+    color: var(--ink-500, var(--text-muted)); font-size: 12px; font-weight: 600; line-height: 1;
+  }
+  .repo-page .repo-exception-badge { flex: 0 0 auto; }
+  .repo-page .repo-contract-title {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    line-height: 1.35;
+    word-break: break-word;
+  }
+  .repo-page #contracts-table th[data-col="type"],
+  .repo-page #contracts-table td[data-col="type"] { min-width: 128px; width: 10%; white-space: nowrap; }
+  .repo-page .repo-type-label { white-space: nowrap; }
+  .repo-page #contracts-table th[data-col="counterparty"],
+  .repo-page #contracts-table td[data-col="counterparty"] { min-width: 150px; width: 12%; }
+  .repo-page #contracts-table th[data-col="stage"],
+  .repo-page #contracts-table td[data-col="stage"] { min-width: 145px; width: 145px; }
+  .repo-page .repo-stage-badge {
+    display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .repo-page #contracts-table th[data-col="owner"],
+  .repo-page #contracts-table td[data-col="owner"] { min-width: 150px; width: 12%; }
+  .repo-page #contracts-table td[data-col="owner"] .assignee-chip {
+    display: inline-flex; align-items: center; gap: 8px; min-width: 0; max-width: 100%;
+    white-space: nowrap;
+  }
+  .repo-page #contracts-table td[data-col="owner"] .assignee-chip-name {
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;
+  }
+  .repo-page #contracts-table th[data-col="activity"],
+  .repo-page #contracts-table td[data-col="activity"] { min-width: 230px; width: 18%; }
+  .repo-page #contracts-table td[data-col="activity"] .activity-line-desc {
+    display: flex; min-width: 0; overflow: hidden; white-space: nowrap;
+  }
+  .repo-page #contracts-table td[data-col="activity"] .activity-line-actor {
+    flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 650;
+  }
+  .repo-page #contracts-table td[data-col="activity"] .activity-line-action {
+    flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .repo-page #contracts-table th[data-col="key_date"],
+  .repo-page #contracts-table td[data-col="key_date"],
+  .repo-page .repo-key-date {
+    min-width: 104px; width: 8%; white-space: nowrap; text-align: left;
+    font-variant-numeric: tabular-nums; color: var(--ink-700, var(--text-secondary));
+  }
+  .repo-page #contracts-table th[data-col="value"],
+  .repo-page #contracts-table td[data-col="value"],
+  .repo-page .repo-value {
+    min-width: 112px; width: 9%; white-space: nowrap; text-align: right !important;
+    padding-right: 12px; font-variant-numeric: tabular-nums;
+    color: var(--ink-800, var(--text-primary));
+  }
+  .repo-page #contracts-table th[data-col="actions"],
+  .repo-page #contracts-table td[data-col="actions"],
+  .repo-page .repo-actions-cell {
+    min-width: 40px; width: 40px; max-width: 40px; padding-left: 4px; padding-right: 8px;
+    text-align: center;
+  }
+  .repo-page #contracts-table th[aria-sort] button.repo-sort-btn {
+    display: inline-flex; align-items: center; gap: 6px; padding: 0; border: 0;
+    background: transparent; color: inherit; font: inherit; text-transform: inherit;
+    letter-spacing: inherit; cursor: pointer;
+  }
+  .repo-page #contracts-table th[aria-sort="ascending"] .repo-sort-ind::after { content: " ▲"; font-size: 9px; }
+  .repo-page #contracts-table th[aria-sort="descending"] .repo-sort-ind::after { content: " ▼"; font-size: 9px; }
+  .repo-page #contracts-table [data-col].is-hidden { display: none; }
+  body[data-design-system=casefile] .repo-page .repo-filter-shell { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "tabs actions" "tools tools"; gap: var(--space-10) var(--space-16); width: 100%; padding: 0 0 var(--space-10); border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: transparent; }
   .repo-page .repo-view-header { display: contents; }
-  .repo-page .repo-view-tabs { grid-area: tabs; align-self: center; }
-  .repo-page .repo-view-actions { grid-area: actions; justify-self: end; }
-  .repo-page .repo-view-tabs { display: flex; gap: 8px; flex-wrap: wrap; flex: 1 1 auto; min-width: 0; }
-  .repo-page .repo-view-actions { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+  .repo-page .repo-view-tabs { grid-area: tabs; align-self: center; display: flex; gap: 8px; flex-wrap: wrap; flex: 1 1 auto; min-width: 0; }
+  .repo-page .repo-view-actions { grid-area: actions; justify-self: end; display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }
   .repo-page .repo-filter-controls { grid-area: tools; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; width: 100%; }
   .repo-page .repo-filter-controls > * { min-width: 0; }
-  .repo-page .repo-filter-controls .repo-search-field { flex: 1 1 360px; }
-  .repo-page .repo-filter-controls .repo-sort-select { flex: 0 0 196px; color: var(--ink-600); background: transparent; }
-  .repo-page .repo-filter-controls .repo-actions-stack { flex: 0 0 auto; margin-left: auto; }
+  .repo-page .repo-filter-controls .repo-search-field { flex: 1 1 420px; min-width: 240px; }
+  .repo-page .repo-filter-controls .repo-actions-stack { flex: 0 0 auto; margin-left: auto; display: inline-flex; gap: 10px; align-items: center; }
   .repo-page .repo-filter-controls .repo-filter-toggle { flex: 0 0 auto; color: var(--ink-600); background: transparent; font-weight: 600; }
-  .repo-page .repo-view-actions .repo-add-contract { min-height: 38px; padding-inline: var(--space-16); font-weight: 700; }
   .repo-page .repo-filter-drawer { display: none; width: 100%; max-width: none; }
   .repo-page .repo-filter-drawer.is-open { display: block; }
   .repo-page .repo-filter-drawer__body { display: grid; gap: 10px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .repo-page .repo-filter-drawer__views { grid-column: 1 / -1; display: grid; gap: var(--space-6); }
-  .repo-page .repo-filter-drawer__view-list { display: flex; gap: 6px; flex-wrap: wrap; }
   .repo-page .repo-filter-drawer label { display: grid; gap: 5px; color: var(--text-muted); font-size: 12px; font-weight: 650; }
   .repo-page .repo-filter-drawer select { min-width: 0; }
   .repo-page .repo-filter-drawer .repo-filter-drawer__header { margin-bottom: 0; }
   .repo-page .repo-filter-drawer .repo-filter-drawer__title { font-size: 14px; }
   .repo-page #filter-chips:empty { display: none; }
-  .repo-page .repo-row-action { color: var(--text-muted); font-size: 20px; line-height: 1; padding: 4px 8px; }
+  .repo-page .repo-result-count {
+    font-size: 13px; font-weight: 600; color: var(--ink-700, var(--text-secondary)); margin: 0;
+    padding: 0; border: 0; border-radius: 0; background: transparent;
+    white-space: nowrap; min-width: 0; line-height: 1.2;
+  }
+  .repo-page .repo-result-count:empty { display: none; }
+  .repo-page .repo-col-menu { position: relative; }
+  .repo-page .repo-col-menu__panel {
+    display: none; position: absolute; right: 0; top: calc(100% + 6px); z-index: 20;
+    min-width: 200px; padding: 10px; border-radius: 10px;
+  }
+  .repo-page .repo-col-menu.is-open .repo-col-menu__panel { display: grid; gap: 6px; }
+  .repo-page .repo-col-menu__panel label {
+    display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500;
+    color: var(--text-primary); cursor: pointer;
+  }
+  .repo-page .repo-row-action { color: var(--text-muted); font-size: 20px; line-height: 1; padding: 0 2px; }
   .repo-page .repo-row-action:hover { color: var(--primary); }
   body[data-design-system=casefile]:has(.repo-page) .top-bar .global-search-form { max-width: 248px; flex-basis: 248px; }
   body[data-design-system=casefile]:has(.repo-page) .top-bar .global-search-input { height: 36px; border: 1px solid transparent !important; background: transparent !important; color: var(--ink-600); }
   body[data-design-system=casefile]:has(.repo-page) .top-bar .global-search-input:focus-visible { border-color: var(--line) !important; background: var(--card) !important; }
   body[data-design-system=casefile]:has(.repo-page) .app-footer { display: none; }
+  .repo-page.dc-ds-list-page > .dc-ds-filterbar { margin-bottom: calc(-1 * var(--space-8)); }
+  .repo-page.dc-ds-list-page > .dc-ds-table-wrap { margin-top: 0; }
   @media (max-width: 1100px) { .repo-page .repo-filter-drawer__body { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   @media (max-width: 700px) {
     .repo-page .repo-filter-shell { grid-template-columns: 1fr; grid-template-areas: "tabs" "actions" "tools"; }
-    .repo-page .repo-view-actions { width: 100%; }
-    .repo-page .repo-view-actions .repo-add-contract { width: 100%; }
+    .repo-page .repo-view-actions { width: 100%; flex-wrap: wrap; }
+    .repo-page .repo-view-actions .dc-ds-button { width: 100%; justify-content: center; }
     .repo-page .repo-filter-drawer__body { grid-template-columns: 1fr; }
     .repo-page .repo-filter-controls .repo-search-field,
-    .repo-page .repo-filter-controls .repo-sort-select,
     .repo-page .repo-filter-controls .repo-actions-stack { flex-basis: 100%; margin-left: 0; }
   }
 </style>
@@ -64,16 +185,10 @@
         <a href="{% url 'dashboard' %}" class="dc-ds-choice">My work</a>
         <a href="{% url 'contracts:approval_request_list' %}" class="dc-ds-choice">Approvals</a>
         <a href="{% url 'contracts:signature_request_list' %}" class="dc-ds-choice">Signatures</a>
-        <a href="{% url 'contracts:risk_log_list' %}" class="dc-ds-choice">Risks</a>
       </nav>
       <div class="repo-view-actions">
-        <details class="relative">
-          <summary class="repo-add-contract dc-ds-button dc-ds-button--primary cursor-pointer">Add contract</summary>
-          <div class="absolute right-0 z-20 mt-2 min-w-64 dc-ds-surface p-2">
-            <a href="{% url 'contracts:contract_template_picker' %}" class="block px-3 py-2 rounded-lg hover:bg-hover">Create from approved template</a>
-            <a href="{% url 'contracts:upload_signed_contract' %}" class="block px-3 py-2 rounded-lg hover:bg-hover">Upload existing agreement</a>
-          </div>
-        </details>
+        <a href="{% url 'contracts:risk_log_list' %}" class="dc-ds-button dc-ds-button--ghost">Risk Register</a>
+        <a href="{% url 'contracts:contract_template_picker' %}" class="dc-ds-button dc-ds-button--primary">Start new contract</a>
       </div>
     </div>
     <div class="repo-filter-controls">
@@ -81,28 +196,36 @@
         {% include "design_system/icon.html" with name="search" class_name="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none c-muted" %}
         <input type="search" id="search-input" placeholder="Search contracts" class="dc-ds-control w-full pl-9 pr-3 py-2 text-sm rounded-lg border focus:outline-none input-base">
       </div>
-      <select id="sort-select" class="dc-ds-control repo-sort-select px-3 py-2 text-sm rounded-lg border focus:outline-none select-base" aria-label="Sort contracts">
-        <option value="updated_desc">Recently updated</option><option value="updated_asc">Oldest first</option><option value="title">Contract A–Z</option><option value="status">Status</option>
+      <select id="sort-select" class="sr-only" aria-hidden="true" tabindex="-1">
+        <option value="updated_desc">Recently updated</option>
+        <option value="updated_asc">Oldest first</option>
+        <option value="title">Contract A–Z</option>
+        <option value="status">Status</option>
       </select>
       <div class="repo-actions-stack">
-        <button id="repo-filter-toggle" type="button" class="repo-filter-toggle dc-ds-button dc-ds-button--ghost" aria-expanded="false" aria-controls="repository-filters">Filters and views</button>
+        <p id="repo-result-count" class="repo-result-count" aria-live="polite"></p>
+        <div class="repo-col-menu" id="repo-col-menu">
+          <button id="repo-col-toggle" type="button" class="repo-filter-toggle dc-ds-button dc-ds-button--ghost" aria-expanded="false" aria-controls="repo-col-panel">Columns</button>
+          <div id="repo-col-panel" class="repo-col-menu__panel dc-ds-surface" role="group" aria-label="Visible columns">
+            <label><input type="checkbox" data-col-toggle="type" checked> Type</label>
+            <label><input type="checkbox" data-col-toggle="counterparty" checked> Counterparty</label>
+            <label><input type="checkbox" data-col-toggle="stage" checked> Stage</label>
+            <label><input type="checkbox" data-col-toggle="owner" checked> Owner</label>
+            <label><input type="checkbox" data-col-toggle="activity" checked> Latest activity</label>
+            <label><input type="checkbox" data-col-toggle="key_date" checked> Key date</label>
+            <label><input type="checkbox" data-col-toggle="value" checked> Value</label>
+          </div>
+        </div>
+        <button id="repo-filter-toggle" type="button" class="repo-filter-toggle dc-ds-button dc-ds-button--ghost" aria-expanded="false" aria-controls="repository-filters">Filters</button>
       </div>
     </div>
   </header>
 
-  <section id="repository-filters" class="repo-filter-drawer dc-ds-surface p-3" aria-label="Filters and views">
-    <div class="repo-filter-drawer__header flex items-center justify-between gap-3 mb-2"><h2 class="repo-filter-drawer__title font-semibold">Filters and views</h2><button type="button" data-action="clear-repository-filters" class="dc-ds-button dc-ds-button--quiet text-sm">Clear filters</button></div>
+  <section id="repository-filters" class="repo-filter-drawer dc-ds-surface p-3" aria-label="Filters">
+    <div class="repo-filter-drawer__header flex items-center justify-between gap-3 mb-2"><h2 class="repo-filter-drawer__title font-semibold">Filters</h2><button type="button" data-action="clear-repository-filters" class="dc-ds-button dc-ds-button--quiet text-sm">Clear filters</button></div>
     <div class="repo-filter-drawer__body">
-      <div class="repo-filter-drawer__views">
-        <p class="text-[11px] font-semibold c-muted mb-0">Quick views</p>
-        <div class="repo-filter-drawer__view-list">
-          <button type="button" class="dc-ds-choice repo-quick-view chip-active" data-rail-view="all" aria-pressed="true">All contracts</button>
-          <button type="button" class="dc-ds-choice repo-quick-view" data-rail-view="active" aria-pressed="false">Active contracts</button>
-          <button type="button" class="dc-ds-choice repo-quick-view" data-rail-view="draft" aria-pressed="false">Draft contracts</button>
-        </div>
-      </div>
       <label>Status<select id="status-filter-select" class="dc-ds-control select-base px-3 py-2 rounded-lg border"><option value="">All statuses</option><option value="DRAFT">Draft</option><option value="IN_REVIEW">Internal review</option><option value="PENDING">Approval</option><option value="APPROVED">Signature</option><option value="ACTIVE">Active</option><option value="EXPIRED">Expired</option></select></label>
-      <label>Contract type<select id="type-filter-select" class="dc-ds-control select-base px-3 py-2 rounded-lg border"><option value="">All contract types</option>{% for value, label in contract_types %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></label>
+      <label>Type<select id="type-filter-select" class="dc-ds-control select-base px-3 py-2 rounded-lg border"><option value="">All types</option>{% for value, label in contract_types %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></label>
       <label>Owner<select id="owner-filter-select" class="dc-ds-control select-base px-3 py-2 rounded-lg border"><option value="">All owners</option>{% for owner in repository_owners %}<option value="{{ owner.pk }}">{{ owner.get_full_name|default:owner.username }}</option>{% endfor %}</select></label>
       <label>Counterparty<select id="counterparty-filter-select" class="dc-ds-control select-base px-3 py-2 rounded-lg border"><option value="">All counterparties</option>{% for counterparty in repository_counterparties %}<option value="{{ counterparty }}">{{ counterparty }}</option>{% endfor %}</select></label>
       <label>Risk level<select id="risk-filter-select" class="dc-ds-control select-base px-3 py-2 rounded-lg border"><option value="">All risk levels</option>{% for value, label in risk_levels %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></label>
@@ -118,7 +241,20 @@
   <div class="dc-ds-table-wrap table-sticky">
     <table id="contracts-table" class="dc-ds-table w-full text-sm" data-table-core="server" aria-label="Contracts repository">
       <caption class="sr-only">Contracts repository — sortable and filterable contract records.</caption>
-      <thead class="tbl-head"><tr><th class="tbl-th" scope="col"><input type="checkbox" id="select-all" aria-label="Select all contracts"></th><th class="tbl-th" scope="col">Contract</th><th class="tbl-th" scope="col">Contract type</th><th class="tbl-th" scope="col">Counterparty</th><th class="tbl-th" scope="col">Stage</th><th class="tbl-th" scope="col">Assigned owner</th><th class="tbl-th" scope="col">Latest activity</th><th class="tbl-th wq-col-num" scope="col">Key date</th><th class="tbl-th wq-col-num" scope="col">Value</th><th class="tbl-th" scope="col"><span class="sr-only">Actions</span></th></tr></thead>
+      <thead class="tbl-head">
+        <tr>
+          <th class="tbl-th" scope="col" data-col="select"><input type="checkbox" id="select-all" aria-label="Select all contracts"></th>
+          <th class="tbl-th" scope="col" data-col="title" data-column-key="title" aria-sort="none"><button type="button" class="repo-sort-btn" data-sort="title">Contract<span class="repo-sort-ind" aria-hidden="true"></span></button></th>
+          <th class="tbl-th" scope="col" data-col="type">Type</th>
+          <th class="tbl-th" scope="col" data-col="counterparty">Counterparty</th>
+          <th class="tbl-th" scope="col" data-col="stage" data-column-key="status" aria-sort="none"><button type="button" class="repo-sort-btn" data-sort="status">Stage<span class="repo-sort-ind" aria-hidden="true"></span></button></th>
+          <th class="tbl-th" scope="col" data-col="owner">Owner</th>
+          <th class="tbl-th" scope="col" data-col="activity" data-column-key="updated" aria-sort="descending"><button type="button" class="repo-sort-btn" data-sort="updated">Latest activity<span class="repo-sort-ind" aria-hidden="true"></span></button></th>
+          <th class="tbl-th wq-col-num" scope="col" data-col="key_date">Key date</th>
+          <th class="tbl-th wq-col-num" scope="col" data-col="value">Value</th>
+          <th class="tbl-th" scope="col" data-col="actions"><span class="sr-only">Actions</span></th>
+        </tr>
+      </thead>
       <tbody id="contracts-tbody"><tr><td colspan="10" class="px-5 py-20 text-center c-muted" role="status" aria-live="polite">Loading contracts…</td></tr></tbody>
     </table>
   </div>

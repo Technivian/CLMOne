@@ -1,23 +1,16 @@
 {% load clmone_format %}
-<div class="dc-ds-metric-grid">
-  <article class="dc-ds-metric">
-    <div class="dc-ds-metric__label">Scheduler</div>
-    <div class="dc-ds-metric__value">{{ scheduler.status|default:"unknown"|title }}</div>
-    <div class="dc-ds-metric__note">Heartbeat: {{ scheduler.seconds_since_success|humanduration|default:"n/a" }} ago</div>
+<div class="dc-ds-metric-grid mb-6">
+  {% for metric in metric_cards %}
+  <article class="dc-ds-metric" data-health="{{ metric.health }}">
+    <div class="dc-ds-metric__label">{{ metric.label }}</div>
+    <div class="dc-ds-metric__value{% if metric.health == 'healthy' %} dc-ds-metric__value--clear{% endif %}">{{ metric.value }}</div>
+    <div class="dc-ds-metric__note">
+      <span>{{ metric.time_range }}</span>
+      · Threshold {{ metric.threshold }}
+      · Trend {{ metric.trend }}
+      · <span class="{% if metric.health == 'critical' %}c-danger{% elif metric.health == 'attention' %}c-warning{% else %}c-success{% endif %}">{{ metric.health|title }}</span>
+    </div>
+    <div class="dc-ds-metric__note c-muted">{{ metric.note }}</div>
   </article>
-  <article class="dc-ds-metric">
-    <div class="dc-ds-metric__label">Database</div>
-    <div class="dc-ds-metric__value">{{ database.status|title }}</div>
-    <div class="dc-ds-metric__note">Latency: {{ database.latency_ms }}ms</div>
-  </article>
-  <article class="dc-ds-metric">
-    <div class="dc-ds-metric__label">Alerts</div>
-    <div class="dc-ds-metric__value">{{ alerts.alert_status }}</div>
-    <div class="dc-ds-metric__note">{{ alerts.five_xx_rate_pct }}% 5xx rate</div>
-  </article>
-  <article class="dc-ds-metric">
-    <div class="dc-ds-metric__label">Requests</div>
-    <div class="dc-ds-metric__value">{{ request_metrics.total_requests }}</div>
-    <div class="dc-ds-metric__note">Avg {{ request_metrics.avg_latency_ms }}ms latency</div>
-  </article>
+  {% endfor %}
 </div>

@@ -1,0 +1,22 @@
+{# Shared account menu for the topbar profile trigger. #}
+<div class="profile-menu" id="profileMenu" role="menu" aria-label="Account menu">
+  <div class="profile-menu-header" role="presentation">
+    <a href="{% url 'profile' %}" class="profile-menu-header__name" role="menuitem">{{ user.get_full_name|default:user.username }}</a>
+    {% if CURRENT_ORGANIZATION %}
+    <span class="profile-menu-header__meta">{{ CURRENT_ORGANIZATION.name }}</span>
+    {% elif user.email %}
+    <span class="profile-menu-header__meta">{{ user.email }}</span>
+    {% endif %}
+  </div>
+  <div class="profile-menu-sep" role="separator"></div>
+  <a href="{% url 'settings_hub' %}" class="profile-menu-item" role="menuitem">Settings</a>
+  {% if CAN_MANAGE_ORGANIZATION %}
+  <a href="{% url 'operations_dashboard' %}" class="profile-menu-item" role="menuitem">Operations</a>
+  {% endif %}
+  <a href="{% url 'contracts:notification_list' %}" class="profile-menu-item" role="menuitem">Notifications</a>
+  <div class="profile-menu-sep" role="separator"></div>
+  <form method="post" action="{% url 'logout' %}" class="logout-form">
+    {% csrf_token %}
+    <button type="submit" class="profile-menu-item profile-menu-danger" role="menuitem">Sign out</button>
+  </form>
+</div>

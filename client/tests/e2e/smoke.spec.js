@@ -61,17 +61,17 @@ test('redesigned workspace shells render on key frontend pages', async ({ page }
     },
     {
       path: '/contracts/workflows/',
-      title: /Workflow Designer/,
-      summaryText: /Workflow pipeline/,
-      marker: '.summary-grid',
-      shell: '.workspace-main.hero-shell',
+      title: /Workflow Operations/,
+      summaryText: /Active workflows/,
+      marker: '.workflow-ops-page',
+      shell: '#workflow-ops-root',
     },
     {
       path: '/contracts/workflows/templates/',
-      title: /Workflow Templates/,
-      summaryText: /Create Template|No workflow templates found\./,
-      marker: '.summary-grid',
-      shell: '.workspace-main.hero-shell',
+      title: /Workflow Operations/,
+      summaryText: /Create template|No workflow templates yet/,
+      marker: '.workflow-templates-page',
+      shell: '.workflow-templates-page',
     },
   ];
 

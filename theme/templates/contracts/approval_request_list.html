@@ -1,15 +1,12 @@
 {% extends "base.html" %}
 {% load clmone_components %}
 {% block title %}Approvals — CLM One{% endblock %}
-{% block authenticated_page_title %}Approvals{% endblock %}
-{% block authenticated_page_subtitle %}What needs a decision from you or your team right now.{% endblock %}
+{% block authenticated_page_title %}Workflow Operations{% endblock %}
+{% block authenticated_page_subtitle %}Approval requests that need a decision from you or your team.{% endblock %}
 {% block content %}
+{% include "components/_list_page_shell_styles.html" %}
 <style nonce="{{ csp_nonce }}">
-  {% comment %}
-  .approvals-page itself carries no layout now — it is a marker class only
-  (kept for test/selector stability). Shell width, padding, and vertical
-  rhythm come from the shared .dc-ds-page list scaffold.
-  {% endcomment %}
+  .approvals-page .clm-list-shell { margin-bottom: var(--space-12); }
   .approvals-queue-card {
     background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px;
     overflow: hidden; box-sizing: border-box;
@@ -18,23 +15,16 @@
   .approvals-queue-body { overflow-x: auto; }
 </style>
 
-<div id="approvals-root" class="dc-ds-page dc-ds-page--wide dc-ds-page-flow dc-ds-list-page approvals-page">
-
-  {# ── Page header: title + primary action ─────────────── #}
-  <header class="dc-ds-page-hero dc-ds-list-header">
-    <div class="dc-ds-page-hero__context dc-ds-list-header__context">
-      <h1 class="dc-ds-title">Approvals</h1>
-      <p class="dc-ds-subtitle">What needs a decision from you or your team right now.</p>
-    </div>
-    <div class="dc-ds-actions">
-      <a href="{% url 'contracts:approval_request_create' %}" class="dc-ds-button dc-ds-button--primary">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-        New Approval Request
-      </a>
+<div id="approvals-root" class="dc-ds-page dc-ds-page--wide dc-ds-page-flow dc-ds-list-page clm-list-page approvals-page">
+  <header class="clm-list-shell dc-ds-filterbar dc-ds-table-toolbar dc-ds-list-toolbar" aria-label="Workflow operations controls">
+    <div class="clm-list-view-header">
+      {% include "components/_workflow_operations_tabs.html" with tabs=ops_tabs %}
+      <div class="clm-list-view-actions">
+        <a href="{% url 'contracts:approval_request_create' %}" class="dc-ds-button dc-ds-button--primary">New approval request</a>
+      </div>
     </div>
   </header>
 
-  {# ── Workflow queue (primary object) ───────────────────── #}
   <div class="approvals-queue-card">
     <div class="approvals-tabs-wrap">
       <nav class="wq-tabs dc-ds-list-tabs" role="tablist" aria-label="Approval queue views">
@@ -55,8 +45,7 @@
       {% endfor %}
     </div>
   </div>
-
-</div>{# /approvals-page #}
+</div>
 
 <script nonce="{{ csp_nonce }}">
 (function () {

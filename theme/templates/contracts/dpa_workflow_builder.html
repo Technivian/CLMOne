@@ -11,21 +11,25 @@
 {% block content %}
 <style nonce="{{ csp_nonce }}">
   /* Match the wider Command Center work area while retaining readable form columns. */
-  .dpa-intake { display:grid; grid-template-columns:220px minmax(0, 1fr); gap:var(--space-32); width:100%; max-width:1180px; margin:0 auto; }
+  .dpa-intake { display:grid; grid-template-columns:minmax(0, 1fr); gap:var(--space-16); width:100%; max-width:1180px; margin:0 auto; }
   .topbar-page-title .dpa-title-context { display:inline-block; margin-left:var(--space-12); padding-left:var(--space-12); border-left:1px solid var(--line); color:var(--ink-500); font:var(--text-small); font-weight:600; letter-spacing:0; vertical-align:middle; }
   .dpa-step-card { border:1px solid var(--color-border-soft); border-radius:var(--radius-subpanel); background:var(--card); box-shadow:var(--shadow-card); }
-  .dpa-step-list { display:grid; align-content:start; gap:var(--space-12); margin:0; padding-top:var(--space-16); }
-  .dpa-workflow-heading { margin:0 0 var(--space-4); color:var(--ink-500); font:var(--text-eyebrow); }
-  .dpa-step-nav { display:grid; grid-template-columns:24px minmax(0, 1fr); align-items:center; min-width:0; gap:var(--space-12); color:var(--ink-500); }
+  .dpa-step-list { display:grid; gap:var(--space-12); margin:0; padding:0; }
+  .dpa-workflow-heading { margin:0; color:var(--ink-500); font:var(--text-eyebrow); }
+  .dpa-step-track { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); align-items:start; width:100%; padding:2px 0 0; }
+  .dpa-step-nav { position:relative; z-index:1; display:flex; min-width:0; flex-direction:column; align-items:center; gap:0; padding:0 var(--space-4); color:var(--ink-500); text-align:center; }
+  .dpa-step-nav:not(:last-child)::after { content:""; position:absolute; z-index:0; top:9px; left:calc(50% + 10px); width:calc(100% - 20px); height:2px; border-radius:999px; background:var(--line); }
+  .dpa-step-nav.is-complete:not(:last-child)::after { background:var(--seal); }
   .dpa-step-nav--link { cursor:pointer; text-decoration:none; }
   .dpa-step-nav--link:hover .dpa-step-nav-title, .dpa-step-nav--link:focus-visible .dpa-step-nav-title { color:var(--seal-dark); outline:0; }
-  .dpa-step-nav-num { display:grid; width:20px; height:20px; place-items:center; border-radius:50%; background:var(--ink-200); color:transparent; font-size:11px; font-weight:800; }
+  .dpa-step-nav-num { position:relative; z-index:1; display:grid; width:20px; height:20px; place-items:center; border-radius:50%; background:var(--ink-200); color:transparent; font-size:11px; font-weight:800; line-height:1; }
   .dpa-step-nav.is-active { color:var(--ink-900); }
-  .dpa-step-nav.is-active .dpa-step-nav-num { border:4px solid var(--seal); background:var(--card); }
+  .dpa-step-nav.is-active .dpa-step-nav-num { background:var(--seal); color:#fff; }
   .dpa-step-nav.is-complete { color:var(--ink-700); }
   .dpa-step-nav.is-complete .dpa-step-nav-num { background:var(--seal); color:#fff; }
-  .dpa-step-nav-title { min-width:0; font:var(--text-small); font-weight:650; line-height:1.35; }
-  .dpa-step-nav.is-active .dpa-step-nav-title { font-weight:750; }
+  .dpa-step-nav-title { display:block; min-width:0; margin-top:var(--space-4); font:var(--text-meta); font-weight:650; line-height:1.25; text-wrap:balance; }
+  .dpa-step-nav.is-active .dpa-step-nav-title { font-weight:750; color:var(--ink-900); }
+  .dpa-step-nav.is-complete .dpa-step-nav-title { color:var(--ink-700); }
   .dpa-step-card { padding:var(--space-24); }
   .dpa-step-eyebrow { margin:0 0 var(--space-8); color:var(--seal-dark); font:var(--text-eyebrow); }
   .dpa-step-title { margin:0; color:var(--ink-900); font:var(--text-section); }
@@ -122,7 +126,14 @@
   .dpa-step4-field--wide { grid-column:1 / -1; }
   .dpa-step4-label { display:block; margin-bottom:var(--space-8); color:var(--ink-800); font:var(--text-meta); font-weight:700; }
   .dpa-step4-input, .dpa-step4-select { width:100%; min-height:var(--control-height); padding:var(--space-8) var(--space-12); border:1px solid var(--line); border-radius:var(--radius-control); background:var(--card); color:var(--ink-900); }
-  .dpa-step4-file { width:100%; padding:var(--space-10); border:1px dashed var(--line); border-radius:var(--radius-control); background:var(--well); color:var(--ink-700); }
+  .dpa-step4-file { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap; }
+  .dpa-dropzone { display:grid; justify-items:center; gap:var(--space-8); min-height:152px; padding:var(--space-20) var(--space-16); border:1.5px dashed var(--line-strong); border-radius:var(--radius-subpanel); background:var(--well); text-align:center; cursor:pointer; transition:border-color .15s ease, background .15s ease; }
+  .dpa-dropzone:hover, .dpa-dropzone.is-dragover, .dpa-dropzone:focus-visible { border-color:var(--seal); background:var(--seal-bg); outline:none; }
+  .dpa-dropzone-icon { display:grid; place-items:center; width:38px; height:38px; border:1px solid var(--line); border-radius:var(--radius-control); color:var(--seal); background:var(--card); }
+  .dpa-dropzone-icon svg { width:18px; height:18px; }
+  .dpa-dropzone-title { color:var(--ink-900); font:var(--text-small); font-weight:700; }
+  .dpa-dropzone-copy { color:var(--ink-500); font:var(--text-meta); line-height:1.45; }
+  .dpa-dropzone-filename { min-height:18px; color:var(--seal-dark); font:var(--text-meta); font-weight:700; }
   .dpa-step4-choice-row { display:flex; flex-wrap:wrap; gap:var(--space-8); }
   .dpa-step4-choice { display:inline-flex; align-items:center; gap:var(--space-8); min-height:38px; padding:0 var(--space-12); border:1px solid var(--line); border-radius:var(--radius-control); background:var(--well); color:var(--ink-700); font:var(--text-small); font-weight:650; cursor:pointer; }
   .dpa-step4-choice:has(input:checked) { border-color:var(--seal); background:var(--seal-bg); color:var(--seal-dark); }
@@ -130,21 +141,21 @@
   .dpa-step4-reveal { display:grid; gap:var(--space-12); margin-top:var(--space-12); padding:var(--space-16); border:1px solid var(--color-status-info-border); border-radius:var(--radius-control); background:var(--status-progress-bg); }
   [data-step4-reveal][hidden], [data-step4-position-reveal][hidden] { display:none; }
   .dpa-step4-position { padding:var(--space-16); border:1px solid var(--line); border-radius:var(--radius-control); background:var(--well); }
-  .dpa-evidence-name { display:block; margin-top:var(--space-4); color:var(--status-positive-fg); font:var(--text-meta); }
   @media (min-width:1000px) { .dpa-field-grid { grid-template-columns:repeat(3, minmax(0, 1fr)); } }
-  @media (max-width:700px) { .dpa-intake { grid-template-columns:1fr; gap:var(--space-16); } .topbar-page-title .dpa-title-context { display:none; } .dpa-step-list { grid-template-columns:repeat(2, minmax(0, 1fr)); } .dpa-workflow-heading { grid-column:1 / -1; } .dpa-field-grid, .dpa-step3-grid, .dpa-step4-grid, .dpa-subprocessor-row { grid-template-columns:1fr; } .dpa-field--wide, .dpa-step3-field--wide, .dpa-step4-field--wide { grid-column:auto; } }
+  @media (max-width:700px) { .topbar-page-title .dpa-title-context { display:none; } .dpa-step-track { grid-template-columns:repeat(2, minmax(0, 1fr)); gap:var(--space-12) 0; } .dpa-step-nav:nth-child(2n)::after { content:none; } .dpa-field-grid, .dpa-step3-grid, .dpa-step4-grid, .dpa-subprocessor-row { grid-template-columns:1fr; } .dpa-field--wide, .dpa-step3-field--wide, .dpa-step4-field--wide { grid-column:auto; } }
 </style>
 
 <div class="dc-ds-page dpa-intake">
   <nav class="dpa-step-list" aria-label="DPA intake steps">
     <p class="dpa-workflow-heading">Workflow checklist</p>
+    <div class="dpa-step-track" role="list">
     {% for step in steps %}
     {% if step.number < active_step and step.completed_count == step.required_count %}
-    <a class="dpa-step-nav dpa-step-nav--link is-complete" href="{% url 'contracts:dpa_workflow_builder' %}?step={{ step.number }}" aria-label="Return to step {{ step.number }}: {{ step.title }}">
+    <a class="dpa-step-nav dpa-step-nav--link is-complete" href="{% url 'contracts:dpa_workflow_builder' %}?step={{ step.number }}" role="listitem" aria-label="Return to step {{ step.number }}: {{ step.title }}">
     {% else %}
-    <div class="dpa-step-nav{% if step.is_active %} is-active{% elif step.completed_count == step.required_count %} is-complete{% endif %}"{% if step.number > active_step %} aria-disabled="true"{% endif %}>
+    <div class="dpa-step-nav{% if step.is_active %} is-active{% elif step.completed_count == step.required_count %} is-complete{% endif %}" role="listitem"{% if step.is_active %} aria-current="step"{% endif %}{% if step.number > active_step %} aria-disabled="true"{% endif %}>
     {% endif %}
-      <span class="dpa-step-nav-num">{% if step.completed_count == step.required_count and step.required_count %}✓{% else %}{{ step.number }}{% endif %}</span>
+      <span class="dpa-step-nav-num">{% if step.completed_count == step.required_count and step.required_count and not step.is_active %}✓{% else %}{{ step.number }}{% endif %}</span>
       <span class="dpa-step-nav-title">{{ step.title }}</span>
     {% if step.number < active_step and step.completed_count == step.required_count %}
     </a>
@@ -152,6 +163,7 @@
     </div>
     {% endif %}
     {% endfor %}
+    </div>
   </nav>
 
   <form method="post" action="{% url 'contracts:dpa_workflow_builder' %}" class="dpa-step-card" enctype="multipart/form-data" novalidate>
@@ -243,9 +255,14 @@
             <fieldset class="dpa-step4-field"><legend class="dpa-step4-label">{{ label }} *</legend><div class="dpa-step4-choice-row">{% for value, choice_label in yes_no_not_sure_choices %}<label class="dpa-step4-choice"><input type="radio" name="step4_{{ key }}" value="{{ value }}"{% if step4_facts|get_item:key == value %} checked{% endif %}>{{ choice_label }}</label>{% endfor %}</div>{% if errors|get_item:key %}<p class="dpa-field-error">{{ errors|get_item:key }}</p>{% endif %}</fieldset>
             {% endfor %}
             <div class="dpa-step4-field dpa-step4-field--wide">
-              <label class="dpa-step4-label" for="step4-security-document">Security documentation upload</label>
-              <input class="dpa-step4-file" id="step4-security-document" name="step4_security_document" type="file">
-              {% if step4_facts.evidence.security_document %}<span class="dpa-evidence-name">Evidence attached: {{ step4_facts.evidence.security_document.original_name }}</span>{% endif %}
+              <span class="dpa-step4-label" id="step4-security-document-label">Security documentation upload</span>
+              <div class="dpa-dropzone" id="step4-security-dropzone" data-dpa-dropzone tabindex="0" role="button" aria-labelledby="step4-security-document-label" aria-describedby="step4-security-document-copy">
+                <span class="dpa-dropzone-icon" aria-hidden="true"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 16V4m0 0L8 8m4-4 4 4M5 14v5a1 1 0 001 1h12a1 1 0 001-1v-5"/></svg></span>
+                <span class="dpa-dropzone-title">Choose a file or drag it here</span>
+                <span class="dpa-dropzone-copy" id="step4-security-document-copy">PDF, DOCX, TXT, MD, CSV, HTML, XML, or JSON · up to 50 MB</span>
+                <span class="dpa-dropzone-filename" data-dpa-dropzone-filename aria-live="polite">{% if step4_facts.evidence.security_document %}{{ step4_facts.evidence.security_document.original_name }}{% endif %}</span>
+              </div>
+              <input class="dpa-step4-file" id="step4-security-document" name="step4_security_document" type="file" accept=".pdf,.docx,.txt,.md,.csv,.html,.xml,.json" data-dpa-dropzone-input>
             </div>
           </div>
         </section>
@@ -271,7 +288,26 @@
           </div>
           <div class="dpa-step4-grid">
             {% for key, label in position_fields %}
-            <fieldset class="dpa-step4-field dpa-step4-field--wide dpa-step4-position" data-position-key="{{ key }}"><legend class="dpa-step4-label">{{ label }} *</legend><div class="dpa-step4-choice-row">{% for value, choice_label in position_choices %}<label class="dpa-step4-choice"><input type="radio" name="step4_{{ key }}_position" value="{{ value }}"{% if step4_facts.positions|get_item:key|get_item:'status' == value %} checked{% endif %}>{{ choice_label }}</label>{% endfor %}</div><div data-step4-position-reveal{% if step4_facts.positions|get_item:key|get_item:'status' != 'deviation' %} hidden{% endif %}><div class="dpa-step4-reveal"><label class="dpa-step4-label" for="step4-{{ key }}-wording">Upload or paste proposed wording *</label><textarea class="dpa-step4-input" id="step4-{{ key }}-wording" name="step4_{{ key }}_wording">{{ step4_facts.positions|get_item:key|get_item:'wording' }}</textarea><input class="dpa-step4-file" name="step4_{{ key }}_document" type="file"><label class="dpa-step4-label" for="step4-{{ key }}-explanation">Optional explanation</label><input class="dpa-step4-input" id="step4-{{ key }}-explanation" name="step4_{{ key }}_explanation" value="{{ step4_facts.positions|get_item:key|get_item:'explanation' }}"></div></div></fieldset>
+            <fieldset class="dpa-step4-field dpa-step4-field--wide dpa-step4-position" data-position-key="{{ key }}">
+              <legend class="dpa-step4-label">{{ label }} *</legend>
+              <div class="dpa-step4-choice-row">{% for value, choice_label in position_choices %}<label class="dpa-step4-choice"><input type="radio" name="step4_{{ key }}_position" value="{{ value }}"{% if step4_facts.positions|get_item:key|get_item:'status' == value %} checked{% endif %}>{{ choice_label }}</label>{% endfor %}</div>
+              <div data-step4-position-reveal{% if step4_facts.positions|get_item:key|get_item:'status' != 'deviation' %} hidden{% endif %}>
+                <div class="dpa-step4-reveal">
+                  <label class="dpa-step4-label" for="step4-{{ key }}-wording">Upload or paste proposed wording *</label>
+                  <textarea class="dpa-step4-input" id="step4-{{ key }}-wording" name="step4_{{ key }}_wording">{{ step4_facts.positions|get_item:key|get_item:'wording' }}</textarea>
+                  <span class="dpa-step4-label" id="step4-{{ key }}-document-label">Supporting document</span>
+                  <div class="dpa-dropzone" data-dpa-dropzone tabindex="0" role="button" aria-labelledby="step4-{{ key }}-document-label" aria-describedby="step4-{{ key }}-document-copy">
+                    <span class="dpa-dropzone-icon" aria-hidden="true"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 16V4m0 0L8 8m4-4 4 4M5 14v5a1 1 0 001 1h12a1 1 0 001-1v-5"/></svg></span>
+                    <span class="dpa-dropzone-title">Choose a file or drag it here</span>
+                    <span class="dpa-dropzone-copy" id="step4-{{ key }}-document-copy">PDF, DOCX, TXT, MD, CSV, HTML, XML, or JSON · up to 50 MB</span>
+                    <span class="dpa-dropzone-filename" data-dpa-dropzone-filename aria-live="polite">{% with evidence_key=key|add:'_document' %}{% if step4_facts.evidence|get_item:evidence_key %}{{ step4_facts.evidence|get_item:evidence_key|get_item:'original_name' }}{% endif %}{% endwith %}</span>
+                  </div>
+                  <input class="dpa-step4-file" id="step4-{{ key }}-document" name="step4_{{ key }}_document" type="file" accept=".pdf,.docx,.txt,.md,.csv,.html,.xml,.json" data-dpa-dropzone-input>
+                  <label class="dpa-step4-label" for="step4-{{ key }}-explanation">Optional explanation</label>
+                  <input class="dpa-step4-input" id="step4-{{ key }}-explanation" name="step4_{{ key }}_explanation" value="{{ step4_facts.positions|get_item:key|get_item:'explanation' }}">
+                </div>
+              </div>
+            </fieldset>
             {% endfor %}
           </div>
         </section>
@@ -469,6 +505,44 @@
       });
       if (addSubprocessor) addSubprocessor.addEventListener('click', addSubprocessorRow);
       updateConditionalSections();
+
+      function initialiseDropzone(dropzone) {
+        var fileInput = dropzone.parentElement && dropzone.parentElement.querySelector('[data-dpa-dropzone-input]');
+        var filename = dropzone.querySelector('[data-dpa-dropzone-filename]');
+        if (!fileInput) return;
+
+        function setFileName(name) {
+          if (filename) filename.textContent = name || '';
+        }
+
+        dropzone.addEventListener('click', function () { fileInput.click(); });
+        dropzone.addEventListener('keydown', function (event) {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            fileInput.click();
+          }
+        });
+        dropzone.addEventListener('dragover', function (event) {
+          event.preventDefault();
+          dropzone.classList.add('is-dragover');
+        });
+        dropzone.addEventListener('dragleave', function () {
+          dropzone.classList.remove('is-dragover');
+        });
+        dropzone.addEventListener('drop', function (event) {
+          event.preventDefault();
+          dropzone.classList.remove('is-dragover');
+          if (event.dataTransfer.files.length) {
+            fileInput.files = event.dataTransfer.files;
+            setFileName(fileInput.files[0].name);
+          }
+        });
+        fileInput.addEventListener('change', function () {
+          setFileName(fileInput.files.length ? fileInput.files[0].name : '');
+        });
+      }
+
+      document.querySelectorAll('[data-dpa-dropzone]').forEach(initialiseDropzone);
     }());
   </script>
 </div>

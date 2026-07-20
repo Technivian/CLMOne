@@ -181,7 +181,9 @@ class DesignSystemPhaseOneFoundationTests(SimpleTestCase):
         self.assertTrue(builder_source.exists())
         self.assertIn('.cform-doc-canvas', builder_source.read_text())
         self.assertIn('dc-ds-workspace--record', detail)
-        self.assertIn('dc-ds-workspace__metadata-grid', detail)
+        self.assertIn('dc-ds-workspace__tabs', detail)
+        self.assertIn('dc-ds-workspace__rail--sticky', detail)
+        self.assertNotIn('dc-ds-workspace__metadata-grid', detail)
         self.assertNotIn('<style', detail)
         for retired in (
             'contract-command-strip',

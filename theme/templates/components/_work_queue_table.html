@@ -8,7 +8,8 @@
       <th>Owner</th>
       <th>Risk</th>
       <th class="wq-col-num">Due</th>
-      <th class="wq-col-action">Action</th>
+      <th>Next action</th>
+      <th class="wq-col-action"><span class="sr-only">Actions</span></th>
     </tr>
   </thead>
   <tbody>
@@ -37,6 +38,7 @@
       </td>
       <td>{% if row.contract %}<span class="wq-risk wq-risk-{{ row.contract.risk_level|lower }}"><i class="wq-risk-dot" aria-hidden="true"></i>{{ row.contract.get_risk_level_display }}</span>{% else %}<span class="c-dim">—</span>{% endif %}</td>
       <td class="wq-col-num{% if row.due_overdue %} wq-due-overdue{% elif row.due_today %} wq-due-today{% endif %}">{{ row.due_date|due_countdown }}</td>
+      <td><span class="wq-next-action">{{ row.next_action|default:row.action_label|default:"Open" }}</span></td>
       <td class="wq-col-action">
         <a href="{{ row.href }}" class="dc-ds-button dc-ds-button--quiet text-xs font-semibold px-2.5 py-1.5 rounded-md border transition-opacity hover:opacity-80">{{ row.action_label|default:"View" }}</a>
         <details class="wq-kebab">
@@ -49,7 +51,7 @@
       </td>
     </tr>
     {% empty %}
-    <tr><td colspan="6" class="wq-empty">{{ empty_message|default:"Nothing here right now." }}</td></tr>
+    <tr><td colspan="7" class="wq-empty">{{ empty_message|default:"Nothing here right now." }}</td></tr>
     {% endfor %}
   </tbody>
 </table>

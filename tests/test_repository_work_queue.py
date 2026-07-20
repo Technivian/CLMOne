@@ -8,6 +8,7 @@ cross-tenant isolation, and the legacy contract_list migration banner.
 """
 import json
 import re
+from datetime import date
 
 from django.contrib.auth.models import User
 from django.test import Client, TestCase
@@ -97,9 +98,11 @@ class RepositoryControlsPreservedTests(TestCase):
     def test_new_stage_assignee_activity_columns_present(self):
         response = self.client.get(reverse('contracts:repository'))
         self.assertContains(response, 'Stage')
-        self.assertContains(response, 'Assigned owner')
+        self.assertContains(response, 'Owner')
         self.assertContains(response, 'Latest activity')
         self.assertContains(response, 'Key date')
+        self.assertNotContains(response, 'Assigned owner')
+        self.assertContains(response, '>Type</')
 
 
 class RepositoryApiRowShapeTests(TestCase):
@@ -171,6 +174,46 @@ class RepositoryApiRowShapeTests(TestCase):
         self.assertIsNone(ISO_TIMESTAMP_RE.search(row['end_date_display'] or ''))
         for word in DUTCH_CASE_PHASE_WORDS:
             self.assertNotIn(word, human_facing.lower())
+
+    def test_exception_marker_becomes_badge_fields_not_embedded_name(self):
+        Contract.objects.create(
+            organization=self.organization,
+            title='MSA — Northstar Consulting B.V. - Exception',
+            counterparty='Northstar Consulting B.V. - Exception',
+            contract_type=Contract.ContractType.MSA,
+            status='DRAFT',
+            lifecycle_stage='DRAFTING',
+            created_by=self.user,
+            end_date=date(2027, 7, 16),
+            value=120000,
+            currency='EUR',
+        )
+        response = self.client.get(reverse('contracts:contracts_api'))
+        self.assertEqual(response.status_code, 200)
+        payload = json.loads(response.content)
+        row = next(c for c in payload['contracts'] if 'Northstar' in c['title'])
+        self.assertEqual(row['title'], 'MSA — Northstar Consulting B.V.')
+        self.assertEqual(row['counterparty'], 'Northstar Consulting B.V.')
+        self.assertTrue(row['has_exception'])
+        self.assertEqual(row['contract_type_short'], 'MSA')
+        self.assertEqual(row['contract_type_display'], 'Master Service Agreement')
+        self.assertEqual(row['end_date_display'], '16 Jul 2027')
+        self.assertNotIn('Exception', row['title'])
+        self.assertNotIn('Exception', row['counterparty'])
+
+    def test_obligation_tracking_stage_uses_short_badge_label(self):
+        Contract.objects.create(
+            organization=self.organization,
+            title='Active obligations contract',
+            status='ACTIVE',
+            lifecycle_stage='OBLIGATION_TRACKING',
+            created_by=self.user,
+        )
+        response = self.client.get(reverse('contracts:contracts_api'))
+        payload = json.loads(response.content)
+        row = next(c for c in payload['contracts'] if c['title'] == 'Active obligations contract')
+        self.assertEqual(row['stage_display'], 'Obligations')
+        self.assertEqual(row['stage_display_full'], 'Obligation Tracking')
 
     def test_unassigned_contract_has_no_assignee(self):
         Contract.objects.create(
