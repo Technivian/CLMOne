@@ -74,10 +74,12 @@ class WorkflowDesignerCanvasTests(TestCase):
         self.assertTrue(response.context['hide_app_footer'])
         for label in ('Design', 'Test', 'Versions', 'Audit trail'):
             self.assertIn(label, body)
-        self.assertIn('Workflow Designer', body)
-        self.assertEqual(body.count('wf-designer-header__title'), 1)
-        self.assertIn(f'>{self.template.name}<', body)
-        self.assertNotIn('topbar-page-title">' + self.template.name, body)
+        self.assertIn('Workflow Designer', body)  # document title / nav still reference the product area
+        self.assertIn('topbar-page-title">' + self.template.name, body)
+        self.assertIn('wf-designer-topbar-status', body)
+        self.assertIn('Not published', body)
+        self.assertNotIn('wf-designer-header__title', body)
+        self.assertNotIn('wf-identity-chip--readonly', body)
         self.assertIn('data-save-changes', body)
         self.assertIn('>Save<', body)
         self.assertIn('Test workflow', body)
@@ -217,18 +219,18 @@ class WorkflowDesignerCanvasTests(TestCase):
         response = self.client.get(reverse('contracts:workflow_template_detail', args=[self.template.pk]))
         self.assertTrue(response.context['published_has_blocking_issues'])
         body = response.content.decode()
-        self.assertIn('Published configuration issue', body)
+        # Ambient chrome: issue badge + create action; yellow banner copy is no longer always-visible.
+        self.assertNotIn('Published configuration issue', body)
         self.assertIn('Create corrected version', body)
         self.assertIn('This immutable published version contains configuration that no longer passes validation.', body)
-        self.assertIn('wf-identity-chip--published', body)
+        self.assertIn('wf-designer-topbar-status is-live', body)
         self.assertIn('wf-issue-badge', body)
-        self.assertIn('wf-identity-chip--readonly', body)
         self.assertIn('Live', body)
-        self.assertIn('Read-only published version', body)
+        self.assertIn('Read-only published version', body)  # inspector still states read-only
+        self.assertNotIn('wf-identity-chip--readonly', body)
         self.assertNotIn('Published · Issues', body)
         self.assertNotIn('Published · Action required', body)
         self.assertNotIn('wf-identity-chip--draft', body)
-        # Header owns primary Create corrected version; card may also include it.
         self.assertGreaterEqual(body.count('Create corrected version'), 1)
         self.assertTrue(response.context['new_launches_blocked'])
 
