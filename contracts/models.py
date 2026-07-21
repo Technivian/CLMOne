@@ -2351,7 +2351,8 @@ class WorkflowTemplate(models.Model):
         blank=True,
         related_name='workflow_templates',
     )
-    is_active = models.BooleanField(default=True)
+    # Unpublished (draft) by default — publication is an explicit governed action.
+    is_active = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(
         User,

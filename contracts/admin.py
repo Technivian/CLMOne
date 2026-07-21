@@ -300,6 +300,37 @@ class WorkflowTemplateAdmin(admin.ModelAdmin):
     search_fields = ('name', 'description')
     readonly_fields = ('created_at',)
 
+    _PUBLISHED_LOCKED_FIELDS = (
+        'name',
+        'description',
+        'organization',
+        'category',
+        'version',
+        'parent_template',
+        'contract_type',
+        'fallback_signer',
+    )
+
+    def get_readonly_fields(self, request, obj=None):
+        readonly = list(super().get_readonly_fields(request, obj))
+        if obj is not None and obj.is_active:
+            readonly = list(dict.fromkeys([*readonly, *self._PUBLISHED_LOCKED_FIELDS, 'is_active']))
+        return readonly
+
+    def save_model(self, request, obj, form, change):
+        if change and obj.pk:
+            prior = WorkflowTemplate.objects.filter(pk=obj.pk).first()
+            if prior and prior.is_active:
+                # Published rows are immutable in Admin. Unpublish via the product UI.
+                from django.contrib import messages
+                messages.error(
+                    request,
+                    'Published workflow templates are immutable in Admin. '
+                    'Use Workflow Designer to create a new version or unpublish to draft.',
+                )
+                return
+        super().save_model(request, obj, form, change)
+
 @admin.register(WorkflowTemplateStep)
 class WorkflowTemplateStepAdmin(admin.ModelAdmin):
     list_display = ['template', 'name', 'order']
