@@ -4,7 +4,7 @@
 
 **North-star outcome:** A user opens CLM One and immediately knows what needs action, what is most urgent, why it matters, what to do next, and when it is due — without hunting across five screens.
 
-**Last updated:** 2026-07-21 (Phases 3–4 complete)  
+**Last updated:** 2026-07-21 (Phases 3–5 complete)  
 **Companion docs:** Engineering delivery waves live in [`ROADMAP.md`](../ROADMAP.md). Canonical boundaries live in [`PRODUCT_MAP.md`](PRODUCT_MAP.md). This document owns product boundaries, sequencing, and acceptance outcomes.
 
 ---
@@ -165,29 +165,32 @@ If a module does not serve one of these jobs clearly, demote, merge, or cut it f
 
 ---
 
-## Phase 5 — Instrument the operating system
+## Phase 5 — Instrument the operating system (complete)
 
 **Goal:** Prove whether My Work is the hub or just another list.
 
 ### Instrument these events
 
-1. Work item surfaced
-2. Work item opened
-3. Primary action taken
-4. Work completed / returned / rejected
-5. SLA breach or overdue transition
+1. [x] Work item surfaced — My Work render → `WorkInteractionEvent(surfaced)` (deduped / day)
+2. [x] Work item opened — My Work beacon → `opened` (+ `from=my_work` on navigation)
+3. [x] Primary action taken — beacon + surface-stamped specialist mutations
+4. [x] Work completed / returned / rejected — mirrored into `WorkInteractionEvent` with `source_surface`
+5. [x] SLA breach or overdue transition — `approval.sla_breached` + `sla_breached` work event
 
 ### Measure
 
-| Metric | Why it matters |
-|--------|----------------|
-| Time to first action after assignment | Discovery + urgency quality |
-| Overdue rate by work type | SLA / prioritization health |
-| Return / reject rate by contract type | Intake and review quality |
-| % completed from My Work vs specialist workspace | Whether the hub is working |
-| Restricted / blocked item frequency | Governance load and access friction |
+| Metric | Why it matters | Source |
+|--------|----------------|--------|
+| Time to first action after assignment | Discovery + urgency quality | Surfaced → opened/action lag; approval decide lag |
+| Overdue rate by work type | SLA / prioritization health | Surfaced events `is_overdue` by `work_kind` |
+| Return / reject rate by contract type | Intake and review quality | Outcome events by `contract_type` |
+| % completed from My Work vs specialist workspace | Whether the hub is working | `completed` events by `surface` |
+| Restricted / blocked item frequency | Governance load and access friction | Surfaced `is_restricted` / `is_blocked` rates |
 
-**Phase 5 exit:** Roadmap decisions are driven by operating metrics, not guesswork.
+**Read API (admins):** `GET /contracts/api/analytics/work-metrics/`  
+**Beacon:** `POST /contracts/api/analytics/work-events/`
+
+**Phase 5 exit:** ✅ Roadmap decisions can be driven by operating metrics, not guesswork.
 
 ---
 
@@ -211,9 +214,9 @@ Do **not** start these until Phases 1–3 are solid.
 | **0** | Personal hub | My Work answers “what needs me now?” | ✅ Complete |
 | **1** | Boundaries + one work model | App stops arguing with itself | ✅ Complete |
 | **2** | Core loop in context | Intake → Close is completable | ✅ Complete |
-| **3** | Governance visible | Trust and control are product features | Planned |
-| **4** | Nav / legacy cleanup | Smaller, complete IA | Planned |
-| **5** | Instrumentation | Operating metrics guide the roadmap | Planned |
+| **3** | Governance visible | Trust and control are product features | ✅ Complete |
+| **4** | Nav / legacy cleanup | Smaller, complete IA | ✅ Complete |
+| **5** | Instrumentation | Operating metrics guide the roadmap | ✅ Complete |
 | **6** | Amplifiers | Reporting, prediction, AI on a trusted base | Planned |
 
 ---

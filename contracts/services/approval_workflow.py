@@ -172,14 +172,43 @@ def _audit_approval_decision(
             object_id=ar.pk,
             object_repr=f'ApprovalRequest #{ar.pk} ({ar.approval_step})',
             organization_id=organization_id,
+            event_type={
+                'approve': 'approval.approved',
+                'reject': 'approval.rejected',
+                'request_changes': 'approval.returned',
+            }.get(action, f'approval.{action}'),
             changes={
                 'event': f'approval_{action}_{"succeeded" if allowed else "blocked"}',
                 'contract_id': ar.contract_id,
                 'previous_state': previous_status,
                 'new_state': ar.status if allowed else previous_status,
                 'comment': comments,
+                'source_surface': (getattr(actor, '_work_surface', None) or 'api'),
             },
         )
+        if allowed:
+            from contracts.models import Organization
+            from contracts.services.work_instrumentation import record_outcome
+            org = None
+            if organization_id:
+                org = Organization.objects.filter(pk=organization_id).first()
+            outcome = {
+                'approve': 'completed',
+                'reject': 'rejected',
+                'request_changes': 'returned',
+            }.get(action)
+            if outcome and org is not None:
+                record_outcome(
+                    organization=org,
+                    user=actor,
+                    event=outcome,
+                    work_item_id=f'approval:{ar.pk}',
+                    work_kind='approval',
+                    surface=getattr(actor, '_work_surface', None) or 'api',
+                    contract=getattr(ar, 'contract', None),
+                    contract_id=ar.contract_id,
+                    metadata={'approval_action': action},
+                )
     except Exception:
         logger.warning('approval audit logging failed for action=%s', action, exc_info=True)
 
@@ -639,6 +668,22 @@ class ApprovalWorkflowService:
                     'sla_hours': ar.rule.sla_hours if ar.rule_id and ar.rule else None,
                 },
             )
+            if effective_org_id:
+                from contracts.models import Organization
+                from contracts.services.work_instrumentation import record_outcome
+                org = Organization.objects.filter(pk=effective_org_id).first()
+                if org is not None:
+                    record_outcome(
+                        organization=org,
+                        user=None,
+                        event='sla_breached',
+                        work_item_id=f'approval:{ar.pk}',
+                        work_kind='approval',
+                        surface='job',
+                        contract=getattr(ar, 'contract', None),
+                        contract_id=ar.contract_id,
+                        is_overdue=True,
+                    )
         except Exception:
             logger.exception('Failed to audit SLA breach for approval %s', ar.pk)
         return _to_dto(ar)

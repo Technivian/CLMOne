@@ -401,10 +401,19 @@ def approval_contract_list_api(request, contract_id):
     })
 
 
+def _stamp_work_surface(request, data=None):
+    """Attach surface attribution onto the actor for downstream audit/instrumentation."""
+    from contracts.services.work_instrumentation import resolve_surface
+    surface = resolve_surface(request, explicit=(data or {}).get('surface') or (data or {}).get('from') or '')
+    request.user._work_surface = surface
+    return surface
+
+
 @login_required
 @require_http_methods(['POST'])
 def approval_approve_api(request, approval_id):
     data = json.loads(request.body or '{}')
+    _stamp_work_surface(request, data)
     svc = get_approval_workflow_service()
     try:
         dto = svc.approve(approval_id, request.user, comments=data.get('comments', ''))
@@ -421,6 +430,7 @@ def approval_approve_api(request, approval_id):
 @require_http_methods(['POST'])
 def approval_reject_api(request, approval_id):
     data = json.loads(request.body or '{}')
+    _stamp_work_surface(request, data)
     svc = get_approval_workflow_service()
     try:
         dto = svc.reject(approval_id, request.user, comments=data.get('comments', ''))
@@ -437,6 +447,7 @@ def approval_reject_api(request, approval_id):
 @require_http_methods(['POST'])
 def approval_request_changes_api(request, approval_id):
     data = json.loads(request.body or '{}')
+    _stamp_work_surface(request, data)
     svc = get_approval_workflow_service()
     try:
         dto = svc.request_changes(approval_id, request.user, comments=data.get('comments', ''))

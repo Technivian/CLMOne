@@ -81,6 +81,8 @@ from contracts.api.integrations import (
 )
 from contracts.api.analytics import (
     executive_analytics_api,
+    work_interaction_api,
+    work_operating_metrics_api,
     executive_dashboard_presets_api,
     executive_dashboard_preset_delete_api,
     clause_analytics_stats,

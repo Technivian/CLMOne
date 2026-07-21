@@ -454,6 +454,19 @@ def deadline_complete(request, pk):
             'previous_state': 'OPEN',
             'new_state': 'COMPLETED',
         },
+        event_type='deadline.completed',
+    )
+    from contracts.services.work_instrumentation import record_outcome, resolve_surface
+    record_outcome(
+        organization=organization,
+        user=request.user,
+        event='completed',
+        work_item_id=f'obligation:{deadline.pk}',
+        work_kind='obligation',
+        surface=resolve_surface(request),
+        contract=deadline.contract,
+        contract_id=deadline.contract_id,
+        is_overdue=bool(deadline.is_overdue),
     )
     messages.success(request, f'Deadline "{deadline.title}" marked as complete.')
     return redirect('contracts:obligations_workspace')

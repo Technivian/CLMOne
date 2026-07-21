@@ -167,6 +167,13 @@ class MyWorkView(LoginRequiredMixin, TemplateView):
             completed_rows = get_recently_completed_items(organization, user, today=today)
         except Exception:
             load_error = True
+        else:
+            if organization and active_rows and view_mode == 'active':
+                try:
+                    from contracts.services.work_instrumentation import record_rows_surfaced
+                    record_rows_surfaced(organization, user, active_rows, surface='my_work')
+                except Exception:
+                    pass
 
         summary_counts = build_summary_counts(active_rows)
         filter_options = build_filter_options(active_rows)

@@ -369,7 +369,7 @@
       fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
-        body: JSON.stringify({ comments: comments }),
+        body: JSON.stringify({ comments: comments, surface: 'approvals' }),
       })
         .then(function (res) {
           return res.json().then(function (data) { return { ok: res.ok, data: data }; });

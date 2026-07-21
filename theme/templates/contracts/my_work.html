@@ -655,10 +655,41 @@
     applyFilters();
   }
 
+  function getCsrfToken() {
+    return document.cookie
+      .split('; ')
+      .find(function (row) { return row.startsWith('csrftoken='); })
+      ?.split('=')[1] || '';
+  }
+
+  function recordWorkEvent(payload) {
+    try {
+      fetch('{% url "contracts:work_interaction_api" %}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+        body: JSON.stringify(payload),
+        keepalive: true,
+      }).catch(function () { /* telemetry must not block navigation */ });
+    } catch (err) { /* ignore */ }
+  }
+
   function openActionContext(row) {
     var href = row.getAttribute('data-action-href');
+    var workItemId = row.getAttribute('data-row-id') || '';
+    if (workItemId) {
+      recordWorkEvent({
+        event: 'opened',
+        work_item_id: workItemId,
+        work_kind: row.getAttribute('data-work-type') || '',
+        surface: 'my_work',
+        contract_type: row.getAttribute('data-contract-type') || '',
+        is_overdue: row.getAttribute('data-due-state') === 'overdue',
+        is_blocked: row.getAttribute('data-status') === 'Blocked',
+      });
+    }
     if (href) {
-      window.location.href = href;
+      var sep = href.indexOf('?') >= 0 ? '&' : '?';
+      window.location.href = href + sep + 'from=my_work';
       return;
     }
     toggleDetail(row);
