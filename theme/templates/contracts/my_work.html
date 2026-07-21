@@ -1,23 +1,802 @@
 {% extends "base.html" %}
+{% load clmone_format %}
 {% block title %}My Work – CLM One{% endblock %}
 {% block authenticated_page_title %}My Work{% endblock %}
-{% block authenticated_page_subtitle %}Actions assigned to you — reviews, approvals, obligations, and returned work.{% endblock %}
+{% block authenticated_page_subtitle %}Review and complete the work currently assigned to you.{% endblock %}
+{% block authenticated_page_actions %}
+<div class="my-work-header-actions" style="display:inline-flex;align-items:center;gap:10px;">
+  <span class="my-work-last-updated" id="my-work-last-updated" style="font:var(--text-meta);color:var(--ink-600);white-space:nowrap;">
+    Updated {{ last_updated|date:"g:i A" }}
+  </span>
+  <button type="button" class="dc-ds-button dc-ds-button--ghost" id="my-work-refresh" aria-label="Refresh work queue">Refresh</button>
+</div>
+{% endblock %}
 {% block content %}
 {% include "components/_list_page_shell_styles.html" %}
-<div class="dc-ds-page dc-ds-page--wide dc-ds-page-flow dc-ds-list-page">
-  <section class="dc-ds-surface" style="padding: var(--space-24); max-width: 720px;">
-    <h2 class="dc-ds-workspace__surface-title" style="margin: 0 0 var(--space-8);">Your personal queue</h2>
-    <p class="profile-page__muted" style="margin: 0 0 var(--space-16); color: var(--ink-500); font: var(--text-small);">
-      My Work will consolidate contracts awaiting your review, approval requests, directed questions,
-      owned obligations, overdue actions, and returned or rejected items. Until that queue ships,
-      use these governed surfaces for work that already belongs to you.
-    </p>
-    <div style="display: grid; gap: var(--space-10);">
-      <a href="{{ approvals_url }}" class="dc-ds-button dc-ds-button--quiet" style="justify-content: flex-start;">Reviews &amp; Approvals</a>
-      <a href="{{ privacy_reviews_url }}" class="dc-ds-button dc-ds-button--quiet" style="justify-content: flex-start;">Privacy Reviews</a>
-      <a href="{{ obligations_url }}" class="dc-ds-button dc-ds-button--quiet" style="justify-content: flex-start;">Obligations</a>
-      <a href="{{ repository_url }}" class="dc-ds-button dc-ds-button--quiet" style="justify-content: flex-start;">Contracts</a>
-    </div>
+<style nonce="{{ csp_nonce }}">
+  .my-work-page .clm-list-summary { --dc-ds-summary-columns: 6; }
+  .my-work-page .my-work-summary-chip {
+    display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto;
+    min-height: 36px; margin: 0; padding: 0 12px;
+    border: 1px solid var(--line, var(--hairline)); border-radius: 999px;
+    background: var(--card, #fff); color: var(--ink-600);
+    font: var(--text-meta); font-size: 12px; font-weight: 650; line-height: 1.2;
+    white-space: nowrap; cursor: pointer; box-shadow: none;
+    transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+  }
+  .my-work-page .my-work-summary-chip:hover {
+    border-color: color-mix(in srgb, var(--seal) 35%, var(--line));
+    color: var(--ink-900);
+    background: color-mix(in srgb, var(--seal) 5%, var(--card));
+  }
+  .my-work-page .my-work-summary-chip:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+  .my-work-page .my-work-summary-chip.is-active,
+  .my-work-page .my-work-summary-chip[aria-pressed="true"] {
+    border-color: var(--seal);
+    background: var(--seal-bg, color-mix(in srgb, var(--seal) 12%, #fff));
+    color: var(--seal-dark, var(--seal));
+    font-weight: 700;
+  }
+  .my-work-page .my-work-summary-chip.is-hidden { display: none; }
+  .my-work-page .my-work-summary-chip__count { font-variant-numeric: tabular-nums; opacity: 0.85; }
+  .my-work-page .my-work-summary-chip--danger .my-work-summary-chip__count { color: var(--status-danger-fg); }
+  .my-work-page .my-work-summary-chip--warning .my-work-summary-chip__count { color: var(--status-pending-fg); }
+  .my-work-page .my-work-summary-chip--info .my-work-summary-chip__count { color: var(--status-progress-fg); }
+
+  .my-work-page .my-work-view-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+  .my-work-page .my-work-type-filters {
+    display: flex; flex: 1 1 auto; align-items: center; gap: 6px;
+    min-width: 0; overflow-x: auto; padding: 1px;
+  }
+  .my-work-page .my-work-type-chip {
+    display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto;
+    min-height: 30px; padding: 0 11px;
+    border: 1px solid var(--line); border-radius: 999px;
+    background: var(--card); color: var(--ink-600);
+    font: var(--text-meta); font-size: 12px; font-weight: 650;
+    cursor: pointer; white-space: nowrap;
+  }
+  .my-work-page .my-work-type-chip.is-active {
+    border-color: var(--seal); background: var(--seal-bg);
+    color: var(--seal-dark, var(--seal)); font-weight: 700;
+  }
+  .my-work-page .my-work-type-chip:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+
+  .my-work-page .my-work-active-filters { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 var(--space-10); }
+  .my-work-page .my-work-filter-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px; border-radius: 999px;
+    border: 1px solid var(--line); background: var(--well);
+    font-size: 12px; font-weight: 600; color: var(--ink-700);
+  }
+  .my-work-page .my-work-filter-chip button {
+    border: 0; background: transparent; cursor: pointer; color: var(--ink-500);
+    font-size: 14px; line-height: 1; padding: 0 2px;
+  }
+
+  .my-work-page #my-work-table { min-width: 1100px; width: 100%; table-layout: fixed; }
+  .my-work-page #my-work-table th,
+  .my-work-page #my-work-table td { vertical-align: top; padding: 14px 10px; overflow: hidden; }
+  .my-work-page #my-work-table th[data-col="priority"],
+  .my-work-page #my-work-table td[data-col="priority"] { width: 88px; }
+  .my-work-page #my-work-table th[data-col="title"],
+  .my-work-page #my-work-table td[data-col="title"] { min-width: 200px; width: 20%; }
+  .my-work-page #my-work-table th[data-col="contract"],
+  .my-work-page #my-work-table td[data-col="contract"] { min-width: 140px; width: 14%; }
+  .my-work-page #my-work-table th[data-col="counterparty"],
+  .my-work-page #my-work-table td[data-col="counterparty"] { min-width: 120px; width: 12%; }
+  .my-work-page #my-work-table th[data-col="type"],
+  .my-work-page #my-work-table td[data-col="type"] { width: 96px; }
+  .my-work-page #my-work-table th[data-col="assigned"],
+  .my-work-page #my-work-table td[data-col="assigned"] { width: 104px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .my-work-page #my-work-table th[data-col="due"],
+  .my-work-page #my-work-table td[data-col="due"] { width: 104px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .my-work-page #my-work-table th[data-col="status"],
+  .my-work-page #my-work-table td[data-col="status"] { min-width: 140px; width: 12%; }
+  .my-work-page #my-work-table th[data-col="action"],
+  .my-work-page #my-work-table td[data-col="action"] { width: 108px; overflow: visible; }
+
+  .my-work-page .my-work-row { cursor: pointer; }
+  .my-work-page .my-work-row:hover td { background: var(--sidebar-hover); }
+  .my-work-page .my-work-row:focus-visible { outline: none; box-shadow: inset var(--ds-focus-ring); }
+  .my-work-page .my-work-row.is-expanded td { background: color-mix(in srgb, var(--seal) 4%, var(--card)); }
+  .my-work-page .my-work-row.is-hidden { display: none; }
+  .my-work-page .my-work-row-detail td { padding: 0; border-top: 0; }
+  .my-work-page .my-work-row-detail.is-hidden { display: none; }
+  .my-work-page .my-work-detail-panel {
+    padding: 14px 16px 16px; border-top: 1px solid var(--line);
+    background: var(--well, var(--surface-2));
+  }
+  .my-work-page .my-work-detail-grid {
+    display: grid; gap: 12px 20px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    font-size: 13px;
+  }
+  .my-work-page .my-work-detail-grid dt { margin: 0; color: var(--ink-500); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
+  .my-work-page .my-work-detail-grid dd { margin: 2px 0 0; color: var(--ink-900); font-weight: 550; }
+
+  .my-work-page .my-work-priority {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 12px; font-weight: 700; color: var(--ink-700);
+  }
+  .my-work-page .my-work-priority--critical,
+  .my-work-page .my-work-priority--high { color: var(--status-danger-fg); }
+  .my-work-page .my-work-priority--normal { color: var(--status-progress-fg); }
+  .my-work-page .my-work-priority--low { color: var(--ink-500); }
+
+  .my-work-page .my-work-status {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 650;
+  }
+  .my-work-page .my-work-status::before {
+    content: ''; width: 7px; height: 7px; border-radius: 50%; flex: 0 0 auto;
+    background: var(--ink-400);
+  }
+  .my-work-page .my-work-status--danger::before { background: var(--status-danger-fg); }
+  .my-work-page .my-work-status--warning::before { background: var(--status-pending-fg); }
+  .my-work-page .my-work-status--info::before { background: var(--status-progress-fg); }
+
+  .my-work-page .wq-due-overdue { color: var(--status-danger-fg); font-weight: 700; }
+  .my-work-page .wq-due-today { color: var(--status-pending-fg); font-weight: 700; }
+
+  .my-work-page .my-work-cards { display: none; gap: 10px; }
+  .my-work-page .my-work-card {
+    border: 1px solid var(--line); border-radius: 12px; background: var(--card);
+    padding: 14px; display: grid; gap: 8px;
+  }
+  .my-work-page .my-work-card__header { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+  .my-work-page .my-work-card__title { font-size: 14px; font-weight: 700; color: var(--ink-900); margin: 0; }
+  .my-work-page .my-work-card__meta { font-size: 12px; color: var(--ink-600); }
+  .my-work-page .my-work-card__footer { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+
+  .my-work-page .my-work-skeleton { display: none; }
+  .my-work-page.is-loading .my-work-skeleton { display: table-row-group; }
+  .my-work-page.is-loading #my-work-active-body,
+  .my-work-page.is-loading .my-work-cards { visibility: hidden; height: 0; overflow: hidden; }
+  .my-work-page .my-work-skeleton td { padding: 14px 10px; }
+  .my-work-page .my-work-skeleton__bar {
+    height: 12px; border-radius: 6px;
+    background: linear-gradient(90deg, var(--well) 0%, var(--line) 50%, var(--well) 100%);
+    background-size: 200% 100%; animation: my-work-shimmer 1.2s ease-in-out infinite;
+  }
+  @keyframes my-work-shimmer { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
+
+  .my-work-page .my-work-update-banner {
+    display: none; align-items: center; justify-content: space-between; gap: 12px;
+    margin: 0 0 var(--space-10); padding: 10px 14px;
+    border: 1px solid var(--line); border-radius: 10px; background: var(--well);
+    font-size: 13px; color: var(--ink-700);
+  }
+  .my-work-page .my-work-update-banner.is-visible { display: flex; }
+
+  .my-work-page .my-work-completed-panel { display: none; }
+  .my-work-page[data-view="completed"] .my-work-active-panel { display: none; }
+  .my-work-page[data-view="completed"] .my-work-completed-panel { display: block; }
+
+  @media (max-width: 900px) {
+    .my-work-page .clm-list-summary { --dc-ds-summary-columns: 3; }
+    .my-work-page .dc-ds-table-wrap { display: none; }
+    .my-work-page .my-work-cards { display: grid; }
+    .my-work-page .my-work-detail-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 560px) {
+    .my-work-page .clm-list-summary { --dc-ds-summary-columns: 2; }
+    .my-work-page .my-work-detail-grid { grid-template-columns: 1fr; }
+  }
+  body[data-design-system=casefile]:has(.my-work-page) .app-footer { display: none; }
+</style>
+
+<div id="my-work-root"
+     class="dc-ds-page dc-ds-page--wide dc-ds-page-flow dc-ds-list-page clm-list-page my-work-page"
+     data-view="{{ view_mode }}"
+     data-initial-count="{{ my_work_rows|length }}">
+
+  {% if load_error %}
+  <section aria-live="polite">
+    {% include "design_system/empty_state.html" with title="Your work queue could not be loaded" copy="Your assignments have not been changed. Try refreshing the page." action_url=request.path action_label="Retry" action_tone="primary" only %}
   </section>
+  {% else %}
+
+  <div class="my-work-update-banner" id="my-work-update-banner" role="status" aria-live="polite">
+    <span>New work is available</span>
+    <button type="button" class="dc-ds-button dc-ds-button--quiet" id="my-work-update-refresh">Refresh queue</button>
+  </div>
+
+  <header class="clm-list-shell dc-ds-filterbar dc-ds-table-toolbar dc-ds-list-toolbar" aria-label="My Work controls">
+    <div class="clm-list-view-header">
+      <nav class="my-work-view-tabs clm-list-view-tabs" aria-label="Work queue views">
+        <button type="button" class="my-work-type-chip is-active" data-view-tab="active" aria-pressed="true">Active work</button>
+        <button type="button" class="my-work-type-chip" data-view-tab="completed" aria-pressed="false">Recently completed</button>
+      </nav>
+    </div>
+
+    <div class="clm-list-filter-controls my-work-active-panel">
+      <div class="my-work-type-filters" role="group" aria-label="Work type filters">
+        {% for key, label in work_type_choices %}
+        <button type="button" class="my-work-type-chip{% if key == 'all' %} is-active{% endif %}" data-work-type="{{ key }}" aria-pressed="{% if key == 'all' %}true{% else %}false{% endif %}">{{ label }}</button>
+        {% endfor %}
+      </div>
+      <div class="clm-list-search-field">
+        {% include "design_system/icon.html" with name="search" class_name="clm-list-search-icon" %}
+        <input type="search" id="my-work-search" class="dc-ds-control" placeholder="Search contract, counterparty, work item, or reference" aria-label="Search work queue">
+      </div>
+      <button type="button" class="clm-list-filter-toggle dc-ds-button dc-ds-button--ghost" id="my-work-filters-toggle" aria-expanded="false" aria-controls="my-work-filters-drawer">Additional filters</button>
+      <div class="clm-list-actions-stack">
+        <p id="my-work-result-count" class="clm-list-result-count" aria-live="polite">{{ my_work_rows|length }} item{{ my_work_rows|length|pluralize }}</p>
+      </div>
+    </div>
+
+    <div id="my-work-filters-drawer" class="clm-list-filter-drawer my-work-active-panel" hidden>
+      <div class="clm-list-filter-drawer__header">
+        <span class="clm-list-filter-drawer__title">Additional filters</span>
+        <div class="clm-list-filter-drawer__actions">
+          <button type="button" class="dc-ds-button dc-ds-button--ghost" id="my-work-clear-filters">Clear filters</button>
+        </div>
+      </div>
+      <div class="clm-list-filter-drawer__body">
+        <label>Due date
+          <select id="my-work-filter-due" class="dc-ds-control">
+            <option value="">Any</option>
+            <option value="overdue">Overdue</option>
+            <option value="today">Due today</option>
+            <option value="soon">Due soon</option>
+          </select>
+        </label>
+        <label>Priority
+          <select id="my-work-filter-priority" class="dc-ds-control">
+            <option value="">Any</option>
+            <option value="Critical">Critical</option>
+            <option value="High">High</option>
+            <option value="Normal">Normal</option>
+            <option value="Low">Low</option>
+          </select>
+        </label>
+        <label>Status
+          <select id="my-work-filter-status" class="dc-ds-control">
+            <option value="">Any</option>
+            <option value="Overdue">Overdue</option>
+            <option value="Due today">Due today</option>
+            <option value="Due soon">Due soon</option>
+            <option value="Awaiting your review">Awaiting your review</option>
+            <option value="Awaiting your approval">Awaiting your approval</option>
+            <option value="Assigned to you">Assigned to you</option>
+            <option value="Returned to you">Returned to you</option>
+            <option value="Rejected, correction required">Rejected, correction required</option>
+            <option value="Blocked">Blocked</option>
+          </select>
+        </label>
+        <label>Contract type
+          <select id="my-work-filter-contract-type" class="dc-ds-control">
+            <option value="">Any</option>
+            {% for value in filter_options.contract_types %}
+            <option value="{{ value }}">{{ value }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label>Counterparty
+          <select id="my-work-filter-counterparty" class="dc-ds-control">
+            <option value="">Any</option>
+            {% for value in filter_options.counterparties %}
+            <option value="{{ value }}">{{ value }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label>Assigned by
+          <select id="my-work-filter-assigned-by" class="dc-ds-control">
+            <option value="">Anyone</option>
+            {% for assigner in filter_options.assigners %}
+            <option value="{{ assigner.id }}">{{ assigner.label }}</option>
+            {% endfor %}
+          </select>
+        </label>
+      </div>
+    </div>
+  </header>
+
+  <div class="my-work-active-panel">
+    <div class="my-work-summary-wrap" role="group" aria-label="Personal workload summary">
+      <div class="my-work-type-filters" style="margin-bottom:var(--space-10);">
+        {% for chip in summary_chips %}
+        <button type="button"
+                class="my-work-summary-chip my-work-summary-chip--{{ chip.tone }}{% if chip.hidden %} is-hidden{% endif %}"
+                data-summary-filter="{{ chip.key }}"
+                aria-pressed="false">
+          <span>{{ chip.label }}</span>
+          <span class="my-work-summary-chip__count">{{ chip.count }}</span>
+        </button>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div id="my-work-active-filters" class="my-work-active-filters" aria-live="polite"></div>
+
+    {% if not my_work_rows %}
+    <section id="my-work-empty" aria-live="polite">
+      {% include "design_system/empty_state.html" with title="You're all caught up" copy="No reviews, approvals, questions, tasks, or obligations currently require your attention." action_url="?view=completed" action_label="View recently completed work" action_tone="quiet" only %}
+    </section>
+    {% else %}
+    <section id="my-work-no-results" class="dc-ds-empty" hidden aria-live="polite">
+      <h2 class="dc-ds-empty__title">No work matches these filters</h2>
+      <p class="dc-ds-empty__copy">Clear or adjust the active filters to see more items.</p>
+      <div class="dc-ds-actions dc-ds-empty__actions">
+        <button type="button" class="dc-ds-button dc-ds-button--primary" id="my-work-empty-clear">Clear filters</button>
+      </div>
+    </section>
+
+    <div class="dc-ds-table-wrap my-work-active-panel">
+      <table id="my-work-table" class="dc-ds-table wq-table" aria-label="My work queue">
+        <thead>
+          <tr>
+            <th scope="col" data-col="priority">Priority</th>
+            <th scope="col" data-col="title">Work item</th>
+            <th scope="col" data-col="contract">Contract</th>
+            <th scope="col" data-col="counterparty">Counterparty</th>
+            <th scope="col" data-col="type">Type</th>
+            <th scope="col" data-col="assigned">Assigned</th>
+            <th scope="col" data-col="due">Due</th>
+            <th scope="col" data-col="status">Status</th>
+            <th scope="col" data-col="action"><span class="sr-only">Action</span></th>
+          </tr>
+        </thead>
+        <tbody class="my-work-skeleton" aria-hidden="true">
+          {% for _ in "12345" %}
+          <tr><td colspan="9"><div class="my-work-skeleton__bar"></div></td></tr>
+          {% endfor %}
+        </tbody>
+        <tbody id="my-work-active-body">
+          {% for row in my_work_rows %}
+          <tr class="my-work-row"
+              tabindex="0"
+              data-row-id="{{ row.id }}"
+              data-work-type="{{ row.work_type_key }}"
+              data-summary-tags="{{ row.summary_tags|join:',' }}"
+              data-priority="{{ row.priority_label }}"
+              data-status="{{ row.status_label }}"
+              data-contract-type="{{ row.contract_type }}"
+              data-counterparty="{{ row.counterparty }}"
+              data-assigned-by="{% if row.assigned_by %}{{ row.assigned_by.pk }}{% endif %}"
+              data-search="{{ row.title }} {{ row.contract_title }} {{ row.counterparty }} {{ row.reference }}"
+              data-due-state="{% if row.due_context.due_overdue %}overdue{% elif row.due_context.due_today %}today{% elif row.due_context.due_soon %}soon{% endif %}">
+            <td data-col="priority">
+              <span class="my-work-priority my-work-priority--{{ row.priority_label|lower }}"
+                    {% if row.priority_reason %}title="{{ row.priority_reason }}"{% endif %}>
+                {{ row.priority_label }}
+              </span>
+            </td>
+            <td data-col="title">
+              <span class="wq-item-link">{{ row.title }}</span>
+              {% if row.reference %}<div class="wq-item-meta">{{ row.reference }}</div>{% endif %}
+            </td>
+            <td data-col="contract">
+              {% if row.contract and not row.is_restricted %}
+              <a href="{% url 'contracts:contract_detail' row.contract.pk %}" class="c-link" onclick="event.stopPropagation();">{{ row.contract_title|truncatechars:36 }}</a>
+              {% else %}
+              <span class="c-dim">{{ row.contract_title|truncatechars:36 }}</span>
+              {% endif %}
+            </td>
+            <td data-col="counterparty">{{ row.counterparty|default:"—" }}</td>
+            <td data-col="type">{{ row.work_type_label }}</td>
+            <td data-col="assigned">{% if row.assigned_date %}{{ row.assigned_date|date:"j M Y" }}{% else %}—{% endif %}</td>
+            <td data-col="due" class="{% if row.due_context.due_overdue %}wq-due-overdue{% elif row.due_context.due_today %}wq-due-today{% endif %}">
+              {% if row.due_context.due_date %}{{ row.due_context.due_date|date:"j M Y" }}{% else %}—{% endif %}
+            </td>
+            <td data-col="status">
+              <span class="my-work-status my-work-status--{{ row.status_tone }}">{{ row.status_label }}</span>
+            </td>
+            <td data-col="action">
+              {% if row.action_href %}
+              <a href="{{ row.action_href }}" class="dc-ds-button dc-ds-button--quiet text-xs font-semibold px-2.5 py-1.5" onclick="event.stopPropagation();">{{ row.action_label }}</a>
+              {% else %}
+              <span class="c-dim">—</span>
+              {% endif %}
+              <details class="wq-kebab" onclick="event.stopPropagation();">
+                <summary aria-label="More actions" class="wq-kebab-trigger">&#8942;</summary>
+                <div class="wq-kebab-menu">
+                  {% if row.action_href %}<a href="{{ row.action_href }}">{{ row.action_label }}</a>{% endif %}
+                  {% if row.contract and not row.is_restricted %}<a href="{% url 'contracts:contract_detail' row.contract.pk %}">Open contract</a>{% endif %}
+                </div>
+              </details>
+            </td>
+          </tr>
+          <tr class="my-work-row-detail is-hidden" data-detail-for="{{ row.id }}">
+            <td colspan="9">
+              <div class="my-work-detail-panel">
+                <dl class="my-work-detail-grid">
+                  <div><dt>Description</dt><dd>{{ row.description|default:"—" }}</dd></div>
+                  <div><dt>Contract</dt><dd>{{ row.contract_title }}{% if row.reference %} · {{ row.reference }}{% endif %}</dd></div>
+                  <div><dt>Counterparty</dt><dd>{{ row.counterparty|default:"—" }}</dd></div>
+                  <div><dt>Requestor</dt><dd>{% if row.requestor %}{{ row.requestor.get_full_name|default:row.requestor.username }}{% else %}—{% endif %}</dd></div>
+                  <div><dt>Assigned by</dt><dd>{% if row.assigned_by %}{{ row.assigned_by.get_full_name|default:row.assigned_by.username }}{% else %}—{% endif %}</dd></div>
+                  <div><dt>Assigned date</dt><dd>{% if row.assigned_date %}{{ row.assigned_date|date:"j M Y" }}{% else %}—{% endif %}</dd></div>
+                  <div><dt>Due date</dt><dd>{% if row.due_context.due_date %}{{ row.due_context.due_date|date:"j M Y" }}{% else %}—{% endif %}</dd></div>
+                  <div><dt>Workflow stage</dt><dd>{{ row.workflow_stage|default:"—" }}</dd></div>
+                  <div><dt>Priority reason</dt><dd>{{ row.priority_reason|default:"—" }}</dd></div>
+                  {% if row.blocking_issue %}
+                  <div style="grid-column:1/-1;"><dt>Blocking dependencies</dt><dd>{{ row.blocking_issue }}{% if row.blocker_owner %} — waiting on {{ row.blocker_owner }}{% endif %}</dd></div>
+                  {% endif %}
+                  {% if row.delegation %}
+                  <div style="grid-column:1/-1;"><dt>Delegation</dt><dd>
+                    {% if row.delegation.original_assignee %}{{ row.delegation.original_assignee.get_full_name|default:row.delegation.original_assignee.username }}{% endif %}
+                    covered by {{ row.delegation.acting_assignee.get_full_name|default:row.delegation.acting_assignee.username }}
+                    {% if row.delegation.effective_from %}from {{ row.delegation.effective_from|date:"j M Y" }}{% endif %}
+                  </dd></div>
+                  {% endif %}
+                  {% if row.recent_activity %}
+                  <div style="grid-column:1/-1;"><dt>Recent activity</dt><dd>{{ row.recent_activity }}</dd></div>
+                  {% endif %}
+                </dl>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="my-work-cards" id="my-work-cards" aria-label="My work queue">
+      {% for row in my_work_rows %}
+      <article class="my-work-card my-work-row"
+               tabindex="0"
+               data-row-id="{{ row.id }}"
+               data-work-type="{{ row.work_type_key }}"
+               data-summary-tags="{{ row.summary_tags|join:',' }}"
+               data-priority="{{ row.priority_label }}"
+               data-status="{{ row.status_label }}"
+               data-contract-type="{{ row.contract_type }}"
+               data-counterparty="{{ row.counterparty }}"
+               data-assigned-by="{% if row.assigned_by %}{{ row.assigned_by.pk }}{% endif %}"
+               data-search="{{ row.title }} {{ row.contract_title }} {{ row.counterparty }} {{ row.reference }}"
+               data-due-state="{% if row.due_context.due_overdue %}overdue{% elif row.due_context.due_today %}today{% elif row.due_context.due_soon %}soon{% endif %}">
+        <div class="my-work-card__header">
+          <h3 class="my-work-card__title">{{ row.title }}</h3>
+          <span class="my-work-priority my-work-priority--{{ row.priority_label|lower }}">{{ row.priority_label }}</span>
+        </div>
+        <p class="my-work-card__meta">{{ row.contract_title }}{% if row.counterparty %} · {{ row.counterparty }}{% endif %}</p>
+        <div class="my-work-card__footer">
+          <span class="my-work-status my-work-status--{{ row.status_tone }}">{{ row.status_label }}</span>
+          {% if row.due_context.due_date %}
+          <span class="{% if row.due_context.due_overdue %}wq-due-overdue{% elif row.due_context.due_today %}wq-due-today{% endif %}">Due {{ row.due_context.due_date|date:"j M" }}</span>
+          {% endif %}
+          {% if row.action_href %}
+          <a href="{{ row.action_href }}" class="dc-ds-button dc-ds-button--quiet">{{ row.action_label }}</a>
+          {% endif %}
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+  <section class="my-work-completed-panel" aria-label="Recently completed work">
+    {% if completed_rows %}
+    <div class="dc-ds-table-wrap">
+      <table class="dc-ds-table wq-table dc-ds-table--auto" aria-label="Recently completed work">
+        <thead>
+          <tr>
+            <th scope="col">Work item</th>
+            <th scope="col">Contract</th>
+            <th scope="col">Type</th>
+            <th scope="col">Completed</th>
+            <th scope="col">Outcome</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in completed_rows %}
+          <tr>
+            <td><a href="{{ row.href }}" class="wq-item-link">{{ row.title }}</a></td>
+            <td>{{ row.contract_title|default:"—" }}</td>
+            <td>{{ row.work_type_label }}</td>
+            <td>{{ row.completed_at|date:"j M Y" }}</td>
+            <td>{{ row.outcome }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="profile-page__muted" style="margin-top:var(--space-10);font:var(--text-small);color:var(--ink-500);">
+      Showing work you completed in the last {{ recently_completed_days }} days.
+    </p>
+    {% else %}
+    {% include "design_system/empty_state.html" with title="No recently completed work" copy=recently_completed_copy tone="neutral" only %}
+    {% endif %}
+  </section>
+
+  {% endif %}
 </div>
+
+<script nonce="{{ csp_nonce }}">
+(function () {
+  var root = document.getElementById('my-work-root');
+  if (!root || root.querySelector('[data-load-error]')) return;
+
+  var STORAGE_KEY = 'clmone-my-work-filters-v1';
+  var initialCount = Number(root.getAttribute('data-initial-count')) || 0;
+  var state = {
+    view: 'active',
+    workType: 'all',
+    summary: '',
+    search: '',
+    due: '',
+    priority: '',
+    status: '',
+    contractType: '',
+    counterparty: '',
+    assignedBy: '',
+  };
+
+  function loadState() {
+    try {
+      var saved = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || '{}');
+      Object.keys(state).forEach(function (key) {
+        if (typeof saved[key] === 'string') state[key] = saved[key];
+      });
+    } catch (err) { /* ignore */ }
+  }
+
+  function saveState() {
+    try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (err) { /* ignore */ }
+  }
+
+  function allRows() {
+    return Array.prototype.slice.call(root.querySelectorAll('.my-work-row[data-row-id]'));
+  }
+
+  function setResultCount(visible, total) {
+    var el = document.getElementById('my-work-result-count');
+    if (!el) return;
+    el.textContent = visible + ' item' + (visible === 1 ? '' : 's');
+  }
+
+  function updateActiveFilterChips() {
+    var wrap = document.getElementById('my-work-active-filters');
+    if (!wrap) return;
+    wrap.innerHTML = '';
+    var labels = [];
+    if (state.summary) labels.push(['summary', state.summary]);
+    if (state.workType && state.workType !== 'all') labels.push(['workType', state.workType]);
+    if (state.search) labels.push(['search', state.search]);
+    if (state.due) labels.push(['due', state.due]);
+    if (state.priority) labels.push(['priority', state.priority]);
+    if (state.status) labels.push(['status', state.status]);
+    if (state.contractType) labels.push(['contractType', state.contractType]);
+    if (state.counterparty) labels.push(['counterparty', state.counterparty]);
+    if (state.assignedBy) labels.push(['assignedBy', state.assignedBy]);
+    labels.forEach(function (entry) {
+      var chip = document.createElement('span');
+      chip.className = 'my-work-filter-chip';
+      chip.textContent = entry[1] + ' ';
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.setAttribute('aria-label', 'Remove ' + entry[1] + ' filter');
+      btn.textContent = '×';
+      btn.addEventListener('click', function () {
+        state[entry[0]] = entry[0] === 'workType' ? 'all' : '';
+        applyFilters();
+      });
+      chip.appendChild(btn);
+      wrap.appendChild(chip);
+    });
+  }
+
+  function rowMatches(row) {
+    if (state.workType !== 'all' && row.getAttribute('data-work-type') !== state.workType) return false;
+    if (state.summary) {
+      var tags = (row.getAttribute('data-summary-tags') || '').split(',');
+      if (tags.indexOf(state.summary) === -1) return false;
+    }
+    if (state.search) {
+      var hay = (row.getAttribute('data-search') || '').toLowerCase();
+      if (hay.indexOf(state.search.toLowerCase()) === -1) return false;
+    }
+    if (state.due && row.getAttribute('data-due-state') !== state.due) return false;
+    if (state.priority && row.getAttribute('data-priority') !== state.priority) return false;
+    if (state.status && row.getAttribute('data-status') !== state.status) return false;
+    if (state.contractType && row.getAttribute('data-contract-type') !== state.contractType) return false;
+    if (state.counterparty && row.getAttribute('data-counterparty') !== state.counterparty) return false;
+    if (state.assignedBy && row.getAttribute('data-assigned-by') !== state.assignedBy) return false;
+    return true;
+  }
+
+  function applyFilters() {
+    var rows = allRows();
+    var visible = 0;
+    rows.forEach(function (row) {
+      var show = rowMatches(row);
+      row.classList.toggle('is-hidden', !show);
+      if (show) visible += 1;
+      var detail = root.querySelector('[data-detail-for="' + row.getAttribute('data-row-id') + '"]');
+      if (detail && !show) detail.classList.add('is-hidden');
+    });
+    setResultCount(visible, rows.length);
+    var empty = document.getElementById('my-work-empty');
+    var noResults = document.getElementById('my-work-no-results');
+    if (noResults) noResults.hidden = !(rows.length && visible === 0);
+    if (empty) empty.hidden = rows.length > 0;
+    updateActiveFilterChips();
+    saveState();
+
+    root.querySelectorAll('[data-work-type]').forEach(function (chip) {
+      if (!chip.classList.contains('my-work-type-chip') || chip.hasAttribute('data-view-tab')) return;
+      var active = chip.getAttribute('data-work-type') === state.workType;
+      chip.classList.toggle('is-active', active);
+      chip.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+    root.querySelectorAll('[data-summary-filter]').forEach(function (chip) {
+      var active = chip.getAttribute('data-summary-filter') === state.summary;
+      chip.classList.toggle('is-active', active);
+      chip.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+  }
+
+  function clearFilters() {
+    state.summary = '';
+    state.workType = 'all';
+    state.search = '';
+    state.due = '';
+    state.priority = '';
+    state.status = '';
+    state.contractType = '';
+    state.counterparty = '';
+    state.assignedBy = '';
+    var search = document.getElementById('my-work-search');
+    if (search) search.value = '';
+    ['my-work-filter-due', 'my-work-filter-priority', 'my-work-filter-status', 'my-work-filter-contract-type', 'my-work-filter-counterparty', 'my-work-filter-assigned-by'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    applyFilters();
+  }
+
+  function toggleDetail(row) {
+    var id = row.getAttribute('data-row-id');
+    var detail = root.querySelector('[data-detail-for="' + id + '"]');
+    if (!detail) return;
+    var expanded = !detail.classList.contains('is-hidden');
+    root.querySelectorAll('.my-work-row-detail').forEach(function (el) { el.classList.add('is-hidden'); });
+    root.querySelectorAll('.my-work-row.is-expanded').forEach(function (el) { el.classList.remove('is-expanded'); });
+    if (!expanded) {
+      detail.classList.remove('is-hidden');
+      row.classList.add('is-expanded');
+    }
+  }
+
+  function setView(view) {
+    state.view = view;
+    root.setAttribute('data-view', view);
+    root.querySelectorAll('[data-view-tab]').forEach(function (tab) {
+      var active = tab.getAttribute('data-view-tab') === view;
+      tab.classList.toggle('is-active', active);
+      tab.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+    if (view === 'completed') {
+      if (window.history && window.history.replaceState) {
+        window.history.replaceState({}, '', '?view=completed');
+      }
+    } else if (window.history && window.history.replaceState) {
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }
+
+  loadState();
+  if (window.location.search.indexOf('view=completed') !== -1) setView('completed');
+  applyFilters();
+
+  var search = document.getElementById('my-work-search');
+  if (search) {
+    search.value = state.search || '';
+    search.addEventListener('input', function () {
+      state.search = search.value.trim();
+      applyFilters();
+    });
+  }
+
+  root.querySelectorAll('[data-work-type]').forEach(function (chip) {
+    if (!chip.classList.contains('my-work-type-chip') || chip.hasAttribute('data-view-tab')) return;
+    chip.addEventListener('click', function () {
+      state.workType = chip.getAttribute('data-work-type') || 'all';
+      applyFilters();
+    });
+  });
+
+  root.querySelectorAll('[data-summary-filter]').forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      var key = chip.getAttribute('data-summary-filter');
+      state.summary = state.summary === key ? '' : key;
+      applyFilters();
+    });
+  });
+
+  root.querySelectorAll('[data-view-tab]').forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      setView(tab.getAttribute('data-view-tab'));
+    });
+  });
+
+  allRows().forEach(function (row) {
+    row.addEventListener('click', function (event) {
+      if (event.target.closest('a, button, summary, .wq-kebab')) return;
+      toggleDetail(row);
+    });
+    row.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        toggleDetail(row);
+      }
+    });
+  });
+
+  var drawerToggle = document.getElementById('my-work-filters-toggle');
+  var drawer = document.getElementById('my-work-filters-drawer');
+  if (drawerToggle && drawer) {
+    drawerToggle.addEventListener('click', function () {
+      var open = drawer.hasAttribute('hidden');
+      if (open) drawer.removeAttribute('hidden'); else drawer.setAttribute('hidden', '');
+      drawer.classList.toggle('is-open', open);
+      drawerToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+  }
+
+  var filterMap = {
+    'my-work-filter-due': 'due',
+    'my-work-filter-priority': 'priority',
+    'my-work-filter-status': 'status',
+    'my-work-filter-contract-type': 'contractType',
+    'my-work-filter-counterparty': 'counterparty',
+    'my-work-filter-assigned-by': 'assignedBy',
+  };
+  Object.keys(filterMap).forEach(function (id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.value = state[filterMap[id]] || '';
+    el.addEventListener('change', function () {
+      state[filterMap[id]] = el.value;
+      applyFilters();
+    });
+  });
+
+  var clearBtn = document.getElementById('my-work-clear-filters');
+  var emptyClear = document.getElementById('my-work-empty-clear');
+  if (clearBtn) clearBtn.addEventListener('click', clearFilters);
+  if (emptyClear) emptyClear.addEventListener('click', clearFilters);
+
+  function refreshQueue() {
+    root.classList.add('is-loading');
+    fetch(window.location.pathname + '?format=json', { headers: { 'Accept': 'application/json' } })
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        var banner = document.getElementById('my-work-update-banner');
+        if (banner) banner.classList.remove('is-visible');
+        var updated = document.getElementById('my-work-last-updated');
+        if (updated && data.last_updated) {
+          var dt = new Date(data.last_updated);
+          updated.textContent = 'Updated ' + dt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+        }
+        if (Number(data.count) !== initialCount) {
+          if (banner) banner.classList.add('is-visible');
+        }
+      })
+      .catch(function () { /* keep current queue */ })
+      .finally(function () {
+        root.classList.remove('is-loading');
+      });
+  }
+
+  var refreshBtn = document.getElementById('my-work-refresh');
+  var updateRefresh = document.getElementById('my-work-update-refresh');
+  if (refreshBtn) refreshBtn.addEventListener('click', function () { window.location.reload(); });
+  if (updateRefresh) updateRefresh.addEventListener('click', function () { window.location.reload(); });
+
+  window.setInterval(function () {
+    fetch(window.location.pathname + '?format=json', { headers: { 'Accept': 'application/json' } })
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        if (Number(data.count) !== initialCount) {
+          var banner = document.getElementById('my-work-update-banner');
+          if (banner) banner.classList.add('is-visible');
+        }
+      })
+      .catch(function () { /* ignore */ });
+  }, 120000);
+})();
+</script>
 {% endblock %}

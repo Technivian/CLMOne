@@ -1,14 +1,26 @@
 """Lightweight workspace destinations introduced for sidebar information architecture."""
 
+from datetime import date
+
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Max, Q
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, JsonResponse
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.formats import date_format
 from django.views.generic import TemplateView
 
 from contracts.models import ApprovalRule, ClauseTemplate, DPAPlaybookPosition, WorkflowTemplate
 from contracts.permissions import can_manage_organization
+from contracts.services.my_work import (
+    RECENTLY_COMPLETED_DAYS,
+    SUMMARY_FILTERS,
+    WORK_TYPE_CHOICES,
+    build_filter_options,
+    build_summary_counts,
+    get_active_work_items,
+    get_recently_completed_items,
+)
 from contracts.tenancy import get_user_organization, scope_queryset_for_organization
 
 
@@ -131,19 +143,75 @@ def _build_templates_playbooks_hub_cards(organization):
 
 
 class MyWorkView(LoginRequiredMixin, TemplateView):
-    """Personal action queue placeholder — assigned reviews, approvals, and obligations."""
+    """Personal action queue — assigned reviews, approvals, tasks, and obligations."""
 
     template_name = 'contracts/my_work.html'
 
+    def get_organization(self):
+        return getattr(self.request, 'organization', None) or get_user_organization(self.request.user)
+
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
+        organization = self.get_organization()
+        user = self.request.user
+        today = timezone.localdate()
+        view_mode = self.request.GET.get('view', 'active')
+        if view_mode not in ('active', 'completed'):
+            view_mode = 'active'
+
+        load_error = False
+        active_rows = []
+        completed_rows = []
+        try:
+            active_rows = get_active_work_items(organization, user, today=today)
+            completed_rows = get_recently_completed_items(organization, user, today=today)
+        except Exception:
+            load_error = True
+
+        summary_counts = build_summary_counts(active_rows)
+        filter_options = build_filter_options(active_rows)
+        summary_chips = []
+        tone_map = {
+            'overdue': 'danger',
+            'due_today': 'warning',
+            'returned_to_me': 'warning',
+        }
+        for key, label in SUMMARY_FILTERS:
+            count = summary_counts.get(key, 0)
+            summary_chips.append({
+                'key': key,
+                'label': label,
+                'count': count,
+                'tone': tone_map.get(key, 'info'),
+                'hidden': count == 0,
+            })
+
         ctx.update({
-            'approvals_url': reverse('contracts:approval_request_list'),
-            'obligations_url': reverse('contracts:obligations_workspace'),
-            'repository_url': reverse('contracts:repository'),
-            'privacy_reviews_url': reverse('contracts:dpa_review_pack_list'),
+            'my_work_rows': active_rows,
+            'completed_rows': completed_rows,
+            'summary_counts': summary_counts,
+            'summary_chips': summary_chips,
+            'summary_filters': SUMMARY_FILTERS,
+            'work_type_choices': WORK_TYPE_CHOICES,
+            'filter_options': filter_options,
+            'view_mode': view_mode,
+            'load_error': load_error,
+            'last_updated': timezone.now(),
+            'recently_completed_days': RECENTLY_COMPLETED_DAYS,
+            'recently_completed_copy': f'Completed items from the last {RECENTLY_COMPLETED_DAYS} days will appear here.',
+            'hide_app_footer': True,
         })
         return ctx
+
+    def render_to_response(self, context, **response_kwargs):
+        if self.request.GET.get('format') == 'json':
+            rows = context.get('my_work_rows') or []
+            return JsonResponse({
+                'count': len(rows),
+                'summary': context.get('summary_counts') or {},
+                'last_updated': context['last_updated'].isoformat(),
+            })
+        return super().render_to_response(context, **response_kwargs)
 
 
 class TemplatesPlaybooksHubView(LoginRequiredMixin, TemplateView):
