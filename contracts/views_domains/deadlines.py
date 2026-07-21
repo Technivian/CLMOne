@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+import json
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -555,6 +556,15 @@ def deadline_escalate(request, pk):
     previous_priority = deadline.priority
     deadline.priority = Deadline.Priority.CRITICAL
     deadline.save(update_fields=['priority'])
+    reason = ''
+    if wants_json:
+        try:
+            payload = json.loads(request.body or '{}')
+        except json.JSONDecodeError:
+            payload = {}
+        reason = (payload.get('reason') or payload.get('comments') or '').strip()
+    else:
+        reason = (request.POST.get('reason') or '').strip()
     log_action(
         request.user, 'UPDATE', 'Deadline', deadline.id, str(deadline), request=request,
         changes={
@@ -562,6 +572,7 @@ def deadline_escalate(request, pk):
             'contract_id': deadline.contract_id,
             'previous_priority': previous_priority,
             'new_priority': deadline.priority,
+            'reason': reason[:500],
         },
     )
     if wants_json:

@@ -80,6 +80,39 @@
   .wh-spark__seg--returned { background: var(--status-pending-fg, #b54708); }
   .wh-spark__seg--rejected { background: var(--status-danger-fg, #b42318); }
   .wh-spark__seg--surfaced { background: color-mix(in srgb, var(--ink-400) 70%, var(--seal)); opacity: 0.55; }
+  .wh-trends {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    margin-top: var(--space-12);
+  }
+  .wh-trend {
+    display: grid;
+    gap: 4px;
+    padding: 10px 12px;
+    border: 1px solid var(--line, var(--hairline));
+    border-radius: 8px;
+    background: var(--well, color-mix(in srgb, var(--line) 35%, #fff));
+  }
+  .wh-trend__label {
+    font-size: 12px;
+    font-weight: 650;
+    color: var(--ink-600, var(--text-secondary));
+  }
+  .wh-trend__value {
+    font-size: 18px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-900, var(--text-primary));
+  }
+  .wh-trend__delta {
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-500, var(--text-secondary));
+  }
+  .wh-trend.is-better .wh-trend__delta { color: var(--seal, #1f4b3a); }
+  .wh-trend.is-worse .wh-trend__delta { color: var(--status-danger-fg, #b42318); }
+  .wh-trend.is-flat .wh-trend__delta { color: var(--ink-500, var(--text-secondary)); }
 </style>
 <div class="dc-ds-page dc-ds-page--wide dc-ds-page-flow">
   <header class="clm-list-shell dc-ds-filterbar" style="margin-bottom:var(--space-16);">
@@ -123,6 +156,21 @@
       <strong class="dc-ds-summary__value">{% if metrics.approval_decision_lag_hours != None %}{{ metrics.approval_decision_lag_hours }}h{% else %}—{% endif %}</strong>
     </div>
   </section>
+
+  {% if trend_cards %}
+  <section class="dc-ds-surface" style="padding:var(--space-16);margin-bottom:var(--space-20);" aria-label="Period trends">
+    <h2 style="margin:0;font:var(--text-h3);">Period trends</h2>
+    <div class="wh-trends">
+      {% for card in trend_cards %}
+      <div class="wh-trend is-{{ card.direction|default:'flat' }}">
+        <span class="wh-trend__label">{{ card.label }}</span>
+        <strong class="wh-trend__value">{{ card.value }}</strong>
+        <span class="wh-trend__delta">{{ card.delta }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
 
   {% if not hub_completion_healthy %}
   <p class="wh-note">Charts deepen once hub completion is measured at 40% or higher. Bars below still show available operating data.</p>

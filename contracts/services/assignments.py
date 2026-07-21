@@ -783,6 +783,7 @@ def _collect_obligation_rows(org, user, today, *, scope='personal'):
                 row['complete_url'] = reverse('contracts:deadline_complete', kwargs={'pk': deadline.pk})
                 row['defer_url'] = reverse('contracts:deadline_defer', kwargs={'pk': deadline.pk})
                 row['escalate_url'] = reverse('contracts:deadline_escalate', kwargs={'pk': deadline.pk})
+                row['deadline_id'] = deadline.pk
         if not row.get('is_restricted'):
             row.update(_assignee_fields(deadline.assigned_to))
         rows.append(row)
@@ -886,6 +887,7 @@ def _collect_privacy_rows(org, user, today, *, scope='personal'):
             row['can_resolve_conflict'] = True
             row['conflict_status_url'] = status_url
             row['risks_href'] = risks_href
+            row['risk_item_id'] = item.pk
             row.update(_assignee_fields(pack.reviewer))
         rows.append(row)
     return rows

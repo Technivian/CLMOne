@@ -242,8 +242,13 @@ class MyWorkView(LoginRequiredMixin, TemplateView):
             ])
         from contracts.view_support import reassign_member_options
         from contracts.services.ai_decision_assist import ai_decision_assist_enabled
-        members = reassign_member_options(organization) if can_team else []
+        members = (
+            reassign_member_options(organization, limit=50)
+            if can_team else []
+        )
         ctx['reassign_members'] = members
+        ctx['assignee_options_url'] = reverse('contracts:assignee_options_api') if can_team else ''
+        ctx['work_suggest_comment_url'] = reverse('contracts:work_suggest_comment_api')
         ctx['decision_assist_enabled'] = bool(organization and ai_decision_assist_enabled(organization))
         # Template suggestions always available for reject/return (even when Gemini is off).
         ctx['decision_suggest_available'] = True

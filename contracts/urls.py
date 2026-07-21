@@ -117,8 +117,9 @@ urlpatterns = [
         api_views.approval_suggest_decision_api,
         name='approval_suggest_decision_api',
     ),
-    path('api/contracts/<int:contract_id>/approvals/', api_views.approval_contract_list_api, name='approval_contract_list_api'),
-    path('api/contracts/<int:contract_id>/approvals/initiate/', api_views.approval_initiate_api, name='approval_initiate_api'),
+    path('api/org/assignee-options/', api_views.assignee_options_api, name='assignee_options_api'),
+    path('api/work/suggest-comment/', api_views.work_suggest_comment_api, name='work_suggest_comment_api'),
+    path('api/contracts/<int:contract_id>/approvals/', api_views.approval_contract_list_api, name='approval_contract_list_api'),    path('api/contracts/<int:contract_id>/approvals/initiate/', api_views.approval_initiate_api, name='approval_initiate_api'),
 
     # Clause Analytics
     path('api/clause-analytics/stats/', api_views.clause_analytics_stats, name='clause_analytics_stats'),

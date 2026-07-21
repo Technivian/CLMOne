@@ -550,6 +550,112 @@ def approval_suggest_decision_api(request, approval_id):
 
 @login_required
 @require_http_methods(['GET'])
+def assignee_options_api(request):
+    """Live searchable assignee list with open-work workload (admin/owner)."""
+    from contracts.permissions import can_manage_organization
+    from contracts.view_support import reassign_member_options
+
+    org = get_user_organization(request.user)
+    if org is None:
+        return JsonResponse({'error': 'No organization'}, status=400)
+    if not can_manage_organization(request.user, org):
+        return JsonResponse({'error': 'Forbidden'}, status=403)
+    q = (request.GET.get('q') or '').strip()
+    try:
+        limit = int(request.GET.get('limit') or 40)
+    except (TypeError, ValueError):
+        limit = 40
+    exclude_raw = request.GET.get('exclude') or ''
+    exclude_ids = []
+    for part in exclude_raw.split(','):
+        part = part.strip()
+        if part.isdigit():
+            exclude_ids.append(int(part))
+    members = reassign_member_options(
+        org, q=q, limit=limit, exclude_ids=exclude_ids, include_workload=True,
+    )
+    return JsonResponse({'ok': True, 'members': members, 'q': q})
+
+
+@login_required
+@require_http_methods(['POST'])
+def work_suggest_comment_api(request):
+    """Suggest a decision-changing comment for reassign / conflict / escalate."""
+    from contracts.models import Deadline, DPARiskItem
+    from contracts.permissions import can_manage_organization
+    from contracts.services.ai_decision_assist import suggest_work_action_comment
+    from contracts.services.approval_workflow import actor_can_decide
+    from contracts.tenancy import scope_queryset_for_organization
+    from contracts.views_domains.dpa_review import _can_review_pack
+
+    data = json.loads(request.body or '{}')
+    kind = (data.get('kind') or data.get('decision') or '').strip().lower()
+    org = get_user_organization(request.user)
+    if org is None:
+        return JsonResponse({'error': 'No organization'}, status=400)
+
+    approval = None
+    risk_item = None
+    deadline = None
+
+    if data.get('approval_id'):
+        approval = scope_queryset_for_organization(
+            ApprovalRequest.objects.select_related('contract', 'organization'),
+            org,
+        ).filter(pk=data.get('approval_id')).first()
+        if approval is None:
+            return JsonResponse({'error': 'Approval not found'}, status=404)
+        if kind == 'reassign':
+            if not can_manage_organization(request.user, org):
+                return JsonResponse({'error': 'Not permitted'}, status=403)
+        elif kind in ('reject', 'return'):
+            if not actor_can_decide(approval, request.user, 'approve'):
+                return JsonResponse({'error': 'Not permitted'}, status=403)
+        else:
+            return JsonResponse({'error': 'Unsupported kind for approval'}, status=400)
+
+    if data.get('risk_item_id'):
+        risk_item = (
+            DPARiskItem.objects
+            .filter(pk=data.get('risk_item_id'), review_pack__organization=org)
+            .select_related('review_pack', 'review_pack__contract', 'review_pack__organization')
+            .first()
+        )
+        if risk_item is None:
+            return JsonResponse({'error': 'Risk item not found'}, status=404)
+        if not _can_review_pack(request.user, risk_item.review_pack):
+            return JsonResponse({'error': 'Not permitted'}, status=403)
+        if kind not in ('conflict_resolved', 'conflict_false_positive'):
+            return JsonResponse({'error': 'Unsupported kind for risk item'}, status=400)
+
+    if data.get('deadline_id'):
+        deadline = Deadline.objects.for_organization(org).select_related('contract').filter(
+            pk=data.get('deadline_id'),
+        ).first()
+        if deadline is None:
+            return JsonResponse({'error': 'Obligation not found'}, status=404)
+        if kind != 'escalate':
+            return JsonResponse({'error': 'Unsupported kind for obligation'}, status=400)
+
+    if approval is None and risk_item is None and deadline is None:
+        return JsonResponse({'error': 'approval_id, risk_item_id, or deadline_id is required'}, status=400)
+
+    try:
+        result = suggest_work_action_comment(
+            kind,
+            organization=org,
+            approval=approval,
+            risk_item=risk_item,
+            deadline=deadline,
+            allow_ai=True,
+        )
+    except ValueError as exc:
+        return JsonResponse({'error': str(exc)}, status=400)
+    return JsonResponse({'ok': True, **result})
+
+
+@login_required
+@require_http_methods(['GET'])
 def approval_overdue_api(request):
     org = get_user_organization(request.user)
     svc = get_approval_workflow_service()

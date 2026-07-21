@@ -530,7 +530,7 @@ def work_interaction_api(request):
 def work_operating_metrics_api(request):
     """Phase 5 operating metrics — hub proof, not a decorative dashboard."""
     from contracts.permissions import can_manage_organization
-    from contracts.services.work_instrumentation import build_operating_metrics
+    from contracts.services.work_instrumentation import build_operating_metrics, build_operating_trends
 
     org = get_user_organization(request.user)
     if org is None:
@@ -542,6 +542,9 @@ def work_operating_metrics_api(request):
     except (TypeError, ValueError):
         days = 30
     days = max(1, min(days, 180))
-    return JsonResponse(build_operating_metrics(org, days=days))
+    payload = build_operating_metrics(org, days=days)
+    if request.GET.get('trends') in ('1', 'true', 'yes'):
+        payload['trends'] = build_operating_trends(org, days=days).get('trends') or {}
+    return JsonResponse(payload)
 
 

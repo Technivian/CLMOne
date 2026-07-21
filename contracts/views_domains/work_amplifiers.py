@@ -66,6 +66,40 @@ class WorkHealthReportView(LoginRequiredMixin, TemplateView):
             )
             if day_total > daily_series_max:
                 daily_series_max = day_total
+
+        from contracts.services.work_instrumentation import build_operating_trends
+        trend_payload = build_operating_trends(org, days=days)
+        trends = trend_payload.get('trends') or {}
+        trend_cards = []
+        for key, label, as_pct, unit in (
+            ('completed_from_my_work_pct', 'Hub completion', True, '%'),
+            ('time_to_first_action_hours', 'Time to first action', False, 'h'),
+            ('approval_decision_lag_hours', 'Approval decision lag', False, 'h'),
+            ('blocked_rate', 'Blocked on surface', True, '%'),
+        ):
+            row = trends.get(key) or {}
+            cur = row.get('current')
+            delta = row.get('delta')
+            if as_pct and cur is not None:
+                cur_display = f'{round(cur * 100)}{unit}'
+            elif cur is not None:
+                cur_display = f'{cur}{unit}'
+            else:
+                cur_display = '—'
+            if as_pct and delta is not None:
+                delta_display = f'{delta * 100:+.1f}{unit} vs prior {days}d'
+            elif delta is not None:
+                delta_display = f'{delta:+.2f}{unit} vs prior {days}d'
+            else:
+                delta_display = 'No prior-window baseline yet'
+            trend_cards.append({
+                'key': key,
+                'label': label,
+                'value': cur_display,
+                'delta': delta_display,
+                'direction': row.get('direction') or 'flat',
+            })
+
         ctx.update({
             'organization': org,
             'report': report,
@@ -80,6 +114,7 @@ class WorkHealthReportView(LoginRequiredMixin, TemplateView):
             ),
             'daily_series': daily_series,
             'daily_series_max': daily_series_max,
+            'trend_cards': trend_cards,
             'window_days': days,
             'hide_app_footer': True,
         })

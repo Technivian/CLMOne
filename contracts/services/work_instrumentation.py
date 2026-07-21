@@ -170,15 +170,25 @@ def record_outcome(
     )
 
 
-def build_operating_metrics(organization, *, days: int = 30) -> dict:
-    """Aggregate the five Phase 5 operating metrics for an organization."""
+def build_operating_metrics(organization, *, days: int = 30, ending_at=None) -> dict:
+    """Aggregate the five Phase 5 operating metrics for an organization.
+
+    ``ending_at`` (default now) closes the window so prior-period trends can
+    reuse the same aggregator without double-counting.
+    """
     from contracts.models import ApprovalRequest, AuditLog, WorkInteractionEvent
 
     if organization is None:
         return {'window_days': days, 'metrics': {}}
 
-    since = timezone.now() - timedelta(days=max(1, days))
-    events = WorkInteractionEvent.objects.filter(organization=organization, occurred_at__gte=since)
+    window_days = max(1, int(days or 30))
+    ending_at = ending_at or timezone.now()
+    since = ending_at - timedelta(days=window_days)
+    events = WorkInteractionEvent.objects.filter(
+        organization=organization,
+        occurred_at__gte=since,
+        occurred_at__lte=ending_at,
+    )
 
     # Time to first action: opened/primary_action after first surfaced for same item.
     time_to_action_hours = None
@@ -246,7 +256,12 @@ def build_operating_metrics(organization, *, days: int = 30) -> dict:
     approval_lag_hours = None
     decided = (
         ApprovalRequest.objects
-        .filter(organization=organization, decided_at__gte=since, decided_at__isnull=False)
+        .filter(
+            organization=organization,
+            decided_at__gte=since,
+            decided_at__lte=ending_at,
+            decided_at__isnull=False,
+        )
         .exclude(created_at__isnull=True)
     )
     lags = []
@@ -270,6 +285,7 @@ def build_operating_metrics(organization, *, days: int = 30) -> dict:
             organization_id=organization.id,
             event_type='approval.sla_breached',
             timestamp__gte=since,
+            timestamp__lte=ending_at,
         ).order_by('-timestamp')[:25].values(
             'object_id', 'object_repr', 'timestamp', 'changes',
         )
@@ -288,18 +304,24 @@ def build_operating_metrics(organization, *, days: int = 30) -> dict:
         key=lambda item: (-item['overdue_rate'], -item['overdue'], item['work_kind']),
     )[:8]
 
-    # Daily activity series for work-health charts (last N days, inclusive).
-    day_count = max(1, min(int(days or 30), 180))
-    day_buckets = {
-        (since.date() + timedelta(days=offset)).isoformat(): {
-            'day': (since.date() + timedelta(days=offset)).isoformat(),
+    # Daily activity series for work-health charts within the closed window.
+    day_count = max(1, min(window_days, 180))
+    start_day = timezone.localtime(since).date() if timezone.is_aware(since) else since.date()
+    end_day = timezone.localtime(ending_at).date() if timezone.is_aware(ending_at) else ending_at.date()
+    day_buckets = {}
+    cursor = start_day
+    while cursor <= end_day:
+        key = cursor.isoformat()
+        day_buckets[key] = {
+            'day': key,
             'surfaced': 0,
             'completed': 0,
             'returned': 0,
             'rejected': 0,
         }
-        for offset in range(day_count + 1)
-    }
+        cursor = cursor + timedelta(days=1)
+        if len(day_buckets) > day_count + 1:
+            break
     for row in events.filter(event__in=['surfaced', 'completed', 'returned', 'rejected']).values(
         'event', 'occurred_at',
     ):
@@ -316,7 +338,9 @@ def build_operating_metrics(organization, *, days: int = 30) -> dict:
     daily_activity = [day_buckets[k] for k in sorted(day_buckets.keys())]
 
     return {
-        'window_days': days,
+        'window_days': window_days,
+        'window_start': since.isoformat(),
+        'window_end': ending_at.isoformat(),
         'generated_at': timezone.now().isoformat(),
         'metrics': {
             'time_to_first_action_hours': time_to_action_hours,
@@ -341,6 +365,60 @@ def build_operating_metrics(organization, *, days: int = 30) -> dict:
             'sla_breaches': sla_breaches,
             'audit_sla_breaches': audit_breaches,
             'daily_activity': daily_activity,
+        },
+    }
+
+
+def _metric_delta(current, prior, *, invert=False):
+    """Return `{current, prior, delta, direction}` for numeric trend chips.
+
+    ``invert=True`` means lower is better (latency, blocked rate).
+    """
+    if current is None and prior is None:
+        return {'current': None, 'prior': None, 'delta': None, 'direction': 'flat'}
+    cur = None if current is None else float(current)
+    prv = None if prior is None else float(prior)
+    if cur is None or prv is None:
+        return {'current': cur, 'prior': prv, 'delta': None, 'direction': 'flat'}
+    delta = round(cur - prv, 3)
+    if abs(delta) < 0.0005:
+        direction = 'flat'
+    else:
+        improved = (delta < 0) if invert else (delta > 0)
+        direction = 'better' if improved else 'worse'
+    return {'current': cur, 'prior': prv, 'delta': delta, 'direction': direction}
+
+
+def build_operating_trends(organization, *, days: int = 30) -> dict:
+    """Compare the current window to the immediately prior equal window."""
+    window_days = max(1, min(int(days or 30), 180))
+    current = build_operating_metrics(organization, days=window_days)
+    prior_end = timezone.now() - timedelta(days=window_days)
+    prior = build_operating_metrics(organization, days=window_days, ending_at=prior_end)
+    cur_m = current.get('metrics') or {}
+    pri_m = prior.get('metrics') or {}
+    cur_blocked = (cur_m.get('restricted_blocked_frequency') or {}).get('blocked_rate')
+    pri_blocked = (pri_m.get('restricted_blocked_frequency') or {}).get('blocked_rate')
+    return {
+        'window_days': window_days,
+        'current': current,
+        'prior': prior,
+        'trends': {
+            'completed_from_my_work_pct': _metric_delta(
+                cur_m.get('completed_from_my_work_pct'),
+                pri_m.get('completed_from_my_work_pct'),
+            ),
+            'time_to_first_action_hours': _metric_delta(
+                cur_m.get('time_to_first_action_hours'),
+                pri_m.get('time_to_first_action_hours'),
+                invert=True,
+            ),
+            'approval_decision_lag_hours': _metric_delta(
+                cur_m.get('approval_decision_lag_hours'),
+                pri_m.get('approval_decision_lag_hours'),
+                invert=True,
+            ),
+            'blocked_rate': _metric_delta(cur_blocked, pri_blocked, invert=True),
         },
     }
 

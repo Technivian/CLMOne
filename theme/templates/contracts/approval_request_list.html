@@ -224,13 +224,16 @@
   </div>
 </div>
 
-{% include "components/_reassign_dialog.html" with dialog_id="approvals-reassign-dialog" reassign_members=reassign_members %}
+{% include "components/_reassign_dialog.html" with dialog_id="approvals-reassign-dialog" reassign_members=reassign_members assignee_options_url=assignee_options_url %}
 {% include "components/_decision_comment_dialog.html" with dialog_id="approvals-decision-dialog" %}
 
 <script nonce="{{ csp_nonce }}">
 (function () {
   var root = document.getElementById('approvals-root');
   if (!root) return;
+
+  var assigneeOptionsUrl = "{{ assignee_options_url|default:''|escapejs }}";
+  var workSuggestCommentUrl = "{{ work_suggest_comment_url|default:''|escapejs }}";
 
   var tabs = root.querySelectorAll('[data-queue-tab]');
   var panels = root.querySelectorAll('table.wq-table[data-queue-panel]');
@@ -387,6 +390,9 @@
         if (!opts.suggestUrl) return;
         suggestBtn.disabled = true;
         if (err) { err.hidden = true; err.textContent = ''; }
+        var suggestBody = opts.suggestPayload
+          ? Object.assign({}, opts.suggestPayload)
+          : { decision: decision };
         fetch(opts.suggestUrl, {
           method: 'POST',
           headers: {
@@ -394,7 +400,7 @@
             'Accept': 'application/json',
             'X-CSRFToken': getCsrfToken(),
           },
-          body: JSON.stringify({ decision: decision }),
+          body: JSON.stringify(suggestBody),
         }).then(function (res) {
           return res.json().then(function (data) { return { ok: res.ok, data: data }; });
         }).then(function (result) {
@@ -521,6 +527,12 @@
     return ((m.label || '') + ' ' + (m.username || '')).toLowerCase();
   }
 
+  function approvalIdFromReassignUrl(url) {
+    if (!url) return '';
+    var match = String(url).match(/\/approvals\/(\d+)\/reassign\/?/);
+    return match ? match[1] : '';
+  }
+
   function openReassignDialog(opts) {
     var backdrop = document.getElementById('approvals-reassign-dialog');
     if (!backdrop || !opts || !opts.url) return;
@@ -532,9 +544,16 @@
     var err = backdrop.querySelector('[data-reassign-error]');
     var confirmBtn = backdrop.querySelector('[data-reassign-confirm]');
     var cancelBtn = backdrop.querySelector('[data-reassign-cancel]');
-    var members = loadReassignMembers();
+    var suggestBtn = backdrop.querySelector('[data-reassign-suggest]');
+    var fallbackMembers = loadReassignMembers();
+    var members = fallbackMembers.slice();
     var currentId = String(opts.currentId || '');
     var selectedId = '';
+    var optionsUrl = backdrop.getAttribute('data-assignee-options-url') || assigneeOptionsUrl || '';
+    var approvalId = String(opts.approvalId || approvalIdFromReassignUrl(opts.url) || '');
+    var searchTimer = null;
+    var fetchSeq = 0;
+    var liveSearchActive = false;
     if (meta) meta.textContent = 'Current owner: ' + (opts.currentLabel || 'unassigned');
     if (err) { err.hidden = true; err.textContent = ''; }
     if (reasonEl) reasonEl.value = '';
@@ -546,7 +565,7 @@
       var list = members.filter(function (m) {
         return String(m.id) !== currentId;
       });
-      if (q) {
+      if (q && !liveSearchActive) {
         list = list.filter(function (m) {
           return memberSearchHaystack(m).indexOf(q) !== -1;
         });
@@ -596,12 +615,96 @@
       });
     }
 
-    if (searchEl) {
-      searchEl.oninput = function () { renderOptions(); };
+    function fetchAssigneeOptions(query) {
+      if (!optionsUrl) {
+        liveSearchActive = false;
+        members = fallbackMembers.slice();
+        renderOptions();
+        return;
+      }
+      var seq = ++fetchSeq;
+      var params = new URLSearchParams();
+      params.set('q', query || '');
+      params.set('limit', '40');
+      if (currentId) params.set('exclude', currentId);
+      var sep = optionsUrl.indexOf('?') >= 0 ? '&' : '?';
+      fetch(optionsUrl + sep + params.toString(), {
+        headers: { 'Accept': 'application/json' },
+      }).then(function (res) {
+        return res.json().then(function (data) { return { ok: res.ok, data: data }; });
+      }).then(function (result) {
+        if (seq !== fetchSeq) return;
+        if (result.ok && result.data && Array.isArray(result.data.members)) {
+          liveSearchActive = true;
+          members = result.data.members;
+          renderOptions();
+          return;
+        }
+        liveSearchActive = false;
+        members = fallbackMembers.slice();
+        renderOptions();
+      }).catch(function () {
+        if (seq !== fetchSeq) return;
+        liveSearchActive = false;
+        members = fallbackMembers.slice();
+        renderOptions();
+      });
     }
-    renderOptions();
+
+    if (searchEl) {
+      searchEl.oninput = function () {
+        var q = (searchEl.value || '').trim();
+        if (optionsUrl) {
+          clearTimeout(searchTimer);
+          searchTimer = setTimeout(function () { fetchAssigneeOptions(q); }, 250);
+        } else {
+          liveSearchActive = false;
+          members = fallbackMembers.slice();
+          renderOptions();
+        }
+      };
+    }
+    if (optionsUrl) {
+      fetchAssigneeOptions('');
+    } else {
+      renderOptions();
+    }
+
+    if (suggestBtn) {
+      suggestBtn.hidden = !(workSuggestCommentUrl && approvalId);
+      suggestBtn.disabled = false;
+      suggestBtn.textContent = 'Suggest reason';
+      suggestBtn.onclick = function () {
+        if (!workSuggestCommentUrl || !approvalId) return;
+        suggestBtn.disabled = true;
+        if (err) { err.hidden = true; err.textContent = ''; }
+        fetch(workSuggestCommentUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRFToken': getCsrfToken(),
+          },
+          body: JSON.stringify({ kind: 'reassign', approval_id: Number(approvalId) }),
+        }).then(function (res) {
+          return res.json().then(function (data) { return { ok: res.ok, data: data }; });
+        }).then(function (result) {
+          suggestBtn.disabled = false;
+          if (result.ok && result.data && result.data.suggestion) {
+            if (reasonEl) reasonEl.value = result.data.suggestion;
+            return;
+          }
+          var msg = (result.data && result.data.error) || 'Could not suggest a reason.';
+          if (err) { err.textContent = msg; err.hidden = false; }
+        }).catch(function () {
+          suggestBtn.disabled = false;
+          if (err) { err.textContent = 'Network error — please try again.'; err.hidden = false; }
+        });
+      };
+    }
 
     function close() {
+      clearTimeout(searchTimer);
       backdrop.classList.remove('is-open');
       backdrop.setAttribute('hidden', '');
       document.removeEventListener('keydown', onKey);
@@ -665,6 +768,7 @@
       var errorEl = cell ? cell.querySelector('.wq-action-error') : null;
       openReassignDialog({
         url: url,
+        approvalId: approvalIdFromReassignUrl(url),
         currentLabel: current || 'unassigned',
         currentId: currentId,
         onError: function (msg) {

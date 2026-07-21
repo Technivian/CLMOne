@@ -154,6 +154,8 @@ from contracts.api.admin import (
     approval_delegate_api,
     approval_reassign_api,
     approval_suggest_decision_api,
+    assignee_options_api,
+    work_suggest_comment_api,
     approval_overdue_api,
     approval_escalate_overdue_api,
     approval_list_api,

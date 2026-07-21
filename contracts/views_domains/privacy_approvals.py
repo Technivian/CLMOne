@@ -726,8 +726,14 @@ class ApprovalRequestListView(TenantScopedQuerysetMixin, LoginRequiredMixin, Lis
         org = self.get_organization()
         from contracts.permissions import can_manage_organization
         from contracts.view_support import reassign_member_options
-        members = reassign_member_options(org) if can_manage_organization(self.request.user, org) else []
+        from django.urls import reverse
+        members = reassign_member_options(org, limit=50) if can_manage_organization(self.request.user, org) else []
         context['reassign_members'] = members
+        context['assignee_options_url'] = (
+            reverse('contracts:assignee_options_api')
+            if can_manage_organization(self.request.user, org) else ''
+        )
+        context['work_suggest_comment_url'] = reverse('contracts:work_suggest_comment_api')
         return context
 
     def _build_queue_tabs(self):

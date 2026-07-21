@@ -35,6 +35,11 @@
     font-weight: 700;
     color: var(--ink-600, var(--text-secondary));
   }
+  .reassign-dialog__suggest-row {
+    display: flex;
+    justify-content: flex-start;
+    margin: -4px 0 12px;
+  }
   .reassign-dialog__actions {
     display: flex;
     justify-content: flex-end;
@@ -99,7 +104,7 @@
     color: var(--ink-500, var(--text-secondary));
   }
 </style>
-<div class="reassign-dialog-backdrop" id="{{ dialog_id|default:'reassign-dialog' }}" hidden role="presentation">
+<div class="reassign-dialog-backdrop" id="{{ dialog_id|default:'reassign-dialog' }}"{% if assignee_options_url %} data-assignee-options-url="{{ assignee_options_url }}"{% endif %} hidden role="presentation">
   <div class="reassign-dialog" role="dialog" aria-modal="true" aria-labelledby="{{ dialog_id|default:'reassign-dialog' }}-title">
     <h2 id="{{ dialog_id|default:'reassign-dialog' }}-title">Reassign approval</h2>
     <p class="reassign-dialog__meta" data-reassign-current>Current owner: —</p>
@@ -126,6 +131,9 @@
     <div class="reassign-dialog__field">
       <label for="{{ dialog_id|default:'reassign-dialog' }}-reason">Reason (required)</label>
       <textarea id="{{ dialog_id|default:'reassign-dialog' }}-reason" class="dc-ds-control" rows="3" data-reassign-reason placeholder="Why is this being reassigned?"></textarea>
+    </div>
+    <div class="reassign-dialog__suggest-row">
+      <button type="button" class="dc-ds-button dc-ds-button--ghost" data-reassign-suggest>Suggest reason</button>
     </div>
     <div class="reassign-dialog__actions">
       <button type="button" class="dc-ds-button dc-ds-button--ghost" data-reassign-cancel>Cancel</button>

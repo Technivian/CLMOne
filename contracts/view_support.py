@@ -191,12 +191,37 @@ def open_work_count_by_user(organization):
     return counts
 
 
-def reassign_member_options(organization, *, include_workload=True):
-    """Active org members for manager reassignment pickers (id + display label + open work)."""
-    users = organization_user_queryset(organization).order_by('first_name', 'last_name', 'username')
+def reassign_member_options(
+    organization,
+    *,
+    include_workload=True,
+    q='',
+    limit=None,
+    exclude_ids=None,
+):
+    """Active org members for manager reassignment pickers (id + display label + open work).
+
+    Optional ``q`` filters by name/username (case-insensitive contains).
+    Optional ``limit`` caps results after workload sort (for live typeahead).
+    """
+    from django.db.models import Q
+
+    users = organization_user_queryset(organization)
+    query = (q or '').strip()
+    if query:
+        users = users.filter(
+            Q(username__icontains=query)
+            | Q(first_name__icontains=query)
+            | Q(last_name__icontains=query)
+            | Q(email__icontains=query)
+        )
+    users = users.order_by('first_name', 'last_name', 'username')
+    exclude = {int(x) for x in (exclude_ids or []) if str(x).isdigit() or isinstance(x, int)}
     workload = open_work_count_by_user(organization) if include_workload else {}
     options = []
     for user in users:
+        if user.pk in exclude:
+            continue
         full = (user.get_full_name() or '').strip()
         label = full or user.username
         if full and user.username and full.lower() != user.username.lower():
@@ -209,8 +234,13 @@ def reassign_member_options(organization, *, include_workload=True):
             'open_count': open_count,
             'search': f'{label} {user.username}'.lower(),
         })
-    # Lightest workload first, then name — helps managers rebalance.
     options.sort(key=lambda row: (row['open_count'], row['label'].casefold()))
+    if limit is not None:
+        try:
+            lim = max(1, min(int(limit), 100))
+        except (TypeError, ValueError):
+            lim = 40
+        options = options[:lim]
     return options
 
 

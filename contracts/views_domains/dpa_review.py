@@ -1177,6 +1177,13 @@ def dpa_risk_item_set_status(request, pk):
 
     risk_item.status = new_status
     risk_item.save(update_fields=['status', 'updated_at'])
+    note_text = (payload.get('note') or payload.get('reason') or payload.get('comments') or '').strip()
+    note_id = None
+    if note_text:
+        note = DPARiskItemNote.objects.create(
+            risk_item=risk_item, author=request.user, note=note_text,
+        )
+        note_id = note.pk
     log_action(
         request.user, AuditLog.Action.UPDATE, 'DPARiskItem',
         object_id=risk_item.pk, object_repr=str(risk_item), organization=risk_item.review_pack.organization,
@@ -1185,10 +1192,12 @@ def dpa_risk_item_set_status(request, pk):
             'contract_id': risk_item.review_pack.contract_id,
             'previous_status': previous_status,
             'new_status': new_status,
+            'note_id': note_id,
+            'note': note_text[:240] if note_text else '',
         },
         request=request,
     )
-    return JsonResponse({'ok': True, 'status': new_status})
+    return JsonResponse({'ok': True, 'status': new_status, 'note_id': note_id})
 
 
 @require_POST

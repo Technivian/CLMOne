@@ -412,8 +412,8 @@
               data-due-state="{% if row.due_context.due_overdue %}overdue{% elif row.due_context.due_today %}today{% elif row.due_context.due_soon %}soon{% endif %}"
               {% if row.can_decide %}data-can-decide="1" data-approve-url="{{ row.approve_url }}" data-reject-url="{{ row.reject_url }}" data-return-url="{{ row.return_url }}"{% if row.suggest_decision_url %} data-suggest-decision-url="{{ row.suggest_decision_url }}"{% endif %}{% endif %}
               {% if row.can_reassign %}data-can-reassign="1" data-reassign-url="{{ row.reassign_url }}" data-current-assignee="{{ row.current_assignee_label|default:''|escape }}" data-current-assignee-id="{{ row.current_assignee_id|default:'' }}"{% endif %}
-              {% if row.can_complete %}data-can-complete="1" data-complete-url="{{ row.complete_url }}"{% if row.defer_url %} data-defer-url="{{ row.defer_url }}"{% endif %}{% if row.escalate_url %} data-escalate-url="{{ row.escalate_url }}"{% endif %}{% endif %}
-              {% if row.can_resolve_conflict %}data-can-resolve-conflict="1" data-conflict-status-url="{{ row.conflict_status_url }}"{% endif %}
+              {% if row.can_complete %}data-can-complete="1" data-complete-url="{{ row.complete_url }}"{% if row.defer_url %} data-defer-url="{{ row.defer_url }}"{% endif %}{% if row.escalate_url %} data-escalate-url="{{ row.escalate_url }}"{% endif %}{% if row.deadline_id %} data-deadline-id="{{ row.deadline_id }}"{% endif %}{% endif %}
+              {% if row.can_resolve_conflict %}data-can-resolve-conflict="1" data-conflict-status-url="{{ row.conflict_status_url }}" data-risk-item-id="{{ row.risk_item_id }}"{% endif %}
               aria-label="{{ row.title }}. {{ row.action_label|default:'Open' }}">
             <td data-col="priority">
               {% include "components/_governance_priority.html" with priority_label=row.priority_label priority_reason=row.priority_reason priority_tone=row.priority_tone show_detail=1 %}
@@ -538,8 +538,8 @@
                data-due-state="{% if row.due_context.due_overdue %}overdue{% elif row.due_context.due_today %}today{% elif row.due_context.due_soon %}soon{% endif %}"
                {% if row.can_decide %}data-can-decide="1" data-approve-url="{{ row.approve_url }}" data-reject-url="{{ row.reject_url }}" data-return-url="{{ row.return_url }}"{% if row.suggest_decision_url %} data-suggest-decision-url="{{ row.suggest_decision_url }}"{% endif %}{% endif %}
                {% if row.can_reassign %}data-can-reassign="1" data-reassign-url="{{ row.reassign_url }}" data-current-assignee="{{ row.current_assignee_label|default:''|escape }}" data-current-assignee-id="{{ row.current_assignee_id|default:'' }}"{% endif %}
-               {% if row.can_complete %}data-can-complete="1" data-complete-url="{{ row.complete_url }}"{% if row.defer_url %} data-defer-url="{{ row.defer_url }}"{% endif %}{% if row.escalate_url %} data-escalate-url="{{ row.escalate_url }}"{% endif %}{% endif %}
-               {% if row.can_resolve_conflict %}data-can-resolve-conflict="1" data-conflict-status-url="{{ row.conflict_status_url }}"{% endif %}
+               {% if row.can_complete %}data-can-complete="1" data-complete-url="{{ row.complete_url }}"{% if row.defer_url %} data-defer-url="{{ row.defer_url }}"{% endif %}{% if row.escalate_url %} data-escalate-url="{{ row.escalate_url }}"{% endif %}{% if row.deadline_id %} data-deadline-id="{{ row.deadline_id }}"{% endif %}{% endif %}
+               {% if row.can_resolve_conflict %}data-can-resolve-conflict="1" data-conflict-status-url="{{ row.conflict_status_url }}" data-risk-item-id="{{ row.risk_item_id }}"{% endif %}
                aria-label="{{ row.title }}. {{ row.action_label|default:'Open' }}">
         <div class="my-work-card__header">
           <h3 class="my-work-card__title">{{ row.title }}</h3>
@@ -626,7 +626,7 @@
   {% endif %}
 </div>
 
-{% include "components/_reassign_dialog.html" with dialog_id="my-work-reassign-dialog" reassign_members=reassign_members %}
+{% include "components/_reassign_dialog.html" with dialog_id="my-work-reassign-dialog" reassign_members=reassign_members assignee_options_url=assignee_options_url %}
 {% include "components/_decision_comment_dialog.html" with dialog_id="my-work-decision-dialog" %}
 
 <script nonce="{{ csp_nonce }}">
@@ -638,6 +638,8 @@
   var initialCount = Number(root.getAttribute('data-initial-count')) || 0;
   var knownSignature = root.getAttribute('data-row-signature') || '';
   var savedViewsUrl = root.getAttribute('data-saved-views-url') || '';
+  var assigneeOptionsUrl = "{{ assignee_options_url|default:''|escapejs }}";
+  var workSuggestCommentUrl = "{{ work_suggest_comment_url|default:''|escapejs }}";
   var state = {
     view: 'active',
     workType: 'all',
@@ -1065,6 +1067,12 @@
     return ((m.label || '') + ' ' + (m.username || '')).toLowerCase();
   }
 
+  function approvalIdFromReassignUrl(url) {
+    if (!url) return '';
+    var match = String(url).match(/\/approvals\/(\d+)\/reassign\/?/);
+    return match ? match[1] : '';
+  }
+
   function openReassignDialog(opts) {
     var backdrop = document.getElementById('my-work-reassign-dialog');
     if (!backdrop || !opts || !opts.url) return;
@@ -1076,9 +1084,16 @@
     var err = backdrop.querySelector('[data-reassign-error]');
     var confirmBtn = backdrop.querySelector('[data-reassign-confirm]');
     var cancelBtn = backdrop.querySelector('[data-reassign-cancel]');
-    var members = loadReassignMembers();
+    var suggestBtn = backdrop.querySelector('[data-reassign-suggest]');
+    var fallbackMembers = loadReassignMembers();
+    var members = fallbackMembers.slice();
     var currentId = String(opts.currentId || '');
     var selectedId = '';
+    var optionsUrl = backdrop.getAttribute('data-assignee-options-url') || assigneeOptionsUrl || '';
+    var approvalId = String(opts.approvalId || approvalIdFromReassignUrl(opts.url) || '');
+    var searchTimer = null;
+    var fetchSeq = 0;
+    var liveSearchActive = false;
     if (meta) meta.textContent = 'Current owner: ' + (opts.currentLabel || 'unassigned');
     if (err) { err.hidden = true; err.textContent = ''; }
     if (reasonEl) reasonEl.value = '';
@@ -1090,7 +1105,7 @@
       var list = members.filter(function (m) {
         return String(m.id) !== currentId;
       });
-      if (q) {
+      if (q && !liveSearchActive) {
         list = list.filter(function (m) {
           return memberSearchHaystack(m).indexOf(q) !== -1;
         });
@@ -1141,12 +1156,96 @@
       });
     }
 
-    if (searchEl) {
-      searchEl.oninput = function () { renderOptions(); };
+    function fetchAssigneeOptions(query) {
+      if (!optionsUrl) {
+        liveSearchActive = false;
+        members = fallbackMembers.slice();
+        renderOptions();
+        return;
+      }
+      var seq = ++fetchSeq;
+      var params = new URLSearchParams();
+      params.set('q', query || '');
+      params.set('limit', '40');
+      if (currentId) params.set('exclude', currentId);
+      var sep = optionsUrl.indexOf('?') >= 0 ? '&' : '?';
+      fetch(optionsUrl + sep + params.toString(), {
+        headers: { 'Accept': 'application/json' },
+      }).then(function (res) {
+        return res.json().then(function (data) { return { ok: res.ok, data: data }; });
+      }).then(function (result) {
+        if (seq !== fetchSeq) return;
+        if (result.ok && result.data && Array.isArray(result.data.members)) {
+          liveSearchActive = true;
+          members = result.data.members;
+          renderOptions();
+          return;
+        }
+        liveSearchActive = false;
+        members = fallbackMembers.slice();
+        renderOptions();
+      }).catch(function () {
+        if (seq !== fetchSeq) return;
+        liveSearchActive = false;
+        members = fallbackMembers.slice();
+        renderOptions();
+      });
     }
-    renderOptions();
+
+    if (searchEl) {
+      searchEl.oninput = function () {
+        var q = (searchEl.value || '').trim();
+        if (optionsUrl) {
+          clearTimeout(searchTimer);
+          searchTimer = setTimeout(function () { fetchAssigneeOptions(q); }, 250);
+        } else {
+          liveSearchActive = false;
+          members = fallbackMembers.slice();
+          renderOptions();
+        }
+      };
+    }
+    if (optionsUrl) {
+      fetchAssigneeOptions('');
+    } else {
+      renderOptions();
+    }
+
+    if (suggestBtn) {
+      suggestBtn.hidden = !(workSuggestCommentUrl && approvalId);
+      suggestBtn.disabled = false;
+      suggestBtn.textContent = 'Suggest reason';
+      suggestBtn.onclick = function () {
+        if (!workSuggestCommentUrl || !approvalId) return;
+        suggestBtn.disabled = true;
+        if (err) { err.hidden = true; err.textContent = ''; }
+        fetch(workSuggestCommentUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRFToken': getCsrfToken(),
+          },
+          body: JSON.stringify({ kind: 'reassign', approval_id: Number(approvalId) }),
+        }).then(function (res) {
+          return res.json().then(function (data) { return { ok: res.ok, data: data }; });
+        }).then(function (result) {
+          suggestBtn.disabled = false;
+          if (result.ok && result.data && result.data.suggestion) {
+            if (reasonEl) reasonEl.value = result.data.suggestion;
+            return;
+          }
+          var msg = (result.data && result.data.error) || 'Could not suggest a reason.';
+          if (err) { err.textContent = msg; err.hidden = false; }
+        }).catch(function () {
+          suggestBtn.disabled = false;
+          if (err) { err.textContent = 'Network error — please try again.'; err.hidden = false; }
+        });
+      };
+    }
 
     function close() {
+      clearTimeout(searchTimer);
       backdrop.classList.remove('is-open');
       backdrop.setAttribute('hidden', '');
       document.removeEventListener('keydown', onKey);
@@ -1221,21 +1320,23 @@
     var confirmBtn = backdrop.querySelector('[data-decision-confirm]');
     var cancelBtn = backdrop.querySelector('[data-decision-cancel]');
     var decision = (opts.decision || 'return').toLowerCase();
-    if (titleEl) {
-      titleEl.textContent = decision === 'reject' ? 'Reject approval' : 'Return for changes';
-    }
-    if (metaEl) {
-      metaEl.textContent = decision === 'reject'
-        ? 'A rejection reason is required before confirming.'
-        : 'Describe the changes required before confirming.';
-    }
+    var defaultTitle = decision === 'reject' ? 'Reject approval' : 'Return for changes';
+    var defaultMeta = decision === 'reject'
+      ? 'A rejection reason is required before confirming.'
+      : 'Describe the changes required before confirming.';
+    var defaultPlaceholder = decision === 'reject'
+      ? 'Reason for rejection'
+      : 'What changes are required?';
+    var defaultRequiredError = decision === 'reject'
+      ? 'A rejection reason is required.'
+      : 'A return reason is required.';
+    if (titleEl) titleEl.textContent = opts.title || defaultTitle;
+    if (metaEl) metaEl.textContent = opts.meta || defaultMeta;
     if (err) { err.hidden = true; err.textContent = ''; }
     if (hint) { hint.hidden = true; hint.textContent = ''; }
     if (reasonEl) {
       reasonEl.value = '';
-      reasonEl.placeholder = decision === 'reject'
-        ? 'Reason for rejection'
-        : 'What changes are required?';
+      reasonEl.placeholder = opts.placeholder || defaultPlaceholder;
     }
     if (suggestBtn) {
       suggestBtn.hidden = !opts.suggestUrl;
@@ -1260,6 +1361,9 @@
         if (!opts.suggestUrl) return;
         suggestBtn.disabled = true;
         if (err) { err.hidden = true; err.textContent = ''; }
+        var suggestBody = opts.suggestPayload
+          ? Object.assign({}, opts.suggestPayload)
+          : { decision: decision };
         fetch(opts.suggestUrl, {
           method: 'POST',
           headers: {
@@ -1267,7 +1371,7 @@
             'Accept': 'application/json',
             'X-CSRFToken': getCsrfToken(),
           },
-          body: JSON.stringify({ decision: decision }),
+          body: JSON.stringify(suggestBody),
         }).then(function (res) {
           return res.json().then(function (data) { return { ok: res.ok, data: data }; });
         }).then(function (result) {
@@ -1295,9 +1399,7 @@
         var comments = reasonEl ? reasonEl.value.trim() : '';
         if (!comments) {
           if (err) {
-            err.textContent = decision === 'reject'
-              ? 'A rejection reason is required.'
-              : 'A return reason is required.';
+            err.textContent = opts.requiredError || defaultRequiredError;
             err.hidden = false;
           }
           return;
@@ -1424,11 +1526,39 @@
         removeOnSuccess = false;
       } else if (action === 'escalate') {
         url = row.getAttribute('data-escalate-url') || '';
-        isForm = true;
-        removeOnSuccess = false;
+        if (!url) return;
+        var escalateDeadlineId = row.getAttribute('data-deadline-id') || '';
+        openDecisionCommentDialog({
+          decision: 'escalate',
+          title: 'Escalate obligation',
+          meta: 'An escalation reason is required before confirming.',
+          placeholder: 'Why is this being escalated?',
+          requiredError: 'An escalation reason is required.',
+          suggestUrl: workSuggestCommentUrl,
+          suggestPayload: escalateDeadlineId
+            ? { kind: 'escalate', deadline_id: Number(escalateDeadlineId) }
+            : { kind: 'escalate' },
+          onConfirm: function (comments) {
+            runMyWorkMutation(
+              btn,
+              url,
+              { reason: comments, surface: 'my_work' },
+              false,
+              false,
+              row,
+              errorEl
+            );
+          },
+          onError: function (msg) {
+            if (errorEl) { errorEl.textContent = msg; errorEl.hidden = false; }
+          },
+        });
+        return;
       } else if (action === 'reassign') {
+        var reassignUrl = row.getAttribute('data-reassign-url') || '';
         openReassignDialog({
-          url: row.getAttribute('data-reassign-url') || '',
+          url: reassignUrl,
+          approvalId: approvalIdFromReassignUrl(reassignUrl),
           currentLabel: row.getAttribute('data-current-assignee') || 'unassigned',
           currentId: row.getAttribute('data-current-assignee-id') || '',
           surface: 'my_work',
@@ -1438,12 +1568,41 @@
           },
         });
         return;
-      } else if (action === 'resolve-conflict') {
+      } else if (action === 'resolve-conflict' || action === 'false-positive') {
         url = row.getAttribute('data-conflict-status-url') || '';
-        body = { status: 'RESOLVED', surface: 'my_work' };
-      } else if (action === 'false-positive') {
-        url = row.getAttribute('data-conflict-status-url') || '';
-        body = { status: 'FALSE_POSITIVE', surface: 'my_work' };
+        if (!url) return;
+        var riskItemId = row.getAttribute('data-risk-item-id') || '';
+        var isResolved = action === 'resolve-conflict';
+        var conflictStatus = isResolved ? 'RESOLVED' : 'FALSE_POSITIVE';
+        openDecisionCommentDialog({
+          decision: action,
+          title: isResolved ? 'Mark conflict resolved' : 'Mark false positive',
+          meta: 'A reason is required before confirming.',
+          placeholder: isResolved ? 'Why is this resolved?' : 'Why is this a false positive?',
+          requiredError: 'A reason is required.',
+          suggestUrl: workSuggestCommentUrl,
+          suggestPayload: riskItemId
+            ? {
+                kind: isResolved ? 'conflict_resolved' : 'conflict_false_positive',
+                risk_item_id: Number(riskItemId),
+              }
+            : { kind: isResolved ? 'conflict_resolved' : 'conflict_false_positive' },
+          onConfirm: function (comments) {
+            runMyWorkMutation(
+              btn,
+              url,
+              { status: conflictStatus, note: comments, surface: 'my_work' },
+              false,
+              true,
+              row,
+              errorEl
+            );
+          },
+          onError: function (msg) {
+            if (errorEl) { errorEl.textContent = msg; errorEl.hidden = false; }
+          },
+        });
+        return;
       }
       runMyWorkMutation(btn, url, body, isForm, removeOnSuccess, row, errorEl);
     });
