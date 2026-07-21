@@ -291,12 +291,12 @@ If a module does not serve one of these jobs clearly, demote, merge, or cut it f
 - [x] Same `approval_reassign_api` contract (`to_user_id` + reason)
 - [x] Tests: `tests/test_phase10_reassign_picker.py`
 
-### Explicitly deferred
+### Explicitly deferred (completed in Phase 11)
 
-- AI assistance only where it changes a decision or next action
-- Charts / insights dashboards after measured completion rates stay healthy
-- Org-wide manager queue in My Work
-- Searchable combobox / workload ranking for assignees
+- ~~AI assistance only where it changes a decision or next action~~ → Phase 11
+- ~~Charts / insights dashboards~~ → Phase 11
+- ~~Org-wide manager queue in My Work~~ → Phase 11
+- ~~Searchable combobox / workload ranking~~ → Phase 11
 
 **Phase 10 exit:** ✅ Managers reassign by teammate name with an explicit reason from My Work and Approvals.
 
