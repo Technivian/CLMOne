@@ -578,6 +578,7 @@ def _collect_approval_rows(org, user, today):
                 row['reassign_url'] = reverse(
                     'contracts:approval_reassign_api', kwargs={'approval_id': approval.pk},
                 )
+                row['current_assignee_id'] = approval.assigned_to_id
                 row['current_assignee_label'] = (
                     (approval.assigned_to.get_full_name() or approval.assigned_to.username)
                     if approval.assigned_to_id else 'unassigned'

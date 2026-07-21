@@ -224,6 +224,8 @@
   </div>
 </div>
 
+{% include "components/_reassign_dialog.html" with dialog_id="approvals-reassign-dialog" reassign_members=reassign_members %}
+
 <script nonce="{{ csp_nonce }}">
 (function () {
   var root = document.getElementById('approvals-root');
@@ -395,53 +397,113 @@
     });
   });
 
-  /* Manager reassignment — requires assignee user id + reason; never silent. */
+  /* Manager reassignment — name picker + required reason; never silent. */
+  function loadReassignMembers() {
+    try {
+      var el = document.getElementById('reassign-members-data');
+      return el ? JSON.parse(el.textContent || '[]') : [];
+    } catch (err) { return []; }
+  }
+
+  function openReassignDialog(opts) {
+    var backdrop = document.getElementById('approvals-reassign-dialog');
+    if (!backdrop || !opts || !opts.url) return;
+    var select = backdrop.querySelector('[data-reassign-assignee]');
+    var reasonEl = backdrop.querySelector('[data-reassign-reason]');
+    var meta = backdrop.querySelector('[data-reassign-current]');
+    var err = backdrop.querySelector('[data-reassign-error]');
+    var confirmBtn = backdrop.querySelector('[data-reassign-confirm]');
+    var cancelBtn = backdrop.querySelector('[data-reassign-cancel]');
+    var members = loadReassignMembers();
+    var currentId = String(opts.currentId || '');
+    if (meta) meta.textContent = 'Current owner: ' + (opts.currentLabel || 'unassigned');
+    if (err) { err.hidden = true; err.textContent = ''; }
+    if (reasonEl) reasonEl.value = '';
+    if (select) {
+      select.innerHTML = '<option value="">Select a teammate</option>';
+      members.forEach(function (m) {
+        if (String(m.id) === currentId) return;
+        var opt = document.createElement('option');
+        opt.value = m.id;
+        opt.textContent = m.label;
+        select.appendChild(opt);
+      });
+    }
+    function close() {
+      backdrop.classList.remove('is-open');
+      backdrop.setAttribute('hidden', '');
+      document.removeEventListener('keydown', onKey);
+    }
+    function onKey(event) {
+      if (event.key === 'Escape') close();
+    }
+    if (cancelBtn) cancelBtn.onclick = close;
+    backdrop.onclick = function (event) {
+      if (event.target === backdrop) close();
+    };
+    if (confirmBtn) {
+      confirmBtn.onclick = function () {
+        var toUserId = select ? select.value : '';
+        var reason = reasonEl ? reasonEl.value.trim() : '';
+        if (!toUserId) {
+          if (err) { err.textContent = 'Select a teammate to reassign to.'; err.hidden = false; }
+          return;
+        }
+        if (!reason) {
+          if (err) { err.textContent = 'A reassignment reason is required.'; err.hidden = false; }
+          return;
+        }
+        confirmBtn.disabled = true;
+        fetch(opts.url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+          body: JSON.stringify({ to_user_id: Number(toUserId), reason: reason }),
+        }).then(function (res) {
+          return res.json().then(function (data) { return { ok: res.ok, data: data }; });
+        }).then(function (result) {
+          confirmBtn.disabled = false;
+          if (result.ok) {
+            close();
+            window.location.reload();
+            return;
+          }
+          var msg = (result.data && result.data.error) || 'Reassignment failed.';
+          if (err) { err.textContent = msg; err.hidden = false; }
+          if (opts.onError) opts.onError(msg);
+        }).catch(function () {
+          confirmBtn.disabled = false;
+          var msg = 'Network error — please try again.';
+          if (err) { err.textContent = msg; err.hidden = false; }
+          if (opts.onError) opts.onError(msg);
+        });
+      };
+    }
+    backdrop.removeAttribute('hidden');
+    backdrop.classList.add('is-open');
+    document.addEventListener('keydown', onKey);
+    if (select) select.focus();
+  }
+
   root.querySelectorAll('[data-approval-reassign]').forEach(function (btn) {
     btn.addEventListener('click', function () {
       var url = btn.getAttribute('data-reassign-url');
       var current = btn.getAttribute('data-current-assignee') || '';
-      var toUserId = window.prompt(
-        'Reassign to user id (required). Current owner: ' + (current || 'unassigned'),
-        ''
-      );
-      if (toUserId === null) return;
-      toUserId = (toUserId || '').trim();
-      if (!toUserId) return;
-      var reason = window.prompt('Reason for reassignment (required):', '');
-      if (reason === null) return;
-      reason = (reason || '').trim();
-      if (!reason) {
-        window.alert('A reassignment reason is required.');
-        return;
-      }
+      var currentId = btn.getAttribute('data-current-assignee-id') || '';
       var cell = btn.closest('.wq-approval-actions');
       var errorEl = cell ? cell.querySelector('.wq-action-error') : null;
-      fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
-        body: JSON.stringify({ to_user_id: Number(toUserId), reason: reason }),
-      })
-        .then(function (res) {
-          return res.json().then(function (data) { return { ok: res.ok, data: data }; });
-        })
-        .then(function (result) {
-          if (result.ok) {
-            window.location.reload();
-            return;
-          }
+      openReassignDialog({
+        url: url,
+        currentLabel: current || 'unassigned',
+        currentId: currentId,
+        onError: function (msg) {
           if (errorEl) {
-            errorEl.textContent = (result.data && result.data.error) || 'Reassignment failed.';
+            errorEl.textContent = msg;
             errorEl.hidden = false;
           } else {
-            window.alert((result.data && result.data.error) || 'Reassignment failed.');
+            window.alert(msg);
           }
-        })
-        .catch(function () {
-          if (errorEl) {
-            errorEl.textContent = 'Network error — please try again.';
-            errorEl.hidden = false;
-          }
-        });
+        },
+      });
     });
   });
 })();

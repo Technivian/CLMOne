@@ -146,6 +146,19 @@ def organization_user_queryset(organization):
     ).distinct()
 
 
+def reassign_member_options(organization):
+    """Active org members for manager reassignment pickers (id + display label)."""
+    users = organization_user_queryset(organization).order_by('first_name', 'last_name', 'username')
+    options = []
+    for user in users:
+        full = (user.get_full_name() or '').strip()
+        label = full or user.username
+        if full and user.username and full.lower() != user.username.lower():
+            label = f'{full} ({user.username})'
+        options.append({'id': user.pk, 'label': label, 'username': user.username})
+    return options
+
+
 def configure_workflow_form(form, organization):
     form = apply_form_queryset_scopes(form, organization, {'contract': Contract})
     if 'template' in form.fields:

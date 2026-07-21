@@ -1,4 +1,5 @@
 import csv
+import json
 from datetime import date
 
 from django.contrib import messages
@@ -722,6 +723,12 @@ class ApprovalRequestListView(TenantScopedQuerysetMixin, LoginRequiredMixin, Lis
         context['queue_tabs'] = self._build_queue_tabs()
         context['hub_tabs'] = workflow_hub_tabs(active='approvals')
         context['hide_app_footer'] = True
+        org = self.get_organization()
+        from contracts.permissions import can_manage_organization
+        from contracts.view_support import reassign_member_options
+        members = reassign_member_options(org) if can_manage_organization(self.request.user, org) else []
+        context['reassign_members'] = members
+        context['reassign_members_json'] = json.dumps(members)
         return context
 
     def _build_queue_tabs(self):
@@ -863,6 +870,7 @@ class ApprovalRequestListView(TenantScopedQuerysetMixin, LoginRequiredMixin, Lis
                     'reject_url': reverse('contracts:approval_reject_api', kwargs={'approval_id': approval.pk}),
                     'return_url': reverse('contracts:approval_request_changes_api', kwargs={'approval_id': approval.pk}),
                     'reassign_url': reverse('contracts:approval_reassign_api', kwargs={'approval_id': approval.pk}),
+                    'current_assignee_id': approval.assigned_to_id,
                     'edit_url': reverse('contracts:approval_request_update', kwargs={'pk': approval.pk}),
                 })
             return rows

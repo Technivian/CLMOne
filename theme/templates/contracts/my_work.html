@@ -384,7 +384,7 @@
               data-search="{{ row.title }} {{ row.contract_title }} {{ row.counterparty }} {{ row.reference }}"
               data-due-state="{% if row.due_context.due_overdue %}overdue{% elif row.due_context.due_today %}today{% elif row.due_context.due_soon %}soon{% endif %}"
               {% if row.can_decide %}data-can-decide="1" data-approve-url="{{ row.approve_url }}" data-reject-url="{{ row.reject_url }}" data-return-url="{{ row.return_url }}"{% endif %}
-              {% if row.can_reassign %}data-can-reassign="1" data-reassign-url="{{ row.reassign_url }}" data-current-assignee="{{ row.current_assignee_label|default:''|escape }}"{% endif %}
+              {% if row.can_reassign %}data-can-reassign="1" data-reassign-url="{{ row.reassign_url }}" data-current-assignee="{{ row.current_assignee_label|default:''|escape }}" data-current-assignee-id="{{ row.current_assignee_id|default:'' }}"{% endif %}
               {% if row.can_complete %}data-can-complete="1" data-complete-url="{{ row.complete_url }}"{% if row.defer_url %} data-defer-url="{{ row.defer_url }}"{% endif %}{% if row.escalate_url %} data-escalate-url="{{ row.escalate_url }}"{% endif %}{% endif %}
               {% if row.can_resolve_conflict %}data-can-resolve-conflict="1" data-conflict-status-url="{{ row.conflict_status_url }}"{% endif %}
               aria-label="{{ row.title }}. {{ row.action_label|default:'Open' }}">
@@ -503,7 +503,7 @@
                data-search="{{ row.title }} {{ row.contract_title }} {{ row.counterparty }} {{ row.reference }}"
                data-due-state="{% if row.due_context.due_overdue %}overdue{% elif row.due_context.due_today %}today{% elif row.due_context.due_soon %}soon{% endif %}"
                {% if row.can_decide %}data-can-decide="1" data-approve-url="{{ row.approve_url }}" data-reject-url="{{ row.reject_url }}" data-return-url="{{ row.return_url }}"{% endif %}
-               {% if row.can_reassign %}data-can-reassign="1" data-reassign-url="{{ row.reassign_url }}" data-current-assignee="{{ row.current_assignee_label|default:''|escape }}"{% endif %}
+               {% if row.can_reassign %}data-can-reassign="1" data-reassign-url="{{ row.reassign_url }}" data-current-assignee="{{ row.current_assignee_label|default:''|escape }}" data-current-assignee-id="{{ row.current_assignee_id|default:'' }}"{% endif %}
                {% if row.can_complete %}data-can-complete="1" data-complete-url="{{ row.complete_url }}"{% if row.defer_url %} data-defer-url="{{ row.defer_url }}"{% endif %}{% if row.escalate_url %} data-escalate-url="{{ row.escalate_url }}"{% endif %}{% endif %}
                {% if row.can_resolve_conflict %}data-can-resolve-conflict="1" data-conflict-status-url="{{ row.conflict_status_url }}"{% endif %}
                aria-label="{{ row.title }}. {{ row.action_label|default:'Open' }}">
@@ -591,6 +591,8 @@
 
   {% endif %}
 </div>
+
+{% include "components/_reassign_dialog.html" with dialog_id="my-work-reassign-dialog" reassign_members=reassign_members %}
 
 <script nonce="{{ csp_nonce }}">
 (function () {
@@ -1004,6 +1006,100 @@
     applyFilters();
   }
 
+  function loadReassignMembers() {
+    try {
+      var el = document.getElementById('reassign-members-data');
+      return el ? JSON.parse(el.textContent || '[]') : [];
+    } catch (err) { return []; }
+  }
+
+  function openReassignDialog(opts) {
+    var backdrop = document.getElementById('my-work-reassign-dialog');
+    if (!backdrop || !opts || !opts.url) return;
+    var select = backdrop.querySelector('[data-reassign-assignee]');
+    var reasonEl = backdrop.querySelector('[data-reassign-reason]');
+    var meta = backdrop.querySelector('[data-reassign-current]');
+    var err = backdrop.querySelector('[data-reassign-error]');
+    var confirmBtn = backdrop.querySelector('[data-reassign-confirm]');
+    var cancelBtn = backdrop.querySelector('[data-reassign-cancel]');
+    var members = loadReassignMembers();
+    var currentId = String(opts.currentId || '');
+    if (meta) meta.textContent = 'Current owner: ' + (opts.currentLabel || 'unassigned');
+    if (err) { err.hidden = true; err.textContent = ''; }
+    if (reasonEl) reasonEl.value = '';
+    if (select) {
+      select.innerHTML = '<option value="">Select a teammate</option>';
+      members.forEach(function (m) {
+        if (String(m.id) === currentId) return;
+        var opt = document.createElement('option');
+        opt.value = m.id;
+        opt.textContent = m.label;
+        select.appendChild(opt);
+      });
+    }
+    function close() {
+      backdrop.classList.remove('is-open');
+      backdrop.setAttribute('hidden', '');
+      document.removeEventListener('keydown', onKey);
+    }
+    function onKey(event) {
+      if (event.key === 'Escape') close();
+    }
+    if (cancelBtn) cancelBtn.onclick = close;
+    backdrop.onclick = function (event) {
+      if (event.target === backdrop) close();
+    };
+    if (confirmBtn) {
+      confirmBtn.onclick = function () {
+        var toUserId = select ? select.value : '';
+        var reason = reasonEl ? reasonEl.value.trim() : '';
+        if (!toUserId) {
+          if (err) { err.textContent = 'Select a teammate to reassign to.'; err.hidden = false; }
+          return;
+        }
+        if (!reason) {
+          if (err) { err.textContent = 'A reassignment reason is required.'; err.hidden = false; }
+          return;
+        }
+        confirmBtn.disabled = true;
+        fetch(opts.url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRFToken': getCsrfToken(),
+          },
+          body: JSON.stringify({
+            to_user_id: Number(toUserId),
+            reason: reason,
+            surface: opts.surface || 'my_work',
+          }),
+        }).then(function (res) {
+          return res.json().then(function (data) { return { ok: res.ok, data: data }; });
+        }).then(function (result) {
+          confirmBtn.disabled = false;
+          if (result.ok) {
+            close();
+            if (opts.onSuccess) opts.onSuccess(result.data);
+            return;
+          }
+          var msg = (result.data && result.data.error) || 'Reassignment failed.';
+          if (err) { err.textContent = msg; err.hidden = false; }
+          if (opts.onError) opts.onError(msg);
+        }).catch(function () {
+          confirmBtn.disabled = false;
+          var msg = 'Network error — please try again.';
+          if (err) { err.textContent = msg; err.hidden = false; }
+          if (opts.onError) opts.onError(msg);
+        });
+      };
+    }
+    backdrop.removeAttribute('hidden');
+    backdrop.classList.add('is-open');
+    document.addEventListener('keydown', onKey);
+    if (select) select.focus();
+  }
+
   function actionErrorEl(btn) {
     var host = btn.closest('td, .my-work-card__footer, .my-work-card') || btn.parentElement;
     return host ? host.querySelector('.wq-action-error') : null;
@@ -1090,26 +1186,17 @@
         isForm = true;
         removeOnSuccess = false;
       } else if (action === 'reassign') {
-        url = row.getAttribute('data-reassign-url') || '';
-        var current = row.getAttribute('data-current-assignee') || 'unassigned';
-        var toUserId = window.prompt(
-          'Reassign to user id (required). Current owner: ' + current,
-          ''
-        );
-        if (toUserId === null) return;
-        toUserId = (toUserId || '').trim();
-        if (!toUserId) {
-          if (errorEl) { errorEl.textContent = 'A target user id is required.'; errorEl.hidden = false; }
-          return;
-        }
-        var reassignReason = window.prompt('Reason for reassignment (required):', '');
-        if (reassignReason === null) return;
-        reassignReason = (reassignReason || '').trim();
-        if (!reassignReason) {
-          if (errorEl) { errorEl.textContent = 'A reassignment reason is required.'; errorEl.hidden = false; }
-          return;
-        }
-        body = { to_user_id: toUserId, reason: reassignReason, surface: 'my_work' };
+        openReassignDialog({
+          url: row.getAttribute('data-reassign-url') || '',
+          currentLabel: row.getAttribute('data-current-assignee') || 'unassigned',
+          currentId: row.getAttribute('data-current-assignee-id') || '',
+          surface: 'my_work',
+          onSuccess: function () { removeWorkRow(row); },
+          onError: function (msg) {
+            if (errorEl) { errorEl.textContent = msg; errorEl.hidden = false; }
+          },
+        });
+        return;
       } else if (action === 'resolve-conflict') {
         url = row.getAttribute('data-conflict-status-url') || '';
         body = { status: 'RESOLVED', surface: 'my_work' };

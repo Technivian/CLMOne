@@ -4,7 +4,7 @@
 
 **North-star outcome:** A user opens CLM One and immediately knows what needs action, what is most urgent, why it matters, what to do next, and when it is due — without hunting across five screens.
 
-**Last updated:** 2026-07-21 (Phases 3–9 complete)  
+**Last updated:** 2026-07-21 (Phases 3–10 complete)  
 **Companion docs:** Engineering delivery waves live in [`ROADMAP.md`](../ROADMAP.md). Canonical boundaries live in [`PRODUCT_MAP.md`](PRODUCT_MAP.md). This document owns product boundaries, sequencing, and acceptance outcomes.
 
 ---
@@ -272,9 +272,33 @@ If a module does not serve one of these jobs clearly, demote, merge, or cut it f
 
 - AI assistance only where it changes a decision or next action
 - Charts / insights dashboards after measured completion rates stay healthy
-- Org-wide manager queue inside My Work; assignee picker beyond Approvals-style user-id prompt
+- Org-wide manager queue inside My Work
+- Richer assignee picker UX (searchable combobox / workload ranking) beyond the Approvals-style user-id prompt
 
 **Phase 9 exit:** ✅ Governance handoffs and privacy conflict disposition are available from My Work with the same APIs specialists use.
+
+---
+
+## Phase 10 — Reassign assignee picker (complete)
+
+**Goal:** Replace numeric user-id `prompt()` reassignment with a named teammate picker and required reason on My Work and Approvals.
+
+### Shipped
+
+- [x] Shared `reassign_member_options` helper + org member list in My Work / Approvals context
+- [x] Shared `_reassign_dialog.html` (select + reason) used by My Work and Approvals
+- [x] Reassign no longer asks for a raw user id; current owner is shown and excluded from the picker
+- [x] Same `approval_reassign_api` contract (`to_user_id` + reason)
+- [x] Tests: `tests/test_phase10_reassign_picker.py`
+
+### Explicitly deferred
+
+- AI assistance only where it changes a decision or next action
+- Charts / insights dashboards after measured completion rates stay healthy
+- Org-wide manager queue in My Work (team filter remains assignee-scoped)
+- Searchable combobox / workload ranking for assignees
+
+**Phase 10 exit:** ✅ Managers reassign by teammate name with an explicit reason from My Work and Approvals.
 
 ---
 
@@ -292,6 +316,7 @@ If a module does not serve one of these jobs clearly, demote, merge, or cut it f
 | **7** | Priority reason everywhere | Why urgency is shown is always answerable | ✅ Complete |
 | **8** | My Work action parity | Hub completes common specialist mutations | ✅ Complete |
 | **9** | My Work governance actions | Reassign + privacy conflict resolve from hub | ✅ Complete |
+| **10** | Reassign assignee picker | Name select + reason replaces user-id prompt | ✅ Complete |
 
 ---
 
@@ -311,7 +336,8 @@ If a module does not serve one of these jobs clearly, demote, merge, or cut it f
 
 1. Optional AI assistance only where it changes a decision or next action
 2. Charts / insights dashboards after measured completion rates stay healthy
-3. Richer assignee picker for reassign (beyond user-id prompt) when usage proves the need
+3. Org-wide manager queue in My Work when usage proves the need
+4. Searchable combobox / workload ranking for assignees when queues grow
 
 ---
 

@@ -233,6 +233,15 @@ class MyWorkView(LoginRequiredMixin, TemplateView):
                 }
                 for v in saved
             ])
+        from contracts.permissions import can_manage_organization
+        from contracts.view_support import reassign_member_options
+        members = (
+            reassign_member_options(organization)
+            if organization and can_manage_organization(user, organization)
+            else []
+        )
+        ctx['reassign_members'] = members
+        ctx['reassign_members_json'] = json.dumps(members)
         return ctx
 
     def render_to_response(self, context, **response_kwargs):
