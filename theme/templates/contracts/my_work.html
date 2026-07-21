@@ -384,7 +384,9 @@
               data-search="{{ row.title }} {{ row.contract_title }} {{ row.counterparty }} {{ row.reference }}"
               data-due-state="{% if row.due_context.due_overdue %}overdue{% elif row.due_context.due_today %}today{% elif row.due_context.due_soon %}soon{% endif %}"
               {% if row.can_decide %}data-can-decide="1" data-approve-url="{{ row.approve_url }}" data-reject-url="{{ row.reject_url }}" data-return-url="{{ row.return_url }}"{% endif %}
+              {% if row.can_reassign %}data-can-reassign="1" data-reassign-url="{{ row.reassign_url }}" data-current-assignee="{{ row.current_assignee_label|default:''|escape }}"{% endif %}
               {% if row.can_complete %}data-can-complete="1" data-complete-url="{{ row.complete_url }}"{% if row.defer_url %} data-defer-url="{{ row.defer_url }}"{% endif %}{% if row.escalate_url %} data-escalate-url="{{ row.escalate_url }}"{% endif %}{% endif %}
+              {% if row.can_resolve_conflict %}data-can-resolve-conflict="1" data-conflict-status-url="{{ row.conflict_status_url }}"{% endif %}
               aria-label="{{ row.title }}. {{ row.action_label|default:'Open' }}">
             <td data-col="priority">
               {% include "components/_governance_priority.html" with priority_label=row.priority_label priority_reason=row.priority_reason priority_tone=row.priority_tone show_detail=1 %}
@@ -424,10 +426,21 @@
                   <button type="button" class="wq-kebab-action" data-my-work-action="reject" role="menuitem">Reject</button>
                   <button type="button" class="wq-kebab-action" data-my-work-action="return" role="menuitem">Return</button>
                   {% endif %}
+                  {% if row.can_reassign %}
+                  <button type="button" class="wq-kebab-action" data-my-work-action="reassign" role="menuitem">Reassign…</button>
+                  {% endif %}
                   {% if row.can_complete %}
                   <button type="button" class="wq-kebab-action" data-my-work-action="complete" role="menuitem">Mark complete</button>
                   {% if row.defer_url %}<button type="button" class="wq-kebab-action" data-my-work-action="defer" role="menuitem">Defer 7 days</button>{% endif %}
                   {% if row.escalate_url %}<button type="button" class="wq-kebab-action" data-my-work-action="escalate" role="menuitem">Escalate</button>{% endif %}
+                  {% endif %}
+                  {% if row.can_resolve_conflict %}
+                  <button type="button" class="wq-kebab-action" data-my-work-action="resolve-conflict" role="menuitem">Mark resolved</button>
+                  <button type="button" class="wq-kebab-action" data-my-work-action="false-positive" role="menuitem">Mark false positive</button>
+                  {% endif %}
+                  {% if row.risks_href %}<a href="{{ row.risks_href }}" role="menuitem">Resolve conflicts</a>{% endif %}
+                  {% if row.work_kind == 'returned' or row.work_kind == 'rejected' %}
+                  {% if row.action_href %}<a href="{{ row.action_href }}" role="menuitem">Correct on contract</a>{% endif %}
                   {% endif %}
                   {% if row.contract and not row.is_restricted %}<a href="{% url 'contracts:contract_detail' row.contract.pk %}" role="menuitem">Open contract</a>{% endif %}
                 </div>
@@ -490,7 +503,9 @@
                data-search="{{ row.title }} {{ row.contract_title }} {{ row.counterparty }} {{ row.reference }}"
                data-due-state="{% if row.due_context.due_overdue %}overdue{% elif row.due_context.due_today %}today{% elif row.due_context.due_soon %}soon{% endif %}"
                {% if row.can_decide %}data-can-decide="1" data-approve-url="{{ row.approve_url }}" data-reject-url="{{ row.reject_url }}" data-return-url="{{ row.return_url }}"{% endif %}
+               {% if row.can_reassign %}data-can-reassign="1" data-reassign-url="{{ row.reassign_url }}" data-current-assignee="{{ row.current_assignee_label|default:''|escape }}"{% endif %}
                {% if row.can_complete %}data-can-complete="1" data-complete-url="{{ row.complete_url }}"{% if row.defer_url %} data-defer-url="{{ row.defer_url }}"{% endif %}{% if row.escalate_url %} data-escalate-url="{{ row.escalate_url }}"{% endif %}{% endif %}
+               {% if row.can_resolve_conflict %}data-can-resolve-conflict="1" data-conflict-status-url="{{ row.conflict_status_url }}"{% endif %}
                aria-label="{{ row.title }}. {{ row.action_label|default:'Open' }}">
         <div class="my-work-card__header">
           <h3 class="my-work-card__title">{{ row.title }}</h3>
@@ -513,10 +528,21 @@
               <button type="button" class="wq-kebab-action" data-my-work-action="reject" role="menuitem">Reject</button>
               <button type="button" class="wq-kebab-action" data-my-work-action="return" role="menuitem">Return</button>
               {% endif %}
+              {% if row.can_reassign %}
+              <button type="button" class="wq-kebab-action" data-my-work-action="reassign" role="menuitem">Reassign…</button>
+              {% endif %}
               {% if row.can_complete %}
               <button type="button" class="wq-kebab-action" data-my-work-action="complete" role="menuitem">Mark complete</button>
               {% if row.defer_url %}<button type="button" class="wq-kebab-action" data-my-work-action="defer" role="menuitem">Defer 7 days</button>{% endif %}
               {% if row.escalate_url %}<button type="button" class="wq-kebab-action" data-my-work-action="escalate" role="menuitem">Escalate</button>{% endif %}
+              {% endif %}
+              {% if row.can_resolve_conflict %}
+              <button type="button" class="wq-kebab-action" data-my-work-action="resolve-conflict" role="menuitem">Mark resolved</button>
+              <button type="button" class="wq-kebab-action" data-my-work-action="false-positive" role="menuitem">Mark false positive</button>
+              {% endif %}
+              {% if row.risks_href %}<a href="{{ row.risks_href }}" role="menuitem">Resolve conflicts</a>{% endif %}
+              {% if row.work_kind == 'returned' or row.work_kind == 'rejected' %}
+              {% if row.action_href %}<a href="{{ row.action_href }}" role="menuitem">Correct on contract</a>{% endif %}
               {% endif %}
               {% if row.contract and not row.is_restricted %}<a href="{% url 'contracts:contract_detail' row.contract.pk %}" role="menuitem">Open contract</a>{% endif %}
             </div>
@@ -1063,6 +1089,33 @@
         url = row.getAttribute('data-escalate-url') || '';
         isForm = true;
         removeOnSuccess = false;
+      } else if (action === 'reassign') {
+        url = row.getAttribute('data-reassign-url') || '';
+        var current = row.getAttribute('data-current-assignee') || 'unassigned';
+        var toUserId = window.prompt(
+          'Reassign to user id (required). Current owner: ' + current,
+          ''
+        );
+        if (toUserId === null) return;
+        toUserId = (toUserId || '').trim();
+        if (!toUserId) {
+          if (errorEl) { errorEl.textContent = 'A target user id is required.'; errorEl.hidden = false; }
+          return;
+        }
+        var reassignReason = window.prompt('Reason for reassignment (required):', '');
+        if (reassignReason === null) return;
+        reassignReason = (reassignReason || '').trim();
+        if (!reassignReason) {
+          if (errorEl) { errorEl.textContent = 'A reassignment reason is required.'; errorEl.hidden = false; }
+          return;
+        }
+        body = { to_user_id: toUserId, reason: reassignReason, surface: 'my_work' };
+      } else if (action === 'resolve-conflict') {
+        url = row.getAttribute('data-conflict-status-url') || '';
+        body = { status: 'RESOLVED', surface: 'my_work' };
+      } else if (action === 'false-positive') {
+        url = row.getAttribute('data-conflict-status-url') || '';
+        body = { status: 'FALSE_POSITIVE', surface: 'my_work' };
       }
       if (!url) return;
 

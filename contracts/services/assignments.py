@@ -556,6 +556,7 @@ def _collect_approval_rows(org, user, today):
             today=today,
         )
         if not row.get('is_restricted'):
+            from contracts.permissions import can_manage_organization
             from contracts.services.approval_workflow import actor_can_decide
             can_decide = (
                 approval.status in (ApprovalRequest.Status.PENDING, ApprovalRequest.Status.ESCALATED)
@@ -567,6 +568,19 @@ def _collect_approval_rows(org, user, today):
                 row['reject_url'] = reverse('contracts:approval_reject_api', kwargs={'approval_id': approval.pk})
                 row['return_url'] = reverse(
                     'contracts:approval_request_changes_api', kwargs={'approval_id': approval.pk},
+                )
+            can_reassign = (
+                approval.status in (ApprovalRequest.Status.PENDING, ApprovalRequest.Status.ESCALATED)
+                and can_manage_organization(user, org)
+            )
+            row['can_reassign'] = can_reassign
+            if can_reassign:
+                row['reassign_url'] = reverse(
+                    'contracts:approval_reassign_api', kwargs={'approval_id': approval.pk},
+                )
+                row['current_assignee_label'] = (
+                    (approval.assigned_to.get_full_name() or approval.assigned_to.username)
+                    if approval.assigned_to_id else 'unassigned'
                 )
         rows.append(row)
 
@@ -774,7 +788,8 @@ def _collect_privacy_rows(org, user, today):
             priority_reason = 'Privacy assessment blocking signature'
         elif unresolved_critical:
             priority_reason = f'{unresolved_critical} critical privacy risk{"s" if unresolved_critical != 1 else ""}'
-        rows.append(_base_row(
+        risks_href = f"{reverse('contracts:dpa_review_pack_detail', kwargs={'pk': pack.pk})}?tab=risks"
+        row = _base_row(
             row_id=f'privacy:{pack.pk}',
             title='Answer privacy questionnaire' if pack.approval_status == DPAReviewPack.ApprovalStatus.DRAFT else 'Complete data transfer assessment',
             work_kind='privacy',
@@ -796,7 +811,10 @@ def _collect_privacy_rows(org, user, today):
             priority_value='HIGH' if pack.approval_status == DPAReviewPack.ApprovalStatus.ESCALATED or conflict_count or unresolved_critical else 'MEDIUM',
             reference=f'DPA-{pack.pk}',
             today=today,
-        ))
+        )
+        if not row.get('is_restricted') and conflict_count:
+            row['risks_href'] = risks_href
+        rows.append(row)
 
     conflicts = (
         DPARiskItem.objects
@@ -807,7 +825,9 @@ def _collect_privacy_rows(org, user, today):
     for item in conflicts:
         pack = item.review_pack
         contract = pack.contract
-        rows.append(_base_row(
+        risks_href = f"{reverse('contracts:dpa_review_pack_detail', kwargs={'pk': pack.pk})}?tab=risks"
+        status_url = reverse('contracts:dpa_risk_item_set_status', kwargs={'pk': item.pk})
+        row = _base_row(
             row_id=f'privacy-conflict:{item.pk}',
             title=item.title or 'Review non-standard liability clause',
             work_kind='privacy',
@@ -820,13 +840,18 @@ def _collect_privacy_rows(org, user, today):
             description=item.description,
             workflow_stage='Privacy review',
             priority_reason=item.get_severity_display() + ' severity finding' if hasattr(item, 'get_severity_display') else '',
-            action_href=reverse('contracts:dpa_review_pack_detail', kwargs={'pk': pack.pk}),
-            action_label='Review',
+            action_href=risks_href,
+            action_label='Resolve',
             source_status=item.status,
             priority_value=getattr(item, 'severity', 'MEDIUM'),
             reference=f'DPA-{pack.pk}',
             today=today,
-        ))
+        )
+        if not row.get('is_restricted'):
+            row['can_resolve_conflict'] = True
+            row['conflict_status_url'] = status_url
+            row['risks_href'] = risks_href
+        rows.append(row)
     return rows
 
 
