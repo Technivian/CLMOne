@@ -4,7 +4,7 @@
 
 **North-star outcome:** A user opens CLM One and immediately knows what needs action, what is most urgent, why it matters, what to do next, and when it is due — without hunting across five screens.
 
-**Last updated:** 2026-07-21 (Phases 3–11 complete)  
+**Last updated:** 2026-07-21 (Phases 3–12 complete)  
 **Companion docs:** Engineering delivery waves live in [`ROADMAP.md`](../ROADMAP.md). Canonical boundaries live in [`PRODUCT_MAP.md`](PRODUCT_MAP.md). This document owns product boundaries, sequencing, and acceptance outcomes.
 
 ---
@@ -316,12 +316,35 @@ If a module does not serve one of these jobs clearly, demote, merge, or cut it f
 
 ### Explicitly deferred
 
-- Searchable typeahead backed by a dedicated people service / live workload SSE
 - Org-wide manager queue as the default My Work view (team remains opt-in)
 - Freeform AI assistant outside the decision loop
 - Third-party chart libraries (Chart.js / Recharts)
+- Live SSE workload streams (HTTP typeahead is enough for now)
 
 **Phase 11 exit:** ✅ Backlog amplifiers are available on existing My Work, Approvals, and Work Health surfaces.
+
+---
+
+## Phase 12 — Backlog polish (complete)
+
+**Goal:** Finish the remaining near-term polish without new product surfaces: live people search, prior-window work-health trends, and suggest-reason on more decision-changing actions.
+
+### Shipped
+
+- [x] Live assignee typeahead API (`assignee_options_api`) + debounced combobox search (initial embed capped)
+- [x] Work Health prior-window **Period trends** (hub completion, time-to-action, decision lag, blocked rate)
+- [x] Suggest reason for reassign, privacy conflict disposition, and obligation escalate (`work_suggest_comment_api`)
+- [x] Conflict resolve/false-positive from My Work requires a note (stored on the risk item); escalate accepts a reason in audit
+- [x] Tests: `tests/test_phase12_backlog_polish.py`
+
+### Explicitly deferred
+
+- Org-wide manager queue as the default My Work view
+- Freeform AI assistant outside the decision loop
+- Third-party chart libraries
+- Push/SSE live workload feeds
+
+**Phase 12 exit:** ✅ Remaining backlog polish is available on My Work, Approvals, and Work Health.
 
 ---
 
@@ -341,6 +364,7 @@ If a module does not serve one of these jobs clearly, demote, merge, or cut it f
 | **9** | My Work governance actions | Reassign + privacy conflict resolve from hub | ✅ Complete |
 | **10** | Reassign assignee picker | Name select + reason replaces user-id prompt | ✅ Complete |
 | **11** | Backlog amplifiers | Combobox, decision suggest, charts, team queue | ✅ Complete |
+| **12** | Backlog polish | Live search, trends, more decision suggests | ✅ Complete |
 
 ---
 
@@ -358,9 +382,7 @@ If a module does not serve one of these jobs clearly, demote, merge, or cut it f
 
 ## Near-term backlog (recommended next builds)
 
-1. Live people search / workload for very large orgs
-2. Deeper work-health trends once hub completion stays healthy in production
-3. Optional AI on other decision comments only when it changes the next action
+_No open product-roadmap backlog items._ Prefer production evidence before inventing the next surface.
 
 ---
 
