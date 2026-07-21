@@ -362,6 +362,7 @@ def _base_row(
             'status_label': 'Blocked',
             'status_tone': 'neutral',
             'priority_label': 'Normal',
+            'priority_tone': 'neutral',
             'priority_reason': 'You no longer have access to this record.',
             'action_label': 'Open',
             'action_href': '',
@@ -414,6 +415,7 @@ def _base_row(
         priority_label = 'High'
         if not priority_reason:
             priority_reason = blocking_issue or 'Blocked — waiting on a dependency'
+    from contracts.services.governance_ux import priority_tone_for_label
     return {
         'id': row_id,
         'title': title,
@@ -430,6 +432,7 @@ def _base_row(
         'status_label': status_label,
         'status_tone': _status_tone(status_label),
         'priority_label': priority_label,
+        'priority_tone': priority_tone_for_label(priority_label),
         'priority_reason': priority_reason,
         'action_label': action_label,
         'action_href': action_href,
@@ -605,10 +608,23 @@ def _collect_approval_rows(org, user, today):
 
 
 def _collect_task_rows(org, user, today):
+    from contracts.services.governance_ux import sla_priority_reason
+
     rows = []
     tasks = open_tasks_queryset(org, user)
     for task in tasks:
         contract = task.contract
+        due = _date_only(task.due_date)
+        overdue = bool(due and due < today)
+        priority_reason = sla_priority_reason(
+            due_date=due,
+            today=today,
+            overdue=overdue,
+            fallback=(
+                task.get_priority_display() + ' priority task'
+                if task.priority in ('HIGH', 'URGENT') else ''
+            ),
+        )
         rows.append(_base_row(
             row_id=f'task:{task.pk}',
             title=task.title,
@@ -621,7 +637,7 @@ def _collect_task_rows(org, user, today):
             due_date=task.due_date,
             description=task.description,
             workflow_stage=task.get_status_display(),
-            priority_reason=task.get_priority_display() + ' priority task' if task.priority in ('HIGH', 'URGENT') else '',
+            priority_reason=priority_reason,
             action_href=reverse('contracts:legal_task_update', kwargs={'pk': task.pk}),
             action_label='Complete',
             source_status=task.status,

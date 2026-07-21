@@ -61,6 +61,18 @@ def sla_priority_reason(*, due_date, today=None, sla_hours=None, overdue=False, 
     return fallback or ''
 
 
+def priority_tone_for_label(label: str) -> str:
+    """Map display priority labels to design-system badge tones."""
+    return {
+        'critical': 'danger',
+        'urgent': 'danger',
+        'high': 'warning',
+        'normal': 'info',
+        'medium': 'info',
+        'low': 'neutral',
+    }.get(str(label or '').strip().lower(), 'neutral')
+
+
 def approval_blocker_for_request(approval, sibling_pending=None):
     """Explain who must act next when an approval is blocked on a prior step."""
     if getattr(approval, 'status', None) == 'ESCALATED':

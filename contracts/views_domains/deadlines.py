@@ -184,7 +184,11 @@ class ObligationsWorkspaceView(LoginRequiredMixin, TemplateView):
             'PENDING': 0,
         }
         due_within_30_count = 0
-        from contracts.services.governance_ux import obligation_blocker_for_deadline, sla_priority_reason
+        from contracts.services.governance_ux import (
+            obligation_blocker_for_deadline,
+            priority_tone_for_label,
+            sla_priority_reason,
+        )
         for obligation in all_obligations:
             obligation.compliance_status = obligation_compliance_status(obligation)
             obligation.source = obligation.contract or obligation.matter
@@ -193,12 +197,14 @@ class ObligationsWorkspaceView(LoginRequiredMixin, TemplateView):
             obligation.is_blocked = blocker['is_blocked']
             obligation.blocking_issue = blocker['blocking_issue']
             obligation.blocker_owner = blocker['blocker_owner']
+            obligation.priority_label = obligation.get_priority_display()
+            obligation.priority_tone = priority_tone_for_label(obligation.priority_label)
             obligation.priority_reason = sla_priority_reason(
                 due_date=obligation.due_date,
                 today=today,
                 overdue=obligation.is_overdue,
                 fallback=(
-                    obligation.get_priority_display() + ' priority'
+                    obligation.priority_label + ' priority'
                     if obligation.priority in ('HIGH', 'CRITICAL') else ''
                 ),
             )

@@ -93,6 +93,7 @@ class LegalTaskKanbanView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListVie
         from datetime import timedelta
 
         from contracts.services.assignments import QUEUE_EMPTY_PERSONAL, open_tasks_queryset
+        from contracts.services.governance_ux import priority_tone_for_label, sla_priority_reason
         from contracts.services.queue_rows import creator_map, latest_activity_map
         from contracts.templatetags.clmone_format import task_priority_badge_class, task_status_badge_class
 
@@ -141,6 +142,16 @@ class LegalTaskKanbanView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListVie
                     if matter.client_id:
                         meta_parts.append(matter.client.name)
 
+                priority_label = task.get_priority_display()
+                priority_reason = sla_priority_reason(
+                    due_date=due,
+                    today=today,
+                    overdue=overdue,
+                    fallback=(
+                        f'{priority_label} priority task'
+                        if task.priority in ('HIGH', 'URGENT') else ''
+                    ),
+                )
                 rows.append({
                     'id': task.pk,
                     'title': task.title,
@@ -154,8 +165,10 @@ class LegalTaskKanbanView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListVie
                     'due_overdue': overdue,
                     'status_label': task.get_status_display(),
                     'status_badge_class': task_status_badge_class(task.status),
-                    'priority_label': task.get_priority_display(),
+                    'priority_label': priority_label,
+                    'priority_tone': priority_tone_for_label(priority_label),
                     'priority_badge_class': task_priority_badge_class(task.priority),
+                    'priority_reason': priority_reason,
                     # Gate on BOTH "is this actor eligible" and "is this task
                     # still open" — an eligible admin must not see a live
                     # Complete button on an already-completed/cancelled task,

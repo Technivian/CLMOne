@@ -13,6 +13,7 @@
 {% endblock %}
 {% block content %}
 {% include "components/_list_page_shell_styles.html" %}
+{% include "components/_governance_styles.html" %}
 <style nonce="{{ csp_nonce }}">
   .my-work-page .clm-list-summary { --dc-ds-summary-columns: 6; }
   .my-work-page .my-work-summary-chip {
@@ -383,10 +384,7 @@
               data-due-state="{% if row.due_context.due_overdue %}overdue{% elif row.due_context.due_today %}today{% elif row.due_context.due_soon %}soon{% endif %}"
               aria-label="{{ row.title }}. {{ row.action_label|default:'Open' }}">
             <td data-col="priority">
-              <span class="my-work-priority my-work-priority--{{ row.priority_label|lower }}"
-                    {% if row.priority_reason %}title="{{ row.priority_reason }}"{% endif %}>
-                {{ row.priority_label }}
-              </span>
+              {% include "components/_governance_priority.html" with priority_label=row.priority_label priority_reason=row.priority_reason priority_tone=row.priority_tone show_detail=1 %}
             </td>
             <td data-col="title">
               <span class="wq-item-link">{{ row.title }}</span>
@@ -479,7 +477,7 @@
                aria-label="{{ row.title }}. {{ row.action_label|default:'Open' }}">
         <div class="my-work-card__header">
           <h3 class="my-work-card__title">{{ row.title }}</h3>
-          <span class="my-work-priority my-work-priority--{{ row.priority_label|lower }}">{{ row.priority_label }}</span>
+          {% include "components/_governance_priority.html" with priority_label=row.priority_label priority_reason=row.priority_reason priority_tone=row.priority_tone show_detail=0 %}
         </div>
         <p class="my-work-card__meta">{{ row.contract_title }}{% if row.counterparty %} · {{ row.counterparty }}{% endif %}</p>
         <div class="my-work-card__footer">

@@ -733,6 +733,7 @@ class ApprovalRequestListView(TenantScopedQuerysetMixin, LoginRequiredMixin, Lis
         from contracts.services.governance_ux import (
             approval_blocker_for_request,
             build_delegation_info,
+            priority_tone_for_label,
             sla_priority_reason,
         )
         from contracts.services.queue_rows import latest_activity_map
@@ -812,6 +813,14 @@ class ApprovalRequestListView(TenantScopedQuerysetMixin, LoginRequiredMixin, Lis
                     risk_level=contract.risk_level if contract else '',
                     escalated=approval.status == 'ESCALATED',
                 )
+                if approval.status == 'ESCALATED':
+                    priority_label = 'Critical'
+                elif overdue:
+                    priority_label = 'High'
+                elif priority_reason:
+                    priority_label = 'High' if (contract and contract.risk_level in ('HIGH', 'CRITICAL')) else 'Normal'
+                else:
+                    priority_label = ''
                 blocker = approval_blocker_for_request(
                     approval,
                     sibling_pending=siblings_by_contract.get(approval.contract_id),
@@ -839,6 +848,8 @@ class ApprovalRequestListView(TenantScopedQuerysetMixin, LoginRequiredMixin, Lis
                     'status_label': approval.get_status_display(),
                     'status_badge_class': approval_status_badge_class(approval.status),
                     'next_action': next_action,
+                    'priority_label': priority_label,
+                    'priority_tone': priority_tone_for_label(priority_label) if priority_label else 'neutral',
                     'priority_reason': priority_reason,
                     'is_blocked': blocker['is_blocked'],
                     'blocking_issue': blocker['blocking_issue'],

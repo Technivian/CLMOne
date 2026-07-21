@@ -796,6 +796,10 @@ class DPAReviewPackListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListV
                     else f'{critical_risk_count} critical risk{"s" if critical_risk_count != 1 else ""} open'
                     if critical_risk_count else ''
                 ),
+                'priority_label': (
+                    'Critical' if critical_risk_count or conflict_count else ''
+                ),
+                'priority_tone': 'danger' if critical_risk_count or conflict_count else 'neutral',
                 'risk_tone': 'danger' if unresolved_risks else 'success',
                 'approval_tone': _REVIEW_STATUS_TONES.get(pack.approval_status, 'neutral'),
                 'review_status_label': _review_status_list_label(pack),

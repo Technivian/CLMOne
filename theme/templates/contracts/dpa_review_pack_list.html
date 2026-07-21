@@ -4,6 +4,7 @@
 {% block authenticated_page_subtitle %}DPA reviews, transfer assessments, subprocessor checks, and privacy deviations that need a decision.{% endblock %}
 {% block content %}
 {% include "components/_list_page_shell_styles.html" %}
+{% include "components/_governance_styles.html" %}
 <style nonce="{{ csp_nonce }}">
   .dpa-review-page .dpa-review-contract-link { color: var(--ds-color-text); font-weight: 780; text-decoration: none; }
   .dpa-review-page .dpa-review-contract-link:hover { color: var(--ds-color-action); }
@@ -257,6 +258,9 @@
             <a href="{{ row.detail_url }}" class="dpa-review-contract-link dpa-review-agreement-title"{% if row.priority_reason %} title="{{ row.priority_reason }}"{% endif %}>{{ row.pack.contract.title }}</a>
             <div class="dpa-review-counterparty">{% if row.pack.counterparty %}{{ row.pack.counterparty.name }}{% else %}No counterparty{% endif %}</div>
             {% include "components/_governance_blocked.html" with is_blocked=row.is_blocked blocking_issue=row.blocking_issue blocker_owner=row.blocker_owner %}
+            {% if row.priority_reason %}
+            {% include "components/_governance_priority.html" with priority_label=row.priority_label priority_reason=row.priority_reason priority_tone=row.priority_tone show_detail=1 %}
+            {% endif %}
           </td>
           <td data-col="role">
             {% if row.role_is_ambiguous %}

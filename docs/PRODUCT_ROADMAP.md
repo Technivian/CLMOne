@@ -4,7 +4,7 @@
 
 **North-star outcome:** A user opens CLM One and immediately knows what needs action, what is most urgent, why it matters, what to do next, and when it is due — without hunting across five screens.
 
-**Last updated:** 2026-07-21 (Phases 3–6 complete)  
+**Last updated:** 2026-07-21 (Phases 3–7 complete)  
 **Companion docs:** Engineering delivery waves live in [`ROADMAP.md`](../ROADMAP.md). Canonical boundaries live in [`PRODUCT_MAP.md`](PRODUCT_MAP.md). This document owns product boundaries, sequencing, and acceptance outcomes.
 
 ---
@@ -215,6 +215,26 @@ If a module does not serve one of these jobs clearly, demote, merge, or cut it f
 
 ---
 
+## Phase 7 — Priority reason everywhere (complete)
+
+**Goal:** Wherever priority or urgency appears on a work queue, the user can see **why** — via tooltip and the shared “Why this priority” pattern — without hunting in a detail drawer.
+
+### Shipped
+
+- [x] Shared `_governance_priority.html` used on My Work (table + mobile cards), Approvals, Tasks, Obligations, and Privacy Reviews
+- [x] Tasks queue rows carry `priority_reason` from `sla_priority_reason` (overdue / HIGH / URGENT)
+- [x] Obligations and Approvals expose label + tone + expandable reason on the priority affordance
+- [x] `priority_tone` plumbed on assignment rows and specialist queues via `priority_tone_for_label`
+
+### Explicitly deferred
+
+- Specialist-workspace inline action parity with My Work (backlog item 2)
+- AI assistance and charts / insights dashboards
+
+**Phase 7 exit:** ✅ Rule-based priority reasons are visible on every primary work queue.
+
+---
+
 ## Sequencing summary
 
 | Phase | Theme | Primary outcome | Status |
@@ -226,6 +246,7 @@ If a module does not serve one of these jobs clearly, demote, merge, or cut it f
 | **4** | Nav / legacy cleanup | Smaller, complete IA | ✅ Complete |
 | **5** | Instrumentation | Operating metrics guide the roadmap | ✅ Complete |
 | **6** | Amplifiers | Reporting, saved views, measured priority | ✅ Complete |
+| **7** | Priority reason everywhere | Why urgency is shown is always answerable | ✅ Complete |
 
 ---
 
@@ -243,10 +264,9 @@ If a module does not serve one of these jobs clearly, demote, merge, or cut it f
 
 ## Near-term backlog (recommended next builds)
 
-1. SLA / priority reason tooltips everywhere priority is shown
-2. Deeper specialist-workspace action parity where My Work still deep-links out
-3. Optional AI assistance only where it changes a decision or next action
-4. Charts / insights dashboards after measured completion rates stay healthy
+1. Deeper specialist-workspace action parity where My Work still deep-links out
+2. Optional AI assistance only where it changes a decision or next action
+3. Charts / insights dashboards after measured completion rates stay healthy
 
 ---
 

@@ -18,7 +18,8 @@
     <tr class="obligations-row" data-href="{% url 'contracts:deadline_update' obligation.pk %}" tabindex="0" role="link" aria-label="Open obligation {{ obligation.title|truncatechars:50 }}">
       <td data-col="obligation">
         <a href="{% url 'contracts:deadline_update' obligation.pk %}" class="wq-item-link"{% if obligation.priority_reason %} title="{{ obligation.priority_reason }}"{% endif %}>{{ obligation.title|truncatechars:60 }}</a>
-        <div class="wq-item-meta">{{ obligation.get_deadline_type_display }}{% if obligation.priority_reason %} · {{ obligation.priority_reason }}{% endif %}</div>
+        <div class="wq-item-meta">{{ obligation.get_deadline_type_display }}</div>
+        {% include "components/_governance_priority.html" with priority_label=obligation.priority_label priority_reason=obligation.priority_reason priority_tone=obligation.priority_tone show_detail=1 %}
         {% include "components/_governance_blocked.html" with is_blocked=obligation.is_blocked blocking_issue=obligation.blocking_issue blocker_owner=obligation.blocker_owner %}
       </td>
       <td data-col="contract">
@@ -31,7 +32,7 @@
         {% endif %}
       </td>
       <td data-col="owner">{% include 'components/_assignee_chip.html' with user=obligation.assigned_to %}</td>
-      <td data-col="due"{% if obligation.is_overdue %} class="wq-due-overdue"{% endif %}>
+      <td data-col="due" class="{% if obligation.is_overdue %}wq-due-overdue{% endif %}"{% if obligation.priority_reason %} title="{{ obligation.priority_reason }}"{% endif %}>
         <div class="obligations-due-absolute">{{ obligation.due_date|date:"j M Y" }}</div>
         <div class="wq-item-meta">{{ obligation.due_date|due_relative_label }}</div>
       </td>
