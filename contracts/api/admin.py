@@ -545,6 +545,14 @@ def approval_suggest_decision_api(request, approval_id):
         result = suggest_approval_decision_comment(approval, decision, allow_ai=True)
     except ValueError as exc:
         return JsonResponse({'error': str(exc)}, status=400)
+    from contracts.services.work_instrumentation import record_adoption_event
+    record_adoption_event(
+        organization=org,
+        user=request.user,
+        evidence_key='suggest_requested',
+        surface='my_work',
+        metadata={'kind': result.get('decision') or decision, 'source': result.get('source')},
+    )
     return JsonResponse({'ok': True, **result})
 
 
@@ -573,6 +581,14 @@ def assignee_options_api(request):
             exclude_ids.append(int(part))
     members = reassign_member_options(
         org, q=q, limit=limit, exclude_ids=exclude_ids, include_workload=True,
+    )
+    from contracts.services.work_instrumentation import record_adoption_event
+    record_adoption_event(
+        organization=org,
+        user=request.user,
+        evidence_key='assignee_search',
+        surface='my_work',
+        metadata={'q_len': len(q), 'result_count': len(members)},
     )
     return JsonResponse({'ok': True, 'members': members, 'q': q})
 
@@ -651,6 +667,14 @@ def work_suggest_comment_api(request):
         )
     except ValueError as exc:
         return JsonResponse({'error': str(exc)}, status=400)
+    from contracts.services.work_instrumentation import record_adoption_event
+    record_adoption_event(
+        organization=org,
+        user=request.user,
+        evidence_key='suggest_requested',
+        surface='my_work',
+        metadata={'kind': result.get('decision') or kind, 'source': result.get('source')},
+    )
     return JsonResponse({'ok': True, **result})
 
 

@@ -498,6 +498,17 @@ def work_interaction_api(request):
 
     event = (data.get('event') or '').strip()
     work_item_id = (data.get('work_item_id') or '').strip()
+    evidence_key = (data.get('evidence') or data.get('evidence_key') or '').strip()
+    if evidence_key:
+        from contracts.services.work_instrumentation import record_adoption_event
+        record_adoption_event(
+            organization=org,
+            user=request.user,
+            evidence_key=evidence_key,
+            surface=resolve_surface(request, explicit=data.get('surface') or ''),
+            metadata=data.get('metadata') if isinstance(data.get('metadata'), dict) else {'via': 'beacon'},
+        )
+        return JsonResponse({'ok': True})
     if event not in {'opened', 'primary_action', 'surfaced'}:
         return JsonResponse({'error': 'Unsupported event'}, status=400)
     if not work_item_id:
@@ -545,6 +556,9 @@ def work_operating_metrics_api(request):
     payload = build_operating_metrics(org, days=days)
     if request.GET.get('trends') in ('1', 'true', 'yes'):
         payload['trends'] = build_operating_trends(org, days=days).get('trends') or {}
+    if request.GET.get('adoption') in ('1', 'true', 'yes'):
+        from contracts.services.work_instrumentation import build_adoption_evidence
+        payload['adoption'] = build_adoption_evidence(org, days=days)
     return JsonResponse(payload)
 
 

@@ -4,7 +4,7 @@
 
 **North-star outcome:** A user opens CLM One and immediately knows what needs action, what is most urgent, why it matters, what to do next, and when it is due — without hunting across five screens.
 
-**Last updated:** 2026-07-21 (Phases 3–12 complete)  
+**Last updated:** 2026-07-21 (Phases 3–13 complete)  
 **Companion docs:** Engineering delivery waves live in [`ROADMAP.md`](../ROADMAP.md). Canonical boundaries live in [`PRODUCT_MAP.md`](PRODUCT_MAP.md). This document owns product boundaries, sequencing, and acceptance outcomes.
 
 ---
@@ -348,6 +348,29 @@ If a module does not serve one of these jobs clearly, demote, merge, or cut it f
 
 ---
 
+## Phase 13 — Ship readiness (complete)
+
+**Goal:** Production-validation plumbing — adoption evidence, team-queue hardening — without shipping the deferred product bets (team-as-default, freeform AI, Chart.js, SSE).
+
+### Shipped
+
+- [x] Adoption evidence on Work Health (team queue views, assignee searches, suggest requested/applied) + reconsideration gates
+- [x] Team queue row cap (250) with truncation banner; skip heavy activity fan-out on large team queues
+- [x] 60s cache for assignee open-work workload counts
+- [x] Evidence beacons from search/suggest APIs and client `suggest_applied`
+- [x] Tests: `tests/test_phase13_ship_evidence_harden.py`
+
+### Still deferred (evidence-gated)
+
+- Team queue as My Work default
+- Freeform AI outside the decision loop
+- Chart.js / third-party charts
+- SSE live workload feeds
+
+**Phase 13 exit:** ✅ Ops can watch amplifier usage and only reopen deferred items when gates fire.
+
+---
+
 ## Sequencing summary
 
 | Phase | Theme | Primary outcome | Status |
@@ -365,6 +388,7 @@ If a module does not serve one of these jobs clearly, demote, merge, or cut it f
 | **10** | Reassign assignee picker | Name select + reason replaces user-id prompt | ✅ Complete |
 | **11** | Backlog amplifiers | Combobox, decision suggest, charts, team queue | ✅ Complete |
 | **12** | Backlog polish | Live search, trends, more decision suggests | ✅ Complete |
+| **13** | Ship readiness | Adoption evidence + team-queue hardening | ✅ Complete |
 
 ---
 
@@ -382,7 +406,7 @@ If a module does not serve one of these jobs clearly, demote, merge, or cut it f
 
 ## Near-term backlog (recommended next builds)
 
-_No open product-roadmap backlog items._ Prefer production evidence before inventing the next surface.
+_No open product-roadmap backlog items._ Watch Work Health **Adoption evidence** gates before inventing the next surface.
 
 ---
 

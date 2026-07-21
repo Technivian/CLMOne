@@ -148,6 +148,7 @@ def organization_user_queryset(organization):
 
 def open_work_count_by_user(organization):
     """Open actionable work counts keyed by assignee user id (approvals, tasks, obligations)."""
+    from django.core.cache import cache
     from django.db.models import Count
 
     from contracts.models import ApprovalRequest, Deadline, LegalTask
@@ -155,6 +156,11 @@ def open_work_count_by_user(organization):
 
     if organization is None:
         return {}
+    cache_key = f'clmone:open_work_count:v1:{organization.pk}'
+    cached = cache.get(cache_key)
+    if isinstance(cached, dict):
+        return cached
+
     counts = {}
 
     def _add(user_id, n):
@@ -188,6 +194,7 @@ def open_work_count_by_user(organization):
     for row in obligations:
         _add(row['assigned_to_id'], row['c'])
 
+    cache.set(cache_key, counts, 60)
     return counts
 
 

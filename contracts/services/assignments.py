@@ -1006,11 +1006,26 @@ def build_summary_counts(rows):
     return counts
 
 
-def get_active_work_items(organization, user, *, today=None, scope='personal'):
+TEAM_QUEUE_ROW_LIMIT = 250
+
+
+def get_active_work_items(organization, user, *, today=None, scope='personal', row_limit=None):
+    """Return active work rows for personal or team scope.
+
+    Team scope is capped (``TEAM_QUEUE_ROW_LIMIT``) so org-wide triage stays
+    responsive; callers can read ``truncated`` via ``get_active_work_items_result``.
+    """
+    result = get_active_work_items_result(
+        organization, user, today=today, scope=scope, row_limit=row_limit,
+    )
+    return result['rows']
+
+
+def get_active_work_items_result(organization, user, *, today=None, scope='personal', row_limit=None):
     if organization is None or user is None or not getattr(user, 'is_authenticated', False):
-        return []
+        return {'rows': [], 'truncated': False, 'scope': 'personal', 'total_before_cap': 0}
     if get_active_org_membership(user, organization) is None:
-        return []
+        return {'rows': [], 'truncated': False, 'scope': 'personal', 'total_before_cap': 0}
 
     scope = 'team' if scope == 'team' else 'personal'
     today = today or timezone.localdate()
@@ -1022,14 +1037,30 @@ def get_active_work_items(organization, user, *, today=None, scope='personal'):
     rows.extend(_collect_review_rows(organization, user, today, scope=scope))
     rows.extend(_collect_workflow_step_rows(organization, user, today, scope=scope))
     rows = _dedupe_rows(rows)
-    _attach_activity(rows, organization)
+
+    # Team queues can be large — skip expensive activity fan-out when over half cap.
+    limit = TEAM_QUEUE_ROW_LIMIT if row_limit is None else max(1, int(row_limit))
+    if scope != 'team' or len(rows) <= max(50, limit // 2):
+        _attach_activity(rows, organization)
     org_overdue_rates = None
     try:
         from contracts.services.work_instrumentation import overdue_rate_by_work_type
         org_overdue_rates = overdue_rate_by_work_type(organization, days=30)
     except Exception:
         org_overdue_rates = None
-    return _sort_rows(rows, today, org_overdue_rates=org_overdue_rates)
+    rows = _sort_rows(rows, today, org_overdue_rates=org_overdue_rates)
+    total = len(rows)
+    truncated = False
+    if scope == 'team' and total > limit:
+        rows = rows[:limit]
+        truncated = True
+    return {
+        'rows': rows,
+        'truncated': truncated,
+        'scope': scope,
+        'total_before_cap': total,
+        'row_limit': limit if scope == 'team' else None,
+    }
 
 
 def get_recently_completed_items(organization, user, *, today=None, days=RECENTLY_COMPLETED_DAYS):

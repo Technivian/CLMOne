@@ -137,6 +137,85 @@ def record_rows_surfaced(organization, user, rows: Iterable[dict], *, surface: s
     return count
 
 
+def record_adoption_event(
+    *,
+    organization,
+    user=None,
+    evidence_key: str,
+    surface: str = 'my_work',
+    metadata: dict | None = None,
+) -> None:
+    """Record product-adoption evidence (team queue, search, suggest) for ops review.
+
+    Uses ``primary_action`` + stable ``evidence:<key>`` work_item ids so we do not
+    need a schema migration for every new signal.
+    """
+    key = (evidence_key or '').strip().lower().replace(' ', '_')
+    if not key:
+        return
+    record_work_event(
+        organization=organization,
+        user=user,
+        event='primary_action',
+        work_item_id=f'evidence:{key}'[:80],
+        work_kind='adoption',
+        surface=surface if surface in VALID_SURFACES else 'my_work',
+        metadata={'evidence': key, **(metadata or {})},
+        dedupe_days=None,
+    )
+
+
+def build_adoption_evidence(organization, *, days: int = 30) -> dict:
+    """Counts that tell us whether amplifiers are used in production."""
+    from contracts.models import WorkInteractionEvent
+
+    if organization is None:
+        return {'window_days': days, 'signals': {}}
+    window_days = max(1, min(int(days or 30), 180))
+    since = timezone.now() - timedelta(days=window_days)
+    qs = WorkInteractionEvent.objects.filter(
+        organization=organization,
+        occurred_at__gte=since,
+        work_kind='adoption',
+        event='primary_action',
+        work_item_id__startswith='evidence:',
+    )
+    counts = {}
+    for row in qs.values('work_item_id').annotate(c=Count('id')):
+        key = (row['work_item_id'] or '').replace('evidence:', '', 1)
+        counts[key] = row['c']
+
+    hub_completed = WorkInteractionEvent.objects.filter(
+        organization=organization,
+        occurred_at__gte=since,
+        event='completed',
+        surface='my_work',
+    ).count()
+    completed_total = WorkInteractionEvent.objects.filter(
+        organization=organization,
+        occurred_at__gte=since,
+        event='completed',
+    ).count()
+
+    return {
+        'window_days': window_days,
+        'signals': {
+            'team_queue_views': counts.get('team_queue', 0),
+            'assignee_searches': counts.get('assignee_search', 0),
+            'suggest_requested': counts.get('suggest_requested', 0),
+            'suggest_applied': counts.get('suggest_applied', 0),
+            'hub_completions': hub_completed,
+            'completions_total': completed_total,
+        },
+        'gates': {
+            'consider_team_default': counts.get('team_queue', 0) >= 50,
+            'consider_chart_library': completed_total >= 100 and hub_completed >= 40,
+            'consider_sse_workload': counts.get('assignee_search', 0) >= 200,
+            'consider_freeform_ai': False,
+        },
+    }
+
+
 def record_outcome(
     *,
     organization,

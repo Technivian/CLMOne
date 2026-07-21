@@ -217,6 +217,12 @@
   </section>
   {% else %}
 
+  {% if work_scope == 'team' and team_queue_truncated %}
+  <div class="dc-ds-banner" role="status" style="margin-bottom:var(--space-12);">
+    Showing the top {{ team_queue_limit }} of {{ team_queue_total }} team items (priority-sorted). Narrow with filters or open specialist queues for the rest.
+  </div>
+  {% endif %}
+
   <div class="my-work-update-banner" id="my-work-update-banner" role="status" aria-live="polite">
     <span>New work is available</span>
     <button type="button" class="dc-ds-button dc-ds-button--quiet" id="my-work-update-refresh">Refresh queue</button>
@@ -640,6 +646,23 @@
   var savedViewsUrl = root.getAttribute('data-saved-views-url') || '';
   var assigneeOptionsUrl = "{{ assignee_options_url|default:''|escapejs }}";
   var workSuggestCommentUrl = "{{ work_suggest_comment_url|default:''|escapejs }}";
+  var workEventsUrl = "{% url 'contracts:work_interaction_api' %}";
+
+  function recordEvidence(key, metadata) {
+    if (!workEventsUrl || !key) return;
+    try {
+      fetch(workEventsUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-CSRFToken': getCsrfToken(),
+        },
+        body: JSON.stringify({ evidence: key, surface: 'my_work', metadata: metadata || {} }),
+        keepalive: true,
+      }).catch(function () { /* ignore */ });
+    } catch (err) { /* ignore */ }
+  }
   var state = {
     view: 'active',
     workType: 'all',
@@ -1338,6 +1361,7 @@
       reasonEl.value = '';
       reasonEl.placeholder = opts.placeholder || defaultPlaceholder;
     }
+    var suggestionApplied = false;
     if (suggestBtn) {
       suggestBtn.hidden = !opts.suggestUrl;
       suggestBtn.disabled = false;
@@ -1378,6 +1402,7 @@
           suggestBtn.disabled = false;
           if (result.ok && result.data && result.data.suggestion) {
             if (reasonEl) reasonEl.value = result.data.suggestion;
+            suggestionApplied = true;
             if (hint) {
               hint.textContent = result.data.source === 'ai'
                 ? 'Suggested with AI — edit before confirming.'
@@ -1403,6 +1428,9 @@
             err.hidden = false;
           }
           return;
+        }
+        if (suggestionApplied) {
+          recordEvidence('suggest_applied', { decision: decision });
         }
         close();
         if (opts.onConfirm) opts.onConfirm(comments);

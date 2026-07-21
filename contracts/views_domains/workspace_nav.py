@@ -19,7 +19,7 @@ from contracts.services.assignments import (
     WORK_TYPE_CHOICES,
     build_filter_options,
     build_summary_counts,
-    get_active_work_items,
+    get_active_work_items_result,
     get_recently_completed_items,
 )
 from contracts.tenancy import get_user_organization, scope_queryset_for_organization
@@ -163,21 +163,35 @@ class MyWorkView(LoginRequiredMixin, TemplateView):
         load_error = False
         active_rows = []
         completed_rows = []
+        work_result = {'truncated': False, 'total_before_cap': 0, 'row_limit': None}
         from contracts.permissions import can_manage_organization
         can_team = bool(organization and can_manage_organization(user, organization))
         scope = self.request.GET.get('scope', 'personal')
         if scope != 'team' or not can_team:
             scope = 'personal'
         try:
-            active_rows = get_active_work_items(organization, user, today=today, scope=scope)
+            work_result = get_active_work_items_result(organization, user, today=today, scope=scope)
+            active_rows = work_result['rows']
             completed_rows = get_recently_completed_items(organization, user, today=today)
         except Exception:
             load_error = True
         else:
             if organization and active_rows and view_mode == 'active':
                 try:
-                    from contracts.services.work_instrumentation import record_rows_surfaced
+                    from contracts.services.work_instrumentation import record_rows_surfaced, record_adoption_event
                     record_rows_surfaced(organization, user, active_rows, surface='my_work')
+                    if scope == 'team':
+                        record_adoption_event(
+                            organization=organization,
+                            user=user,
+                            evidence_key='team_queue',
+                            surface='my_work',
+                            metadata={
+                                'row_count': len(active_rows),
+                                'truncated': bool(work_result.get('truncated')),
+                                'total_before_cap': work_result.get('total_before_cap'),
+                            },
+                        )
                 except Exception:
                     pass
 
@@ -210,6 +224,9 @@ class MyWorkView(LoginRequiredMixin, TemplateView):
             'view_mode': view_mode,
             'work_scope': scope,
             'can_view_team_queue': can_team,
+            'team_queue_truncated': bool(work_result.get('truncated')),
+            'team_queue_total': work_result.get('total_before_cap') or len(active_rows),
+            'team_queue_limit': work_result.get('row_limit'),
             'load_error': load_error,
             'last_updated': timezone.now(),
             'recently_completed_days': RECENTLY_COMPLETED_DAYS,

@@ -172,6 +172,29 @@
   </section>
   {% endif %}
 
+  {% if adoption_cards %}
+  <section class="dc-ds-surface" style="padding:var(--space-16);margin-bottom:var(--space-20);" aria-label="Adoption evidence">
+    <h2 style="margin:0 0 var(--space-8);font:var(--text-h3);">Adoption evidence</h2>
+    <p class="profile-page__muted" style="margin:0 0 var(--space-12);">Signals for whether amplifiers are used — reopen deferred items only when a gate lights up.</p>
+    <div class="wh-trends">
+      {% for card in adoption_cards %}
+      <div class="wh-trend{% if card.gate %} is-better{% else %} is-flat{% endif %}">
+        <span class="wh-trend__label">{{ card.label }}</span>
+        <strong class="wh-trend__value">{{ card.value }}</strong>
+        <span class="wh-trend__delta">{% if card.gate %}Gate: reconsider deferred item{% else %}Watching{% endif %}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% if adoption_gate_notes %}
+    <ul class="profile-page__muted" style="margin:var(--space-12) 0 0;padding-left:1.2rem;">
+      {% for note in adoption_gate_notes %}
+      <li>{{ note }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </section>
+  {% endif %}
+
   {% if not hub_completion_healthy %}
   <p class="wh-note">Charts deepen once hub completion is measured at 40% or higher. Bars below still show available operating data.</p>
   {% endif %}

@@ -67,9 +67,10 @@ class WorkHealthReportView(LoginRequiredMixin, TemplateView):
             if day_total > daily_series_max:
                 daily_series_max = day_total
 
-        from contracts.services.work_instrumentation import build_operating_trends
+        from contracts.services.work_instrumentation import build_operating_trends, build_adoption_evidence
         trend_payload = build_operating_trends(org, days=days)
         trends = trend_payload.get('trends') or {}
+        adoption = build_adoption_evidence(org, days=days)
         trend_cards = []
         for key, label, as_pct, unit in (
             ('completed_from_my_work_pct', 'Hub completion', True, '%'),
@@ -100,6 +101,22 @@ class WorkHealthReportView(LoginRequiredMixin, TemplateView):
                 'direction': row.get('direction') or 'flat',
             })
 
+        signals = adoption.get('signals') or {}
+        gates = adoption.get('gates') or {}
+        adoption_cards = [
+            {'label': 'Team queue views', 'value': signals.get('team_queue_views', 0), 'gate': 'consider_team_default' if gates.get('consider_team_default') else ''},
+            {'label': 'Assignee searches', 'value': signals.get('assignee_searches', 0), 'gate': 'consider_sse_workload' if gates.get('consider_sse_workload') else ''},
+            {'label': 'Suggest requested', 'value': signals.get('suggest_requested', 0), 'gate': ''},
+            {'label': 'Suggest applied', 'value': signals.get('suggest_applied', 0), 'gate': ''},
+        ]
+        gate_notes = []
+        if gates.get('consider_team_default'):
+            gate_notes.append('Team queue usage is high enough to reconsider a remembered admin default (still not product-default).')
+        if gates.get('consider_chart_library'):
+            gate_notes.append('Completion volume supports richer charts if CSS trends are hard to read.')
+        if gates.get('consider_sse_workload'):
+            gate_notes.append('Assignee search volume may justify live workload feeds.')
+
         ctx.update({
             'organization': org,
             'report': report,
@@ -115,6 +132,8 @@ class WorkHealthReportView(LoginRequiredMixin, TemplateView):
             'daily_series': daily_series,
             'daily_series_max': daily_series_max,
             'trend_cards': trend_cards,
+            'adoption_cards': adoption_cards,
+            'adoption_gate_notes': gate_notes,
             'window_days': days,
             'hide_app_footer': True,
         })
