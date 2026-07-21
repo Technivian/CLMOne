@@ -127,6 +127,9 @@ class ContractListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
 
     def dispatch(self, request, *args, **kwargs):
         # Canonical Contracts destination is the repository workspace.
+        # Auth first — never alias-redirect anonymous users past login.
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
         target = reverse('contracts:repository')
         query = request.META.get('QUERY_STRING')
         if query:
