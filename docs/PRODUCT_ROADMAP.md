@@ -4,7 +4,7 @@
 
 **North-star outcome:** A user opens CLM One and immediately knows what needs action, what is most urgent, why it matters, what to do next, and when it is due — without hunting across five screens.
 
-**Last updated:** 2026-07-21 (Phases 3–10 complete)  
+**Last updated:** 2026-07-21 (Phases 3–11 complete)  
 **Companion docs:** Engineering delivery waves live in [`ROADMAP.md`](../ROADMAP.md). Canonical boundaries live in [`PRODUCT_MAP.md`](PRODUCT_MAP.md). This document owns product boundaries, sequencing, and acceptance outcomes.
 
 ---
@@ -295,10 +295,33 @@ If a module does not serve one of these jobs clearly, demote, merge, or cut it f
 
 - AI assistance only where it changes a decision or next action
 - Charts / insights dashboards after measured completion rates stay healthy
-- Org-wide manager queue in My Work (team filter remains assignee-scoped)
+- Org-wide manager queue in My Work
 - Searchable combobox / workload ranking for assignees
 
 **Phase 10 exit:** ✅ Managers reassign by teammate name with an explicit reason from My Work and Approvals.
+
+---
+
+## Phase 11 — Backlog amplifiers (complete)
+
+**Goal:** Ship the four near-term backlog items without inventing new product surfaces: richer reassign UX, decision-changing AI assist, work-health charts, and an admin team queue on My Work.
+
+### Shipped
+
+- [x] Searchable assignee combobox with open-work workload ranking (My Work + Approvals)
+- [x] Decision comment dialog with **Suggest reason** for reject/return (`approval_suggest_decision_api`; AI when enabled, template fallback otherwise — never auto-submits)
+- [x] Work Health CSS charts: hub completion meter, bottleneck/return bars, daily activity series
+- [x] Admin-only My Work **Team queue** (`?scope=team`) with assignee column + filter; members stay personal-scoped
+- [x] Tests: `tests/test_phase11_backlog_amplifiers.py` (+ Phase 10 picker coverage extended)
+
+### Explicitly deferred
+
+- Searchable typeahead backed by a dedicated people service / live workload SSE
+- Org-wide manager queue as the default My Work view (team remains opt-in)
+- Freeform AI assistant outside the decision loop
+- Third-party chart libraries (Chart.js / Recharts)
+
+**Phase 11 exit:** ✅ Backlog amplifiers are available on existing My Work, Approvals, and Work Health surfaces.
 
 ---
 
@@ -317,6 +340,7 @@ If a module does not serve one of these jobs clearly, demote, merge, or cut it f
 | **8** | My Work action parity | Hub completes common specialist mutations | ✅ Complete |
 | **9** | My Work governance actions | Reassign + privacy conflict resolve from hub | ✅ Complete |
 | **10** | Reassign assignee picker | Name select + reason replaces user-id prompt | ✅ Complete |
+| **11** | Backlog amplifiers | Combobox, decision suggest, charts, team queue | ✅ Complete |
 
 ---
 
@@ -334,10 +358,9 @@ If a module does not serve one of these jobs clearly, demote, merge, or cut it f
 
 ## Near-term backlog (recommended next builds)
 
-1. Optional AI assistance only where it changes a decision or next action
-2. Charts / insights dashboards after measured completion rates stay healthy
-3. Org-wide manager queue in My Work when usage proves the need
-4. Searchable combobox / workload ranking for assignees when queues grow
+1. Live people search / workload for very large orgs
+2. Deeper work-health trends once hub completion stays healthy in production
+3. Optional AI on other decision comments only when it changes the next action
 
 ---
 
