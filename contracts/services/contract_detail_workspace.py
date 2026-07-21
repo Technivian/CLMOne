@@ -22,6 +22,13 @@ CONTRACT_DETAIL_TAB_ALIASES = {
 WORKFLOW_SECTIONS = frozenset({'review', 'approvals', 'signatures'})
 
 
+def contract_detail_workflow_url(contract_pk: int, *, section: str = 'review') -> str:
+    """Deep link into the contract workflow tab at the right specialist section."""
+    section = normalize_workflow_section(section)
+    base = reverse('contracts:contract_detail', kwargs={'pk': contract_pk})
+    return f'{base}?tab=workflow&section={section}'
+
+
 def normalize_contract_detail_tab(raw_tab: str | None) -> str:
     key = (raw_tab or 'overview').strip().lower()
     key = CONTRACT_DETAIL_TAB_ALIASES.get(key, key)

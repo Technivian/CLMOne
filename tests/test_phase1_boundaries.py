@@ -60,3 +60,9 @@ class Phase1BoundaryTests(TestCase):
         self.assertEqual(response.status_code, 200)
         tab_keys = [tab['key'] for tab in response.context['view_tabs']]
         self.assertIn('my_reviews', tab_keys)
+
+    def test_command_center_uses_org_wide_approval_framing(self):
+        response = self.client.get(reverse('dashboard'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Organization-wide view of portfolio health')
+        self.assertNotContains(response, 'in your queue')

@@ -27,4 +27,4 @@ Canonical boundaries for workspace surfaces. If a screen violates this map, trea
 - Personal assignments are aggregated in `contracts/services/assignments.py`.
 - Specialist inbox personal tabs call `pending_approvals_queryset`, `open_tasks_queryset`, `open_obligations_queryset`, and `reviewer_privacy_packs_queryset`.
 - `contracts/services/my_work.py` is a thin facade for backward compatibility.
-- Command Center saved views are org-wide only; personal filtering belongs on My Work.
+- Command Center uses org-wide metrics and `CommandCenterWorkItem` projections; it must not use personal assignment querysets.

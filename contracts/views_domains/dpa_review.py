@@ -707,6 +707,7 @@ class DPAReviewPackListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListV
         )
 
         params = self.request.GET
+        selected_view = (params.get('view') or '').strip()
         ctx['search_query'] = (params.get('q') or '').strip()
         ctx['selected_status'] = (params.get('status') or '').strip()
         ctx['selected_role'] = (params.get('role') or '').strip()

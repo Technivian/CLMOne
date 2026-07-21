@@ -846,10 +846,9 @@ def legal_front_door(request):
         {
             'key': 'legal_question',
             'title': 'Ask a legal question',
-            'description': 'Route a question to the Legal team.',
+            'description': 'Log a question for the Legal team and track it as an assigned task.',
             'icon': 'question',
-            'href': None,
-            'coming_soon': True,
+            'href': reverse('contracts:legal_task_create'),
         },
         {
             'key': 'approval',
@@ -2265,7 +2264,7 @@ def dashboard(request):
         clm_my_approvals_count = approvals_qs.filter(status='PENDING', assigned_to=request.user).count()
         clm_pending_approvals_count = approvals_qs.filter(status='PENDING').count()
         clm_approval_overdue_count = approvals_qs.filter(
-            status='PENDING', assigned_to=request.user, due_date__lt=timezone.now(),
+            status='PENDING', due_date__lt=timezone.now(),
         ).count()
 
         clm_deadlines_30d_count = deadlines_qs.filter(
@@ -2316,13 +2315,13 @@ def dashboard(request):
     if clm_needs_review_count:
         n = clm_needs_review_count
         attention_parts.append(f"{n} contract{'s' if n != 1 else ''} needing legal review")
-    if clm_my_approvals_count:
-        n = clm_my_approvals_count
-        attention_parts.append(f"{n} approval{'s' if n != 1 else ''} in your queue")
+    if clm_pending_approvals_count:
+        n = clm_pending_approvals_count
+        attention_parts.append(f"{n} open approval{'s' if n != 1 else ''} across the organization")
     if clm_renewals_count:
         n = clm_renewals_count
         attention_parts.append(f"{n} renewal{'s' if n != 1 else ''}/deadline{'s' if n != 1 else ''} due soon")
-    attention_total = (clm_conflict_count or 0) + (clm_needs_review_count or 0) + (clm_my_approvals_count or 0) + (clm_renewals_count or 0)
+    attention_total = (clm_conflict_count or 0) + (clm_needs_review_count or 0) + (clm_pending_approvals_count or 0) + (clm_renewals_count or 0)
     if len(attention_parts) <= 1:
         attention_summary = attention_parts[0] if attention_parts else ''
     elif len(attention_parts) == 2:

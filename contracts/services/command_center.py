@@ -86,7 +86,7 @@ DEFAULT_RAIL_ITEMS = [
     {
         'kind': 'APPROVALS',
         'title': 'Blocking approvals',
-        'summary': 'Business approvals assigned to you or waiting on owners.',
+        'summary': 'Open business approvals blocking contracts across the organization.',
         'action_path': None,
         'sort_order': 10,
     },

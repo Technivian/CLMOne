@@ -4,7 +4,7 @@
 
 **North-star outcome:** A user opens CLM One and immediately knows what needs action, what is most urgent, why it matters, what to do next, and when it is due — without hunting across five screens.
 
-**Last updated:** 2026-07-21 (Phase 1 in progress)  
+**Last updated:** 2026-07-21 (Phase 1 complete; Phase 2 started)  
 **Companion docs:** Engineering delivery waves live in [`ROADMAP.md`](../ROADMAP.md). Canonical boundaries live in [`PRODUCT_MAP.md`](PRODUCT_MAP.md). This document owns product boundaries, sequencing, and acceptance outcomes.
 
 ---
@@ -64,11 +64,11 @@ If a module does not serve one of these jobs clearly, demote, merge, or cut it f
 
 ---
 
-## Phase 1 — Lock boundaries and one work model
+## Phase 1 — Lock boundaries and one work model (complete)
 
 **Goal:** Stop the app from arguing with itself. Make “work” one concept with many views.
 
-### 1.1 Product-map audit
+### 1.1 Product-map audit ✅
 
 - [x] Audit every destination against the product map above
 - [x] Remove or redirect duplicate personal queues (dashboard “Waiting on Me”, Command Center “My Queue” as personal inbox)
@@ -77,65 +77,51 @@ If a module does not serve one of these jobs clearly, demote, merge, or cut it f
 
 **Acceptance:** No two primary nav destinations answer the same question with different data shapes.
 
-### 1.2 Canonical assignment model
+### 1.2 Canonical assignment model ✅
 
-Fund one assignment / work-item model with:
+- [x] My Work is a **view** over `contracts/services/assignments.py`
+- [x] Specialist personal tabs read shared assignment querysets (approvals, tasks, obligations, privacy)
+- [x] Command Center saved views are org-wide only (“Blocked work” replaces “My Queue”)
 
-- Owner and acting assignee (delegation-aware)
-- Source type (approval, review, privacy, task, obligation, workflow step, …)
-- Priority + SLA / priority reason
-- Status in user language (not vague “Open / Pending”)
-- Deep link to the correct action context
-- Permission-safe rendering (restricted / ethical-wall safe states)
+**Acceptance:** Adding a new personal work type does not require a new bespoke ETL per page.
 
-Then:
+### 1.3 Queue honesty baseline ✅
 
-- [x] My Work becomes a **view** over that model (`contracts/services/assignments.py`)
-- [ ] Command Center becomes an **org-wide view** over the same model (saved views updated; full projection reuse is Phase 2)
-- [x] Specialist inboxes keep depth, but read the same underlying assignments / events (shared querysets for personal tabs; org-wide tabs unchanged)
+- [x] Shared empty states for specialist personal tabs (`_work_queue_empty_state.html` → My Work)
+- [x] Removed undated “Coming soon” from Legal Front Door (legal questions route to task create)
+- [x] Command Center KPIs and copy use org-wide framing, not personal inbox language
 
-**Acceptance:** Adding a new work type does not require a new bespoke ETL per page.
-
-### 1.3 Queue honesty baseline
-
-- [x] Shared empty / error / loading patterns across My Work, Command Center, Approvals, Privacy, Obligations (personal tabs link to My Work via `_work_queue_empty_state.html`)
-- [ ] No “coming soon” cards without a dated delivery path
-- [ ] No duplicate CTAs already present in the sidebar
-
-**Acceptance:** Every queue either shows real work, a truthful empty state, or a recoverable error — never fake product.
-
-**Phase 1 exit:** Boundaries are clear, work is one model, and personal vs org-wide queues no longer overlap.
-
-**Phase 1 status (2026-07-21):** Boundary fixes shipped — canonical `assignments` service, My Work reads from it, Command Center “My Queue” replaced with org-wide “Blocked work”, dashboard “Waiting on Me” tab removed, contract hub tab links to My Work. Specialist personal tabs (approvals, tasks, obligations, privacy) now use shared assignment querysets; personal empty states link to My Work. Remaining: Command Center projection reuse (Phase 2), “coming soon” retirement, duplicate CTA audit.
+**Phase 1 exit:** ✅ Boundaries are clear, work is one model, and personal vs org-wide queues no longer overlap.
 
 ---
 
-## Phase 2 — Finish the core loop in context
+## Phase 2 — Finish the core loop in context (in progress)
 
 **Goal:** Make Intake → Close undeniable before expanding breadth.
 
 ### 2.1 Action-context deep links
 
-- [ ] Every work row opens the correct task context, not only the general contract page
-- [ ] Primary action labels stay singular: Review / Approve / Respond / Complete / Correct / Open
-- [ ] Secondary actions stay in overflow menus
+- [x] Review findings and returned/rejected work open contract workflow context (`?tab=workflow&section=…`)
+- [x] Approvals, tasks, obligations, privacy packs, and workflow steps already deep-link to action surfaces
+- [ ] Row click vs primary action parity across My Work cards and specialist tables
+- [ ] Secondary actions stay in overflow menus everywhere
 
 ### 2.2 Specialist depth (not alternate lists)
 
 Score and harden each specialist surface against the four loop checks:
 
-| Surface | Focus |
-|--------|--------|
-| Reviews & Approvals | Decision in place, return / reject with reason, audit outcome |
-| Privacy Reviews | Questionnaire / assessment completion, conflict resolution path |
-| Obligations | Complete / defer / escalate with due and owner clarity |
-| Contract detail | Next required action visible without leaving the record |
+| Surface | Focus | Status |
+|--------|--------|--------|
+| Reviews & Approvals | Decision in place, return / reject with reason, audit outcome | In progress |
+| Privacy Reviews | Questionnaire / assessment completion, conflict resolution path | In progress |
+| Obligations | Complete / defer / escalate with due and owner clarity | In progress |
+| Contract detail | Next required action visible without leaving the record | Planned |
 
 ### 2.3 Command Center as org ops
 
-- [ ] Command Center is explicitly organization-wide
-- [ ] Remove personal-inbox framing from Command Center
-- [ ] Surface blockers, overdue risk, and cross-team wait states
+- [x] Command Center subtitle and approval KPIs are explicitly organization-wide
+- [x] Personal-inbox framing removed from attention banner and rail copy
+- [ ] Surface blockers, overdue risk, and cross-team wait states in recommended actions
 
 **Phase 2 exit:** A counsel can discover, understand, act, and leave an audit trail for the full loop without relying on tribal knowledge of which queue is “real.”
 
@@ -226,15 +212,15 @@ Do **not** start these until Phases 1–3 are solid.
 
 ## Sequencing summary
 
-| Phase | Theme | Primary outcome |
-|------|--------|-----------------|
-| **0** | Personal hub | My Work answers “what needs me now?” |
-| **1** | Boundaries + one work model | App stops arguing with itself |
-| **2** | Core loop in context | Intake → Close is completable |
-| **3** | Governance visible | Trust and control are product features |
-| **4** | Nav / legacy cleanup | Smaller, complete IA |
-| **5** | Instrumentation | Operating metrics guide the roadmap |
-| **6** | Amplifiers | Reporting, prediction, AI on a trusted base |
+| Phase | Theme | Primary outcome | Status |
+|------|--------|-----------------|--------|
+| **0** | Personal hub | My Work answers “what needs me now?” | ✅ Complete |
+| **1** | Boundaries + one work model | App stops arguing with itself | ✅ Complete |
+| **2** | Core loop in context | Intake → Close is completable | 🔄 In progress |
+| **3** | Governance visible | Trust and control are product features | Planned |
+| **4** | Nav / legacy cleanup | Smaller, complete IA | Planned |
+| **5** | Instrumentation | Operating metrics guide the roadmap | Planned |
+| **6** | Amplifiers | Reporting, prediction, AI on a trusted base | Planned |
 
 ---
 
@@ -252,15 +238,11 @@ Do **not** start these until Phases 1–3 are solid.
 
 ## Near-term backlog (recommended next builds)
 
-Ordered for maximum product clarity:
-
-1. **Canonical assignment model** + migrate My Work onto it
-2. **Command Center boundary fix** (org-wide only; remove personal-queue overlap)
-3. **Naming / IA audit** across dashboard, hubs, and sidebar labels
-4. **Shared queue honesty** (empty / error / loading) on Approvals, Privacy, Obligations, Command Center
-5. **Action-context deep links** for every My Work / Command Center row
-6. **Delegation + blocked-state UX** across queues
-7. **Work-event instrumentation** and first operating dashboard for legal ops
+1. **My Work row-click parity** — open action context on row click, not only primary button
+2. **Contract detail next-action strip** — surface required action without leaving the record
+3. **Command Center blocker surfacing** — recommended actions for cross-team wait states
+4. **Delegation + blocked-state UX** across queues (Phase 3)
+5. **Work-event instrumentation** and first operating dashboard for legal ops
 
 ---
 

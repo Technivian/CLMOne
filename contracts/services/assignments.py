@@ -27,6 +27,7 @@ from contracts.models import (
     WorkflowStep,
 )
 from contracts.permissions import can_access_contract_action, get_active_org_membership
+from contracts.services.contract_detail_workspace import contract_detail_workflow_url
 from contracts.services.queue_rows import latest_activity_map
 from contracts.tenancy import scope_queryset_for_organization
 
@@ -510,7 +511,7 @@ def _collect_approval_rows(org, user, today):
             description=approval.comments or 'Changes were requested on this approval.',
             workflow_stage='Returned',
             priority_reason='Returned for correction',
-            action_href=reverse('contracts:contract_detail', kwargs={'pk': contract.pk}) if contract else '',
+            action_href=contract_detail_workflow_url(contract.pk, section='approvals') if contract else '',
             action_label='Correct',
             is_returned=True,
             source_status=approval.status,
@@ -541,7 +542,7 @@ def _collect_approval_rows(org, user, today):
             description=approval.comments or 'This approval was rejected and requires correction.',
             workflow_stage='Rejected',
             priority_reason='Approval rejected',
-            action_href=reverse('contracts:contract_detail', kwargs={'pk': contract.pk}) if contract else '',
+            action_href=contract_detail_workflow_url(contract.pk, section='approvals') if contract else '',
             action_label='Correct',
             is_rejected=True,
             source_status=approval.status,
@@ -695,7 +696,7 @@ def _collect_review_rows(org, user, today):
             description=finding.explanation or finding.recommended_action,
             workflow_stage=finding.get_status_display(),
             priority_reason=finding.get_severity_display() + ' severity finding',
-            action_href=reverse('contracts:contract_detail', kwargs={'pk': contract.pk}),
+            action_href=contract_detail_workflow_url(contract.pk, section='review'),
             action_label='Respond' if is_question else 'Review',
             source_status=finding.status,
             is_question=is_question,
