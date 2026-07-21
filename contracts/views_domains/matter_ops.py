@@ -47,19 +47,9 @@ from contracts.view_support import TenantAssignCreateMixin, TenantScopedFormMixi
 
 
 def _can_actor_complete_task(task, user, org):
-    """Single source of truth for "can this actor complete this task" —
-    used by both the Tasks queue (to decide whether to show a live Complete
-    button) and the legal_task_complete endpoint (the real enforcement
-    boundary), so the UI can never claim an action is available that the
-    API would then refuse. Mirrors the exact rule LegalTaskUpdateView.dispatch
-    already applies to editing: contract-linked tasks require contract-edit
-    access; matter-linked tasks require the matter to belong to the actor's
-    organization. A task with neither link has nothing further to check."""
-    if task.contract_id and not can_access_contract_action(user, task.contract, ContractAction.EDIT):
-        return False
-    if task.matter_id and (not org or task.matter.organization_id != org.id):
-        return False
-    return True
+    """Delegate to the shared assignments rule used by My Work and Tasks."""
+    from contracts.services.assignments import can_actor_complete_task
+    return can_actor_complete_task(task, user, org)
 
 
 class LegalTaskKanbanView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
@@ -303,7 +293,20 @@ def legal_task_complete(request, pk):
         changes={'event': 'legal_task_completed'},
         request=request,
     )
-    return JsonResponse({'ok': True})
+    from contracts.services.work_instrumentation import record_outcome, resolve_surface
+    surface = resolve_surface(request)
+    record_outcome(
+        organization=task_org,
+        user=request.user,
+        event='completed',
+        work_item_id=f'task:{task.pk}',
+        work_kind='task',
+        surface=surface,
+        contract=task.contract,
+        contract_id=task.contract_id,
+        is_overdue=bool(task.due_date and task.due_date < timezone.localdate()),
+    )
+    return JsonResponse({'ok': True, 'surface': surface})
 
 
 class TrademarkRequestListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):

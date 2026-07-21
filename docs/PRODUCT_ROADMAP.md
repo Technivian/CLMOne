@@ -4,7 +4,7 @@
 
 **North-star outcome:** A user opens CLM One and immediately knows what needs action, what is most urgent, why it matters, what to do next, and when it is due — without hunting across five screens.
 
-**Last updated:** 2026-07-21 (Phases 3–7 complete)  
+**Last updated:** 2026-07-21 (Phases 3–8 complete)  
 **Companion docs:** Engineering delivery waves live in [`ROADMAP.md`](../ROADMAP.md). Canonical boundaries live in [`PRODUCT_MAP.md`](PRODUCT_MAP.md). This document owns product boundaries, sequencing, and acceptance outcomes.
 
 ---
@@ -235,6 +235,28 @@ If a module does not serve one of these jobs clearly, demote, merge, or cut it f
 
 ---
 
+## Phase 8 — My Work action parity (complete)
+
+**Goal:** Finish common specialist mutations from My Work without leaving the hub, while keeping deep-link row click as the primary open-context path.
+
+### Shipped
+
+- [x] Approval Approve / Reject / Return from My Work kebab (same APIs as Approvals, `surface=my_work`)
+- [x] Task Mark complete from My Work kebab (`legal_task_complete` + outcome instrumentation)
+- [x] Obligation Mark complete / Defer / Escalate from My Work kebab (JSON mode on deadline mutations)
+- [x] Mutation URLs + `can_decide` / `can_complete` on assignment rows (never on restricted rows)
+- [x] Mobile cards mirror the same kebab mutations
+
+### Explicitly deferred
+
+- Manager reassign from My Work
+- Privacy conflict resolve / returned-work Correct in place
+- AI assistance and charts / insights dashboards
+
+**Phase 8 exit:** ✅ Approvals, tasks, and obligations can be completed from My Work without losing audit or surface attribution.
+
+---
+
 ## Sequencing summary
 
 | Phase | Theme | Primary outcome | Status |
@@ -247,6 +269,7 @@ If a module does not serve one of these jobs clearly, demote, merge, or cut it f
 | **5** | Instrumentation | Operating metrics guide the roadmap | ✅ Complete |
 | **6** | Amplifiers | Reporting, saved views, measured priority | ✅ Complete |
 | **7** | Priority reason everywhere | Why urgency is shown is always answerable | ✅ Complete |
+| **8** | My Work action parity | Hub completes common specialist mutations | ✅ Complete |
 
 ---
 
@@ -264,9 +287,9 @@ If a module does not serve one of these jobs clearly, demote, merge, or cut it f
 
 ## Near-term backlog (recommended next builds)
 
-1. Deeper specialist-workspace action parity where My Work still deep-links out
-2. Optional AI assistance only where it changes a decision or next action
-3. Charts / insights dashboards after measured completion rates stay healthy
+1. Optional AI assistance only where it changes a decision or next action
+2. Charts / insights dashboards after measured completion rates stay healthy
+3. Manager reassign + privacy conflict resolve from My Work where permissions already allow it
 
 ---
 

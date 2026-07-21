@@ -26,7 +26,7 @@ from contracts.models import (
     LegalTask,
     WorkflowStep,
 )
-from contracts.permissions import can_access_contract_action, get_active_org_membership
+from contracts.permissions import ContractAction, can_access_contract_action, get_active_org_membership
 from contracts.services.contract_detail_workspace import contract_detail_workflow_url
 from contracts.services.queue_rows import latest_activity_map
 from contracts.tenancy import scope_queryset_for_organization
@@ -35,6 +35,19 @@ PRIORITY_RANK = {'Critical': 4, 'High': 3, 'Normal': 2, 'Low': 1}
 DUE_SOON_DAYS = 7
 UPCOMING_OBLIGATION_DAYS = 30
 RECENTLY_COMPLETED_DAYS = 30
+
+
+def can_actor_complete_task(task, user, org) -> bool:
+    """Whether the actor may complete this task (shared by My Work + Tasks).
+
+    Mirrors LegalTaskUpdateView: contract-linked tasks need contract EDIT;
+    matter-linked tasks must belong to the actor's organization.
+    """
+    if task.contract_id and not can_access_contract_action(user, task.contract, ContractAction.EDIT):
+        return False
+    if task.matter_id and (not org or task.matter.organization_id != org.id):
+        return False
+    return True
 
 WORK_TYPE_CHOICES = (
     ('all', 'All'),
@@ -510,7 +523,7 @@ def _collect_approval_rows(org, user, today):
             approval,
             sibling_pending=siblings_by_contract.get(approval.contract_id),
         )
-        rows.append(_base_row(
+        row = _base_row(
             row_id=f'approval:{approval.pk}',
             title=f'Approve {approval.approval_step.replace("_", " ").strip().title()}',
             work_kind='approval',
@@ -541,7 +554,21 @@ def _collect_approval_rows(org, user, today):
             ),
             reference=f'APR-{approval.pk}',
             today=today,
-        ))
+        )
+        if not row.get('is_restricted'):
+            from contracts.services.approval_workflow import actor_can_decide
+            can_decide = (
+                approval.status in (ApprovalRequest.Status.PENDING, ApprovalRequest.Status.ESCALATED)
+                and actor_can_decide(approval, user, 'approve')
+            )
+            row['can_decide'] = can_decide
+            if can_decide:
+                row['approve_url'] = reverse('contracts:approval_approve_api', kwargs={'approval_id': approval.pk})
+                row['reject_url'] = reverse('contracts:approval_reject_api', kwargs={'approval_id': approval.pk})
+                row['return_url'] = reverse(
+                    'contracts:approval_request_changes_api', kwargs={'approval_id': approval.pk},
+                )
+        rows.append(row)
 
     returned = qs.filter(
         status=ApprovalRequest.Status.CHANGES_REQUESTED,
@@ -625,7 +652,7 @@ def _collect_task_rows(org, user, today):
                 if task.priority in ('HIGH', 'URGENT') else ''
             ),
         )
-        rows.append(_base_row(
+        row = _base_row(
             row_id=f'task:{task.pk}',
             title=task.title,
             work_kind='task',
@@ -644,7 +671,15 @@ def _collect_task_rows(org, user, today):
             priority_value=task.priority,
             reference=f'TASK-{task.pk}',
             today=today,
-        ))
+        )
+        if (
+            not row.get('is_restricted')
+            and task.status in (LegalTask.Status.PENDING, LegalTask.Status.IN_PROGRESS)
+            and can_actor_complete_task(task, user, org)
+        ):
+            row['can_complete'] = True
+            row['complete_url'] = reverse('contracts:legal_task_complete', kwargs={'pk': task.pk})
+        rows.append(row)
     return rows
 
 
@@ -670,7 +705,7 @@ def _collect_obligation_rows(org, user, today):
             ),
         )
         blocker = obligation_blocker_for_deadline(deadline, today=today)
-        rows.append(_base_row(
+        row = _base_row(
             row_id=f'obligation:{deadline.pk}',
             title=title,
             work_kind='obligation',
@@ -693,7 +728,19 @@ def _collect_obligation_rows(org, user, today):
             priority_value=deadline.priority,
             reference=f'OBL-{deadline.pk}',
             today=today,
-        ))
+        )
+        if not row.get('is_restricted') and not deadline.is_completed:
+            can_mutate = True
+            if deadline.contract_id and not can_access_contract_action(
+                user, deadline.contract, ContractAction.EDIT,
+            ):
+                can_mutate = False
+            if can_mutate:
+                row['can_complete'] = True
+                row['complete_url'] = reverse('contracts:deadline_complete', kwargs={'pk': deadline.pk})
+                row['defer_url'] = reverse('contracts:deadline_defer', kwargs={'pk': deadline.pk})
+                row['escalate_url'] = reverse('contracts:deadline_escalate', kwargs={'pk': deadline.pk})
+        rows.append(row)
     return rows
 
 

@@ -373,6 +373,7 @@
               role="link"
               data-row-id="{{ row.id }}"
               data-action-href="{{ row.action_href }}"
+              data-work-kind="{{ row.work_kind }}"
               data-work-type="{{ row.work_type_key }}"
               data-summary-tags="{{ row.summary_tags|join:',' }}"
               data-priority="{{ row.priority_label }}"
@@ -382,6 +383,8 @@
               data-assigned-by="{% if row.assigned_by %}{{ row.assigned_by.pk }}{% endif %}"
               data-search="{{ row.title }} {{ row.contract_title }} {{ row.counterparty }} {{ row.reference }}"
               data-due-state="{% if row.due_context.due_overdue %}overdue{% elif row.due_context.due_today %}today{% elif row.due_context.due_soon %}soon{% endif %}"
+              {% if row.can_decide %}data-can-decide="1" data-approve-url="{{ row.approve_url }}" data-reject-url="{{ row.reject_url }}" data-return-url="{{ row.return_url }}"{% endif %}
+              {% if row.can_complete %}data-can-complete="1" data-complete-url="{{ row.complete_url }}"{% if row.defer_url %} data-defer-url="{{ row.defer_url }}"{% endif %}{% if row.escalate_url %} data-escalate-url="{{ row.escalate_url }}"{% endif %}{% endif %}
               aria-label="{{ row.title }}. {{ row.action_label|default:'Open' }}">
             <td data-col="priority">
               {% include "components/_governance_priority.html" with priority_label=row.priority_label priority_reason=row.priority_reason priority_tone=row.priority_tone show_detail=1 %}
@@ -414,11 +417,22 @@
               {% endif %}
               <details class="wq-kebab" onclick="event.stopPropagation();">
                 <summary aria-label="More actions" class="wq-kebab-trigger">&#8942;</summary>
-                <div class="wq-kebab-menu">
-                  <button type="button" class="wq-kebab-action" data-toggle-detail="{{ row.id }}">View details</button>
-                  {% if row.contract and not row.is_restricted %}<a href="{% url 'contracts:contract_detail' row.contract.pk %}">Open contract</a>{% endif %}
+                <div class="wq-kebab-menu" role="menu">
+                  <button type="button" class="wq-kebab-action" data-toggle-detail="{{ row.id }}" role="menuitem">View details</button>
+                  {% if row.can_decide %}
+                  <button type="button" class="wq-kebab-action" data-my-work-action="approve" role="menuitem">Approve</button>
+                  <button type="button" class="wq-kebab-action" data-my-work-action="reject" role="menuitem">Reject</button>
+                  <button type="button" class="wq-kebab-action" data-my-work-action="return" role="menuitem">Return</button>
+                  {% endif %}
+                  {% if row.can_complete %}
+                  <button type="button" class="wq-kebab-action" data-my-work-action="complete" role="menuitem">Mark complete</button>
+                  {% if row.defer_url %}<button type="button" class="wq-kebab-action" data-my-work-action="defer" role="menuitem">Defer 7 days</button>{% endif %}
+                  {% if row.escalate_url %}<button type="button" class="wq-kebab-action" data-my-work-action="escalate" role="menuitem">Escalate</button>{% endif %}
+                  {% endif %}
+                  {% if row.contract and not row.is_restricted %}<a href="{% url 'contracts:contract_detail' row.contract.pk %}" role="menuitem">Open contract</a>{% endif %}
                 </div>
               </details>
+              <div class="wq-action-error" hidden></div>
             </td>
           </tr>
           <tr class="my-work-row-detail is-hidden" data-detail-for="{{ row.id }}">
@@ -465,6 +479,7 @@
                role="link"
                data-row-id="{{ row.id }}"
                data-action-href="{{ row.action_href }}"
+               data-work-kind="{{ row.work_kind }}"
                data-work-type="{{ row.work_type_key }}"
                data-summary-tags="{{ row.summary_tags|join:',' }}"
                data-priority="{{ row.priority_label }}"
@@ -474,6 +489,8 @@
                data-assigned-by="{% if row.assigned_by %}{{ row.assigned_by.pk }}{% endif %}"
                data-search="{{ row.title }} {{ row.contract_title }} {{ row.counterparty }} {{ row.reference }}"
                data-due-state="{% if row.due_context.due_overdue %}overdue{% elif row.due_context.due_today %}today{% elif row.due_context.due_soon %}soon{% endif %}"
+               {% if row.can_decide %}data-can-decide="1" data-approve-url="{{ row.approve_url }}" data-reject-url="{{ row.reject_url }}" data-return-url="{{ row.return_url }}"{% endif %}
+               {% if row.can_complete %}data-can-complete="1" data-complete-url="{{ row.complete_url }}"{% if row.defer_url %} data-defer-url="{{ row.defer_url }}"{% endif %}{% if row.escalate_url %} data-escalate-url="{{ row.escalate_url }}"{% endif %}{% endif %}
                aria-label="{{ row.title }}. {{ row.action_label|default:'Open' }}">
         <div class="my-work-card__header">
           <h3 class="my-work-card__title">{{ row.title }}</h3>
@@ -488,6 +505,23 @@
           {% if row.action_href %}
           <a href="{{ row.action_href }}" class="dc-ds-button dc-ds-button--quiet" onclick="event.stopPropagation();">{{ row.action_label }}</a>
           {% endif %}
+          <details class="wq-kebab" onclick="event.stopPropagation();">
+            <summary aria-label="More actions" class="wq-kebab-trigger">&#8942;</summary>
+            <div class="wq-kebab-menu" role="menu">
+              {% if row.can_decide %}
+              <button type="button" class="wq-kebab-action" data-my-work-action="approve" role="menuitem">Approve</button>
+              <button type="button" class="wq-kebab-action" data-my-work-action="reject" role="menuitem">Reject</button>
+              <button type="button" class="wq-kebab-action" data-my-work-action="return" role="menuitem">Return</button>
+              {% endif %}
+              {% if row.can_complete %}
+              <button type="button" class="wq-kebab-action" data-my-work-action="complete" role="menuitem">Mark complete</button>
+              {% if row.defer_url %}<button type="button" class="wq-kebab-action" data-my-work-action="defer" role="menuitem">Defer 7 days</button>{% endif %}
+              {% if row.escalate_url %}<button type="button" class="wq-kebab-action" data-my-work-action="escalate" role="menuitem">Escalate</button>{% endif %}
+              {% endif %}
+              {% if row.contract and not row.is_restricted %}<a href="{% url 'contracts:contract_detail' row.contract.pk %}" role="menuitem">Open contract</a>{% endif %}
+            </div>
+          </details>
+          <div class="wq-action-error" hidden></div>
         </div>
       </article>
       {% endfor %}
@@ -931,6 +965,132 @@
       var menu = btn.closest('details');
       if (menu) menu.open = false;
       if (row) toggleDetail(row);
+    });
+  });
+
+  function removeWorkRow(row) {
+    var id = row.getAttribute('data-row-id');
+    root.querySelectorAll('.my-work-row[data-row-id="' + id + '"]').forEach(function (el) {
+      el.remove();
+    });
+    var detail = root.querySelector('[data-detail-for="' + id + '"]');
+    if (detail) detail.remove();
+    applyFilters();
+  }
+
+  function actionErrorEl(btn) {
+    var host = btn.closest('td, .my-work-card__footer, .my-work-card') || btn.parentElement;
+    return host ? host.querySelector('.wq-action-error') : null;
+  }
+
+  function postMyWorkAction(url, body, isForm) {
+    if (isForm) {
+      var formUrl = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'from=my_work';
+      return fetch(formUrl, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'X-CSRFToken': getCsrfToken(),
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'csrfmiddlewaretoken=' + encodeURIComponent(getCsrfToken()) + '&from=my_work',
+      }).then(function (res) {
+        return res.json().then(function (data) { return { ok: res.ok, data: data }; }).catch(function () {
+          return { ok: res.ok, data: {} };
+        });
+      });
+    }
+    return fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-CSRFToken': getCsrfToken(),
+      },
+      body: JSON.stringify(body || { surface: 'my_work' }),
+    }).then(function (res) {
+      return res.json().then(function (data) { return { ok: res.ok, data: data }; });
+    });
+  }
+
+  root.querySelectorAll('[data-my-work-action]').forEach(function (btn) {
+    btn.addEventListener('click', function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      var action = btn.getAttribute('data-my-work-action');
+      var row = btn.closest('.my-work-row');
+      if (!row || !action) return;
+      var menu = btn.closest('details');
+      if (menu) menu.open = false;
+      var errorEl = actionErrorEl(btn);
+      var url = '';
+      var body = { surface: 'my_work' };
+      var isForm = false;
+      var removeOnSuccess = true;
+
+      if (action === 'approve') {
+        url = row.getAttribute('data-approve-url') || '';
+      } else if (action === 'reject') {
+        url = row.getAttribute('data-reject-url') || '';
+        var rejectReason = window.prompt('Reason for rejection (required):', '');
+        if (rejectReason === null) return;
+        rejectReason = (rejectReason || '').trim();
+        if (!rejectReason) {
+          if (errorEl) { errorEl.textContent = 'A rejection reason is required.'; errorEl.hidden = false; }
+          return;
+        }
+        body.comments = rejectReason;
+      } else if (action === 'return') {
+        url = row.getAttribute('data-return-url') || '';
+        var returnReason = window.prompt('What changes are required? (required):', '');
+        if (returnReason === null) return;
+        returnReason = (returnReason || '').trim();
+        if (!returnReason) {
+          if (errorEl) { errorEl.textContent = 'A return reason is required.'; errorEl.hidden = false; }
+          return;
+        }
+        body.comments = returnReason;
+      } else if (action === 'complete') {
+        url = row.getAttribute('data-complete-url') || '';
+        // Obligations use form POST endpoints; tasks use JSON.
+        isForm = (row.getAttribute('data-work-kind') === 'obligation');
+        if (!isForm) body = { surface: 'my_work' };
+      } else if (action === 'defer') {
+        url = row.getAttribute('data-defer-url') || '';
+        isForm = true;
+        removeOnSuccess = false;
+      } else if (action === 'escalate') {
+        url = row.getAttribute('data-escalate-url') || '';
+        isForm = true;
+        removeOnSuccess = false;
+      }
+      if (!url) return;
+
+      btn.disabled = true;
+      if (errorEl) { errorEl.hidden = true; errorEl.textContent = ''; }
+      postMyWorkAction(url, body, isForm)
+        .then(function (result) {
+          if (result.ok) {
+            if (removeOnSuccess) {
+              removeWorkRow(row);
+            } else {
+              window.location.reload();
+            }
+            return;
+          }
+          btn.disabled = false;
+          if (errorEl) {
+            errorEl.textContent = (result.data && result.data.error) || 'That action failed. Please try again.';
+            errorEl.hidden = false;
+          }
+        })
+        .catch(function () {
+          btn.disabled = false;
+          if (errorEl) {
+            errorEl.textContent = 'Network error — please try again.';
+            errorEl.hidden = false;
+          }
+        });
     });
   });
 

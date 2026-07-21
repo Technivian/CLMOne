@@ -3,7 +3,7 @@ from datetime import date, timedelta
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
@@ -23,6 +23,16 @@ from contracts.view_support import (
     TenantScopedQuerysetMixin,
     organization_user_queryset,
 )
+
+
+def _wants_json(request) -> bool:
+    accept = (request.headers.get('Accept') or '').lower()
+    if 'application/json' in accept:
+        return True
+    if (request.GET.get('format') or '').lower() == 'json':
+        return True
+    content_type = (request.content_type or '').lower()
+    return 'application/json' in content_type
 
 _OBLIGATION_VIEW_TABS = (
     ('all', 'All'),
@@ -440,12 +450,17 @@ def deadline_complete(request, pk):
     if not hasattr(request, '_cached_organization'):
         request._cached_organization = get_user_organization(request.user)
     organization = request._cached_organization
+    wants_json = _wants_json(request)
 
     deadline_queryset = Deadline.objects.for_organization(organization)
     deadline = get_object_or_404(deadline_queryset, pk=pk)
     if deadline.contract and not can_access_contract_action(request.user, deadline.contract, ContractAction.EDIT):
+        if wants_json:
+            return JsonResponse({'error': 'You do not have permission to complete this contract deadline.'}, status=403)
         return HttpResponseForbidden('You do not have permission to complete this contract deadline.')
     if deadline.is_completed:
+        if wants_json:
+            return JsonResponse({'ok': True, 'already_complete': True})
         messages.info(request, f'Deadline "{deadline.title}" was already complete.')
         return redirect('contracts:obligations_workspace')
     deadline.is_completed = True
@@ -463,17 +478,20 @@ def deadline_complete(request, pk):
         event_type='deadline.completed',
     )
     from contracts.services.work_instrumentation import record_outcome, resolve_surface
+    surface = resolve_surface(request)
     record_outcome(
         organization=organization,
         user=request.user,
         event='completed',
         work_item_id=f'obligation:{deadline.pk}',
         work_kind='obligation',
-        surface=resolve_surface(request),
+        surface=surface,
         contract=deadline.contract,
         contract_id=deadline.contract_id,
         is_overdue=bool(deadline.is_overdue),
     )
+    if wants_json:
+        return JsonResponse({'ok': True, 'surface': surface})
     messages.success(request, f'Deadline "{deadline.title}" marked as complete.')
     return redirect('contracts:obligations_workspace')
 
@@ -483,10 +501,15 @@ def deadline_complete(request, pk):
 def deadline_defer(request, pk):
     """Defer an open obligation by seven days and record the reason in audit."""
     organization = get_user_organization(request.user)
+    wants_json = _wants_json(request)
     deadline = get_object_or_404(Deadline.objects.for_organization(organization), pk=pk)
     if deadline.contract and not can_access_contract_action(request.user, deadline.contract, ContractAction.EDIT):
+        if wants_json:
+            return JsonResponse({'error': 'You do not have permission to defer this obligation.'}, status=403)
         return HttpResponseForbidden('You do not have permission to defer this obligation.')
     if deadline.is_completed:
+        if wants_json:
+            return JsonResponse({'ok': True, 'already_complete': True})
         messages.info(request, f'Obligation "{deadline.title}" is already complete.')
         return redirect('contracts:obligations_workspace')
 
@@ -503,6 +526,11 @@ def deadline_defer(request, pk):
             'defer_days': 7,
         },
     )
+    if wants_json:
+        return JsonResponse({
+            'ok': True,
+            'due_date': deadline.due_date.isoformat(),
+        })
     messages.success(request, f'Obligation "{deadline.title}" deferred to {deadline.due_date.strftime("%d %b %Y")}.')
     return redirect('contracts:obligations_workspace')
 
@@ -512,10 +540,15 @@ def deadline_defer(request, pk):
 def deadline_escalate(request, pk):
     """Escalate an open obligation to critical priority and leave an audit trail."""
     organization = get_user_organization(request.user)
+    wants_json = _wants_json(request)
     deadline = get_object_or_404(Deadline.objects.for_organization(organization), pk=pk)
     if deadline.contract and not can_access_contract_action(request.user, deadline.contract, ContractAction.EDIT):
+        if wants_json:
+            return JsonResponse({'error': 'You do not have permission to escalate this obligation.'}, status=403)
         return HttpResponseForbidden('You do not have permission to escalate this obligation.')
     if deadline.is_completed:
+        if wants_json:
+            return JsonResponse({'ok': True, 'already_complete': True})
         messages.info(request, f'Obligation "{deadline.title}" is already complete.')
         return redirect('contracts:obligations_workspace')
 
@@ -531,6 +564,8 @@ def deadline_escalate(request, pk):
             'new_priority': deadline.priority,
         },
     )
+    if wants_json:
+        return JsonResponse({'ok': True, 'priority': deadline.priority})
     messages.success(request, f'Obligation "{deadline.title}" escalated to critical priority.')
     return redirect('contracts:obligations_workspace')
 
