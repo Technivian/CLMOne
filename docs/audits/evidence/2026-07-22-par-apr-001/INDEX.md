@@ -1,9 +1,9 @@
 # PAR-APR-001 evidence index
 
 **Programme ID:** PAR-APR-001  
-**Final status:** Closed — canonical foundation delivered and governance accepted; cutover residuals transferred to PAR-APR-002.  
-**ADR:** ADR-0013 **Accepted** (2026-07-22)  
-**Branch:** `cursor/feat-platform-documentation-alignment-d7f1` @ `c9ae7305`
+**Status:** **Pending ratification** — foundation delivered at `c9ae7305`  
+**ADR:** ADR-0013 **Pending Ratification**  
+**Branch:** `cursor/feat-platform-documentation-alignment-d7f1`
 
 ---
 
@@ -11,10 +11,11 @@
 
 | Artifact | Purpose |
 |---|---|
-| [`GOVERNANCE_REVIEW.md`](GOVERNANCE_REVIEW.md) | Governance compliance and vote summary |
-| [`TEST_RESULTS.md`](TEST_RESULTS.md) | Test evidence and known residuals |
-| [`../../../governance/decisions/adr/0013-approval-requirement-decision-split.md`](../../../governance/decisions/adr/0013-approval-requirement-decision-split.md) | **Accepted** ADR |
-| [`../../../governance/decisions/adr/0013-governance-acceptance-meeting-record-2026-07-22.md`](../../../governance/decisions/adr/0013-governance-acceptance-meeting-record-2026-07-22.md) | Formal meeting record |
+| [`GOVERNANCE_REVIEW.md`](GOVERNANCE_REVIEW.md) | Compliance, vote validation, planning boundary |
+| [`TEST_RESULTS.md`](TEST_RESULTS.md) | Test evidence and known programme failures |
+| [`../../../governance/decisions/adr/0013-approval-requirement-decision-split.md`](../../../governance/decisions/adr/0013-approval-requirement-decision-split.md) | ADR (Pending Ratification) |
+| [`../../../governance/decisions/adr/0013-governance-acceptance-meeting-record-2026-07-22.md`](../../../governance/decisions/adr/0013-governance-acceptance-meeting-record-2026-07-22.md) | Draft meeting record + §10 validation |
+| [`../../../audits/2026-07-22-adr-0013-ratification-validation.md`](../../../audits/2026-07-22-adr-0013-ratification-validation.md) | Ratification validation report |
 
 ---
 
@@ -22,7 +23,7 @@
 
 | Artifact | Purpose |
 |---|---|
-| [`SUMMARY.md`](SUMMARY.md) | Programme summary (updated at closure) |
+| [`SUMMARY.md`](SUMMARY.md) | Programme summary |
 | [`TARGET_APPROVAL_MODEL.md`](TARGET_APPROVAL_MODEL.md) | Target entity model |
 | [`APPROVAL_USAGE_MATRIX.md`](APPROVAL_USAGE_MATRIX.md) | Read/write path matrix |
 | [`MIGRATION_PLAN.md`](MIGRATION_PLAN.md) | Migration `0110` plan |
@@ -47,9 +48,6 @@
 
 ---
 
-## Explicitly out of scope (transferred)
+## Tenant isolation statement
 
-- Legacy `ApprovalRequest` retirement → PAR-APR-002
-- DPAReviewPack merge → PAR-APR-002
-- ApprovalRoute runtime mapping → PAR-APR-002
-- ABSTAIN/REVOKE UI → PAR-APR-002
+Programme-level tenant isolation remains **unproven** until **PAR-SEC-003** resolves `ContractIsolationTest.test_list_shows_only_own_org`.

@@ -1,8 +1,8 @@
 # PAR-APR-001 evidence summary — 2026-07-22
 
-## Status: Closed
+## Status: Pending ratification
 
-> **Closed — canonical foundation delivered and governance accepted; cutover residuals transferred to PAR-APR-002.**
+> Canonical foundation delivered at `c9ae7305`. Programme closure and ADR-0013 acceptance **pending ratification** (named approver evidence required). Target closure upon ratification: *Closed — canonical foundation delivered and governance accepted; cutover residuals transferred to PAR-APR-002.*
 
 ### Canonical split (delivered)
 - `ApprovalRequirement` — why/who/authority/state at open
@@ -17,7 +17,7 @@
 - Signature gating checks open canonical requirements
 
 ### Migration
-- `0110_approval_requirement_decision` — truthful backfill; rollback/re-forward proven
+- `0110_approval_requirement_decision` — linear after `0109`; rollback/re-forward proven
 
 ### Audit
 - `approval.requirement.created`, `approval.decision.recorded`, `approval.requirement.invalidated`
@@ -30,7 +30,7 @@
 - See [`TEST_RESULTS.md`](TEST_RESULTS.md) for programme residuals
 
 ### ADR
-- **ADR-0013 Accepted** (2026-07-22) — see [`GOVERNANCE_REVIEW.md`](GOVERNANCE_REVIEW.md)
+- **ADR-0013 Pending Ratification** — see [`GOVERNANCE_REVIEW.md`](GOVERNANCE_REVIEW.md)
 
 ### Residual → PAR-APR-002
 - `DPAReviewPack` parallel approval model not merged

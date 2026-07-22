@@ -1,20 +1,21 @@
 # ADR-0013: Approval Requirement and Approval Decision split
 
-- Status: **Accepted**
+- Status: **Pending Ratification**
 - Date: 2026-07-22
-- Effective date: **2026-07-22**
-- Deciders: CLM One Platform Alignment Programme governance review (Product / Engineering)
-- Related: PAR-APR-001 (Closed), PAR-APR-002 (Planned), PAR-DOC-001, CANONICAL_DOMAIN_MODEL §2.23–2.24, PDR-0001
+- Effective date: **Pending** — requires named approver evidence (see meeting record §10)
+- Deciders: Pending — governance package submitted for ratification
+- Related: PAR-APR-001 (foundation delivered; closure pending ratification), PAR-APR-002 (Planned), PAR-DOC-001, CANONICAL_DOMAIN_MODEL §2.23–2.24, PDR-0001
 - Meeting record: [`0013-governance-acceptance-meeting-record-2026-07-22.md`](0013-governance-acceptance-meeting-record-2026-07-22.md)
+- Ratification validation: [`../../../audits/2026-07-22-adr-0013-ratification-validation.md`](../../../audits/2026-07-22-adr-0013-ratification-validation.md)
 
 ## Approval metadata
 
 | Field | Value |
 |---|---|
-| **Approved by** | Product governance delegate · Engineering governance delegate |
-| **Advisory** | Security & privacy reviewer (approve with conditions — PAR-SEC-003) |
-| **Approved on** | **2026-07-22** |
-| **Acceptance scope** | Canonical foundation (additive schema, governed write path, vocabulary mapping, audit events). **Does not authorize** PAR-APR-002 implementation or legacy cutover. |
+| **Submitted for ratification** | 2026-07-22 |
+| **Ratification status** | **Pending** — insufficient approver evidence (see validation report) |
+| **Required before Accepted** | Named approvers or delegated org identifiers; authority basis; written consent or attendance record; vote timestamp |
+| **Proposed acceptance scope** | Canonical foundation (additive schema, governed write path, vocabulary mapping, audit events). **Would not authorize** PAR-APR-002 implementation or legacy cutover. |
 | **Evidence** | `docs/audits/evidence/2026-07-22-par-apr-001/` |
 
 ## Context
@@ -28,9 +29,17 @@ CLM One previously collapsed both into mutable `ApprovalRequest` rows.
 
 PAR-DOC-001 delivered `DocumentVersion` binding for signatures; approvals lacked version binding (gap G-DOM / traceability row).
 
-## Decision (Accepted)
+## Alternatives considered
 
-### 1. Canonical entities (implemented additively)
+| Alternative | Why not adopted |
+|---|---|
+| Retain collapsed `ApprovalRequest` only | Violates CANONICAL_DOMAIN_MODEL §2.23–2.24; no immutable decision bound to document version |
+| Status-only split on `ApprovalRequest` | Does not provide immutable Decision entity or governed append-only outcomes |
+| Big-bang legacy removal | Too risky; dual-write additive path preferred with PAR-APR-002 cutover |
+
+## Decision (proposed — pending ratification)
+
+### 1. Canonical entities (implemented additively on `c9ae7305`)
 
 | Entity | Role |
 |---|---|
@@ -85,14 +94,14 @@ PAR-DOC-001 delivered `DocumentVersion` binding for signatures; approvals lacked
 - Server-side authorization and tenant isolation (SECURITY_PRIVACY_ACCESS_AND_AUDIT)
 - Finance threshold single entry (PDR-0001 — unchanged)
 
-## Consequences
+## Consequences (upon ratification)
 
-- PAR-APR-001 is **Closed** — canonical foundation delivered on continuation branch `c9ae7305`.
-- PAR-APR-002 is **Planned** — cutover residuals; blocked pending owner, cutover plan, and implementation authorization.
-- ADR acceptance authorizes **planning** for PAR-APR-002 only; not implementation.
-- Tenant isolation remains **unproven** at programme level until PAR-SEC-003 resolves `ContractIsolationTest.test_list_shows_only_own_org`.
+- PAR-APR-001 would close as foundation delivered; cutover residuals transfer to PAR-APR-002.
+- PAR-APR-002 remains **Planned** — blocked pending owner, cutover plan, and separate implementation authorization.
+- ADR acceptance would authorize **planning** for PAR-APR-002 only; not implementation.
+- Programme-level tenant isolation remains **unproven** until PAR-SEC-003 resolves `ContractIsolationTest.test_list_shows_only_own_org`.
 - ADR-0010 remains **Proposed** and is not amended by this decision.
 
 ## Approval
 
-**Accepted** on 2026-07-22. Legacy `ApprovalRequest` write-path removal gates on PAR-APR-002 implementation authorization.
+**Pending Ratification** as of 2026-07-22. Prior draft meeting record did not include named approvers or written consent evidence. Do not treat as Accepted until ratification validation passes.

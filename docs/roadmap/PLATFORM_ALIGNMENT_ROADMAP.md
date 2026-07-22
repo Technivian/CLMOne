@@ -1,7 +1,7 @@
 # Platform Alignment Roadmap
 
 **Created:** 2026-07-21  
-**Last refined:** 2026-07-22 (ADR-0013 Accepted; PAR-APR-001 closed; PAR-APR-002 planned)  
+**Last refined:** 2026-07-22 (ADR-0013 pending ratification; PAR-APR-001 foundation delivered)  
 **Authority:** Gap audit `docs/audits/2026-07-21-platform-gap-audit.md` · active `docs/governance/GOVERNANCE_CHARTER.md` · Accepted PDR-0003  
 **Branch:** `cursor/feat-platform-documentation-alignment-d7f1`  
 **Living document:** update statuses only with implementation, tests, audit evidence, migration evidence (if any), documentation, and rollback proof.
@@ -15,9 +15,10 @@ Statuses: Completed · In progress · Blocked · Deferred by approved decision �
 | Rollup | Count | Notes |
 |---|---:|---|
 | **Unique PAR IDs in this roadmap** | **25** | All distinct `PAR-*` identifiers below |
-| Completed / Closed unique PAR IDs | 13 | Includes closed **PAR-APR-001** (foundation) |
+| Completed unique PAR IDs | 12 | Excludes PAR-APR-001 (pending ratification) |
+| Pending ratification | 1 | `PAR-APR-001` — foundation at `c9ae7305`; ADR-0013 not yet ratified |
 | Planned (blocked) | 1 | `PAR-APR-002` — cutover; owner unassigned |
-| Future / residual unique PAR IDs | 11 | Includes `PAR-SEC-002`, `PAR-SEC-003` |
+| Future / residual unique PAR IDs | 11 | Includes `PAR-SEC-002`, `PAR-SEC-003` (unresolved) |
 | Non-PAR Milestone 1 follow-ups | 1 | Playwright DPA bootstrap (`M1-E2E-001`) |
 
 ### Bundling rule for `PAR-AUD-001`
@@ -26,7 +27,9 @@ Statuses: Completed · In progress · Blocked · Deferred by approved decision �
 
 ### Unique PAR ID inventory
 
-**Completed / Closed (13):** `PAR-WF-001`, `PAR-AUD-001`, `PAR-WF-002`, `PAR-WF-003`, `PAR-WF-005`, `PAR-NAV-001`, `PAR-SEC-001`, `PAR-WORK-001`, `PAR-CORE-001`, `PAR-CORE-003`, `PAR-CORE-002`, `PAR-DOC-001`, `PAR-APR-001` *(Closed — foundation)*
+**Completed (12):** `PAR-WF-001`, `PAR-AUD-001`, `PAR-WF-002`, `PAR-WF-003`, `PAR-WF-005`, `PAR-NAV-001`, `PAR-SEC-001`, `PAR-WORK-001`, `PAR-CORE-001`, `PAR-CORE-003`, `PAR-CORE-002`, `PAR-DOC-001`
+
+**Pending ratification (1):** `PAR-APR-001` — foundation `c9ae7305`; closure pending named approver evidence
 
 **Planned / blocked (1):** `PAR-APR-002` — legacy cutover; blocked pending owner assignment, cutover plan, and implementation authorization
 
@@ -38,9 +41,11 @@ Statuses: Completed · In progress · Blocked · Deferred by approved decision �
 
 ## Immediate next items
 
-1. **Tranche-1 programme integration gate** — merge `cursor/feat-platform-alignment-tranche-1` to `main` — required before PAR-ID-001
-2. **PAR-APR-002** — **Planned** (not In progress) — assign owner, approve cutover plan, record implementation authorization
-3. **PAR-WF-010** — production cutover **blocked** pending Accepted ADR-0012
+1. **Tranche-1 programme integration gate** — merge PR #50 (`cursor/feat-platform-alignment-tranche-1`) to `main` — **blocked** (CI failures) — required before PAR-ID-001
+2. **ADR-0013 ratification** — named approver evidence required — blocks PAR-APR-001 closure
+3. **PAR-APR-002** — **Planned** (not In progress) — assign owner, approve cutover plan, record implementation authorization
+4. **PAR-WF-010** — production cutover **blocked** pending Accepted ADR-0012
+5. **PAR-ID-001** — **queued** as next unblocked domain item after Tranche-1 gate + ratification
 
 Parallel Milestone 1 hygiene:
 
@@ -72,13 +77,13 @@ Parallel Milestone 1 hygiene:
 |---|---|---|
 | ADR-0010 | Workflow instance version pinning interim | **Proposed** — `docs/governance/decisions/adr/0010-workflow-instance-version-pinning-interim.md`. Non-authorizing until Accepted. Interim pinning only. |
 | ADR-0012 | Workflow Definition aggregate and cutover | **Proposed** — `docs/governance/decisions/adr/0012-workflow-definition-aggregate-cutover.md`. Required for PAR-WF-010 production cutover. |
-| ADR-0013 | Approval Requirement / Decision split | **Accepted** (2026-07-22) — `docs/governance/decisions/adr/0013-approval-requirement-decision-split.md`. Foundation only; PAR-APR-002 cutover separate. |
+| ADR-0013 | Approval Requirement / Decision split | **Pending Ratification** — `docs/governance/decisions/adr/0013-approval-requirement-decision-split.md`. Foundation proposed; PAR-APR-002 cutover separate. |
 
-## Accepted decisions (programme)
+## Submitted for ratification (not yet Accepted)
 
 | ID | Title | Status |
 |---|---|---|
-| ADR-0013 | Approval Requirement / Decision split | **Accepted** 2026-07-22 — meeting record `0013-governance-acceptance-meeting-record-2026-07-22.md` |
+| ADR-0013 | Approval Requirement / Decision split | **Pending Ratification** — validation `docs/audits/2026-07-22-adr-0013-ratification-validation.md` |
 
 ---
 
@@ -101,7 +106,7 @@ Parallel Milestone 1 hygiene:
 |---|---|---|---|
 | **PAR-CORE-001** | Complete remaining PDR-0002 UI/test drift | P0 | **Completed** |
 | **PAR-SEC-002** | Uniform authz for search/analytics/AI; client-hide ≠ authorization | P1 | Future |
-| **PAR-SEC-003** | Stale ContractIsolationTest repository-redirect assertion | P1 | Future residual |
+| **PAR-SEC-003** | Stale ContractIsolationTest repository-redirect assertion | P1 | **Unresolved** (future residual) |
 | M1-E2E-001 | Fix Playwright DPA bootstrap | P1 | Future (non-PAR) |
 
 ### Milestone 2 — Canonical contract core
@@ -117,9 +122,9 @@ Parallel Milestone 1 hygiene:
 
 | ID | Title | Priority | Status |
 |---|---|---|---|
-| PAR-APR-001 | Approval Requirement/Decision foundation | P1 | **Closed** — canonical foundation delivered; ADR-0013 Accepted |
+| PAR-APR-001 | Approval Requirement/Decision foundation | P1 | **Pending ratification** — foundation `c9ae7305` delivered |
 | PAR-APR-002 | Approval legacy cutover | P1 | **Planned** — blocked pending owner, cutover plan, implementation authorization |
-| PAR-ID-001 | Role Definition reconciliation | P1 | Future (blocked on Tranche-1 gate) |
+| PAR-ID-001 | Role Definition reconciliation | P1 | **Queued** — next unblocked domain item after Tranche-1 gate |
 | PAR-EXC-001 | Governed Exception | P1 | Future |
 
 ### Milestone 4 — Canonical data and post-signature
@@ -391,14 +396,14 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 
 | Field | Content |
 |---|---|
-| Status | **Closed — canonical foundation delivered and governance accepted; cutover residuals transferred to PAR-APR-002.** |
+| Status | **Pending ratification** — canonical foundation delivered at `c9ae7305`; target upon ratification: *Closed — canonical foundation delivered and governance accepted; cutover residuals transferred to PAR-APR-002.* |
 | Priority | P1 |
 | Problem | `ApprovalRequest` collapses Requirement and Decision; domain requires Decision bound to approved state/document version. |
 | Delivered | Additive `ApprovalRequirement` + `ApprovalDecision`; `approval_canonical.py`; migration `0110`; primary dual-write; document-version binding; invalidation on supersession |
-| ADR | **ADR-0013 Accepted** (2026-07-22) |
-| Evidence | `docs/audits/evidence/2026-07-22-par-apr-001/` (see `INDEX.md`, `GOVERNANCE_REVIEW.md`, `TEST_RESULTS.md`) |
-| Tests | PAR-APR targeted suites **33/33 PASS**; programme residuals recorded (workflow routing, PAR-SEC-003) |
-| Acceptance criteria (foundation) | Separate concepts; governed decisions; version binding; invalidation; audit — **met** |
+| ADR | **ADR-0013 Pending Ratification** |
+| Evidence | `docs/audits/evidence/2026-07-22-par-apr-001/` |
+| Tests | PAR-APR targeted suites **33/33 PASS**; programme residuals: workflow routing test, PAR-SEC-003 isolation test |
+| Tenant isolation | Programme-level isolation **unproven** until PAR-SEC-003 resolved |
 | Successor | **PAR-APR-002** (Planned) |
 | Last updated | 2026-07-22 |
 
@@ -410,11 +415,11 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | Priority | P1 |
 | Problem | Legacy `ApprovalRequest` read/write paths, DPAReviewPack parallel model, and UI residuals remain after foundation delivery. |
 | Scope | Legacy read-path retirement; dual-write sunset; DPAReviewPack reconciliation; ApprovalRoute runtime mapping; ABSTAIN/REVOKE UI; full regression sign-off |
-| Dependencies | PAR-APR-001 Closed; ADR-0013 Accepted; Tranche-1 on `main`; PAR-SEC-003 for isolation proof |
+| Dependencies | PAR-APR-001 ratified; PAR-APR-002 helpful (cutover); policy owners |
 | Decision required | Implementation authorization (separate from ADR-0013 acceptance) |
 | Owner | **Unassigned** |
 | Evidence | `docs/audits/evidence/2026-07-22-par-apr-002/CLOSURE_CHECKLIST.md` |
-| Authorization | ADR-0013 acceptance authorizes **planning only** — not implementation |
+| Authorization | ADR-0013 ratification would authorize **planning only** — not implementation |
 | Tests gate | Full isolation unproven until PAR-SEC-003; see TEST_RESULTS.md known issues |
 | Last updated | 2026-07-22 |
 
@@ -635,4 +640,4 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | 2026-07-22 | **PAR-CORE-002 Completed:** canonical `ContractType` catalogue + `contract_type_catalogue` FK; transitional char mirror; migration 0107; Proposed ADR-0011; evidence `2026-07-22-par-core-002`; next **PAR-DOC-001** |
 | 2026-07-22 | **PAR-DOC-001 Completed:** `DocumentVersion` entity + immutability service; migrations 0108–0109; signature version binding; evidence `2026-07-22-par-doc-001`; next **PAR-WF-010** (design only until Accepted ADR) |
 | 2026-07-22 | **PAR-WF-010 discovery complete (Blocked):** evidence `2026-07-22-par-wf-010`; Proposed ADR-0012; characterization tests; production cutover blocked pending Accepted ADR; next unblocked **PAR-APR-001** |
-| 2026-07-22 | **PAR-APR-001 Closed / ADR-0013 Accepted:** foundation on `c9ae7305`; governance meeting record; cutover residuals → **PAR-APR-002** (Planned, not In progress); tenant isolation unproven until PAR-SEC-003 |
+| 2026-07-22 | **ADR-0013 ratification validation:** insufficient named approver evidence → **Pending Ratification**; PAR-APR-001 closure pending; PR #50 not merged; follow-up branch not created |

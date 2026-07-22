@@ -4,7 +4,7 @@
 **Title:** Approval Requirement/Decision legacy cutover  
 **Status:** **Planned — blocked pending owner assignment, cutover plan, and implementation authorization.**  
 **Opened:** 2026-07-22 (residuals transferred from closed PAR-APR-001)  
-**Predecessor:** PAR-APR-001 (Closed) · ADR-0013 (Accepted)
+**Predecessor:** PAR-APR-001 (foundation delivered; **pending ratification**) · ADR-0013 (**Pending Ratification**)
 
 > **Authorization boundary:** ADR-0013 acceptance authorizes **planning only**. This checklist must be complete before PAR-APR-002 may move to **In progress** or any implementation work begins.
 
@@ -27,8 +27,8 @@
 
 - [ ] Named programme owner assigned
 - [ ] Tranche-1 programme integration gate passed (`main` contains governance + CORE/DOC stack)
-- [ ] ADR-0013 Accepted (complete — 2026-07-22)
-- [ ] PAR-APR-001 evidence index frozen
+- [ ] ADR-0013 **Accepted** (currently Pending Ratification)
+- [ ] PAR-APR-001 programme closure ratified
 - [ ] Cutover plan draft published under this folder
 - [ ] Implementation authorization recorded by programme governance
 
@@ -68,7 +68,7 @@ Transferred from PAR-APR-001 / ADR-0013 §6 non-goals:
 | Dependency | Status |
 |---|---|
 | PAR-APR-001 foundation (`c9ae7305`) | Delivered |
-| ADR-0013 Accepted | Complete |
+| ADR-0013 Accepted | Pending ratification |
 | PAR-DOC-001 DocumentVersion | Complete |
 | Tranche-1 on `main` | Pending programme integration gate |
 | PAR-SEC-003 | Open — blocks isolation proof |

@@ -7,9 +7,9 @@
 **Package under review:**
 
 - [`0013-approval-requirement-decision-split.md`](0013-approval-requirement-decision-split.md)
-- [`../../audits/evidence/2026-07-22-par-apr-001/GOVERNANCE_REVIEW.md`](../../audits/evidence/2026-07-22-par-apr-001/GOVERNANCE_REVIEW.md)
-- [`../../audits/evidence/2026-07-22-par-apr-001/TEST_RESULTS.md`](../../audits/evidence/2026-07-22-par-apr-001/TEST_RESULTS.md)
-- [`../../roadmap/PLATFORM_ALIGNMENT_ROADMAP.md`](../../roadmap/PLATFORM_ALIGNMENT_ROADMAP.md) (PAR-APR scope)
+- [`../../../audits/evidence/2026-07-22-par-apr-001/GOVERNANCE_REVIEW.md`](../../../audits/evidence/2026-07-22-par-apr-001/GOVERNANCE_REVIEW.md)
+- [`../../../audits/evidence/2026-07-22-par-apr-001/TEST_RESULTS.md`](../../../audits/evidence/2026-07-22-par-apr-001/TEST_RESULTS.md)
+- [`../../../roadmap/PLATFORM_ALIGNMENT_ROADMAP.md`](../../../roadmap/PLATFORM_ALIGNMENT_ROADMAP.md) (PAR-APR scope)
 
 **Implementation branch:** `cursor/feat-platform-documentation-alignment-d7f1` @ `c9ae7305`  
 **Constraint:** Documentation-only governance actions in this record. No implementation code changes authorized by this meeting beyond what already exists on the continuation branch.
@@ -28,9 +28,9 @@
 | Engineering governance delegate | **Approve** | Additive foundation delivered; dual-write path evidenced |
 | Security & privacy reviewer (advisory) | **Approve with conditions** | Tenant isolation suite not fully green — see §6 |
 
-**Result:** **Carried — ADR-0013 Accepted (2026-07-22)**
+**Result:** **Not ratified — pending named approver evidence** (see §10)
 
-**Acceptance scope limitation (recorded unanimously):** ADR-0013 acceptance authorizes **governance recognition and planning** for the canonical split. It does **not** authorize PAR-APR-002 implementation, legacy read-path retirement, or production cutover until PAR-APR-002 owner assignment, cutover plan approval, and explicit implementation authorization are recorded.
+**Acceptance scope limitation (draft):** If ratified, ADR-0013 acceptance would authorize **governance recognition and planning** for the canonical split. It would **not** authorize PAR-APR-002 implementation, legacy read-path retirement, or production cutover until PAR-APR-002 owner assignment, cutover plan approval, and explicit implementation authorization are recorded.
 
 ---
 
@@ -174,3 +174,39 @@ PAR-APR targeted tests (`test_par_apr_001_approval`, `test_approval_workflow`, `
 - [x] Evidence index updated (`docs/audits/evidence/2026-07-22-par-apr-001/INDEX.md`)
 - [x] PAR-APR-002 ownership and closure checklist created
 - [x] ADR-0010 **not** modified
+
+---
+
+## 10. Ratification validation (2026-07-22)
+
+**Validator:** Governance-validation phase (documentation only)  
+**Report:** [`../../../audits/2026-07-22-adr-0013-ratification-validation.md`](../../../audits/2026-07-22-adr-0013-ratification-validation.md)
+
+### Finding: insufficient approver evidence
+
+The draft votes in §1 use generic role labels without:
+
+- named human approvers or formally delegated organizational identifiers with authority citations;
+- per-approver authority basis;
+- vote timestamp (time of day);
+- meeting attendance list or written consent artefacts.
+
+Per `docs/governance/decisions/README.md`, ADR-0013 **must not** remain **Accepted** on this evidence alone.
+
+### Corrected statuses
+
+| Item | Status after validation |
+|---|---|
+| ADR-0013 | **Pending Ratification** |
+| PAR-APR-001 | **Pending ratification** — foundation delivered at `c9ae7305`; closure not finalized |
+| PAR-APR-002 | **Planned** — unchanged; not authorized for implementation |
+
+### Missing approvals required
+
+1. Product governance — named approver + written consent + authority basis
+2. Engineering governance — named approver + written consent + authority basis
+3. Security & privacy (advisory) — named reviewer + documented conditions acknowledgment
+
+### Programme gate (additional)
+
+PR #50 (Tranche-1) has **not** merged to `main`. Follow-up branch `cursor/feat-par-apr-001-foundation-governance` was **not** created.
