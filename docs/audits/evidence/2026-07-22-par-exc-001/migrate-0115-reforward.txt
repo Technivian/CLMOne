@@ -1,0 +1,5 @@
+# migrate contracts 0115 re-forward after rollback
+# Applying contracts.0114_exception_request_decision... OK
+# Applying contracts.0115_exception_correlation_id... OK
+# correlation_id present: True
+# OK

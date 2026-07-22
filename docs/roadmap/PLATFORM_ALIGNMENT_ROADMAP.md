@@ -38,8 +38,8 @@ Statuses: Completed · In progress · Blocked · Deferred by approved decision �
 
 ## Immediate next items
 
-1. **PAR-EXC-001** — Governed Exception (Milestone 3) — **In progress** (ADR-0015 **Accepted**; foundation PR #66; dual-write PR #67 default-off; **activation pending**)
-2. **PAR-ID-001** — Role Definition reconciliation — residual **In progress** (R0 inventory **PASS** verified 20/4/8; activation pending; R1+ not authorized; **not** advanced by this PAR-EXC slice)
+1. **PAR-EXC-001** — Governed Exception (Milestone 3) — **In progress** (ADR-0015 **Accepted**; foundation PR #66 merged `982b0900`; dual-write PR #69 → `main` default-off; controlled-pilot activation **Requested**; canonical read **unauthorized**)
+2. **PAR-ID-001** — Role Definition reconciliation — **In progress** (R0 **PASS**; R1 CERTAIN non-ADMIN remediation **Authorized/PASS** — 12 rows; AMBIGUOUS ADMIN **8** residual; activation pending; flags default off)
 3. **PAR-APR-002** — legacy approval cutover — **Planned** — **not started this slice**
 4. **PAR-WF-010** — production cutover **blocked** pending Accepted ADR-0012 — **not started this slice**
 5. **PAR-ID-002** — ADMIN process-role reconciliation — Future residual — **not started this slice**
@@ -404,7 +404,7 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 
 | Field | Content |
 |---|---|
-| Status | **In progress** (2026-07-22) — R0 inventory **PASS** (verified 20/4/8); R1 CERTAIN non-ADMIN remediation auth package **Requested** (12 rows; ADMIN/AMBIGUOUS excluded); activation **pending**; flags default off; P1+P3 binding; P2 rejected; GI pre-auth merge **Ratified and Closed** |
+| Status | **In progress** (2026-07-22) — R0 **PASS**; R1 CERTAIN non-ADMIN remediation **Authorized** (Product `19:16:55Z` / Eng `19:16:56Z` / Sec `19:16:57Z`) and evidence **PASS** (12 creates; LEGACY_ONLY→0 on corpus; AMBIGUOUS ADMIN **8** residual); activation **pending**; flags default off; P1+P3; P2 rejected |
 | Priority | P1 |
 | Problem | Dual role systems (`OrganizationMembership` vs `UserProfile.Role`) conflict with canonical Role Definition. |
 | Governance source | CANONICAL_DOMAIN_MODEL §2.5; SECURITY_PRIVACY_ACCESS_AND_AUDIT |
@@ -429,7 +429,7 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 
 | Field | Content |
 |---|---|
-| Status | **In progress** (2026-07-22) — ADR-0015 **Accepted**; canonical foundation PR #66; six-path dual-write PR #67 (default-off, Motion 2 Authorized); controlled-pilot activation **not** authorized; canonical read cutover **unauthorized** |
+| Status | **In progress** (2026-07-22) — ADR-0015 **Accepted**; canonical foundation PR #66 **merged** (`982b0900`); six-path dual-write PR #69 (default-off, Motion 2 Authorized; supersedes stacked #67); controlled-pilot activation **not** authorized; canonical read cutover **unauthorized**; break-glass / signature-provider residual paths inventoried |
 | Priority | P1 |
 | Problem | No first-class governed Exception; risk/actions are scattered. |
 | Governance source | CANONICAL_DOMAIN_MODEL §2.33; gap G-DOM-03 |
@@ -446,10 +446,10 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | Acceptance criteria | Accepted ADR (**met**); six priority paths dual-write merged default-off; remaining paths inventoried; activation + read authority still open — **keep In progress** |
 | Evidence | `docs/audits/evidence/2026-07-22-par-exc-001/` |
 | Accepted ADR | **ADR-0015** (Accepted 2026-07-22T19:12:39Z) |
-| PR/commits | Foundation PR #66; dual-write PR #67 |
+| PR/commits | Foundation PR #66 merge `982b0900`; dual-write PR #69 (from #67 rebase) |
 | Last updated | 2026-07-22 |
 | Explicit non-starts | PAR-APR-002, PAR-WF-010, PAR-ID-002 |
-| Next cutover step | Separate controlled-pilot activation votes → enable allowlist `controlled-pilot-org` only; do not enable before authorization |
+| Next cutover step | Merge #69 → separate controlled-pilot activation votes → enable allowlist `controlled-pilot-org` only; do not enable before authorization |
 
 ---
 
@@ -647,6 +647,9 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | 2026-07-22 | **PR #63 merged** to `main` @ `06258d26` (2026-07-22T18:44:14Z); reviewed HEAD `60263068` CI 6/6; merge auth Engineering `18:37:34Z` / Product `18:38:34Z`; docs/governance only; R0 inventory authorization gate **opened** (votes Requested); no R0 execution; flags remain default off; PAR-ID-001 remains **In progress** |
 | 2026-07-22 | **PAR-ID-001 R0 inventory Authorized and PASS:** Product `18:55:17Z` / Engineering `18:53:20Z` / Security `18:53:20Z`; clean staging-equivalent + 0113 + deterministic seeds; verified MISSING **20** / LEGACY_ONLY orgs **4** / AMBIGUOUS ADMIN **8** (historical 14/1/13 superseded); CROSS_TENANT/DIFFERENT_USER **0**; flags remain default off; R1+ not authorized; PAR-ID-001 remains **In progress** |
 | 2026-07-22 | **PAR-ID-001 R1 CERTAIN non-ADMIN remediation auth package prepared** from `main` @ `0404e284`: 12 CERTAIN missing rows in scope; 8 AMBIGUOUS ADMIN excluded; mapping manifest + test/rollback plan; votes **Requested**; no implementation; flags remain default off; PAR-ID-001 remains **In progress** |
+| 2026-07-22 | **PAR-ID-001 R1 Authorized (bundled):** Product `19:16:55Z` / Engineering `19:16:56Z` / Security `19:16:57Z` (conditions 1–10 yes); dry-run/apply/rollback for exactly 12 CERTAIN rows; staging-equivalent evidence PASS (LEGACY_ONLY 89→0; AMBIGUOUS ADMIN 8 residual); flags remain default off; no separate merge vote; R2–R5 / activation not authorized; PAR-ID-001 remains **In progress** |
+| 2026-07-22 | **PR #68 merged** to `main` @ `fb8f7d84` (2026-07-22T19:38:30Z); reviewed HEAD `15acc520`; R1 CERTAIN remediation on main; flags remain default off; PAR-ID-001 remains **In progress** |
 
 
 | 2026-07-22 | **ADR-0015 Accepted** (Product `19:12:31Z` / Engineering `19:12:35Z` / Security `19:12:39Z` Approve with conditions); Motion 2 authorizes default-off six-path dual-write; controlled-pilot activation **not** authorized; PAR-EXC-001 remains **In progress** |
+| 2026-07-22 | **PR #66 merged** to `main` @ `982b0900` (canonical ExceptionRequest/Decision + migration `0114`); dual-write retargeted as PR #69 onto main (migration `0115`; supersedes stacked #67); controlled-pilot activation package **Requested**; flags remain default off; PAR-EXC-001 remains **In progress** |

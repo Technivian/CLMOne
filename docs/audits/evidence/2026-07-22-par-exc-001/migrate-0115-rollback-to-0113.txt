@@ -1,0 +1,5 @@
+# migrate contracts 0113 (rollback 0115 then 0114)
+# Unapplying contracts.0115_exception_correlation_id... OK
+# Unapplying contracts.0114_exception_request_decision... OK
+# tables after rollback: []
+# OK

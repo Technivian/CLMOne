@@ -3,11 +3,8 @@
 **Baseline `main`:** `8316a756` (pre-package)  
 **Merged to `main`:** `06258d26` at `2026-07-22T18:44:14Z` (PR [#63](https://github.com/Technivian/CLMOne/pull/63))  
 **R0 evidence tip:** `0404e284`  
-**Status:** **In progress** — R0 **PASS**; R1 CERTAIN non-ADMIN remediation auth package **Requested**  
-**Package vote status:** **Approved** — Product `18:33:34Z` / Engineering `18:35:34Z` / Security `18:34:34Z`  
-**PR #63 merge authorization:** **Authorized and merged**  
-**R0 authorization status:** **Authorized and executed** — exit **PASS**  
-**R1 authorization status:** **Requested** — see [`R1_CERTAIN_REMEDIATION_AUTHORIZATION.md`](R1_CERTAIN_REMEDIATION_AUTHORIZATION.md)  
+**Status:** **In progress** — R0 **PASS**; R1 CERTAIN non-ADMIN remediation **Authorized** (bundled) — see [`R1_CERTAIN_REMEDIATION_AUTHORIZATION.md`](R1_CERTAIN_REMEDIATION_AUTHORIZATION.md) / [`R1_EXIT_REPORT.md`](R1_EXIT_REPORT.md)  
+**R1 authorization status:** **Authorized** — Product `19:16:55Z` / Eng `19:16:56Z` / Sec `19:16:57Z`  
 
 | Artifact | Purpose |
 |---|---|
@@ -18,12 +15,15 @@
 | [`R0_INVENTORY_IMPLEMENTATION_AUTHORIZATION.md`](R0_INVENTORY_IMPLEMENTATION_AUTHORIZATION.md) | R0 inventory auth (**Authorized**) |
 | [`R0_EXIT_REPORT.md`](R0_EXIT_REPORT.md) | R0 exit verdict + verified counts |
 | [`r0_inventory_raw.json`](r0_inventory_raw.json) | Tenant-scoped row inventory + parity rows |
-| [`R1_CERTAIN_REMEDIATION_AUTHORIZATION.md`](R1_CERTAIN_REMEDIATION_AUTHORIZATION.md) | R1 CERTAIN non-ADMIN remediation auth (**Requested**) |
+| [`R1_CERTAIN_REMEDIATION_AUTHORIZATION.md`](R1_CERTAIN_REMEDIATION_AUTHORIZATION.md) | R1 CERTAIN non-ADMIN remediation auth (**Authorized**) |
 | [`R1_MAPPING_MANIFEST.md`](R1_MAPPING_MANIFEST.md) | Deterministic CERTAIN mapping rules |
 | [`R1_ROW_SCOPE.md`](R1_ROW_SCOPE.md) | Exact 12 in-scope rows; 8 ADMIN denied |
 | [`R1_TEST_MATRIX_AND_ROLLBACK.md`](R1_TEST_MATRIX_AND_ROLLBACK.md) | Tests + rollback plan |
+| [`R1_EXIT_REPORT.md`](R1_EXIT_REPORT.md) | R1 exit evidence (PASS) |
+| [`r1_dry_run.json`](r1_dry_run.json) | Dry-run exact 12-row scope |
+| [`r1_apply_evidence.json`](r1_apply_evidence.json) | Apply / rollback / parity evidence |
 
 **Verified R0 counts (clean seed corpus, not production):** MISSING/INACTIVE **20**; LEGACY_ONLY orgs **4**; AMBIGUOUS ADMIN **8**.  
 **R1 proposed scope:** **12** CERTAIN non-ADMIN creates only.
 
-**Not authorized:** R1 apply (until votes); R2–R5; staging flag activation; dual-return; privilege/resolver cutover; automatic repair; ADMIN/AMBIGUOUS remediation.
+**Not authorized:** R2–R5; staging flag activation; dual-return; privilege/resolver cutover; automatic repair; ADMIN/AMBIGUOUS remediation; production apply.

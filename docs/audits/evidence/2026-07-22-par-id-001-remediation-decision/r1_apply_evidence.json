@@ -1,0 +1,317 @@
+{
+  "after_first_apply": {
+    "AMBIGUOUS_ADMIN": 8,
+    "CERTAIN_MATCH": 12,
+    "CERTAIN_MISSING": 0,
+    "MATCH_ACTIVE": 12,
+    "MISSING": 8,
+    "active_pra_total": 12,
+    "ambiguous_mapping": 8,
+    "assignment_parity_rows": 20,
+    "legacy_process_admin_active": 0,
+    "legacy_without_canonical": 8,
+    "resolver": {
+      "AMBIGUOUS": 5,
+      "MATCH": 89
+    }
+  },
+  "apply": {
+    "created_count": 12,
+    "mode": "apply",
+    "remediation_run_id": "80ec4528-60e5-410f-964a-219714361c16",
+    "skipped_count": 0,
+    "timestamp": "2026-07-22T19:21:15.815986+00:00"
+  },
+  "authorized_environment": "clean_staging_equivalent_sqlite_r0_seed_corpus",
+  "before": {
+    "AMBIGUOUS_ADMIN": 8,
+    "CERTAIN_MISSING": 12,
+    "MATCH_ACTIVE": 0,
+    "MISSING": 20,
+    "assignment_parity_rows": 20,
+    "legacy_without_canonical": 20,
+    "resolver": {
+      "AMBIGUOUS": 5,
+      "LEGACY_ONLY": 89
+    }
+  },
+  "dry_run": {
+    "already_active": [],
+    "already_active_count": 0,
+    "authorized_count": 12,
+    "discovered_count": 12,
+    "flags_must_remain_false": true,
+    "mode": "dry-run",
+    "scope_valid": true,
+    "to_create": [
+      {
+        "already_active": false,
+        "mapped_code": "partner_reviewer",
+        "membership_id": 2,
+        "organization_id": 1,
+        "organization_slug": "demo-firm",
+        "profile_role": "PARTNER",
+        "rule_id": "R1-MAP-01",
+        "user_id": 2,
+        "username": "jsmith"
+      },
+      {
+        "already_active": false,
+        "mapped_code": "senior_reviewer",
+        "membership_id": 3,
+        "organization_id": 1,
+        "organization_slug": "demo-firm",
+        "profile_role": "SENIOR_ASSOCIATE",
+        "rule_id": "R1-MAP-02",
+        "user_id": 3,
+        "username": "sjones"
+      },
+      {
+        "already_active": false,
+        "mapped_code": "paralegal_reviewer",
+        "membership_id": 4,
+        "organization_id": 1,
+        "organization_slug": "demo-firm",
+        "profile_role": "PARALEGAL",
+        "rule_id": "R1-MAP-04",
+        "user_id": 4,
+        "username": "mwilson"
+      },
+      {
+        "already_active": false,
+        "mapped_code": "partner_reviewer",
+        "membership_id": 6,
+        "organization_id": 2,
+        "organization_slug": "clmone-demo",
+        "profile_role": "PARTNER",
+        "rule_id": "R1-MAP-01",
+        "user_id": 6,
+        "username": "demo_partner"
+      },
+      {
+        "already_active": false,
+        "mapped_code": "senior_reviewer",
+        "membership_id": 7,
+        "organization_id": 2,
+        "organization_slug": "clmone-demo",
+        "profile_role": "SENIOR_ASSOCIATE",
+        "rule_id": "R1-MAP-02",
+        "user_id": 7,
+        "username": "demo_associate"
+      },
+      {
+        "already_active": false,
+        "mapped_code": "paralegal_reviewer",
+        "membership_id": 8,
+        "organization_id": 2,
+        "organization_slug": "clmone-demo",
+        "profile_role": "PARALEGAL",
+        "rule_id": "R1-MAP-04",
+        "user_id": 8,
+        "username": "demo_paralegal"
+      },
+      {
+        "already_active": false,
+        "mapped_code": "legal_reviewer",
+        "membership_id": 10,
+        "organization_id": 3,
+        "organization_slug": "clmone-mvp",
+        "profile_role": "ASSOCIATE",
+        "rule_id": "R1-MAP-03",
+        "user_id": 10,
+        "username": "mvp_owner"
+      },
+      {
+        "already_active": false,
+        "mapped_code": "senior_reviewer",
+        "membership_id": 11,
+        "organization_id": 3,
+        "organization_slug": "clmone-mvp",
+        "profile_role": "SENIOR_ASSOCIATE",
+        "rule_id": "R1-MAP-02",
+        "user_id": 11,
+        "username": "mvp_reviewer"
+      },
+      {
+        "already_active": false,
+        "mapped_code": "paralegal_reviewer",
+        "membership_id": 14,
+        "organization_id": 4,
+        "organization_slug": "controlled-pilot-org",
+        "profile_role": "PARALEGAL",
+        "rule_id": "R1-MAP-04",
+        "user_id": 14,
+        "username": "pilot_requester"
+      },
+      {
+        "already_active": false,
+        "mapped_code": "legal_reviewer",
+        "membership_id": 15,
+        "organization_id": 4,
+        "organization_slug": "controlled-pilot-org",
+        "profile_role": "ASSOCIATE",
+        "rule_id": "R1-MAP-03",
+        "user_id": 15,
+        "username": "pilot_legal"
+      },
+      {
+        "already_active": false,
+        "mapped_code": "senior_reviewer",
+        "membership_id": 18,
+        "organization_id": 5,
+        "organization_slug": "payrollminds-demo",
+        "profile_role": "SENIOR_ASSOCIATE",
+        "rule_id": "R1-MAP-02",
+        "user_id": 18,
+        "username": "payrollminds_legal"
+      },
+      {
+        "already_active": false,
+        "mapped_code": "legal_reviewer",
+        "membership_id": 19,
+        "organization_id": 5,
+        "organization_slug": "payrollminds-demo",
+        "profile_role": "ASSOCIATE",
+        "rule_id": "R1-MAP-03",
+        "user_id": 19,
+        "username": "payrollminds_procurement"
+      }
+    ],
+    "to_create_count": 12
+  },
+  "final_after_reapply": {
+    "AMBIGUOUS": 5,
+    "AMBIGUOUS_ADMIN_missing_or_active_label": 8,
+    "CERTAIN_MATCH": 12,
+    "CERTAIN_MISSING": 0,
+    "CROSS_TENANT_ANOMALY": 0,
+    "DIFFERENT_USER": 0,
+    "LEGACY_ONLY": 0,
+    "MATCH_ACTIVE": 12,
+    "MISSING": 8,
+    "active_pra_total": 12,
+    "ambiguous_mapping": 8,
+    "legacy_process_admin_active": 0,
+    "legacy_without_canonical": 8,
+    "resolver": {
+      "AMBIGUOUS": 5,
+      "MATCH": 89
+    }
+  },
+  "flags": {
+    "PROCESS_ROLE_CANONICAL_RESOLVER_ENABLED": false,
+    "PROCESS_ROLE_PARITY_REPORTING_ENABLED": false,
+    "PROCESS_ROLE_RESOLVER_PARITY_ENABLED": false,
+    "PROCESS_ROLE_SHADOW_WRITE_ENABLED": false
+  },
+  "reapply": {
+    "created_count": 12,
+    "mode": "apply",
+    "remediation_run_id": "b934dbea-ec43-473c-a4da-5081ce0a0e12",
+    "skipped_count": 0
+  },
+  "rollback": {
+    "deactivated": [
+      {
+        "assignment_id": 1,
+        "mapped_code": "partner_reviewer",
+        "organization_id": 1,
+        "organization_slug": "demo-firm",
+        "user_id": 2,
+        "username": "jsmith"
+      },
+      {
+        "assignment_id": 2,
+        "mapped_code": "senior_reviewer",
+        "organization_id": 1,
+        "organization_slug": "demo-firm",
+        "user_id": 3,
+        "username": "sjones"
+      },
+      {
+        "assignment_id": 3,
+        "mapped_code": "paralegal_reviewer",
+        "organization_id": 1,
+        "organization_slug": "demo-firm",
+        "user_id": 4,
+        "username": "mwilson"
+      },
+      {
+        "assignment_id": 4,
+        "mapped_code": "partner_reviewer",
+        "organization_id": 2,
+        "organization_slug": "clmone-demo",
+        "user_id": 6,
+        "username": "demo_partner"
+      },
+      {
+        "assignment_id": 5,
+        "mapped_code": "senior_reviewer",
+        "organization_id": 2,
+        "organization_slug": "clmone-demo",
+        "user_id": 7,
+        "username": "demo_associate"
+      },
+      {
+        "assignment_id": 6,
+        "mapped_code": "paralegal_reviewer",
+        "organization_id": 2,
+        "organization_slug": "clmone-demo",
+        "user_id": 8,
+        "username": "demo_paralegal"
+      },
+      {
+        "assignment_id": 7,
+        "mapped_code": "legal_reviewer",
+        "organization_id": 3,
+        "organization_slug": "clmone-mvp",
+        "user_id": 10,
+        "username": "mvp_owner"
+      },
+      {
+        "assignment_id": 8,
+        "mapped_code": "senior_reviewer",
+        "organization_id": 3,
+        "organization_slug": "clmone-mvp",
+        "user_id": 11,
+        "username": "mvp_reviewer"
+      },
+      {
+        "assignment_id": 9,
+        "mapped_code": "paralegal_reviewer",
+        "organization_id": 4,
+        "organization_slug": "controlled-pilot-org",
+        "user_id": 14,
+        "username": "pilot_requester"
+      },
+      {
+        "assignment_id": 10,
+        "mapped_code": "legal_reviewer",
+        "organization_id": 4,
+        "organization_slug": "controlled-pilot-org",
+        "user_id": 15,
+        "username": "pilot_legal"
+      },
+      {
+        "assignment_id": 11,
+        "mapped_code": "senior_reviewer",
+        "organization_id": 5,
+        "organization_slug": "payrollminds-demo",
+        "user_id": 18,
+        "username": "payrollminds_legal"
+      },
+      {
+        "assignment_id": 12,
+        "mapped_code": "legal_reviewer",
+        "organization_id": 5,
+        "organization_slug": "payrollminds-demo",
+        "user_id": 19,
+        "username": "payrollminds_procurement"
+      }
+    ],
+    "deactivated_count": 12,
+    "mode": "rollback",
+    "remediation_run_id": "80ec4528-60e5-410f-964a-219714361c16",
+    "timestamp": "2026-07-22T19:21:16.142914+00:00"
+  }
+}

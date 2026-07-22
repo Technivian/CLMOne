@@ -1,0 +1,144 @@
+{
+  "already_active": [],
+  "already_active_count": 0,
+  "authorized_count": 12,
+  "discovered_count": 12,
+  "flags_must_remain_false": true,
+  "mode": "dry-run",
+  "scope_valid": true,
+  "to_create": [
+    {
+      "already_active": false,
+      "mapped_code": "partner_reviewer",
+      "membership_id": 2,
+      "organization_id": 1,
+      "organization_slug": "demo-firm",
+      "profile_role": "PARTNER",
+      "rule_id": "R1-MAP-01",
+      "user_id": 2,
+      "username": "jsmith"
+    },
+    {
+      "already_active": false,
+      "mapped_code": "senior_reviewer",
+      "membership_id": 3,
+      "organization_id": 1,
+      "organization_slug": "demo-firm",
+      "profile_role": "SENIOR_ASSOCIATE",
+      "rule_id": "R1-MAP-02",
+      "user_id": 3,
+      "username": "sjones"
+    },
+    {
+      "already_active": false,
+      "mapped_code": "paralegal_reviewer",
+      "membership_id": 4,
+      "organization_id": 1,
+      "organization_slug": "demo-firm",
+      "profile_role": "PARALEGAL",
+      "rule_id": "R1-MAP-04",
+      "user_id": 4,
+      "username": "mwilson"
+    },
+    {
+      "already_active": false,
+      "mapped_code": "partner_reviewer",
+      "membership_id": 6,
+      "organization_id": 2,
+      "organization_slug": "clmone-demo",
+      "profile_role": "PARTNER",
+      "rule_id": "R1-MAP-01",
+      "user_id": 6,
+      "username": "demo_partner"
+    },
+    {
+      "already_active": false,
+      "mapped_code": "senior_reviewer",
+      "membership_id": 7,
+      "organization_id": 2,
+      "organization_slug": "clmone-demo",
+      "profile_role": "SENIOR_ASSOCIATE",
+      "rule_id": "R1-MAP-02",
+      "user_id": 7,
+      "username": "demo_associate"
+    },
+    {
+      "already_active": false,
+      "mapped_code": "paralegal_reviewer",
+      "membership_id": 8,
+      "organization_id": 2,
+      "organization_slug": "clmone-demo",
+      "profile_role": "PARALEGAL",
+      "rule_id": "R1-MAP-04",
+      "user_id": 8,
+      "username": "demo_paralegal"
+    },
+    {
+      "already_active": false,
+      "mapped_code": "legal_reviewer",
+      "membership_id": 10,
+      "organization_id": 3,
+      "organization_slug": "clmone-mvp",
+      "profile_role": "ASSOCIATE",
+      "rule_id": "R1-MAP-03",
+      "user_id": 10,
+      "username": "mvp_owner"
+    },
+    {
+      "already_active": false,
+      "mapped_code": "senior_reviewer",
+      "membership_id": 11,
+      "organization_id": 3,
+      "organization_slug": "clmone-mvp",
+      "profile_role": "SENIOR_ASSOCIATE",
+      "rule_id": "R1-MAP-02",
+      "user_id": 11,
+      "username": "mvp_reviewer"
+    },
+    {
+      "already_active": false,
+      "mapped_code": "paralegal_reviewer",
+      "membership_id": 14,
+      "organization_id": 4,
+      "organization_slug": "controlled-pilot-org",
+      "profile_role": "PARALEGAL",
+      "rule_id": "R1-MAP-04",
+      "user_id": 14,
+      "username": "pilot_requester"
+    },
+    {
+      "already_active": false,
+      "mapped_code": "legal_reviewer",
+      "membership_id": 15,
+      "organization_id": 4,
+      "organization_slug": "controlled-pilot-org",
+      "profile_role": "ASSOCIATE",
+      "rule_id": "R1-MAP-03",
+      "user_id": 15,
+      "username": "pilot_legal"
+    },
+    {
+      "already_active": false,
+      "mapped_code": "senior_reviewer",
+      "membership_id": 18,
+      "organization_id": 5,
+      "organization_slug": "payrollminds-demo",
+      "profile_role": "SENIOR_ASSOCIATE",
+      "rule_id": "R1-MAP-02",
+      "user_id": 18,
+      "username": "payrollminds_legal"
+    },
+    {
+      "already_active": false,
+      "mapped_code": "legal_reviewer",
+      "membership_id": 19,
+      "organization_id": 5,
+      "organization_slug": "payrollminds-demo",
+      "profile_role": "ASSOCIATE",
+      "rule_id": "R1-MAP-03",
+      "user_id": 19,
+      "username": "payrollminds_procurement"
+    }
+  ],
+  "to_create_count": 12
+}
