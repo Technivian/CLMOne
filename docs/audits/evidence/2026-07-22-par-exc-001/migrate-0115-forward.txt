@@ -1,0 +1,5 @@
+# migrate contracts 0115 forward (fresh sqlite)
+# Applied contracts.0114_exception_request_decision... OK
+# Applied contracts.0115_exception_correlation_id... OK
+# tables: contracts_exceptiondecision, contracts_exceptionrequest
+# OK
