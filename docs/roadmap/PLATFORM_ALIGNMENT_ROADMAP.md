@@ -402,24 +402,24 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 
 | Field | Content |
 |---|---|
-| Status | **In progress** (2026-07-22) — catalogue `0112` + process-role adapter `0113` delivered; production authority still legacy; Completion deferred |
+| Status | **In progress** (2026-07-22) — catalogue `0112` + adapter `0113` + feature-flagged shadow sync delivered; production authority still legacy; Completion deferred |
 | Priority | P1 |
 | Problem | Dual role systems (`OrganizationMembership` vs `UserProfile.Role`) conflict with canonical Role Definition. |
 | Governance source | CANONICAL_DOMAIN_MODEL §2.5; SECURITY_PRIVACY_ACCESS_AND_AUDIT |
-| Current evidence | `docs/audits/evidence/2026-07-22-par-id-001/` — ROLE_USAGE_MATRIX, TARGET_ROLE_MODEL, PROCESS_ROLE_MAPPING_MATRIX, 0112/0113 authorization |
+| Current evidence | `docs/audits/evidence/2026-07-22-par-id-001/` — ROLE_USAGE_MATRIX, TARGET_ROLE_MODEL, PROCESS_ROLE_MAPPING_MATRIX, SHADOW_WRITE_PATH_MATRIX, 0112/0113 auth + Slice 3 auth request |
 | Target outcome | Single terminology and mapping for process vs org roles; no silent privilege escalation |
 | Dependencies | ADR-0014 Accepted (**met**); PAR-SEC-003 Closed (**met**); privilege/resolver cutover needs separate authorization |
 | Decision required | **ADR-0014 Accepted** — privilege/resolver cutover still needs separate implementation authorization |
-| Migration impact | `0112` catalogue + `0113` org-scoped `ProcessRoleAssignment` dual-read adapter; production resolvers unchanged |
-| Security and permissions impact | **High** — labels grant no permissions; dual-read non-authoritative; runtime authz unchanged |
-| Audit requirements | `role.definition.*`; `role.assignment.created/deactivated/repaired/legacy_mapped/drift_detected` |
+| Migration impact | `0112` catalogue + `0113` org-scoped `ProcessRoleAssignment`; Slice 3 adds no migration; production resolvers unchanged |
+| Security and permissions impact | **High** — labels grant no permissions; dual-read/shadow non-authoritative; runtime authz unchanged |
+| Audit requirements | `role.definition.*`; `role.assignment.created/deactivated/legacy_mapped/drift_detected/shadow_sync_failed` |
 | UX requirements | Consistent role labels in My Work, Approvals, Admin (copy audit residual) |
-| Tests | Characterization (19) + catalogue + process-role assignment suites |
-| Rollback strategy | Reverse 0113 (deletes LEGACY_BACKFILL) then 0112; feature flag reserved for future cutover |
-| Acceptance criteria | Accepted ADR (**met**); additive catalogue (**met**); org-scoped adapter + dual-read (**met**); runtime cutover criteria **not yet** |
+| Tests | Characterization (19) + catalogue + assignment + shadow sync + isolation (75) + approvals (33) + WF-010 |
+| Rollback strategy | Flags default off; reverse 0113 then 0112 if needed; no resolver flip to roll back |
+| Acceptance criteria | Accepted ADR (**met**); additive catalogue (**met**); org-scoped adapter + dual-read (**met**); feature-flagged shadow sync + parity (**met**); runtime cutover criteria **not yet** |
 | Evidence | `docs/audits/evidence/2026-07-22-par-id-001/` |
-| Accepted ADR | **ADR-0014** + 0112/0113 implementation authorizations |
-| PR/commits | PR #51 `21e65f09`; PR #53 `0bf7c9dc`; PR #54 `58966de7`; Slice 3 open as PR #55; visual remediation PR #52 `3c5e628b` on `main` |
+| Accepted ADR | **ADR-0014** + 0112/0113 implementation authorizations; Slice 3 auth **Authorized** (non-authoritative; merge recorded separately) |
+| PR/commits | PR #51 `21e65f09`; PR #53 `0bf7c9dc`; PR #54 `58966de7`; PR #52 `3c5e628b`; PR #55 shadow sync; evidence PR #57 `2f14c034` |
 | Last updated | 2026-07-22 |
 
 ### PAR-EXC-001 — Governed Exception
@@ -625,3 +625,4 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | 2026-07-22 | **PAR-ID-001 process-role adapter:** migration `0113` `ProcessRoleAssignment` + dual-read parity; production authority still legacy resolvers; privilege/resolver cutover **not** authorized |
 | 2026-07-22 | **PR #54 merged** to `main` @ `58966de7` |
 | 2026-07-22 | **PR #52 merged** to `main` @ `3c5e628b` — PR #50 visual + E2E remediation closed; evidence `docs/audits/evidence/2026-07-22-pr52-merge/` |
+| 2026-07-22 | **PAR-ID-001 Slice 3:** feature-flagged shadow sync (`PROCESS_ROLE_SHADOW_WRITE_ENABLED`) + `process_role_parity_report`; parity evidence; production resolvers still legacy; next cutover slice needs separate authorization |
