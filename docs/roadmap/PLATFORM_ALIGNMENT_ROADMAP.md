@@ -403,7 +403,7 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 
 | Field | Content |
 |---|---|
-| Status | **In progress** (2026-07-22) — **R0 Completed**; **R1 Completed**; **R2 Not required on verified corpus**; **R3 Deferred**; **R4 Completed, PASS** ([`…-par-id-001-r4-staging/`](../audits/evidence/2026-07-22-par-id-001-r4-staging/)); **R5 Blocked**, awaiting explicit canonical-authority cutover authorization — **R5 authorization and execution-readiness package prepared** ([`…-par-id-001-r5-canonical-authority-cutover/`](../audits/evidence/2026-07-22-par-id-001-r5-canonical-authority-cutover/); votes **Requested**; not authorized); committed `PROCESS_ROLE_*` defaults remain **false**; legacy resolver remains authoritative |
+| Status | **In progress** (2026-07-22) — **R0 Completed**; **R1 Completed**; **R2 Not required on verified corpus**; **R3 Deferred**; **R4 Completed, PASS** ([`…-par-id-001-r4-staging/`](../audits/evidence/2026-07-22-par-id-001-r4-staging/)); **R5 Blocked**, awaiting explicit canonical-authority cutover authorization — **R5 authorization and execution-readiness package prepared and merged** (PR #72 @ `198ed13c`) ([`…-par-id-001-r5-canonical-authority-cutover/`](../audits/evidence/2026-07-22-par-id-001-r5-canonical-authority-cutover/); votes **Requested**; not authorized); committed `PROCESS_ROLE_*` defaults remain **false**; legacy resolver remains authoritative |
 | Priority | P1 |
 | Problem | Dual role systems (`OrganizationMembership` vs `UserProfile.Role`) conflict with canonical Role Definition. |
 | Governance source | CANONICAL_DOMAIN_MODEL §2.5; SECURITY_PRIVACY_ACCESS_AND_AUDIT |
@@ -420,9 +420,9 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | Acceptance criteria | Accepted ADR (**met**); additive catalogue (**met**); org-scoped adapter + dual-read (**met**); feature-flagged shadow sync + parity (**met**); R4 staging diagnostic (**PASS**); R5 canonical authority **not** authorized |
 | Evidence | R0/R1 + R4 PASS + R5 prep package (votes Requested) |
 | Accepted ADR | **ADR-0014** |
-| PR/commits | PR #51–#59, #62, #63, #68; R4+R5 docs on `cursor/par-id-001-r5-authority-cutover-prep` |
+| PR/commits | PR #51–#59, #62, #63, #68; R4+R5 prep PR #72 merged `198ed13c` |
 | Last updated | 2026-07-22 |
-| Gate map | R0 **Completed** · R1 **Completed** · R2 **Not required on verified corpus** · R3 **Deferred** · R4 **Completed, PASS** · R5 **Blocked** (prep package; awaiting explicit authorization) |
+| Gate map | R0 **Completed** · R1 **Completed** · R2 **Not required on verified corpus** · R3 **Deferred** · R4 **Completed, PASS** · R5 **Blocked** (prep package merged @ `198ed13c`; awaiting explicit authorization) |
 | Next | Carry Motions 1–4 on [`CANONICAL_RESOLVER_AUTHORITY_CUTOVER_AUTHORIZATION.md`](../audits/evidence/2026-07-22-par-id-001-r5-canonical-authority-cutover/CANONICAL_RESOLVER_AUTHORITY_CUTOVER_AUTHORIZATION.md) before any enablement; ADMIN → **PAR-ID-002**; parallel: **PAR-EXC-001** |
 
 ### PAR-EXC-001 — Governed Exception
@@ -651,6 +651,7 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | 2026-07-22 | **PR #68 merged** to `main` @ `fb8f7d84` (2026-07-22T19:38:30Z); reviewed HEAD `15acc520`; R1 CERTAIN remediation on main; flags remain default off; PAR-ID-001 remains **In progress** |
 | 2026-07-22 | **PAR-ID-001 R4 staging diagnostic activation Authorized (bundled) and PASS:** Product `19:41:15Z` / Engineering `19:41:16Z` / Security `19:41:17Z` (conditions acknowledged yes); named env `par-id-001-r4-staging-equivalent`; activation `19:44:04Z`; resolver MATCH **89** / AMBIGUOUS **5** / critical **0**; assignment CERTAIN missing **0** / AMBIGUOUS ADMIN **8**; flag-off rollback PASS; evidence review Product/Eng/Sec `19:49:25–27Z`; committed defaults remain false; R0 Completed / R1 Completed / R2 Not required on verified corpus / R3 Deferred / R4 **Completed, PASS** / R5 **Blocked**; PAR-ID-001 remains **In progress** |
 | 2026-07-22 | **PAR-ID-001 R5 authorization and execution-readiness package prepared** (docs only): draft/requested [`CANONICAL_RESOLVER_AUTHORITY_CUTOVER_AUTHORIZATION.md`](../audits/evidence/2026-07-22-par-id-001-r5-canonical-authority-cutover/CANONICAL_RESOLVER_AUTHORITY_CUTOVER_AUTHORIZATION.md); proposed env `par-id-001-r5-staging-equivalent` (production out of scope); Motions 1–4 votes **Requested**; no votes invented; no cutover executed; canonical authority remains disabled; R5 remains **Blocked**; PAR-ID-001 remains **In progress** |
+| 2026-07-22 | **PR #72 merged** to `main` @ `198ed13c` (2026-07-22T20:20:15Z); reviewed tip `3fcc3f99`; R4 evidence + R5 prep package on main; Motions 1–4 remain **Requested**; R5 remains **Blocked**; canonical authority disabled; flags default off; PAR-ID-001 remains **In progress** |
 
 
 | 2026-07-22 | **ADR-0015 Accepted** (Product `19:12:31Z` / Engineering `19:12:35Z` / Security `19:12:39Z` Approve with conditions); Motion 2 authorizes default-off six-path dual-write; controlled-pilot activation **not** authorized; PAR-EXC-001 remains **In progress** |
