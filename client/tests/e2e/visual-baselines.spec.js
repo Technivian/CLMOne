@@ -40,6 +40,9 @@ async function capture(page, path, marker, name) {
       page.locator('.cc-v3-table tbody td:last-child'),
     ];
   }
+  if (name === 'list') {
+    await expect(page.locator('#contracts-tbody')).not.toContainText('Loading contracts', { timeout: 15000 });
+  }
   await expect(page).toHaveScreenshot(`phase-1-${name}.png`, options);
 }
 
