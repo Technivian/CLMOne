@@ -16,8 +16,8 @@ Statuses: Completed · In progress · Blocked · Deferred by approved decision �
 |---|---:|---|
 | **Unique PAR IDs in this roadmap** | **24** | All distinct `PAR-*` identifiers below |
 | Completed unique PAR IDs | 14 | Includes `PAR-AUD-001`, `PAR-CORE-001`, `PAR-CORE-003`, `PAR-CORE-002`, `PAR-DOC-001`, `PAR-APR-001`, `PAR-SEC-003` |
-| In progress | 1 | `PAR-ID-001` — Role Definition reconciliation (Milestone 3) |
-| Future / residual unique PAR IDs | 9 | Includes `PAR-SEC-002` (PAR-SEC-003 Closed) |
+| In progress | 2 | `PAR-EXC-001` (this slice); `PAR-ID-001` residual (R0/activation — not advanced here) |
+| Future / residual unique PAR IDs | 8 | Includes `PAR-SEC-002` (PAR-SEC-003 Closed); `PAR-ID-002` residual not started |
 | Non-PAR Milestone 1 follow-ups | 1 | Playwright DPA bootstrap (`M1-E2E-001`) |
 
 ### Bundling rule for `PAR-AUD-001`
@@ -28,9 +28,9 @@ Statuses: Completed · In progress · Blocked · Deferred by approved decision �
 
 **Completed (14):** `PAR-WF-001`, `PAR-AUD-001`, `PAR-WF-002`, `PAR-WF-003`, `PAR-WF-005`, `PAR-NAV-001`, `PAR-SEC-001`, `PAR-WORK-001`, `PAR-CORE-001`, `PAR-CORE-003`, `PAR-CORE-002`, `PAR-DOC-001`, `PAR-APR-001`, `PAR-SEC-003`
 
-**In progress (1):** `PAR-ID-001`
+**In progress (2):** `PAR-EXC-001`, `PAR-ID-001`
 
-**Future / residual (9):** `PAR-SEC-002`, `PAR-WF-010`, `PAR-EXC-001`, `PAR-DATA-001`, `PAR-OBL-001`, `PAR-OBL-002`, `PAR-AI-001`, `PAR-ENT-001`, `PAR-INT-001`
+**Future / residual (8):** `PAR-SEC-002`, `PAR-WF-010`, `PAR-DATA-001`, `PAR-OBL-001`, `PAR-OBL-002`, `PAR-AI-001`, `PAR-ENT-001`, `PAR-INT-001`
 
 **Blocked (1):** `PAR-WF-010` — discovery complete; production cutover blocked pending Accepted ADR-0012
 
@@ -38,11 +38,11 @@ Statuses: Completed · In progress · Blocked · Deferred by approved decision �
 
 ## Immediate next items
 
-1. **PAR-ID-001** — Role Definition reconciliation (Milestone 3) — **In progress** (R0 inventory **PASS**; R1 CERTAIN non-ADMIN remediation auth **Requested** — 12 rows; activation pending; flags default off; ADMIN deferred under P1+P3)
-
-
-2. **PAR-APR-002** — legacy approval cutover — **Planned** (blocked on owner + cutover plan)
-3. **PAR-WF-010** — production cutover **blocked** pending Accepted ADR-0012 (discovery complete — see evidence)
+1. **PAR-EXC-001** — Governed Exception (Milestone 3) — **In progress** (foundation PR #66; dual-write follow-up default-off; ADR-0015 votes **Requested**)
+2. **PAR-ID-001** — Role Definition reconciliation — residual **In progress** (R0 inventory **PASS** verified 20/4/8; activation pending; R1+ not authorized; **not** advanced by this PAR-EXC slice)
+3. **PAR-APR-002** — legacy approval cutover — **Planned** — **not started this slice**
+4. **PAR-WF-010** — production cutover **blocked** pending Accepted ADR-0012 — **not started this slice**
+5. **PAR-ID-002** — ADMIN process-role reconciliation — Future residual — **not started this slice**
 
 Parallel Milestone 1 hygiene:
 
@@ -116,7 +116,7 @@ Parallel Milestone 1 hygiene:
 | PAR-APR-001 | Approval Requirement/Decision split | P1 | **Completed** |
 | PAR-APR-002 | Legacy approval cutover | P1 | **Planned** |
 | PAR-ID-001 | Role Definition reconciliation | P1 | **In progress** |
-| PAR-EXC-001 | Governed Exception | P1 | Future |
+| PAR-EXC-001 | Governed Exception | P1 | **In progress** |
 
 ### Milestone 4 — Canonical data and post-signature
 
@@ -409,44 +409,46 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | Problem | Dual role systems (`OrganizationMembership` vs `UserProfile.Role`) conflict with canonical Role Definition. |
 | Governance source | CANONICAL_DOMAIN_MODEL §2.5; SECURITY_PRIVACY_ACCESS_AND_AUDIT |
 | Current evidence | `docs/audits/evidence/2026-07-22-par-id-001/` + `…-pr58-merge/` + `…-remediation-decision/` (incl. `R0_EXIT_REPORT.md`); activation package **Requested**; R0 **PASS** |
-
 | Target outcome | Single terminology and mapping for process vs org roles; no silent privilege escalation |
-| Dependencies | ADR-0014 Accepted (**met**); PAR-SEC-003 Closed (**met**); privilege/resolver cutover needs separate authorization |
-| Decision required | **ADR-0014 Accepted** — privilege/resolver cutover still needs separate implementation authorization |
-| Migration impact | `0112` catalogue + `0113` org-scoped `ProcessRoleAssignment`; Slice 3 adds no migration; production resolvers unchanged |
-| Security and permissions impact | **High** — labels grant no permissions; dual-read/shadow non-authoritative; runtime authz unchanged |
-| Audit requirements | `role.definition.*`; `role.assignment.created/deactivated/legacy_mapped/drift_detected/shadow_sync_failed` |
-| UX requirements | Consistent role labels in My Work, Approvals, Admin (copy audit residual) |
-| Tests | Characterization (19) + catalogue + assignment + shadow sync + isolation (75) + approvals (33) + WF-010 |
-| Rollback strategy | Flags default off; reverse 0113 then 0112 if needed; no resolver flip to roll back |
-| Acceptance criteria | Accepted ADR (**met**); additive catalogue (**met**); org-scoped adapter + dual-read (**met**); feature-flagged shadow sync + parity (**met**); runtime cutover criteria **not yet** |
-| Evidence | `docs/audits/evidence/2026-07-22-par-id-001/` |
-| Accepted ADR | **ADR-0014** + 0112/0113 implementation authorizations; Slice 3 auth **Authorized** (non-authoritative; merge recorded separately) |
-| PR/commits | PR #51 `21e65f09`; PR #53 `0bf7c9dc`; PR #54 `58966de7`; PR #52 `3c5e628b`; PR #55 `bb881ac2`; evidence PR #57 `2f14c034`; merge evidence PR #59 `0d9712ca`; PR #58 `598b7a12` (resolver parity); PR [#62](https://github.com/Technivian/CLMOne/pull/62) (canonical authority default-off) |
+| Dependencies | ADR-0014 Accepted (**met**); PAR-SEC-003 Closed (**met**) |
+| Decision required | **ADR-0014 Accepted** (**met**) |
+| Migration impact | `0112` catalogue + `0113` org-scoped `ProcessRoleAssignment` |
+| Security and permissions impact | Labels grant no permissions; runtime cutover default-off with allowlist; ADMIN deferred |
+| Audit requirements | `role.definition.*`; `role.assignment.*`; `role.resolver.*` |
+| UX requirements | Consistent role labels (copy audit residual) |
+| Tests | Characterization + catalogue + assignment + shadow + parity + canonical authority |
+| Rollback strategy | Flags default off; proven rollback in activation evidence |
+| Acceptance criteria | Accepted ADR (**met**); additive catalogue (**met**); org-scoped adapter + dual-read (**met**); feature-flagged shadow sync + parity (**met**); runtime cutover criteria **partial** (implementation merged default-off; activation + R0 pending) |
+| Evidence | `docs/audits/evidence/2026-07-22-par-id-001/` + remediation-decision evidence |
+| Accepted ADR | **ADR-0014** |
+| PR/commits | PR #51–#59, #62, #63; evidence under `docs/audits/evidence/2026-07-22-par-id-001/` |
 | Last updated | 2026-07-22 |
+| Next | R0 **PASS**; activation pending; R1+ not authorized; ADMIN → **PAR-ID-002**; programme parallel: **PAR-EXC-001** |
 
 ### PAR-EXC-001 — Governed Exception
 
 | Field | Content |
 |---|---|
-| Status | Future roadmap (Milestone 3) — **not Completed** |
+| Status | **In progress** (2026-07-22) — discovery + canonical foundation delivered; ADR-0015 **Proposed** (not Accepted); production path cutover **not** done |
 | Priority | P1 |
 | Problem | No first-class governed Exception; risk/actions are scattered. |
-| Governance source | CANONICAL_DOMAIN_MODEL §2.33; PRODUCT_OPERATING_MODEL exception handling |
-| Current evidence | RiskSignal / ad hoc actions; gap audit Missing/Medium–High path |
-| Target outcome | Governed Exception object with approval/audit path and clear lifecycle |
-| Dependencies | PAR-APR-001 helpful; policy owners |
-| Decision required | **PDR** for Exception vocabulary and authority |
-| Migration impact | New model + optional backfill from RiskLog/signals |
-| Security and permissions impact | Exception raise/resolve restricted roles |
-| Audit requirements | Create/resolve/waive audited |
-| UX requirements | Exception surfaces outside hero clutter; actionable queues |
-| Tests | Lifecycle, permissions, isolation |
-| Rollback strategy | Feature-flag new object; reverse additive migration |
-| Acceptance criteria | Accepted PDR; Exception CRUD governed; tests + audit evidence |
-| Evidence | TBD |
-| PR/commits | TBD |
+| Governance source | CANONICAL_DOMAIN_MODEL §2.33; gap G-DOM-03 |
+| Current evidence | `docs/audits/evidence/2026-07-22-par-exc-001/` |
+| Target outcome | Governed `ExceptionRequest` / `ExceptionDecision` with owner, expiry, authority, compensating controls, privilege tokens, immutable history, tenant isolation |
+| Dependencies | PAR-APR-001 pattern helpful (**met**); ADR-0015 acceptance; policy/Security owners for cutover |
+| Decision required | **ADR-0015 Proposed** — Acceptance required before production path cutover |
+| Migration impact | Additive `0114_exception_request_decision`; no legacy backfill; dual-write later under authorization |
+| Security and permissions impact | Server-side authz; Critical security bypass requires explicit Security approval; cross-tenant prohibited |
+| Audit requirements | `exception.request.*`, `exception.decision.recorded`, `exception.cross_tenant.denied` |
+| UX requirements | Exception surfaces deferred until cutover; no hero clutter |
+| Tests | `tests/test_par_exc_001_exception.py` (invariants + legacy characterization) |
+| Rollback strategy | Reverse additive `0114` while no production writers; future dual-write flags default off |
+| Acceptance criteria | Accepted ADR; governed production paths for priority legacy surfaces; expired exceptions stop applying; tests + audit evidence — **not met** (keep In progress) |
+| Evidence | `docs/audits/evidence/2026-07-22-par-exc-001/` |
+| Proposed ADR | **ADR-0015** (not Accepted) |
+| PR/commits | This branch |
 | Last updated | 2026-07-22 |
+| Explicit non-starts | PAR-APR-002, PAR-WF-010, PAR-ID-002 |
 
 ---
 
