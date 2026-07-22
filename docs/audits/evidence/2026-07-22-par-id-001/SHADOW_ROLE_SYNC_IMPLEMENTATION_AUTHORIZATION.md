@@ -4,7 +4,8 @@
 **ADR:** ADR-0014 **Accepted**  
 **Prerequisite:** PR [#54](https://github.com/Technivian/CLMOne/pull/54) merged to `main` @ `58966de7`  
 **Request timestamp:** 2026-07-22T11:40:00Z  
-**Status:** **Partial** — Product Approve recorded; Engineering and Security advisory votes still pending
+**Authorization complete timestamp:** 2026-07-22T13:15:23Z  
+**Status:** **Authorized** — Product, Engineering, and Security advisory votes recorded; merge still requires separate explicit authorization
 
 ---
 
@@ -15,10 +16,10 @@
 | Approver | GitHub identity | Governance capacity | Authority basis | Vote | Consent |
 |---|---|---|---|---|---|
 | Haroon Wahed | @haroonwahed | Product governance | CODEOWNERS `/docs/`; Charter v2.0 | **Approve** | Recorded 2026-07-22T13:02:57Z (verbatim below) |
-| Technivian | @Technivian | Engineering governance | CODEOWNERS `/contracts/`; PDR-0003 | **Requested** | Pending |
-| Security & privacy (advisory) | @Technivian | Security review capacity | SECURITY_PRIVACY_ACCESS_AND_AUDIT; Charter §7 | **Requested (advisory, with conditions)** | Pending |
+| Technivian | @Technivian | Engineering governance | CODEOWNERS `/contracts/`; PDR-0003 | **Approve** | Recorded 2026-07-22T13:13:23Z (verbatim below) |
+| Security & privacy (advisory) | @Technivian | Security review capacity | SECURITY_PRIVACY_ACCESS_AND_AUDIT; Charter §7 | **Approve with conditions** | Recorded 2026-07-22T13:15:23Z (verbatim below) |
 
-**Result:** **Not yet authorized** — Engineering and Security advisory votes remain pending. Do not mark ready or merge until all required votes are recorded.
+**Result:** **Authorized** for the requested non-authoritative shadow-sync slice only. **Does not authorize** PR #55 merge or resolver-parity implementation.
 
 ---
 
@@ -27,7 +28,7 @@
 ### Product — @haroonwahed (accepted)
 
 Source: direct user-provided authorization text  
-Received and recorded as provided:
+Timestamp: `2026-07-22T13:02:57Z`
 
 ```text
 SHADOW ROLE SYNC IMPLEMENTATION AUTHORIZATION — 2026-07-22
@@ -57,38 +58,81 @@ This approval does not authorize:
 - Navigation behaviour changes
 - PAR-ID-001 resolver-parity implementation
 - PR merge
-
-Engineering and Security advisory votes from @Technivian remain pending and must be provided directly with their own ISO-8601 UTC timestamps and conditions.
-
-After all required votes are recorded, the agent is authorized to:
-1. Record the votes verbatim in SHADOW_ROLE_SYNC_IMPLEMENTATION_AUTHORIZATION.md.
-2. Fix the pr-release-evidence checklist.
-3. Re-run required CI checks.
-4. Mark PR #55 ready for review only when authorization is complete and all required checks are green.
-
-A separate explicit authorization is required before merging PR #55.
 ```
 
-### Engineering — @Technivian
+### Engineering — @Technivian (accepted)
 
-**Pending.** Must be provided directly with ISO-8601 UTC timestamp.
+Source: direct user-provided authorization text  
+Timestamp: `2026-07-22T13:13:23Z`
 
-### Security advisory — @Technivian
+```text
+@Technivian Engineering: Approve
+Timestamp: 2026-07-22T13:13:23Z
 
-**Pending.** Must be provided directly with ISO-8601 UTC timestamp, conditions text, conditions acknowledged, and non-authoritative confirmation.
+Engineering confirms that the approved slice is limited to:
+- Shadow role synchronization
+- Parity reporting
+- Audit and evidence updates
+- Automated tests
+- Roadmap updates
+
+Engineering conditions acknowledged: yes
+Slice remains non-authoritative: yes
+Feature flags remain default off: yes
+```
+
+### Security advisory — @Technivian (accepted)
+
+Source: direct user-provided authorization text  
+Timestamp: `2026-07-22T13:15:23Z`
+
+```text
+@Technivian Security advisory: Approve with conditions
+Timestamp: 2026-07-22T13:15:23Z
+
+Security conditions:
+
+1. Shadow role data must not influence production authorization, permissions, memberships, navigation, assignment resolution, or runtime behaviour.
+2. PROCESS_ROLE_SHADOW_WRITE_ENABLED and PROCESS_ROLE_PARITY_REPORTING_ENABLED must remain disabled by default.
+3. Shadow writes and parity reporting must remain tenant-scoped and permission-safe.
+4. No restricted role, membership, or organization metadata may leak through logs, reports, exports, errors, metrics, or audit summaries.
+5. Parity output must be diagnostic only and must not automatically repair or overwrite authoritative role data.
+6. Enabling either feature flag must be explicit, reversible, auditable, and limited to an approved environment or workspace.
+7. Any parity mismatch must be recorded without changing authoritative production state.
+8. Resolver cutover requires a separate authorization, threat review, test matrix, and rollback plan.
+9. This approval does not authorize merging PR #55.
+
+Conditions acknowledged: yes
+Slice remains non-authoritative: yes
+Feature flags remain default off: yes
+```
+
+Combined closing exclusions from the Engineering/Security authorization package (also recorded):
+
+```text
+This authorization does not approve:
+- Production resolver cutover
+- Permission or privilege changes
+- Membership-authority changes
+- Navigation behaviour changes
+- Automatic parity repair
+- PAR-ID-001 resolver-parity implementation
+- PR merge
+```
 
 ---
 
-## Requested scope
+## Authorized scope
 
-| Item | Requested |
+| Item | Authorized |
 |---|---|
 | Feature flags `PROCESS_ROLE_SHADOW_WRITE_ENABLED`, `PROCESS_ROLE_PARITY_REPORTING_ENABLED` (default off) | **Yes** |
 | Shadow sync from `UserProfile.role` writes into org-scoped `ProcessRoleAssignment` | **Yes** |
 | Deterministic parity reporting command | **Yes** |
 | Drift detection + audit evidence | **Yes** |
-| Staging activation of flags | **Yes** |
+| Staging activation of flags (explicit, reversible, auditable) | **Yes** |
 | Management-command diagnostics | **Yes** |
+| Automated tests + roadmap updates | **Yes** |
 
 ---
 
@@ -96,7 +140,7 @@ A separate explicit authorization is required before merging PR #55.
 
 | Item | Authorized |
 |---|---|
-| Production resolver flip | **No** |
+| Production resolver flip / cutover | **No** |
 | Permission or privilege changes | **No** |
 | `OrganizationMembership` authority changes | **No** |
 | `UserProfile.role` removal | **No** |
@@ -104,22 +148,27 @@ A separate explicit authorization is required before merging PR #55.
 | Approval or signer resolver changes | **No** |
 | Navigation changes | **No** |
 | Workflow assignment cutover | **No** |
-| PAR-APR-002 / PAR-WF-010 | **No** |
+| Automatic parity repair | **No** |
 | PAR-ID-001 resolver-parity implementation | **No** |
+| PAR-APR-002 / PAR-WF-010 | **No** |
 | PR #55 merge (requires separate authorization) | **No** |
 
 ---
 
-## Security advisory conditions (proposed until advisory vote)
+## Security advisory conditions (binding)
 
-1. Legacy `UserProfile.role` remains authoritative while flags are off or on.
-2. Shadow failure must not roll back or corrupt the legacy write; fail closed on cross-tenant violations; audit `role.assignment.shadow_sync_failed`.
-3. `profile_role` ADMIN → `legacy_process_admin` only; workspace ADMIN/OWNER/MEMBER never shadow-written as process roles.
-4. Parity output must not drive authorization, approval, signer, or workflow routing.
-5. Flags default **off** in all environments until staging activation is deliberate.
+1. Shadow role data must not influence production authorization, permissions, memberships, navigation, assignment resolution, or runtime behaviour.
+2. `PROCESS_ROLE_SHADOW_WRITE_ENABLED` and `PROCESS_ROLE_PARITY_REPORTING_ENABLED` must remain disabled by default.
+3. Shadow writes and parity reporting must remain tenant-scoped and permission-safe.
+4. No restricted role, membership, or organization metadata may leak through logs, reports, exports, errors, metrics, or audit summaries.
+5. Parity output must be diagnostic only and must not automatically repair or overwrite authoritative role data.
+6. Enabling either feature flag must be explicit, reversible, auditable, and limited to an approved environment or workspace.
+7. Any parity mismatch must be recorded without changing authoritative production state.
+8. Resolver cutover requires a separate authorization, threat review, test matrix, and rollback plan.
+9. This approval does not authorize merging PR #55.
 
 ---
 
-## Next slice (not requested here)
+## Next slice (not authorized here)
 
-Production resolver dual-read consumption / privilege cutover — requires new authorization.
+Feature-flagged production resolver dual-read comparison / privilege cutover — requires new authorization. Stop before canonical output influences any production decision.
