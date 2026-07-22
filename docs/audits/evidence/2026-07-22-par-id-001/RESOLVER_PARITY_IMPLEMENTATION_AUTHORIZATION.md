@@ -249,9 +249,9 @@ Regression gate after implementation (not now): shadow-sync, RoleDefinition, Pro
 | Flag default | **off** |
 | Dual-return / cutover | **Not authorized** |
 | Staging flag activation | **Not authorized** by this vote set |
-| Ready to merge implementation | **After green CI + human merge step** |
+| Ready to merge implementation | **No** — separate Product + Engineering merge authorization required; PR remains draft |
 
-**Verdict:** Implementation is **authorized** and present on PR #58. Dual-return / privilege cutover remain **blocked**.
+**Verdict:** Implementation is **authorized** and present on PR #58. Merge remains **blocked**. Dual-return / privilege cutover / staging flag activation remain **blocked**.
 
 ---
 
