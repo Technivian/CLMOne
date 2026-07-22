@@ -1,0 +1,125 @@
+{
+  "activation_timestamp": "2026-07-22T18:03:45.588554+00:00",
+  "organization_allowlist": "controlled-pilot-org",
+  "event_counts": {
+    "canonical_used": 8,
+    "legacy_fallback": 4,
+    "excluded_role": 2,
+    "canonical_failure": 0,
+    "cross_tenant_anomaly": 2,
+    "parity_compared": 16
+  },
+  "scenarios": [
+    {
+      "scenario": "dpa_workflow_launch",
+      "detail": "role='PARALEGAL' resolved=True",
+      "ok": true
+    },
+    {
+      "scenario": "msa_workflow_launch",
+      "detail": "role='ASSOCIATE' resolved=True",
+      "ok": true
+    },
+    {
+      "scenario": "nda_workflow_launch",
+      "detail": "role='ASSOCIATE' resolved=True",
+      "ok": true
+    },
+    {
+      "scenario": "generic_workflow_launch",
+      "detail": "role='SENIOR_ASSOCIATE' resolved=False",
+      "ok": true
+    },
+    {
+      "scenario": "approval_initiation",
+      "detail": "role='ASSOCIATE' resolved=True",
+      "ok": true
+    },
+    {
+      "scenario": "approval_initiation",
+      "detail": "role='ADMIN' resolved=True",
+      "ok": true
+    },
+    {
+      "scenario": "approval_initiation",
+      "detail": "role='ASSOCIATE' resolved=True",
+      "ok": true
+    },
+    {
+      "scenario": "approval_initiation",
+      "detail": "role='ADMIN' resolved=True",
+      "ok": true
+    },
+    {
+      "scenario": "approval_initiation",
+      "detail": "role='PARALEGAL' resolved=True",
+      "ok": true
+    },
+    {
+      "scenario": "legal_reviewer_resolution",
+      "detail": "resolved=True",
+      "ok": true
+    },
+    {
+      "scenario": "finance_reviewer_resolution",
+      "detail": "resolved=True",
+      "ok": true
+    },
+    {
+      "scenario": "excluded_ADMIN",
+      "detail": "legacy_allowed_result=True",
+      "ok": true
+    },
+    {
+      "scenario": "privacy_reviewer_resolution",
+      "detail": "resolved=True",
+      "ok": true
+    },
+    {
+      "scenario": "delegation",
+      "detail": "resolver path covered",
+      "ok": true
+    },
+    {
+      "scenario": "reassignment",
+      "detail": "resolver path covered",
+      "ok": true
+    },
+    {
+      "scenario": "unresolved_assignment",
+      "detail": "none=True",
+      "ok": true
+    },
+    {
+      "scenario": "inactive_assignment",
+      "detail": "legacy_fallback=True",
+      "ok": true
+    },
+    {
+      "scenario": "multi_organization_users",
+      "detail": "org_b_not_allowlisted_legacy_path",
+      "ok": true
+    },
+    {
+      "scenario": "cross_tenant_attempt",
+      "detail": "fail_closed_None",
+      "ok": true
+    },
+    {
+      "scenario": "assignee_correctness",
+      "detail": "ok",
+      "ok": true
+    }
+  ],
+  "stop_triggers": [],
+  "user_visible_incidents": [],
+  "security_findings": [
+    {
+      "finding": "controlled_cross_tenant_fail_closed",
+      "severity": "expected_pass"
+    }
+  ],
+  "audit_hygiene_leak": false,
+  "assignments_intact": true,
+  "activation_pass": true
+}

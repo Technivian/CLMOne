@@ -100,7 +100,7 @@ Status key: Compliant · Partially compliant · Missing · Conflicting · Not im
 | Reminder first-class | DOMAIN | Objects | Fields/jobs only | Deadline.reminder_days | Missing | Medium | Model later | — | PAR-OBL-002 |
 | Exception first-class | DOMAIN | Objects | RiskSignal / actions | — | Missing | Medium | Governed Exception | PDR | PAR-EXC-001 |
 | Document Version immutable entity | DOMAIN | Documents | `DocumentVersion` + service | `document_version_service` | Compliant (residual: DraftDocument, approval FK) | — | Maintain | — | PAR-DOC-001 **Resolved** |
-| Role Definition process roles | DOMAIN | Identity | Dual role systems | Membership vs Profile | Conflicting | High | Terminology ADR | ADR | PAR-ID-001 |
+| Role Definition process roles | DOMAIN | Identity | Dual role systems | Membership vs Profile | **Closed via PAR-ID-001** (ADMIN residual **PAR-ID-002**) | High | Terminology ADR | ADR | PAR-ID-001 → Closed; PAR-ID-002 |
 
 ---
 

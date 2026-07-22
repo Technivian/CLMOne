@@ -1,0 +1,8 @@
+[CLM One] Database: /workspace/db.sqlite3 (local, env=development)
+{
+  "rollback_pass": true,
+  "flag_off_uses_legacy": true,
+  "assignments_intact": true,
+  "on_equals_off_or_both_set": true,
+  "immediate_legacy_on_disable": true
+}
