@@ -406,7 +406,7 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | Priority | P1 |
 | Problem | Dual role systems (`OrganizationMembership` vs `UserProfile.Role`) conflict with canonical Role Definition. |
 | Governance source | CANONICAL_DOMAIN_MODEL §2.5; SECURITY_PRIVACY_ACCESS_AND_AUDIT |
-| Current evidence | `docs/audits/evidence/2026-07-22-par-id-001/` — ROLE_USAGE_MATRIX, TARGET_ROLE_MODEL, PROCESS_ROLE_MAPPING_MATRIX, SHADOW_WRITE_PATH_MATRIX, 0112/0113 auth + Slice 3 auth request |
+| Current evidence | `docs/audits/evidence/2026-07-22-par-id-001/` — ROLE_USAGE_MATRIX, TARGET_ROLE_MODEL, PROCESS_ROLE_MAPPING_MATRIX, SHADOW_WRITE_PATH_MATRIX, RESOLVER_USAGE_MATRIX, 0112/0113 + Slice 3 auth; resolver comparison auth **Requested** |
 | Target outcome | Single terminology and mapping for process vs org roles; no silent privilege escalation |
 | Dependencies | ADR-0014 Accepted (**met**); PAR-SEC-003 Closed (**met**); privilege/resolver cutover needs separate authorization |
 | Decision required | **ADR-0014 Accepted** — privilege/resolver cutover still needs separate implementation authorization |
@@ -419,7 +419,7 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | Acceptance criteria | Accepted ADR (**met**); additive catalogue (**met**); org-scoped adapter + dual-read (**met**); feature-flagged shadow sync + parity (**met**); runtime cutover criteria **not yet** |
 | Evidence | `docs/audits/evidence/2026-07-22-par-id-001/` |
 | Accepted ADR | **ADR-0014** + 0112/0113 implementation authorizations; Slice 3 auth **Authorized** (non-authoritative; merge recorded separately) |
-| PR/commits | PR #51 `21e65f09`; PR #53 `0bf7c9dc`; PR #54 `58966de7`; PR #52 `3c5e628b`; PR #55 shadow sync; evidence PR #57 `2f14c034` |
+| PR/commits | PR #51 `21e65f09`; PR #53 `0bf7c9dc`; PR #54 `58966de7`; PR #52 `3c5e628b`; PR #55 `bb881ac2`; evidence PR #57 `2f14c034`; branch `cursor/feat-par-id-001-resolver-parity` |
 | Last updated | 2026-07-22 |
 
 ### PAR-EXC-001 — Governed Exception
@@ -626,3 +626,6 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | 2026-07-22 | **PR #54 merged** to `main` @ `58966de7` |
 | 2026-07-22 | **PR #52 merged** to `main` @ `3c5e628b` — PR #50 visual + E2E remediation closed; evidence `docs/audits/evidence/2026-07-22-pr52-merge/` |
 | 2026-07-22 | **PAR-ID-001 Slice 3:** feature-flagged shadow sync (`PROCESS_ROLE_SHADOW_WRITE_ENABLED`) + `process_role_parity_report`; parity evidence; production resolvers still legacy; next cutover slice needs separate authorization |
+| 2026-07-22 | **PR #55 merged** to `main` @ `bb881ac2` — shadow sync + parity (flags default off); Slice 3 Authorized and non-authoritative |
+| 2026-07-22 | **PR #57 merged** to `main` @ `2f14c034` — PR #52 merge-evidence documentation |
+| 2026-07-22 | **PAR-ID-001 resolver comparison:** authorization **Requested** + `RESOLVER_USAGE_MATRIX` on `cursor/feat-par-id-001-resolver-parity`; implementation gated on Product/Engineering/Security votes; privilege cutover **not** authorized |
