@@ -463,8 +463,13 @@ class ContractIsolationTest(CrossTenantFixtureMixin, TestCase):
     """Contracts carry organization FK – isolation is enforced by scope_queryset."""
 
     def test_list_shows_only_own_org(self):
+        """PAR-SEC-003: legacy contract_list alias redirects to repository."""
         self.client.login(username='user_b', password='passB1234!')
         response = self.client.get(reverse('contracts:contract_list'))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse('contracts:repository'))
+
+        response = self.client.get(reverse('contracts:repository'))
         self.assertEqual(response.status_code, 200)
         ids = [c['id'] if isinstance(c, dict) else c.id
                for c in response.context.get('contracts', [])]
@@ -566,12 +571,13 @@ class DeadlineIsolationTest(CrossTenantFixtureMixin, TestCase):
 
     def test_list_excludes_other_org(self):
         self.client.login(username='user_b', password='passB1234!')
-        response = self.client.get(reverse('contracts:deadline_list') + '?show=all')
+        # Legacy deadline_list aliases to Obligations workspace (auth required).
+        response = self.client.get(reverse('contracts:obligations_workspace') + '?view=all')
         self.assertEqual(response.status_code, 200)
-        ids = [d.id for d in response.context.get('deadlines', [])]
-        self.assertNotIn(self.deadline_a.id, ids,
-                         'deadline_a (via contract_a of Org A) must not appear for Org B')
-        self.assertIn(self.deadline_b.id, ids)
+        # Obligations workspace may expose rows via context keys other than `deadlines`.
+        body = response.content.decode()
+        self.assertNotIn(str(self.deadline_a.title), body)
+        self.assertIn(str(self.deadline_b.title), body)
 
     def test_update_cross_org_returns_404(self):
         self.client.login(username='user_b', password='passB1234!')

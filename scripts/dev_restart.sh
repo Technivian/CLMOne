@@ -10,8 +10,8 @@ INTERVAL_MINUTES="${1:-60}"
 pkill -f "uvicorn config.asgi:application" 2>/dev/null || true
 sleep 1
 
-# Prefer the durable HTTPS path on this project; fall back to HTTP runserver.
-if [[ -x "$ROOT_DIR/scripts/dev_https.sh" ]]; then
+# Prefer the durable HTTPS path on macOS; fall back to HTTP runserver elsewhere.
+if [[ -x "$ROOT_DIR/scripts/dev_https.sh" ]] && command -v security >/dev/null 2>&1; then
   "$ROOT_DIR/scripts/dev_https.sh" up --background
   # Reminder scheduler is still started by the HTTP helper when available.
   if [[ -x "$ROOT_DIR/.venv/bin/python" ]]; then
