@@ -1,7 +1,7 @@
 # PAR-ID-001 — R5 execution readiness (preparation)
 
-**Status:** Readiness package prepared — **R5 remains Blocked**  
-**Authorization:** [`CANONICAL_RESOLVER_AUTHORITY_CUTOVER_AUTHORIZATION.md`](CANONICAL_RESOLVER_AUTHORITY_CUTOVER_AUTHORIZATION.md) (Draft / Authorization requested)  
+**Status:** Motions 1–4 **Authorized** (`2026-07-22T20:38:18Z`) — operational enablement **not** performed by the vote record  
+**Authorization:** [`CANONICAL_RESOLVER_AUTHORITY_CUTOVER_AUTHORIZATION.md`](CANONICAL_RESOLVER_AUTHORITY_CUTOVER_AUTHORIZATION.md) (**Authorized**)  
 **R4 prerequisite:** PASS — [`../2026-07-22-par-id-001-r4-staging/R4_EXIT_REPORT.md`](../2026-07-22-par-id-001-r4-staging/R4_EXIT_REPORT.md)
 
 ---
@@ -15,12 +15,12 @@
 | Abort conditions defined | Yes | Authorization § Immediate abort conditions |
 | Rollback procedure defined | Yes | Flag-based; non-destructive |
 | Evidence locations created | Yes | This directory + `pending/` |
-| Motions 1–4 drafted | Yes | Votes **Requested** (not carried) |
-| Operator identities filled | No | **PENDING** |
-| Reviewed deployment HEAD for execution | No | **PENDING** at vote time |
-| Staging-equivalent env recreate run for R5 | No | **PENDING** — do not run as part of prep claim |
-| Votes carried | No | **Blocked** |
-| Canonical flag enabled | No | Must remain false |
+| Motions 1–4 drafted | Yes | **Carried** `2026-07-22T20:38:18Z` |
+| Operator identities filled | No | **PENDING** (operational execution) |
+| Reviewed deployment HEAD for execution | Yes | `058c5ed09cb79b9460cb875e80a9d5ad0cc9367d` |
+| Staging-equivalent env recreate run for R5 | No | **PENDING** — operational enablement not performed by vote record |
+| Votes carried | **Yes** — Motions 1–4 carried `2026-07-22T20:38:18Z` |
+| Canonical flag enabled | **No** — must remain false until separate operational enablement |
 
 ---
 
@@ -59,6 +59,6 @@ Outcomes of a future authorized run must be captured under `pending/` — not in
 
 ---
 
-## Explicit non-readiness for execution
+## Explicit non-execution note
 
-This package is **not** execution-ready until Motions 1–4 are carried and PENDING gates above are closed with real evidence.
+This package is **Authorized** for Motions 1–4. Operational enablement in `par-id-001-r5-staging-equivalent` remains a **separate execution step** and was **not** performed by the vote record.
