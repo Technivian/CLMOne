@@ -262,7 +262,7 @@ class Command(BaseCommand):
 
         contracts = {}
         for record in records:
-            contract, _ = Contract.objects.update_or_create(
+            contract, created = Contract.objects.update_or_create(
                 organization=organization,
                 title=record['title'],
                 defaults={
@@ -271,19 +271,40 @@ class Command(BaseCommand):
                     'status': record['status'],
                     'lifecycle_stage': record['stage'],
                     'owner': users[record['owner']],
-                    'created_by': users['payrollminds_admin'],
                     'value': record['value'],
                     'currency': Contract.Currency.EUR,
                     'start_date': record['start'],
                     'end_date': record['end'],
                     'risk_level': record['risk'],
                     'content': record['content'],
-                    'origin_kind': Contract.OriginKind.SEED,
-                    'origin_channel': 'seed_payrollminds_demo',
-                    'origin_reason': 'Payrollminds demo seed data',
                     **record['extra'],
                 },
             )
+            if created:
+                from contracts.services.contract_provenance import OriginKind, apply_provenance_fields
+
+                contract.created_by = users['payrollminds_admin']
+                apply_provenance_fields(
+                    contract,
+                    origin_kind=OriginKind.SEED,
+                    origin_channel='seed_payrollminds_demo',
+                    origin_reason='Payrollminds demo seed data',
+                    actor=users['payrollminds_admin'],
+                    created_by=users['payrollminds_admin'],
+                    lock=True,
+                    validate=True,
+                )
+                contract.save(
+                    update_fields=[
+                        'created_by',
+                        'origin_kind',
+                        'origin_channel',
+                        'origin_reason',
+                        'provenance_locked_at',
+                        'updated_at',
+                    ],
+                    allow_provenance_mutation=True,
+                )
             contracts[record['title']] = contract
 
         msa = contracts['Payrollminds Master Services Agreement']
@@ -664,22 +685,38 @@ class Command(BaseCommand):
     def _document(
         organization, contract, uploader, *, title, filename, version, status, lines, parent=None,
     ):
-        document, _ = Document.objects.update_or_create(
+        from contracts.services.document_version_service import create_document_version
+
+        existing = Document.objects.filter(
             organization=organization,
             contract=contract,
             title=title,
             version=version,
-            defaults={
-                'document_type': Document.DocType.CONTRACT,
-                'status': status,
-                'description': 'Payrollminds demonstration source document.',
-                'parent_document': parent,
-                'uploaded_by': uploader,
-                'is_confidential': True,
-            },
-        )
-        if not document.file:
-            document.file.save(filename, ContentFile(_pdf_bytes(title, lines)), save=True)
+        ).first()
+        if existing and existing.file:
+            return existing
+        if existing:
+            existing.delete()
+
+        pdf_file = ContentFile(_pdf_bytes(title, lines), name=filename)
+        kwargs = {
+            'organization': organization,
+            'contract': contract,
+            'title': title,
+            'document_type': Document.DocType.CONTRACT,
+            'status': status,
+            'description': 'Payrollminds demonstration source document.',
+            'uploaded_by': uploader,
+            'actor': uploader,
+            'source': 'seed',
+            'file': pdf_file,
+            'is_confidential': True,
+            'supersede_prior': False,
+        }
+        if parent is not None:
+            kwargs['derived_from_document'] = parent
+            kwargs['parent_document'] = parent
+        document, _ = create_document_version(**kwargs)
         return document
 
     @staticmethod

@@ -161,8 +161,9 @@ Parent: c5a1109b (draft PR #50 baseline)
 | pr-release-evidence | PR body missing required checklist lines | **#2** Missing required evidence | PR #50 body updated with checked verification items + smoke/rollback evidence |
 | quality-and-tenancy | Production deploy check missing `APP_BASE_URL`, `OPERATOR_ALERT_EMAIL`, and durable storage env | **#3** CI configuration defect | Added valid HTTPS `APP_BASE_URL`, operator email, and S3 storage env to `.github/workflows/platform-guardrails.yml` (validation unchanged) |
 | security-scans | `theme/static_src` npm audit: `brace-expansion` (high), `tar` (critical) | **#5** pre-existing transitive deps | `npm audit fix` in `theme/static_src` (lockfile updated) |
-| redesigned-e2e | `seed_demo_command_center` → `WorkflowLaunchBlocked` (flagship templates lack assignees) + `ProvenanceError` on post-lock `source_system` mutation | **#1** Genuine Tranche-1 defect | Migration `0110_flagship_workflow_template_assignees`; pass `source_system`/`source_system_id` in workflow intake before provenance lock |
-| Phase 1 visual baselines | `check_visual_baselines.sh` referenced `playwright.config.js` from repo root | **#3** CI configuration defect | `--config=client/playwright.config.js` |
+| redesigned-e2e | `seed_demo_command_center` → `WorkflowLaunchBlocked` (flagship templates lack assignees) + `DocumentVersionError` in `seed_payrollminds_demo` post-lock file mutation | **#1** Genuine Tranche-1 defect | Migration `0110_flagship_workflow_template_assignees`; demo provenance intake fix; `seed_payrollminds_demo` uses `create_document_version` and create-only provenance stamping |
+| Phase 1 visual baselines | Same e2e webServer bootstrap failure as redesigned-e2e (not snapshot drift on first failure) | **#1** Genuine Tranche-1 defect (shared bootstrap) | Fixed with payrollminds seed + playwright config path |
+| quality-and-tenancy | `ContractIsolationTest.test_list_shows_only_own_org` expects 200; product returns 302 to repository (PAR-SEC-001) | **#1** Genuine Tranche-1 test drift (named PAR-SEC-003 residual) | Test updated to assert 302 → repository + tenant-scoped repository contents |
 
 ### Why visual / redesigned-E2E ran on this PR
 
@@ -175,6 +176,8 @@ Both workflows path-filter on `theme/templates/**` and `client/**`. Tranche-1 in
 | `scripts/check_brand_regression.sh` | **PASS** |
 | `tests/test_design_system_phase1_foundation` + `phase2a` | **PASS** (33 tests) |
 | `tests/test_demo_command_center` | **PASS** (4 tests) |
+| `tests/test_cross_tenant_isolation.ContractIsolationTest.test_list_shows_only_own_org` | **PASS** (302 → repository) |
+| `seed_payrollminds_demo` (idempotent ×2) | **PASS** |
 | Production deploy check (CI-equivalent env) | **PASS** (`manage.py check --deploy --fail-level WARNING`) |
 | `theme/static_src` npm audit `--audit-level=high` | **PASS** (0 vulnerabilities) |
 | `client` npm audit `--audit-level=high` | **PASS** (0 high/critical) |
