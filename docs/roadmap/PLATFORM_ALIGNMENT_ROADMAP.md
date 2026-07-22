@@ -623,3 +623,5 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | 2026-07-22 | **ADR-0014 Accepted**; **PAR-SEC-003 Closed**; migration `0112` authorized and implemented (additive RoleDefinition catalogue); PAR-ID-001 remains **In progress** |
 | 2026-07-22 | **PR #53 merged** to `main` @ `0bf7c9dc` |
 | 2026-07-22 | **PAR-ID-001 process-role adapter:** migration `0113` `ProcessRoleAssignment` + dual-read parity; production authority still legacy resolvers; privilege/resolver cutover **not** authorized |
+| 2026-07-22 | **PR #54 merged** to `main` @ `58966de7` |
+| 2026-07-22 | **PR #52 merged** to `main` @ `3c5e628b` — PR #50 visual + E2E remediation closed; evidence `docs/audits/evidence/2026-07-22-pr52-merge/` |
