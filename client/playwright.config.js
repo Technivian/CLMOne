@@ -5,8 +5,6 @@ const { defineConfig } = require('@playwright/test');
 const allowSnapshotUpdate = process.env.PLAYWRIGHT_UPDATE_SNAPSHOTS === '1' && process.env.CI !== 'true';
 
 module.exports = defineConfig({
-  // CI captures on macos-14; keep a single committed darwin suffix on all hosts.
-  snapshotPathTemplate: '{testDir}/{testFilePath}-snapshots/{arg}-darwin{ext}',
   testDir: './tests/e2e',
   // The local E2E server uses one SQLite workspace. Serial execution keeps
   // lifecycle mutations deterministic and avoids cross-test data races.

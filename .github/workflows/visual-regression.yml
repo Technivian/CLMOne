@@ -32,8 +32,8 @@ on:
 jobs:
   visual-baselines:
     name: Phase 1 visual baselines (no auto-regen)
-    # Existing committed snapshots use the darwin suffix from local capture.
-    runs-on: macos-14
+    # Snapshots are captured on ubuntu-latest to match agent/CI Chromium rendering.
+    runs-on: ubuntu-latest
     timeout-minutes: 45
 
     steps:
