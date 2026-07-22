@@ -1,10 +1,11 @@
 # PAR-ID-001 evidence index
 
 **Programme ID:** PAR-ID-001  
-**Status:** **In progress** — discovery complete; ADR-0014 Accepted; additive catalogue `0112` delivered  
+**Status:** **In progress** — catalogue `0112` + process-role adapter `0113`; production authority still legacy  
 **ADR:** ADR-0014 **Accepted**  
-**Branch:** `cursor/feat-par-id-001-role-definition-registry-d7f1`  
-**PR #51 merge:** `21e65f09`
+**PR #51 merge:** `21e65f09`  
+**PR #53 merge:** `0bf7c9dc`  
+**Branch:** `cursor/feat-par-id-001-process-role-adapter`
 
 ---
 
@@ -13,39 +14,36 @@
 | Artifact | Purpose |
 |---|---|
 | [`../../../governance/decisions/adr/0014-role-definition-reconciliation.md`](../../../governance/decisions/adr/0014-role-definition-reconciliation.md) | Accepted ADR |
-| [`../../../governance/decisions/adr/0014-governance-acceptance-meeting-record-2026-07-22.md`](../../../governance/decisions/adr/0014-governance-acceptance-meeting-record-2026-07-22.md) | Ratification votes |
-| [`../../../governance/decisions/adr/0014-governance-decision-package-2026-07-22.md`](../../../governance/decisions/adr/0014-governance-decision-package-2026-07-22.md) | Decision package |
-| [`0112-implementation-authorization.md`](0112-implementation-authorization.md) | Narrow authorization for migration 0112 |
+| [`0112-implementation-authorization.md`](0112-implementation-authorization.md) | Catalogue authorization |
+| [`0113-process-role-adapter-implementation-authorization.md`](0113-process-role-adapter-implementation-authorization.md) | Adapter authorization |
 | [`../2026-07-22-par-sec-003/CLOSURE.md`](../2026-07-22-par-sec-003/CLOSURE.md) | PAR-SEC-003 Closed |
 
 ---
 
-## Discovery evidence
+## Discovery + mapping
 
 | Artifact | Purpose |
 |---|---|
-| [`SUMMARY.md`](SUMMARY.md) | Programme summary |
-| [`CURRENT_ROLE_MATRIX.md`](CURRENT_ROLE_MATRIX.md) | Dual-role overview (initial) |
-| [`ROLE_USAGE_MATRIX.md`](ROLE_USAGE_MATRIX.md) | Full role-like concept inventory |
-| [`TARGET_ROLE_MODEL.md`](TARGET_ROLE_MODEL.md) | Five-concept target model |
-| [`CUTOVER_PLAN.md`](CUTOVER_PLAN.md) | Full cutover plan (later slices not authorized) |
-| [`CHARACTERIZATION_TESTS.md`](CHARACTERIZATION_TESTS.md) | Test inventory |
+| [`ROLE_USAGE_MATRIX.md`](ROLE_USAGE_MATRIX.md) | Full inventory |
+| [`TARGET_ROLE_MODEL.md`](TARGET_ROLE_MODEL.md) | Five-concept target |
+| [`PROCESS_ROLE_MAPPING_MATRIX.md`](PROCESS_ROLE_MAPPING_MATRIX.md) | 0113 mapping rules |
+| [`CUTOVER_PLAN.md`](CUTOVER_PLAN.md) | Later cutover plan (not authorized) |
 
 ---
 
-## Implementation evidence (0112)
+## Implementation evidence
 
 | Artifact | Purpose |
 |---|---|
-| [`migrate-forward.txt`](migrate-forward.txt) | Migration 0112 forward |
-| [`migrate-rollback.txt`](migrate-rollback.txt) | Rollback to 0111 |
-| [`migrate-reforward.txt`](migrate-reforward.txt) | Re-forward to 0112 |
-| [`django-tests.txt`](django-tests.txt) | Test evidence |
+| [`migrate-forward.txt`](migrate-forward.txt) / rollback / reforward | 0112 proof |
+| [`migrate-0113-forward.txt`](migrate-0113-forward.txt) / rollback / reforward | 0113 proof |
+| [`TEST_RESULTS.md`](TEST_RESULTS.md) | Test evidence |
+| [`django-tests.txt`](django-tests.txt) | Captured runs |
 
 ---
 
 ## Scope boundary
 
-- **Complete:** Discovery; ADR-0014 Accepted; PAR-SEC-003 Closed; additive `RoleDefinition` catalogue
-- **Not complete:** Runtime role assignment cutover; privilege changes; `UserProfile.role` removal
-- **Next authorized slice:** Requires new implementation authorization (org-scoped dual-read / resolver compatibility)
+- **Delivered:** Additive catalogue; org-scoped assignment adapter; dual-read parity; truthful backfill
+- **Not delivered:** Production resolver flip; privilege cutover; `UserProfile.role` removal
+- **Production authority:** Still uses legacy resolvers

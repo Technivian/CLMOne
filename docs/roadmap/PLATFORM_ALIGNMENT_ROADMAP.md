@@ -402,24 +402,24 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 
 | Field | Content |
 |---|---|
-| Status | **In progress** (2026-07-22) — discovery complete; ADR-0014 **Accepted**; additive catalogue `0112` authorized; Completion deferred |
+| Status | **In progress** (2026-07-22) — catalogue `0112` + process-role adapter `0113` delivered; production authority still legacy; Completion deferred |
 | Priority | P1 |
 | Problem | Dual role systems (`OrganizationMembership` vs `UserProfile.Role`) conflict with canonical Role Definition. |
 | Governance source | CANONICAL_DOMAIN_MODEL §2.5; SECURITY_PRIVACY_ACCESS_AND_AUDIT |
-| Current evidence | `docs/audits/evidence/2026-07-22-par-id-001/` — ROLE_USAGE_MATRIX, TARGET_ROLE_MODEL, CUTOVER_PLAN, 0112 authorization |
+| Current evidence | `docs/audits/evidence/2026-07-22-par-id-001/` — ROLE_USAGE_MATRIX, TARGET_ROLE_MODEL, PROCESS_ROLE_MAPPING_MATRIX, 0112/0113 authorization |
 | Target outcome | Single terminology and mapping for process vs org roles; no silent privilege escalation |
-| Dependencies | ADR-0014 Accepted (**met**); PAR-SEC-003 Closed (**met**); further slices need separate authorization |
+| Dependencies | ADR-0014 Accepted (**met**); PAR-SEC-003 Closed (**met**); privilege/resolver cutover needs separate authorization |
 | Decision required | **ADR-0014 Accepted** — privilege/resolver cutover still needs separate implementation authorization |
-| Migration impact | `0112_role_definition_registry` additive catalogue (authorized); further migrations not authorized |
-| Security and permissions impact | **High** — catalogue labels grant no permissions; runtime authz unchanged in this slice |
-| Audit requirements | `role.definition.created/updated/deactivated/repaired` |
+| Migration impact | `0112` catalogue + `0113` org-scoped `ProcessRoleAssignment` dual-read adapter; production resolvers unchanged |
+| Security and permissions impact | **High** — labels grant no permissions; dual-read non-authoritative; runtime authz unchanged |
+| Audit requirements | `role.definition.*`; `role.assignment.created/deactivated/repaired/legacy_mapped/drift_detected` |
 | UX requirements | Consistent role labels in My Work, Approvals, Admin (copy audit residual) |
-| Tests | Characterization (19) + `test_par_id_001_role_definition` catalogue suite |
-| Rollback strategy | Reverse migration 0112; feature flag reserved for future cutover |
-| Acceptance criteria | Accepted ADR (**met**); additive catalogue (**in this slice**); runtime cutover criteria **not yet** |
+| Tests | Characterization (19) + catalogue + process-role assignment suites |
+| Rollback strategy | Reverse 0113 (deletes LEGACY_BACKFILL) then 0112; feature flag reserved for future cutover |
+| Acceptance criteria | Accepted ADR (**met**); additive catalogue (**met**); org-scoped adapter + dual-read (**met**); runtime cutover criteria **not yet** |
 | Evidence | `docs/audits/evidence/2026-07-22-par-id-001/` |
-| Accepted ADR | **ADR-0014** + meeting record + 0112 authorization |
-| PR/commits | PR #51 merge `21e65f09`; follow-up branch `cursor/feat-par-id-001-role-definition-registry-d7f1` |
+| Accepted ADR | **ADR-0014** + 0112/0113 implementation authorizations |
+| PR/commits | PR #51 `21e65f09`; PR #53 `0bf7c9dc`; branch `cursor/feat-par-id-001-process-role-adapter` |
 | Last updated | 2026-07-22 |
 
 ### PAR-EXC-001 — Governed Exception
@@ -621,3 +621,5 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | 2026-07-22 | **PAR-ID-001 discovery complete:** ROLE_USAGE_MATRIX, TARGET_ROLE_MODEL, CUTOVER_PLAN, ADR-0014 decision package; 19 characterization tests |
 | 2026-07-22 | **PR #51 merged** to `main` @ `21e65f09` |
 | 2026-07-22 | **ADR-0014 Accepted**; **PAR-SEC-003 Closed**; migration `0112` authorized and implemented (additive RoleDefinition catalogue); PAR-ID-001 remains **In progress** |
+| 2026-07-22 | **PR #53 merged** to `main` @ `0bf7c9dc` |
+| 2026-07-22 | **PAR-ID-001 process-role adapter:** migration `0113` `ProcessRoleAssignment` + dual-read parity; production authority still legacy resolvers; privilege/resolver cutover **not** authorized |

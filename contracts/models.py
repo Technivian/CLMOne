@@ -4628,6 +4628,123 @@ class RoleDefinition(models.Model):
         super().save(*args, **kwargs)
 
 
+class ProcessRoleAssignmentQuerySet(models.QuerySet):
+    """Block QuerySet.update from bypassing ProcessRoleAssignment governance rules."""
+
+    def update(self, **kwargs):
+        from contracts.services.process_role_assignment import (
+            IMMUTABLE_PROCESS_ROLE_ASSIGNMENT_FIELDS,
+            ProcessRoleAssignmentError,
+        )
+
+        normalized = set()
+        for key in kwargs:
+            normalized.add(key)
+            if not key.endswith('_id'):
+                normalized.add(f'{key}_id')
+        blocked = sorted(normalized & IMMUTABLE_PROCESS_ROLE_ASSIGNMENT_FIELDS)
+        if blocked:
+            raise ProcessRoleAssignmentError(
+                f'QuerySet.update cannot mutate immutable ProcessRoleAssignment fields {blocked}.'
+            )
+        return super().update(**kwargs)
+
+
+class ProcessRoleAssignmentManager(models.Manager.from_queryset(ProcessRoleAssignmentQuerySet)):
+    pass
+
+
+class ProcessRoleAssignment(models.Model):
+    """Organization-scoped process-role assignment (PAR-ID-001 / ADR-0014 / migration 0113).
+
+    Dual-read / diagnostics only in this slice. Does **not** grant permissions or
+    drive approval, signer, or workflow runtime resolution.
+    """
+
+    class AssignmentSource(models.TextChoices):
+        MANUAL = 'MANUAL', 'Manual'
+        LEGACY_BACKFILL = 'LEGACY_BACKFILL', 'Legacy backfill'
+        SYSTEM = 'SYSTEM', 'System'
+        IMPORT = 'IMPORT', 'Import'
+
+    class MappingConfidence(models.TextChoices):
+        CERTAIN = 'CERTAIN', 'Certain'
+        AMBIGUOUS = 'AMBIGUOUS', 'Ambiguous'
+        UNKNOWN = 'UNKNOWN', 'Unknown'
+
+    organization = models.ForeignKey(
+        Organization, on_delete=models.CASCADE, related_name='process_role_assignments',
+    )
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='process_role_assignments',
+    )
+    membership = models.ForeignKey(
+        OrganizationMembership,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='process_role_assignments',
+    )
+    role_definition = models.ForeignKey(
+        RoleDefinition, on_delete=models.PROTECT, related_name='assignments',
+    )
+    assignment_source = models.CharField(max_length=32, choices=AssignmentSource.choices)
+    legacy_source_field = models.CharField(max_length=64, blank=True, default='')
+    legacy_source_value = models.CharField(max_length=64, blank=True, default='')
+    mapping_confidence = models.CharField(
+        max_length=16, choices=MappingConfidence.choices, default=MappingConfidence.CERTAIN,
+    )
+    is_active = models.BooleanField(default=True)
+    is_system_managed = models.BooleanField(default=False)
+    effective_start = models.DateTimeField()
+    effective_end = models.DateTimeField(null=True, blank=True)
+    assigned_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='process_role_assignments_made',
+    )
+    assignment_reason = models.TextField(blank=True, default='')
+    correlation_id = models.UUIDField(default=uuid.uuid4, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    objects = ProcessRoleAssignmentManager()
+
+    class Meta:
+        ordering = ['organization_id', 'user_id', 'role_definition_id', '-created_at']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['organization', 'user', 'role_definition'],
+                condition=models.Q(is_active=True),
+                name='prole_active_org_user_role_uniq',
+            ),
+        ]
+        indexes = [
+            models.Index(fields=['organization', 'user', 'is_active'], name='prole_org_user_active_ix'),
+            models.Index(fields=['organization', 'role_definition', 'is_active'], name='prole_org_role_active_ix'),
+            models.Index(fields=['organization', 'legacy_source_field'], name='prole_org_legacy_ix'),
+        ]
+
+    def __str__(self):
+        return f'{self.user_id}→{self.role_definition_id} @ org {self.organization_id}'
+
+    def save(self, *args, **kwargs):
+        skip_immutability = kwargs.pop('skip_process_role_immutability', False)
+        if self.pk and not skip_immutability:
+            previous = (
+                type(self).objects.filter(pk=self.pk)
+                .values(
+                    'organization_id', 'user_id', 'role_definition_id',
+                    'assignment_source', 'is_system_managed',
+                )
+                .first()
+            )
+            if previous:
+                from contracts.services.process_role_assignment import assert_process_role_assignment_immutable
+
+                assert_process_role_assignment_immutable(self, previous=previous)
+        super().save(*args, **kwargs)
+
+
 class BackgroundJob(models.Model):
     class Status(models.TextChoices):
         PENDING = 'PENDING', 'Pending'
