@@ -1,51 +1,36 @@
 # PAR-ID-001 evidence summary — 2026-07-22
 
-## Status: In progress — resolver parity Authorized and implemented (non-authoritative)
+## Status: In progress — READY FOR CUTOVER AUTHORIZATION (not implemented)
 
 **ADR:** ADR-0014 **Accepted**  
-**PR #53 merge:** `0bf7c9dc` (catalogue 0112)  
-**PR #54 merge:** `58966de7` (process-role adapter 0113)  
-**PR #55 merge:** `bb881ac2` (2026-07-22T13:35:32Z) — reviewed HEAD `432a55b1`  
-**Merge evidence:** PR #59 → `main` @ `0d9712ca`  
-**PR #52 / #57:** visual remediation + merge evidence on main  
-**PR #58:** resolver-parity comparison (Authorized + implemented; flag default off)
+**PR #58 merge:** `598b7a128cb8d0f5be0c7cd2fb1880f631ca9608`  
+**Evidence PR:** [#60](https://github.com/Technivian/CLMOne/pull/60)
 
 ### Delivered
-- Additive `RoleDefinition` catalogue (0112)
-- Org-scoped `ProcessRoleAssignment` model + governed service (0113)
-- Dual-read parity / drift diagnostics (non-authoritative)
-- Feature-flagged shadow sync from `UserProfile.role` → `ProcessRoleAssignment`
-- Deterministic `process_role_parity_report` management command
-- Shadow write-path inventory + Slice 3 implementation/merge authorization
-- Resolver usage matrix + resolver-parity authorization (Product `14:17:31Z` / Engineering `14:18:31Z` / Security `14:15:31Z`; prior `14:04–14:06Z` draft record superseded)
-- Feature-flagged resolver comparison (`PROCESS_ROLE_RESOLVER_PARITY_ENABLED`, default off)
-- `process_role_resolver_parity_report` staging diagnostics
+- Catalogue / adapter / shadow sync / resolver parity comparison (legacy authoritative)
+- Staging diagnostic activation + post-remediation parity rerun
+- CERTAIN inactive reactivation (`legal_reviewer`) + companion org-b CERTAIN create
+- ADMIN first-cutover exclusion recorded (AMBIGUOUS remains AMBIGUOUS)
+- Focused threat review complete
+- Cutover authorization **package** prepared (votes **Requested**; flag **not** implemented)
+
+### Post-remediation parity (all orgs)
+| MATCH | AMBIGUOUS (excluded) | INACTIVE | LEGACY_ONLY | critical |
+|---:|---:|---:|---:|---:|
+| 24 | 13 | 0 | 0 | 0 |
 
 ### Explicitly unchanged
-- Permissions / authorization outcomes
-- `OrganizationMembership.role` authority
-- `UserProfile.role` behaviour (still authoritative)
-- Approval / signer / workflow runtime resolution return values (legacy always returned)
-- Navigation
+- Runtime resolver return values (legacy)
+- Permissions / membership / navigation
 - PAR-APR-002 / PAR-WF-010
-- Flags remain **default off** (not enabled by merge)
+- Committed flag defaults remain off
 
-### Programme record
-- Canonical catalogue delivered
-- Organization-scoped assignments delivered
-- Dual-read diagnostics delivered
-- Feature-flagged shadow synchronization delivered **and merged**
-- Parity evidence available
-- Resolver comparison delivered behind default-off flag (legacy authoritative)
-- Production permissions and runtime resolvers remain legacy
-- Dual-return / privilege cutover requires separate authorization
-- Staging critical-drift evidence required before next decision gate
+### Votes
+| Package | Status |
+|---|---|
+| Resolver readiness remediation | **Requested** (@haroonwahed Product, @Technivian Engineering, @Technivian Security) |
+| Canonical resolver cutover | **Requested** (same approvers) |
 
-### Flags (default off)
-- `PROCESS_ROLE_SHADOW_WRITE_ENABLED`
-- `PROCESS_ROLE_PARITY_REPORTING_ENABLED`
-- `PROCESS_ROLE_RESOLVER_PARITY_ENABLED`
-
-### Next decision gate
-Staging critical-drift evidence (CROSS_TENANT_ANOMALY / DIFFERENT_USER / RESOLUTION_ERROR counts) before any dual-return or privilege-cutover authorization.
-Stop before canonical resolver output affects any production decision.
+### Next
+Record votes on remediation + cutover packages; only then implement `PROCESS_ROLE_CANONICAL_RESOLVER_ENABLED` (default off) in a separate PR.  
+Stop before canonical results influence production decisions.
