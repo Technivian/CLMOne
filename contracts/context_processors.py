@@ -32,6 +32,7 @@ def _compute_asset_version():
         os.path.join(settings.BASE_DIR, 'theme', 'static', 'css', 'dist', 'styles.css'),
         os.path.join(settings.BASE_DIR, 'theme', 'static', 'css', 'clmone-tokens.css'),
         os.path.join(settings.BASE_DIR, 'theme', 'static', 'css', 'command-center.css'),
+        os.path.join(settings.BASE_DIR, 'theme', 'static', 'js', 'clmone-repository.js'),
     ]
     try:
         return str(int(max(os.path.getmtime(path) for path in css_paths)))

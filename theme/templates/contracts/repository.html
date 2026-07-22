@@ -18,35 +18,44 @@
     vertical-align: middle !important;
   }
   /* Kebab menus center via flex on .wq-kebab-trigger; block/grid cell content ignores
-     td vertical-align. Title cell stays in-flow (sets row height); other cells fill
-     the row with an absolutely positioned flex inner — same centering as the kebab. */
+     td vertical-align. Flex on body cells matches that pattern (works with or without
+     .repo-cell-inner when clmone-repository.js is cache-busted). */
   .repo-page #contracts-table tbody td.repo-cell {
-    padding: 0 !important;
     vertical-align: middle !important;
   }
   .repo-page #contracts-table tbody td.repo-cell:not([data-col="title"]) {
-    position: relative;
+    display: flex !important;
+    align-items: center !important;
+    box-sizing: border-box;
+    padding: 14px 12px !important;
     overflow: hidden;
   }
   .repo-page #contracts-table tbody td.repo-cell[data-col="actions"] {
     overflow: visible;
+    justify-content: center;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+  .repo-page #contracts-table tbody td.repo-cell[data-col="value"] {
+    justify-content: flex-end;
+    padding-right: 16px !important;
   }
   .repo-page #contracts-table tbody td.repo-cell .repo-cell-inner {
     display: flex;
     align-items: center;
     box-sizing: border-box;
     min-width: 0;
-    padding: 14px 12px;
+    width: 100%;
+    padding: 0;
   }
-  .repo-page #contracts-table tbody td.repo-cell:not([data-col="title"]) .repo-cell-inner {
-    position: absolute;
-    inset: 0;
-    width: auto;
-    height: auto;
-    overflow: hidden;
+  .repo-page #contracts-table tbody td.repo-cell[data-col="title"] {
+    display: table-cell !important;
+    padding: 0 !important;
   }
   .repo-page #contracts-table tbody td.repo-cell[data-col="title"] .repo-cell-inner {
     width: 100%;
+    padding: 14px 12px;
+    padding-left: 6px;
   }
   .repo-page #contracts-table tbody td.repo-cell .repo-cell-inner > * {
     min-width: 0;
@@ -54,16 +63,6 @@
   }
   .repo-page #contracts-table tbody td.repo-cell[data-col="title"] .repo-cell-inner > .repo-title-stack {
     width: 100%;
-  }
-  .repo-page #contracts-table tbody td.repo-cell[data-col="value"] .repo-cell-inner {
-    justify-content: flex-end;
-    padding-right: 16px;
-  }
-  .repo-page #contracts-table tbody td.repo-cell[data-col="actions"] .repo-cell-inner {
-    justify-content: center;
-    padding-left: 8px;
-    padding-right: 8px;
-    overflow: visible;
   }
   .repo-page #contracts-table th.tbl-th:not([data-col="select"]) {
     padding: 14px 12px;
@@ -114,8 +113,15 @@
     padding: 0;
     line-height: 1;
   }
+  .repo-page #contracts-table tbody td.repo-cell[data-col="select"] {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start;
+    padding: 0 0 0 10px !important;
+  }
   .repo-page #contracts-table tbody td.repo-cell[data-col="select"] .repo-cell-inner {
-    padding: 0 0 0 10px;
+    width: auto;
+    padding: 0;
     justify-content: flex-start;
   }
   .repo-page #contracts-table.dc-ds-table [data-col="select"] input[type="checkbox"] {
@@ -134,9 +140,6 @@
     box-shadow: 1px 0 0 var(--line, var(--card-border));
   }
   .repo-page #contracts-table thead th[data-col="title"] {
-    padding-left: 6px;
-  }
-  .repo-page #contracts-table tbody td.repo-cell[data-col="title"] .repo-cell-inner {
     padding-left: 6px;
   }
   .repo-page #contracts-table thead th[data-col="title"] { z-index: 6; }
@@ -177,7 +180,7 @@
   .repo-page #contracts-table th[data-col="type"],
   .repo-page #contracts-table td[data-col="type"] { min-width: 128px; width: 10%; }
   .repo-page .repo-type-label {
-    display: block;
+    display: inline-block;
     min-width: 0;
     max-width: 100%;
     overflow: hidden;
@@ -187,7 +190,7 @@
   .repo-page #contracts-table th[data-col="counterparty"],
   .repo-page #contracts-table td[data-col="counterparty"] { min-width: 150px; width: 12%; }
   .repo-page .repo-counterparty-label {
-    display: block;
+    display: inline-block;
     min-width: 0;
     max-width: 100%;
     overflow: hidden;
