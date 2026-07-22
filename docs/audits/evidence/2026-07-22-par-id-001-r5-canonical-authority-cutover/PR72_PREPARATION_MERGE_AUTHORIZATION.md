@@ -15,7 +15,7 @@
 | Target branch | `main` |
 | Original prep commit | `6a10ee57e0a61f383b76eee18413bdc7b3f937a7` |
 | Reconcile with `main` | `e9b1cb9fe0e4db63135d1f73fff3302fadfd032e` (roadmap conflict resolved; PAR-EXC main status retained) |
-| **Reviewed PR tip for this authorization** | _recorded in follow-up tip-fill commit_ |
+| **Reviewed PR tip for this authorization** | `8f03e8a7e83fe2366d52bcec89e8260201141044` (authorization-record commit; content review `e9b1cb9f`) |
 | Scope vs `main` | Documentation and evidence under `docs/` only |
 
 ### Scope assessment (inspection)
@@ -104,7 +104,7 @@ Timestamps via `date -u +"%Y-%m-%dT%H:%M:%SZ"`.
 | Field | Value |
 |---|---|
 | Content review SHA (pre-auth-doc) | `e9b1cb9fe0e4db63135d1f73fff3302fadfd032e` |
-| Authorization record commit / PR tip | **PENDING_FILL_AT_COMMIT** |
+| Authorization record commit / PR tip | `8f03e8a7e83fe2366d52bcec89e8260201141044` |
 
 ---
 
