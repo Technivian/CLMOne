@@ -38,7 +38,7 @@ Statuses: Completed · In progress · Blocked · Deferred by approved decision �
 
 ## Immediate next items
 
-1. **PAR-ID-001** — Role Definition reconciliation (Milestone 3) — **In progress** (PR #58 merged `598b7a12`; staging diagnostic gate **NOT READY** for cutover; legacy authoritative)
+1. **PAR-ID-001** — Role Definition reconciliation (Milestone 3) — **In progress** (staging remediation done; **READY FOR CUTOVER AUTHORIZATION**; `PROCESS_ROLE_CANONICAL_RESOLVER_ENABLED` not implemented; votes Requested)
 2. **PAR-APR-002** — legacy approval cutover — **Planned** (blocked on owner + cutover plan)
 3. **PAR-WF-010** — production cutover **blocked** pending Accepted ADR-0012 (discovery complete — see evidence)
 
@@ -402,11 +402,11 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 
 | Field | Content |
 |---|---|
-| Status | **In progress** (2026-07-22) — catalogue `0112` + adapter `0113` + shadow sync **merged**; Slice 4 resolver-parity **merged** (`598b7a12`); staging diagnostic gate **NOT READY** for cutover; production authority still legacy; Completion deferred |
+| Status | **In progress** (2026-07-22) — PR #58 merged (`598b7a12`); staging CERTAIN remediation + ADMIN exclusion + threat review; readiness **READY FOR CUTOVER AUTHORIZATION**; authority flag **not** implemented; production still legacy |
 | Priority | P1 |
 | Problem | Dual role systems (`OrganizationMembership` vs `UserProfile.Role`) conflict with canonical Role Definition. |
 | Governance source | CANONICAL_DOMAIN_MODEL §2.5; SECURITY_PRIVACY_ACCESS_AND_AUDIT |
-| Current evidence | `docs/audits/evidence/2026-07-22-par-id-001/` — matrices + 0112/0113/Slice 3/4 auth; PR #58 merge `598b7a12`; [`STAGING_RESOLVER_PARITY_RESULTS.md`](../audits/evidence/2026-07-22-par-id-001/STAGING_RESOLVER_PARITY_RESULTS.md) (verdict NOT READY) |
+| Current evidence | `docs/audits/evidence/2026-07-22-par-id-001/` — post-remediation staging results (MATCH 24 / AMBIGUOUS 13 excluded / critical 0); cutover auth package **Requested** |
 | Target outcome | Single terminology and mapping for process vs org roles; no silent privilege escalation |
 | Dependencies | ADR-0014 Accepted (**met**); PAR-SEC-003 Closed (**met**); privilege/resolver cutover needs separate authorization |
 | Decision required | **ADR-0014 Accepted** — privilege/resolver cutover still needs separate implementation authorization |
@@ -633,3 +633,4 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | 2026-07-22 | **PAR-ID-001 Slice 4 Authorized (authoritative vote record):** Product `14:17:31Z` / Engineering `14:18:31Z` / Security advisory `14:15:31Z` (Approve with conditions); prior draft `14:04–14:06Z` record superseded; comparison hooks on PR #58 behind default-off flag; merge + staging activation still separate |
 | 2026-07-22 | **PR #58 merged** to `main` @ `598b7a12` (2026-07-22T14:42:13Z) — resolver-parity comparison; flags remain default off; legacy authoritative |
 | 2026-07-22 | **PAR-ID-001 staging resolver-parity gate:** diagnostic flags on in staging-equivalent; report total=37 critical=0; LEGACY_ONLY=1 INACTIVE=14 AMBIGUOUS=13; verdict **NOT READY, REMEDIATION REQUIRED**; cutover auth package withheld; PAR-ID-001 remains **In progress** |
+| 2026-07-22 | **PAR-ID-001 resolver-readiness remediation:** CERTAIN `legal_reviewer` reactivate (org A) + companion create (org B); ADMIN first-cutover exclusion; threat review PASS for packaging; post-parity MATCH 24 / AMBIGUOUS 13 / critical 0; verdict **READY FOR CUTOVER AUTHORIZATION**; `CANONICAL_RESOLVER_CUTOVER_AUTHORIZATION.md` votes **Requested**; authority flag **not** implemented; PAR-ID-001 remains **In progress** |
