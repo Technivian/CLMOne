@@ -380,6 +380,15 @@ def create_nda_workflow_instance(*, organization, user, cleaned_values: dict, re
     for field in field_defs:
         if field.maps_to_contract_field and field.key in cleaned_values:
             setattr(contract, field.maps_to_contract_field, cleaned_values[field.key])
+    from contracts.services.contract_provenance import OriginKind, apply_provenance_fields, pin_workflow_provenance
+    apply_provenance_fields(
+        contract,
+        origin_kind=OriginKind.WORKFLOW,
+        origin_channel='nda_workflow',
+        actor=user,
+        lock=False,
+        validate=False,
+    )
     contract.save()
 
     workflow = Workflow.objects.create(
@@ -391,6 +400,7 @@ def create_nda_workflow_instance(*, organization, user, cleaned_values: dict, re
         status=Workflow.Status.ACTIVE,
         created_by=user,
     )
+    pin_workflow_provenance(contract, workflow, actor=user, request=request, channel='nda_workflow')
     materialize_workflow_from_template(workflow)
 
     FieldValue.objects.bulk_create([

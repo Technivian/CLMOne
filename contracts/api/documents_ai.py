@@ -367,19 +367,43 @@ def document_upload_api(request):
     try:
         with transaction.atomic():
             if contract_payload is not None:
-                contract = Contract.objects.create(**contract_payload)
+                from contracts.services.contract_provenance import (
+                    EVENT_PROVENANCE_ASSIGNED,
+                    OriginKind,
+                    apply_provenance_fields,
+                    provenance_snapshot,
+                )
+                contract = Contract(**contract_payload)
+                apply_provenance_fields(
+                    contract,
+                    origin_kind=OriginKind.UPLOAD,
+                    origin_channel='documents_ai_upload',
+                    actor=request.user,
+                    lock=True,
+                    validate=True,
+                )
+                contract.save()
                 get_version_service().create_version(
                     contract, changed_by=request.user, change_summary='Initial source document uploaded.'
                 )
+                snap = provenance_snapshot(contract)
                 log_action(
                     request.user, AuditLog.Action.CREATE, 'Contract', contract.pk, str(contract),
                     organization=organization, request=request,
                     event_type='contract.uploaded',
                     changes={
                         'event': 'contract.uploaded',
+                        'equivalent_event': 'contract.record.created',
                         'status': contract.status,
                         'contract_type': contract.contract_type,
+                        'provenance': snap,
                     },
+                )
+                log_action(
+                    request.user, AuditLog.Action.CREATE, 'Contract', contract.pk, str(contract),
+                    organization=organization, request=request,
+                    event_type=EVENT_PROVENANCE_ASSIGNED,
+                    changes={'event': EVENT_PROVENANCE_ASSIGNED, 'provenance': snap},
                 )
             prior_document = None
             if contract is not None:

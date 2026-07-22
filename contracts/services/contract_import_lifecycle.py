@@ -64,15 +64,27 @@ def persist_contract_with_imported_lifecycle(
     source: str = 'import',
     request=None,
     non_lifecycle_update_fields: list[str] | None = None,
+    provenance_correlation_id: str = '',
 ):
     """Save contract fields, then apply status/stage via the lifecycle service.
 
     Creates always start at ``IN_PROGRESS`` / ``DRAFTING``, then move to the
     desired pair through ``apply_operational_position(..., system=True)`` so
     audit/provenance remain intact for bulk ingestion.
+
+    PAR-CORE-003: new rows receive import/integration provenance before first
+    save so ``origin_kind`` / source identity are locked with the create.
     """
     from contracts.models import Contract
     from contracts.services.contract_lifecycle import get_contract_lifecycle_service
+    from contracts.services.contract_provenance import (
+        EVENT_PROVENANCE_ASSIGNED,
+        EVENT_RECORD_CREATED,
+        provenance_snapshot,
+        stamp_import_provenance,
+    )
+    from contracts.middleware import log_action
+    from contracts.models import AuditLog
 
     status, stage = resolve_import_status_stage(
         status=desired_status,
@@ -83,9 +95,40 @@ def persist_contract_with_imported_lifecycle(
     actor_type = 'system'
 
     if created:
+        stamp_import_provenance(
+            contract,
+            source=source,
+            actor=actor,
+            correlation_id=provenance_correlation_id,
+        )
         contract.status = Contract.Status.IN_PROGRESS
         contract.lifecycle_stage = Contract.LifecycleStage.DRAFTING
         contract.save()
+        snap = provenance_snapshot(contract)
+        log_action(
+            actor,
+            AuditLog.Action.CREATE,
+            'Contract',
+            contract.pk,
+            str(contract),
+            organization=getattr(contract, 'organization', None),
+            request=request,
+            event_type=EVENT_RECORD_CREATED,
+            actor_type=AuditLog.ActorType.SYSTEM if actor is None else AuditLog.ActorType.HUMAN,
+            changes={'event': EVENT_RECORD_CREATED, 'source': source, 'provenance': snap},
+        )
+        log_action(
+            actor,
+            AuditLog.Action.CREATE,
+            'Contract',
+            contract.pk,
+            str(contract),
+            organization=getattr(contract, 'organization', None),
+            request=request,
+            event_type=EVENT_PROVENANCE_ASSIGNED,
+            actor_type=AuditLog.ActorType.SYSTEM if actor is None else AuditLog.ActorType.HUMAN,
+            changes={'event': EVENT_PROVENANCE_ASSIGNED, 'source': source, 'provenance': snap},
+        )
     else:
         # Persist non-lifecycle field changes without rewriting status/stage here.
         if non_lifecycle_update_fields:

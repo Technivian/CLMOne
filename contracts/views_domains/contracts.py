@@ -1350,10 +1350,26 @@ class ContractCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView
         # cleaned field values — harmless no-op if the content has none,
         # so this runs whether or not a template was used to start the draft.
         form.instance.content = render_merge_fields(form.instance.content, form.instance)
+        from contracts.services.contract_provenance import (
+            EVENT_PROVENANCE_ASSIGNED,
+            OriginKind,
+            apply_provenance_fields,
+            provenance_snapshot,
+        )
+        apply_provenance_fields(
+            form.instance,
+            origin_kind=OriginKind.MANUAL,
+            origin_channel='contract_create_ui',
+            origin_reason='Created via contract form',
+            actor=self.request.user,
+            lock=True,
+            validate=True,
+        )
         response = super().form_valid(form)
         if self.object.dpa_attached:
             from contracts.services.dpa_activation import ensure_dpa_review_pack
             ensure_dpa_review_pack(self.object, self.request.user, request=self.request)
+        snap = provenance_snapshot(self.object)
         log_action(
             self.request.user,
             'CREATE',
@@ -1362,6 +1378,7 @@ class ContractCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView
             str(self.object),
             changes={
                 'event': 'contract_created',
+                'equivalent_event': 'contract.record.created',
                 'status': self.object.status,
                 'lifecycle_stage': self.object.lifecycle_stage,
                 'contract_type': self.object.contract_type,
@@ -1383,8 +1400,19 @@ class ContractCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView
                 'playbook_applied': assessment.playbook_applied,
                 'review_route': route_decision.reviewers,
                 'approval_route': route_decision.approvers,
+                'provenance': snap,
             },
             request=self.request,
+        )
+        log_action(
+            self.request.user,
+            'CREATE',
+            'Contract',
+            self.object.id,
+            str(self.object),
+            changes={'event': EVENT_PROVENANCE_ASSIGNED, 'provenance': snap},
+            request=self.request,
+            event_type=EVENT_PROVENANCE_ASSIGNED,
         )
         messages.success(self.request, f'Contract "{self.object.title}" created.')
         return response

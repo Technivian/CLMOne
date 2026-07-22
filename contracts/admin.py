@@ -346,10 +346,75 @@ class WorkflowStepAdmin(admin.ModelAdmin):
 
 @admin.register(Contract)
 class ContractAdmin(admin.ModelAdmin):
-    list_display = ['title', 'organization', 'status', 'counterparty', 'value', 'start_date', 'end_date', 'created_at', 'is_expiring_soon']
-    list_filter = ['organization', 'status', 'created_at', 'start_date', ExpiringContractFilter]
-    search_fields = ['title', 'content', 'counterparty']
+    list_display = [
+        'title', 'organization', 'status', 'origin_kind', 'counterparty',
+        'value', 'start_date', 'end_date', 'created_at', 'is_expiring_soon',
+    ]
+    list_filter = ['organization', 'status', 'origin_kind', 'created_at', 'start_date', ExpiringContractFilter]
+    search_fields = ['title', 'content', 'counterparty', 'source_system_id', 'provenance_correlation_id']
     ordering = ['-created_at']
+    readonly_fields = [
+        'origin_kind',
+        'origin_channel',
+        'origin_workflow',
+        'origin_workflow_template',
+        'origin_workflow_template_version',
+        'origin_reason',
+        'provenance_correlation_id',
+        'provenance_locked_at',
+        'source_system',
+        'source_system_id',
+        'created_by',
+        'created_at',
+        'updated_at',
+    ]
+
+    def save_model(self, request, obj, form, change):
+        from contracts.services.contract_provenance import (
+            EVENT_PROVENANCE_ASSIGNED,
+            EVENT_RECORD_CREATED,
+            OriginKind,
+            apply_provenance_fields,
+            provenance_snapshot,
+        )
+        from contracts.middleware import log_action
+        from contracts.models import AuditLog
+
+        if not change:
+            apply_provenance_fields(
+                obj,
+                origin_kind=OriginKind.ADMIN,
+                origin_channel='django_admin',
+                origin_reason='Created via Django admin',
+                actor=request.user,
+                lock=True,
+                validate=True,
+            )
+        super().save_model(request, obj, form, change)
+        if not change:
+            snap = provenance_snapshot(obj)
+            log_action(
+                request.user,
+                AuditLog.Action.CREATE,
+                'Contract',
+                obj.pk,
+                str(obj),
+                organization=obj.organization,
+                request=request,
+                event_type=EVENT_RECORD_CREATED,
+                changes={'event': EVENT_RECORD_CREATED, 'provenance': snap},
+            )
+            log_action(
+                request.user,
+                AuditLog.Action.CREATE,
+                'Contract',
+                obj.pk,
+                str(obj),
+                organization=obj.organization,
+                request=request,
+                event_type=EVENT_PROVENANCE_ASSIGNED,
+                changes={'event': EVENT_PROVENANCE_ASSIGNED, 'provenance': snap},
+            )
 
     @admin.display(boolean=True, description='Expiring <=30d')
     def is_expiring_soon(self, obj):

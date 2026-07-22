@@ -1,7 +1,7 @@
 # Platform Alignment Roadmap
 
 **Created:** 2026-07-21  
-**Last refined:** 2026-07-22 (reconciliation + PAR-CORE-001 start)  
+**Last refined:** 2026-07-22 (PAR-CORE-003 completed)  
 **Authority:** Gap audit `docs/audits/2026-07-21-platform-gap-audit.md` · active `docs/governance/GOVERNANCE_CHARTER.md` · Accepted PDR-0003  
 **Branch:** `cursor/feat-platform-documentation-alignment-d7f1`  
 **Living document:** update statuses only with implementation, tests, audit evidence, migration evidence (if any), documentation, and rollback proof.
@@ -15,9 +15,9 @@ Statuses: Completed · In progress · Blocked · Deferred by approved decision �
 | Rollup | Count | Notes |
 |---|---:|---|
 | **Unique PAR IDs in this roadmap** | **24** | All distinct `PAR-*` identifiers below |
-| Completed unique PAR IDs | 9 | Includes `PAR-AUD-001`, `PAR-CORE-001` |
+| Completed unique PAR IDs | 10 | Includes `PAR-AUD-001`, `PAR-CORE-001`, `PAR-CORE-003` |
 | In progress | 0 | — |
-| Future / residual unique PAR IDs | 15 | Includes `PAR-SEC-002`, `PAR-SEC-003`, `PAR-CORE-002` |
+| Future / residual unique PAR IDs | 14 | Includes `PAR-SEC-002`, `PAR-SEC-003`, `PAR-CORE-002` |
 | Non-PAR Milestone 1 follow-ups | 1 | Playwright DPA bootstrap (`M1-E2E-001`) |
 
 ### Bundling rule for `PAR-AUD-001`
@@ -26,18 +26,17 @@ Statuses: Completed · In progress · Blocked · Deferred by approved decision �
 
 ### Unique PAR ID inventory
 
-**Completed (9):** `PAR-WF-001`, `PAR-AUD-001`, `PAR-WF-002`, `PAR-WF-003`, `PAR-WF-005`, `PAR-NAV-001`, `PAR-SEC-001`, `PAR-WORK-001`, `PAR-CORE-001`
+**Completed (10):** `PAR-WF-001`, `PAR-AUD-001`, `PAR-WF-002`, `PAR-WF-003`, `PAR-WF-005`, `PAR-NAV-001`, `PAR-SEC-001`, `PAR-WORK-001`, `PAR-CORE-001`, `PAR-CORE-003`
 
-**Future / residual (15):** `PAR-SEC-002`, `PAR-SEC-003`, `PAR-CORE-002`, `PAR-CORE-003`, `PAR-DOC-001`, `PAR-WF-010`, `PAR-APR-001`, `PAR-ID-001`, `PAR-EXC-001`, `PAR-DATA-001`, `PAR-OBL-001`, `PAR-OBL-002`, `PAR-AI-001`, `PAR-ENT-001`, `PAR-INT-001`
+**Future / residual (14):** `PAR-SEC-002`, `PAR-SEC-003`, `PAR-CORE-002`, `PAR-DOC-001`, `PAR-WF-010`, `PAR-APR-001`, `PAR-ID-001`, `PAR-EXC-001`, `PAR-DATA-001`, `PAR-OBL-001`, `PAR-OBL-002`, `PAR-AI-001`, `PAR-ENT-001`, `PAR-INT-001`
 
 ---
 
 ## Immediate next items
 
-1. **PAR-CORE-003** — Contract Record provenance completeness (Milestone 2) — **next**
-2. **PAR-CORE-002** — Dual ContractType reconciliation (Milestone 2; before WF-010 cutover)
-3. **PAR-DOC-001** — Document Version entity harden (Milestone 2)
-4. **PAR-WF-010** — Workflow Definition aggregate (discovery/design OK; **no production cutover** until an appropriate ADR is Accepted; ADR-0010 stays Proposed/non-authorizing)
+1. **PAR-CORE-002** — Dual ContractType reconciliation (Milestone 2; before WF-010 cutover) — **next**
+2. **PAR-DOC-001** — Document Version entity harden (Milestone 2)
+3. **PAR-WF-010** — Workflow Definition aggregate (discovery/design OK; **no production cutover** until an appropriate ADR is Accepted; ADR-0010 stays Proposed/non-authorizing)
 
 Parallel Milestone 1 hygiene:
 
@@ -97,7 +96,7 @@ Parallel Milestone 1 hygiene:
 
 | ID | Title | Priority | Status |
 |---|---|---|---|
-| **PAR-CORE-003** | Contract Record provenance completeness | P0 (after CORE-001) | Future |
+| **PAR-CORE-003** | Contract Record provenance completeness | P0 (after CORE-001) | **Completed** |
 | **PAR-CORE-002** | Dual ContractType enum vs model (G-DOM-02) | P0 (before WF-010 cutover) | Future |
 | **PAR-DOC-001** | Document Version entity harden | P0 | Future |
 | **PAR-WF-010** | Workflow Definition aggregate | P0 (Accepted ADR required for cutover) | Future |
@@ -200,7 +199,7 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | Acceptance criteria | Checklist all Compliant for in-scope writers — **met** |
 | Evidence | `docs/audits/evidence/2026-07-22-par-core-001/` |
 | PR/commits | `cursor/feat-platform-documentation-alignment-d7f1` |
-| Next roadmap item | **PAR-CORE-003** |
+| Next roadmap item | **PAR-CORE-002** |
 | Last updated | 2026-07-22 |
 
 ### M1-E2E-001 — Fix Playwright DPA bootstrap
@@ -281,23 +280,23 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 
 | Field | Content |
 |---|---|
-| Status | Future roadmap (Milestone 2) — **not Completed** |
+| Status | **Completed** |
 | Priority | P0 after PAR-CORE-001 |
 | Problem | Contract Record provenance is partial (creator/org present; workflow/document/event linkage incomplete vs domain invariants). |
 | Governance source | CANONICAL_DOMAIN_MODEL invariants; gap audit PAR-CORE-003 / G provenance row |
-| Current evidence | `contracts.models.Contract` fields; gap audit Partially compliant |
+| Current evidence | `contracts.models.Contract` provenance fields; `contracts/services/contract_provenance.py`; evidence `docs/audits/evidence/2026-07-22-par-core-003/` |
 | Target outcome | Every material Contract Record carries required provenance (org, creator, governing workflow version when applicable, source events) with queryable history |
 | Dependencies | Prefer after PAR-CORE-001 vocabulary stability; may touch Document/Workflow FKs |
 | Decision required | None for incremental fields; schema reshape may need ADR |
-| Migration impact | Additive fields/backfill likely; must be reversible or expandable |
-| Security and permissions impact | Provenance visible only within tenant; no cross-org leakage |
-| Audit requirements | Provenance mutations and backfill jobs emit AuditLog |
-| UX requirements | Record header/history surfaces show provenance without cluttering pilot hero flows |
-| Tests | Model/service tests; isolation; optional API serializers |
-| Rollback strategy | Reverse migration for additive columns; feature-flag UI |
+| Migration impact | Additive `0106_contract_record_provenance`; truthful backfill; reversible RunPython |
+| Security and permissions impact | Provenance visible only within tenant; repair requires OWNER/ADMIN/staff; no cross-org repair |
+| Audit requirements | `contract.record.created`, `contract.record.provenance_assigned`, `contract.record.provenance_repaired` (+ retained equivalents) |
+| UX requirements | Record header/history surfaces show provenance without cluttering pilot hero flows (server slice first; UI panel residual) |
+| Tests | `tests/test_par_core_003_provenance.py` (19 OK) + ownership suite regression |
+| Rollback strategy | Reverse migration 0106; proven rollback + re-forward |
 | Acceptance criteria | Domain provenance checklist green for in-scope fields; tests + migration evidence + rollback proof |
-| Evidence | TBD |
-| PR/commits | TBD |
+| Evidence | `docs/audits/evidence/2026-07-22-par-core-003/` |
+| PR/commits | Branch `cursor/feat-platform-documentation-alignment-d7f1` |
 | Last updated | 2026-07-22 |
 
 
@@ -612,3 +611,4 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | 2026-07-22 | **Roadmap refinement (docs only):** reconciled unique PAR count (21; `PAR-AUD-001` bundled with `PAR-WF-001` but retained in catalogue); corrected Charter v3 blocker (PDR-0003 does not approve v3); reordered Future into Milestones 1–5; expanded all future items + M1 follow-ups with full field schema; set immediate next to PAR-CORE-001 → PAR-CORE-003 → PAR-DOC-001 → PAR-WF-010 |
 | 2026-07-22 | **Ambiguity reconciliation:** added `PAR-SEC-002`, `PAR-CORE-002` (G-DOM-02), `PAR-SEC-003` (isolation residual); unique PAR count → **24**; ADR-0010 remains Proposed/non-authorizing; started **PAR-CORE-001** (In progress) with PDR-0002 slices + evidence — not Completed |
 | 2026-07-22 | **PAR-CORE-001 Completed:** closed CRM/CSV/inbound ownership, document supersession audit, and Contract.save pair protection; checklist Compliant; next item **PAR-CORE-003** |
+| 2026-07-22 | **PAR-CORE-003 Completed:** Contract Record provenance fields + immutability + governed repair; migration 0106 truthful backfill; import/workflow/manual/admin/seed paths wired; tests + rollback proof; next item **PAR-CORE-002** |

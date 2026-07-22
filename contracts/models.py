@@ -806,6 +806,37 @@ class Matter(models.Model):
         return total
 
 
+class ContractQuerySet(models.QuerySet):
+    """Block QuerySet.update / bulk_create from bypassing provenance immutability."""
+
+    def update(self, **kwargs):
+        from contracts.services.contract_provenance import PROVENANCE_UPDATE_BLOCKLIST, ProvenanceError
+
+        blocked = sorted(set(kwargs) & PROVENANCE_UPDATE_BLOCKLIST)
+        if blocked:
+            raise ProvenanceError(
+                f'QuerySet.update cannot mutate provenance fields {blocked}. '
+                f'Use repair_contract_provenance() for governed repairs.'
+            )
+        return super().update(**kwargs)
+
+    def bulk_create(self, objs, *args, **kwargs):
+        from django.utils import timezone
+        from contracts.services.contract_provenance import OriginKind, ensure_create_provenance
+
+        for obj in objs:
+            if not (getattr(obj, 'origin_kind', '') or '').strip():
+                obj.origin_kind = OriginKind.LEGACY_UNKNOWN
+            ensure_create_provenance(obj)
+            if obj.provenance_locked_at is None:
+                obj.provenance_locked_at = timezone.now()
+        return super().bulk_create(objs, *args, **kwargs)
+
+
+class ContractManager(models.Manager.from_queryset(ContractQuerySet)):
+    pass
+
+
 class Contract(models.Model):
     class Status(models.TextChoices):
         """Record status — business state of the contract record (not workflow stage)."""
@@ -869,6 +900,20 @@ class Contract(models.Model):
     class PaperSource(models.TextChoices):
         OUR_PAPER = 'OUR_PAPER', 'Our paper'
         COUNTERPARTY_PAPER = 'COUNTERPARTY_PAPER', 'Counterparty paper'
+
+    class OriginKind(models.TextChoices):
+        WORKFLOW = 'WORKFLOW', 'Workflow instance'
+        MANUAL = 'MANUAL', 'Manual creation'
+        UPLOAD = 'UPLOAD', 'Document upload'
+        IMPORT_CSV = 'IMPORT_CSV', 'CSV import'
+        IMPORT_INBOUND = 'IMPORT_INBOUND', 'Inbound import'
+        INTEGRATION = 'INTEGRATION', 'External integration'
+        MIGRATION = 'MIGRATION', 'Data migration'
+        SEED = 'SEED', 'Seed / demo data'
+        ADMIN = 'ADMIN', 'Admin console'
+        LEGACY_UNKNOWN = 'LEGACY_UNKNOWN', 'Legacy / unknown'
+
+    objects = ContractManager()
 
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, null=True, blank=True, related_name='contracts')
     title = models.CharField(max_length=200)
@@ -943,6 +988,58 @@ class Contract(models.Model):
     source_system_id = models.CharField(max_length=255, blank=True, default='')
     source_system_url = models.URLField(blank=True)
     source_last_modified_at = models.DateTimeField(null=True, blank=True)
+    # PAR-CORE-003 — Contract Record provenance (immutable once locked).
+    origin_kind = models.CharField(
+        max_length=32,
+        choices=OriginKind.choices,
+        blank=True,
+        default='',
+        help_text='How this Contract Record entered CLM One. Blank only until first save.',
+    )
+    origin_channel = models.CharField(
+        max_length=64,
+        blank=True,
+        default='',
+        help_text='Narrower channel within origin_kind (e.g. salesforce, dpa_workflow, ui).',
+    )
+    origin_workflow = models.ForeignKey(
+        'Workflow',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='originated_contracts',
+        help_text='Originating Workflow Instance when created via workflow.',
+    )
+    origin_workflow_template = models.ForeignKey(
+        'WorkflowTemplate',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='originated_contracts',
+        help_text='Immutable Workflow Version (template row) pinned at creation.',
+    )
+    origin_workflow_template_version = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text='Denormalized template.version at creation for durable lineage.',
+    )
+    origin_reason = models.CharField(
+        max_length=500,
+        blank=True,
+        default='',
+        help_text='Reason for manual creation or governed provenance repair.',
+    )
+    provenance_correlation_id = models.CharField(
+        max_length=64,
+        blank=True,
+        default='',
+        help_text='Import batch or correlation identifier.',
+    )
+    provenance_locked_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='When provenance was finalized; fields are immutable afterwards.',
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -982,7 +1079,7 @@ class Contract(models.Model):
             raise ValidationError(errors)
 
     def save(self, *args, **kwargs):
-        """Enforce PDR-0002 status/stage pairing below the UI layer.
+        """Enforce PDR-0002 status/stage pairing and PAR-CORE-003 provenance lock.
 
         Validation runs when status or lifecycle_stage is written (including
         creates). Partial updates that omit both fields leave historical pairs
@@ -995,9 +1092,46 @@ class Contract(models.Model):
 
         Pass ``skip_lifecycle_validation=True`` only for proven migration or
         repair paths — never for product writers.
+
+        Provenance fields are immutable once ``provenance_locked_at`` is set.
+        Pass ``allow_provenance_mutation=True`` only from
+        ``assign_and_lock_provenance`` / ``repair_contract_provenance`` /
+        ``pin_workflow_provenance``.
         """
         skip_lifecycle_validation = kwargs.pop('skip_lifecycle_validation', False)
+        allow_provenance_mutation = kwargs.pop('allow_provenance_mutation', False)
         update_fields = kwargs.get('update_fields')
+
+        previous_provenance = None
+        if self.pk and not allow_provenance_mutation:
+            previous_provenance = (
+                type(self).objects.filter(pk=self.pk)
+                .values(
+                    'origin_kind',
+                    'origin_channel',
+                    'origin_workflow_id',
+                    'origin_workflow_template_id',
+                    'origin_workflow_template_version',
+                    'origin_reason',
+                    'provenance_correlation_id',
+                    'provenance_locked_at',
+                    'source_system',
+                    'source_system_id',
+                    'created_by_id',
+                )
+                .first()
+            )
+            if previous_provenance and previous_provenance.get('provenance_locked_at'):
+                from contracts.services.contract_provenance import assert_provenance_immutable
+                assert_provenance_immutable(self, previous=previous_provenance)
+
+        if self.pk is None and not allow_provenance_mutation:
+            from contracts.services.contract_provenance import ensure_create_provenance
+            ensure_create_provenance(self)
+            if update_fields is not None:
+                extra = {'origin_kind', 'provenance_locked_at'}
+                kwargs['update_fields'] = list(dict.fromkeys(list(update_fields) + list(extra)))
+
         should_validate = not skip_lifecycle_validation
         if should_validate and update_fields is not None:
             fields = set(update_fields)
@@ -1017,7 +1151,7 @@ class Contract(models.Model):
                 from .services.contract_import_lifecycle import default_stage_for_status
                 self.lifecycle_stage = default_stage_for_status(self.status)
                 if update_fields is not None and 'lifecycle_stage' not in update_fields:
-                    kwargs['update_fields'] = list(update_fields) + ['lifecycle_stage']
+                    kwargs['update_fields'] = list(kwargs.get('update_fields', update_fields)) + ['lifecycle_stage']
             try:
                 validate_status_stage_pair(self.status, self.lifecycle_stage)
             except ValidationError:
@@ -1032,6 +1166,8 @@ class Contract(models.Model):
             models.Index(fields=['organization', 'renewal_date'], name='ctr_org_renew_ix'),
             models.Index(fields=['organization', 'created_at'], name='ctr_org_created_ix'),
             models.Index(fields=['organization', 'source_system', 'source_system_id'], name='ctr_org_src_ref_ix'),
+            models.Index(fields=['organization', 'origin_kind'], name='ctr_org_origin_ix'),
+            models.Index(fields=['organization', 'provenance_correlation_id'], name='ctr_org_prov_corr_ix'),
         ]
 
 
