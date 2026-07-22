@@ -14,23 +14,23 @@ Statuses: Completed · In progress · Blocked · Deferred by approved decision �
 
 | Rollup | Count | Notes |
 |---|---:|---|
-| **Unique PAR IDs in this roadmap** | **24** | All distinct `PAR-*` identifiers below |
-| Completed unique PAR IDs | 14 | Includes `PAR-AUD-001`, `PAR-CORE-001`, `PAR-CORE-003`, `PAR-CORE-002`, `PAR-DOC-001`, `PAR-APR-001`, `PAR-SEC-003` |
-| In progress | 1 | `PAR-ID-001` — Role Definition reconciliation (Milestone 3) |
-| Future / residual unique PAR IDs | 9 | Includes `PAR-SEC-002` (PAR-SEC-003 Closed) |
+| **Unique PAR IDs in this roadmap** | **25** | Includes residual `PAR-ID-002` from PAR-ID-001 closure |
+| Completed unique PAR IDs | 15 | Includes `PAR-ID-001`, `PAR-AUD-001`, `PAR-CORE-001`, `PAR-CORE-003`, `PAR-CORE-002`, `PAR-DOC-001`, `PAR-APR-001`, `PAR-SEC-003` |
+| In progress | 0 | — |
+| Future / residual unique PAR IDs | 10 | Includes `PAR-ID-002` (ADMIN reconciliation), `PAR-SEC-002`, `PAR-EXC-001` |
 | Non-PAR Milestone 1 follow-ups | 1 | Playwright DPA bootstrap (`M1-E2E-001`) |
 
 ### Bundling rule for `PAR-AUD-001`
 
-`PAR-AUD-001` remains intentionally bundled with `PAR-WF-001` for delivery and is **included** in the unique total of **24**.
+`PAR-AUD-001` remains intentionally bundled with `PAR-WF-001` for delivery and is **included** in the unique total of **25**.
 
 ### Unique PAR ID inventory
 
-**Completed (14):** `PAR-WF-001`, `PAR-AUD-001`, `PAR-WF-002`, `PAR-WF-003`, `PAR-WF-005`, `PAR-NAV-001`, `PAR-SEC-001`, `PAR-WORK-001`, `PAR-CORE-001`, `PAR-CORE-003`, `PAR-CORE-002`, `PAR-DOC-001`, `PAR-APR-001`, `PAR-SEC-003`
+**Completed (15):** `PAR-WF-001`, `PAR-AUD-001`, `PAR-WF-002`, `PAR-WF-003`, `PAR-WF-005`, `PAR-NAV-001`, `PAR-SEC-001`, `PAR-WORK-001`, `PAR-CORE-001`, `PAR-CORE-003`, `PAR-CORE-002`, `PAR-DOC-001`, `PAR-APR-001`, `PAR-SEC-003`, `PAR-ID-001`
 
-**In progress (1):** `PAR-ID-001`
+**In progress (0):** —
 
-**Future / residual (9):** `PAR-SEC-002`, `PAR-WF-010`, `PAR-EXC-001`, `PAR-DATA-001`, `PAR-OBL-001`, `PAR-OBL-002`, `PAR-AI-001`, `PAR-ENT-001`, `PAR-INT-001`
+**Future / residual (10):** `PAR-ID-002`, `PAR-SEC-002`, `PAR-WF-010`, `PAR-EXC-001`, `PAR-DATA-001`, `PAR-OBL-001`, `PAR-OBL-002`, `PAR-AI-001`, `PAR-ENT-001`, `PAR-INT-001`
 
 **Blocked (1):** `PAR-WF-010` — discovery complete; production cutover blocked pending Accepted ADR-0012
 
@@ -38,9 +38,10 @@ Statuses: Completed · In progress · Blocked · Deferred by approved decision �
 
 ## Immediate next items
 
-1. **PAR-ID-001** — Role Definition reconciliation (Milestone 3) — **In progress** (canonical authority **implemented** default-off on PR #62; **activation pending**; legacy retained; ADMIN deferred)
-2. **PAR-APR-002** — legacy approval cutover — **Planned** (blocked on owner + cutover plan)
-3. **PAR-WF-010** — production cutover **blocked** pending Accepted ADR-0012 (discovery complete — see evidence)
+1. **PAR-EXC-001** — Governed Exception (Milestone 3) — **Future / next**
+2. **PAR-ID-002** — ADMIN process-role reconciliation (residual from PAR-ID-001) — **Future**
+3. **PAR-APR-002** — legacy approval cutover — **Planned** (blocked on owner + cutover plan; do not start automatically)
+4. **PAR-WF-010** — production cutover **blocked** pending Accepted ADR-0012
 
 Parallel Milestone 1 hygiene:
 
@@ -113,7 +114,8 @@ Parallel Milestone 1 hygiene:
 |---|---|---|---|
 | PAR-APR-001 | Approval Requirement/Decision split | P1 | **Completed** |
 | PAR-APR-002 | Legacy approval cutover | P1 | **Planned** |
-| PAR-ID-001 | Role Definition reconciliation | P1 | **In progress** |
+| PAR-ID-001 | Role Definition reconciliation | P1 | **Completed** |
+| PAR-ID-002 | ADMIN process-role reconciliation | P1 | Future (residual) |
 | PAR-EXC-001 | Governed Exception | P1 | Future |
 
 ### Milestone 4 — Canonical data and post-signature
@@ -402,11 +404,11 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 
 | Field | Content |
 |---|---|
-| Status | **In progress** (2026-07-22) — cutover **implementation** on PR #62 (`PROCESS_ROLE_CANONICAL_RESOLVER_ENABLED` default off); activation **pending** separate votes; GI-2026-07-22-PR58-PREAUTH-MERGE **Ratified and Closed**; legacy retained; ADMIN reconciliation deferred |
+| Status | **Completed** (2026-07-22) — controlled-pilot activation PASS + rollback PASS; PR #62 `4c08fb9c`; ADMIN residual → **PAR-ID-002**; legacy removal separately governed |
 | Priority | P1 |
 | Problem | Dual role systems (`OrganizationMembership` vs `UserProfile.Role`) conflict with canonical Role Definition. |
 | Governance source | CANONICAL_DOMAIN_MODEL §2.5; SECURITY_PRIVACY_ACCESS_AND_AUDIT |
-| Current evidence | `docs/audits/evidence/2026-07-22-par-id-001/` + `docs/audits/evidence/2026-07-22-par-id-001-pr58-merge/`; implementation Authorized `15:27–15:29Z`; activation package **Requested** |
+| Current evidence | `docs/audits/evidence/2026-07-22-par-id-001/` — [`CLOSURE.md`](../audits/evidence/2026-07-22-par-id-001/CLOSURE.md), activation results |
 | Target outcome | Single terminology and mapping for process vs org roles; no silent privilege escalation |
 | Dependencies | ADR-0014 Accepted (**met**); PAR-SEC-003 Closed (**met**); privilege/resolver cutover needs separate authorization |
 | Decision required | **ADR-0014 Accepted** — privilege/resolver cutover still needs separate implementation authorization |
@@ -416,10 +418,29 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | UX requirements | Consistent role labels in My Work, Approvals, Admin (copy audit residual) |
 | Tests | Characterization (19) + catalogue + assignment + shadow sync + isolation (75) + approvals (33) + WF-010 |
 | Rollback strategy | Flags default off; reverse 0113 then 0112 if needed; no resolver flip to roll back |
-| Acceptance criteria | Accepted ADR (**met**); additive catalogue (**met**); org-scoped adapter + dual-read (**met**); feature-flagged shadow sync + parity (**met**); runtime cutover criteria **not yet** |
-| Evidence | `docs/audits/evidence/2026-07-22-par-id-001/` |
-| Accepted ADR | **ADR-0014** + 0112/0113 implementation authorizations; Slice 3 auth **Authorized** (non-authoritative; merge recorded separately) |
-| PR/commits | PR #51 `21e65f09`; PR #53 `0bf7c9dc`; PR #54 `58966de7`; PR #52 `3c5e628b`; PR #55 `bb881ac2`; evidence PR #57 `2f14c034`; merge evidence PR #59 `0d9712ca`; PR #58 `598b7a12` (resolver parity); PR [#62](https://github.com/Technivian/CLMOne/pull/62) (canonical authority default-off) |
+| Acceptance criteria | Accepted ADR (**met**); additive catalogue (**met**); org-scoped adapter + dual-read (**met**); feature-flagged shadow sync + parity (**met**); default-off canonical authority (**met**); controlled-pilot activation + rollback (**met**); ADMIN cutover deferred to PAR-ID-002 |
+| Evidence | `docs/audits/evidence/2026-07-22-par-id-001/` incl. `CLOSURE.md` |
+| Accepted ADR | **ADR-0014** + 0112/0113 + Slice 3/4 + cutover implementation + activation authorizations |
+| PR/commits | PR #51 `21e65f09`; PR #53 `0bf7c9dc`; PR #54 `58966de7`; PR #52 `3c5e628b`; PR #55 `bb881ac2`; evidence PR #57 `2f14c034`; merge evidence PR #59 `0d9712ca`; PR #58 `598b7a12`; PR #62 `4c08fb9c` |
+| Last updated | 2026-07-22 |
+
+### PAR-ID-002 — ADMIN process-role reconciliation
+
+| Field | Content |
+|---|---|
+| Status | Future roadmap (residual from PAR-ID-001) — **not Completed** |
+| Priority | P1 |
+| Problem | Profile ADMIN remains AMBIGUOUS (`legacy_process_admin`); excluded from first cutover; workspace ADMIN must stay separate |
+| Governance source | PROCESS_ROLE_MAPPING_MATRIX ADMIN collision rule; SECURITY_PRIVACY_ACCESS_AND_AUDIT |
+| Current evidence | `docs/audits/evidence/2026-07-22-par-id-001/PAR-ID-002-ADMIN-RECONCILIATION.md` |
+| Target outcome | Explicit CERTAIN mapping or permanent exclusion; optional later authority only with new votes |
+| Dependencies | PAR-ID-001 Closed (**met**); Product + Security policy |
+| Decision required | Product mapping decision + Security advisory; separate activation if authority proposed |
+| Migration impact | TBD after decision (likely assignment remaps only) |
+| Security and permissions impact | **High** — no silent privilege merge with workspace ADMIN |
+| Acceptance criteria | Mapping/exclusion recorded; tests; no silent AMBIGUOUS→MATCH |
+| Evidence | Residual stub under `2026-07-22-par-id-001/` |
+| PR/commits | TBD |
 | Last updated | 2026-07-22 |
 
 ### PAR-EXC-001 — Governed Exception
@@ -636,4 +657,6 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | 2026-07-22 | **GI-2026-07-22-PR58-PREAUTH-MERGE Ratified and Closed:** Product `15:31:46Z` / Engineering `15:31:55Z`; PAR-ID-001 **In progress** — resolver parity merged; remediation required before staging activation; flags remain default off |
 | 2026-07-22 | **PAR-ID-001 staging resolver-parity gate + remediation:** CERTAIN assignment gaps fixed; ADMIN first-cutover exclusion; threat review PASS for packaging; post-parity MATCH 24 / AMBIGUOUS 13 / critical 0; verdict **READY FOR CUTOVER AUTHORIZATION** |
 | 2026-07-22 | **PAR-ID-001 cutover implementation Authorized:** Product `15:27:09Z` / Engineering `15:28:09Z` / Security `15:29:09Z` (Approve with conditions); `PROCESS_ROLE_CANONICAL_RESOLVER_ENABLED` default off on PR [#62](https://github.com/Technivian/CLMOne/pull/62); activation votes **Requested**; flag **not** enabled; PAR-ID-001 remains **In progress** |
+| 2026-07-22 | **PR #62 merged** to `main` @ `4c08fb9c` (2026-07-22T15:59:25Z) — canonical authority default off |
+| 2026-07-22 | **PAR-ID-001 controlled-pilot activation Authorized:** Product `17:58:59Z` / Engineering `17:59:59Z` / Security `18:00:59Z`; allowlist `controlled-pilot-org`; activation PASS; rollback PASS; **PAR-ID-001 Closed**; residual **PAR-ID-002** (ADMIN); next item **PAR-EXC-001**; do not begin PAR-APR-002 / PAR-WF-010 automatically |
 
