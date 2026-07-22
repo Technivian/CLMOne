@@ -1,7 +1,7 @@
 # PAR-EXC-001 evidence index
 
 **Programme ID:** PAR-EXC-001  
-**Status:** **In progress** — ADR-0015 **Accepted**; foundation PR #66 **merged** (`982b0900`); dual-write PR #67 (default-off); controlled-pilot activation **Requested** / **not** activated; canonical read cutover **unauthorized**  
+**Status:** **In progress** — ADR-0015 **Accepted**; foundation PR #66 **merged** (`982b0900`); dual-write PR #69 **merged** (`f19eae42`, default-off); controlled-pilot activation **Requested** / **not** activated; canonical read cutover **unauthorized**  
 **ADR:** ADR-0015 **Accepted** (`2026-07-22T19:12:39Z`)  
 **Foundation:** PR [#66](https://github.com/Technivian/CLMOne/pull/66) merge `982b0900b37f64cf3ce36f44e23a062ae908dbb7`  
 **Dual-write branch / PR:** `cursor/feat-par-exc-001-dual-write-main-d7f1` / [#69](https://github.com/Technivian/CLMOne/pull/69) (supersedes stacked [#67](https://github.com/Technivian/CLMOne/pull/67))  
