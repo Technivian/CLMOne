@@ -16,7 +16,7 @@ Statuses: Completed · In progress · Blocked · Deferred by approved decision �
 |---|---:|---|
 | **Unique PAR IDs in this roadmap** | **24** | All distinct `PAR-*` identifiers below |
 | Completed unique PAR IDs | 14 | Includes `PAR-AUD-001`, `PAR-CORE-001`, `PAR-CORE-003`, `PAR-CORE-002`, `PAR-DOC-001`, `PAR-APR-001`, `PAR-SEC-003` |
-| In progress | 2 | `PAR-EXC-001` (this slice); `PAR-ID-001` residual (R0/activation — not advanced here) |
+| In progress | 2 | `PAR-EXC-001`; `PAR-ID-001` (R4 PASS; R5 Blocked — prep package) |
 | Future / residual unique PAR IDs | 8 | Includes `PAR-SEC-002` (PAR-SEC-003 Closed); `PAR-ID-002` residual not started |
 | Non-PAR Milestone 1 follow-ups | 1 | Playwright DPA bootstrap (`M1-E2E-001`) |
 
@@ -39,8 +39,7 @@ Statuses: Completed · In progress · Blocked · Deferred by approved decision �
 ## Immediate next items
 
 1. **PAR-EXC-001** — Governed Exception (Milestone 3) — **In progress** (ADR-0015 **Accepted**; foundation PR #66 merged `982b0900`; dual-write PR #69 merged `f19eae42` default-off; controlled-pilot activation **Requested**; canonical read **unauthorized**)
-2. **PAR-ID-001** — Role Definition reconciliation — **In progress** (R0 **PASS**; R1 CERTAIN non-ADMIN remediation **Authorized/PASS** — 12 rows; AMBIGUOUS ADMIN **8** residual; activation pending; flags default off)
-3. **PAR-APR-002** — legacy approval cutover — **Planned** — **not started this slice**
+2. **PAR-ID-001** — Role Definition reconciliation — **In progress** (R0 **Completed**; R1 **Completed**; R2 **Not required on verified corpus**; R3 **Deferred**; R4 **Completed, PASS**; R5 **Blocked**, awaiting explicit canonical-authority cutover authorization — prep package ready; flags default off)3. **PAR-APR-002** — legacy approval cutover — **Planned** — **not started this slice**
 4. **PAR-WF-010** — production cutover **blocked** pending Accepted ADR-0012 — **not started this slice**
 5. **PAR-ID-002** — ADMIN process-role reconciliation — Future residual — **not started this slice**
 
@@ -404,26 +403,27 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 
 | Field | Content |
 |---|---|
-| Status | **In progress** (2026-07-22) — R0 **PASS**; R1 CERTAIN non-ADMIN remediation **Authorized** (Product `19:16:55Z` / Eng `19:16:56Z` / Sec `19:16:57Z`) and evidence **PASS** (12 creates; LEGACY_ONLY→0 on corpus; AMBIGUOUS ADMIN **8** residual); activation **pending**; flags default off; P1+P3; P2 rejected |
+| Status | **In progress** (2026-07-22) — **R0 Completed**; **R1 Completed**; **R2 Not required on verified corpus**; **R3 Deferred**; **R4 Completed, PASS** ([`…-par-id-001-r4-staging/`](../audits/evidence/2026-07-22-par-id-001-r4-staging/)); **R5 Blocked**, awaiting explicit canonical-authority cutover authorization — **R5 authorization and execution-readiness package prepared** ([`…-par-id-001-r5-canonical-authority-cutover/`](../audits/evidence/2026-07-22-par-id-001-r5-canonical-authority-cutover/); votes **Requested**; not authorized); committed `PROCESS_ROLE_*` defaults remain **false**; legacy resolver remains authoritative |
 | Priority | P1 |
 | Problem | Dual role systems (`OrganizationMembership` vs `UserProfile.Role`) conflict with canonical Role Definition. |
 | Governance source | CANONICAL_DOMAIN_MODEL §2.5; SECURITY_PRIVACY_ACCESS_AND_AUDIT |
-| Current evidence | `docs/audits/evidence/2026-07-22-par-id-001/` + `…-pr58-merge/` + `…-remediation-decision/` (incl. `R0_EXIT_REPORT.md`); activation package **Requested**; R0 **PASS** |
+| Current evidence | `docs/audits/evidence/2026-07-22-par-id-001/` + `…-pr58-merge/` + `…-remediation-decision/` + `…-par-id-001-r4-staging/` + `…-par-id-001-r5-canonical-authority-cutover/` |
 | Target outcome | Single terminology and mapping for process vs org roles; no silent privilege escalation |
 | Dependencies | ADR-0014 Accepted (**met**); PAR-SEC-003 Closed (**met**) |
-| Decision required | **ADR-0014 Accepted** (**met**) |
+| Decision required | **ADR-0014 Accepted** (**met**); R5 requires separate Motions 1–4 |
 | Migration impact | `0112` catalogue + `0113` org-scoped `ProcessRoleAssignment` |
 | Security and permissions impact | Labels grant no permissions; runtime cutover default-off with allowlist; ADMIN deferred |
 | Audit requirements | `role.definition.*`; `role.assignment.*`; `role.resolver.*` |
 | UX requirements | Consistent role labels (copy audit residual) |
 | Tests | Characterization + catalogue + assignment + shadow + parity + canonical authority |
-| Rollback strategy | Flags default off; proven rollback in activation evidence |
-| Acceptance criteria | Accepted ADR (**met**); additive catalogue (**met**); org-scoped adapter + dual-read (**met**); feature-flagged shadow sync + parity (**met**); runtime cutover criteria **partial** (implementation merged default-off; activation + R0 pending) |
-| Evidence | `docs/audits/evidence/2026-07-22-par-id-001/` + remediation-decision evidence |
+| Rollback strategy | Flags default off; R4 flag-off proven; R5 rollback procedure drafted (not executed) |
+| Acceptance criteria | Accepted ADR (**met**); additive catalogue (**met**); org-scoped adapter + dual-read (**met**); feature-flagged shadow sync + parity (**met**); R4 staging diagnostic (**PASS**); R5 canonical authority **not** authorized |
+| Evidence | R0/R1 + R4 PASS + R5 prep package (votes Requested) |
 | Accepted ADR | **ADR-0014** |
-| PR/commits | PR #51–#59, #62, #63; evidence under `docs/audits/evidence/2026-07-22-par-id-001/` |
+| PR/commits | PR #51–#59, #62, #63, #68; R4+R5 docs on `cursor/par-id-001-r5-authority-cutover-prep` |
 | Last updated | 2026-07-22 |
-| Next | R0 **PASS**; activation pending; R1+ not authorized; ADMIN → **PAR-ID-002**; programme parallel: **PAR-EXC-001** |
+| Gate map | R0 **Completed** · R1 **Completed** · R2 **Not required on verified corpus** · R3 **Deferred** · R4 **Completed, PASS** · R5 **Blocked** (prep package; awaiting explicit authorization) |
+| Next | Carry Motions 1–4 on [`CANONICAL_RESOLVER_AUTHORITY_CUTOVER_AUTHORIZATION.md`](../audits/evidence/2026-07-22-par-id-001-r5-canonical-authority-cutover/CANONICAL_RESOLVER_AUTHORITY_CUTOVER_AUTHORIZATION.md) before any enablement; ADMIN → **PAR-ID-002**; parallel: **PAR-EXC-001** |
 
 ### PAR-EXC-001 — Governed Exception
 
@@ -649,6 +649,8 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | 2026-07-22 | **PAR-ID-001 R1 CERTAIN non-ADMIN remediation auth package prepared** from `main` @ `0404e284`: 12 CERTAIN missing rows in scope; 8 AMBIGUOUS ADMIN excluded; mapping manifest + test/rollback plan; votes **Requested**; no implementation; flags remain default off; PAR-ID-001 remains **In progress** |
 | 2026-07-22 | **PAR-ID-001 R1 Authorized (bundled):** Product `19:16:55Z` / Engineering `19:16:56Z` / Security `19:16:57Z` (conditions 1–10 yes); dry-run/apply/rollback for exactly 12 CERTAIN rows; staging-equivalent evidence PASS (LEGACY_ONLY 89→0; AMBIGUOUS ADMIN 8 residual); flags remain default off; no separate merge vote; R2–R5 / activation not authorized; PAR-ID-001 remains **In progress** |
 | 2026-07-22 | **PR #68 merged** to `main` @ `fb8f7d84` (2026-07-22T19:38:30Z); reviewed HEAD `15acc520`; R1 CERTAIN remediation on main; flags remain default off; PAR-ID-001 remains **In progress** |
+| 2026-07-22 | **PAR-ID-001 R4 staging diagnostic activation Authorized (bundled) and PASS:** Product `19:41:15Z` / Engineering `19:41:16Z` / Security `19:41:17Z` (conditions acknowledged yes); named env `par-id-001-r4-staging-equivalent`; activation `19:44:04Z`; resolver MATCH **89** / AMBIGUOUS **5** / critical **0**; assignment CERTAIN missing **0** / AMBIGUOUS ADMIN **8**; flag-off rollback PASS; evidence review Product/Eng/Sec `19:49:25–27Z`; committed defaults remain false; R0 Completed / R1 Completed / R2 Not required on verified corpus / R3 Deferred / R4 **Completed, PASS** / R5 **Blocked**; PAR-ID-001 remains **In progress** |
+| 2026-07-22 | **PAR-ID-001 R5 authorization and execution-readiness package prepared** (docs only): draft/requested [`CANONICAL_RESOLVER_AUTHORITY_CUTOVER_AUTHORIZATION.md`](../audits/evidence/2026-07-22-par-id-001-r5-canonical-authority-cutover/CANONICAL_RESOLVER_AUTHORITY_CUTOVER_AUTHORIZATION.md); proposed env `par-id-001-r5-staging-equivalent` (production out of scope); Motions 1–4 votes **Requested**; no votes invented; no cutover executed; canonical authority remains disabled; R5 remains **Blocked**; PAR-ID-001 remains **In progress** |
 
 
 | 2026-07-22 | **ADR-0015 Accepted** (Product `19:12:31Z` / Engineering `19:12:35Z` / Security `19:12:39Z` Approve with conditions); Motion 2 authorizes default-off six-path dual-write; controlled-pilot activation **not** authorized; PAR-EXC-001 remains **In progress** |

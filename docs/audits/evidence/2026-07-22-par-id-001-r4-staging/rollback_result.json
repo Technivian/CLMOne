@@ -1,0 +1,32 @@
+{
+  "rollback_method": "flag-off",
+  "resolver_parity_enabled": false,
+  "require_flag_exit_expected_2": true,
+  "parity_report_total_comparisons_with_flag_off": 0,
+  "legacy_remains_authoritative": true,
+  "PASS": true,
+  "report": {
+    "CROSS_TENANT_ANOMALY_count": 0,
+    "DIFFERENT_USER_count": 0,
+    "RESOLUTION_ERROR_count": 0,
+    "authoritative_for_runtime": false,
+    "counts_per_classification": {
+      "AMBIGUOUS": 0,
+      "CANONICAL_ONLY": 0,
+      "CROSS_TENANT_ANOMALY": 0,
+      "DIFFERENT_ROLE": 0,
+      "DIFFERENT_USER": 0,
+      "INACTIVE_ASSIGNMENT": 0,
+      "LEGACY_ONLY": 0,
+      "MATCH": 0,
+      "RESOLUTION_ERROR": 0
+    },
+    "critical_classes": [
+      "CROSS_TENANT_ANOMALY",
+      "DIFFERENT_USER",
+      "RESOLUTION_ERROR"
+    ],
+    "critical_drift_count": 0,
+    "total_comparisons": 0
+  }
+}
