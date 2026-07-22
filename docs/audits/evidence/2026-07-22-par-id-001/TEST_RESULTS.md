@@ -1,34 +1,24 @@
-# PAR-ID-001 — test results (additive catalogue slice)
+# PAR-ID-001 — test results (0113 process-role adapter)
 
 **Date:** 2026-07-22  
-**Branch:** `cursor/feat-par-id-001-role-definition-registry-d7f1`  
-**Settings:** `config.settings_test`
+**Branch:** `cursor/feat-par-id-001-process-role-adapter`
 
----
-
-## Suites
-
-| Module | Result |
+| Suite | Result |
 |---|---|
-| `tests.test_par_id_001_role_definition` | **17 PASS** |
+| `tests.test_par_id_001_process_role_assignment` | **PASS** |
+| `tests.test_par_id_001_role_definition` | **PASS** |
 | `tests.test_par_id_001_characterization` | **19 PASS** |
-| `tests.test_par_apr_001_approval` + approval workflow/authorization | **33 PASS** |
+| Approval suites | **33 PASS** |
 | `tests.test_par_wf_010_characterization` | **4 PASS** |
 | `tests.test_cross_tenant_isolation` | **75 PASS** |
-| **Combined gate run** | **148 PASS** |
+| **Combined gate** | **165 PASS** |
 
----
-
-## Migration proof
+## Migration 0113
 
 | Operation | Result |
 |---|---|
-| Forward `0112` | **PASS** |
-| Rollback → `0111` | **PASS** |
-| Re-forward → `0112` | **PASS** |
+| Forward | PASS |
+| Rollback → 0112 | PASS |
+| Re-forward | PASS |
 
----
-
-## Tenant isolation conclusion
-
-Programme isolation suite **75/75 PASS**. PAR-SEC-003 **Closed**. Programme-level tenant isolation is **proven for the additive RoleDefinition catalogue slice**. Privilege / resolver cutover remains **not authorized**.
+Production authority remains legacy resolvers. Privilege cutover **not** authorized.

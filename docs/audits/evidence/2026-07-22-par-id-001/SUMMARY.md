@@ -1,28 +1,31 @@
 # PAR-ID-001 evidence summary — 2026-07-22
 
-## Status: In progress — additive catalogue delivered
+## Status: In progress — adapter delivered (non-authoritative)
 
-**Programme:** Role Definition reconciliation (Milestone 3)  
-**ADR:** ADR-0014 **Accepted** 2026-07-22T11:00:00Z  
-**PR #51 merge:** `21e65f09`  
-**Authorized slice:** migration `0112_role_definition_registry`
+**ADR:** ADR-0014 **Accepted**  
+**PR #53 merge:** `0bf7c9dc` (catalogue 0112)  
+**This slice:** migration `0113_process_role_assignment`
 
 ### Delivered
-- Discovery pack (ROLE_USAGE_MATRIX, TARGET_ROLE_MODEL, CUTOVER_PLAN)
-- ADR-0014 Accepted with named approvers
-- PAR-SEC-003 Closed
-- Additive `RoleDefinition` model + service + migration 0112
-- Compatibility lookup (no privilege dual-write)
-- Ambiguous `UserProfile.ADMIN` → `legacy_process_admin` (LEGACY_UNKNOWN)
+- Additive `RoleDefinition` catalogue (0112)
+- Org-scoped `ProcessRoleAssignment` model + governed service
+- Dual-read parity / drift diagnostics (non-authoritative)
+- Truthful backfill from `UserProfile.role` with ADMIN → `legacy_process_admin`
+- Mapping matrix `PROCESS_ROLE_MAPPING_MATRIX.md`
 
 ### Explicitly unchanged
 - Permissions / authorization outcomes
-- Runtime assignee resolution
-- Navigation access
-- `OrganizationMembership` / `UserProfile.role` behaviour
+- `OrganizationMembership.role` authority
+- `UserProfile.role` behaviour
+- Approval / signer / workflow runtime resolution
+- Navigation
 
-### Not Completed
-PAR-ID-001 remains **In progress** until runtime role assignment and compatibility cutover criteria are delivered under separate authorization.
+### Programme record
+- Additive catalogue delivered
+- Organization-scoped assignment adapter delivered
+- Dual-read parity available
+- Production authority still uses legacy resolvers
+- Privilege and resolver cutover require separate authorization
 
-### Next authorized slice (proposed)
-Org-scoped process-role dual-read adapter — **not authorized** in this package.
+### Next slice (not authorized)
+Production dual-write / feature-flagged resolver dual-read consumption — **new authorization required**.
