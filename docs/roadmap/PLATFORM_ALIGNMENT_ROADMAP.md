@@ -419,7 +419,7 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | Acceptance criteria | Accepted ADR (**met**); additive catalogue (**met**); org-scoped adapter + dual-read (**met**); runtime cutover criteria **not yet** |
 | Evidence | `docs/audits/evidence/2026-07-22-par-id-001/` |
 | Accepted ADR | **ADR-0014** + 0112/0113 implementation authorizations |
-| PR/commits | PR #51 `21e65f09`; PR #53 `0bf7c9dc`; branch `cursor/feat-par-id-001-process-role-adapter` |
+| PR/commits | PR #51 `21e65f09`; PR #53 `0bf7c9dc`; PR #54 `58966de7`; Slice 3 open as PR #55; visual remediation PR #52 `3c5e628b` on `main` |
 | Last updated | 2026-07-22 |
 
 ### PAR-EXC-001 — Governed Exception
