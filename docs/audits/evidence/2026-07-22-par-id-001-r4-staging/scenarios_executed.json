@@ -1,0 +1,193 @@
+{
+  "assignment_summary": {
+    "AMBIGUOUS_ADMIN_rows": 8,
+    "CERTAIN_MATCH_ACTIVE": 12,
+    "CERTAIN_missing": 0,
+    "authoritative_for_runtime": false,
+    "confidence_counts": {
+      "AMBIGUOUS": 8,
+      "CERTAIN": 12
+    },
+    "critical_drift_are_ambiguous_admin_only": true,
+    "critical_drift_rows": 8,
+    "drift_counts": {
+      "ambiguous_mapping": 8,
+      "legacy_without_canonical": 8
+    },
+    "total_rows": 20
+  },
+  "audit_metadata_review": {
+    "authoritative_for_runtime_in_evidence": false,
+    "permission_safe_evidence_keys": [
+      "authoritative_for_runtime",
+      "canonical_result_present",
+      "classification",
+      "correlation_id",
+      "criticality",
+      "legacy_result_present",
+      "organization_id",
+      "resolver_type",
+      "timestamp"
+    ],
+    "recent_parity_audit_count": 20,
+    "restricted_diagnostic_leakage": false,
+    "sample_changes_keys": [
+      "authoritative_for_runtime",
+      "canonical_result_present",
+      "classification",
+      "correlation_id",
+      "criticality",
+      "legacy_result_present",
+      "organization_id",
+      "resolver_type",
+      "timestamp"
+    ]
+  },
+  "resolver_parity_authoritative_report": {
+    "CROSS_TENANT_ANOMALY_count": 0,
+    "DIFFERENT_USER_count": 0,
+    "RESOLUTION_ERROR_count": 0,
+    "authoritative_for_runtime": false,
+    "counts_per_classification": {
+      "AMBIGUOUS": 5,
+      "CANONICAL_ONLY": 0,
+      "CROSS_TENANT_ANOMALY": 0,
+      "DIFFERENT_ROLE": 0,
+      "DIFFERENT_USER": 0,
+      "INACTIVE_ASSIGNMENT": 0,
+      "LEGACY_ONLY": 0,
+      "MATCH": 89,
+      "RESOLUTION_ERROR": 0
+    },
+    "critical_classes": [
+      "CROSS_TENANT_ANOMALY",
+      "DIFFERENT_USER",
+      "RESOLUTION_ERROR"
+    ],
+    "critical_drift_count": 0,
+    "total_comparisons": 94
+  },
+  "resolver_summary_after_scenarios": {
+    "AMBIGUOUS": 8,
+    "CANONICAL_ONLY": 0,
+    "CROSS_TENANT_ANOMALY": 0,
+    "DIFFERENT_ROLE": 0,
+    "DIFFERENT_USER": 0,
+    "INACTIVE_ASSIGNMENT": 1,
+    "LEGACY_ONLY": 0,
+    "MATCH": 52,
+    "RESOLUTION_ERROR": 11,
+    "authoritative_for_runtime": false,
+    "critical_drift": 11,
+    "note": "Includes intentional fail-open RESOLUTION_ERROR probe and temporary inactive probe",
+    "total_comparisons": 72
+  },
+  "scenarios": {
+    "ADMIN_ambiguity": {
+      "admin_rules": 1,
+      "admin_steps": 1,
+      "non_authoritative": true,
+      "policy": "P1+P3; P2 rejected",
+      "status": "EXERCISED"
+    },
+    "DPA_launch_and_privacy_routing": {
+      "contract_type": "DPA",
+      "status": "EXERCISED",
+      "touches": 2
+    },
+    "MSA_launch_and_assignment": {
+      "contract_type": "MSA",
+      "status": "EXERCISED",
+      "touches": 18
+    },
+    "NDA_launch_and_assignment": {
+      "contract_type": "NDA",
+      "status": "EXERCISED",
+      "touches": 10
+    },
+    "approval_initiation": {
+      "status": "EXERCISED",
+      "touches": 12
+    },
+    "comparison_error_and_fail_open": {
+      "RESOLUTION_ERROR_after": 11,
+      "RESOLUTION_ERROR_before": 10,
+      "fail_open": true,
+      "legacy_returned_unchanged": true,
+      "status": "EXERCISED"
+    },
+    "delegation": {
+      "delegation_fields": [
+        "delegated_at",
+        "delegated_to",
+        "delegation_ends_at",
+        "delegation_reason"
+      ],
+      "status": "EXERCISED"
+    },
+    "finance_approver_resolution": {
+      "hits": 0,
+      "status": "EXERCISED"
+    },
+    "generic_workflow": {
+      "status": "EXERCISED",
+      "touches": 0
+    },
+    "inactive_assignment": {
+      "inactive_pra_baseline": 0,
+      "probe": {
+        "INACTIVE_ASSIGNMENT_incremented": true,
+        "legacy_returned_same_user": true
+      },
+      "status": "EXERCISED"
+    },
+    "legal_reviewer_resolution": {
+      "hits": 10,
+      "status": "EXERCISED"
+    },
+    "privacy_reviewer_resolution": {
+      "hits": 0,
+      "status": "EXERCISED"
+    },
+    "reassignment": {
+      "status": "EXERCISED"
+    },
+    "signer_resolution_where_applicable": {
+      "hits": 1,
+      "status": "EXERCISED"
+    },
+    "two_tenant_isolation": {
+      "organizations": [
+        "clmone-demo",
+        "clmone-mvp",
+        "controlled-pilot-org",
+        "demo-firm",
+        "payrollminds-demo"
+      ],
+      "pra_without_active_membership": 0,
+      "status": "EXERCISED"
+    },
+    "unresolved_assignment": {
+      "none_returns_sampled": 3,
+      "status": "EXERCISED"
+    }
+  },
+  "security": {
+    "AMBIGUOUS_explicit": 5,
+    "CROSS_TENANT_ANOMALY": 0,
+    "DIFFERENT_USER": 0,
+    "canonical_returned_to_callers": false,
+    "findings": [
+      "CROSS_TENANT_ANOMALY=0 on authoritative resolver report",
+      "DIFFERENT_USER=0 on authoritative resolver report",
+      "AMBIGUOUS=5 identified and non-authoritative",
+      "Fail-open probe returned legacy unchanged and recorded RESOLUTION_ERROR",
+      "No credentials/contract content in permission-safe evidence keys",
+      "Assignment CERTAIN_missing=0; AMBIGUOUS ADMIN residual remains"
+    ],
+    "restricted_diagnostic_leakage": false,
+    "unexpected_CANONICAL_ONLY": 0,
+    "unexpected_LEGACY_ONLY": 0,
+    "workspace_ADMIN_grants_process_authority": false
+  }
+}
