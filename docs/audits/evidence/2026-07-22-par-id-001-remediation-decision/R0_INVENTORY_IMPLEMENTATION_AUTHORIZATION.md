@@ -1,9 +1,11 @@
 # Implementation authorization — PAR-ID-001 Slice R0 verified inventory (only)
 
 **Programme:** PAR-ID-001  
-**Prerequisite:** Remediation decision package (PR #63) **Approved** (Product + Engineering + Security)  
+**Prerequisite:** Remediation decision package (PR #63) **Approved** (Product `18:33:34Z` / Engineering `18:35:34Z` / Security `18:34:34Z`)  
+**Additional prerequisite:** PR #63 **merged** under separate merge authorization (not yet)  
 **Baseline `main` at package:** `8316a756`  
-**Status:** **Requested** — not authorized; do not invent votes; do not start R0 until votes recorded  
+**Package-approved reviewed HEAD:** `8390769d`  
+**Status:** **Requested** — package Approved; R0 gate **not opened** until PR #63 merges; do not invent R0 votes; do not start R0  
 **Depends on:** [`PACKAGE_REVIEW_AND_VOTE.md`](PACKAGE_REVIEW_AND_VOTE.md)
 
 ---

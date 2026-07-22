@@ -3,12 +3,8 @@
 **PR:** [#63](https://github.com/Technivian/CLMOne/pull/63)  
 **Baseline `main`:** `8316a756`  
 **Package path:** `docs/audits/evidence/2026-07-22-par-id-001-remediation-decision/`  
-**Reviewed HEAD (prior lock):** `4a8b1aa9be08ed45e6ad72420d50b26d3e52fb5e`  
-**Current PR tip / vote-gate HEAD:** `d1a3cb78ce8fb0f4dd14f6e63938a48fbccb466d`  
-**Review timestamp:** 2026-07-22T15:56:14Z  
-**Vote-gate processing timestamp:** 2026-07-22T16:01:57Z  
-**Package-vote gate refresh:** 2026-07-22T16:07:36Z  
-**CI on vote-gate HEAD:** see § CI state (must be green before merge auth)  
+**Package-approved reviewed HEAD:** `8390769d28d4e96599072861d950dc2e4ec8b5e2`  
+**Package approval recorded:** 2026-07-22T18:36:00Z  
 **Package type:** Policy and planning only — **no** production code, seed, assignment, flag, or authority changes in this PR  
 **Package approval ≠ merge authorization:** Package Approve votes do **not** authorize merging PR #63; see § Merge authorization (separate).
 
@@ -45,15 +41,31 @@ Verified counts require a separate **R0** implementation authorization (below). 
 
 | Approver | GitHub identity | Capacity | Vote | Consent |
 |---|---|---|---|---|
-| Haroon Wahed | @haroonwahed | Product | **Requested** | Pending real ISO-8601 UTC timestamp |
-| Technivian | @Technivian | Engineering | **Requested** | Pending real ISO-8601 UTC timestamp |
-| Security & privacy (advisory) | @Technivian | Security | **Requested (advisory, with binding conditions)** | Pending real ISO-8601 UTC timestamp + conditions acknowledged |
+| Haroon Wahed | @haroonwahed | Product | **Approve** | `2026-07-22T18:33:34Z` — Reviewed HEAD `8390769d`; P1+P3; P2 rejected; package ≠ merge auth |
+| Technivian | @Technivian | Engineering | **Approve** | `2026-07-22T18:35:34Z` |
+| Security & privacy (advisory) | @Technivian | Security | **Approve with conditions** | `2026-07-22T18:34:34Z` — Conditions 1–6 acknowledged: yes |
 
-**Package vote status:** **Not authorized** until all three votes are recorded verbatim.
+**Package vote status:** **Approved** (policy/planning only). Does **not** authorize PR #63 merge, R0 execution, flag enablement, or cutover.
+
+### Recorded package votes (verbatim)
+
+```text
+@haroonwahed Product: Approve
+Timestamp: 2026-07-22T18:33:34Z
+Reviewed HEAD: 8390769d
+# P1+P3; P2 rejected; package ≠ merge auth
+
+@Technivian Engineering: Approve
+Timestamp: 2026-07-22T18:35:34Z
+
+@Technivian Security advisory: Approve with conditions
+Timestamp: 2026-07-22T18:34:34Z
+Conditions 1–6 acknowledged: yes
+```
 
 ---
 
-## Approved ADMIN policy (motion — effective only when package votes recorded)
+## Approved ADMIN policy (binding)
 
 **Exactly:**
 
@@ -65,7 +77,7 @@ Verified counts require a separate **R0** implementation authorization (below). 
 
 ---
 
-## Binding Security conditions (verbatim — must be acknowledged in Security vote)
+## Binding Security conditions (verbatim — acknowledged)
 
 1. Never merge workspace ADMIN with process ADMIN.  
 2. No automatic privilege grant via `legacy_process_admin`.  
@@ -76,96 +88,20 @@ Verified counts require a separate **R0** implementation authorization (below). 
 
 ---
 
-## Explicit package vote blocks (paste verbatim; do not invent)
-
-### Product — @haroonwahed
-
-```text
-PAR-ID-001 REMEDIATION DECISION PACKAGE (PR #63) — 2026-07-22
-Baseline main: 8316a756
-Reviewed HEAD: d1a3cb78 (or later content-identical tip)
-
-@haroonwahed Product: Approve | Reject
-Timestamp: <actual ISO-8601 UTC>
-
-Approved:
-- P1 labels + P3 authority
-- retain legacy_process_admin as AMBIGUOUS diagnostic label
-- no automatic process authority for workspace ADMIN
-- explicit CERTAIN process-role assignments required
-- P2 automatic ADMIN mapping rejected
-- Threat model + remediation architecture (planning)
-- Separate R0 authorization required before data remediation
-
-Confirms:
-- 14/1/13 remain unverified until R0
-- No staging activation
-- No cutover / flag enablement / auto-repair
-- Package approval is not PR merge authorization
-- PAR-ID-001 remains In progress
-```
-
-### Engineering — @Technivian
-
-```text
-@Technivian Engineering: Approve | Reject
-Timestamp: <actual ISO-8601 UTC>
-
-Engineering confirms:
-- Package is docs/policy only
-- Motion is exactly P1+P3; P2 rejected
-- R0–R5 each need separate implementation authorization
-- R0 is inventory-only when authorized
-- Package approval is not PR #63 merge authorization
-```
-
-### Security advisory — @Technivian
-
-```text
-@Technivian Security advisory: Approve with conditions | Reject
-Timestamp: <actual ISO-8601 UTC>
-
-Binding Security conditions (verbatim):
-1. Never merge workspace ADMIN with process ADMIN.
-2. No automatic privilege grant via legacy_process_admin.
-3. AMBIGUOUS retained in diagnostics until explicit CERTAIN assignment.
-4. Threat review T1–T10 acknowledged; residual legacy ADMIN first-match (T5) accepted only until separate cutover authorization.
-5. No staging activation, dual-return, privilege cutover, or auto-repair by this package vote.
-6. R0 (if later authorized) must remain inventory-only: no assignment repair, no flag enablement, no resolver-authority change.
-
-Conditions acknowledged: yes | no
-P1+P3 / P2 rejected acknowledged: yes | no
-No staging activation by this vote: yes | no
-Package approval is not PR merge authorization: yes | no
-```
-
----
-
 ## CI state
 
 | HEAD | Status |
 |---|---|
-| `4a8b1aa9` (prior reviewed) | All 6 required checks **SUCCESS** |
-| `d1a3cb78` (current tip at package-vote gate refresh) | Re-check required after tip refresh commit; merge only when all 6 SUCCESS |
+| `8390769d` (package-approved reviewed HEAD) | All 6 required checks **SUCCESS**; merge state CLEAN |
+| Tip after this vote-record commit | Must be CI-green (or content-identical) before merge |
 
-Required checks:
-
-| Check | Required |
-|---|---|
-| Forbidden-brand scan | SUCCESS |
-| Anti-drift + contrast | SUCCESS |
-| pr-release-evidence | SUCCESS |
-| security-scans | SUCCESS |
-| verify-ui | SUCCESS |
-| quality-and-tenancy | SUCCESS |
-
-Merge only if final reviewed HEAD has all required checks SUCCESS.
+Required checks: Forbidden-brand scan · Anti-drift + contrast · pr-release-evidence · security-scans · verify-ui · quality-and-tenancy — all SUCCESS.
 
 ---
 
 ## Merge authorization (PR #63) — separate from package approval
 
-**Status:** **Requested** — blocked until (a) package votes recorded Approve, (b) CI green on reviewed HEAD, (c) Product + Engineering **Approve merge** votes below.
+**Status:** **Requested** — package is Approved; CI was green on `8390769d`; awaiting Product + Engineering **Approve merge**.
 
 Package approval does **not** authorize merge.
 
@@ -175,7 +111,8 @@ Package approval does **not** authorize merge.
 PR #63 MERGE AUTHORIZATION — 2026-07-22
 
 PR: #63
-Reviewed HEAD: <final reviewed HEAD after package Approved + CI green>
+Reviewed HEAD: 8390769d
+(or later content-identical / CI-green tip that includes this vote record)
 Package: docs/audits/evidence/2026-07-22-par-id-001-remediation-decision/
 
 @haroonwahed Product: Approve merge | Reject merge
@@ -198,11 +135,10 @@ Timestamp: <actual ISO-8601 UTC>
 
 ## R0 authorization status
 
-**Not authorized.** Blocked until:
+**Not authorized.** Package is **Approved**. R0 remains blocked until:
 
-1. Policy package **Approved** (three votes), and  
-2. PR #63 **merged** under separate merge authorization, and  
-3. Separate R0 votes recorded in [`R0_INVENTORY_IMPLEMENTATION_AUTHORIZATION.md`](R0_INVENTORY_IMPLEMENTATION_AUTHORIZATION.md).
+1. PR #63 **merged** under separate merge authorization, and  
+2. Separate R0 votes recorded in [`R0_INVENTORY_IMPLEMENTATION_AUTHORIZATION.md`](R0_INVENTORY_IMPLEMENTATION_AUTHORIZATION.md).
 
 R0 allow/deny unchanged: inventory-only in clean staging-equivalent env; apply 0113; deterministic setup; tenant-scoped inventory + provenance; parity rerun; replace 14/1/13; **no** repair, flags, privileges, resolver-authority change, staging activation, or cutover.
 
@@ -210,13 +146,13 @@ R0 allow/deny unchanged: inventory-only in clean staging-equivalent env; apply 0
 
 ## Gate sequence (binding)
 
-1. Record package votes (Product / Engineering / Security) — **current step; votes not yet received with real timestamps** (not invented).  
-2. Separate Product + Engineering **Approve merge** for PR #63 (after package Approved + CI green on final reviewed HEAD).  
-3. Merge PR #63 (docs-only) when CI green — package approval ≠ merge authorization.  
-4. Open/execute R0 only after PR #63 merged **and** separate R0 authorization votes.  
-5. R1+ and staging activation remain later gates.
+1. Record package votes (Product / Engineering / Security) — **done; package Approved**.  
+2. Separate Product + Engineering **Approve merge** for PR #63 — **current step**.  
+3. Merge PR #63 (docs-only) when CI green on merge HEAD.  
+4. Open R0 inventory authorization gate only after PR #63 merged; execute only after separate R0 votes.  
+5. R1+ and staging/canonical activation remain later gates.
 
 ## Next authorized action
 
-**Await and record** verbatim package Approve votes with real ISO-8601 UTC timestamps.  
-Do **not** merge PR #63. Do **not** open or execute R0. Do **not** enable flags.
+**Await separate Product + Engineering Approve merge** votes.  
+Do **not** merge without them. Do **not** open or execute R0. Do **not** enable flags.

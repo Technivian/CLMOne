@@ -38,7 +38,7 @@ Statuses: Completed · In progress · Blocked · Deferred by approved decision �
 
 ## Immediate next items
 
-1. **PAR-ID-001** — Role Definition reconciliation (Milestone 3) — **In progress** (canonical authority **implemented** default-off; **activation pending**; remediation decision package pending votes; legacy retained; ADMIN deferred)
+1. **PAR-ID-001** — Role Definition reconciliation (Milestone 3) — **In progress** (canonical authority **implemented** default-off; **activation pending**; remediation decision package **Approved** on PR #63 @ `8390769d`; merge auth pending; legacy retained; ADMIN deferred)
 
 2. **PAR-APR-002** — legacy approval cutover — **Planned** (blocked on owner + cutover plan)
 3. **PAR-WF-010** — production cutover **blocked** pending Accepted ADR-0012 (discovery complete — see evidence)
@@ -403,7 +403,7 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 
 | Field | Content |
 |---|---|
-| Status | **In progress** (2026-07-22) — cutover **implementation** merged (`PROCESS_ROLE_CANONICAL_RESOLVER_ENABLED` default off); activation **pending**; remediation decision package pending votes; GI-2026-07-22-PR58-PREAUTH-MERGE **Ratified and Closed**; legacy retained; ADMIN reconciliation deferred |
+| Status | **In progress** (2026-07-22) — cutover **implementation** merged (`PROCESS_ROLE_CANONICAL_RESOLVER_ENABLED` default off); activation **pending**; remediation decision package **Approved** (PR #63 @ `8390769d`; Product `18:33:34Z` / Eng `18:35:34Z` / Sec `18:34:34Z`); merge auth **Requested**; GI-2026-07-22-PR58-PREAUTH-MERGE **Ratified and Closed**; legacy retained; ADMIN reconciliation deferred |
 | Priority | P1 |
 | Problem | Dual role systems (`OrganizationMembership` vs `UserProfile.Role`) conflict with canonical Role Definition. |
 | Governance source | CANONICAL_DOMAIN_MODEL §2.5; SECURITY_PRIVACY_ACCESS_AND_AUDIT |
@@ -639,4 +639,5 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | 2026-07-22 | **PAR-ID-001 staging resolver-parity gate + remediation:** CERTAIN assignment gaps fixed; ADMIN first-cutover exclusion; threat review PASS for packaging; post-parity MATCH 24 / AMBIGUOUS 13 / critical 0; verdict **READY FOR CUTOVER AUTHORIZATION** |
 | 2026-07-22 | **PAR-ID-001 cutover implementation Authorized:** Product `15:27:09Z` / Engineering `15:28:09Z` / Security `15:29:09Z` (Approve with conditions); `PROCESS_ROLE_CANONICAL_RESOLVER_ENABLED` default off on PR [#62](https://github.com/Technivian/CLMOne/pull/62) → `main`; activation votes **Requested**; flag **not** enabled; PAR-ID-001 remains **In progress** |
 | 2026-07-22 | **PAR-ID-001 remediation decision package prepared** (docs-only PR #63): REMEDIATION_ANALYSIS, ADMIN_ROLE_MAPPING_DECISION, THREAT_REVIEW; 14/1/13 counts marked unverified pending inventory; package votes **Requested**; **no** staging activation requested |
+| 2026-07-22 | **PAR-ID-001 remediation decision package Approved** on PR #63 reviewed HEAD `8390769d`: Product `18:33:34Z` / Engineering `18:35:34Z` / Security advisory `18:34:34Z` (conditions 1–6 acknowledged); motion **P1+P3**; **P2 rejected**; package approval ≠ merge auth; R0 not opened; flags remain default off; PAR-ID-001 remains **In progress** |
 
