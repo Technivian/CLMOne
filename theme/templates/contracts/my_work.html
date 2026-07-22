@@ -4,14 +4,8 @@
 {% block authenticated_page_title %}My Work{% endblock %}
 {% block authenticated_page_subtitle %}{% if work_scope == 'team' %}Open work across your organization (admin triage).{% else %}Review and complete the work currently assigned to you.{% endif %}{% endblock %}
 {% block authenticated_page_actions %}
-<div class="my-work-header-actions" style="display:inline-flex;align-items:center;gap:10px;">
-  {% if can_view_team_queue %}
-  <nav class="my-work-scope-tabs" aria-label="Work scope" style="display:inline-flex;align-items:center;gap:6px;">
-    <a class="dc-ds-button dc-ds-button--ghost{% if work_scope != 'team' %} is-active{% endif %}" href="?scope=personal"{% if work_scope != 'team' %} aria-current="page"{% endif %}>My work</a>
-    <a class="dc-ds-button dc-ds-button--ghost{% if work_scope == 'team' %} is-active{% endif %}" href="?scope=team"{% if work_scope == 'team' %} aria-current="page"{% endif %}>Team queue</a>
-  </nav>
-  {% endif %}
-  <span class="my-work-last-updated" id="my-work-last-updated" style="font:var(--text-meta);color:var(--ink-600);white-space:nowrap;">
+<div class="topbar-page-actions my-work-header-actions">
+  <span class="my-work-last-updated" id="my-work-last-updated">
     Updated {{ last_updated|date:"g:i A" }}
   </span>
   <button type="button" class="dc-ds-button dc-ds-button--ghost" id="my-work-refresh" aria-label="Refresh work queue">Refresh</button>
@@ -21,6 +15,21 @@
 {% include "components/_list_page_shell_styles.html" %}
 {% include "components/_governance_styles.html" %}
 <style nonce="{{ csp_nonce }}">
+  .my-work-header-actions .my-work-last-updated {
+    font: var(--text-meta);
+    color: var(--ink-600);
+    white-space: nowrap;
+  }
+  .my-work-page .my-work-scope-tabs {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex: 0 0 auto;
+    margin-right: 4px;
+  }
+  .my-work-page .my-work-scope-tabs .my-work-type-chip {
+    text-decoration: none;
+  }
   .my-work-page .clm-list-summary { --dc-ds-summary-columns: 6; }
   .my-work-page .my-work-summary-chip {
     display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto;
@@ -231,6 +240,16 @@
   <header class="clm-list-shell dc-ds-filterbar dc-ds-table-toolbar dc-ds-list-toolbar" aria-label="My Work controls">
     <div class="clm-list-view-header">
       <nav class="my-work-view-tabs clm-list-view-tabs" aria-label="Work queue views">
+        {% if can_view_team_queue %}
+        <div class="my-work-scope-tabs" role="group" aria-label="Work scope">
+          <a class="my-work-type-chip{% if work_scope != 'team' %} is-active{% endif %}"
+             href="?scope=personal{% if view_mode == 'completed' %}&view=completed{% endif %}"
+             {% if work_scope != 'team' %}aria-current="page"{% endif %}>My work</a>
+          <a class="my-work-type-chip{% if work_scope == 'team' %} is-active{% endif %}"
+             href="?scope=team{% if view_mode == 'completed' %}&view=completed{% endif %}"
+             {% if work_scope == 'team' %}aria-current="page"{% endif %}>Team queue</a>
+        </div>
+        {% endif %}
         <button type="button" class="my-work-type-chip is-active" data-view-tab="active" aria-pressed="true">Active work</button>
         <button type="button" class="my-work-type-chip" data-view-tab="completed" aria-pressed="false">Recently completed</button>
       </nav>
