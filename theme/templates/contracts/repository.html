@@ -18,12 +18,15 @@
     vertical-align: middle !important;
   }
   /* Kebab menus center via flex on .wq-kebab-trigger; block/grid cell content ignores
-     td vertical-align. Inner flex wrappers mirror that pattern inside table cells. */
+     td vertical-align. Title cell stays in-flow (sets row height); other cells fill
+     the row with an absolutely positioned flex inner — same centering as the kebab. */
   .repo-page #contracts-table tbody td.repo-cell {
-    height: 1px;
-    padding: 0;
-    overflow: hidden;
+    padding: 0 !important;
     vertical-align: middle !important;
+  }
+  .repo-page #contracts-table tbody td.repo-cell:not([data-col="title"]) {
+    position: relative;
+    overflow: hidden;
   }
   .repo-page #contracts-table tbody td.repo-cell[data-col="actions"] {
     overflow: visible;
@@ -32,11 +35,18 @@
     display: flex;
     align-items: center;
     box-sizing: border-box;
-    min-height: 100%;
-    height: 100%;
     min-width: 0;
-    width: 100%;
     padding: 14px 12px;
+  }
+  .repo-page #contracts-table tbody td.repo-cell:not([data-col="title"]) .repo-cell-inner {
+    position: absolute;
+    inset: 0;
+    width: auto;
+    height: auto;
+    overflow: hidden;
+  }
+  .repo-page #contracts-table tbody td.repo-cell[data-col="title"] .repo-cell-inner {
+    width: 100%;
   }
   .repo-page #contracts-table tbody td.repo-cell .repo-cell-inner > * {
     min-width: 0;
@@ -53,6 +63,7 @@
     justify-content: center;
     padding-left: 8px;
     padding-right: 8px;
+    overflow: visible;
   }
   .repo-page #contracts-table th.tbl-th:not([data-col="select"]) {
     padding: 14px 12px;
