@@ -17,7 +17,7 @@
 - Feature-flagged shadow sync from `UserProfile.role` → `ProcessRoleAssignment`
 - Deterministic `process_role_parity_report` management command
 - Shadow write-path inventory + Slice 3 implementation/merge authorization
-- Resolver usage matrix + resolver-parity authorization (Product / Engineering / Security)
+- Resolver usage matrix + resolver-parity authorization (Product `14:17:31Z` / Engineering `14:18:31Z` / Security `14:15:31Z`; prior `14:04–14:06Z` draft record superseded)
 - Feature-flagged resolver comparison (`PROCESS_ROLE_RESOLVER_PARITY_ENABLED`, default off)
 - `process_role_resolver_parity_report` staging diagnostics
 

@@ -6,8 +6,8 @@
 **Baseline `main` HEAD:** `0d9712ca`  
 **Draft PR:** [#58](https://github.com/Technivian/CLMOne/pull/58) — `cursor/feat-par-id-001-resolver-parity`  
 **Review package timestamp:** 2026-07-22T14:09:08Z  
-**Authorization complete timestamp:** 2026-07-22T14:06:28Z  
-**Status:** **Authorized** — Product, Engineering, and Security-advisory votes recorded verbatim; dual-return / privilege cutover / staging activation / merge still require programme gates as noted below
+**Authorization complete timestamp:** 2026-07-22T14:18:31Z  
+**Status:** **Authorized** — Product, Engineering, and Security-advisory votes recorded from direct user-provided text (timestamps below). Prior draft vote record at `14:04–14:06Z` is **superseded** (timestamps preceded the review package lock and did not match the approving authority’s posted votes). Dual-return / privilege cutover / staging activation / merge still require programme gates as noted below.
 
 **Related evidence:**
 - [`RESOLVER_USAGE_MATRIX.md`](RESOLVER_USAGE_MATRIX.md)
@@ -33,87 +33,60 @@
 
 | Approver | GitHub identity | Governance capacity | Authority basis | Vote | Consent |
 |---|---|---|---|---|---|
-| Haroon Wahed | @haroonwahed | Product governance | CODEOWNERS `/docs/`; Charter v2.0 | **Approve** | Recorded 2026-07-22T14:05:28Z (verbatim below) |
-| Technivian | @Technivian | Engineering governance | CODEOWNERS `/contracts/`; PDR-0003 | **Approve** | Recorded 2026-07-22T14:04:28Z (verbatim below) |
-| Security & privacy (advisory) | @Technivian | Security review capacity | SECURITY_PRIVACY_ACCESS_AND_AUDIT; Charter §7 | **Approve with conditions** | Recorded 2026-07-22T14:06:28Z (verbatim below) |
+| Haroon Wahed | @haroonwahed | Product governance | CODEOWNERS `/docs/`; Charter v2.0 | **Approve** | Recorded 2026-07-22T14:17:31Z (verbatim below) |
+| Technivian | @Technivian | Engineering governance | CODEOWNERS `/contracts/`; PDR-0003 | **Approve** | Recorded 2026-07-22T14:18:31Z (verbatim below) |
+| Security & privacy (advisory) | @Technivian | Security review capacity | SECURITY_PRIVACY_ACCESS_AND_AUDIT; Charter §7 | **Approve with conditions** | Recorded 2026-07-22T14:15:31Z (verbatim below) |
 
 **Result:** **Authorized** for diagnostic-only resolver parity implementation. Does **not** by itself authorize dual-return, privilege cutover, staging flag activation, or merge without green CI + programme merge step.
 
 ---
 
-## Verbatim recorded votes
+## Verbatim recorded votes (authoritative)
 
-### Product — @haroonwahed
+Source: direct user-provided authorization text (2026-07-22).  
+Supersedes earlier draft vote block timestamps `14:04:28Z` / `14:05:28Z` / `14:06:28Z`.
 
-```text
-APPROVE — PAR-ID-001 Resolver Parity Slice
-
-Approver: @haroonwahed
-Capacity: Product governance
-Vote: Approve
-Timestamp: 2026-07-22T14:05:28Z
-
-I approve the diagnostic-only resolver parity scope documented in
-RESOLVER_PARITY_IMPLEMENTATION_AUTHORIZATION.md.
-
-This approval authorizes parallel comparison of legacy and canonical resolution
-for the named assignee resolvers behind a default-off feature flag.
-
-The legacy result must remain authoritative in every outcome.
-
-This approval does not authorize dual-return, resolver cutover, privilege
-changes, membership changes, navigation changes, automatic repair, or removal
-of legacy role resolution.
-```
-
-### Engineering — @Technivian
+### Product — @haroonwahed (accepted)
 
 ```text
-APPROVE — PAR-ID-001 Resolver Parity Slice
+@haroonwahed Product: Approve
+Timestamp: 2026-07-22T14:17:31Z
 
-Approver: @Technivian
-Capacity: Engineering governance
-Vote: Approve
-Timestamp: 2026-07-22T14:04:28Z
-
-Engineering approves implementation of the narrowly scoped resolver parity
-slice.
-
-Conditions:
-
-- PROCESS_ROLE_RESOLVER_PARITY_ENABLED defaults off
-- legacy results are always returned
-- canonical errors fail safely
-- no automatic repair or overwrite
-- no authorization, routing, permission, or privilege behavior changes
-- tests must prove legacy authority for every drift classification
-- rollback is disabling the feature flag
+Conditions acknowledged: yes
+Slice remains non-authoritative: yes
+Feature flag remains default off: yes
 ```
 
-### Security advisory — @Technivian
+### Engineering — @Technivian (accepted)
 
 ```text
-APPROVE WITH CONDITIONS — PAR-ID-001 Resolver Parity Slice
-
-Approver: @Technivian
-Capacity: Security advisory
-Vote: Approve with conditions
-Timestamp: 2026-07-22T14:06:28Z
-
-Security approves diagnostic-only resolver comparison subject to these binding
-conditions:
-
-- canonical output must never influence a production decision
-- no cross-tenant identity or role leakage
-- CROSS_TENANT_ANOMALY triggers security escalation
-- diagnostic evidence must be tenant-scoped and permission-safe
-- workspace roles must never become process-role targets
-- ADMIN remains explicitly ambiguous
-- canonical failures produce RESOLUTION_ERROR while returning the legacy result
-- no automatic correction
-- the feature flag defaults off
-- dual-return or privilege cutover requires separate authorization
+@Technivian Engineering: Approve
+Timestamp: 2026-07-22T14:18:31Z
 ```
+
+### Security advisory — @Technivian (accepted)
+
+```text
+@Technivian Security advisory: Approve with conditions
+Timestamp: 2026-07-22T14:15:31Z
+
+Conditions acknowledged: yes
+Slice remains non-authoritative: yes
+Feature flag remains default off: yes
+```
+
+Binding Security conditions (from authorization package; acknowledged with the Security vote):
+
+1. Canonical comparison output must never replace, reorder, or filter the legacy resolver return value.
+2. `PROCESS_ROLE_RESOLVER_PARITY_ENABLED` must remain disabled by default.
+3. Comparison must be fail-open for product behaviour: comparison errors must not raise into or block the legacy call path.
+4. Cross-tenant anomalies must be classified `CROSS_TENANT_ANOMALY` / security findings and must not attempt repair.
+5. Ambiguous ADMIN mappings must remain explicit (`AMBIGUOUS`); never equate workspace ADMIN with process ADMIN.
+6. Diagnostic output must be tenant-scoped and must not leak credentials, contract content, or unrestricted cross-tenant metadata via logs, reports, metrics, or audit summaries.
+7. Parity must not automatically create, deactivate, or rewrite `ProcessRoleAssignment` / `UserProfile` / `OrganizationMembership` rows.
+8. Enabling the flag must be explicit, reversible, auditable, and limited to an approved environment or workspace (separate activation authorization).
+9. Resolver cutover, privilege migration, and returning canonical results to callers require a separate authorization, threat review, test matrix, and rollback plan.
+10. This approval does not authorize merging the implementation PR.
 
 ---
 
@@ -270,7 +243,7 @@ Regression gate after implementation (not now): shadow-sync, RoleDefinition, Pro
 
 | Gate | Verdict |
 |---|---|
-| Authorization votes | **Recorded** — Product `14:05:28Z` / Engineering `14:04:28Z` / Security `14:06:28Z` |
+| Authorization votes | **Recorded** — Product `14:17:31Z` / Engineering `14:18:31Z` / Security `14:15:31Z` |
 | Implementation present | **Yes** — comparison hooks + report + tests on PR #58 |
 | Legacy authoritative | **Yes** — every path returns legacy result |
 | Flag default | **off** |
@@ -297,4 +270,7 @@ Comparison slice completion does **not** authorize cutover. Cutover readiness re
 
 ## Implementation gate
 
-Do **not** add `PROCESS_ROLE_RESOLVER_PARITY_ENABLED` wiring, comparison hooks, or merge any implementation PR until this file records verbatim Product, Engineering, and Security-advisory Approve votes with ISO-8601 UTC timestamps.
+Comparison hooks behind `PROCESS_ROLE_RESOLVER_PARITY_ENABLED` (default false) are **authorized** under the votes above.  
+Do **not** merge PR #58 without separate Product + Engineering merge authorization and green CI.  
+Do **not** enable the flag without separate activation authorization.  
+Do **not** return canonical results to callers or begin privilege/resolver cutover.

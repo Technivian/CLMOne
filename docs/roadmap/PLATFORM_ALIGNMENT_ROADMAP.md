@@ -38,7 +38,7 @@ Statuses: Completed · In progress · Blocked · Deferred by approved decision �
 
 ## Immediate next items
 
-1. **PAR-ID-001** — Role Definition reconciliation (Milestone 3) — **In progress** (Slice 4 resolver-parity authorization **Reviewed — Pending Votes**)
+1. **PAR-ID-001** — Role Definition reconciliation (Milestone 3) — **In progress** (Slice 4 resolver-parity **Authorized** + implemented on PR #58; flag default off)
 2. **PAR-APR-002** — legacy approval cutover — **Planned** (blocked on owner + cutover plan)
 3. **PAR-WF-010** — production cutover **blocked** pending Accepted ADR-0012 (discovery complete — see evidence)
 
@@ -402,11 +402,11 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 
 | Field | Content |
 |---|---|
-| Status | **In progress** (2026-07-22) — catalogue `0112` + adapter `0113` + shadow sync **merged** (`bb881ac2`); Slice 4 resolver-parity auth **Reviewed — Pending Votes**; production authority still legacy; flags default off; Completion deferred |
+| Status | **In progress** (2026-07-22) — catalogue `0112` + adapter `0113` + shadow sync **merged** (`bb881ac2`); Slice 4 resolver-parity **Authorized** + implemented on PR #58 (flag default off); production authority still legacy; Completion deferred |
 | Priority | P1 |
 | Problem | Dual role systems (`OrganizationMembership` vs `UserProfile.Role`) conflict with canonical Role Definition. |
 | Governance source | CANONICAL_DOMAIN_MODEL §2.5; SECURITY_PRIVACY_ACCESS_AND_AUDIT |
-| Current evidence | `docs/audits/evidence/2026-07-22-par-id-001/` — ROLE_USAGE_MATRIX, TARGET_ROLE_MODEL, PROCESS_ROLE_MAPPING_MATRIX, SHADOW_WRITE_PATH_MATRIX, RESOLVER_USAGE_MATRIX, RESOLVER_PARITY_TEST_MATRIX, 0112/0113 + Slice 3 auth; Slice 4 resolver comparison auth **Requested** |
+| Current evidence | `docs/audits/evidence/2026-07-22-par-id-001/` — ROLE_USAGE_MATRIX, TARGET_ROLE_MODEL, PROCESS_ROLE_MAPPING_MATRIX, SHADOW_WRITE_PATH_MATRIX, RESOLVER_USAGE_MATRIX, RESOLVER_PARITY_TEST_MATRIX, 0112/0113 + Slice 3 auth; Slice 4 resolver comparison auth **Authorized** |
 | Target outcome | Single terminology and mapping for process vs org roles; no silent privilege escalation |
 | Dependencies | ADR-0014 Accepted (**met**); PAR-SEC-003 Closed (**met**); privilege/resolver cutover needs separate authorization |
 | Decision required | **ADR-0014 Accepted** — privilege/resolver cutover still needs separate implementation authorization |
@@ -629,4 +629,5 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | 2026-07-22 | **PR #55 merged** to `main` @ `bb881ac2` (reviewed HEAD `432a55b1`, 2026-07-22T13:35:32Z); flags remain default off; merge auth Product `13:36:50Z` / Engineering `15:15:23Z` |
 | 2026-07-22 | **PR #57 merged** to `main` @ `2f14c034` — PR #52 merge-evidence documentation |
 | 2026-07-22 | **PR #59 merged** to `main` @ `0d9712ca` — PR #55 merge-evidence documentation |
-| 2026-07-22 | **PAR-ID-001 Slice 4 authorization package:** resolver usage matrix + test matrix + non-authoritative comparison authorization **Reviewed — Pending Votes** on PR [#58](https://github.com/Technivian/CLMOne/pull/58); no comparison hooks until votes |
+| 2026-07-22 | **PAR-ID-001 Slice 4 authorization package:** resolver usage matrix + test matrix + non-authoritative comparison authorization on PR [#58](https://github.com/Technivian/CLMOne/pull/58) |
+| 2026-07-22 | **PAR-ID-001 Slice 4 Authorized (authoritative vote record):** Product `14:17:31Z` / Engineering `14:18:31Z` / Security advisory `14:15:31Z` (Approve with conditions); prior draft `14:04–14:06Z` record superseded; comparison hooks on PR #58 behind default-off flag; merge + staging activation still separate |
