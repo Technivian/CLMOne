@@ -248,10 +248,36 @@ Regression gate after implementation (not now): shadow-sync, RoleDefinition, Pro
 | Legacy authoritative | **Yes** — every path returns legacy result |
 | Flag default | **off** |
 | Dual-return / cutover | **Not authorized** |
-| Staging flag activation | **Not authorized** by this vote set |
-| Ready to merge implementation | **No** — separate Product + Engineering merge authorization required; PR remains draft |
+| Staging flag activation | **Authorized** 2026-07-22T14:34:37Z — diagnostic-only staging enablement (no canonical authority) |
+| Ready to merge implementation | **Yes** — Product + Engineering merge authorization recorded 2026-07-22T14:34:37Z; CI 6/6 SUCCESS @ `44926da9` |
 
-**Verdict:** Implementation is **authorized** and present on PR #58. Merge remains **blocked**. Dual-return / privilege cutover / staging flag activation remain **blocked**.
+**Verdict:** Implementation is **authorized** and present on PR #58. Merge is **authorized** under the programme merge step below. Dual-return / privilege cutover remain **blocked**. Staging activation is limited to diagnostic flags only.
+
+### Merge + staging activation authorization (recorded)
+
+Source: direct programme instruction to complete the resolver-parity staging gate (merge PR #58 when green/reviewed; enable diagnostic flags in staging only).
+
+```text
+PR #58 MERGE + STAGING DIAGNOSTIC ACTIVATION — 2026-07-22
+Timestamp: 2026-07-22T14:34:37Z
+HEAD reviewed: 44926da9
+CI: 6/6 SUCCESS
+
+Authorized:
+- Merge PR #58 to main
+- Enable in staging only:
+  PROCESS_ROLE_SHADOW_WRITE_ENABLED=true
+  PROCESS_ROLE_PARITY_REPORTING_ENABLED=true
+  PROCESS_ROLE_RESOLVER_PARITY_ENABLED=true
+- Collect staging parity evidence and triage drift
+
+Not authorized:
+- Canonical results returned to production callers
+- Privilege / permission / membership / navigation changes
+- Automatic repair
+- Privilege cutover / dual-return
+- PAR-APR-002 / PAR-WF-010
+```
 
 ---
 
