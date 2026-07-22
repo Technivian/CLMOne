@@ -1,13 +1,13 @@
 # Dual-write implementation authorization — PAR-EXC-001 priority paths
 
 **Programme:** PAR-EXC-001  
-**Prerequisite:** ADR-0015 **Accepted** (Motion 1) — currently **Proposed** / votes **Requested**  
-**Status:** **Requested** — do not invent votes; do not enable dual-write flags until Authorized  
+**Prerequisite:** ADR-0015 **Accepted** (Motion 1) — **met** 2026-07-22T19:12:39Z  
+**Status:** **Authorized** (default-off implementation only)  
 **Meeting record:** [`../../../governance/decisions/adr/0015-governance-acceptance-meeting-record-2026-07-22.md`](../../../governance/decisions/adr/0015-governance-acceptance-meeting-record-2026-07-22.md)
 
 ---
 
-## Motion — Authorize six-path dual-write (legacy authoritative)
+## Motion — Authorize six-path dual-write (legacy authoritative, default-off)
 
 Authorize implementation of dual-write adapters for:
 
@@ -24,14 +24,14 @@ Authorize implementation of dual-write adapters for:
 
 - Legacy behavior remains **authoritative**.
 - Each new exception action also creates a canonical `ExceptionRequest`.
-- The governing outcome creates an immutable `ExceptionDecision`.
+- The governing outcome creates an immutable `ExceptionDecision` (AI exception stays SUBMITTED until a later authorized decision).
 - Request, decision, and legacy record share a correlation ID.
 - Tenant, actor, reason, scope, owner, authority basis, and expiry are preserved (no invented historical fields).
-- Compensating controls are recorded when supplied or defaulted truthfully for the path.
+- Compensating controls are recorded.
 - Critical bypasses require recorded Security approval (`security_approval=True`).
 - Dual-write is idempotent on correlation ID + source.
 - Canonical failures are visible and audited (`exception.dual_write_failed`).
-- Flags default **off**; controlled-pilot allowlist activation is separate after tests pass.
+- Flags default **off**; controlled-pilot allowlist activation is **separate**.
 
 ### Explicitly excluded
 
@@ -42,6 +42,7 @@ Authorize implementation of dual-write adapters for:
 - Cross-tenant exceptions
 - Automatic repair
 - Retrospective bulk invention of historical exceptions
+- Controlled-pilot flag enablement (separate activation package)
 - PAR-APR-002 / PAR-WF-010 / PAR-ID-002
 
 ### Flags (defaults)
@@ -62,12 +63,12 @@ Authorize implementation of dual-write adapters for:
 
 ---
 
-## Votes
+## Votes (verbatim; authoritative)
 
 | Approver | Capacity | Vote | Timestamp |
 |---|---|---|---|
-| @haroonwahed | Product | **Requested** | — |
-| @Technivian | Engineering | **Requested** | — |
-| @Technivian | Security advisory | **Requested** | — |
+| @haroonwahed | Product | **Approve** | 2026-07-22T19:12:31Z |
+| @Technivian | Engineering | **Approve** | 2026-07-22T19:12:35Z |
+| @Technivian | Security advisory | **Approve with conditions** | 2026-07-22T19:12:39Z |
 
-**Result:** Pending quorum. Implementation may be prepared behind default-off flags; enablement and pilot activation require Authorized status.
+**Result:** **Authorized** for default-off implementation. Activation remains **Requested** / not authorized.

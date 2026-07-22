@@ -38,7 +38,7 @@ Statuses: Completed · In progress · Blocked · Deferred by approved decision �
 
 ## Immediate next items
 
-1. **PAR-EXC-001** — Governed Exception (Milestone 3) — **In progress** (foundation PR #66; dual-write follow-up default-off; ADR-0015 votes **Requested**)
+1. **PAR-EXC-001** — Governed Exception (Milestone 3) — **In progress** (ADR-0015 **Accepted**; foundation PR #66; dual-write PR #67 default-off; **activation pending**)
 2. **PAR-ID-001** — Role Definition reconciliation — residual **In progress** (R0 inventory **PASS** verified 20/4/8; activation pending; R1+ not authorized; **not** advanced by this PAR-EXC slice)
 3. **PAR-APR-002** — legacy approval cutover — **Planned** — **not started this slice**
 4. **PAR-WF-010** — production cutover **blocked** pending Accepted ADR-0012 — **not started this slice**
@@ -429,26 +429,27 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 
 | Field | Content |
 |---|---|
-| Status | **In progress** (2026-07-22) — discovery + canonical foundation delivered; ADR-0015 **Proposed** (not Accepted); production path cutover **not** done |
+| Status | **In progress** (2026-07-22) — ADR-0015 **Accepted**; canonical foundation PR #66; six-path dual-write PR #67 (default-off, Motion 2 Authorized); controlled-pilot activation **not** authorized; canonical read cutover **unauthorized** |
 | Priority | P1 |
 | Problem | No first-class governed Exception; risk/actions are scattered. |
 | Governance source | CANONICAL_DOMAIN_MODEL §2.33; gap G-DOM-03 |
 | Current evidence | `docs/audits/evidence/2026-07-22-par-exc-001/` |
 | Target outcome | Governed `ExceptionRequest` / `ExceptionDecision` with owner, expiry, authority, compensating controls, privilege tokens, immutable history, tenant isolation |
-| Dependencies | PAR-APR-001 pattern helpful (**met**); ADR-0015 acceptance; policy/Security owners for cutover |
-| Decision required | **ADR-0015 Proposed** — Acceptance required before production path cutover |
-| Migration impact | Additive `0114_exception_request_decision`; no legacy backfill; dual-write later under authorization |
-| Security and permissions impact | Server-side authz; Critical security bypass requires explicit Security approval; cross-tenant prohibited |
-| Audit requirements | `exception.request.*`, `exception.decision.recorded`, `exception.cross_tenant.denied` |
+| Dependencies | PAR-APR-001 pattern helpful (**met**); ADR-0015 Acceptance (**met**); Motion 2 dual-write (**Authorized** default-off); activation votes pending |
+| Decision required | **ADR-0015 Accepted**; activation requires separate package |
+| Migration impact | Additive `0114` + `0115` (`correlation_id`); no legacy backfill; dual-write default-off |
+| Security and permissions impact | Server-side authz; Critical security bypass requires explicit Security approval; cross-tenant prohibited; legacy authoritative until read cutover |
+| Audit requirements | `exception.request.*`, `exception.decision.recorded`, `exception.activated`, `exception.dual_write_failed`, `exception.security_gate_blocked`, `exception.cross_tenant.denied` |
 | UX requirements | Exception surfaces deferred until cutover; no hero clutter |
-| Tests | `tests/test_par_exc_001_exception.py` (invariants + legacy characterization) |
-| Rollback strategy | Reverse additive `0114` while no production writers; future dual-write flags default off |
-| Acceptance criteria | Accepted ADR; governed production paths for priority legacy surfaces; expired exceptions stop applying; tests + audit evidence — **not met** (keep In progress) |
+| Tests | `tests/test_par_exc_001_exception.py` (11 OK) + `tests/test_par_exc_001_dual_write.py` (16 OK) |
+| Rollback strategy | Flags default off; reverse `0115` then `0114` |
+| Acceptance criteria | Accepted ADR (**met**); six priority paths dual-write merged default-off; remaining paths inventoried; activation + read authority still open — **keep In progress** |
 | Evidence | `docs/audits/evidence/2026-07-22-par-exc-001/` |
-| Proposed ADR | **ADR-0015** (not Accepted) |
-| PR/commits | This branch |
+| Accepted ADR | **ADR-0015** (Accepted 2026-07-22T19:12:39Z) |
+| PR/commits | Foundation PR #66; dual-write PR #67 |
 | Last updated | 2026-07-22 |
 | Explicit non-starts | PAR-APR-002, PAR-WF-010, PAR-ID-002 |
+| Next cutover step | Separate controlled-pilot activation votes → enable allowlist `controlled-pilot-org` only; do not enable before authorization |
 
 ---
 
@@ -647,3 +648,5 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | 2026-07-22 | **PAR-ID-001 R0 inventory Authorized and PASS:** Product `18:55:17Z` / Engineering `18:53:20Z` / Security `18:53:20Z`; clean staging-equivalent + 0113 + deterministic seeds; verified MISSING **20** / LEGACY_ONLY orgs **4** / AMBIGUOUS ADMIN **8** (historical 14/1/13 superseded); CROSS_TENANT/DIFFERENT_USER **0**; flags remain default off; R1+ not authorized; PAR-ID-001 remains **In progress** |
 | 2026-07-22 | **PAR-ID-001 R1 CERTAIN non-ADMIN remediation auth package prepared** from `main` @ `0404e284`: 12 CERTAIN missing rows in scope; 8 AMBIGUOUS ADMIN excluded; mapping manifest + test/rollback plan; votes **Requested**; no implementation; flags remain default off; PAR-ID-001 remains **In progress** |
 
+
+| 2026-07-22 | **ADR-0015 Accepted** (Product `19:12:31Z` / Engineering `19:12:35Z` / Security `19:12:39Z` Approve with conditions); Motion 2 authorizes default-off six-path dual-write; controlled-pilot activation **not** authorized; PAR-EXC-001 remains **In progress** |

@@ -1,9 +1,9 @@
 # ADR-0015: Exception Request and Exception Decision model
 
-- Status: **Proposed**
+- Status: **Accepted**
 - Date: 2026-07-22
-- Effective date: _pending acceptance_
-- Deciders: _pending ratification_
+- Effective date: **2026-07-22T19:12:39Z**
+- Deciders: @haroonwahed (Product governance) · @Technivian (Engineering governance)
 - Related: PAR-EXC-001 (In progress), CANONICAL_DOMAIN_MODEL §2.33, G-DOM-03, PAR-APR-001 / ADR-0013 (pattern precedent)
 - Evidence: [`../../../audits/evidence/2026-07-22-par-exc-001/`](../../../audits/evidence/2026-07-22-par-exc-001/)
 - Decision package: [`../../../audits/evidence/2026-07-22-par-exc-001/DECISION_PACKAGE.md`](../../../audits/evidence/2026-07-22-par-exc-001/DECISION_PACKAGE.md)
@@ -14,14 +14,16 @@
 | Field | Value |
 |---|---|
 | **Submitted for ratification** | 2026-07-22 |
-| **Ratified** | _not ratified_ |
-| **Product governance** | **Requested** — @haroonwahed |
-| **Engineering governance** | **Requested** — @Technivian |
-| **Security & privacy** | **Requested** — @Technivian (required for Critical-control clauses) |
+| **Ratified** | **2026-07-22T19:12:39Z** |
+| **Product governance** | **Approve** — @haroonwahed (`2026-07-22T19:12:31Z`) |
+| **Engineering governance** | **Approve** — @Technivian (`2026-07-22T19:12:35Z`) |
+| **Security & privacy** | **Approve with conditions** — @Technivian (`2026-07-22T19:12:39Z`) |
 | **Authority basis** | `.github/CODEOWNERS`; `GOVERNANCE_CHARTER.md` v2.0; PDR-0003 |
-| **Acceptance scope** | Canonical Exception/Waiver foundation (vocabulary, invariants, additive schema, governed service). **Does not authorize** production path cutover without Motion 2 written authorization. |
+| **Written consent** | Verbatim votes in meeting record §2 |
+| **Acceptance scope** | Canonical Exception/Waiver foundation (vocabulary, invariants, additive schema, governed service). Motion 2 separately authorizes **default-off** six-path dual-write only. |
+| **Does not authorize** | Canonical read-path authority; legacy retirement; controlled-pilot flag enablement; automatic repair; retrospective historical invention |
 
-**Do not treat this ADR as Accepted. Do not invent votes.**
+**Implementation boundary:** Foundation merge (PR #66) + default-off dual-write (PR #67) under Motion 2. Activation requires a separate authorization package and votes.
 
 ## Context
 
@@ -135,4 +137,4 @@ Append-only decision history; material actions emit `exception.*` audit events o
 
 ## Approval
 
-_Pending. Do not mark Accepted without recorded Product + Engineering votes (and Security for Critical clauses)._
+**Accepted** 2026-07-22T19:12:39Z by @haroonwahed (Product), @Technivian (Engineering), and @Technivian (Security advisory, Approve with conditions) per meeting record. Motion 2 authorizes default-off dual-write only; controlled-pilot activation and canonical read authority require separate votes.
