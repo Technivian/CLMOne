@@ -1,7 +1,7 @@
 # PAR-ID-001 evidence index
 
 **Programme ID:** PAR-ID-001  
-**Status:** **In progress** — catalogue `0112` + adapter `0113` + shadow sync + Slice 4 resolver-parity **merged** (`598b7a12`); flags default off; production authority still legacy  
+**Status:** **In progress** — catalogue `0112` + adapter `0113` + shadow sync + Slice 4 resolver-parity **merged** (`598b7a12`); flags default off; production authority still legacy; **GI-2026-07-22-PR58-PREAUTH-MERGE** open (awaiting Ratify \| Revert)  
 **ADR:** ADR-0014 **Accepted**  
 **PR #51 merge:** `21e65f09`  
 **PR #53 merge:** `0bf7c9dc`  
@@ -25,6 +25,8 @@
 | [`SHADOW_ROLE_SYNC_IMPLEMENTATION_AUTHORIZATION.md`](SHADOW_ROLE_SYNC_IMPLEMENTATION_AUTHORIZATION.md) | Slice 3 implementation + merge authorization (recorded) |
 | [`RESOLVER_PARITY_IMPLEMENTATION_AUTHORIZATION.md`](RESOLVER_PARITY_IMPLEMENTATION_AUTHORIZATION.md) | Slice 4 implementation + merge authorization (**Authorized and merged**) |
 | [`../2026-07-22-par-id-001-pr58-merge/SUMMARY.md`](../2026-07-22-par-id-001-pr58-merge/SUMMARY.md) | PR #58 merge evidence |
+| [`../2026-07-22-par-id-001-pr58-merge/GOVERNANCE_INCIDENT_AND_RATIFICATION_ADDENDUM.md`](../2026-07-22-par-id-001-pr58-merge/GOVERNANCE_INCIDENT_AND_RATIFICATION_ADDENDUM.md) | Pre-auth merge incident; Ratify \| Revert requested |
+| [`../2026-07-22-par-id-001-pr58-merge/REMEDIATION_BACKLOG.md`](../2026-07-22-par-id-001-pr58-merge/REMEDIATION_BACKLOG.md) | Post-ratification remediation (no staging request) |
 | [`../2026-07-22-par-sec-003/CLOSURE.md`](../2026-07-22-par-sec-003/CLOSURE.md) | PAR-SEC-003 Closed |
 
 ---

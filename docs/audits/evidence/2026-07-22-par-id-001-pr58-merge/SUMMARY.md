@@ -6,11 +6,27 @@
 **Pre-merge tip:** `f7b56ab57b2842fba0d7a00bb0333f93f304ec39` (docs-only vs `44926da9`; `config/` / `contracts/` / `tests/` unchanged)  
 **Merge commit:** `598b7a128cb8d0f5be0c7cd2fb1880f631ca9608`  
 **Merged at:** `2026-07-22T14:42:13Z`  
-**Updated `main` HEAD:** `598b7a12`
+**Updated `main` HEAD:** `598b7a12`  
+**Governance:** [`GOVERNANCE_INCIDENT_AND_RATIFICATION_ADDENDUM.md`](GOVERNANCE_INCIDENT_AND_RATIFICATION_ADDENDUM.md) — **Open; awaiting Ratify \| Revert**
 
 ---
 
-## Merge authorization (recorded after merge; authoritative)
+## Governance discrepancy (recorded)
+
+PR #58 **merged before** formal merge authorization votes:
+
+| Event | Timestamp |
+|---|---|
+| Merge to `main` | `2026-07-22T14:42:13Z` |
+| Product Approve merge (recorded) | `2026-07-22T15:06:30Z` |
+| Engineering Approve merge (recorded) | `2026-07-22T15:06:45Z` |
+
+Post-hoc merge votes are recorded but **do not close** the process gap until retrospective **Ratify merge** or **Revert merge** is decided.  
+Recommendation in the addendum: **Ratify** if safeguards continue to hold (flags off; legacy authoritative; tests green; no runtime authz change).
+
+---
+
+## Merge votes (recorded after merge; timestamps unchanged)
 
 | Approver | Vote | Timestamp |
 |---|---|---|
@@ -59,5 +75,7 @@ Evidence captures:
 
 - Slice 4 non-authoritative resolver comparison is on `main` behind default-off flag
 - Legacy resolvers remain authoritative
-- PAR-ID-001 remains **In progress**
-- Staging flag activation, dual-return, and privilege/resolver cutover **not** authorized
+- PAR-ID-001 remains **In progress** (not Completed)
+- Staging flag activation **not** requested until ratification + remediation progress
+- Dual-return / privilege cutover **not** authorized
+- Remediation backlog (post-ratification): [`REMEDIATION_BACKLOG.md`](REMEDIATION_BACKLOG.md)

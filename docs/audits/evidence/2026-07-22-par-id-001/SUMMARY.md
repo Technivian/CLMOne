@@ -1,13 +1,15 @@
 # PAR-ID-001 evidence summary — 2026-07-22
 
-## Status: In progress — resolver parity merged (non-authoritative; flags default off)
+## Status: In progress — resolver parity merged; pre-auth merge ratification pending
 
 **ADR:** ADR-0014 **Accepted**  
 **PR #53 merge:** `0bf7c9dc` (catalogue 0112)  
 **PR #54 merge:** `58966de7` (process-role adapter 0113)  
 **PR #55 merge:** `bb881ac2` (2026-07-22T13:35:32Z) — reviewed HEAD `432a55b1`  
 **PR #58 merge:** `598b7a12` (2026-07-22T14:42:13Z) — reviewed code HEAD `44926da9`  
-**Merge evidence:** `docs/audits/evidence/2026-07-22-par-id-001-pr58-merge/SUMMARY.md`  
+**Merge votes recorded:** Product `15:06:30Z` / Engineering `15:06:45Z` (**after** merge)  
+**Governance:** [`../2026-07-22-par-id-001-pr58-merge/GOVERNANCE_INCIDENT_AND_RATIFICATION_ADDENDUM.md`](../2026-07-22-par-id-001-pr58-merge/GOVERNANCE_INCIDENT_AND_RATIFICATION_ADDENDUM.md) — **Open**  
+**Merge evidence:** `docs/audits/evidence/2026-07-22-par-id-001-pr58-merge/`  
 **PR #52 / #57 / #59:** prior merge evidence on main
 
 ### Delivered
@@ -47,5 +49,7 @@
 - `PROCESS_ROLE_RESOLVER_PARITY_ENABLED` = false
 
 ### Next decision gate
-Separate staging activation authorization (if desired), then critical-drift evidence before any dual-return or privilege-cutover authorization.  
-Stop before canonical resolver output affects any production decision.
+1. Close **GI-2026-07-22-PR58-PREAUTH-MERGE** with **Ratify merge** or **Revert merge**.  
+2. If Ratified: execute remediation backlog (inactive/missing assignments, LEGACY_ONLY org, AMBIGUOUS ADMIN + Product/Security policy + threat review) — still **no** staging activation.  
+3. Staging activation remains a **later, separate** authorization after remediation progress.  
+Stop before canonical resolver output affects any production decision. PAR-ID-001 remains **In progress**.

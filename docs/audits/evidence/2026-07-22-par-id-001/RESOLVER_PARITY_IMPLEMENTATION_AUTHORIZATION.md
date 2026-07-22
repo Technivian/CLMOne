@@ -10,7 +10,8 @@
 **Merge commit:** `598b7a128cb8d0f5be0c7cd2fb1880f631ca9608`  
 **Merged at:** `2026-07-22T14:42:13Z`  
 **Reviewed HEAD (code):** `44926da923ff3b71bbfe8434794bd91f7cfe8d2e` (docs-only follow-up `f7b56ab5` before merge; config/contracts/tests unchanged vs `44926da9`)  
-**Status:** **Authorized and merged** — Product, Engineering, and Security-advisory implementation votes recorded; Product + Engineering merge votes recorded below. Dual-return / privilege cutover / staging flag activation remain **not** authorized.
+**Status:** **Authorized and merged** — implementation votes recorded; merge votes recorded **after** the merge commit (see governance addendum). Dual-return / privilege cutover / staging flag activation remain **not** authorized. PAR-ID-001 remains **In progress**.  
+**Governance incident:** [`../2026-07-22-par-id-001-pr58-merge/GOVERNANCE_INCIDENT_AND_RATIFICATION_ADDENDUM.md`](../2026-07-22-par-id-001-pr58-merge/GOVERNANCE_INCIDENT_AND_RATIFICATION_ADDENDUM.md) — **Open — awaiting Ratify \| Revert** (merge at `14:42:13Z` preceded Product/Engineering merge votes at `15:06:30Z` / `15:06:45Z`).
 
 **Related evidence:**
 - [`RESOLVER_USAGE_MATRIX.md`](RESOLVER_USAGE_MATRIX.md)
@@ -249,7 +250,8 @@ Regression gate after implementation (not now): shadow-sync, RoleDefinition, Pro
 **Pre-merge tip (docs-only):** `f7b56ab57b2842fba0d7a00bb0333f93f304ec39` — authorization text only; `config/` / `contracts/` / `tests/` identical to `44926da9`  
 **Merge commit:** `598b7a128cb8d0f5be0c7cd2fb1880f631ca9608`  
 **Merged at:** `2026-07-22T14:42:13Z`  
-**CI at reviewed HEAD:** 6/6 SUCCESS
+**CI at reviewed HEAD:** 6/6 SUCCESS  
+**Process note:** Merge occurred **before** the Product/Engineering Approve merge votes below. Retrospective **Ratify \| Revert** is required — see [`../2026-07-22-par-id-001-pr58-merge/GOVERNANCE_INCIDENT_AND_RATIFICATION_ADDENDUM.md`](../2026-07-22-par-id-001-pr58-merge/GOVERNANCE_INCIDENT_AND_RATIFICATION_ADDENDUM.md).
 
 | Approver | Vote | Timestamp |
 |---|---|---|
