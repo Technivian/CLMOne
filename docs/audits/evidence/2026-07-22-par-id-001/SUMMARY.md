@@ -1,51 +1,48 @@
 # PAR-ID-001 evidence summary — 2026-07-22
 
-## Status: In progress — remediation decision package pending
+## Status: In progress — cutover implementation delivered; activation pending; remediation decision package pending
 
 **ADR:** ADR-0014 **Accepted**  
-**PR #58 merge:** `598b7a12`  
-**Evidence HEAD:** `main` @ `8316a756`  
-**Retrospective ratification:** GI-2026-07-22-PR58-PREAUTH-MERGE **Ratified and Closed**  
+**PR #58 merge:** `598b7a12` (2026-07-22T14:42:13Z) — reviewed code HEAD `44926da9`  
+**Merge votes recorded:** Product `15:06:30Z` / Engineering `15:06:45Z` (**after** merge)  
+**Retrospective ratification:** Product `15:31:46Z` / Engineering `15:31:55Z` — **GI-2026-07-22-PR58-PREAUTH-MERGE Ratified and Closed**  
+**Merge evidence:** `docs/audits/evidence/2026-07-22-par-id-001-pr58-merge/`  
+**Canonical resolver:** implemented default-off (PR [#62](https://github.com/Technivian/CLMOne/pull/62) → `main`); activation **Requested**  
 **Remediation decision package:** `docs/audits/evidence/2026-07-22-par-id-001-remediation-decision/` (**pending votes**)
+
 
 ### Delivered
 - Additive `RoleDefinition` catalogue (0112)
-- Org-scoped `ProcessRoleAssignment` model + governed service (0113)
-- Dual-read parity / drift diagnostics (non-authoritative)
-- Feature-flagged shadow sync from `UserProfile.role` → `ProcessRoleAssignment`
-- Deterministic `process_role_parity_report` management command
-- Shadow write-path inventory + Slice 3 implementation/merge authorization
-- Resolver usage matrix + resolver-parity authorization (Product `14:17:31Z` / Engineering `14:18:31Z` / Security `14:15:31Z`)
-- Feature-flagged resolver comparison **merged** (`PROCESS_ROLE_RESOLVER_PARITY_ENABLED`, default off)
-- `process_role_resolver_parity_report` management command
-- Merge authorization Product `15:06:30Z` / Engineering `15:06:45Z` (staging activation **not** authorized; `14:34:37Z` staging claim superseded)
+- Org-scoped `ProcessRoleAssignment` + governed service (0113)
+- Feature-flagged shadow sync + assignment parity reporting
+- Feature-flagged resolver comparison **merged** (legacy authoritative while diagnostic)
+- Staging remediation + readiness (**READY FOR CUTOVER AUTHORIZATION**)
+- `PROCESS_ROLE_CANONICAL_RESOLVER_ENABLED` (**default false**) + org allowlist
+- Canonical authority wiring on `resolve_assignee` / `resolve_rule_assignee`
+- ADMIN / workspace exclusions; legacy fallback; cross-tenant fail-closed
+- Activation package prepared (votes **Requested**)
 
-### Explicitly unchanged
-- Permissions / authorization outcomes
-- `OrganizationMembership.role` authority
-- `UserProfile.role` behaviour (still authoritative)
-- Approval / signer / workflow runtime resolution return values (legacy always returned)
-- Navigation
+### Votes
+| Package | Status |
+|---|---|
+| Remediation + cutover **implementation** | **Authorized** — Product `15:27:09Z` / Engineering `15:28:09Z` / Security `15:29:09Z` |
+| **Activation** | **Requested** — not invented |
+
+### Explicitly unchanged / not done
+- Flag **not enabled** in staging or production
+- Permissions / membership / navigation / privilege
 - PAR-APR-002 / PAR-WF-010
-- Flags remain **default off** (not enabled by merge)
+- ADMIN cutover
 
-### Programme record
-- Canonical catalogue delivered
-- Organization-scoped assignments delivered
-- Dual-read diagnostics delivered
-- Feature-flagged shadow synchronization delivered **and merged**
-- Resolver comparison delivered **and merged** behind default-off flag (legacy authoritative)
-- Production permissions and runtime resolvers remain legacy
-- Dual-return / privilege cutover requires separate authorization
-- Staging flag activation requires separate authorization
-
-### Flags (default off on `main`)
+### Flags (default off on `main` until activation)
 - `PROCESS_ROLE_SHADOW_WRITE_ENABLED` = false
 - `PROCESS_ROLE_PARITY_REPORTING_ENABLED` = false
 - `PROCESS_ROLE_RESOLVER_PARITY_ENABLED` = false
+- `PROCESS_ROLE_CANONICAL_RESOLVER_ENABLED` = false
 
 ### Next decision gate
-1. Approve remediation decision package (ADMIN policy + threat review + analysis).  
+1. Approve remediation decision package (ADMIN policy + threat review + analysis) on PR #63.  
 2. Separately authorize and verify remediation implementation slices (R0+).  
-3. Only then consider staging activation authorization.  
-PAR-ID-001 remains **In progress**. No flag enablement by this package.
+3. Separate activation decision on [`CANONICAL_RESOLVER_ACTIVATION_AUTHORIZATION.md`](CANONICAL_RESOLVER_ACTIVATION_AUTHORIZATION.md) — stop before enabling canonical authority without recorded activation votes.  
+PAR-ID-001 remains **In progress**. No flag enablement by the remediation decision package.
+
