@@ -2,6 +2,10 @@
 
 **Authorization:** Product `2026-07-22T19:16:55Z` / Engineering `2026-07-22T19:16:56Z` / Security `2026-07-22T19:16:57Z` (conditions 1–10 yes)  
 **Baseline package tip:** `03eab9a6` / R0 tip `0404e284`  
+**Implementation reviewed HEAD:** `15acc520` (R1 code `c128f2ee` + main reconcile)  
+**PR:** [#68](https://github.com/Technivian/CLMOne/pull/68) **MERGED**  
+**Merge SHA:** `fb8f7d84` (`fb8f7d84b8d63e87a4bab1d8fff1f976546be402`)  
+**Merged at:** `2026-07-22T19:38:30Z`  
 **Authorized environment:** clean staging-equivalent SQLite + R0 deterministic seed corpus (`r0_staging_env/`; DB not committed)  
 **Not authorized:** production / unnamed environments; flag enablement; cutover  
 
