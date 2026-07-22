@@ -400,8 +400,16 @@ def document_upload_api(request):
                 Document.Status.FINAL,
                 Document.Status.EXECUTED,
             }:
-                prior_document.status = Document.Status.SUPERSEDED
-                prior_document.save(update_fields=['status', 'updated_at'])
+                from contracts.services.document_supersession import supersede_document
+                supersede_document(
+                    prior_document,
+                    document,
+                    actor=request.user,
+                    reason='revised source document upload',
+                    source='documents_ai_upload',
+                    request=request,
+                    organization=organization,
+                )
             if contract and prior_document:
                 get_version_service().create_version(
                     contract, changed_by=request.user,

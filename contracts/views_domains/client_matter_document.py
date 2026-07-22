@@ -484,8 +484,16 @@ class DocumentUpdateView(TenantScopedFormMixin, TenantScopedQuerysetMixin, Login
         )
         self.object.save()
         if original_document.status in {Document.Status.FINAL, Document.Status.EXECUTED}:
-            original_document.status = Document.Status.SUPERSEDED
-            original_document.save(update_fields=['status', 'updated_at'])
+            from contracts.services.document_supersession import supersede_document
+            supersede_document(
+                original_document,
+                self.object,
+                actor=self.request.user,
+                reason='document version replace',
+                source='document_update_view',
+                request=self.request,
+                organization=original_document.organization,
+            )
         queue_document_ocr_review(self.object)
         log_action(
             self.request.user,

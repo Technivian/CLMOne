@@ -981,6 +981,49 @@ class Contract(models.Model):
         if errors:
             raise ValidationError(errors)
 
+    def save(self, *args, **kwargs):
+        """Enforce PDR-0002 status/stage pairing below the UI layer.
+
+        Validation runs when status or lifecycle_stage is written (including
+        creates). Partial updates that omit both fields leave historical pairs
+        untouched so migrations/jobs can update unrelated columns safely.
+
+        On create, if status is set with the model-default ``DRAFTING`` stage and
+        the pair is illegal (common test/factory pattern for ``ACTIVE``), coerce
+        the stage to the canonical resting stage for that status. Explicit
+        updates that write an illegal pair still raise.
+
+        Pass ``skip_lifecycle_validation=True`` only for proven migration or
+        repair paths — never for product writers.
+        """
+        skip_lifecycle_validation = kwargs.pop('skip_lifecycle_validation', False)
+        update_fields = kwargs.get('update_fields')
+        should_validate = not skip_lifecycle_validation
+        if should_validate and update_fields is not None:
+            fields = set(update_fields)
+            should_validate = ('status' in fields) or ('lifecycle_stage' in fields)
+        if should_validate:
+            from django.core.exceptions import ValidationError
+            from .services.lifecycle_dimensions import (
+                is_valid_status_stage_pair,
+                validate_status_stage_pair,
+            )
+
+            if (
+                self.pk is None
+                and not is_valid_status_stage_pair(self.status, self.lifecycle_stage)
+                and self.lifecycle_stage == self.LifecycleStage.DRAFTING
+            ):
+                from .services.contract_import_lifecycle import default_stage_for_status
+                self.lifecycle_stage = default_stage_for_status(self.status)
+                if update_fields is not None and 'lifecycle_stage' not in update_fields:
+                    kwargs['update_fields'] = list(update_fields) + ['lifecycle_stage']
+            try:
+                validate_status_stage_pair(self.status, self.lifecycle_stage)
+            except ValidationError:
+                raise
+        super().save(*args, **kwargs)
+
     class Meta:
         indexes = [
             models.Index(fields=['organization', 'status', '-updated_at'], name='ctr_org_stat_upd_ix'),
