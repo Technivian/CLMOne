@@ -53,11 +53,11 @@ test('redesigned workspace shells render on key frontend pages', async ({ page }
       shell: '.command-center.cc-v3',
     },
     {
-      path: '/contracts/',
-      title: /Contract Workspace/,
-      summaryText: /Contracts/,
-      marker: '.cw-toolbar',
-      shell: '.page-wrap.cw-page',
+      path: '/contracts/repository/',
+      title: /Contracts/,
+      summaryText: /Start new contract/,
+      marker: '#contracts-table',
+      shell: '.repo-page',
     },
     {
       path: '/contracts/workflows/',

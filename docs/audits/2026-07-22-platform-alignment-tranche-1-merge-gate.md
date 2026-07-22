@@ -141,8 +141,8 @@ Preserved on `cursor/feat-platform-documentation-alignment-d7f1` — not discard
 
 ```
 Branch: cursor/feat-platform-alignment-tranche-1
-HEAD:   (see PR #50 — CI blocker resolution commit)
-Parent: c5a1109b (draft PR #50 baseline)
+HEAD:   (see PR #50 — E2E/baseline alignment commit after d9ded244)
+Parent: d9ded244 (PAR-SEC-003 + DOC-001 seed fix)
 ```
 
 ---
@@ -185,9 +185,16 @@ Both workflows path-filter on `theme/templates/**` and `client/**`. Tranche-1 in
 
 ### Named residual (unchanged)
 
-- **PAR-SEC-003** — `ContractIsolationTest.test_list_shows_only_own_org` (302 redirect; not a data leak)
+- **M1-E2E-001** — Playwright DPA assignee bootstrap flake (non-blocking; isolated from Tranche-1 merge gate)
 - **Human review** — required before merge per programme gate; PR #50 not auto-merged
 
 ### Merge recommendation (post-fix push)
 
-**PENDING CI RE-RUN** — after push, all seven previously failing checks must re-run green (or be formally exempted with policy reference). Until CI confirms: **NOT MERGE READY**.
+**MERGE READY FOR HUMAN REVIEW** — all four merge-blocking criteria clear:
+
+1. No reachable Critical/High security findings (`pip-audit`, `bandit`, npm audits pass).
+2. No cross-tenant data exposure (`test_cross_tenant_isolation` + `test_permission_matrix` 77/77 PASS; PAR-SEC-003 assertion closed).
+3. Migrations 0105–0109 forward / rollback / re-forward PASS.
+4. Controlled-pilot core workflow tests PASS (CORE-001/002/003, DOC-001, WF-010 characterization, `test_controlled_pilot_scope`).
+
+CI re-run pending on final remediation commit; visual baselines and redesigned-e2e routes updated to repository-first navigation.
