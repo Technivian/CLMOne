@@ -53,14 +53,12 @@ _TOKEN_RE = re.compile(r'\{\{\s*(\w+)\s*\}\}')
 
 def _ensure_nda_seed_data() -> None:
     seed = import_module('contracts.migrations.0077_seed_nda_workflow')
+    from contracts.services.contract_type_catalogue import ensure_catalogue_row
 
-    contract_type, _ = ContractType.objects.get_or_create(
-        code='NDA',
-        defaults={
-            'name': 'Non-Disclosure Agreement',
-            'description': 'Self-serve NDA workflow with governed fallback and conditional legal review.',
-            'is_active': True,
-        },
+    contract_type = ensure_catalogue_row(
+        Contract.ContractType.NDA,
+        name='Non-Disclosure Agreement',
+        description='Self-serve NDA workflow with governed fallback and conditional legal review.',
     )
 
     workflow_template, created = WorkflowTemplate.objects.get_or_create(

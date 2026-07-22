@@ -101,6 +101,8 @@ def persist_contract_with_imported_lifecycle(
             actor=actor,
             correlation_id=provenance_correlation_id,
         )
+        from contracts.services.contract_type_catalogue import assign_contract_type
+        assign_contract_type(contract, code=contract.contract_type or Contract.ContractType.OTHER)
         contract.status = Contract.Status.IN_PROGRESS
         contract.lifecycle_stage = Contract.LifecycleStage.DRAFTING
         contract.save()

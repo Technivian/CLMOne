@@ -8,7 +8,7 @@ from .models import (
     TrademarkRequest, LegalTask, RiskLog, ComplianceChecklist,
     Workflow, WorkflowTemplate, WorkflowTemplateStep, WorkflowStep, ChecklistItem,
     DueDiligenceProcess, DueDiligenceTask, DueDiligenceRisk, Budget, BudgetExpense, Contract,
-    ContractTemplate,
+    ContractTemplate, ContractType,
     Counterparty, ClauseCategory, ClauseTemplate, SignatureRequest, DataInventoryRecord,
     DSARRequest, Subprocessor, TransferRecord, RetentionPolicy, LegalHold,
     ApprovalRule, ApprovalRequest, EthicalWall, SalesforceOrganizationConnection,
@@ -343,6 +343,38 @@ class WorkflowStepAdmin(admin.ModelAdmin):
     list_display = ['workflow', 'name', 'status', 'assigned_to', 'due_date']
     list_filter = ['status', 'due_date']
     search_fields = ['workflow__title', 'name']
+
+@admin.register(ContractType)
+class ContractTypeAdmin(admin.ModelAdmin):
+    list_display = ['code', 'name', 'is_active', 'created_at']
+    list_filter = ['is_active']
+    search_fields = ['code', 'name', 'description']
+    ordering = ['name']
+    readonly_fields = ['created_at']
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            return ['code', 'created_at']
+        return ['created_at']
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def save_model(self, request, obj, form, change):
+        from contracts.services.contract_type_catalogue import audit_catalogue_mutation, valid_codes
+        from django.core.exceptions import ValidationError
+
+        if not change and obj.code not in valid_codes():
+            raise ValidationError('New catalogue rows must use an approved enum code.')
+        super().save_model(request, obj, form, change)
+        audit_catalogue_mutation(
+            actor=request.user,
+            catalogue=obj,
+            action='update' if change else 'create',
+            changes={'code': obj.code, 'name': obj.name, 'is_active': obj.is_active},
+            request=request,
+        )
+
 
 @admin.register(Contract)
 class ContractAdmin(admin.ModelAdmin):

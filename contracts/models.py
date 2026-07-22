@@ -823,11 +823,13 @@ class ContractQuerySet(models.QuerySet):
     def bulk_create(self, objs, *args, **kwargs):
         from django.utils import timezone
         from contracts.services.contract_provenance import OriginKind, ensure_create_provenance
+        from contracts.services.contract_type_catalogue import sync_contract_type_catalogue_fields
 
         for obj in objs:
             if not (getattr(obj, 'origin_kind', '') or '').strip():
                 obj.origin_kind = OriginKind.LEGACY_UNKNOWN
             ensure_create_provenance(obj)
+            sync_contract_type_catalogue_fields(obj)
             if obj.provenance_locked_at is None:
                 obj.provenance_locked_at = timezone.now()
         return super().bulk_create(objs, *args, **kwargs)
@@ -917,7 +919,20 @@ class Contract(models.Model):
 
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, null=True, blank=True, related_name='contracts')
     title = models.CharField(max_length=200)
-    contract_type = models.CharField(max_length=20, choices=ContractType.choices, default=ContractType.OTHER)
+    contract_type = models.CharField(
+        max_length=20,
+        choices=ContractType.choices,
+        default=ContractType.OTHER,
+        help_text='Transitional denormalized code; canonical type is contract_type_catalogue.',
+    )
+    contract_type_catalogue = models.ForeignKey(
+        'ContractType',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='contract_records',
+        help_text='Canonical governed Contract Type catalogue row (PAR-CORE-002).',
+    )
     content = models.TextField(blank=True)
     status = models.CharField(max_length=30, choices=Status.choices, default=Status.IN_PROGRESS)
     case_phase = models.CharField(
@@ -1132,6 +1147,12 @@ class Contract(models.Model):
                 extra = {'origin_kind', 'provenance_locked_at'}
                 kwargs['update_fields'] = list(dict.fromkeys(list(update_fields) + list(extra)))
 
+        from contracts.services.contract_type_catalogue import sync_contract_type_catalogue_fields
+        sync_contract_type_catalogue_fields(self)
+        if update_fields is not None:
+            extra_type = {'contract_type', 'contract_type_catalogue'}
+            kwargs['update_fields'] = list(dict.fromkeys(list(kwargs.get('update_fields', update_fields)) + list(extra_type)))
+
         should_validate = not skip_lifecycle_validation
         if should_validate and update_fields is not None:
             fields = set(update_fields)
@@ -1168,6 +1189,7 @@ class Contract(models.Model):
             models.Index(fields=['organization', 'source_system', 'source_system_id'], name='ctr_org_src_ref_ix'),
             models.Index(fields=['organization', 'origin_kind'], name='ctr_org_origin_ix'),
             models.Index(fields=['organization', 'provenance_correlation_id'], name='ctr_org_prov_corr_ix'),
+            models.Index(fields=['organization', 'contract_type_catalogue'], name='ctr_org_type_cat_ix'),
         ]
 
 
@@ -2753,11 +2775,13 @@ class WorkflowStep(models.Model):
 # (not AI) risk signals detected while drafting.
 
 class ContractType(models.Model):
-    """Lookup/config row per contract type, e.g. DPA. Does not replace
-    Contract.ContractType (still the canonical choices field on Contract
-    itself) — this is the FK target that lets a WorkflowTemplate bind
-    directly to a type instead of only being matched heuristically."""
-    code = models.CharField(max_length=20, unique=True, help_text='Matches a Contract.ContractType value, e.g. DPA')
+    """Governed Contract Type catalogue (CANONICAL_DOMAIN_MODEL §2.6).
+
+    ``code`` is the stable identifier shared with integrations and the
+    transitional ``Contract.contract_type`` denormalized field. Workflow
+    templates bind to catalogue rows via ``WorkflowTemplate.contract_type``.
+    """
+    code = models.CharField(max_length=20, unique=True, help_text='Stable type code, e.g. DPA')
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)

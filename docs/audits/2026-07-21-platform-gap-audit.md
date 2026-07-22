@@ -37,7 +37,7 @@
 | G-WF-02 | `migrate_workflows_to_template` rebinds live instance FKs (breaks version pin invariant) | **Critical** |
 | G-WF-03 | `WorkflowTemplate.is_active` defaults `True` (publish-by-default) | **High** |
 | G-DOM-01 | No Workflow Definition entity; Version = template row only | **High** |
-| G-DOM-02 | Dual `Contract.ContractType` enum vs `ContractType` model | **High** |
+| G-DOM-02 | Dual `Contract.ContractType` enum vs `ContractType` model | **High** → **Resolved (PAR-CORE-002)** — catalogue canonical; char mirror transitional; ADR-0011 Proposed for removal gate |
 | G-DOM-03 | Obligations = `Deadline` alias; no Reminder/Exception first-class objects | **High** |
 | G-NAV-01 | Data Manager and Entities missing from canonical nav | **High** |
 | G-AI-01 | `ClauseRecommendation` lacks model/provider/prompt provenance | **Medium** |
@@ -137,7 +137,7 @@ Status key: Compliant · Partially compliant · Missing · Conflicting · Not im
 | Conflict | Type | Evidence |
 |---|---|---|
 | Workflow Definition missing; Version = `WorkflowTemplate` row | Missing / collapse | `models.WorkflowTemplate` |
-| Dual ContractType enum vs model | Duplicate | `Contract.ContractType` vs `ContractType` |
+| Dual ContractType enum vs model | Duplicate → transitional | `ContractType` catalogue + `contract_type_catalogue` FK (PAR-CORE-002); char mirror until ADR-0011 Accepted |
 | Org Membership roles vs UserProfile process roles | Duplicate / ambiguous | models |
 | Obligation as Deadline | Alias / terminology drift | `services/obligations.py` |
 | Work Item ephemeral vs CommandCenterWorkItem persisted | Dual semantics | my_work vs command_center |

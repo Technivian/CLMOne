@@ -27,7 +27,7 @@ class InboundImportService:
         # Legacy aliases accepted on import and mapped below
         'DRAFT', 'PENDING', 'IN_REVIEW', 'APPROVED', 'COMPLETED',
     }
-    VALID_CONTRACT_TYPES = {'NDA', 'SERVICE', 'EMPLOYMENT', 'VENDOR', 'PARTNERSHIP', 'LEASE', 'OTHER'}
+    VALID_CONTRACT_TYPES = None  # deprecated — use contract_type_catalogue.validate_import_contract_type
     VALID_STAGES = {
         'INTAKE', 'DRAFTING', 'INTERNAL_REVIEW', 'NEGOTIATION', 'APPROVAL',
         'SIGNATURE', 'EXECUTED', 'OBLIGATION_TRACKING', 'RENEWAL',
@@ -61,10 +61,14 @@ class InboundImportService:
                         organization=org,
                         title=row.get('title', '').strip(),
                         counterparty=row.get('counterparty', '').strip(),
-                        contract_type=row.get('contract_type', 'OTHER').strip().upper() or 'OTHER',
                         start_date=self._parse_date(row.get('start_date')),
                         end_date=self._parse_date(row.get('end_date')),
                         created_by=user,
+                    )
+                    from contracts.services.contract_type_catalogue import assign_contract_type
+                    assign_contract_type(
+                        contract,
+                        code=(row.get('contract_type') or 'OTHER').strip(),
                     )
                     persist_contract_with_imported_lifecycle(
                         contract,
@@ -120,8 +124,9 @@ class InboundImportService:
                 errors.append(str(exc))
 
         contract_type = row.get('contract_type', '').strip().upper()
-        if contract_type and contract_type not in self.VALID_CONTRACT_TYPES:
-            errors.append(f'invalid contract_type "{contract_type}"')
+        if contract_type:
+            from contracts.services.contract_type_catalogue import validate_import_contract_type
+            errors.extend(validate_import_contract_type(contract_type))
 
         for date_field in ('start_date', 'end_date'):
             val = row.get(date_field, '').strip()
