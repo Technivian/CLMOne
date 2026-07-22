@@ -38,7 +38,7 @@ Statuses: Completed · In progress · Blocked · Deferred by approved decision �
 
 ## Immediate next items
 
-1. **PAR-ID-001** — Role Definition reconciliation (Milestone 3) — **In progress** (R0 inventory **PASS**; R1 CERTAIN non-ADMIN remediation auth **Requested** — 12 rows; activation pending; flags default off; ADMIN deferred under P1+P3)
+1. **PAR-ID-001** — Role Definition reconciliation (Milestone 3) — **In progress** (R0 **PASS**; R1 CERTAIN non-ADMIN remediation **Authorized/PASS** on staging-equivalent corpus — 12 rows; AMBIGUOUS ADMIN **8** residual; activation pending; flags default off)
 
 
 2. **PAR-APR-002** — legacy approval cutover — **Planned** (blocked on owner + cutover plan)
@@ -404,7 +404,7 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 
 | Field | Content |
 |---|---|
-| Status | **In progress** (2026-07-22) — R0 inventory **PASS** (verified 20/4/8); R1 CERTAIN non-ADMIN remediation auth package **Requested** (12 rows; ADMIN/AMBIGUOUS excluded); activation **pending**; flags default off; P1+P3 binding; P2 rejected; GI pre-auth merge **Ratified and Closed** |
+| Status | **In progress** (2026-07-22) — R0 **PASS**; R1 CERTAIN non-ADMIN remediation **Authorized** (Product `19:16:55Z` / Eng `19:16:56Z` / Sec `19:16:57Z`) and evidence **PASS** (12 creates; LEGACY_ONLY→0 on corpus; AMBIGUOUS ADMIN **8** residual); activation **pending**; flags default off; P1+P3; P2 rejected |
 | Priority | P1 |
 | Problem | Dual role systems (`OrganizationMembership` vs `UserProfile.Role`) conflict with canonical Role Definition. |
 | Governance source | CANONICAL_DOMAIN_MODEL §2.5; SECURITY_PRIVACY_ACCESS_AND_AUDIT |
@@ -644,4 +644,5 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | 2026-07-22 | **PR #63 merged** to `main` @ `06258d26` (2026-07-22T18:44:14Z); reviewed HEAD `60263068` CI 6/6; merge auth Engineering `18:37:34Z` / Product `18:38:34Z`; docs/governance only; R0 inventory authorization gate **opened** (votes Requested); no R0 execution; flags remain default off; PAR-ID-001 remains **In progress** |
 | 2026-07-22 | **PAR-ID-001 R0 inventory Authorized and PASS:** Product `18:55:17Z` / Engineering `18:53:20Z` / Security `18:53:20Z`; clean staging-equivalent + 0113 + deterministic seeds; verified MISSING **20** / LEGACY_ONLY orgs **4** / AMBIGUOUS ADMIN **8** (historical 14/1/13 superseded); CROSS_TENANT/DIFFERENT_USER **0**; flags remain default off; R1+ not authorized; PAR-ID-001 remains **In progress** |
 | 2026-07-22 | **PAR-ID-001 R1 CERTAIN non-ADMIN remediation auth package prepared** from `main` @ `0404e284`: 12 CERTAIN missing rows in scope; 8 AMBIGUOUS ADMIN excluded; mapping manifest + test/rollback plan; votes **Requested**; no implementation; flags remain default off; PAR-ID-001 remains **In progress** |
+| 2026-07-22 | **PAR-ID-001 R1 Authorized (bundled):** Product `19:16:55Z` / Engineering `19:16:56Z` / Security `19:16:57Z` (conditions 1–10 yes); dry-run/apply/rollback for exactly 12 CERTAIN rows; staging-equivalent evidence PASS (LEGACY_ONLY 89→0; AMBIGUOUS ADMIN 8 residual); flags remain default off; no separate merge vote; R2–R5 / activation not authorized; PAR-ID-001 remains **In progress** |
 
