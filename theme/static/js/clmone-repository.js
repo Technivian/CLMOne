@@ -503,6 +503,10 @@ class CLMOneRepository {
         `;
     }
 
+    repoCellInner(content) {
+        return `<div class="repo-cell-inner">${content}</div>`;
+    }
+
     renderTypeCell(contract) {
         const shortLabel = contract.contract_type_short || contract.contract_type_display || 'Other';
         const fullLabel = contract.contract_type_display || shortLabel;
@@ -562,37 +566,38 @@ class CLMOneRepository {
         tbody.innerHTML = result.contracts.map(contract => `
             <tr class="contract-row cursor-pointer" data-contract-id="${contract.id}" aria-selected="false">
                 <td class="repo-cell repo-select-cell" data-col="select">
-                    <span class="repo-select-hit"><input type="checkbox" class="contract-checkbox" value="${contract.id}" aria-label="Select ${this.escapeHtml(contract.title)}"></span>
+                    ${this.repoCellInner(`<span class="repo-select-hit"><input type="checkbox" class="contract-checkbox" value="${contract.id}" aria-label="Select ${this.escapeHtml(contract.title)}"></span>`)}
                 </td>
                 <td class="repo-cell" data-col="title">
+                    ${this.repoCellInner(`
                     <div class="repo-title-stack">
                       <div class="font-medium repo-contract-title">${this.escapeHtml(contract.title)}</div>
                       <div class="repo-title-meta">${this.renderStatusMeta(contract)}</div>
-                    </div>
+                    </div>`)}
                 </td>
                 <td class="repo-cell" data-col="type">
-                    ${this.renderTypeCell(contract)}
+                    ${this.repoCellInner(this.renderTypeCell(contract))}
                 </td>
                 <td class="repo-cell" data-col="counterparty">
-                    ${this.renderTruncatedText(contract.counterparty)}
+                    ${this.repoCellInner(this.renderTruncatedText(contract.counterparty))}
                 </td>
                 <td class="repo-cell" data-col="stage">
-                    ${this.renderStageBadge(contract)}
+                    ${this.repoCellInner(this.renderStageBadge(contract))}
                 </td>
                 <td class="repo-cell" data-col="owner">
-                    ${this.renderAssigneeChip(contract.assignee_name, contract.assignee_initial)}
+                    ${this.repoCellInner(this.renderAssigneeChip(contract.assignee_name, contract.assignee_initial))}
                 </td>
                 <td class="repo-cell" data-col="activity">
-                    ${this.renderActivityLine(contract.latest_activity_text, contract.latest_activity_time, contract.latest_activity_initial)}
+                    ${this.repoCellInner(this.renderActivityLine(contract.latest_activity_text, contract.latest_activity_time, contract.latest_activity_initial))}
                 </td>
                 <td class="repo-cell repo-key-date${contract.due_overdue ? ' wq-due-overdue' : ''}" data-col="key_date">
-                    ${contract.end_date_display ? this.escapeHtml(contract.end_date_display) : '<span class="repo-empty-label">—</span>'}
+                    ${this.repoCellInner(contract.end_date_display ? this.escapeHtml(contract.end_date_display) : '<span class="repo-empty-label">—</span>')}
                 </td>
                 <td class="repo-cell repo-value" data-col="value">
-                    ${contract.value_display || '—'}
+                    ${this.repoCellInner(contract.value_display || '—')}
                 </td>
                 <td class="repo-cell repo-actions-cell" data-col="actions">
-                    ${this.renderRowActions(contract)}
+                    ${this.repoCellInner(this.renderRowActions(contract))}
                 </td>
             </tr>
         `).join('');

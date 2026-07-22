@@ -18,27 +18,43 @@
     vertical-align: middle !important;
   }
   /* Kebab menus center via flex on .wq-kebab-trigger; block/grid cell content ignores
-     td vertical-align, so body cells use the same flex centering pattern. */
+     td vertical-align. Inner flex wrappers mirror that pattern inside table cells. */
   .repo-page #contracts-table tbody td.repo-cell {
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    vertical-align: middle !important;
+  }
+  .repo-page #contracts-table tbody td.repo-cell[data-col="actions"] {
+    overflow: visible;
+  }
+  .repo-page #contracts-table tbody td.repo-cell .repo-cell-inner {
     display: flex;
     align-items: center;
     box-sizing: border-box;
+    min-height: 100%;
+    height: 100%;
+    min-width: 0;
+    width: 100%;
+    padding: 14px 12px;
   }
-  .repo-page #contracts-table tbody td.repo-cell > * {
+  .repo-page #contracts-table tbody td.repo-cell .repo-cell-inner > * {
     min-width: 0;
     max-width: 100%;
   }
-  .repo-page #contracts-table tbody td.repo-cell[data-col="title"] > .repo-title-stack {
+  .repo-page #contracts-table tbody td.repo-cell[data-col="title"] .repo-cell-inner > .repo-title-stack {
     width: 100%;
   }
-  .repo-page #contracts-table tbody td.repo-cell[data-col="value"] {
+  .repo-page #contracts-table tbody td.repo-cell[data-col="value"] .repo-cell-inner {
     justify-content: flex-end;
+    padding-right: 16px;
   }
-  .repo-page #contracts-table tbody td.repo-cell[data-col="actions"] {
+  .repo-page #contracts-table tbody td.repo-cell[data-col="actions"] .repo-cell-inner {
     justify-content: center;
+    padding-left: 8px;
+    padding-right: 8px;
   }
-  .repo-page #contracts-table th.tbl-th:not([data-col="select"]),
-  .repo-page #contracts-table td.repo-cell:not([data-col="select"]) {
+  .repo-page #contracts-table th.tbl-th:not([data-col="select"]) {
     padding: 14px 12px;
     overflow: hidden;
   }
@@ -75,7 +91,7 @@
     box-sizing: border-box;
     vertical-align: middle !important;
     background-color: var(--card-bg, #fff);
-    padding: 0 0 0 10px !important;
+    padding: 0 !important;
     overflow: visible !important;
     text-align: left;
   }
@@ -86,6 +102,10 @@
     margin: 0;
     padding: 0;
     line-height: 1;
+  }
+  .repo-page #contracts-table tbody td.repo-cell[data-col="select"] .repo-cell-inner {
+    padding: 0 0 0 10px;
+    justify-content: flex-start;
   }
   .repo-page #contracts-table.dc-ds-table [data-col="select"] input[type="checkbox"] {
     width: 14px;
@@ -101,6 +121,11 @@
     position: sticky; left: 32px; z-index: 3; min-width: 260px; width: 24%;
     background-color: var(--card-bg, #fff);
     box-shadow: 1px 0 0 var(--line, var(--card-border));
+  }
+  .repo-page #contracts-table thead th[data-col="title"] {
+    padding-left: 6px;
+  }
+  .repo-page #contracts-table tbody td.repo-cell[data-col="title"] .repo-cell-inner {
     padding-left: 6px;
   }
   .repo-page #contracts-table thead th[data-col="title"] { z-index: 6; }
