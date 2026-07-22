@@ -141,8 +141,8 @@ Preserved on `cursor/feat-platform-documentation-alignment-d7f1` — not discard
 
 ```
 Branch: cursor/feat-platform-alignment-tranche-1
-HEAD:   (see PR #50 — CI blocker resolution commit)
-Parent: c5a1109b (draft PR #50 baseline)
+HEAD:   7afa7b73
+Parent: d9ded244 (PAR-SEC-003 + DOC-001 seed fix)
 ```
 
 ---
@@ -161,8 +161,9 @@ Parent: c5a1109b (draft PR #50 baseline)
 | pr-release-evidence | PR body missing required checklist lines | **#2** Missing required evidence | PR #50 body updated with checked verification items + smoke/rollback evidence |
 | quality-and-tenancy | Production deploy check missing `APP_BASE_URL`, `OPERATOR_ALERT_EMAIL`, and durable storage env | **#3** CI configuration defect | Added valid HTTPS `APP_BASE_URL`, operator email, and S3 storage env to `.github/workflows/platform-guardrails.yml` (validation unchanged) |
 | security-scans | `theme/static_src` npm audit: `brace-expansion` (high), `tar` (critical) | **#5** pre-existing transitive deps | `npm audit fix` in `theme/static_src` (lockfile updated) |
-| redesigned-e2e | `seed_demo_command_center` → `WorkflowLaunchBlocked` (flagship templates lack assignees) + `ProvenanceError` on post-lock `source_system` mutation | **#1** Genuine Tranche-1 defect | Migration `0110_flagship_workflow_template_assignees`; pass `source_system`/`source_system_id` in workflow intake before provenance lock |
-| Phase 1 visual baselines | `check_visual_baselines.sh` referenced `playwright.config.js` from repo root | **#3** CI configuration defect | `--config=client/playwright.config.js` |
+| redesigned-e2e | Smoke test expected legacy `.page-wrap.cw-page` at `/contracts/` (302→repository) and hidden subtitle copy | **#1** Genuine Tranche-1 test drift | Updated `client/tests/e2e/smoke.spec.js` selectors for repository + workflow ops shells |
+| Phase 1 visual baselines | Template migration drift + wrong markers/paths; bootstrap fixed in pass 2 | **#1** Genuine Tranche-1 visual drift | Updated `visual-baselines.spec.js` paths/markers; regenerated `phase-1-*-darwin.png` snapshots |
+| quality-and-tenancy (pass 2) | `test_contract_list_query_count_*` hit 302 on legacy list alias | **#1** Test drift (PAR-SEC-003) | Point performance guardrail at `contracts:repository` |
 
 ### Why visual / redesigned-E2E ran on this PR
 
@@ -175,6 +176,8 @@ Both workflows path-filter on `theme/templates/**` and `client/**`. Tranche-1 in
 | `scripts/check_brand_regression.sh` | **PASS** |
 | `tests/test_design_system_phase1_foundation` + `phase2a` | **PASS** (33 tests) |
 | `tests/test_demo_command_center` | **PASS** (4 tests) |
+| `tests/test_cross_tenant_isolation.ContractIsolationTest.test_list_shows_only_own_org` | **PASS** (302 → repository) |
+| `seed_payrollminds_demo` (idempotent ×2) | **PASS** |
 | Production deploy check (CI-equivalent env) | **PASS** (`manage.py check --deploy --fail-level WARNING`) |
 | `theme/static_src` npm audit `--audit-level=high` | **PASS** (0 vulnerabilities) |
 | `client` npm audit `--audit-level=high` | **PASS** (0 high/critical) |
@@ -182,9 +185,18 @@ Both workflows path-filter on `theme/templates/**` and `client/**`. Tranche-1 in
 
 ### Named residual (unchanged)
 
-- **PAR-SEC-003** — `ContractIsolationTest.test_list_shows_only_own_org` (302 redirect; not a data leak)
+- **M1-E2E-001** — Playwright DPA assignee bootstrap flake (non-blocking; isolated from Tranche-1 merge gate)
 - **Human review** — required before merge per programme gate; PR #50 not auto-merged
 
-### Merge recommendation (post-fix push)
+### Merge recommendation (@ `e5956ca2`)
 
-**PENDING CI RE-RUN** — after push, all seven previously failing checks must re-run green (or be formally exempted with policy reference). Until CI confirms: **NOT MERGE READY**.
+**NOT MERGE READY** — 6/8 required GitHub checks green; 2 residuals remain:
+
+| Check | CI result | Residual |
+|---|---|---|
+| Phase 1 visual baselines | **FAIL** (1/5 snapshots) | `phase-1-list-darwin.png` pixel drift on macos-14 CI vs local capture — **#1** Tranche-1 UI drift |
+| redesigned-e2e | **FAIL** | Smoke likely green; `critical-flows.spec.js` create/edit `selectOption` timeout — **#1** test drift vs contract create UX |
+
+All other merge-blocking checks (**Forbidden-brand**, **Anti-drift + contrast**, **pr-release-evidence**, **quality-and-tenancy**, **security-scans**, **verify-ui**) are **PASS**.
+
+Human review required before merge. PR #50 must not be merged until visual + e2e residuals are green or formally exempted.

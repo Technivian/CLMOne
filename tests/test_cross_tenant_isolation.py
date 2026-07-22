@@ -463,8 +463,13 @@ class ContractIsolationTest(CrossTenantFixtureMixin, TestCase):
     """Contracts carry organization FK – isolation is enforced by scope_queryset."""
 
     def test_list_shows_only_own_org(self):
+        """PAR-SEC-003: legacy contract_list alias redirects to repository."""
         self.client.login(username='user_b', password='passB1234!')
         response = self.client.get(reverse('contracts:contract_list'))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse('contracts:repository'))
+
+        response = self.client.get(reverse('contracts:repository'))
         self.assertEqual(response.status_code, 200)
         ids = [c['id'] if isinstance(c, dict) else c.id
                for c in response.context.get('contracts', [])]
