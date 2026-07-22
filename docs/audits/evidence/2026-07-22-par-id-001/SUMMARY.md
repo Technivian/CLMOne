@@ -1,13 +1,15 @@
 # PAR-ID-001 evidence summary — 2026-07-22
 
-## Status: In progress — cutover implementation delivered; activation pending
+## Status: In progress — cutover implementation delivered; activation pending; remediation decision package pending
 
 **ADR:** ADR-0014 **Accepted**  
 **PR #58 merge:** `598b7a12` (2026-07-22T14:42:13Z) — reviewed code HEAD `44926da9`  
 **Merge votes recorded:** Product `15:06:30Z` / Engineering `15:06:45Z` (**after** merge)  
 **Retrospective ratification:** Product `15:31:46Z` / Engineering `15:31:55Z` — **GI-2026-07-22-PR58-PREAUTH-MERGE Ratified and Closed**  
 **Merge evidence:** `docs/audits/evidence/2026-07-22-par-id-001-pr58-merge/`  
-**Implementation branch:** `cursor/feat-par-id-001-canonical-resolver-authority-d7f1` (PR [#62](https://github.com/Technivian/CLMOne/pull/62))
+**Canonical resolver:** implemented default-off (PR [#62](https://github.com/Technivian/CLMOne/pull/62) → `main`); activation **Requested**  
+**Remediation decision package:** `docs/audits/evidence/2026-07-22-par-id-001-remediation-decision/` (**pending votes**)
+
 
 ### Delivered
 - Additive `RoleDefinition` catalogue (0112)
@@ -38,6 +40,9 @@
 - `PROCESS_ROLE_RESOLVER_PARITY_ENABLED` = false
 - `PROCESS_ROLE_CANONICAL_RESOLVER_ENABLED` = false
 
-### Next
-Separate activation decision on [`CANONICAL_RESOLVER_ACTIVATION_AUTHORIZATION.md`](CANONICAL_RESOLVER_ACTIVATION_AUTHORIZATION.md) after PR #62 merge + implementation review.  
-Stop before enabling canonical authority without recorded activation votes. PAR-ID-001 remains **In progress**.
+### Next decision gate
+1. Approve remediation decision package (ADMIN policy + threat review + analysis) on PR #63.  
+2. Separately authorize and verify remediation implementation slices (R0+).  
+3. Separate activation decision on [`CANONICAL_RESOLVER_ACTIVATION_AUTHORIZATION.md`](CANONICAL_RESOLVER_ACTIVATION_AUTHORIZATION.md) — stop before enabling canonical authority without recorded activation votes.  
+PAR-ID-001 remains **In progress**. No flag enablement by the remediation decision package.
+
