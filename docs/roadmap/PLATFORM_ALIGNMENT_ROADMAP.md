@@ -38,7 +38,7 @@ Statuses: Completed · In progress · Blocked · Deferred by approved decision �
 
 ## Immediate next items
 
-1. **PAR-ID-001** — Role Definition reconciliation (Milestone 3) — **In progress** (Slice 4 resolver-parity **Authorized** + implemented on PR #58; flag default off)
+1. **PAR-ID-001** — Role Definition reconciliation (Milestone 3) — **In progress** (PR #58 merged `598b7a12`; staging diagnostic gate **NOT READY** for cutover; legacy authoritative)
 2. **PAR-APR-002** — legacy approval cutover — **Planned** (blocked on owner + cutover plan)
 3. **PAR-WF-010** — production cutover **blocked** pending Accepted ADR-0012 (discovery complete — see evidence)
 
@@ -631,3 +631,5 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | 2026-07-22 | **PR #59 merged** to `main` @ `0d9712ca` — PR #55 merge-evidence documentation |
 | 2026-07-22 | **PAR-ID-001 Slice 4 authorization package:** resolver usage matrix + test matrix + non-authoritative comparison authorization on PR [#58](https://github.com/Technivian/CLMOne/pull/58) |
 | 2026-07-22 | **PAR-ID-001 Slice 4 Authorized (authoritative vote record):** Product `14:17:31Z` / Engineering `14:18:31Z` / Security advisory `14:15:31Z` (Approve with conditions); prior draft `14:04–14:06Z` record superseded; comparison hooks on PR #58 behind default-off flag; merge + staging activation still separate |
+| 2026-07-22 | **PR #58 merged** to `main` @ `598b7a12` (2026-07-22T14:42:13Z) — resolver-parity comparison; flags remain default off; legacy authoritative |
+| 2026-07-22 | **PAR-ID-001 staging resolver-parity gate:** diagnostic flags on in staging-equivalent; report total=37 critical=0; LEGACY_ONLY=1 INACTIVE=14 AMBIGUOUS=13; verdict **NOT READY, REMEDIATION REQUIRED**; cutover auth package withheld; PAR-ID-001 remains **In progress** |
