@@ -165,6 +165,35 @@ class OrganizationInvitation(models.Model):
         return f'Invite {self.email} to {self.organization.name} ({self.get_status_display()})'
 
 
+class UserProfileQuerySet(models.QuerySet):
+    """Detect role QuerySet.update for optional shadow sync (PAR-ID-001 Slice 3)."""
+
+    def update(self, **kwargs):
+        role_update = 'role' in kwargs
+        previous_by_user = {}
+        user_ids = []
+        if role_update:
+            previous_by_user = dict(self.values_list('user_id', 'role'))
+            user_ids = list(previous_by_user.keys())
+        result = super().update(**kwargs)
+        if role_update:
+            try:
+                from contracts.services.process_role_shadow_sync import (
+                    maybe_shadow_sync_after_queryset_role_update,
+                )
+
+                maybe_shadow_sync_after_queryset_role_update(user_ids, previous_by_user, kwargs['role'])
+            except Exception:
+                # Never break legacy QuerySet.update
+                import logging
+                logging.getLogger(__name__).exception('UserProfile.role QuerySet shadow sync failed')
+        return result
+
+
+class UserProfileManager(models.Manager.from_queryset(UserProfileQuerySet)):
+    pass
+
+
 class UserProfile(models.Model):
     class Role(models.TextChoices):
         PARTNER = 'PARTNER', 'Partner'
@@ -215,13 +244,34 @@ class UserProfile(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    objects = UserProfileManager()
+
     def __str__(self):
         return f'{self.user.get_full_name() or self.user.username} ({self.get_role_display()})'
 
     def save(self, *args, **kwargs):
+        previous_role = None
+        update_fields = kwargs.get('update_fields')
+        if self.pk:
+            previous_role = (
+                type(self).objects.filter(pk=self.pk).values_list('role', flat=True).first()
+            )
+        role_touched = (
+            update_fields is None
+            or 'role' in update_fields
+            or previous_role is None
+        )
         if not self.mfa_enabled:
             self.mfa_verified_at = None
         super().save(*args, **kwargs)
+        if role_touched:
+            try:
+                from contracts.services.process_role_shadow_sync import maybe_shadow_sync_profile_role
+
+                maybe_shadow_sync_profile_role(self, previous_role=previous_role)
+            except Exception:
+                import logging
+                logging.getLogger(__name__).exception('UserProfile.save shadow sync hook failed')
 
     def _mfa_code_hash(self, code):
         material = f'{self.user_id}:{code}:{settings.SECRET_KEY}'

@@ -542,6 +542,12 @@ TRUST_ACCOUNTING_ENABLED = _bool_env('TRUST_ACCOUNTING_ENABLED', default=True)
 # hermetic tests and general development remain unaffected.
 CONTROLLED_PILOT_ENABLED = _bool_env('CONTROLLED_PILOT_ENABLED', default=False)
 
+# PAR-ID-001 Slice 3 — feature-flagged shadow sync / parity (default OFF).
+# When enabled, selected UserProfile.role writes mirror into org-scoped
+# ProcessRoleAssignment. Legacy profile role remains authoritative for runtime.
+PROCESS_ROLE_SHADOW_WRITE_ENABLED = _bool_env('PROCESS_ROLE_SHADOW_WRITE_ENABLED', default=False)
+PROCESS_ROLE_PARITY_REPORTING_ENABLED = _bool_env('PROCESS_ROLE_PARITY_REPORTING_ENABLED', default=False)
+
 STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY', '').strip()
 STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY', '').strip()
 STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET', '').strip()
