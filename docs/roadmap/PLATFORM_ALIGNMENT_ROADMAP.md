@@ -411,25 +411,24 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 
 | Field | Content |
 |---|---|
-| Status | **In progress** (2026-07-22) — Tranche-1 gate cleared; PAR-APR-001 closed |
+| Status | **In progress** (2026-07-22) — **discovery complete**; ADR-0014 awaiting ratification |
 | Priority | P1 |
 | Problem | Dual role systems (`OrganizationMembership` vs `UserProfile.Role`) conflict with canonical Role Definition. |
 | Governance source | CANONICAL_DOMAIN_MODEL §2.5; SECURITY_PRIVACY_ACCESS_AND_AUDIT |
-| Current evidence | Membership + Profile roles in pilot seed; gap audit Conflicting |
+| Current evidence | `docs/audits/evidence/2026-07-22-par-id-001/` — ROLE_USAGE_MATRIX, TARGET_ROLE_MODEL, CUTOVER_PLAN |
 | Target outcome | Single terminology and mapping for process vs org roles; no silent privilege escalation |
-| Dependencies | Authz matrix inventory; avoid breaking pilot seeds |
-| Decision required | **ADR** for terminology/mapping |
-| Migration impact | Mapping table / backfill; possibly no destructive drop initially |
+| Dependencies | ADR-0014 Acceptance; PAR-SEC-003 disposition before cutover; authz matrix inventory |
+| Decision required | **ADR-0014** — decision package ready, not ratified |
+| Migration impact | Mapping table / backfill per CUTOVER_PLAN (not authorized) |
 | Security and permissions impact | **High** — must preserve least privilege; server-side checks remain source of truth |
 | Audit requirements | Role/mapping changes audited |
 | UX requirements | Consistent role labels in My Work, Approvals, Admin |
-| Tests | Permission matrix tests; pilot role fixtures; isolation |
-| Rollback strategy | Keep dual-read mapping; revert ADR implementation behind flag |
+| Tests | `tests/test_par_id_001_characterization.py` — **19 PASS** |
+| Rollback strategy | Feature flag + migration checkpoints per CUTOVER_PLAN |
 | Acceptance criteria | Accepted ADR; documented mapping; tests prove no privilege widening |
 | Evidence | `docs/audits/evidence/2026-07-22-par-id-001/` |
-| Proposed ADR | **ADR-0014** — `docs/governance/decisions/adr/0014-role-definition-reconciliation.md` |
-| Tests | `tests/test_par_id_001_characterization.py` |
-| PR/commits | TBD |
+| Proposed ADR | **ADR-0014** + decision package `0014-governance-decision-package-2026-07-22.md` |
+| PR/commits | PR [#51](https://github.com/Technivian/CLMOne/pull/51) |
 | Last updated | 2026-07-22 |
 
 ### PAR-EXC-001 — Governed Exception
@@ -628,4 +627,4 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | 2026-07-22 | **PAR-WF-010 discovery complete (Blocked):** evidence `2026-07-22-par-wf-010`; Proposed ADR-0012; characterization tests; production cutover blocked pending Accepted ADR |
 | 2026-07-22 | **Tranche-1 integration gate Completed:** PR #50 merged to `main` @ `c52d699a` |
 | 2026-07-22 | **PAR-APR-001 Completed:** `ApprovalRequirement` + `ApprovalDecision`; migration 0111; ADR-0013 **Accepted**; evidence `2026-07-22-par-apr-001`; cutover residuals → PAR-APR-002 |
-| 2026-07-22 | **PAR-ID-001 started:** Proposed ADR-0014; characterization tests; evidence `2026-07-22-par-id-001` |
+| 2026-07-22 | **PAR-ID-001 discovery complete:** ROLE_USAGE_MATRIX, TARGET_ROLE_MODEL, CUTOVER_PLAN, ADR-0014 decision package; 19 characterization tests |
