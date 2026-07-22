@@ -418,13 +418,8 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | Rollback strategy | Flags default off; reverse 0113 then 0112 if needed; no resolver flip to roll back |
 | Acceptance criteria | Accepted ADR (**met**); additive catalogue (**met**); org-scoped adapter + dual-read (**met**); feature-flagged shadow sync + parity (**met**); runtime cutover criteria **not yet** |
 | Evidence | `docs/audits/evidence/2026-07-22-par-id-001/` |
-<<<<<<< HEAD
-| Accepted ADR | **ADR-0014** + 0112/0113 implementation authorizations |
-| PR/commits | PR #51 `21e65f09`; PR #53 `0bf7c9dc`; PR #54 `58966de7`; Slice 3 open as PR #55; visual remediation PR #52 `3c5e628b` on `main` |
-=======
-| Accepted ADR | **ADR-0014** + 0112/0113 implementation authorizations; Slice 3 auth **Requested** |
-| PR/commits | PR #51 `21e65f09`; PR #53 `0bf7c9dc`; PR #54 `58966de7`; branch `cursor/feat-par-id-001-shadow-role-sync` |
->>>>>>> f8ca9a9d (feat(roles): add feature-flagged process-role shadow sync and parity report)
+| Accepted ADR | **ADR-0014** + 0112/0113 implementation authorizations; Slice 3 auth **Authorized** (non-authoritative; merge recorded separately) |
+| PR/commits | PR #51 `21e65f09`; PR #53 `0bf7c9dc`; PR #54 `58966de7`; PR #52 `3c5e628b`; PR #55 shadow sync; evidence PR #57 `2f14c034` |
 | Last updated | 2026-07-22 |
 
 ### PAR-EXC-001 — Governed Exception
@@ -629,8 +624,5 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | 2026-07-22 | **PR #53 merged** to `main` @ `0bf7c9dc` |
 | 2026-07-22 | **PAR-ID-001 process-role adapter:** migration `0113` `ProcessRoleAssignment` + dual-read parity; production authority still legacy resolvers; privilege/resolver cutover **not** authorized |
 | 2026-07-22 | **PR #54 merged** to `main` @ `58966de7` |
-<<<<<<< HEAD
 | 2026-07-22 | **PR #52 merged** to `main` @ `3c5e628b` — PR #50 visual + E2E remediation closed; evidence `docs/audits/evidence/2026-07-22-pr52-merge/` |
-=======
 | 2026-07-22 | **PAR-ID-001 Slice 3:** feature-flagged shadow sync (`PROCESS_ROLE_SHADOW_WRITE_ENABLED`) + `process_role_parity_report`; parity evidence; production resolvers still legacy; next cutover slice needs separate authorization |
->>>>>>> f8ca9a9d (feat(roles): add feature-flagged process-role shadow sync and parity report)
