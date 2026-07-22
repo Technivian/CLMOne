@@ -53,34 +53,62 @@ async function selectOptionContainingText(page, selector, textFragment) {
   await page.selectOption(selector, value);
 }
 
-async function openFirstRepositoryContract(page) {
-  await page.goto('/contracts/repository/');
-  await expect(page.locator('.contract-row').first()).toBeVisible();
-  const contractId = await page.locator('.contract-row').first().getAttribute('data-contract-id');
-  const title = (await page.locator('.contract-row .repo-contract-title').first().textContent())?.trim();
-  expect(contractId).toBeTruthy();
-  expect(title).toBeTruthy();
-  return { contractId, title };
+async function waitForRepositoryContracts(page) {
+  await expect(page.locator('#contracts-tbody')).not.toContainText('Loading contracts', { timeout: 15000 });
+}
+
+async function openRepositoryContractByTitle(page, title) {
+  await page.goto(`/contracts/repository/?q=${encodeURIComponent(title)}`);
+  await waitForRepositoryContracts(page);
+  const row = page.locator('tr.contract-row').filter({
+    has: page.locator('.repo-contract-title', { hasText: title }),
+  });
+  await expect(row).toBeVisible({ timeout: 15000 });
+  await row.click();
 }
 
 test('critical contract create and edit flow works', async ({ page }) => {
   await login(page);
 
-  // Controlled pilot blocks freeform /contracts/new/; use seeded repository record.
-  const { contractId } = await openFirstRepositoryContract(page);
+  const suffix = Date.now().toString().slice(-6);
+  const title = `E2E Contract ${suffix}`;
 
-  await page.goto(`/contracts/${contractId}/`);
+  await page.goto('/contracts/new/');
+  await page.fill('input[name="title"]', title);
+  await page.selectOption('select[name="contract_type"]', 'MSA');
+  await page.fill('input[name="counterparty"]', 'E2E Counterparty');
+  await openPanel(page, 'legal-posture');
+  await page.fill('input[name="value"]', '10000');
+  await page.selectOption('select[name="currency"]', 'USD');
+  await page.fill('input[name="governing_law"]', 'State of Delaware');
+  await page.fill('input[name="jurisdiction"]', 'New York');
+  await openPanel(page, 'lifecycle-control');
+  await page.fill('input[name="start_date"]', '2026-04-12');
+  await page.fill('input[name="end_date"]', '2026-12-31');
+  await openPanel(page, 'draft-brief');
+  await page.fill('textarea[name="content"]', 'Automated E2E contract body');
+  await submitOwningForm(page, 'input[name="title"]');
+
+  await expect(page).toHaveURL(/\/contracts\/repository\/?(\?.*)?$/);
+  await openRepositoryContractByTitle(page, title);
   await expect(page).toHaveURL(/\/contracts\/\d+\/?$/);
+  // Intentional product change: record shell uses dc-ds-workspace--record (not page-wrap/arch-detail-grid).
   await expect(page.locator('.dc-ds-workspace--record').first()).toBeVisible();
   await expect(page.getByText('Contract details').first()).toBeVisible();
   await expect(page.getByText('Contract lifecycle').first()).toBeVisible();
   await expect(page.getByText('View full workflow')).toHaveCount(0);
-  await page.goto(`/contracts/${contractId}/edit/`);
+  // Compact header shows record status · workflow stage (never dual "Draft"/"Drafting").
+  await expect(page.getByText('In progress · Drafting').first()).toBeVisible();
+  const detailUrl = page.url().replace(/\/$/, '');
+  await page.goto(`${detailUrl}/edit/`);
   await expect(page).toHaveURL(/\/contracts\/\d+\/edit\/?$/);
 
+  // Status and lifecycle_stage are governed (not free-edited on the form).
   await page.fill('input[name="counterparty"]', 'E2E Counterparty Updated');
   await submitOwningForm(page, 'input[name="counterparty"]');
-  await expect(page).toHaveURL(new RegExp(`/contracts/${contractId}/?$`));
+  await expect(page).toHaveURL(/\/contracts\/\d+\/?$/);
+  await expect(page.locator('.contract-details-dl__row').filter({ hasText: 'Counterparty' })).toContainText('E2E Counterparty Updated');
+  expect(page.url()).toMatch(new RegExp(`^${detailUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/?$`));
 });
 
 test('critical invoice and time-entry submissions accept valid precision', async ({ page }) => {
@@ -115,9 +143,29 @@ test('critical redesigned workflow path works end-to-end', async ({ page }) => {
   await login(page);
 
   const suffix = Date.now().toString().slice(-6);
-  const { title: contractTitle } = await openFirstRepositoryContract(page);
+  const contractTitle = `E2E Workflow Contract ${suffix}`;
   const workflowTitle = `E2E Workflow ${suffix}`;
   const templateName = `E2E Template ${suffix}`;
+  const templateStepName = `Template Step ${suffix}`;
+
+  await page.goto('/contracts/new/');
+  await page.fill('input[name="title"]', contractTitle);
+  await page.selectOption('select[name="contract_type"]', 'MSA');
+  await page.fill('input[name="counterparty"]', 'Workflow Counterparty');
+  await openPanel(page, 'legal-posture');
+  await page.fill('input[name="value"]', '5000');
+  await page.selectOption('select[name="currency"]', 'USD');
+  await page.fill('input[name="governing_law"]', 'State of Delaware');
+  await page.fill('input[name="jurisdiction"]', 'New York');
+  await openPanel(page, 'lifecycle-control');
+  await page.fill('input[name="start_date"]', '2026-04-12');
+  await page.fill('input[name="end_date"]', '2026-12-31');
+  await openPanel(page, 'draft-brief');
+  await page.fill('textarea[name="content"]', 'Workflow path contract body');
+  await submitOwningForm(page, 'input[name="title"]');
+
+  await expect(page).toHaveURL(/\/contracts\/repository\/?(\?.*)?$/);
+  await openRepositoryContractByTitle(page, contractTitle);
 
   await page.goto('/contracts/workflows/');
   await expect(page.locator('#workflow-ops-root').first()).toBeVisible();
@@ -150,6 +198,16 @@ test('critical redesigned workflow path works end-to-end', async ({ page }) => {
   await submitOwningForm(page, 'input[name="name"]');
 
   await expect(page).toHaveURL(/\/contracts\/workflows\/templates\/\d+\/?$/);
-  await expect(page.locator('#workflow-designer').first()).toBeVisible();
-  await expect(page.getByText(templateName).first()).toBeVisible();
+  await expect(page.locator('.dc-ds-workspace--workflow-designer').first()).toBeVisible();
+  await expect(page.locator('[data-canvas-stage]').first()).toBeVisible();
+
+  await page.locator('[data-open-add-step]').click();
+  const inspector = page.locator('[data-inspector-form]');
+  await expect(inspector).toBeVisible();
+  await inspector.locator('input[name="name"]').fill(templateStepName);
+  await inspector.locator('textarea[name="description"]').fill('Step created by e2e redesigned workflow path test');
+  await inspector.locator('select[name="step_kind"]').selectOption({ index: 1 });
+  await inspector.locator('[data-inspector-submit]').click();
+
+  await expect(page.getByText(templateStepName).first()).toBeVisible();
 });
