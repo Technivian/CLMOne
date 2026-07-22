@@ -1,6 +1,6 @@
 # PAR-ID-001 evidence summary — 2026-07-22
 
-## Status: In progress — resolver parity merged; pre-auth merge ratification pending
+## Status: In progress — resolver parity merged; remediation required before staging activation
 
 **ADR:** ADR-0014 **Accepted**  
 **PR #53 merge:** `0bf7c9dc` (catalogue 0112)  
@@ -8,7 +8,7 @@
 **PR #55 merge:** `bb881ac2` (2026-07-22T13:35:32Z) — reviewed HEAD `432a55b1`  
 **PR #58 merge:** `598b7a12` (2026-07-22T14:42:13Z) — reviewed code HEAD `44926da9`  
 **Merge votes recorded:** Product `15:06:30Z` / Engineering `15:06:45Z` (**after** merge)  
-**Governance:** [`../2026-07-22-par-id-001-pr58-merge/GOVERNANCE_INCIDENT_AND_RATIFICATION_ADDENDUM.md`](../2026-07-22-par-id-001-pr58-merge/GOVERNANCE_INCIDENT_AND_RATIFICATION_ADDENDUM.md) — **Open**  
+**Retrospective ratification:** Product `15:31:46Z` / Engineering `15:31:55Z` — **GI-2026-07-22-PR58-PREAUTH-MERGE Ratified and Closed**  
 **Merge evidence:** `docs/audits/evidence/2026-07-22-par-id-001-pr58-merge/`  
 **PR #52 / #57 / #59:** prior merge evidence on main
 
@@ -49,7 +49,7 @@
 - `PROCESS_ROLE_RESOLVER_PARITY_ENABLED` = false
 
 ### Next decision gate
-1. Close **GI-2026-07-22-PR58-PREAUTH-MERGE** with **Ratify merge** or **Revert merge**.  
-2. If Ratified: execute remediation backlog (inactive/missing assignments, LEGACY_ONLY org, AMBIGUOUS ADMIN + Product/Security policy + threat review) — still **no** staging activation.  
-3. Staging activation remains a **later, separate** authorization after remediation progress.  
+1. Complete remediation planning/analysis for REM-01..REM-06 (no flag enablement; no auto-repair).  
+2. Product + Security ADMIN policy acceptance (REM-04 / REM-05) + threat review (REM-06).  
+3. **Then** separate staging activation authorization (not opened).  
 Stop before canonical resolver output affects any production decision. PAR-ID-001 remains **In progress**.

@@ -10,8 +10,8 @@
 **Merge commit:** `598b7a128cb8d0f5be0c7cd2fb1880f631ca9608`  
 **Merged at:** `2026-07-22T14:42:13Z`  
 **Reviewed HEAD (code):** `44926da923ff3b71bbfe8434794bd91f7cfe8d2e` (docs-only follow-up `f7b56ab5` before merge; config/contracts/tests unchanged vs `44926da9`)  
-**Status:** **Authorized and merged** — implementation votes recorded; merge votes recorded **after** the merge commit (see governance addendum). Dual-return / privilege cutover / staging flag activation remain **not** authorized. PAR-ID-001 remains **In progress**.  
-**Governance incident:** [`../2026-07-22-par-id-001-pr58-merge/GOVERNANCE_INCIDENT_AND_RATIFICATION_ADDENDUM.md`](../2026-07-22-par-id-001-pr58-merge/GOVERNANCE_INCIDENT_AND_RATIFICATION_ADDENDUM.md) — **Open — awaiting Ratify \| Revert** (merge at `14:42:13Z` preceded Product/Engineering merge votes at `15:06:30Z` / `15:06:45Z`).
+**Status:** **Authorized and merged**; pre-auth merge incident **Ratified and Closed** (`15:31:55Z`). Dual-return / privilege cutover / staging flag activation remain **not** authorized. PAR-ID-001: **In progress** — resolver parity merged; remediation required before staging activation.  
+**Governance incident:** [`../2026-07-22-par-id-001-pr58-merge/GOVERNANCE_INCIDENT_AND_RATIFICATION_ADDENDUM.md`](../2026-07-22-par-id-001-pr58-merge/GOVERNANCE_INCIDENT_AND_RATIFICATION_ADDENDUM.md) — **Ratified and Closed**.
 
 **Related evidence:**
 - [`RESOLVER_USAGE_MATRIX.md`](RESOLVER_USAGE_MATRIX.md)

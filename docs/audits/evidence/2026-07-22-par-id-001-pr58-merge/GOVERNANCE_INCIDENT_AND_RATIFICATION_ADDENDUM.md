@@ -5,9 +5,10 @@
 **Merge commit:** `598b7a128cb8d0f5be0c7cd2fb1880f631ca9608`  
 **Incident ID:** `GI-2026-07-22-PR58-PREAUTH-MERGE`  
 **Opened:** 2026-07-22T15:19:31Z  
-**Status:** **Open — awaiting retrospective decision** (Ratify merge | Revert merge)  
+**Closed:** 2026-07-22T15:31:55Z  
+**Status:** **Ratified and Closed**  
 **Responsible owner:** Product governance (@haroonwahed) with Engineering co-owner (@Technivian)  
-**PAR-ID-001 programme status:** remains **In progress** (not Completed)
+**PAR-ID-001 programme status:** **In progress** — resolver parity merged; remediation required before staging activation  
 
 Related:
 - [`SUMMARY.md`](SUMMARY.md)
@@ -39,8 +40,11 @@ This is a **process/governance discrepancy**, not a runtime authority change. Im
 | Product Approve merge (recorded) | `2026-07-22T15:06:30Z` | **after** merge |
 | Engineering Approve merge (recorded) | `2026-07-22T15:06:45Z` | **after** merge |
 | This addendum opened | `2026-07-22T15:19:31Z` | retrospective decision requested |
+| Product Ratify merge | `2026-07-22T15:31:46Z` | closes process gap |
+| Engineering Ratify merge | `2026-07-22T15:31:55Z` | incident **Ratified and Closed** |
 
-**Gap:** ~24 minutes between merge (`14:42:13Z`) and Product merge vote (`15:06:30Z`); ~24.5 minutes to Engineering merge vote (`15:06:45Z`).
+**Gap:** ~24 minutes between merge (`14:42:13Z`) and Product merge vote (`15:06:30Z`); ~24.5 minutes to Engineering merge vote (`15:06:45Z`).  
+**Retrospective ratification:** recorded at `15:31:46Z` / `15:31:55Z` (does not alter earlier timestamps).
 
 ---
 
@@ -100,18 +104,10 @@ Merged under PR #58 (non-authoritative Slice 4):
 
 ---
 
-## 7. Recommendation
+## 7. Recommendation (historical)
 
-**Recommend: Ratify merge** — subject to Product + Engineering explicit retrospective votes below — **only because** all of the following hold:
-
-- flags remain default off;
-- legacy output remains authoritative;
-- CI and post-merge tests remain green;
-- no permission, privilege, membership, navigation, or runtime behaviour changed under default configuration.
-
-**Do not** treat post-hoc merge votes alone as curing process without this retrospective Ratify/Revert decision.
-
-**Do not** request staging activation until this incident is closed by ratification **and** remediation backlog acceptance progresses (see [`REMEDIATION_BACKLOG.md`](REMEDIATION_BACKLOG.md)).
+At open, recommendation was **Ratify merge** subject to Product + Engineering votes.  
+**Outcome:** **Ratified and Closed** (`15:31:46Z` / `15:31:55Z`). Staging activation remains **not** authorized by this ratification.
 
 ---
 
@@ -138,53 +134,69 @@ Merged under PR #58 (non-authoritative Slice 4):
 
 ---
 
-## 10. Retrospective decision — vote blocks (do not invent)
+## 10. Retrospective decision — recorded votes
 
-### Product — @haroonwahed
+### Product — @haroonwahed (accepted)
 
-```text
-GI-2026-07-22-PR58-PREAUTH-MERGE — RETROSPECTIVE DECISION
-
-PR: #58
-Merge commit: 598b7a12
-Merged at: 2026-07-22T14:42:13Z
-Product merge vote recorded at: 2026-07-22T15:06:30Z
-Engineering merge vote recorded at: 2026-07-22T15:06:45Z
-
-@haroonwahed Product: Ratify merge | Revert merge
-Timestamp: <actual ISO-8601 UTC>
-
-Conditions acknowledged (if Ratify):
-- Flags remain default off: yes | no
-- Legacy output remains authoritative: yes | no
-- No staging activation authorized by this ratification: yes | no
-- PAR-ID-001 remains In progress: yes | no
-```
-
-### Engineering — @Technivian
+Source: direct user-provided ratification text  
+Timestamp: `2026-07-22T15:31:46Z`
 
 ```text
-@Technivian Engineering: Ratify merge | Revert merge
-Timestamp: <actual ISO-8601 UTC>
+PR #58 RETROSPECTIVE RATIFICATION — 2026-07-22
 
-Engineering confirms technical safeguards remain in force and runtime
-authority was unchanged under default-off flags.
+Incident:
+GI-2026-07-22-PR58-PREAUTH-MERGE
 
-Conditions acknowledged: yes | no
+PR:
+#58
+
+Merge SHA:
+598b7a128cb8d0f5be0c7cd2fb1880f631ca9608
+
+@haroonwahed Product: Ratify merge
+Timestamp: 2026-07-22T15:31:46Z
 ```
+
+### Engineering — @Technivian (accepted)
+
+Source: direct user-provided ratification text  
+Timestamp: `2026-07-22T15:31:55Z`
+
+```text
+@Technivian Engineering: Ratify merge
+Timestamp: 2026-07-22T15:31:55Z
+```
+
+### Ratification confirms (binding)
+
+- The merge occurred before formal merge authorization
+- The original timestamps remain unchanged
+- The governance discrepancy is accepted and documented
+- All resolver-related feature flags remain default off
+- Legacy resolver output remains authoritative
+- Canonical resolver output remains diagnostic only
+- No staging activation is authorized
+- No resolver, privilege, permission, membership-authority, signer, approval, or navigation cutover is authorized
+- No automatic repair is authorized
+- PAR-ID-001 remains In progress
+- Remediation items REM-01 through REM-06 remain required before any staging activation request
 
 | Approver | Vote | Consent |
 |---|---|---|
-| @haroonwahed Product | **Requested** | Pending real ISO-8601 UTC timestamp |
-| @Technivian Engineering | **Requested** | Pending real ISO-8601 UTC timestamp |
+| @haroonwahed Product | **Ratify merge** | Recorded `2026-07-22T15:31:46Z` |
+| @Technivian Engineering | **Ratify merge** | Recorded `2026-07-22T15:31:55Z` |
 
-**Ratification status:** **Not ratified** — awaiting retrospective decision.
+**Ratification status:** **Ratified and Closed**
 
 ---
 
-## 11. Closure criteria
+## 11. Closure
 
-Incident closes when either:
+**Closed — Ratified** at `2026-07-22T15:31:55Z`.
 
-1. **Ratify merge** recorded verbatim for Product + Engineering → update this file to **Closed — Ratified**; keep flags off; proceed to remediation backlog only; **no** staging activation yet; or  
-2. **Revert merge** recorded → execute revert under that decision; update this file to **Closed — Reverted**.
+Authorized next steps (only):
+- Merge documentation-only evidence PR #61 after CI + review
+- Begin remediation backlog **analysis and planning only** (REM-01..REM-06)
+- Do **not** enable flags
+- Do **not** begin dual-return, canonical authority, privilege cutover, or automatic repair
+- Do **not** request staging activation until remediation progress + separate activation authorization

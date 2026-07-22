@@ -7,7 +7,7 @@
 **Merge commit:** `598b7a128cb8d0f5be0c7cd2fb1880f631ca9608`  
 **Merged at:** `2026-07-22T14:42:13Z`  
 **Updated `main` HEAD:** `598b7a12`  
-**Governance:** [`GOVERNANCE_INCIDENT_AND_RATIFICATION_ADDENDUM.md`](GOVERNANCE_INCIDENT_AND_RATIFICATION_ADDENDUM.md) — **Open; awaiting Ratify \| Revert**
+**Governance:** [`GOVERNANCE_INCIDENT_AND_RATIFICATION_ADDENDUM.md`](GOVERNANCE_INCIDENT_AND_RATIFICATION_ADDENDUM.md) — **Ratified and Closed** (`15:31:55Z`)
 
 ---
 
@@ -21,8 +21,8 @@ PR #58 **merged before** formal merge authorization votes:
 | Product Approve merge (recorded) | `2026-07-22T15:06:30Z` |
 | Engineering Approve merge (recorded) | `2026-07-22T15:06:45Z` |
 
-Post-hoc merge votes are recorded but **do not close** the process gap until retrospective **Ratify merge** or **Revert merge** is decided.  
-Recommendation in the addendum: **Ratify** if safeguards continue to hold (flags off; legacy authoritative; tests green; no runtime authz change).
+Post-hoc merge votes are recorded. Retrospective **Ratify merge** is **recorded and closed** (Product `15:31:46Z` / Engineering `15:31:55Z`).  
+Staging activation remains **not** authorized. Remediation planning may proceed (REM-01..REM-06).
 
 ---
 
@@ -75,7 +75,7 @@ Evidence captures:
 
 - Slice 4 non-authoritative resolver comparison is on `main` behind default-off flag
 - Legacy resolvers remain authoritative
-- PAR-ID-001 remains **In progress** (not Completed)
-- Staging flag activation **not** requested until ratification + remediation progress
+- PAR-ID-001 remains **In progress** — resolver parity merged; remediation required before staging activation
+- Staging flag activation **not** authorized
 - Dual-return / privilege cutover **not** authorized
-- Remediation backlog (post-ratification): [`REMEDIATION_BACKLOG.md`](REMEDIATION_BACKLOG.md)
+- Remediation planning: [`REMEDIATION_BACKLOG.md`](REMEDIATION_BACKLOG.md), [`REMEDIATION_PLANNING.md`](REMEDIATION_PLANNING.md)

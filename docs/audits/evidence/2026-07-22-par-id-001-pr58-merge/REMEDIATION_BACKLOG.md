@@ -1,20 +1,24 @@
 # PAR-ID-001 — post-Slice-4 remediation backlog (after PR #58 ratification)
 
-**Status:** **Prepared — blocked on GI-2026-07-22-PR58-PREAUTH-MERGE ratification**  
+**Status:** **Planning open** — GI-2026-07-22-PR58-PREAUTH-MERGE **Ratified and Closed** (`15:31:55Z`)  
 **Opened:** 2026-07-22T15:19:31Z  
-**Programme status:** PAR-ID-001 remains **In progress**  
-**Staging activation:** **Not requested** until ratification is complete **and** this backlog’s Product/Security acceptance items for ADMIN policy are addressed
+**Planning started:** 2026-07-22T15:32:33Z  
+**Programme status:** **In progress** — resolver parity merged; remediation required before staging activation  
+**Staging activation:** **Not requested** until REM-01..REM-06 progress and separate activation authorization
 
-Related: [`GOVERNANCE_INCIDENT_AND_RATIFICATION_ADDENDUM.md`](GOVERNANCE_INCIDENT_AND_RATIFICATION_ADDENDUM.md)
+Related:
+- [`GOVERNANCE_INCIDENT_AND_RATIFICATION_ADDENDUM.md`](GOVERNANCE_INCIDENT_AND_RATIFICATION_ADDENDUM.md) (**Ratified and Closed**)
+- [`REMEDIATION_PLANNING.md`](REMEDIATION_PLANNING.md)
 
 ---
 
 ## Preconditions
 
 Do **not** start this remediation as production cutover work.  
-Do **not** enable `PROCESS_ROLE_RESOLVER_PARITY_ENABLED` / shadow / parity-reporting flags until separate staging activation authorization exists **after** ratification.
+Do **not** enable `PROCESS_ROLE_RESOLVER_PARITY_ENABLED` / shadow / parity-reporting flags until separate staging activation authorization exists **after** remediation progress.
 
-Remediation here is **diagnostic cleanup and policy acceptance**, not authority flip.
+Remediation here is **diagnostic cleanup and policy acceptance**, not authority flip.  
+**No automatic repair** without separate write authorization.
 
 ---
 
@@ -31,13 +35,15 @@ Remediation here is **diagnostic cleanup and policy acceptance**, not authority 
 
 ---
 
-## Recommended sequence (post-ratification)
+## Remediation order (planning)
 
-1. Close GI-2026-07-22-PR58-PREAUTH-MERGE with **Ratify** (or execute **Revert** and stop).  
-2. Inventory evidence for REM-01..03 (org-scoped reports; permission-safe).  
-3. Product + Security decisions on REM-04 / REM-05 (ADMIN policy).  
-4. Complete REM-06 threat review write-up.  
-5. Only then consider a **separate** staging activation authorization request (not part of this backlog open).
+1. **REM-01** — Inventory inactive/missing assignments (org-scoped, permission-safe).  
+2. **REM-02** — Characterize the LEGACY_ONLY organization.  
+3. **REM-03** — Enumerate 13 AMBIGUOUS ADMIN mappings (ids/codes only; no privilege change).  
+4. **REM-04** — Product ADMIN policy decision package (draft for vote; not auto-accepted).  
+5. **REM-05** — Security advisory on ADMIN policy.  
+6. **REM-06** — Threat review write-up for comparison-only residuals.  
+7. **Only then** — separate staging activation authorization request (not opened here).
 
 ---
 

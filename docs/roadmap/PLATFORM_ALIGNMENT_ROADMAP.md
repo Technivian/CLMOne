@@ -38,7 +38,7 @@ Statuses: Completed · In progress · Blocked · Deferred by approved decision �
 
 ## Immediate next items
 
-1. **PAR-ID-001** — Role Definition reconciliation (Milestone 3) — **In progress** (Slice 4 merged @ `598b7a12`; pre-auth merge ratification **pending**; flags default off)
+1. **PAR-ID-001** — Role Definition reconciliation (Milestone 3) — **In progress** — resolver parity merged; remediation required before staging activation (flags default off)
 2. **PAR-APR-002** — legacy approval cutover — **Planned** (blocked on owner + cutover plan)
 3. **PAR-WF-010** — production cutover **blocked** pending Accepted ADR-0012 (discovery complete — see evidence)
 
@@ -402,7 +402,7 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 
 | Field | Content |
 |---|---|
-| Status | **In progress** (2026-07-22) — catalogue `0112` + adapter `0113` + shadow sync **merged** (`bb881ac2`); Slice 4 resolver-parity **merged** (`598b7a12`); flags default off; **GI-2026-07-22-PR58-PREAUTH-MERGE** open (merge preceded merge votes; awaiting Ratify \| Revert); production authority still legacy; Completion deferred |
+| Status | **In progress** (2026-07-22) — resolver parity merged (`598b7a12`); remediation required before staging activation; flags default off; GI-2026-07-22-PR58-PREAUTH-MERGE **Ratified and Closed**; production authority still legacy; Completion deferred |
 | Priority | P1 |
 | Problem | Dual role systems (`OrganizationMembership` vs `UserProfile.Role`) conflict with canonical Role Definition. |
 | Governance source | CANONICAL_DOMAIN_MODEL §2.5; SECURITY_PRIVACY_ACCESS_AND_AUDIT |
@@ -633,3 +633,4 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | 2026-07-22 | **PAR-ID-001 Slice 4 Authorized (authoritative vote record):** Product `14:17:31Z` / Engineering `14:18:31Z` / Security advisory `14:15:31Z` (Approve with conditions); prior draft `14:04–14:06Z` record superseded; comparison hooks on PR #58 behind default-off flag; merge + staging activation still separate |
 | 2026-07-22 | **PR #58 merged** to `main` @ `598b7a12` (2026-07-22T14:42:13Z); reviewed code HEAD `44926da9`; flags remain default off; merge auth Product `15:06:30Z` / Engineering `15:06:45Z` recorded **after** merge; staging activation **not** authorized (`14:34:37Z` staging claim superseded); PAR-ID-001 remains **In progress** |
 | 2026-07-22 | **GI-2026-07-22-PR58-PREAUTH-MERGE opened:** merge preceded formal merge votes; ratification addendum requests **Ratify \| Revert**; recommend Ratify if safeguards hold; remediation backlog prepared; **no** staging activation until ratification + remediation progress |
+| 2026-07-22 | **GI-2026-07-22-PR58-PREAUTH-MERGE Ratified and Closed:** Product `15:31:46Z` / Engineering `15:31:55Z`; PAR-ID-001 **In progress** — resolver parity merged; remediation required before staging activation; flags remain default off |
