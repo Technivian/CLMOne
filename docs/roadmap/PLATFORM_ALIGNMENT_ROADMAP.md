@@ -402,11 +402,11 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 
 | Field | Content |
 |---|---|
-| Status | **In progress** (2026-07-22) — catalogue `0112` + adapter `0113` + shadow sync **merged** (`bb881ac2`); Slice 4 resolver-parity **Authorized** + implemented on PR #58 (flag default off); production authority still legacy; Completion deferred |
+| Status | **In progress** (2026-07-22) — catalogue `0112` + adapter `0113` + shadow sync **merged**; Slice 4 resolver-parity **merged** (`598b7a12`); staging diagnostic gate **NOT READY** for cutover; production authority still legacy; Completion deferred |
 | Priority | P1 |
 | Problem | Dual role systems (`OrganizationMembership` vs `UserProfile.Role`) conflict with canonical Role Definition. |
 | Governance source | CANONICAL_DOMAIN_MODEL §2.5; SECURITY_PRIVACY_ACCESS_AND_AUDIT |
-| Current evidence | `docs/audits/evidence/2026-07-22-par-id-001/` — ROLE_USAGE_MATRIX, TARGET_ROLE_MODEL, PROCESS_ROLE_MAPPING_MATRIX, SHADOW_WRITE_PATH_MATRIX, RESOLVER_USAGE_MATRIX, RESOLVER_PARITY_TEST_MATRIX, 0112/0113 + Slice 3 auth; Slice 4 resolver comparison auth **Authorized** |
+| Current evidence | `docs/audits/evidence/2026-07-22-par-id-001/` — matrices + 0112/0113/Slice 3/4 auth; PR #58 merge `598b7a12`; [`STAGING_RESOLVER_PARITY_RESULTS.md`](../audits/evidence/2026-07-22-par-id-001/STAGING_RESOLVER_PARITY_RESULTS.md) (verdict NOT READY) |
 | Target outcome | Single terminology and mapping for process vs org roles; no silent privilege escalation |
 | Dependencies | ADR-0014 Accepted (**met**); PAR-SEC-003 Closed (**met**); privilege/resolver cutover needs separate authorization |
 | Decision required | **ADR-0014 Accepted** — privilege/resolver cutover still needs separate implementation authorization |
@@ -419,7 +419,7 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | Acceptance criteria | Accepted ADR (**met**); additive catalogue (**met**); org-scoped adapter + dual-read (**met**); feature-flagged shadow sync + parity (**met**); runtime cutover criteria **not yet** |
 | Evidence | `docs/audits/evidence/2026-07-22-par-id-001/` |
 | Accepted ADR | **ADR-0014** + 0112/0113 implementation authorizations; Slice 3 auth **Authorized** (non-authoritative; merge recorded separately) |
-| PR/commits | PR #51 `21e65f09`; PR #53 `0bf7c9dc`; PR #54 `58966de7`; PR #52 `3c5e628b`; PR #55 `bb881ac2`; evidence PR #57 `2f14c034`; merge evidence PR #59 `0d9712ca`; Slice 4 auth PR [#58](https://github.com/Technivian/CLMOne/pull/58) |
+| PR/commits | PR #51 `21e65f09`; PR #53 `0bf7c9dc`; PR #54 `58966de7`; PR #52 `3c5e628b`; PR #55 `bb881ac2`; evidence PR #57 `2f14c034`; merge evidence PR #59 `0d9712ca`; Slice 4 merge PR [#58](https://github.com/Technivian/CLMOne/pull/58) `598b7a12` |
 | Last updated | 2026-07-22 |
 
 ### PAR-EXC-001 — Governed Exception

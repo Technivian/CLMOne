@@ -1,7 +1,7 @@
 # PAR-ID-001 evidence index
 
 **Programme ID:** PAR-ID-001  
-**Status:** **In progress** — catalogue `0112` + adapter `0113` + shadow sync on `main`; Slice 4 resolver-parity **Authorized and implemented** (flag default off); production authority still legacy  
+**Status:** **In progress** — catalogue `0112` + adapter `0113` + shadow sync on `main`; Slice 4 resolver-parity **merged** (`598b7a12`); staging diagnostic activation exercised; cutover **NOT READY**; production authority still legacy  
 **ADR:** ADR-0014 **Accepted**  
 **PR #51 merge:** `21e65f09`  
 **PR #53 merge:** `0bf7c9dc`  
@@ -10,8 +10,9 @@
 **PR #55 merge:** `bb881ac2` (2026-07-22T13:35:32Z) — reviewed HEAD `432a55b1`  
 **PR #57 merge (PR #52 evidence):** `2f14c034`  
 **PR #59 merge (PR #55 merge evidence):** `0d9712ca`  
-**Baseline `main`:** `0d9712ca`  
-**Branch:** `cursor/feat-par-id-001-resolver-parity` (PR [#58](https://github.com/Technivian/CLMOne/pull/58))
+**PR #58 merge:** `598b7a128cb8d0f5be0c7cd2fb1880f631ca9608` (2026-07-22T14:42:13Z)  
+**Baseline `main`:** `598b7a12`  
+**Evidence branch:** `cursor/docs-par-id-001-staging-resolver-parity-d7f1`
 
 ---
 
@@ -24,6 +25,7 @@
 | [`0113-process-role-adapter-implementation-authorization.md`](0113-process-role-adapter-implementation-authorization.md) | Adapter authorization |
 | [`SHADOW_ROLE_SYNC_IMPLEMENTATION_AUTHORIZATION.md`](SHADOW_ROLE_SYNC_IMPLEMENTATION_AUTHORIZATION.md) | Slice 3 implementation + merge authorization (recorded) |
 | [`RESOLVER_PARITY_IMPLEMENTATION_AUTHORIZATION.md`](RESOLVER_PARITY_IMPLEMENTATION_AUTHORIZATION.md) | Slice 4 resolver comparison authorization (**Authorized**) |
+| [`STAGING_RESOLVER_PARITY_RESULTS.md`](STAGING_RESOLVER_PARITY_RESULTS.md) | Staging diagnostic activation + parity triage; cutover **NOT READY** |
 | [`../2026-07-22-par-sec-003/CLOSURE.md`](../2026-07-22-par-sec-003/CLOSURE.md) | PAR-SEC-003 Closed |
 
 ---
@@ -57,7 +59,8 @@
 
 ## Scope boundary
 
-- **Delivered on main:** Additive catalogue; org-scoped assignment adapter; dual-read parity; feature-flagged shadow sync; parity command
-- **Delivered on PR #58:** Feature-flagged resolver comparison (legacy return authoritative); staging report command; tests
-- **Not delivered:** Dual-return; production resolver flip; privilege cutover; `UserProfile.role` removal; staging flag activation
+- **Delivered on main:** Additive catalogue; org-scoped assignment adapter; dual-read parity; feature-flagged shadow sync; parity command; resolver comparison (PR #58 `598b7a12`)
+- **Staging (diagnostic only):** Three process-role flags enabled in staging-equivalent `.env`; evidence in `STAGING_RESOLVER_PARITY_RESULTS.md`
+- **Not delivered:** Dual-return; production resolver flip; privilege cutover; `UserProfile.role` removal; canonical authority flag
+- **Cutover readiness:** **NOT READY, REMEDIATION REQUIRED** (unresolved LEGACY_ONLY / INACTIVE gaps; AMBIGUOUS ADMIN not yet accepted/excluded; threat review incomplete)
 - **Production authority:** Still uses legacy resolvers
