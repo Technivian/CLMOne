@@ -1,7 +1,7 @@
 # PAR-ID-001 evidence index
 
 **Programme ID:** PAR-ID-001  
-**Status:** **In progress** — catalogue `0112` + adapter `0113` + shadow sync on `main`; Slice 4 resolver-parity authorization **Reviewed — Pending Votes**; production authority still legacy  
+**Status:** **In progress** — catalogue `0112` + adapter `0113` + shadow sync on `main`; Slice 4 resolver-parity **Authorized and implemented** (flag default off); production authority still legacy  
 **ADR:** ADR-0014 **Accepted**  
 **PR #51 merge:** `21e65f09`  
 **PR #53 merge:** `0bf7c9dc`  
@@ -23,7 +23,7 @@
 | [`0112-implementation-authorization.md`](0112-implementation-authorization.md) | Catalogue authorization |
 | [`0113-process-role-adapter-implementation-authorization.md`](0113-process-role-adapter-implementation-authorization.md) | Adapter authorization |
 | [`SHADOW_ROLE_SYNC_IMPLEMENTATION_AUTHORIZATION.md`](SHADOW_ROLE_SYNC_IMPLEMENTATION_AUTHORIZATION.md) | Slice 3 implementation + merge authorization (recorded) |
-| [`RESOLVER_PARITY_IMPLEMENTATION_AUTHORIZATION.md`](RESOLVER_PARITY_IMPLEMENTATION_AUTHORIZATION.md) | Slice 4 resolver comparison authorization (**Reviewed — Pending Votes**) |
+| [`RESOLVER_PARITY_IMPLEMENTATION_AUTHORIZATION.md`](RESOLVER_PARITY_IMPLEMENTATION_AUTHORIZATION.md) | Slice 4 resolver comparison authorization (**Authorized**) |
 | [`../2026-07-22-par-sec-003/CLOSURE.md`](../2026-07-22-par-sec-003/CLOSURE.md) | PAR-SEC-003 Closed |
 
 ---
@@ -57,7 +57,7 @@
 
 ## Scope boundary
 
-- **Delivered:** Additive catalogue; org-scoped assignment adapter; dual-read parity; feature-flagged shadow sync; parity command
-- **Prepared (not implemented):** Resolver comparison authorization package + usage matrix + test matrix
-- **Not delivered:** Resolver comparison wiring; production resolver flip; privilege cutover; `UserProfile.role` removal
+- **Delivered on main:** Additive catalogue; org-scoped assignment adapter; dual-read parity; feature-flagged shadow sync; parity command
+- **Delivered on PR #58:** Feature-flagged resolver comparison (legacy return authoritative); staging report command; tests
+- **Not delivered:** Dual-return; production resolver flip; privilege cutover; `UserProfile.role` removal; staging flag activation
 - **Production authority:** Still uses legacy resolvers

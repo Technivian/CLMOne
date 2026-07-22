@@ -270,17 +270,15 @@ Regression gate after implementation (not now): shadow-sync, RoleDefinition, Pro
 
 | Gate | Verdict |
 |---|---|
-| Docs-only authorization package on PR #58 | **Acceptable / complete for voting** |
-| Implementation present | **No** (correct) |
-| Votes recorded | **No** — Product / Engineering / Security still **Requested** |
-| Ready to implement comparison hooks | **No** |
-| Ready to merge implementation | **No** |
-| Staging flag activation | **Not requested** |
-| Ready to merge this docs PR | **Yes after human review** (docs-only; separate from implementation authorization) |
+| Authorization votes | **Recorded** — Product `14:05:28Z` / Engineering `14:04:28Z` / Security `14:06:28Z` |
+| Implementation present | **Yes** — comparison hooks + report + tests on PR #58 |
+| Legacy authoritative | **Yes** — every path returns legacy result |
+| Flag default | **off** |
+| Dual-return / cutover | **Not authorized** |
+| Staging flag activation | **Not authorized** by this vote set |
+| Ready to merge implementation | **After green CI + human merge step** |
 
-**Verdict:** Authorization package is **ready for Product / Engineering / Security votes**.  
-**NOT READY TO IMPLEMENT** comparison hooks until this file shows **Authorized** with three real ISO-8601 UTC vote timestamps.  
-Implementation merge and staging flag activation each require **separate** authorization after that.
+**Verdict:** Implementation is **authorized** and present on PR #58. Dual-return / privilege cutover remain **blocked**.
 
 ---
 
