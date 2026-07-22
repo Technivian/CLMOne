@@ -1,7 +1,7 @@
 # PAR-ID-001 — Threat review (REM-06) — remediation / resolver-parity residuals
 
 **Baseline `main`:** `8316a756`  
-**Status:** **Proposed — pending Security advisory acceptance**  
+**Status:** **Proposed motion locked — pending Security advisory (and package) votes**  
 **Scope:** Comparison-only resolver parity (merged, flag default off) + proposed remediation postures  
 **Non-scope:** Dual-return, privilege cutover, staging flag enablement
 

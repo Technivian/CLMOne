@@ -1,10 +1,11 @@
 # PAR-ID-001 — ADMIN role mapping decision (Product + Security)
 
 **Baseline `main`:** `8316a756`  
-**Status:** **Proposed — pending Product / Security / Engineering votes**  
+**Status:** **Proposed motion locked — pending Product / Security / Engineering votes**  
+**Package motion:** **Approve P1 labels + P3 authority**; **Reject P2**  
 **Hard rule:** Workspace administrator privileges (`OrganizationMembership.Role.ADMIN` / OWNER) are **not** process-role assignments and must never be silently merged with `UserProfile.Role.ADMIN`.
 
-Related: [`REMEDIATION_ANALYSIS.md`](REMEDIATION_ANALYSIS.md), [`THREAT_REVIEW.md`](THREAT_REVIEW.md), [`../2026-07-22-par-id-001/PROCESS_ROLE_MAPPING_MATRIX.md`](../2026-07-22-par-id-001/PROCESS_ROLE_MAPPING_MATRIX.md)
+Related: [`PACKAGE_REVIEW_AND_VOTE.md`](PACKAGE_REVIEW_AND_VOTE.md), [`REMEDIATION_ANALYSIS.md`](REMEDIATION_ANALYSIS.md), [`THREAT_REVIEW.md`](THREAT_REVIEW.md), [`../2026-07-22-par-id-001/PROCESS_ROLE_MAPPING_MATRIX.md`](../2026-07-22-par-id-001/PROCESS_ROLE_MAPPING_MATRIX.md)
 
 ---
 
@@ -29,16 +30,16 @@ Related: [`REMEDIATION_ANALYSIS.md`](REMEDIATION_ANALYSIS.md), [`THREAT_REVIEW.m
 | **P3** | No automatic process role | Do not create PRA from profile ADMIN | Skip ADMIN in backfill/shadow | LEGACY_ONLY or AMBIGUOUS with empty canonical | Legacy still resolves ADMIN label; canonical ignores |
 | **P4** | Explicit per-workspace mapping | Org setting: profile ADMIN → chosen RoleDefinition **or** none | Only create PRA when org config present | MATCH only if explicit assignment exists | Safest for multi-tenant variance; more product complexity |
 
-### Recommended option (for vote)
+### Package motion (locked for votes)
 
-**Recommend P1 for catalogue continuity + P3 semantics for authority:**
+**Approve P1 for catalogue continuity + P3 semantics for authority:**
 
 - Keep catalogue code `legacy_process_admin` with **AMBIGUOUS** confidence (P1 labels).  
-- Treat profile ADMIN as **non-authoritative for any future canonical routing** (P3 authority posture).  
-- Any org that needs an ADMIN-profile user in a process lane must receive an **explicit** CERTAIN process role assignment (legal_reviewer / partner_reviewer / …) under managed assignment APIs — not via automatic ADMIN mapping.  
+- Do **not** automatically grant process authority to workspace ADMIN or via profile ADMIN (P3 authority).  
+- Require **explicit CERTAIN** process-role assignments for process coverage.  
 - Optionally evolve to **P4** later via PDR if tenants need configurable ADMIN→process maps.
 
-**Do not recommend P2.**
+**P2 is rejected** — no automatic ADMIN-to-process-role mapping.
 
 ---
 
