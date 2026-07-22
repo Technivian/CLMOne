@@ -9,8 +9,20 @@ from django.conf import settings
 from django.db.models import Count, Q
 from django.utils import timezone
 
-from contracts.models import AuditLog, Contract, Organization, OrganizationMembership
+from contracts.models import (
+    AuditLog,
+    Contract,
+    ExceptionDecision,
+    ExceptionRequest,
+    Organization,
+    OrganizationMembership,
+)
 from contracts.observability import request_metrics_snapshot
+from contracts.services.exception_dual_write import (
+    AUTHORIZED_SOURCES,
+    EVENT_DUAL_WRITE_FAILED,
+    EVENT_SECURITY_GATE_BLOCKED,
+)
 
 
 def _day_bounds(day=None):
@@ -32,6 +44,102 @@ def pilot_feature_flag_state() -> Dict[str, Any]:
         ),
         'RATELIMIT_ENABLED': bool(getattr(settings, 'RATELIMIT_ENABLED', True)),
         'LOGIN_RATE_LIMIT_REQUESTS': getattr(settings, 'LOGIN_RATE_LIMIT_REQUESTS', None),
+        'EXCEPTION_DUAL_WRITE_ENABLED': bool(
+            getattr(settings, 'EXCEPTION_DUAL_WRITE_ENABLED', False)
+        ),
+        'EXCEPTION_DUAL_WRITE_ORG_ALLOWLIST': getattr(
+            settings, 'EXCEPTION_DUAL_WRITE_ORG_ALLOWLIST', ''
+        ),
+    }
+
+
+def _exception_dual_write_health(*, organization, start, end, audits) -> Dict[str, Any]:
+    """Return metadata-only PAR-EXC-001 counters and stop-condition indicators."""
+    source_counts = {source: 0 for source in sorted(AUTHORIZED_SOURCES)}
+    empty = {
+        'actions_by_source': source_counts,
+        'canonical_requests_created': 0,
+        'canonical_decisions_created': 0,
+        'submitted_without_decision': 0,
+        'dual_write_failures': 0,
+        'security_gate_blocks': 0,
+        'cross_tenant_denials': 0,
+        'duplicate_correlation_groups': 0,
+        'requests_with_multiple_decisions': 0,
+        'active_missing_owner_or_expiry': 0,
+        'stop_required': False,
+        'stop_reasons': [],
+    }
+    if organization is None:
+        return empty
+
+    requests = ExceptionRequest.objects.filter(
+        organization=organization,
+        created_at__gte=start,
+        created_at__lt=end,
+        legacy_source__in=AUTHORIZED_SOURCES,
+    )
+    decisions = ExceptionDecision.objects.filter(
+        organization=organization,
+        created_at__gte=start,
+        created_at__lt=end,
+        exception_request__legacy_source__in=AUTHORIZED_SOURCES,
+    )
+
+    for row in requests.values('legacy_source').annotate(count=Count('id')):
+        source_counts[row['legacy_source']] = row['count']
+
+    duplicate_correlation_groups = (
+        requests.exclude(correlation_id='')
+        .values('legacy_source', 'correlation_id')
+        .annotate(count=Count('id'))
+        .filter(count__gt=1)
+        .count()
+    )
+    requests_with_multiple_decisions = (
+        requests.annotate(decision_count=Count('decisions'))
+        .filter(decision_count__gt=1)
+        .count()
+    )
+    active_missing_owner_or_expiry = requests.filter(
+        status__in=[ExceptionRequest.Status.APPROVED, ExceptionRequest.Status.ACTIVE],
+    ).filter(Q(owner__isnull=True) | Q(expires_at__isnull=True)).count()
+
+    dual_write_failures = audits.filter(event_type=EVENT_DUAL_WRITE_FAILED).count()
+    security_gate_blocks = audits.filter(event_type=EVENT_SECURITY_GATE_BLOCKED).count()
+    cross_tenant_denials = audits.filter(event_type='exception.cross_tenant.denied').count()
+    submitted_without_decision = requests.filter(
+        status=ExceptionRequest.Status.SUBMITTED,
+        decisions__isnull=True,
+    ).count()
+
+    stop_reasons = []
+    if dual_write_failures:
+        stop_reasons.append('dual_write_failure')
+    if security_gate_blocks:
+        stop_reasons.append('unauthorized_critical_bypass_blocked')
+    if cross_tenant_denials:
+        stop_reasons.append('cross_tenant_anomaly')
+    if duplicate_correlation_groups:
+        stop_reasons.append('duplicate_correlation')
+    if requests_with_multiple_decisions:
+        stop_reasons.append('duplicate_canonical_decision')
+    if active_missing_owner_or_expiry:
+        stop_reasons.append('active_missing_owner_or_expiry')
+
+    return {
+        'actions_by_source': source_counts,
+        'canonical_requests_created': requests.count(),
+        'canonical_decisions_created': decisions.count(),
+        'submitted_without_decision': submitted_without_decision,
+        'dual_write_failures': dual_write_failures,
+        'security_gate_blocks': security_gate_blocks,
+        'cross_tenant_denials': cross_tenant_denials,
+        'duplicate_correlation_groups': duplicate_correlation_groups,
+        'requests_with_multiple_decisions': requests_with_multiple_decisions,
+        'active_missing_owner_or_expiry': active_missing_owner_or_expiry,
+        'stop_required': bool(stop_reasons),
+        'stop_reasons': stop_reasons,
     }
 
 
@@ -134,6 +242,12 @@ def build_pilot_daily_health(organization: Organization | None = None, day=None)
         'authorization_failures': authz_failures,
         'audit_event_creation_failures': audit_write_failures,
         'ai_usage_and_policy_denials_approx': ai_denials,
+        'exception_dual_write': _exception_dual_write_health(
+            organization=org,
+            start=start,
+            end=end,
+            audits=audits,
+        ),
         'unresolved_incidents': None,  # operator-maintained in ops log
         'support_requests': None,  # operator-maintained in ops log
         'routing_anomalies': None,  # compare Finance submits vs threshold matrix in review
