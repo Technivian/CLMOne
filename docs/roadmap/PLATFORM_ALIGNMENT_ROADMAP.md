@@ -407,7 +407,7 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | Priority | P1 |
 | Problem | Dual role systems (`OrganizationMembership` vs `UserProfile.Role`) conflict with canonical Role Definition. |
 | Governance source | CANONICAL_DOMAIN_MODEL §2.5; SECURITY_PRIVACY_ACCESS_AND_AUDIT |
-| Current evidence | `docs/audits/evidence/2026-07-22-par-id-001/` + `…-pr58-merge/` + `…-remediation-decision/`; implementation Authorized `15:27–15:29Z`; activation package **Requested**; remediation package votes **Requested** |
+| Current evidence | `docs/audits/evidence/2026-07-22-par-id-001/` + `…-pr58-merge/` + `…-remediation-decision/`; implementation Authorized `15:27–15:29Z`; activation package **Requested**; remediation package **Approved** `18:33–18:35Z` (merge auth pending) |
 
 | Target outcome | Single terminology and mapping for process vs org roles; no silent privilege escalation |
 | Dependencies | ADR-0014 Accepted (**met**); PAR-SEC-003 Closed (**met**); privilege/resolver cutover needs separate authorization |
