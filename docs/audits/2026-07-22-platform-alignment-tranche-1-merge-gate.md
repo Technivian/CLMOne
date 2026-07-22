@@ -200,3 +200,33 @@ Both workflows path-filter on `theme/templates/**` and `client/**`. Tranche-1 in
 All other merge-blocking checks (**Forbidden-brand**, **Anti-drift + contrast**, **pr-release-evidence**, **quality-and-tenancy**, **security-scans**, **verify-ui**) are **PASS**.
 
 Human review required before merge. PR #50 must not be merged until visual + e2e residuals are green or formally exempted.
+
+---
+
+## 11. PR #52 remediation merge (2026-07-22) — CLOSED
+
+**PR:** [#52](https://github.com/Technivian/CLMOne/pull/52) — `fix(ci): PR #50 visual + E2E remediation`  
+**Merge commit:** `3c5e628bfdf6f437f0f4c8bebf42de0da35b388b`  
+**Merged at:** 2026-07-22T13:07:15Z  
+**Updated `main` HEAD:** `3c5e628b`  
+**Evidence:** `docs/audits/evidence/2026-07-22-pr52-merge/SUMMARY.md`
+
+### Scope merged
+
+| Item | Present on `main` |
+|---|---|
+| Repository-load wait (`#contracts-tbody` / `Loading contracts`) | **Yes** — `client/tests/e2e/visual-baselines.spec.js` |
+| Corrected Darwin phase-1 baselines (5 PNGs) | **Yes** — `client/tests/e2e/visual-baselines.spec.js-snapshots/` |
+| Updated critical-flow E2E helpers/locators | **Yes** — `client/tests/e2e/critical-flows.spec.js` |
+
+### Pre-merge CI (HEAD `3635c328`)
+
+All **8/8** required checks SUCCESS, including Phase 1 visual baselines **5/5** and redesigned-e2e.
+
+### Human approval
+
+Explicit APPROVE recorded before merge. Scope limited to visual/E2E remediation — **no** new product capability, privilege change, resolver cutover, or PAR-APR-002.
+
+### Residual closure
+
+The visual + redesigned-e2e blockers named in §10 are **closed** by this merge. Remaining non-blocking residual: **M1-E2E-001** (Playwright DPA assignee bootstrap flake).
