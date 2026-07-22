@@ -1,6 +1,6 @@
 # PAR-ID-001 — PR #73 preparation-merge authorization (merge-record follow-up)
 
-**PR:** _pending number_  
+**PR:** [#73](https://github.com/Technivian/CLMOne/pull/73)  
 **Branch:** `cursor/docs-par-id-001-pr72-merge-record`  
 **Classification:** Docs-only merge record + roadmap note  
 **Status:** **Authorized** for preparation-only merge  
