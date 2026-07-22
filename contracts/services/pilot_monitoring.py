@@ -103,6 +103,7 @@ def _exception_dual_write_health(*, organization, start, end, audits) -> Dict[st
     )
     active_missing_owner_or_expiry = requests.filter(
         status__in=[ExceptionRequest.Status.APPROVED, ExceptionRequest.Status.ACTIVE],
+        is_permanent=False,
     ).filter(Q(owner__isnull=True) | Q(expires_at__isnull=True)).count()
 
     dual_write_failures = audits.filter(event_type=EVENT_DUAL_WRITE_FAILED).count()

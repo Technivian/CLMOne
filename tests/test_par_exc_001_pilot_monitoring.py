@@ -104,3 +104,41 @@ class ExceptionPilotMonitoringTests(TestCase):
         self.assertIn('duplicate_correlation', health['stop_reasons'])
         self.assertIn('duplicate_canonical_decision', health['stop_reasons'])
         self.assertIn('active_missing_owner_or_expiry', health['stop_reasons'])
+
+    def test_security_gate_block_counted_without_authorization(self):
+        from contracts.middleware import log_action
+        from contracts.models import AuditLog
+        from contracts.services.exception_dual_write import EVENT_SECURITY_GATE_BLOCKED
+
+        log_action(
+            self.owner,
+            AuditLog.Action.UPDATE,
+            'ExceptionRequest',
+            changes={'event': EVENT_SECURITY_GATE_BLOCKED, 'source': 'DPA_APPROVE_WITH_BLOCKERS'},
+            organization=self.org,
+            event_type=EVENT_SECURITY_GATE_BLOCKED,
+        )
+        summary = build_pilot_daily_health(organization=self.org)
+        health = summary['exception_dual_write']
+        self.assertEqual(health['security_gate_blocks'], 1)
+        self.assertTrue(health['stop_required'])
+        self.assertIn('unauthorized_critical_bypass_blocked', health['stop_reasons'])
+        # Monitoring does not create or approve any exception.
+        self.assertEqual(health['canonical_requests_created'], 0)
+        self.assertEqual(health['canonical_decisions_created'], 0)
+
+    def test_flags_off_and_non_allowlisted_org_reported_truthfully(self):
+        other = Organization.objects.create(name='Other Org', slug='demo-firm')
+        with override_settings(
+            EXCEPTION_DUAL_WRITE_ENABLED=False,
+            EXCEPTION_DUAL_WRITE_ORG_ALLOWLIST='',
+        ):
+            summary = build_pilot_daily_health(organization=other)
+        self.assertFalse(summary['feature_flags']['EXCEPTION_DUAL_WRITE_ENABLED'])
+        self.assertEqual(summary['feature_flags']['EXCEPTION_DUAL_WRITE_ORG_ALLOWLIST'], '')
+        # Non-allowlisted org still gets metadata-only empty/zero dual-write counters.
+        health = summary['exception_dual_write']
+        self.assertEqual(health['canonical_requests_created'], 0)
+        self.assertFalse(health['stop_required'])
+        allowlist = summary['feature_flags']['EXCEPTION_DUAL_WRITE_ORG_ALLOWLIST']
+        self.assertNotIn(other.slug, [s.strip() for s in str(allowlist).split(',') if s.strip()])

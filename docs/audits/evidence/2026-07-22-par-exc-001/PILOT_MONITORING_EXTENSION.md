@@ -1,8 +1,9 @@
 # PAR-EXC-001 — controlled-pilot monitoring extension
 
-**Status:** Implementation proposed on `agent/par-exc-001-pilot-monitoring`  
-**Authority:** Motion 3 Authorized; controlled-pilot activation PASS  
-**Programme status:** PAR-EXC-001 remains **In progress**
+**Status:** Implementation validated on `agent/par-exc-001-pilot-monitoring` @ `6f49abb5` (+ follow-up validation commits)  
+**Authority prerequisite:** Motion 3 **Authorized**; controlled-pilot activation **PASS**  
+**Programme status:** PAR-EXC-001 remains **In progress**  
+**PR:** [#78](https://github.com/Technivian/CLMOne/pull/78) (draft until bundled authorization)
 
 ## Scope
 
@@ -19,7 +20,7 @@ The extension reports:
 - cross-tenant denials;
 - duplicate correlation groups;
 - requests with multiple canonical decisions;
-- active exceptions missing owner or expiry;
+- active exceptions missing owner or expiry (temporary only; permanent rows excluded);
 - a derived `stop_required` indicator and machine-readable stop reasons.
 
 ## Boundaries
@@ -28,20 +29,94 @@ The extension reports:
 - No database migration.
 - No write or repair operation.
 - No change to committed feature-flag defaults.
+- No environment flag enablement by this PR.
 - No canonical read authority.
 - Legacy remains authoritative.
 - No PAR-APR-002, PAR-WF-010, or PAR-ID-002 work.
 
-## Validation
+## Exact commands
 
-Focused tests cover:
+```bash
+# Focused
+.venv/bin/python manage.py test \
+  tests.test_par_exc_001_pilot_monitoring \
+  tests.test_par_exc_001_exception \
+  tests.test_par_exc_001_dual_write \
+  tests.test_controlled_pilot_scope -v 1
 
-1. normal daily counters, including AI `SUBMITTED` without a decision;
-2. duplicate correlation detection;
-3. multiple-decision detection;
-4. active missing-expiry detection;
-5. derived stop-condition output.
+# Broader (monitoring / audit / exception / pilot surfaces)
+.venv/bin/python manage.py test \
+  tests.test_par_exc_001_pilot_monitoring \
+  tests.test_par_exc_001_exception \
+  tests.test_par_exc_001_dual_write \
+  tests.test_controlled_pilot_scope \
+  tests.test_request_context_logging \
+  tests.test_cross_tenant_isolation -v 1
+
+# Command exercise
+.venv/bin/python manage.py pilot_daily_health \
+  --org-slug controlled-pilot-org \
+  --output /tmp/par-exc-001-pilot-health.json
+```
+
+## Actual test results
+
+| Suite | Result |
+|---|---|
+| `tests.test_par_exc_001_pilot_monitoring` (4 tests) | **OK** |
+| Focused (pilot monitoring + exception + dual-write + controlled-pilot scope) | **32 OK** |
+| Broader (+ request context logging + cross-tenant isolation) | **111 OK** |
+
+## Command-output validation
+
+| Check | Result |
+|---|---|
+| Reports exact dual-write flag + allowlist | **Pass** (off/empty and on/`controlled-pilot-org`) |
+| Reports all six authorized source keys | **Pass** |
+| Distinguishes AI `SUBMITTED` without decision | **Pass** (`submitted_without_decision=1`) |
+| Duplicate correlations → `stop_required=true` | **Pass** |
+| Multiple decisions → `stop_required=true` | **Pass** |
+| Missing expiry on active temporary exception → `stop_required=true` | **Pass** |
+| Security gate block counted; does not authorize/create rows | **Pass** |
+| Flags off represented truthfully | **Pass** |
+| Non-allowlisted org not treated as activated | **Pass** (`demo-firm` not in allowlist; zero dual-write rows) |
+| Healthy data → `stop_required=false` | **Pass** |
+
+Sample healthy output (metadata only): [`pilot_daily_health_sample.json`](pilot_daily_health_sample.json)
+
+## Privacy / content-redaction checks
+
+- Output contains only counters, flag names/values, org slug, and stop reason tokens.
+- Fixture exception `reason` text (`fixture` / `fixture-anomaly`) does **not** appear in JSON output.
+- No passwords, credentials, contract content, or identity payloads in monitoring output.
+- Pre-existing `notes` string mentions the words “credentials” / “secrets” as a denial statement only.
+
+## Migration impact
+
+**None.**
 
 ## Rollback
 
-Revert the monitoring service and focused test commits. No data or schema rollback is required.
+Revert this PR (monitoring service + tests + evidence). No data or schema rollback required.
+
+## Remaining authority boundaries
+
+- Committed defaults remain **off**.
+- Legacy remains **authoritative**.
+- Canonical read remains **unauthorized**.
+- PAR-EXC-001 remains **In progress**.
+- PAR-APR-002 / PAR-WF-010 / PAR-ID-002 remain **unstarted**.
+
+---
+
+## Bundled implementation + merge authorization (Motion — Requested)
+
+**Motion text:** Authorize implementation and merge of PR #78 (`feat(par-exc-001): add controlled-pilot dual-write monitoring`) at the reviewed HEAD recorded at vote time, as a read-only metadata monitoring extension of `pilot_daily_health` only; no migration; no committed default change; no canonical read authority; no automatic repair; no historical invention; legacy remains authoritative; PAR-EXC-001 remains In progress; PAR-APR-002 / PAR-WF-010 / PAR-ID-002 remain unstarted.
+
+| Approver | Capacity | Vote | Timestamp |
+|---|---|---|---|
+| @haroonwahed | Product governance | _pending_ | |
+| @Technivian | Engineering governance | _pending_ | |
+| @Technivian | Security advisory | _pending_ | |
+
+**Do not invent votes.** Merge only after Product + Engineering + Security record genuine Approve (or Approve with conditions) with real UTC timestamps.
