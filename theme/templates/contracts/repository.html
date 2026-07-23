@@ -15,11 +15,58 @@
   }
   .repo-page #contracts-table th,
   .repo-page #contracts-table td {
-    vertical-align: top;
+    vertical-align: middle !important;
   }
-  .repo-page #contracts-table th.tbl-th,
-  .repo-page #contracts-table td.repo-cell {
-    padding: 16px 12px;
+  /* Keep td as table-cell (display:flex on td collapses columns). Title stays in-flow
+     to set row height; other cells fill the row with an absolute flex inner. */
+  .repo-page #contracts-table tbody td.repo-cell {
+    padding: 0 !important;
+    vertical-align: middle !important;
+  }
+  .repo-page #contracts-table tbody td.repo-cell:not([data-col="title"]) {
+    position: relative;
+    overflow: hidden;
+  }
+  .repo-page #contracts-table tbody td.repo-cell[data-col="actions"] {
+    overflow: visible;
+  }
+  .repo-page #contracts-table tbody td.repo-cell .repo-cell-inner {
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+    min-width: 0;
+    padding: 14px 12px;
+  }
+  .repo-page #contracts-table tbody td.repo-cell:not([data-col="title"]) .repo-cell-inner {
+    position: absolute;
+    inset: 0;
+    width: auto;
+    height: auto;
+    overflow: hidden;
+  }
+  .repo-page #contracts-table tbody td.repo-cell[data-col="title"] .repo-cell-inner {
+    width: 100%;
+    padding-left: 6px;
+  }
+  .repo-page #contracts-table tbody td.repo-cell .repo-cell-inner > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .repo-page #contracts-table tbody td.repo-cell[data-col="title"] .repo-cell-inner > .repo-title-stack {
+    width: 100%;
+  }
+  .repo-page #contracts-table tbody td.repo-cell[data-col="value"] .repo-cell-inner {
+    justify-content: flex-end;
+    padding-right: 16px;
+  }
+  .repo-page #contracts-table tbody td.repo-cell[data-col="actions"] .repo-cell-inner {
+    justify-content: center;
+    padding-left: 8px;
+    padding-right: 8px;
+    overflow: visible;
+  }
+  .repo-page #contracts-table th.tbl-th:not([data-col="select"]) {
+    padding: 14px 12px;
     overflow: hidden;
   }
   .repo-page #contracts-table tbody tr.wq-row-selected td,
@@ -40,17 +87,54 @@
     color: var(--ink-700, var(--text-secondary)); font-size: 12.5px; font-weight: 550;
   }
   .repo-page .assignee-chip-empty .assignee-chip-name.repo-empty-label { color: var(--ink-700, var(--text-secondary)); }
-  .repo-page #contracts-table th[data-col="select"],
-  .repo-page #contracts-table td[data-col="select"] {
-    position: sticky; left: 0; z-index: 3; width: 44px; min-width: 44px; max-width: 44px;
-    background-color: var(--card-bg, #fff); padding-left: 12px; padding-right: 8px;
+  /* Beat shared .dc-ds-table td { padding: 10px 16px; } which widens the gutter. */
+  .repo-page #contracts-table.dc-ds-table th[data-col="select"],
+  .repo-page #contracts-table.dc-ds-table td[data-col="select"],
+  .repo-page #contracts-table.dc-ds-table th.tbl-th[data-col="select"],
+  .repo-page #contracts-table.dc-ds-table td.repo-cell[data-col="select"],
+  .repo-page #contracts-table.dc-ds-table td.repo-select-cell {
+    position: sticky;
+    left: 0;
+    z-index: 3;
+    width: 32px !important;
+    min-width: 32px !important;
+    max-width: 32px !important;
+    box-sizing: border-box;
+    vertical-align: middle !important;
+    background-color: var(--card-bg, #fff);
+    padding: 0 !important;
+    overflow: visible !important;
+    text-align: left;
+  }
+  .repo-page #contracts-table.dc-ds-table [data-col="select"] .repo-select-hit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    margin: 0;
+    padding: 0;
+    line-height: 1;
+  }
+  .repo-page #contracts-table tbody td.repo-cell[data-col="select"] .repo-cell-inner {
+    padding: 0 0 0 10px;
+    justify-content: flex-start;
+  }
+  .repo-page #contracts-table.dc-ds-table [data-col="select"] input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
+    margin: 0;
+    padding: 0;
+    flex: 0 0 auto;
+    accent-color: var(--seal, var(--primary));
   }
   .repo-page #contracts-table thead th[data-col="select"] { z-index: 6; }
   .repo-page #contracts-table th[data-col="title"],
   .repo-page #contracts-table td[data-col="title"] {
-    position: sticky; left: 44px; z-index: 3; min-width: 260px; width: 24%;
+    position: sticky; left: 32px; z-index: 3; min-width: 260px; width: 24%;
     background-color: var(--card-bg, #fff);
     box-shadow: 1px 0 0 var(--line, var(--card-border));
+  }
+  .repo-page #contracts-table thead th[data-col="title"] {
+    padding-left: 6px;
   }
   .repo-page #contracts-table thead th[data-col="title"] { z-index: 6; }
   .repo-page #contracts-table tbody tr:hover:not(.wq-row-selected) td[data-col="select"],
@@ -90,7 +174,7 @@
   .repo-page #contracts-table th[data-col="type"],
   .repo-page #contracts-table td[data-col="type"] { min-width: 128px; width: 10%; }
   .repo-page .repo-type-label {
-    display: block;
+    display: inline-block;
     min-width: 0;
     max-width: 100%;
     overflow: hidden;
@@ -100,7 +184,7 @@
   .repo-page #contracts-table th[data-col="counterparty"],
   .repo-page #contracts-table td[data-col="counterparty"] { min-width: 150px; width: 12%; }
   .repo-page .repo-counterparty-label {
-    display: block;
+    display: inline-block;
     min-width: 0;
     max-width: 100%;
     overflow: hidden;
@@ -288,7 +372,7 @@
       <caption class="sr-only">Contracts repository — sortable and filterable contract records.</caption>
       <thead class="tbl-head">
         <tr>
-          <th class="tbl-th" scope="col" data-col="select"><input type="checkbox" id="select-all" aria-label="Select all contracts"></th>
+          <th class="tbl-th" scope="col" data-col="select"><span class="repo-select-hit"><input type="checkbox" id="select-all" aria-label="Select all contracts"></span></th>
           <th class="tbl-th" scope="col" data-col="title" data-column-key="title" aria-sort="none"><button type="button" class="repo-sort-btn" data-sort="title">Contract<span class="repo-sort-ind" aria-hidden="true"></span></button></th>
           <th class="tbl-th" scope="col" data-col="type">Type</th>
           <th class="tbl-th" scope="col" data-col="counterparty">Counterparty</th>
