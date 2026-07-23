@@ -1,0 +1,73 @@
+{
+  "active_users": 5,
+  "ai_usage_and_policy_denials_approx": 0,
+  "audit_anomalies": 0,
+  "audit_event_creation_failures": 0,
+  "authorization_failures": 0,
+  "contracts_created": 5,
+  "contracts_created_by_type": [
+    {
+      "contract_type": "DPA",
+      "count": 1
+    },
+    {
+      "contract_type": "MSA",
+      "count": 3
+    },
+    {
+      "contract_type": "NDA",
+      "count": 1
+    }
+  ],
+  "date": "2026-07-22",
+  "exception_dual_write": {
+    "actions_by_source": {
+      "ACCEPTED_RISK": 0,
+      "AI_EXCEPTION": 1,
+      "CONFLICT_CHECK_WAIVER": 0,
+      "DEADLINE_DEFER": 0,
+      "DPA_APPROVE_WITH_BLOCKERS": 0,
+      "KEEP_EXCEPTION": 1
+    },
+    "active_missing_owner_or_expiry": 0,
+    "canonical_decisions_created": 1,
+    "canonical_requests_created": 2,
+    "cross_tenant_denials": 0,
+    "dual_write_failures": 0,
+    "duplicate_correlation_groups": 0,
+    "requests_with_multiple_decisions": 0,
+    "security_gate_blocks": 0,
+    "stop_reasons": [],
+    "stop_required": false,
+    "submitted_without_decision": 1
+  },
+  "exports_approx": 0,
+  "failed_actions": 0,
+  "feature_flags": {
+    "BILLING_SELF_SERVE_ENABLED": true,
+    "CONTROLLED_PILOT_ENABLED": false,
+    "EXCEPTION_DUAL_WRITE_ENABLED": true,
+    "EXCEPTION_DUAL_WRITE_ORG_ALLOWLIST": "controlled-pilot-org",
+    "FINANCE_APPROVAL_THRESHOLD": "100000",
+    "GEMINI_AI_ENABLED": true,
+    "LOGIN_RATE_LIMIT_REQUESTS": 10,
+    "RATELIMIT_ENABLED": true,
+    "TRUST_ACCOUNTING_ENABLED": true
+  },
+  "http_status_counts": {
+    "2xx": 0,
+    "3xx": 0,
+    "4xx": 0,
+    "5xx": 0
+  },
+  "lifecycle_transition_failures": 0,
+  "login_failures": 0,
+  "msa_finance_submissions_approx": 0,
+  "msa_legal_submissions_approx": 0,
+  "notes": "Counts are derived from AuditLog metadata and request metrics. Contract content, credentials, and secrets are never included.",
+  "organization": "controlled-pilot-org",
+  "routing_anomalies": null,
+  "support_requests": null,
+  "unresolved_incidents": null,
+  "workflow_completions_approx": 0
+}
