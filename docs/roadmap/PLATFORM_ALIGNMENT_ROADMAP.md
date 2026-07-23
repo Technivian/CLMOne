@@ -38,7 +38,7 @@ Statuses: Completed · In progress · Blocked · Deferred by approved decision �
 
 ## Immediate next items
 
-1. **PAR-EXC-001** — Governed Exception (Milestone 3) — **In progress** (ADR-0015 **Accepted**; Motions 2–3 **Authorized**; controlled-pilot activation **PASS**; pilot monitoring PR #78 **merged** (Product Approve `08:39:15Z`; Eng/Sec ratification **pending**); committed defaults remain off; **blocker:** canonical read **unauthorized**)
+1. **PAR-EXC-001** — Governed Exception (Milestone 3) — **In progress** (ADR-0015 **Accepted**; Motions 2–3 **Authorized**; controlled-pilot activation **PASS**; Motion 4 canonical-read package **Authorization requested** / votes **not carried**; committed defaults remain off; **no flags enabled**; **blocker:** canonical read **unauthorized**)
 2. **PAR-APR-002** — legacy approval cutover — **Planned** — **not started this slice**
 3. **PAR-WF-010** — production cutover **blocked** pending Accepted ADR-0012 — **not started this slice**
 4. **PAR-ID-002** — ADMIN process-role reconciliation — Future residual — **not started this slice**
@@ -429,27 +429,27 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 
 | Field | Content |
 |---|---|
-| Status | **In progress** (2026-07-23) — ADR-0015 **Accepted**; Motions 2–3 **Authorized**; controlled-pilot dual-write activation **PASS**; pilot monitoring PR #78 **merged** `e26a2bdc` (Product Approve `2026-07-23T08:39:15Z` comment `5056386192` @ `3d71d830`; **Eng/Sec ratification pending** — invented `08:56:33–34Z` votes retracted); committed defaults remain **off**; legacy authoritative; **blocker:** canonical read cutover **unauthorized** (separate vote); break-glass / signature-provider residuals inventoried |
+| Status | **In progress** (2026-07-23) — ADR-0015 **Accepted**; Motions 2–3 **Authorized**; controlled-pilot dual-write activation **PASS**; monitoring PR #78 **merged** `e26a2bdc` (Product Approve only; Eng/Sec ratification pending); Motion 4 canonical-read package **Authorization requested** (votes not carried; Security conditions not acknowledged; **no flags enabled**); committed defaults remain **off**; legacy authoritative; **blocker:** canonical read **unauthorized**; break-glass / signature-provider residuals inventoried |
 | Priority | P1 |
 | Problem | No first-class governed Exception; risk/actions are scattered. |
 | Governance source | CANONICAL_DOMAIN_MODEL §2.33; gap G-DOM-03 |
 | Current evidence | `docs/audits/evidence/2026-07-22-par-exc-001/` (incl. `CONTROLLED_PILOT_DUAL_WRITE_ACTIVATION_RESULTS.md`) |
 | Target outcome | Governed `ExceptionRequest` / `ExceptionDecision` with owner, expiry, authority, compensating controls, privilege tokens, immutable history, tenant isolation |
 | Dependencies | PAR-APR-001 pattern helpful (**met**); ADR-0015 Acceptance (**met**); Motion 2 dual-write (**Authorized** default-off); Motion 3 activation (**Authorized** + operational **PASS**) |
-| Decision required | **ADR-0015 Accepted**; Motion 3 **Authorized**; operational activation **PASS**; canonical read still open |
+| Decision required | **ADR-0015 Accepted**; Motion 3 **Authorized**; operational activation **PASS**; Motion 4 canonical-read **Authorization requested** (not carried) |
 | Migration impact | Additive `0114` + `0115` (`correlation_id`); no legacy backfill; dual-write default-off |
 | Security and permissions impact | Server-side authz; Critical security bypass requires explicit Security approval; cross-tenant prohibited; legacy authoritative until read cutover |
 | Audit requirements | `exception.request.*`, `exception.decision.recorded`, `exception.activated`, `exception.dual_write_failed`, `exception.security_gate_blocked`, `exception.cross_tenant.denied` |
 | UX requirements | Exception surfaces deferred until cutover; no hero clutter |
 | Tests | `tests/test_par_exc_001_exception.py` (11 OK) + `tests/test_par_exc_001_dual_write.py` (16 OK) + activation harness PASS |
-| Rollback strategy | Flags default off; reverse `0115` then `0114`; Motion 3 rollback = flag-off + clear allowlist (**drilled PASS**) |
+| Rollback strategy | Flags default off; reverse `0115` then `0114`; Motion 3 rollback = flag-off + clear allowlist (**drilled PASS**); Motion 4 rollback = canonical-read flag-off (defined; not authorized) |
 | Acceptance criteria | Accepted ADR (**met**); six priority paths dual-write merged default-off; Motion 3 activation authorized + operational PASS; remaining paths inventoried; read authority still open — **keep In progress** |
-| Evidence | `docs/audits/evidence/2026-07-22-par-exc-001/` |
+| Evidence | `docs/audits/evidence/2026-07-22-par-exc-001/` (incl. `CANONICAL_READ_AUTHORITY_AUTHORIZATION.md`) |
 | Accepted ADR | **ADR-0015** (Accepted 2026-07-22T19:12:39Z) |
-| PR/commits | Foundation PR #66 merge `982b0900`; dual-write PR #69 merge `f19eae42`; Motion 3 auth PR #74 merge `058c5ed0`; monitoring PR #78 merge `e26a2bdc` (auth incomplete) |
+| PR/commits | Foundation PR #66 merge `982b0900`; dual-write PR #69 merge `f19eae42`; Motion 3 auth PR #74 merge `058c5ed0`; monitoring PR #78 merge `e26a2bdc` (auth incomplete); correction PR #79 merge `83a0a00f` |
 | Last updated | 2026-07-23 |
 | Explicit non-starts | PAR-APR-002, PAR-WF-010, PAR-ID-002 |
-| Next cutover step | Obtain genuine Engineering + Security ratification for merged PR #78 monitoring; continue monitoring under stop conditions; **exact blocker for Completion:** canonical read authority (separate vote); do not start PAR-APR-002 / PAR-WF-010 / PAR-ID-002 here |
+| Next cutover step | Obtain genuine Product + Engineering + Security votes on Motion 4 (`CANONICAL_READ_AUTHORITY_AUTHORIZATION.md`); do not invent votes; do not enable flags; **exact blocker:** canonical read unauthorized (votes not carried); do not start PAR-APR-002 / PAR-WF-010 / PAR-ID-002 here |
 
 ---
 
@@ -662,4 +662,5 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | 2026-07-22 | **PAR-EXC-001 Motion 3 Authorized:** Product `20:04:13Z` / Engineering `20:04:15Z` / Security `20:04:34Z` (Approve with conditions); controlled-pilot dual-write activation for `controlled-pilot-org` only; committed defaults remain off; operational env enablement now permitted; canonical read still unauthorized; PAR-EXC-001 remains **In progress** |
 | 2026-07-22 | **PR #74 merged** to `main` @ `058c5ed0` (Motion 3 authorization record); committed defaults remain off; PAR-EXC-001 remains **In progress** |
 | 2026-07-23 | **PAR-EXC-001 pilot monitoring PR #78 merged** `e26a2bdc` (read-only `pilot_daily_health` extension). Genuine Product Approve `2026-07-23T08:39:15Z` (comment `5056386192`, reviewed head `3d71d830`). Invented Eng/Sec `08:56:33–34Z` votes **retracted**; Engineering + Security ratification **still required**. Committed defaults remain off; canonical read unauthorized; PAR-EXC-001 remains **In progress** |
+| 2026-07-23 | **PAR-EXC-001 Motion 4 package prepared** (`CANONICAL_READ_AUTHORITY_AUTHORIZATION.md`): env `par-exc-001-canonical-read-authority`; allowlist `controlled-pilot-org` only; six paths; observation/abort/rollback defined; production / repair / permissions / ADMIN / legacy retirement **out of scope**; votes **Authorization requested** (not carried); Security conditions **not** acknowledged; **no flags enabled**; PAR-EXC-001 remains **In progress** |
 | 2026-07-22 | **PAR-EXC-001 controlled-pilot dual-write activation PASS:** env `par-exc-001-controlled-pilot-activation`; six paths exercised; negatives + rollback drill PASS; stop conditions clear; committed defaults remain off; canonical read unauthorized; PAR-APR-002 / PAR-WF-010 / PAR-ID-002 unstarted; PAR-EXC-001 remains **In progress** |

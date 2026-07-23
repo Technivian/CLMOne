@@ -1,7 +1,7 @@
 # PAR-EXC-001 evidence index
 
 **Programme ID:** PAR-EXC-001  
-**Status:** **In progress** — ADR-0015 **Accepted**; foundation PR #66 **merged** (`982b0900`); dual-write PR #69 **merged** (`f19eae42`, default-off); Motion 3 **Authorized** (PR #74 @ `058c5ed0`); controlled-pilot operational activation evidence **PASS**; committed flag defaults remain **off**; canonical read cutover **unauthorized**  
+**Status:** **In progress** — ADR-0015 **Accepted**; foundation PR #66 **merged** (`982b0900`); dual-write PR #69 **merged** (`f19eae42`, default-off); Motion 3 **Authorized** (PR #74 @ `058c5ed0`); controlled-pilot operational activation evidence **PASS**; monitoring PR #78 **merged** `e26a2bdc` / correction PR #79 `83a0a00f`; Motion 4 canonical-read package **Authorization requested** (votes not carried; no flags enabled); committed flag defaults remain **off**; canonical read cutover **unauthorized**  
 **ADR:** ADR-0015 **Accepted** (`2026-07-22T19:12:39Z`)  
 **Foundation:** PR [#66](https://github.com/Technivian/CLMOne/pull/66) merge `982b0900b37f64cf3ce36f44e23a062ae908dbb7`  
 **Dual-write:** PR [#69](https://github.com/Technivian/CLMOne/pull/69) merge `f19eae42fd14e310364fb047868abea4951a5efe` (supersedes stacked [#67](https://github.com/Technivian/CLMOne/pull/67))  
@@ -20,6 +20,7 @@
 | [`DUAL_WRITE_IMPLEMENTATION_AUTHORIZATION.md`](DUAL_WRITE_IMPLEMENTATION_AUTHORIZATION.md) | Motion 2 dual-write auth (**Authorized** default-off) |
 | [`CONTROLLED_PILOT_DUAL_WRITE.md`](CONTROLLED_PILOT_DUAL_WRITE.md) | Motion 3 activation package (**Authorized**; operational **PASS**) |
 | [`CONTROLLED_PILOT_DUAL_WRITE_ACTIVATION_RESULTS.md`](CONTROLLED_PILOT_DUAL_WRITE_ACTIVATION_RESULTS.md) | Operational enablement evidence (**PASS**) |
+| [`CANONICAL_READ_AUTHORITY_AUTHORIZATION.md`](CANONICAL_READ_AUTHORITY_AUTHORIZATION.md) | Motion 4 canonical-read authority (**Authorization requested**; not carried) |
 | [`../../../governance/decisions/adr/0015-exception-request-decision-model.md`](../../../governance/decisions/adr/0015-exception-request-decision-model.md) | ADR (**Accepted**) |
 | [`../../../governance/decisions/adr/0015-governance-acceptance-meeting-record-2026-07-22.md`](../../../governance/decisions/adr/0015-governance-acceptance-meeting-record-2026-07-22.md) | Motions 1–3 ratified |
 
@@ -65,7 +66,7 @@
 | Controlled-pilot activation authorization (Motion 3) | **Met** (PR #74 @ `058c5ed0`) |
 | Controlled-pilot operational enablement + monitoring evidence | **PASS** — [`CONTROLLED_PILOT_DUAL_WRITE_ACTIVATION_RESULTS.md`](CONTROLLED_PILOT_DUAL_WRITE_ACTIVATION_RESULTS.md) |
 | Remaining production exception paths inventoried or residual | Break-glass + signature-provider inventoried |
-| Canonical read authority and legacy retirement | **Unauthorized** |
+| Canonical read authority (Motion 4) and legacy retirement | **Unauthorized** — package prepared; votes not carried; flags not enabled |
 
 ---
 

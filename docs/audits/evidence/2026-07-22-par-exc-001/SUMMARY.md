@@ -7,7 +7,7 @@
 **Motion 3:** Controlled-pilot dual-write activation **Authorized** (`2026-07-22T20:04:34Z`; PR #74 @ `058c5ed0`).  
 **Operational activation:** **PASS** — [`CONTROLLED_PILOT_DUAL_WRITE_ACTIVATION_RESULTS.md`](CONTROLLED_PILOT_DUAL_WRITE_ACTIVATION_RESULTS.md).  
 **Committed flag defaults:** remain **off**.  
-**Canonical read authority:** **Unauthorized**.  
+**Canonical read authority:** **Unauthorized** — Motion 4 package [`CANONICAL_READ_AUTHORITY_AUTHORIZATION.md`](CANONICAL_READ_AUTHORITY_AUTHORIZATION.md) **Authorization requested**; votes **not carried**; flags **not** enabled.  
 **Not started:** PAR-APR-002, PAR-WF-010, PAR-ID-002.
 
 ### Discovery
@@ -28,6 +28,6 @@
 - Activation package: [`CONTROLLED_PILOT_DUAL_WRITE.md`](CONTROLLED_PILOT_DUAL_WRITE.md) — Motion 3 **Authorized**; operational evidence **PASS**.
 
 ### Next (from evidence)
-1. Keep monitoring `controlled-pilot-org` dual-write; honour stop conditions / immediate rollback.
-2. Do **not** authorize canonical read cutover without a separate vote.
-3. Keep programme **In progress**; do not start PAR-APR-002 / PAR-WF-010 / PAR-ID-002 from this slice.
+1. Obtain genuine Product + Engineering + Security votes on Motion 4 ([`CANONICAL_READ_AUTHORITY_AUTHORIZATION.md`](CANONICAL_READ_AUTHORITY_AUTHORIZATION.md)); do **not** invent votes; do **not** enable flags.
+2. Obtain genuine Engineering + Security post-merge ratification (or revert) for PR #78 monitoring retention (separate from Motion 4).
+3. Keep programme **In progress** until Motion 4 carries **and** Completion criteria are met; do not start PAR-APR-002 / PAR-WF-010 / PAR-ID-002 from this slice.
