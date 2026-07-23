@@ -6,7 +6,8 @@
 **Package type:** Separate canonical-read authority (Motion 4)  
 **Status:** **Authorization requested** — votes **not carried** (Product Approve recorded; Engineering + Security outstanding)  
 **Authorizing PR:** [#81](https://github.com/Technivian/CLMOne/pull/81)  
-**Reviewed HEAD:** `e1858cd33c1652349a44540d152b4a57af150dd5`  
+**Reviewed HEAD:** `acc19e82d1b03a0691d46a10679af10b07d59ab5` (docs-only; reconciled with `main` @ `091882c7` / PR #80)  
+**Product vote reviewed package baseline:** `e1858cd33c1652349a44540d152b4a57af150dd5` (Motion text unchanged since Product Approve)  
 **This vote enables flags?** **No**  
 **This vote merges implementation?** **No**  
 **Production?** **OUT OF SCOPE**
