@@ -4,7 +4,9 @@
 **ADR:** ADR-0015 **Accepted** (`2026-07-22T19:12:39Z`)  
 **Prerequisites:** Motion 2 **Authorized** (default-off dual-write); Motion 3 **Authorized** + controlled-pilot activation **PASS**; monitoring extension on `main` (PR #78 / correction PR #79)  
 **Package type:** Separate canonical-read authority (Motion 4)  
-**Status:** **Authorization requested** — votes **not carried**  
+**Status:** **Authorization requested** — votes **not carried** (Product Approve recorded; Engineering + Security outstanding)  
+**Authorizing PR:** [#81](https://github.com/Technivian/CLMOne/pull/81)  
+**Reviewed HEAD:** `e1858cd33c1652349a44540d152b4a57af150dd5`  
 **This vote enables flags?** **No**  
 **This vote merges implementation?** **No**  
 **Production?** **OUT OF SCOPE**
@@ -18,12 +20,12 @@
 | Field | Value |
 |---|---|
 | Decision | **Not authorized** (Motion 4 not carried) |
-| Aggregate | Product / Engineering / Security votes incomplete |
+| Aggregate | Product **Approve**; Engineering **pending**; Security **pending** |
 | Security conditions acknowledged | **No** (pending Security vote) |
 | Flags enabled by this record | **No** |
 | Committed defaults changed by this record | **No** |
 | Programme status | PAR-EXC-001 remains **In progress** |
-| Exact blocker | Canonical read authority **unauthorized** — Engineering and Security votes outstanding (and Product vote must be genuine on the authorizing PR) |
+| Exact blocker | Canonical read authority **unauthorized** — Engineering and Security genuine votes outstanding on PR #81 |
 
 ---
 
@@ -134,7 +136,7 @@ export EXCEPTION_DUAL_WRITE_ORG_ALLOWLIST=
 
 | Approver | Capacity | Vote | Timestamp (UTC) | Evidence |
 |---|---|---|---|---|
-| @haroonwahed | Product governance | _pending_ | | |
+| @haroonwahed | Product governance | **Approve** | `2026-07-23T09:21:26Z` | [comment 5056679929](https://github.com/Technivian/CLMOne/pull/81#issuecomment-5056679929) |
 | @Technivian | Engineering governance | _pending_ | | |
 | @Technivian | Security advisory | _pending_ | | |
 
@@ -146,7 +148,7 @@ export EXCEPTION_DUAL_WRITE_ORG_ALLOWLIST=
 
 | Approver | Capacity | Vote | Timestamp (UTC) | Evidence |
 |---|---|---|---|---|
-| @haroonwahed | Product governance | _pending_ | | |
+| @haroonwahed | Product governance | **Approve** | `2026-07-23T09:21:26Z` | [comment 5056679929](https://github.com/Technivian/CLMOne/pull/81#issuecomment-5056679929) |
 | @Technivian | Engineering governance | _pending_ | | |
 | @Technivian | Security advisory | _pending_ | | |
 
@@ -158,7 +160,7 @@ export EXCEPTION_DUAL_WRITE_ORG_ALLOWLIST=
 
 | Approver | Capacity | Vote | Timestamp (UTC) | Evidence |
 |---|---|---|---|---|
-| @haroonwahed | Product governance | _pending_ | | |
+| @haroonwahed | Product governance | **Approve** | `2026-07-23T09:21:26Z` | [comment 5056679929](https://github.com/Technivian/CLMOne/pull/81#issuecomment-5056679929) |
 | @Technivian | Engineering governance | _pending_ | | |
 | @Technivian | Security advisory | _pending_ | | |
 
@@ -170,11 +172,34 @@ export EXCEPTION_DUAL_WRITE_ORG_ALLOWLIST=
 
 | Approver | Capacity | Vote | Timestamp (UTC) | Evidence |
 |---|---|---|---|---|
-| @haroonwahed | Product governance | _pending_ | | |
+| @haroonwahed | Product governance | **Approve** | `2026-07-23T09:21:26Z` | [comment 5056679929](https://github.com/Technivian/CLMOne/pull/81#issuecomment-5056679929) |
 | @Technivian | Engineering governance | _pending_ | | |
 | @Technivian | Security advisory | _pending_ | | |
 
 **Motion 4.4 result:** **Not carried**
+
+### Recorded Product approval (verbatim; authoritative)
+
+```text
+MOTION 4 — PAR-EXC-001 Canonical Read Authority
+
+Approver: @haroonwahed
+Capacity: Product governance
+Timestamp: 2026-07-23T09:21:26Z
+
+Motions 4.1–4.4: Approve
+
+Vote: Approve
+
+Conditions acknowledged:
+- exact env par-exc-001-canonical-read-authority only;
+- allowlist controlled-pilot-org only;
+- six approved paths only;
+- this vote does not enable flags or change committed defaults;
+- production, repair, permission changes, ADMIN authority, and legacy retirement remain out of scope;
+- Engineering and Security genuine votes still required before Motion 4 is Authorized;
+- PAR-EXC-001 remains In progress until Completion criteria are met.
+```
 
 ---
 

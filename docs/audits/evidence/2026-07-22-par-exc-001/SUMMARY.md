@@ -7,7 +7,7 @@
 **Motion 3:** Controlled-pilot dual-write activation **Authorized** (`2026-07-22T20:04:34Z`; PR #74 @ `058c5ed0`).  
 **Operational activation:** **PASS** — [`CONTROLLED_PILOT_DUAL_WRITE_ACTIVATION_RESULTS.md`](CONTROLLED_PILOT_DUAL_WRITE_ACTIVATION_RESULTS.md).  
 **Committed flag defaults:** remain **off**.  
-**Canonical read authority:** **Unauthorized** — Motion 4 package [`CANONICAL_READ_AUTHORITY_AUTHORIZATION.md`](CANONICAL_READ_AUTHORITY_AUTHORIZATION.md) **Authorization requested**; votes **not carried**; flags **not** enabled.  
+**Canonical read authority:** **Unauthorized** — Motion 4 package [`CANONICAL_READ_AUTHORITY_AUTHORIZATION.md`](CANONICAL_READ_AUTHORITY_AUTHORIZATION.md) on PR [#81](https://github.com/Technivian/CLMOne/pull/81); Product Approve `2026-07-23T09:21:26Z`; Engineering + Security **pending**; Motion 4 **not carried**; flags **not** enabled.  
 **Not started:** PAR-APR-002, PAR-WF-010, PAR-ID-002.
 
 ### Discovery
