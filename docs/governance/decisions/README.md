@@ -31,6 +31,26 @@ Earlier accepted records may use the legacy forms `0008-….md` / `0001-….md` 
 - [ADR template](adr/ADR_TEMPLATE.md)
 - [PDR template](pdr/PDR_TEMPLATE.md)
 - [Exception template](exceptions/EXCEPTION_TEMPLATE.md)
+- [GitHub vote-evidence guidance](../GITHUB_VOTE_EVIDENCE_GUIDANCE.md)
+
+## Governance vote evidence
+
+For a new governance vote, the genuine GitHub comment or review is the
+evidence. Its system-generated `created_at` is the authoritative audit
+timestamp and may be retrieved for audit; it must not be manually typed,
+calculated, or copied into a vote template.
+
+A valid vote identifies its approver through the GitHub evidence and contains:
+
+- governance capacity;
+- an explicit vote;
+- the reviewed commit, merge SHA, motion, ADR, or PDR; and
+- explicit conditions when applicable.
+
+Do not accept a timestamp without a genuine vote, a proxy vote, a generated or
+inferred timestamp, or a vote copied by someone other than the approver. Keep
+historical evidence intact, including genuine system timestamps and retracted
+invalid records. See PDR-0004 for the proposed policy record.
 
 ## Status values
 
@@ -61,6 +81,7 @@ Do not fabricate approved decisions. Do not mark a record Accepted without docum
 | [0001-finance-approval-threshold.md](pdr/0001-finance-approval-threshold.md) | See file |
 | [0002-contract-stage-and-status.md](pdr/0002-contract-stage-and-status.md) | See file |
 | [PDR-0003-documentation-operating-model.md](pdr/PDR-0003-documentation-operating-model.md) | Accepted |
+| [PDR-0004-github-vote-evidence.md](pdr/PDR-0004-github-vote-evidence.md) | Proposed |
 
 ### Exceptions
 

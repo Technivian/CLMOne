@@ -65,6 +65,15 @@ Do not silently introduce new:
 
 Decision records live under `docs/governance/decisions/`. See `docs/governance/decisions/README.md`.
 
+## Governance vote evidence
+
+For new governance votes, use the GitHub evidence model in
+`docs/governance/GITHUB_VOTE_EVIDENCE_GUIDANCE.md`: the genuine GitHub
+comment or review is the vote evidence and its system-generated `created_at`
+is the authoritative audit timestamp. Do not enter, calculate, infer, or
+proxy a vote timestamp. Historical records remain unchanged unless a separate
+approved record requires a correction.
+
 ## Cursor Cloud specific instructions
 
 CLM One is a single Django 5.2 app (project `config`, main domain app `contracts`, Tailwind theme app `theme`). Dev runs on SQLite with all third-party integrations (Redis, Stripe, Gemini AI, S3, OIDC/SAML SSO, Salesforce, NetSuite, e-sign) feature-flagged off, so no external services are needed to run or test it.

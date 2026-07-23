@@ -10,6 +10,18 @@ Statuses: Completed · In progress · Blocked · Deferred by approved decision �
 
 ---
 
+## Governance vote evidence
+
+New roadmap-linked authorization packages must use a genuine GitHub comment or
+review as vote evidence. Record the approver, capacity, explicit vote, reviewed
+reference, conditions where applicable, and an Evidence link; GitHub's
+system-generated `created_at` is the audit timestamp. Do not add manual vote
+timestamps. This guidance does not alter any PAR status, authority, execution
+gate, or historical record. See proposed
+[`PDR-0004`](../governance/decisions/pdr/PDR-0004-github-vote-evidence.md).
+
+---
+
 ## Catalogue count (reconciled)
 
 | Rollup | Count | Notes |
