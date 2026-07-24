@@ -11,7 +11,7 @@ are complete; PR #78 monitoring remains read-only; legacy remains authoritative.
 
 ## Evidence model
 
-This package uses the repository evidence model in Governance Charter v2.1.
+This package uses the repository evidence model in Governance Charter v2.2.
 Its immutable reviewed SHA is the exact PR #81 head SHA bound to the approved
 GitHub reviews and green CI; GitHub records that SHA with the reviews and merge
 event. The operator record must repeat that deployed SHA. Do not copy approval
@@ -24,7 +24,8 @@ GitHub and prior immutable commits; they are not rewritten by this package.
 
 Canonical authority is **not ready** until all of the following are true:
 
-1. PR #81 has approved Engineering and Security GitHub reviews.
+1. PR #81 has an approved GitHub review by the named Release Authority,
+   `@haroonwahed`.
 2. CI is green for the reviewed PR #81 head SHA.
 3. The default-off canonical-read implementation has merged to `main` and its
    immutable merge SHA is recorded by GitHub.
@@ -35,8 +36,9 @@ Canonical authority is **not ready** until all of the following are true:
    run, flag values, counters, isolation/authorization results, abort events,
    and rollback outcome.
 
-PR #81 currently has no approved Engineering or Security review. It must not
-be merged or used to authorize enablement until the first two gates are met.
+PR #81 currently has no approved review by the named Release Authority. It
+must not be merged or used to authorize enablement until the first two gates
+are met.
 
 ## Exact environment
 

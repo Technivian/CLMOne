@@ -1,6 +1,6 @@
 # GitHub review and release evidence
 
-**Status:** Active — Governance Charter v2.1
+**Status:** Active — Governance Charter v2.2
 **Scope:** New authorization packages, decision records, releases, and PRs.
 **Historical evidence:** Preserved; this rule is prospective.
 
@@ -15,12 +15,14 @@ approval timestamp.
 ## Gates
 
 - Low-risk default-off work requires green CI and normal PR review.
-- Non-production canonical authority requires approved Engineering and
-  Security GitHub reviews, green CI, reversible default-off flags, and a
-  named-environment operator record.
+- Non-production canonical authority requires approval by the named GitHub
+  Release Authority, **@haroonwahed**, green CI for the unchanged reviewed
+  SHA, reversible default-off flags, documented abort and rollback controls,
+  and a named-environment operator record.
 - Production activation, permission or privilege changes, automatic repair,
   ADMIN authority, and legacy retirement require approved Product,
-  Engineering, and Security GitHub reviews, green CI, and a release record.
+  Engineering, and Security GitHub reviews that are independent of one
+  another, green CI, and a release record.
 
 The required reviewer roles must be requested and verified through GitHub.
 Every required review applies to the immutable PR head SHA shown by GitHub;

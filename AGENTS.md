@@ -74,12 +74,14 @@ statements, or manually entered approval timestamps. Historical evidence is
 preserved and must not be rewritten.
 
 - Low-risk default-off work: green CI and normal review.
-- Non-production canonical authority: approved Engineering and Security GitHub
-  reviews, green CI, reversible default-off flags, and a named-environment
-  operator record.
+- Non-production canonical authority: an approved GitHub review by the named
+  Release Authority (`@haroonwahed`), green CI for the unchanged reviewed SHA,
+  reversible default-off flags, documented abort/rollback controls, and a
+  named-environment operator record.
 - Production activation, permission or privilege changes, automatic repair,
   ADMIN authority, and legacy retirement: approved Product, Engineering, and
-  Security GitHub reviews plus green CI and a release record.
+  Security GitHub reviews that are independent of one another, plus green CI
+  and a release record.
 
 A feature flag does not grant authority. Never enable one before the
 applicable gate is satisfied.

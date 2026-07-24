@@ -81,6 +81,12 @@ immutable reviewed and merged SHAs, and the required operator or release
 record. Active authorization packages must not use manually maintained vote
 tables or manually entered approval timestamps.
 
+For non-production canonical authority, the named Release Authority is
+`@haroonwahed`; its approved GitHub review, green CI for the unchanged SHA,
+reversible default-off flags, and documented abort/rollback controls are all
+required. This limited authority does not replace independent Product,
+Engineering, and Security approval for higher-risk release actions.
+
 ## 16. Tests protect invariants
 
 Mandatory invariant tests include:

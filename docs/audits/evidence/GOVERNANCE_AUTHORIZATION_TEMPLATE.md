@@ -21,8 +21,9 @@ exclusions, and non-starts. A feature flag does not grant authority.
 ## Preconditions
 
 List the conditions that must be satisfied before implementation or execution.
-For canonical authority, include default-off/reversible flags, an operator
-record, and the exact rollback check.
+For non-production canonical authority, include the named Release Authority's
+GitHub review of the unchanged SHA, default-off/reversible flags, documented
+abort and rollback controls, an operator record, and the exact rollback check.
 
 ## Operator or release record
 

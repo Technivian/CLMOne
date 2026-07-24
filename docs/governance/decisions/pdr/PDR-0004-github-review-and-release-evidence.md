@@ -22,11 +22,14 @@ tables or manually entered approval timestamps.
 The gate is proportional to risk:
 
 - low-risk default-off work requires green CI and normal PR review;
-- non-production canonical authority requires Engineering and Security PR
-  approval, green CI, reversible default-off flags, and an operator record;
+- non-production canonical authority requires the named GitHub Release
+  Authority (`@haroonwahed`) to approve the current PR SHA, green CI,
+  reversible default-off flags, documented abort/rollback controls, and an
+  operator record;
 - production activation, permission or privilege changes, automatic repair,
   ADMIN authority, and legacy retirement require Product, Engineering, and
-  Security PR approval plus green CI and a release record.
+  Security PR approval that is independent across the three capacities, plus
+  green CI and a release record.
 
 This decision does not change runtime authorization, product permissions,
 domain authority, or the requirement that feature flags are exposure controls

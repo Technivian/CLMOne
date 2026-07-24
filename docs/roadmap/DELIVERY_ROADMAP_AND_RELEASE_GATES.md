@@ -234,12 +234,14 @@ operator logs. Active packages do not use manual vote tables or manually
 entered approval timestamps; historical evidence remains preserved.
 
 - Low-risk default-off work: green CI and normal PR review.
-- Non-production canonical authority: approved Engineering and Security PR
-  reviews, green CI, reversible default-off flags, and a named-environment
-  operator record.
+- Non-production canonical authority: the named Release Authority's approved
+  PR review, green CI for the unchanged reviewed SHA, reversible default-off
+  flags, documented abort/rollback controls, and a named-environment operator
+  record.
 - Production activation, permission or privilege changes, automatic repair,
   ADMIN authority, or legacy retirement: approved Product, Engineering, and
-  Security PR reviews, green CI, and a release record.
+  Security PR reviews that are independent of one another, green CI, and a
+  release record.
 
 Feature flags control exposure only; they never grant release authority.
 
