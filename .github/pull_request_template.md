@@ -7,6 +7,12 @@
 
 Before material product, architecture, design, security, workflow, AI, or engineering work, follow root [`AGENTS.md`](../AGENTS.md). The active Governance Charter is [`docs/governance/GOVERNANCE_CHARTER.md`](../docs/governance/GOVERNANCE_CHARTER.md). Accepted supporting docs (PDR-0003) remain subordinate to the active Charter. Proposed Charter v3 does not supersede approved governance until separately approved.
 
+If this PR requests a governance decision, use the GitHub evidence model in
+[`GITHUB_VOTE_EVIDENCE_GUIDANCE.md`](../docs/governance/GITHUB_VOTE_EVIDENCE_GUIDANCE.md).
+Votes link to the genuine GitHub comment or review; do not enter a manual UTC
+timestamp in the PR or vote template. This guidance becomes binding when
+PDR-0004 is accepted.
+
 ## Risk and Scope
 
 - Tenant isolation impact: `none | low | medium | high`
@@ -35,3 +41,4 @@ Before material product, architecture, design, security, workflow, AI, or engine
 - Screenshots / logs / links:
 - Smoke evidence:
 - Rollback evidence:
+- Governance vote evidence (when applicable):

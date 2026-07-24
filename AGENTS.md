@@ -65,6 +65,25 @@ Do not silently introduce new:
 
 Decision records live under `docs/governance/decisions/`. See `docs/governance/decisions/README.md`.
 
+## Governance vote evidence
+
+For new governance votes, use the GitHub evidence model in
+`docs/governance/GITHUB_VOTE_EVIDENCE_GUIDANCE.md`: the genuine GitHub
+comment or review is the vote evidence and its system-generated `created_at`
+is the authoritative audit timestamp. Do not enter, calculate, infer, or
+proxy a vote timestamp. Historical records remain unchanged unless a separate
+approved record requires a correction. PDR-0004 is Proposed, so this model
+does not itself authorize a decision until the PDR is accepted.
+
+## Solo-maintainer standing authorization
+
+When the repository is in solo-maintainer mode, follow
+`docs/governance/SOLO_MAINTAINER_STANDING_AUTHORIZATION.md`. An agent may use
+that narrow path only after the repository owner explicitly confirms that it
+applies to the exact PR, head, and scope. It never substitutes for stronger
+controls or independent review where those are required. Do not manufacture
+the owner confirmation, review evidence, or a timestamp.
+
 ## Cursor Cloud specific instructions
 
 CLM One is a single Django 5.2 app (project `config`, main domain app `contracts`, Tailwind theme app `theme`). Dev runs on SQLite with all third-party integrations (Redis, Stripe, Gemini AI, S3, OIDC/SAML SSO, Salesforce, NetSuite, e-sign) feature-flagged off, so no external services are needed to run or test it.

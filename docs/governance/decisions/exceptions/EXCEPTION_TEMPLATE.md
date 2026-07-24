@@ -28,3 +28,13 @@ Why the exception is necessary.
 ## Exit plan
 
 ## Resolution evidence
+
+If this exception needs a governance vote, use the GitHub vote-evidence model:
+
+| Approver | Capacity | Vote | Evidence |
+|---|---|---|---|
+| | | | |
+
+Each Evidence entry must link to the genuine GitHub comment or review. Its
+system-generated `created_at` is authoritative; never request or record a
+manually entered vote timestamp.
