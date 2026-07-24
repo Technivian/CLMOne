@@ -39,6 +39,7 @@ Operating authority, product operating model, decision records, and archive.
 | [GOVERNANCE_CHARTER.md](governance/GOVERNANCE_CHARTER.md) | Active constitutional governance | Approved |
 | [GOVERNANCE_CHARTER_V3_PROPOSED.md](governance/GOVERNANCE_CHARTER_V3_PROPOSED.md) | Proposed Charter amendment | Proposed |
 | [GITHUB_VOTE_EVIDENCE_GUIDANCE.md](governance/GITHUB_VOTE_EVIDENCE_GUIDANCE.md) | GitHub-backed governance vote evidence | See PDR-0004 status |
+| [SOLO_MAINTAINER_STANDING_AUTHORIZATION.md](governance/SOLO_MAINTAINER_STANDING_AUTHORIZATION.md) | Low-risk PR merge path while one maintainer is active | Active while applicable |
 | [PRODUCT_OPERATING_MODEL.md](governance/PRODUCT_OPERATING_MODEL.md) | Product thesis, users, lifecycle | Accepted |
 | [decisions/](governance/decisions/) | ADRs, PDRs, exceptions | Mixed |
 | [archive/DESIGN_CONSTITUTION.md](governance/archive/DESIGN_CONSTITUTION.md) | Historical CMS Aegis constitution | Superseded |

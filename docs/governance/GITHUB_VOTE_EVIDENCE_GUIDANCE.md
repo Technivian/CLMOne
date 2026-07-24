@@ -9,6 +9,13 @@ and PR reviews.
 **Out of scope:** Runtime audit timestamps, platform audit events, historical
 record rewriting, and any authorization or execution decision.
 
+For the separate low-risk merge path while the repository has one active
+maintainer, see
+[`SOLO_MAINTAINER_STANDING_AUTHORIZATION.md`](SOLO_MAINTAINER_STANDING_AUTHORIZATION.md).
+That authorization does not validate a missing vote or reduce the stronger
+controls required for authority, activation, privilege, migration, or security
+control changes.
+
 ## Rule
 
 PDR-0004 proposes discontinuing manual UTC timestamp entry for governance

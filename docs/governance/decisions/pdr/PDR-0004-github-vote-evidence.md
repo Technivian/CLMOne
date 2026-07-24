@@ -6,6 +6,7 @@
 - **Affected Charter sections:** Charter §10 Change Control
 - **Related ADRs:** ADR-0015 (unchanged authority scope)
 - **Related exceptions:** None
+- **Related active operating rule:** [Solo-maintainer standing authorization](../../SOLO_MAINTAINER_STANDING_AUTHORIZATION.md)
 
 ## Problem
 
@@ -36,6 +37,8 @@ defined in
 This change does not remove required approval authorities, approval dates or
 effective dates where applicable, platform audit timestamps, or any existing
 authorization gate. It only removes manual vote-timestamp administration.
+The separate solo-maintainer rule is limited to low-risk PR merges and does
+not turn a missing governance vote into a valid vote.
 
 ## Users and roles affected
 
