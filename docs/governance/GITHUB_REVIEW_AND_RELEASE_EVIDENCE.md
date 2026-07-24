@@ -1,6 +1,6 @@
 # GitHub review and release evidence
 
-**Status:** Active — Governance Charter v2.2
+**Status:** Active — Governance Charter v2.3
 **Scope:** New authorization packages, decision records, releases, and PRs.
 **Historical evidence:** Preserved; this rule is prospective.
 
@@ -19,6 +19,16 @@ approval timestamp.
   Release Authority, **@haroonwahed**, green CI for the unchanged reviewed
   SHA, reversible default-off flags, documented abort and rollback controls,
   and a named-environment operator record.
+- Where GitHub shows exactly one direct human collaborator with push or admin
+  access, independent review is unavailable. For a non-production,
+  reversible, default-off change only, the repository owner may submit a
+  GitHub owner attestation naming the exact immutable head SHA instead. CI
+  must be green for that SHA, the reviewed scope must be unchanged, abort and
+  rollback controls and an operator record remain required, and all flags must
+  return off after observation. This exception never authorizes production,
+  permission or privilege changes, automatic repair, ADMIN authority, or
+  legacy retirement; those actions still require independent Product,
+  Engineering, and Security approvals.
 - Production activation, permission or privilege changes, automatic repair,
   ADMIN authority, and legacy retirement require approved Product,
   Engineering, and Security GitHub reviews that are independent of one
@@ -27,6 +37,7 @@ approval timestamp.
 The required reviewer roles must be requested and verified through GitHub.
 Every required review applies to the immutable PR head SHA shown by GitHub;
 changing that head requires the required reviews and CI to be current again.
+An owner attestation is likewise valid only for the exact SHA it names.
 
 ## Operator and release records
 

@@ -49,7 +49,7 @@ execution gate, or historical record. See
 
 ## Immediate next items
 
-1. **PAR-EXC-001** — Governed Exception (Milestone 3) — **In progress** (ADR-0015 **Accepted**; controlled-pilot dual-write **PASS**; PR #78/#79 history preserved; PR #81 is the non-production canonical-read package; committed defaults remain off; **no flags enabled**; **blocker:** named Release Authority `@haroonwahed` must approve the unchanged PR #81 SHA; CI must remain green before canonical-read implementation may start)
+1. **PAR-EXC-001** — Governed Exception (Milestone 3) — **In progress** (ADR-0015 **Accepted**; controlled-pilot dual-write **PASS**; PR #78/#79 history preserved; PR #81 is the non-production canonical-read package; committed defaults remain off; **no flags enabled**; single-maintainer bootstrap requires the repository-owner attestation on PR #81's exact SHA plus green CI before canonical-read implementation may start)
 
 2. **PAR-APR-002** — legacy approval cutover — **Planned** — **not started this slice**
 3. **PAR-WF-010** — production cutover **blocked** pending Accepted ADR-0012 — **not started this slice**
@@ -441,7 +441,7 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 
 | Field | Content |
 |---|---|
-| Status | **In progress** (2026-07-24) — ADR-0015 **Accepted**; controlled-pilot dual-write activation **PASS**; monitoring PR #78 was merged prematurely `e26a2bdc` and its correction trail is preserved by PR #79 `83a0a00f`; monitoring remains read-only. PR [#81](https://github.com/Technivian/CLMOne/pull/81) carries the non-production canonical-read package; **no flags enabled**; committed defaults remain **off**; legacy authoritative; **blocker:** named Release Authority `@haroonwahed` must approve the unchanged SHA while CI remains green; break-glass / signature-provider residuals inventoried |
+| Status | **In progress** (2026-07-24) — ADR-0015 **Accepted**; controlled-pilot dual-write activation **PASS**; monitoring PR #78 was merged prematurely `e26a2bdc` and its correction trail is preserved by PR #79 `83a0a00f`; monitoring remains read-only. PR [#81](https://github.com/Technivian/CLMOne/pull/81) carries the non-production canonical-read package; **no flags enabled**; committed defaults remain **off**; legacy authoritative; sole-maintainer bootstrap requires a repository-owner attestation on the unchanged SHA while CI remains green; break-glass / signature-provider residuals inventoried |
 
 | Priority | P1 |
 | Problem | No first-class governed Exception; risk/actions are scattered. |
@@ -449,20 +449,20 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | Current evidence | `docs/audits/evidence/2026-07-22-par-exc-001/` (incl. `CONTROLLED_PILOT_DUAL_WRITE_ACTIVATION_RESULTS.md`) |
 | Target outcome | Governed `ExceptionRequest` / `ExceptionDecision` with owner, expiry, authority, compensating controls, privilege tokens, immutable history, tenant isolation |
 | Dependencies | PAR-APR-001 pattern helpful (**met**); ADR-0015 Acceptance (**met**); Motion 2 dual-write (**Authorized** default-off); Motion 3 activation (**Authorized** + operational **PASS**) |
-| Decision required | **ADR-0015 Accepted**; controlled-pilot dual-write **PASS**; PR #81 requires the named Release Authority's approval for its unchanged SHA and green CI before the separate default-off canonical-read implementation may start |
+| Decision required | **ADR-0015 Accepted**; controlled-pilot dual-write **PASS**; PR #81 requires the applicable exact-SHA gate (named Release Authority review, or the narrowly scoped sole-maintainer owner attestation) and green CI before the separate default-off canonical-read implementation may start |
 | Migration impact | Additive `0114` + `0115` (`correlation_id`); no legacy backfill; dual-write default-off |
 | Security and permissions impact | Server-side authz; Critical security bypass requires explicit Security approval; cross-tenant prohibited; legacy authoritative until read cutover |
 | Audit requirements | `exception.request.*`, `exception.decision.recorded`, `exception.activated`, `exception.dual_write_failed`, `exception.security_gate_blocked`, `exception.cross_tenant.denied` |
 | UX requirements | Exception surfaces deferred until cutover; no hero clutter |
 | Tests | `tests/test_par_exc_001_exception.py` (11 OK) + `tests/test_par_exc_001_dual_write.py` (16 OK) + activation harness PASS |
 | Rollback strategy | Flags default off; reverse `0115` then `0114`; dual-write rollback = flag-off + clear allowlist (**drilled PASS**); canonical-read rollback = flag-off + clear allowlist (required before enablement) |
-| Acceptance criteria | Accepted ADR (**met**); six priority paths dual-write merged default-off; controlled-pilot activation **PASS**; remaining paths inventoried; canonical read requires the Release Authority/CI gate on PR #81, a separate default-off implementation, and a PASS operator run followed by flag-off restoration — **keep In progress** |
+| Acceptance criteria | Accepted ADR (**met**); six priority paths dual-write merged default-off; controlled-pilot activation **PASS**; remaining paths inventoried; canonical read requires the applicable exact-SHA/CI gate on PR #81, a separate default-off implementation, and a PASS operator run followed by flag-off restoration — **keep In progress** |
 | Evidence | `docs/audits/evidence/2026-07-22-par-exc-001/` (incl. `CANONICAL_READ_AUTHORITY_AUTHORIZATION.md`) |
 | Accepted ADR | **ADR-0015** (Accepted 2026-07-22T19:12:39Z) |
 | PR/commits | Foundation PR #66 merge `982b0900`; dual-write PR #69 merge `f19eae42`; Motion 3 auth PR #74 merge `058c5ed0`; monitoring PR #78 merge `e26a2bdc` (premature); correction PR #79 merge `83a0a00f`; Motion 4 PR #81 open |
 | Last updated | 2026-07-23 |
 | Explicit non-starts | PAR-APR-002, PAR-WF-010, PAR-ID-002 |
-| Next cutover step | Obtain the named Release Authority's approval for PR #81's unchanged SHA while CI is green; merge only after those gates pass; then implement default-off canonical read in a separate reviewed PR and run it only in the named environment. **Exact blocker:** PR #81 has no Release Authority approval. Do not start PAR-APR-002 / PAR-WF-010 / PAR-ID-002 here. |
+| Next cutover step | Obtain the applicable exact-SHA gate for PR #81 (the named Release Authority review or, only where independently unavailable, the sole-maintainer owner attestation) while CI is green; merge only after those gates pass; then implement default-off canonical read in a separate reviewed PR and run it only in the named environment. Do not start PAR-APR-002 / PAR-WF-010 / PAR-ID-002 here. |
 
 
 ---

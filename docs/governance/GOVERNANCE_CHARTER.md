@@ -1,6 +1,6 @@
 # CLM One Governance Charter
 
-Version: 2.2
+Version: 2.3
 Status: Mandatory — canonical repository governance document
 Last amended: 2026-07-24 (supersedes CMS Aegis `DESIGN_CONSTITUTION.md` v1.5 per ADR-0009)
 Purpose: enforce one coherent enterprise-grade product language across all CLM One pages
@@ -425,6 +425,14 @@ approval evidence.
   review by the named Release Authority, green CI for that immutable reviewed
   SHA, default-off and reversible flags, and documented abort, rollback, and
   named-environment operator controls.
+- **Single-maintainer exception:** when GitHub shows exactly one direct human
+  collaborator with push or admin access, independent review is unavailable.
+  For non-production, reversible, default-off work only, that repository owner
+  may submit a GitHub owner attestation that names the exact immutable head SHA.
+  All required CI must be green for that SHA; the reviewed scope must be
+  unchanged; abort and rollback controls and a named-environment operator
+  record are mandatory; and flags must be off again after observation. This is
+  not a GitHub review and does not apply to any action in the following bullet.
 - Production activation, permission or privilege changes, automatic repair,
   ADMIN authority, and legacy retirement require approved Product,
   Engineering, and Security GitHub reviews that are independent of one
