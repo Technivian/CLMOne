@@ -11,6 +11,10 @@ cleanup() { git -C "$ROOT" worktree remove --force "$BASE_DIR" 2>/dev/null || tr
 trap cleanup EXIT
 mkdir -p "$ARTIFACT_DIR"
 git -C "$ROOT" worktree add --detach "$BASE_DIR" "$BASE_REF" >/dev/null
+# The application and tests remain at BASE_REF.  Only the reviewed capture
+# harness is copied in so both revisions emit the same machine-readable schema.
+cp "$ROOT/scripts/verify_ui.sh" "$BASE_DIR/scripts/verify_ui.sh"
+chmod +x "$BASE_DIR/scripts/verify_ui.sh"
 
 run_suite() {
   local checkout=$1 output=$2 port=$3 status
