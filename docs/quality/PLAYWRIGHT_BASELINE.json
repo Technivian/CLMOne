@@ -801,6 +801,4 @@
       "safeguards": "Exact identity/signature comparison; raw artifacts retained; hard expiry."
     }
   ],
-  "schema_version": 1
-}
-
+  "schema_version": 1}
