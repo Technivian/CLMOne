@@ -328,7 +328,7 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | Target outcome | Search, analytics, and AI endpoints enforce the same tenant + permission rules as primary contract APIs; UI hide never substitutes for server checks |
 | Owners | **@haroonwahed** — named Programme, Product, Engineering, and Security owner under the Pilot Hardening bootstrap; recorded as the sole direct human administrator. This declaration does not replace independent reviews required for enforcement. |
 | Dependencies | Completed route/control inventory and characterization. PDR-0008 remains Proposed; its acceptance and separate authorization are required before enforcement can safely interpret Ethical Walls, confidential records, role scope, aggregates, telemetry, or AI context. `PAR-AI-001` surfaces may be characterized without claiming AI provenance complete. |
-| Decision required | **PDR-0008 Product/Security policy acceptance** is required before introducing an object-level read model or changing entitlement behaviour. A separate authorization is required for every enforcement implementation or activation. |
+| Decision required | **PDR-0008 Addendum 001 accepts the policy scope only.** A separate authorization is still required for every enforcement implementation or activation. |
 | Migration impact | None expected |
 | Security and permissions impact | **High** — close authz gaps; regression tests mandatory |
 | Audit requirements | Denied cross-tenant access attempts remain free of contract content in logs; establish evidence for restricted-record denial, aggregate/facet suppression, telemetry minimization, and AI context exclusion before enforcement. |
@@ -336,8 +336,8 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | Tests | Baseline: focused authorization suite **159/160 pass**, with one documented unrelated UI assertion failure. Characterization adds unauthenticated, owner/member, cross-tenant AI, Ethical-Wall, telemetry, and default-off counter tests; enforcement remains blocked pending the required policy decision. |
 | Rollback strategy | Characterization is merged with its observation control committed off. The smallest proposed enforcement slice is default-off contract-search result/facet filtering only, with a named non-production environment, explicit allowlist, generic content-free deny/empty outcomes, and flag-off restoration of the legacy read path. It cannot proceed until PDR-0008 is accepted, independent reviews, green CI, and separately reviewed rollback controls are present. |
 | Acceptance criteria | For each in-scope route, a server-side policy is demonstrably applied before records, facets, aggregates, telemetry, or AI context are returned; client hiding is not relied on; cross-tenant and restricted-record denial is content-free; required CI and authorization evidence are green. |
-| Evidence | `docs/audits/evidence/2026-07-24-par-sec-002/BASELINE_AUDIT.md`; `docs/audits/evidence/2026-07-25-par-sec-002-characterization/ROUTE_MATRIX.md`; `docs/audits/evidence/2026-07-25-par-sec-002-policy/POLICY_PACKAGE.md`; PDR-0008 |
-| PR/commits | PR #113 baseline merge `10177cc5d`; PR #119 characterization merge `809b5760`; PDR-0008 policy package PR pending |
+| Evidence | `docs/audits/evidence/2026-07-24-par-sec-002/BASELINE_AUDIT.md`; `docs/audits/evidence/2026-07-25-par-sec-002-characterization/ROUTE_MATRIX.md`; `docs/audits/evidence/2026-07-25-par-sec-002-policy/POLICY_PACKAGE.md`; PDR-0008 and Addendum 001 |
+| PR/commits | PR #113 baseline merge `10177cc5d`; PR #119 characterization merge `809b5760`; policy PR #120 `136675003f`; Addendum PR pending |
 | Last updated | 2026-07-25 |
 
 ---

@@ -1,11 +1,12 @@
 # PDR-0008: Object-level read enforcement policy for search, analytics, and AI
 
-**Status:** Proposed — Product/Security planning decision only; not implementation authority.
+**Status:** Proposed — policy scope accepted in Addendum 001; implementation authority not granted.
 **Date:** 2026-07-25
 **Owner:** Pilot Hardening PAR-SEC-002 — Programme, Product, Engineering, and Security: `@haroonwahed` (the recorded sole direct human administrator)
 **Affected Charter sections:** §16 Repository evidence and release control
 **Related programme:** PAR-SEC-002
 **Evidence:** `docs/audits/evidence/2026-07-24-par-sec-002/BASELINE_AUDIT.md`; `docs/audits/evidence/2026-07-25-par-sec-002-characterization/ROUTE_MATRIX.md`
+**Addendum:** [PDR-0008 Addendum 001](PDR-0008-ADDENDUM-001-policy-resolution.md)
 
 ## Status and authority boundary
 
@@ -220,18 +221,27 @@ Rejected.  Retrieval before authorization risks exposure.  Authorization and
 retrieval filtering must happen before context construction; unknown
 classification fails closed.
 
-## Unresolved decisions
+## Resolved by Addendum 001
 
-1. Whether the proposed small-cohort threshold of five needs a different
-   product value or narrowly defined statutory/reporting exception process.
-2. The accepted field/document classification and redaction catalogue needed
-   for eligible AI context beyond wall denial.
-3. The support and break-glass process, including its independent approvals,
-   audit access, expiry, and operator controls.
-4. The authoritative source and refresh semantics for any future semantic
-   search index after object-level filtering is introduced.
-5. The retention duration and legal basis for the proposed content-free
-   telemetry aggregates.
+Addendum 001 resolves the aggregate threshold and exception model, AI
+classification/redaction boundary, break-glass controls, search-index/facet
+semantics, and telemetry schema/retention/legal-basis proposal.  Its
+disposition is **Accept for policy scope only**.  It does not authorize
+implementation, activation, or any permission, visibility, migration,
+telemetry, AI, production, repair, ADMIN, canonical-read, or legacy-retirement
+change.
+
+## Remaining implementation risks
+
+1. Adversarial testing is still needed for aggregate differencing and
+   high-cardinality joins.
+2. The catalogue must be populated and tested across document regions, OCR,
+   embeddings, and provider-side retention.
+3. Break-glass drills must prove revocation, clock handling, and audit-sink
+   failure behavior.
+4. Index lag, cache invalidation, and cross-shard policy rechecks need proof.
+5. Existing raw telemetry needs a separately authorized privacy inventory;
+   this addendum does not alter it.
 
 ## Approval
 

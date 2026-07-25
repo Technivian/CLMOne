@@ -3,7 +3,8 @@
 **Scope:** Planning and decision documentation only.
 **Runtime authorization:** Unchanged.
 **Implementation authority:** None.
-**Related decision:** [PDR-0008](../../../governance/decisions/pdr/PDR-0008-object-level-read-enforcement-policy.md) (Proposed)
+**Related decision:** [PDR-0008](../../../governance/decisions/pdr/PDR-0008-object-level-read-enforcement-policy.md) (policy scope accepted; implementation remains blocked)
+**Addendum:** [PDR-0008 Addendum 001](../../../governance/decisions/pdr/PDR-0008-ADDENDUM-001-policy-resolution.md)
 
 ## Verified inputs
 
@@ -30,13 +31,13 @@ or legacy behaviour changed.
 
 ## Decision and implementation gates
 
-PDR-0008 is **Proposed**.  Before any implementation, it needs the applicable
-repository-governance acceptance, a separately authorized scope, exact-SHA
-green CI, and the required independent reviews for a permission or
-result-visibility change.  Before any non-production observation or release,
-the implementation needs documented abort/rollback controls and the
-appropriate operator or release record.  Feature flags control exposure only;
-they do not provide authority.
+PDR-0008 Addendum 001 records **Accept for policy scope only**.  Before any
+implementation, it still needs a separately authorized scope, exact-SHA green
+CI, and the required independent reviews for a permission or result-visibility
+change.  Before any non-production observation or release, the implementation
+needs documented abort/rollback controls and the appropriate operator or
+release record.  Feature flags control exposure only; they do not provide
+authority.
 
 ## Smallest proposed slice
 
