@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
-from contracts.models import Contract, Organization, OrganizationMembership
+from contracts.models import ClauseCategory, ClauseTemplate, Contract, Organization, OrganizationMembership
 
 User = get_user_model()
 
@@ -80,6 +80,68 @@ class NamedCopyDefectTests(TestCase):
         content = response.content.decode()
         self.assertNotIn('No clause library found', content)
         self.assertIn('Add first clause', content)
+
+    def test_clause_library_exposes_its_search_filters_count_and_primary_action(self):
+        ClauseTemplate.objects.create(
+            organization=self.org,
+            title='Governing law',
+            content='This agreement is governed by Dutch law.',
+        )
+
+        response = self.client.get(reverse('contracts:clause_template_list'))
+
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        for value in ('Search clauses', 'All categories', 'All scopes', '1 clause', '>Add new<'):
+            with self.subTest(value=value):
+                self.assertIn(value, content)
+
+    def test_clause_library_retains_active_search_category_and_scope_filters(self):
+        category = ClauseCategory.objects.create(organization=self.org, name='Governing law')
+        ClauseTemplate.objects.create(
+            organization=self.org,
+            category=category,
+            title='Dutch governing law',
+            content='This agreement is governed by Dutch law.',
+            jurisdiction_scope=ClauseTemplate.JurisdictionScope.EU,
+        )
+        ClauseTemplate.objects.create(
+            organization=self.org,
+            title='Confidentiality',
+            content='Keep confidential information protected.',
+            jurisdiction_scope=ClauseTemplate.JurisdictionScope.GLOBAL,
+        )
+
+        response = self.client.get(
+            reverse('contracts:clause_template_list'),
+            {'q': 'Dutch', 'category': category.pk, 'scope': ClauseTemplate.JurisdictionScope.EU},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn('1 clause', content)
+        self.assertIn('value="EU" selected', content)
+        self.assertIn(f'value="{category.pk}" selected', content)
+        self.assertIn('Dutch governing law', content)
+        self.assertNotIn('>Confidentiality<', content)
+
+    def test_clause_template_edit_explains_versioned_save_and_groups_fields(self):
+        clause = ClauseTemplate.objects.create(
+            organization=self.org,
+            title='Governing law',
+            content='This agreement is governed by Dutch law.',
+        )
+
+        response = self.client.get(reverse('contracts:clause_template_update', kwargs={'pk': clause.pk}))
+
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        for value in (
+            'Clause details', 'Clause text', 'Applicability', 'Negotiation guidance',
+            'Versioned change', 'Saving creates a new draft version.', 'Save new version',
+        ):
+            with self.subTest(value=value):
+                self.assertIn(value, content)
 
     def test_contract_detail_target_stage_is_not_a_raw_enum_key(self):
         contract = Contract.objects.create(

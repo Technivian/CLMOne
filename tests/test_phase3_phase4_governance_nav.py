@@ -199,12 +199,12 @@ class Phase4NavigationRetirementTests(TestCase):
         self.assertIn(reverse('contracts:obligations_workspace'), response.url)
         self.assertIn('view=overdue', response.url)
 
-    def test_command_center_points_deadlines_at_obligations(self):
+    def test_command_center_keeps_specialist_navigation_in_the_sidebar(self):
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, reverse('contracts:obligations_workspace'))
-        self.assertContains(response, 'Open Obligations')
+        self.assertNotContains(response, 'Open Obligations')
         self.assertContains(response, 'Contracts needing attention')
+        self.assertContains(response, 'Upcoming deadlines')
         self.assertNotContains(response, 'Recent Matters')
 
     @override_settings(CONTROLLED_PILOT_ENABLED=False)

@@ -3,18 +3,40 @@
 {% block authenticated_page_title %}Clause Library{% endblock %}
 {% block authenticated_page_subtitle %}Manage the governed clause library and its approved language.{% endblock %}
 {% block content %}
-<div class="dc-ds-page dc-ds-page--wide dc-ds-page-flow dc-ds-list-page">
+{% include "components/_list_page_shell_styles.html" %}
+<div class="dc-ds-page dc-ds-page--wide dc-ds-page-flow dc-ds-list-page clm-list-page clause-library-page">
+  <form method="get" aria-label="Clause library controls">
+    <header class="clm-list-shell dc-ds-filterbar dc-ds-table-toolbar dc-ds-list-toolbar" aria-label="Clause library controls">
+      <div class="clm-list-filter-controls">
+        <div class="clm-list-search-field">
+          {% include "design_system/icon.html" with name="search" class_name="clm-list-search-icon" %}
+          <label class="sr-only" for="clause-library-search">Search clauses</label>
+          <input class="dc-ds-control" type="search" id="clause-library-search" name="q" value="{{ search_query }}" placeholder="Search clauses">
+        </div>
 
-  <header class="dc-ds-page-hero dc-ds-list-header">
-    <div class="dc-ds-page-hero__context dc-ds-list-header__context">
-      <h1 class="dc-ds-title">Clause Library</h1>
-      <p class="dc-ds-subtitle">Manage the governed clause library and its approved language.</p>
-    </div>
-    <div class="dc-ds-actions"><a href="{% url 'contracts:clause_template_create' %}" class="dc-ds-button dc-ds-button--primary text-white inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg">
-        <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-        Add New
-      </a></div>
-  </header>
+        <label class="sr-only" for="clause-library-category">Category</label>
+        <select class="dc-ds-control" id="clause-library-category" name="category" data-autosubmit>
+          <option value="">All categories</option>
+          {% for category in categories %}
+            <option value="{{ category.pk }}"{% if selected_category == category.pk|stringformat:"s" %} selected{% endif %}>{{ category.name }}</option>
+          {% endfor %}
+        </select>
+
+        <label class="sr-only" for="clause-library-scope">Scope</label>
+        <select class="dc-ds-control" id="clause-library-scope" name="scope" data-autosubmit>
+          <option value="">All scopes</option>
+          {% for value, label in scope_options %}
+            <option value="{{ value }}"{% if selected_scope == value %} selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+
+        <div class="clm-list-actions-stack">
+          <p class="clm-list-result-count" aria-live="polite">{{ clause_count }} clause{{ clause_count|pluralize }}</p>
+          <a href="{% url 'contracts:clause_template_create' %}" class="dc-ds-button dc-ds-button--primary">Add new</a>
+        </div>
+      </div>
+    </header>
+  </form>
 
   <div class="dc-ds-table-wrap">
     <table class="dc-ds-table" data-table-core="server">

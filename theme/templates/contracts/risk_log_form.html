@@ -1,45 +1,9 @@
-{% extends 'base.html' %}
-{% block title %}{% if form.instance.pk %}Edit Risk{% else %}Log New Risk{% endif %}{% endblock %}
-{% block authenticated_page_title %}{% if form.instance.pk %}Edit Risk{% else %}Log a New Risk{% endif %}{% endblock %}
+{% extends "base.html" %}
+{% block title %}{% if form.instance.pk %}Edit Risk{% else %}Log New Risk{% endif %} – CLM One{% endblock %}
+{% block authenticated_page_title %}{% if form.instance.pk %}Edit Risk{% else %}Log New Risk{% endif %}{% endblock %}
+{% block authenticated_page_subtitle %}Capture the risk, accountable owner, and mitigation plan for this governed record.{% endblock %}
 {% block authenticated_page_back %}<a href="{% url 'contracts:risk_log_list' %}" class="topbar-back-link" data-workspace-back aria-label="Back to {{ risk_review_label|lower }}" title="Back to {{ risk_review_label }}">{% include "design_system/icon.html" with name="arrow-left" %}</a>{% endblock %}
 {% block content %}
-<div class="dc-ds-page dc-ds-page-flow dc-ds-record-page"><div class="dc-ds-record-content dc-ds-record-content--narrow">
-            <form method="post" class="panel panel-inner dc-ds-surface dc-ds-record-form">
-                {% csrf_token %}
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="md:col-span-2">
-                        <label for="{{ form.title.id_for_label }}" class="form-label">Title</label>
-                        {{ form.title }}
-                    </div>
-                    <div class="md:col-span-2">
-                        <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
-                        {{ form.description }}
-                    </div>
-                    <div>
-                        <label for="{{ form.risk_level.id_for_label }}" class="form-label">Risk Level</label>
-                        {{ form.risk_level }}
-                    </div>
-                    <div>
-                        <label for="{{ form.mitigation_status.id_for_label }}" class="form-label">Mitigation Status</label>
-                        {{ form.mitigation_status }}
-                    </div>
-                    <div>
-                        <label for="{{ form.owner.id_for_label }}" class="form-label">Owner</label>
-                        {{ form.owner }}
-                    </div>
-                    <div>
-                        <label for="{{ form.linked_contract.id_for_label }}" class="form-label">Linked Contract (Optional)</label>
-                        {{ form.linked_contract }}
-                    </div>
-                    <div class="md:col-span-2">
-                        <label for="{{ form.mitigation_steps.id_for_label }}" class="form-label">Mitigation Steps</label>
-                        {{ form.mitigation_steps }}
-                    </div>
-                </div>
-                <div class="dc-ds-form-actions">
-                    <a href="{% url 'contracts:risk_log_list' %}" class="dc-ds-button dc-ds-button--quiet">Cancel</a>
-                    <button type="submit" class="dc-ds-button dc-ds-button--primary">Save Risk</button>
-                </div>
-            </form>
-</div></div>
+{% url 'contracts:risk_log_list' as cancel_href %}
+{% include "design_system/record_form.html" with form=form cancel_href=cancel_href submit_label="Save risk" %}
 {% endblock %}

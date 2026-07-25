@@ -27,7 +27,7 @@
 
 - Templates & Playbooks
 - Workflow Designer
-- Data Manager
+- Workflow Field Catalog
 - Entities
 - Settings
 
@@ -67,6 +67,12 @@ workspaces.
 Organization-wide operational and risk overview.
 
 Must not become a personal queue.
+
+Dashboard intervention hierarchy is: one highest-priority portfolio issue in
+the hero, then non-overlapping portfolio actions, then additional contracts
+requiring attention. Scores must expose their data freshness, included
+controls, and a breakdown path. Do not embed navigation cards for My Work or
+specialist workspaces; their sidebar destinations remain the canonical routes.
 
 ### Specialist workspaces
 
@@ -119,6 +125,12 @@ Top-level areas:
 - Approval Policies
 
 Each area must show operational metadata, not only a navigation card.
+
+Linked configuration surfaces:
+
+- Workflow Field Catalog
+
+The Workflow Field Catalog is a workflow-template field inventory, not the canonical Data Manager. Reserved Data Manager navigation should only appear once the governed property registry exists.
 
 ## 5. Workflow Designer
 

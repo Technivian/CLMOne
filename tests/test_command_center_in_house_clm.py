@@ -68,12 +68,12 @@ class CommandCenterDashboardTests(TestCase):
         self.assertContains(response, 'Command Center')
         self.assertNotContains(response, 'Legal operations')
         self.assertNotContains(response, 'Live workspace')
-        self.assertContains(response, 'Overview of contracts, approvals, and governance.')
+        self.assertContains(response, 'Organization-wide view of portfolio health, blockers, and operational risk.')
         # A contract record makes the portfolio measurable even if it does not
         # yet have a priority workflow item.
         self.assertContains(response, 'No priority action right now')
-        self.assertContains(response, 'Review priority actions')
-        self.assertContains(response, 'No active issues')
+        self.assertContains(response, 'Review priority action')
+        self.assertContains(response, 'No additional portfolio actions')
         self.assertNotContains(response, 'Attention needed:')
 
     def test_metric_cards_render(self):
@@ -81,8 +81,8 @@ class CommandCenterDashboardTests(TestCase):
         self.assertContains(response, 'dc-ds-metric__value--clear')
         self.assertContains(response, 'Configure tracking')
 
-    def test_priority_queue_and_right_rail_render(self):
-        # Priority Queue is wired to real in-progress contracts, not hardcoded
+    def test_priority_queue_and_portfolio_operations_render(self):
+        # Portfolio actions are wired to real in-progress contracts, not hardcoded
         # mock rows — seed one so the test verifies actual data flows through
         # rather than locking in fake company names.
         Contract.objects.create(
@@ -98,9 +98,9 @@ class CommandCenterDashboardTests(TestCase):
         self.assertContains(response, 'Operational queues')
         self.assertContains(response, 'Cross-document conflicts')
         self.assertContains(response, 'Governance controls')
-        self.assertContains(response, 'Action queue')
-        self.assertContains(response, 'Upcoming Deadlines')
-        self.assertContains(response, 'Recent Matters')
+        self.assertContains(response, 'Portfolio actions')
+        self.assertContains(response, 'Upcoming deadlines')
+        self.assertContains(response, 'Contracts needing attention')
 
     def test_dashboard_uses_persisted_command_center_model(self):
         CommandCenterSavedView.objects.create(
@@ -151,7 +151,6 @@ class CommandCenterDashboardTests(TestCase):
 
         self.assertContains(response, 'Persisted DPA conflict row')
         self.assertContains(response, 'MSA cap mismatch')
-        self.assertContains(response, 'Counsel review')
         self.assertContains(response, 'Resolve')
         self.assertContains(response, 'Top priority')
 

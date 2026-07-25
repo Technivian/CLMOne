@@ -13,8 +13,10 @@ from contracts.models import (
     Contract,
     Counterparty,
     DPAReviewPack,
+    FieldDefinition,
     Organization,
     OrganizationMembership,
+    WorkflowTemplate,
 )
 from contracts.nav_config import nav_item_labels
 
@@ -30,7 +32,6 @@ STANDARD_NAV_LABELS = [
     'Obligations',
     'Templates & Playbooks',
     'Workflow Designer',
-    'Data Manager',
     'Entities',
 ]
 
@@ -44,7 +45,6 @@ STANDARD_NAV_LABELS_HTML = [
     'Obligations',
     'Templates &amp; Playbooks',
     'Workflow Designer',
-    'Data Manager',
     'Entities',
 ]
 
@@ -200,6 +200,7 @@ class StandardNavTests(TestCase):
         content = sidebar_html(response)
         for label in OLD_LAYOUT_NAV_LABELS:
             self.assertNotIn(label, content, msg=f'{label} should not render as a primary nav item')
+        self.assertNotIn('Data Manager', content)
 
     def test_upload_and_review_removed_from_sidebar_but_reachable_from_new_contract(self):
         response = self.owner_client.get(reverse('dashboard'))
@@ -329,19 +330,23 @@ class StandardNavTests(TestCase):
         self.assertContains(owner_response, 'Clause Library')
         self.assertContains(owner_response, 'Privacy Playbooks')
         self.assertContains(owner_response, 'Workflow Templates')
+        self.assertContains(owner_response, 'Workflow Field Catalog')
         self.assertContains(owner_response, 'Approval Policies')
         self.assertNotContains(owner_response, 'DPA playbooks')
         self.assertNotContains(owner_response, 'Approval thresholds')
         self.assertContains(owner_response, reverse('contracts:clause_template_list'))
         self.assertContains(owner_response, reverse('contracts:dpa_playbook_list'))
         self.assertContains(owner_response, reverse('contracts:workflow_template_list'))
+        self.assertContains(owner_response, reverse('contracts:workflow_field_catalog'))
         self.assertContains(owner_response, reverse('contracts:approval_rule_list'))
-        self.assertContains(owner_response, 'tph-grid')
-        self.assertContains(owner_response, 'tph-card__stat')
-        self.assertContains(owner_response, 'tph-card__icon')
+        self.assertContains(owner_response, 'dc-ds-card-grid--catalog')
+        self.assertContains(owner_response, 'dc-ds-card--catalog')
+        self.assertContains(owner_response, 'dc-ds-card__count')
+        self.assertContains(owner_response, 'dc-ds-card__icon')
         self.assertContains(owner_response, 'clauses')
         self.assertContains(owner_response, 'positions')
         self.assertContains(owner_response, 'templates')
+        self.assertContains(owner_response, 'fields')
         self.assertContains(owner_response, 'policies')
         body = owner_response.content.decode()
         self.assertIn('M14 2H6a2', body)  # file-text glyph
@@ -354,6 +359,109 @@ class StandardNavTests(TestCase):
 
         member_response = self.member_client.get(reverse('contracts:templates_playbooks_hub'))
         self.assertEqual(member_response.status_code, 403)
+
+    def test_workflow_field_catalog_is_linked_from_templates_playbooks(self):
+        response = self.owner_client.get(reverse('contracts:templates_playbooks_hub'))
+        self.assertContains(response, reverse('contracts:workflow_field_catalog'))
+        self.assertContains(response, 'Workflow Field Catalog')
+
+    def test_workflow_field_catalog_page_uses_new_product_name(self):
+        response = self.owner_client.get(reverse('contracts:workflow_field_catalog'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Workflow Field Catalog')
+        self.assertContains(response, 'Back to Templates and Playbooks')
+        self.assertNotContains(response, 'View the fields used by workflow templates and how each field is configured.')
+        self.assertContains(response, 'Search fields')
+        self.assertContains(response, 'Workflow')
+        self.assertContains(response, 'Section')
+        self.assertContains(response, 'Type')
+        self.assertContains(response, 'Required')
+        self.assertContains(response, 'workflow-field-catalog-filter-toggle')
+        self.assertContains(response, 'workflow-field-catalog-filters')
+        self.assertContains(response, 'workflow-field-catalog-column-toggle')
+        self.assertContains(response, 'dc-ds-table--fixed')
+        self.assertContains(response, 'dc-ds-table-sort')
+        self.assertNotContains(response, 'Data Manager')
+        self.assertNotContains(response, 'Property Definition')
+        self.assertNotContains(response, 'Workflow Field Usage')
+
+    def test_workflow_field_catalog_leads_with_label_and_filters_rows(self):
+        workflow = WorkflowTemplate.objects.create(
+            name='Catalog workflow', description='Test workflow', organization=self.org,
+        )
+        FieldDefinition.objects.create(
+            workflow_template=workflow,
+            key='counterparty',
+            label='Counterparty name',
+            section=FieldDefinition.Section.BASIC_DETAILS,
+            field_type=FieldDefinition.FieldType.TEXTAREA,
+            is_required=True,
+        )
+        FieldDefinition.objects.create(
+            workflow_template=workflow,
+            key='privacy_notes',
+            label='Privacy notes',
+            section=FieldDefinition.Section.PRIVACY_QUESTIONS,
+            field_type=FieldDefinition.FieldType.TEXT,
+            is_required=False,
+        )
+
+        response = self.owner_client.get(
+            reverse('contracts:workflow_field_catalog'), {'q': 'counterparty', 'required': 'yes'},
+        )
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertLess(
+            content.index('data-col="field" aria-sort="none"'),
+            content.index('data-col="key" aria-sort="none"'),
+        )
+        self.assertContains(response, 'Counterparty name')
+        self.assertContains(response, 'Long text')
+        self.assertContains(response, 'Basic details')
+        self.assertContains(response, 'Required')
+        self.assertNotContains(response, 'Privacy notes')
+
+        section_response = self.owner_client.get(
+            reverse('contracts:workflow_field_catalog'), {'section': FieldDefinition.Section.PRIVACY_QUESTIONS},
+        )
+        self.assertContains(section_response, 'Privacy notes')
+        self.assertContains(section_response, 'Privacy questions')
+
+    def test_workflow_field_catalog_supports_sorting_and_pagination(self):
+        workflow = WorkflowTemplate.objects.create(
+            name='Paged catalog workflow', description='Test workflow', organization=self.org,
+        )
+        FieldDefinition.objects.bulk_create([
+            FieldDefinition(
+                workflow_template=workflow,
+                key=f'field_{index:02d}',
+                label=f'Field {index:02d}',
+                section=FieldDefinition.Section.BASIC_DETAILS,
+                field_type=FieldDefinition.FieldType.TEXT,
+                order=index,
+            )
+            for index in range(51)
+        ])
+
+        sorted_response = self.owner_client.get(
+            reverse('contracts:workflow_field_catalog'), {'q': 'field_', 'sort': 'key', 'direction': 'desc'},
+        )
+        self.assertContains(sorted_response, 'data-col="key" aria-sort="descending"')
+        sorted_content = sorted_response.content.decode()
+        self.assertLess(sorted_content.index('Field 50'), sorted_content.index('Field 01'))
+        self.assertNotContains(sorted_response, 'dc-ds-table-selection')
+        self.assertNotContains(sorted_response, 'data-select-row')
+
+        paged_response = self.owner_client.get(reverse('contracts:workflow_field_catalog'), {'page': 2})
+        self.assertEqual(paged_response.context['page_obj'].number, 2)
+        num_pages = paged_response.context['page_obj'].paginator.num_pages
+        self.assertGreaterEqual(num_pages, 2)
+        self.assertContains(paged_response, f'Page 2 of {num_pages}')
+
+    def test_legacy_data_manager_url_redirects_to_workflow_field_catalog(self):
+        response = self.owner_client.get('/contracts/data-manager/')
+        self.assertEqual(response.status_code, 301)
+        self.assertEqual(response.url, reverse('contracts:workflow_field_catalog'))
 
     def test_new_contract_links_to_contract_type_picker(self):
         response = self.owner_client.get(reverse('dashboard'))

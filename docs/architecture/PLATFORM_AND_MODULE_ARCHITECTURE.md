@@ -213,7 +213,7 @@ Owns:
 
 ### 2.16 Data Manager
 
-Owns canonical definitions for:
+Reserved for the future governed registry. When implemented, it will own canonical definitions for:
 
 - properties;
 - contract types;
@@ -224,6 +224,8 @@ Owns canonical definitions for:
 - data quality;
 - deprecation;
 - schema usage.
+
+Current workflow-template field inventories are exposed through the Workflow Field Catalog linked from configuration surfaces, not through the first-class Data Manager destination.
 
 ### 2.17 Search and Repository Intelligence
 

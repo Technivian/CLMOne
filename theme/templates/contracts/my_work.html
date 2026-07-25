@@ -43,6 +43,12 @@
     font-size: 16px;
     font-weight: 400;
   }
+  .my-work-page .my-work-scope-tabs + .my-work-view-mode-tabs::before {
+    content: "|";
+    color: var(--ink-400, var(--text-muted));
+    font-size: 16px;
+    font-weight: 400;
+  }
   .my-work-page .my-work-summary-chip {
     display: inline-flex; align-items: center; gap: 6px;
     min-height: 30px; margin: 0; padding: 0 10px;
@@ -318,10 +324,11 @@
              {% if work_scope == 'team' %}aria-current="page"{% endif %}>Team queue</a>
         </div>
         {% endif %}
-        <div class="my-work-inline-summary my-work-active-panel" role="group" aria-label="Personal workload summary">
+        {% if summary_chips %}
+        <div class="my-work-inline-summary my-work-active-panel" role="group" aria-label="Quick views">
           {% for chip in summary_chips %}
           <button type="button"
-                  class="my-work-summary-chip my-work-summary-chip--{{ chip.tone }}{% if chip.hidden %} is-hidden{% endif %}"
+                  class="my-work-summary-chip"
                   data-summary-filter="{{ chip.key }}"
                   aria-pressed="false">
             <span class="my-work-summary-chip__label">{{ chip.label }}</span>
@@ -329,11 +336,18 @@
           </button>
           {% endfor %}
         </div>
+        {% endif %}
         <div class="my-work-view-mode-tabs">
           <button type="button" class="my-work-type-chip is-active" data-view-tab="active" aria-pressed="true">Active work</button>
           <button type="button" class="my-work-type-chip" data-view-tab="completed" aria-pressed="false">Recently completed</button>
         </div>
       </nav>
+      <div class="clm-list-view-actions my-work-toolbar-actions">
+        <span class="my-work-last-updated" id="my-work-last-updated">
+          Updated {{ last_updated|date:"g:i A" }}
+        </span>
+        <button type="button" class="dc-ds-button dc-ds-button--ghost" id="my-work-refresh" aria-label="Refresh work queue">Refresh</button>
+      </div>
     </div>
 
     <div class="clm-list-filter-controls my-work-active-panel">
@@ -367,12 +381,6 @@
           </div>
         </div>
         <p id="my-work-result-count" class="clm-list-result-count" aria-live="polite">{{ my_work_rows|length }} item{{ my_work_rows|length|pluralize }}</p>
-        <div class="my-work-toolbar-actions">
-          <span class="my-work-last-updated" id="my-work-last-updated">
-            Updated {{ last_updated|date:"g:i A" }}
-          </span>
-          <button type="button" class="dc-ds-button dc-ds-button--ghost" id="my-work-refresh" aria-label="Refresh work queue">Refresh</button>
-        </div>
       </div>
     </div>
 
@@ -793,6 +801,21 @@
         if (typeof saved[key] === 'string') state[key] = saved[key];
       });
     } catch (err) { /* ignore */ }
+
+    // Summary shortcuts that used to be rendered in the header now live in
+    // standard filters. Preserve an existing saved/session view without
+    // leaving an invisible summary filter active.
+    var legacySummaryFilters = {
+      due_today: { due: 'today' },
+      overdue: { due: 'overdue' },
+      questions_for_me: { workType: 'questions' },
+      returned_to_me: { status: 'Returned to you' },
+    };
+    var replacement = legacySummaryFilters[state.summary];
+    if (replacement) {
+      Object.keys(replacement).forEach(function (key) { state[key] = replacement[key]; });
+      state.summary = '';
+    }
   }
 
   function saveState() {

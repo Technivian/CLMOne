@@ -14,7 +14,14 @@ from django.shortcuts import render
 @login_required
 def design_system_catalog(request):
     """Living Casefile catalogue backed by production templates and tokens."""
-    return render(request, 'design_system/catalog.html')
+    return render(request, 'design_system/catalog.html', {
+        'card_demo_meta': [
+            {'label': 'Owner', 'value': 'Legal Operations'},
+            {'label': 'Review', 'value': 'Standard route'},
+            {'label': 'Updated', 'value': 'Today'},
+            {'label': 'Internal only', 'value': 'Not shown'},
+        ],
+    })
 
 
 @login_required

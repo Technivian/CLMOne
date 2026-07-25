@@ -1,0 +1,58 @@
+{% comment %}
+  Shared card shell. A linked card exposes one destination; an unlinked card
+  remains a semantic article and may contain its own footer actions.
+
+  Required: card_variant, card_title
+  Optional: card_href, card_icon, card_subtitle, card_badge, card_count,
+            card_description, card_meta, card_action_label, card_aria_label,
+            card_class_name, card_role, card_action_placement
+{% endcomment %}
+{% if card_href %}
+<a class="dc-ds-card dc-ds-card--{{ card_variant }} dc-ds-card--interactive{% if card_class_name %} {{ card_class_name }}{% endif %}" href="{{ card_href }}"{% if card_role %} role="{{ card_role }}"{% endif %}{% if card_aria_label %} aria-label="{{ card_aria_label }}"{% endif %}>
+{% else %}
+<article class="dc-ds-card dc-ds-card--{{ card_variant }}{% if card_class_name %} {{ card_class_name }}{% endif %}"{% if card_role %} role="{{ card_role }}"{% endif %}{% if card_aria_label %} aria-label="{{ card_aria_label }}"{% endif %}>
+{% endif %}
+  <div class="dc-ds-card__header">
+    {% if card_icon %}
+    <span class="dc-ds-card__icon" aria-hidden="true">{% include "design_system/icon.html" with name=card_icon only %}</span>
+    {% endif %}
+    <span class="dc-ds-card__heading">
+      <span class="dc-ds-card__title-row">
+        <span class="dc-ds-card__title">{{ card_title }}</span>
+        {% if card_badge %}<span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--neutral">{{ card_badge }}</span>{% endif %}
+      </span>
+      {% if card_subtitle %}<span class="dc-ds-card__subtitle">{{ card_subtitle }}</span>{% endif %}
+    </span>
+    {% if card_count %}<span class="dc-ds-card__count">{{ card_count }}</span>{% endif %}
+  </div>
+  {% if card_description %}<p class="dc-ds-card__body">{{ card_description }}</p>{% endif %}
+  {% if card_meta %}
+  {% if card_action_placement == "inline" %}<div class="dc-ds-card__meta-action-row">{% endif %}
+  <ul class="dc-ds-card__meta" aria-label="{{ card_title }} details">
+    {% for item in card_meta %}
+      {% if forloop.counter <= 3 %}
+      <li class="dc-ds-card__meta-item"><span>{{ item.label }}</span><strong>{{ item.value }}</strong></li>
+      {% endif %}
+    {% endfor %}
+    {% if card_meta|length > 3 %}<li class="dc-ds-card__meta-item dc-ds-card__meta-item--more">+{{ card_meta|length|add:"-3" }} more</li>{% endif %}
+  </ul>
+  {% if card_action_placement == "inline" and card_action_label %}
+  <span class="dc-ds-card__inline-action">{{ card_action_label }} {% include "design_system/icon.html" with name="arrow-right" only %}</span>
+  {% endif %}
+  {% if card_action_placement == "inline" %}</div>{% endif %}
+  {% endif %}
+  {% if card_action_placement == "inline" and card_action_label and not card_meta %}
+  <div class="dc-ds-card__meta-action-row">
+    <span class="dc-ds-card__inline-action">{{ card_action_label }} {% include "design_system/icon.html" with name="arrow-right" only %}</span>
+  </div>
+  {% endif %}
+  {% if card_action_label and card_action_placement != "inline" %}
+  <div class="dc-ds-card__footer">
+    <span class="dc-ds-card__primary-action">{{ card_action_label }} {% include "design_system/icon.html" with name="arrow-right" only %}</span>
+  </div>
+  {% endif %}
+{% if card_href %}
+</a>
+{% else %}
+</article>
+{% endif %}

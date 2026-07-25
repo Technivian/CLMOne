@@ -9,13 +9,6 @@
 {% endblock %}
 {% block content %}
 <style nonce="{{ csp_nonce }}">
-  .ctp-card {
-    display: block; padding: var(--ds-space-4); text-decoration: none;
-  }
-  .ctp-card-title { font-size: var(--ds-text-md); font-weight: 760; color: var(--ds-color-text); }
-  .ctp-card-sub { font-size: var(--ds-text-sm); color: var(--ds-color-text-secondary); margin-top: var(--ds-space-1); line-height: var(--ds-line-base); }
-  .ctp-card-blank { border-style: dashed; }
-
   .ctp-toolbar {
     display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-12);
     margin-bottom: var(--space-20);
@@ -38,54 +31,6 @@
     text-transform: none; letter-spacing: 0; font-weight: 500;
   }
 
-  .ctp-entry-grid {
-    display: grid;
-    gap: var(--space-12);
-    justify-content: start;
-    align-items: stretch;
-  }
-  .ctp-entry-grid[data-cols="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .ctp-entry-grid[data-cols="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .ctp-entry-grid[data-cols="1"] { grid-template-columns: minmax(0, 1fr); max-width: 360px; }
-
-  .ctp-entry-card {
-    position: relative; display: flex; flex-direction: column; gap: var(--space-8);
-    min-height: 164px; padding: var(--space-12); text-decoration: none;
-    color: inherit; outline: none; cursor: pointer;
-    transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease, background-color .15s ease;
-  }
-  .ctp-entry-card[hidden] { display: none; }
-  .ctp-entry-heading { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: var(--space-10); align-items: start; }
-  .ctp-entry-icon {
-    width: 36px; height: 36px; border-radius: var(--radius-control); background: var(--seal-bg); color: var(--seal-dark);
-    display: flex; align-items: center; justify-content: center; transition: background .15s, color .15s;
-  }
-  .ctp-entry-icon .dc-ds-icon { width: 16px; height: 16px; }
-  .ctp-entry-title { font: var(--text-heading); color: var(--ink-900); font-size: 15px; line-height: 22px; }
-  .ctp-entry-desc { margin-top: var(--space-2); color: var(--ink-500); font: var(--text-small); font-size: 12.5px; line-height: 17px; }
-  .ctp-entry-meta {
-    display: flex; flex-direction: column; gap: var(--space-2); margin-top: auto; padding-top: var(--space-8);
-    border-top: 1px solid var(--hairline); color: var(--ink-500); font: var(--text-meta);
-  }
-  .ctp-entry-meta-row { display: flex; justify-content: space-between; gap: var(--ds-space-2); }
-  .ctp-entry-meta-row span { color: var(--ink-500); }
-  .ctp-entry-meta-row b { max-width: 62%; color: var(--ink-700); font-size: var(--font-size-meta); font-weight: 600; text-align: right; }
-  .ctp-entry-cta {
-    width: fit-content; min-height: 32px; margin-top: 0; pointer-events: none;
-  }
-  .ctp-entry-card.dc-ds-surface--interactive:hover {
-    border-color: color-mix(in srgb, var(--seal) 48%, var(--hairline));
-    background: color-mix(in srgb, var(--seal) 7%, var(--card, #fff));
-    box-shadow: var(--shadow-card-hover, 0 8px 20px rgba(15, 23, 42, 0.08));
-    transform: translateY(-1px);
-  }
-  .ctp-entry-card.dc-ds-surface--interactive:focus-visible {
-    border-color: var(--seal);
-    background: color-mix(in srgb, var(--seal) 5%, var(--card, #fff));
-    box-shadow: 0 0 0 3px var(--focus-ring);
-    transform: none;
-  }
-
   .ctp-search-empty {
     margin: 0; padding: var(--space-16); border: 1px dashed var(--hairline);
     border-radius: var(--radius-subpanel, var(--radius-control));
@@ -94,23 +39,12 @@
   .ctp-search-empty[hidden] { display: none; }
 
   @media (max-width: 1024px) {
-    .ctp-entry-grid[data-cols="3"],
-    .ctp-entry-grid[data-cols="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .ctp-entry-grid[data-cols="1"] { max-width: none; }
   }
   @media (max-width: 640px) {
     .ctp-toolbar { align-items: stretch; }
     .ctp-search-wrap { flex-basis: 100%; }
     .ctp-toolbar-action { width: 100%; }
     .ctp-toolbar-action .dc-ds-button { width: 100%; justify-content: center; }
-    .ctp-entry-grid[data-cols="3"],
-    .ctp-entry-grid[data-cols="2"],
-    .ctp-entry-grid[data-cols="1"] { grid-template-columns: 1fr; max-width: none; }
-    .ctp-entry-card { min-height: 0; }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .ctp-entry-card { transition: none; }
-    .ctp-entry-card.dc-ds-surface--interactive:hover { transform: none; }
   }
 </style>
 
@@ -119,19 +53,21 @@
   {% if selected_type %}
   <div class="dc-ds-page-actions"><div class="dc-ds-actions"><a href="{% url 'contracts:contract_template_picker' %}" class="dc-ds-button dc-ds-button--ghost">Choose another type</a></div></div>
 
-  <div class="dc-ds-card-grid">
+  <div class="dc-ds-card-grid dc-ds-card-grid--launch">
     {% if templates %}
     {% for template in templates %}
-    <a href="{% url 'contracts:contract_create' %}?template={{ template.pk }}" class="ctp-card dc-ds-surface dc-ds-surface--interactive">
-      <div class="ctp-card-title">{{ template.name }}</div>
-      {% if template.description %}<div class="ctp-card-sub">{{ template.description }}</div>{% endif %}
-    </a>
+    {% url 'contracts:contract_create' as contract_create_url %}
+    {% with template_id=template.pk|stringformat:"s" %}
+      {% with template_href=contract_create_url|add:'?template='|add:template_id %}
+        {% include "design_system/card.html" with card_variant="launch" card_href=template_href card_icon="file-text" card_title=template.name card_description=template.description card_action_label="Use template" card_aria_label="Use template for "|add:template.name only %}
+      {% endwith %}
+    {% endwith %}
     {% endfor %}
     {% if not CONTROLLED_PILOT_ENABLED %}
-    <a href="{% url 'contracts:contract_create' %}?type={{ selected_type }}" class="ctp-card ctp-card-blank dc-ds-surface dc-ds-surface--interactive">
-      <div class="ctp-card-title">Start blank</div>
-      <div class="ctp-card-sub">Draft from scratch — no template content.</div>
-    </a>
+    {% url 'contracts:contract_create' as contract_create_url %}
+    {% with blank_href=contract_create_url|add:'?type='|add:selected_type %}
+      {% include "design_system/card.html" with card_variant="launch" card_href=blank_href card_icon="file-text" card_title="Start blank" card_description="Draft from scratch — no template content." card_action_label="Start draft" card_aria_label="Start a blank draft" only %}
+    {% endwith %}
     {% endif %}
     {% else %}
     {% if CONTROLLED_PILOT_ENABLED %}
@@ -172,31 +108,15 @@
       <div class="ctp-section-heading">
         <h2 id="ctp-section-{{ section.key }}" class="ctp-section-title">{{ section.label }}</h2>
       </div>
-      <div class="ctp-entry-grid" data-cols="{{ section.columns }}">
+      <div class="dc-ds-card-grid dc-ds-card-grid--launch" data-cols="{{ section.columns }}">
         {% for card in section.cards %}
-        <a
-          href="{{ card.start_url }}"
-          class="ctp-entry-card dc-ds-surface dc-ds-surface--interactive"
+        <div
           data-ctp-card
           data-contract-type="{{ card.contract_type }}"
           data-search="{{ card.title }} {{ card.contract_type }} {{ card.description }} {{ card.template_name|default:'' }} {{ card.expected_review }}"
-          aria-label="Start {{ card.title }} request"
         >
-          <div class="ctp-entry-heading">
-            <div class="ctp-entry-icon" aria-hidden="true">
-              {% include "design_system/icon.html" with name=card.icon class_name="dc-ds-icon" %}
-            </div>
-            <div>
-              <div class="ctp-entry-title">{{ card.title }}</div>
-              <div class="ctp-entry-desc">{{ card.description }}</div>
-            </div>
-          </div>
-          <div class="ctp-entry-meta">
-            <div class="ctp-entry-meta-row"><span>Starting template</span><b>{{ card.template_name|default:"Approved template route" }}</b></div>
-            <div class="ctp-entry-meta-row"><span>Expected review</span><b>{{ card.expected_review }}</b></div>
-          </div>
-          <span class="ctp-entry-cta dc-ds-button dc-ds-button--primary" aria-hidden="true">Start request &rarr;</span>
-        </a>
+          {% include "design_system/card.html" with card_variant="launch" card_href=card.start_url card_icon=card.icon card_title=card.title card_description=card.description card_meta=card.meta card_action_label="Start request" card_aria_label="Start "|add:card.title|add:" request" only %}
+        </div>
         {% endfor %}
       </div>
     </section>

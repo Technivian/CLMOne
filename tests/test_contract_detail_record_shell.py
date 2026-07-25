@@ -133,7 +133,7 @@ class ContractDetailShellTests(TestCase):
         self.assertNotIn('Stage:', body)
         self.assertIn('Active', body)
         self.assertIn('Obligation tracking', body)
-        self.assertIn('contract-command-position', body)
+        self.assertIn('contract-command-status-tags', body)
         self.assertIn('Upcoming milestone', body)
         self.assertNotIn('View all details', body)
         self.assertIn('contract-next-steps__action', body)
@@ -215,7 +215,7 @@ class ContractDetailMetadataHeaderTests(TestCase):
         self.assertIn('Header Contract', body)
         self.assertIn('In progress', body)
         self.assertIn('Negotiation', body)
-        self.assertIn('contract-command-position', body)
+        self.assertIn('contract-command-status-tags', body)
         self.assertNotIn('Status:', body)
         self.assertNotIn('Stage:', body)
         self.assertIn('Northwind Logistics LLC', body)
@@ -226,6 +226,19 @@ class ContractDetailMetadataHeaderTests(TestCase):
         self.assertIn('contract-command-meta__value', body)
         self.assertRegex(body, r'contract-command-meta__value[^>]*>\$125,000<')
         self.assertNotIn('dc-ds-workspace__metadata-grid', body)
+
+    def test_header_places_separate_bordered_status_tags_before_owner(self):
+        response = self.client.get(detail_url(self.contract.pk))
+        body = page_body(response.content.decode())
+
+        self.assertIn('contract-command-status-tags', body)
+        self.assertIn('dc-ds-badge--progress">In progress</span>', body)
+        self.assertIn('dc-ds-badge--progress">Negotiation</span>', body)
+        self.assertNotIn('contract-command-position', body)
+        self.assertLess(
+            body.index('contract-command-status-tags'),
+            body.index('contract-command-owner'),
+        )
 
     def test_header_omits_duplicate_command_summary_grid(self):
         response = self.client.get(detail_url(self.contract.pk))

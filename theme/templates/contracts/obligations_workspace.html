@@ -21,33 +21,34 @@
     color: var(--ink-800, var(--text-primary)); font-weight: 650;
   }
   .obligations-page .clm-list-summary { --dc-ds-summary-columns: 4; }
-  .obligations-page .dc-ds-table-wrap { overflow-x: auto; }
   .obligations-page #obligations-table {
-    min-width: 100%; width: 100%; table-layout: fixed;
-  }
-  .obligations-page #obligations-table th,
-  .obligations-page #obligations-table td {
-    vertical-align: middle; padding: 8px 12px; overflow: hidden;
+    min-width: 1180px;
   }
   .obligations-page #obligations-table th[data-col="obligation"],
   .obligations-page #obligations-table td[data-col="obligation"] { min-width: 220px; width: 24%; }
+  .obligations-page #obligations-table th[data-col="type"],
+  .obligations-page #obligations-table td[data-col="type"] { min-width: 110px; width: 10%; }
   .obligations-page #obligations-table th[data-col="contract"],
-  .obligations-page #obligations-table td[data-col="contract"] { min-width: 160px; width: 16%; }
+  .obligations-page #obligations-table td[data-col="contract"] { min-width: 160px; width: 15%; }
   .obligations-page #obligations-table th[data-col="owner"],
-  .obligations-page #obligations-table td[data-col="owner"] { min-width: 140px; width: 14%; }
+  .obligations-page #obligations-table td[data-col="owner"] { min-width: 140px; width: 13%; }
   .obligations-page #obligations-table th[data-col="due"],
   .obligations-page #obligations-table td[data-col="due"] {
-    min-width: 120px; width: 12%; text-align: left;
+    min-width: 128px; width: 11%; text-align: left;
     white-space: nowrap; color: var(--ink-700, var(--text-secondary));
   }
   .obligations-page #obligations-table th[data-col="status"],
-  .obligations-page #obligations-table td[data-col="status"] { min-width: 110px; width: 11%; }
+  .obligations-page #obligations-table td[data-col="status"] { min-width: 110px; width: 10%; }
   .obligations-page #obligations-table th[data-col="next_action"],
-  .obligations-page #obligations-table td[data-col="next_action"] { min-width: 160px; width: 18%; }
+  .obligations-page #obligations-table td[data-col="next_action"] { min-width: 160px; width: 13%; }
   .obligations-page #obligations-table th[data-col="actions"],
   .obligations-page #obligations-table td[data-col="actions"] {
-    min-width: 48px; width: 48px; text-align: center; overflow: visible;
+    min-width: 144px; width: 144px; text-align: right; overflow: visible;
   }
+  .obligations-page .obligation-row-actions {
+    display: flex; align-items: center; justify-content: flex-end; gap: var(--space-8); white-space: nowrap;
+  }
+  .obligations-page .obligation-row-actions form { margin: 0; }
   /* Keep open-menu focus local to the trigger — avoid a teal actions-column blot. */
   .obligations-page .obligation-actions-menu[open] .wq-kebab-trigger {
     background: var(--sidebar-hover);

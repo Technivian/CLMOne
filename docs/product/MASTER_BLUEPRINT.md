@@ -51,7 +51,7 @@ Supporting objects:
 4. Workflow Designer
 5. Templates and Clauses
 6. Negotiation Playbooks
-7. Data Manager
+7. Workflow Field Catalog
 8. Entities and Relationships
 9. Review and Collaboration
 10. Approvals
@@ -97,7 +97,7 @@ Deep review, privacy, and obligation operations.
 
 ### Configuration
 
-Workflow Designer, Templates and Playbooks, Data Manager, Entities, Settings.
+Workflow Designer, Templates and Playbooks, Workflow Field Catalog, Entities, Settings.
 
 ## Competitive posture
 

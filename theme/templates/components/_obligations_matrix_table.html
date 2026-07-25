@@ -5,7 +5,8 @@
   <thead class="tbl-head">
     <tr>
       <th class="tbl-th" scope="col" data-col="obligation">Obligation</th>
-      <th class="tbl-th" scope="col" data-col="contract">Source contract</th>
+      <th class="tbl-th" scope="col" data-col="type">Type</th>
+      <th class="tbl-th" scope="col" data-col="contract">Source</th>
       <th class="tbl-th" scope="col" data-col="status">Status</th>
       <th class="tbl-th" scope="col" data-col="owner">Owner</th>
       <th class="tbl-th" scope="col" data-col="due">Due date</th>
@@ -18,10 +19,10 @@
     <tr class="obligations-row" data-href="{% url 'contracts:deadline_update' obligation.pk %}" tabindex="0" role="link" aria-label="Open obligation {{ obligation.title|truncatechars:50 }}">
       <td data-col="obligation">
         <a href="{% url 'contracts:deadline_update' obligation.pk %}" class="wq-item-link"{% if obligation.priority_reason %} title="{{ obligation.priority_reason }}"{% endif %}>{{ obligation.title|truncatechars:60 }}</a>
-        <div class="wq-item-meta">{{ obligation.get_deadline_type_display }}</div>
         {% include "components/_governance_priority.html" with priority_label=obligation.priority_label priority_reason=obligation.priority_reason priority_tone=obligation.priority_tone show_detail=0 %}
         {% include "components/_governance_blocked.html" with is_blocked=obligation.is_blocked blocking_issue=obligation.blocking_issue blocker_owner=obligation.blocker_owner %}
       </td>
+      <td data-col="type"><span class="dc-ds-table-cell-text" title="{{ obligation.get_deadline_type_display }}">{{ obligation.get_deadline_type_display }}</span></td>
       <td data-col="contract">
         {% if obligation.contract %}
         <a href="{% url 'contracts:contract_detail' obligation.contract.pk %}" class="c-link">{{ obligation.contract.title|truncatechars:36 }}</a>
@@ -38,39 +39,49 @@
         <div class="wq-item-meta">{{ obligation.due_date|due_relative_label }}</div>
       </td>
       <td data-col="next_action"><span class="obligations-next-action">{{ obligation.next_action }}</span></td>
-      <td class="wq-col-action" data-col="actions">
-        <details class="wq-kebab obligation-actions-menu">
-          <summary aria-label="More actions for {{ obligation.title|truncatechars:50 }}" class="wq-kebab-trigger">
-            <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.7"></circle><circle cx="12" cy="12" r="1.7"></circle><circle cx="12" cy="19" r="1.7"></circle></svg>
-          </summary>
-          <div class="wq-kebab-menu" role="menu">
-            {% if not obligation.is_completed %}
-            <form method="post" action="{% url 'contracts:deadline_complete' obligation.pk %}" role="none">
-              {% csrf_token %}
-              <button type="submit" class="wq-kebab-action" role="menuitem">Mark complete</button>
-            </form>
-            <form method="post" action="{% url 'contracts:deadline_defer' obligation.pk %}" role="none">
-              {% csrf_token %}
-              <button type="submit" class="wq-kebab-action" role="menuitem">Defer 7 days</button>
-            </form>
-            <form method="post" action="{% url 'contracts:deadline_escalate' obligation.pk %}" role="none">
-              {% csrf_token %}
-              <button type="submit" class="wq-kebab-action" role="menuitem">Escalate priority</button>
-            </form>
-            {% endif %}
-            <a href="{% url 'contracts:deadline_update' obligation.pk %}" class="wq-kebab-action" role="menuitem">Edit obligation</a>
-            <div class="wq-kebab-divider" role="separator"></div>
-            <form method="post" action="{% url 'contracts:deadline_delete' obligation.pk %}" role="none">
-              {% csrf_token %}
-              <button type="submit" class="wq-kebab-action wq-kebab-action-danger" role="menuitem">Delete obligation</button>
-            </form>
-          </div>
-        </details>
+      <td data-col="actions">
+        <div class="obligation-row-actions">
+          {% if not obligation.is_completed %}
+          <form method="post" action="{% url 'contracts:deadline_complete' obligation.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="dc-ds-button dc-ds-button--quiet text-xs font-semibold px-2.5 py-1.5 rounded-md border">Complete</button>
+          </form>
+          {% else %}
+          <a href="{% url 'contracts:deadline_update' obligation.pk %}" class="dc-ds-button dc-ds-button--quiet text-xs font-semibold px-2.5 py-1.5 rounded-md border">View</a>
+          {% endif %}
+          <details class="wq-kebab obligation-actions-menu">
+            <summary aria-label="More actions for {{ obligation.title|truncatechars:50 }}" class="wq-kebab-trigger">
+              <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.7"></circle><circle cx="12" cy="12" r="1.7"></circle><circle cx="12" cy="19" r="1.7"></circle></svg>
+            </summary>
+            <div class="wq-kebab-menu" role="menu">
+              {% if not obligation.is_completed %}
+              <form method="post" action="{% url 'contracts:deadline_complete' obligation.pk %}" role="none">
+                {% csrf_token %}
+                <button type="submit" class="wq-kebab-action" role="menuitem">Mark complete</button>
+              </form>
+              <form method="post" action="{% url 'contracts:deadline_defer' obligation.pk %}" role="none">
+                {% csrf_token %}
+                <button type="submit" class="wq-kebab-action" role="menuitem">Defer 7 days</button>
+              </form>
+              <form method="post" action="{% url 'contracts:deadline_escalate' obligation.pk %}" role="none">
+                {% csrf_token %}
+                <button type="submit" class="wq-kebab-action" role="menuitem">Escalate priority</button>
+              </form>
+              {% endif %}
+              <a href="{% url 'contracts:deadline_update' obligation.pk %}" class="wq-kebab-action" role="menuitem">Edit obligation</a>
+              <div class="wq-kebab-divider" role="separator"></div>
+              <form method="post" action="{% url 'contracts:deadline_delete' obligation.pk %}" role="none">
+                {% csrf_token %}
+                <button type="submit" class="wq-kebab-action wq-kebab-action-danger" role="menuitem">Delete obligation</button>
+              </form>
+            </div>
+          </details>
+        </div>
       </td>
     </tr>
     {% empty %}
     <tr>
-      <td colspan="7">
+      <td colspan="8">
         {% if obligations_empty_state %}
           {% include "components/_work_queue_empty_state.html" with title=obligations_empty_state.title copy=obligations_empty_state.copy how=obligations_empty_state.how personal_hub=obligations_empty_state.personal_hub only %}
         {% else %}

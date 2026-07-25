@@ -53,12 +53,9 @@ class DemoCommandCenterSeedTests(TestCase):
         self.assertContains(response, 'Northwind DPA Privacy Review Workflow')
         self.assertContains(response, 'Acme MSA Commercial Review Workflow')
         self.assertContains(response, 'Brightlane NDA Self-Serve Workflow')
-        self.assertContains(response, 'Confirm SCC transfer position')
-        self.assertContains(response, 'Review liability deviation')
-
         for item in CommandCenterWorkItem.objects.filter(organization=self.org, workflow__isnull=False):
             self.assertContains(response, reverse('contracts:workflow_detail', kwargs={'pk': item.workflow_id}))
-        self.assertContains(response, 'Action queue')
+        self.assertContains(response, 'Portfolio actions')
 
     def test_dashboard_summary_strip_uses_real_workflow_counts(self):
         # The workflow-type summary strip (a second, duplicate filter row

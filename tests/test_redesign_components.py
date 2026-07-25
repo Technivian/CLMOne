@@ -64,7 +64,7 @@ class RedesignComponentsTestCase(TestCase):
         self.assertContains(response, 'Component Label Contract')
         self.assertContains(response, 'Top priority')
         self.assertContains(response, 'Governance controls')
-        self.assertContains(response, 'Action queue')
+        self.assertContains(response, 'Portfolio actions')
 
     def test_contracts_list_core_components(self):
         Contract.objects.create(

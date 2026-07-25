@@ -7,6 +7,7 @@
   <nav class="dc-ds-catalog__nav" aria-label="Catalogue sections">
     <a href="#foundations">Foundations</a>
     <a href="#surfaces">Surfaces</a>
+    <a href="#cards">Cards</a>
     <a href="#actions">Actions</a>
     <a href="#status">Status</a>
     <a href="#forms">Forms</a>
@@ -34,6 +35,19 @@
       <div class="dc-ds-surface__title">Heading - Priority work queue</div>
       <p>Body - Review governed agreements, ownership, deadlines, and risk.</p>
       <small>Metadata - Updated Jul 10, 2026 at 08:30</small>
+    </div>
+  </section>
+
+  <section class="dc-ds-catalog__section" id="cards">
+    <div class="dc-ds-catalog__intro">
+      <p class="dc-ds-eyebrow">Shared card system</p>
+      <h2>Launch, catalog, and operational cards</h2>
+      <p>One shell keeps the action, supporting context, and metadata in a stable order.</p>
+    </div>
+    <div class="dc-ds-card-grid dc-ds-card-grid--operational">
+      {% include "design_system/card.html" with card_variant="launch" card_icon="file-text" card_title="New MSA" card_subtitle="Contract request" card_description="Start from an approved agreement route." card_meta=card_demo_meta card_action_label="Start request" card_href="#cards" only %}
+      {% include "design_system/card.html" with card_variant="catalog" card_icon="workflow" card_title="Workflow templates" card_count="12 templates" card_description="Browse the governed flows available to this workspace." card_meta=card_demo_meta card_action_label="Open templates" card_href="#cards" only %}
+      {% include "design_system/card.html" with card_variant="operational" card_icon="settings" card_title="DPA privacy review" card_badge="Draft" card_description="A live template with one outstanding setup step." card_meta=card_demo_meta card_action_label="Open designer" card_href="#cards" only %}
     </div>
   </section>
 

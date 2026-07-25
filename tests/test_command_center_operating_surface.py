@@ -21,6 +21,7 @@ from contracts.services.command_center import (
     format_deadline_status,
     get_persisted_command_center_rows,
     group_recommended_actions,
+    partition_portfolio_interventions,
     rank_command_center_rows,
 )
 
@@ -107,6 +108,33 @@ class CommandCenterServiceTests(TestCase):
         ], today=today)
         self.assertEqual([item['title'] for item in items], ['Overdue', 'Tomorrow', 'Undated'])
 
+    def test_portfolio_intervention_views_do_not_repeat_a_contract_or_issue(self):
+        rows = [
+            work_row(f'Contract {index}', workspace_href=f'/work/{index}/', blocking_issue=f'Issue {index}')
+            for index in range(5)
+        ]
+        result = partition_portfolio_interventions(rows)
+        self.assertEqual(result['priority']['title'], 'Contract 0')
+        visible_contracts = [result['priority']['title']] + [
+            row['contract'] for row in result['portfolio_actions']
+        ] + [row['contract'] for row in result['contracts_needing_attention']]
+        visible_issues = [result['priority']['blocking_issue']] + [
+            row['issue'] for row in result['portfolio_actions']
+        ] + [row['issue'] for row in result['contracts_needing_attention']]
+        self.assertEqual(len(visible_contracts), len(set(visible_contracts)))
+        self.assertEqual(len(visible_issues), len(set(visible_issues)))
+
+    def test_portfolio_actions_label_relative_dates_as_due_dates(self):
+        today = timezone.localdate()
+        rows = [
+            work_row('Priority', due_date=today, due_label='Today'),
+            work_row('Follow-up', due_date=today + timedelta(days=6), due_label='6 days'),
+        ]
+
+        result = partition_portfolio_interventions(rows, today=today)
+
+        self.assertEqual(result['portfolio_actions'][0]['due'], 'Due in 6 days')
+
 
 class CommandCenterProductionSurfaceTests(TestCase):
     def setUp(self):
@@ -175,12 +203,13 @@ class CommandCenterProductionSurfaceTests(TestCase):
         self.assertContains(response, 'Add first contract')
         self.assertContains(response, 'Upload &amp; review agreement')
         self.assertNotContains(response, 'Getting started')
-        self.assertContains(response, 'No active issues')
-        self.assertContains(response, 'Monitored queues are clear.')
-        action_queue_header = response.content.decode().split('id="recommended-actions-title"', 1)[1].split('</div>', 1)[0]
-        self.assertNotIn('View all', action_queue_header)
-        self.assertContains(response, 'Setup required')
-        self.assertContains(response, 'Configure DPA reviews')
+        self.assertContains(response, 'No additional portfolio actions')
+        self.assertContains(response, 'The current priority issues are shown above.')
+        self.assertContains(response, 'No other contracts need attention')
+        self.assertContains(response, 'Upcoming deadlines')
+        self.assertContains(response, 'Deadline tracking not configured')
+        self.assertNotContains(response, 'cc-v3-attention-table')
+        self.assertNotContains(response, 'Open Obligations')
         self.assertContains(response, 'None open')
         self.assertContains(response, 'No policy exceptions')
         self.assertNotContains(response, 'No intervention required')
@@ -210,15 +239,17 @@ class CommandCenterProductionSurfaceTests(TestCase):
         self.assertTrue(response.context['portfolio_health_available'])
         self.assertEqual(response.context['portfolio_health_score'], 83)
         self.assertContains(response, 'Portfolio health score 83 out of 100, Needs attention')
-        self.assertContains(response, 'Review priority actions')
+        self.assertContains(response, 'Review priority action')
+        self.assertContains(response, 'controls assessed')
+        self.assertContains(response, 'View score breakdown')
 
     def test_deadline_status_distinguishes_setup_from_clear(self):
         response = self.client_.get(reverse('dashboard'))
         self.assertFalse(response.context['deadline_tracking_configured'])
         self.assertContains(response, 'Configure tracking')
-        self.assertContains(response, 'Deadline tracking')
-        self.assertContains(response, 'Not configured')
-        self.assertContains(response, 'Configure deadlines')
+        self.assertContains(response, 'Upcoming deadlines')
+        self.assertContains(response, 'Deadline tracking not configured')
+        self.assertContains(response, 'Add governed dates to monitor due work here.')
         self.assertNotContains(response, 'See all deadlines')
         self.assertNotContains(response, 'View calendar')
 
@@ -235,8 +266,8 @@ class CommandCenterProductionSurfaceTests(TestCase):
         response = self.client_.get(reverse('dashboard'))
         self.assertTrue(response.context['deadline_tracking_configured'])
         self.assertContains(response, 'dc-ds-metric__value--clear')
-        self.assertContains(response, 'View calendar')
-        self.assertNotContains(response, 'Configure deadlines')
+        self.assertContains(response, 'Long-range renewal')
+        self.assertNotContains(response, 'Open Obligations')
         self.assertNotContains(response, 'See all deadlines')
 
     def test_kpi_counts_use_org_wide_pending_approvals(self):

@@ -1,33 +1,9 @@
 {% extends "base.html" %}
 {% block title %}{% if form.instance.pk %}Edit{% else %}New{% endif %} Obligation – CLM One{% endblock %}
 {% block authenticated_page_title %}{% if form.instance.pk %}Edit Obligation{% else %}New Obligation{% endif %}{% endblock %}
-{% block authenticated_page_back %}
-<a href="{% url 'contracts:obligations_workspace' %}" class="topbar-back-link" data-workspace-back aria-label="Back to obligations" title="Back to obligations">
-  {% include "design_system/icon.html" with name="arrow-left" %}
-</a>
-{% endblock %}
+{% block authenticated_page_subtitle %}Define the contractual commitment, accountable owner, and due date.{% endblock %}
+{% block authenticated_page_back %}<a href="{% url 'contracts:obligations_workspace' %}" class="topbar-back-link" data-workspace-back aria-label="Back to obligations" title="Back to obligations">{% include "design_system/icon.html" with name="arrow-left" %}</a>{% endblock %}
 {% block content %}
-<div class="page-wrap">
-    <div class="panel dc-ds-surface">
-        <div class="panel-inner">
-            <form method="post">
-                {% csrf_token %}
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {% for field in form %}
-                    <div class="dc-ds-form-field {% if field.name == 'title' or field.name == 'description' %}md:col-span-2{% endif %}{% if field.errors %} dc-ds-form-field--error{% endif %}">
-                        <label for="{{ field.id_for_label }}" class="dc-ds-form-field__label">{{ field.label }}</label>
-                        <div class="dc-ds-form-field__control">{{ field }}</div>
-                        {% if field.help_text %}<p class="dc-ds-form-field__help">{{ field.help_text }}</p>{% endif %}
-                        {% if field.errors %}<div class="dc-ds-form-field__errors" role="alert"><p>{{ field.errors.0 }}</p></div>{% endif %}
-                    </div>
-                    {% endfor %}
-                </div>
-                <div class="flex items-center justify-end gap-3 pt-4">
-                    <a href="{% url 'contracts:obligations_workspace' %}" class="dc-ds-button dc-ds-button--quiet">Cancel</a>
-                    <button type="submit" class="dc-ds-button dc-ds-button--primary">{% if form.instance.pk %}Update{% else %}Create{% endif %}</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+{% url 'contracts:obligations_workspace' as cancel_href %}
+{% include "design_system/record_form.html" with form=form cancel_href=cancel_href submit_label="Save obligation" %}
 {% endblock %}

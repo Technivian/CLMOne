@@ -1,17 +1,9 @@
 {% extends "base.html" %}
 {% block title %}{{ object|yesno:"Edit,New" }} Legal Hold – CLM One{% endblock %}
 {% block authenticated_page_title %}{{ object|yesno:"Edit,New" }} Legal Hold{% endblock %}
+{% block authenticated_page_subtitle %}Capture the legal hold scope, custodians, and retention requirements.{% endblock %}
 {% block authenticated_page_back %}<a href="{% url 'contracts:legal_hold_list' %}" class="topbar-back-link" data-workspace-back aria-label="Back to legal holds" title="Back to legal holds">{% include "design_system/icon.html" with name="arrow-left" %}</a>{% endblock %}
 {% block content %}
-<div class="dc-ds-page dc-ds-page-flow dc-ds-record-page"><div class="dc-ds-record-content dc-ds-record-content--narrow">
-            <form method="post" enctype="multipart/form-data" class="panel panel-inner dc-ds-surface dc-ds-record-form">
-                {% csrf_token %}
-                {% for field in form %}
-                {% include "design_system/form_field.html" with field=field class_name="mb-4" preserve_help=True %}
-                {% endfor %}
-                <div class="dc-ds-form-actions">
-                    <button type="submit" class="dc-ds-button dc-ds-button--primary">Save</button>
-                </div>
-            </form>
-</div></div>
+{% url 'contracts:legal_hold_list' as cancel_href %}
+{% include "design_system/record_form.html" with form=form cancel_href=cancel_href submit_label="Save legal hold" %}
 {% endblock %}

@@ -4,6 +4,7 @@ import json
 from datetime import date
 
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.paginator import Paginator
 from django.db.models import Max, Q
 from django.http import HttpResponseForbidden, JsonResponse
 from django.urls import reverse
@@ -64,6 +65,16 @@ def _build_templates_playbooks_hub_cards(organization):
     rule_inactive = rule_total - rule_active
     rule_updated = rules.aggregate(latest=Max('created_at'))['latest']
 
+    from contracts.models import FieldDefinition
+    field_definitions = FieldDefinition.objects.none()
+    if organization is not None:
+        field_definitions = FieldDefinition.objects.filter(
+            Q(workflow_template__organization=organization)
+            | Q(workflow_template__organization__isnull=True)
+        )
+    field_total = field_definitions.count()
+    field_updated = field_definitions.aggregate(latest=Max('workflow_template__created_at'))['latest']
+
     def card_meta(status_value, updated_at):
         """Every card exposes the same two chips so heights stay aligned."""
         return [
@@ -90,6 +101,11 @@ def _build_templates_playbooks_hub_cards(organization):
         policy_status = f'{rule_active} active · {rule_inactive} inactive'
     else:
         policy_status = 'No policies yet'
+
+    if field_total:
+        field_status = f'{field_total} field{"s" if field_total != 1 else ""} cataloged'
+    else:
+        field_status = 'No workflow fields yet'
 
     return [
         {
@@ -127,6 +143,18 @@ def _build_templates_playbooks_hub_cards(organization):
             'stat_label': 'templates' if workflow_total != 1 else 'template',
             'stat_text': _pluralize_label(workflow_total, 'template'),
             'meta': card_meta(workflow_status, workflow_updated),
+        },
+        {
+            'id': 'workflow-field-catalog',
+            'title': 'Workflow Field Catalog',
+            'copy': 'Template-scoped field usage for workflow intake, required states, and section placement.',
+            'href': reverse('contracts:workflow_field_catalog'),
+            'cta': 'Open Workflow Field Catalog',
+            'icon': 'list',
+            'stat_value': field_total,
+            'stat_label': 'fields' if field_total != 1 else 'field',
+            'stat_text': _pluralize_label(field_total, 'field'),
+            'meta': card_meta(field_status, field_updated),
         },
         {
             'id': 'approval-policies',
@@ -197,20 +225,19 @@ class MyWorkView(LoginRequiredMixin, TemplateView):
 
         summary_counts = build_summary_counts(active_rows)
         filter_options = build_filter_options(active_rows)
+        # Keep the header focused on the two personal shortcuts that help
+        # people resume work. Due-date, question, and return states remain in
+        # the Filters drawer instead of competing with scope and view controls.
+        header_summary_keys = {'awaiting_review', 'upcoming_obligations'}
         summary_chips = []
-        tone_map = {
-            'overdue': 'danger',
-            'due_today': 'warning',
-            'returned_to_me': 'warning',
-        }
         for key, label in SUMMARY_FILTERS:
             count = summary_counts.get(key, 0)
+            if key not in header_summary_keys or not count:
+                continue
             summary_chips.append({
                 'key': key,
                 'label': label,
                 'count': count,
-                'tone': tone_map.get(key, 'info'),
-                'hidden': False,
             })
 
         ctx.update({
@@ -303,15 +330,10 @@ class TemplatesPlaybooksHubView(LoginRequiredMixin, TemplateView):
         return ctx
 
 
-class DataManagerHubView(LoginRequiredMixin, TemplateView):
-    """
-    Interim Data Manager surface (PAR-NAV-001).
+class WorkflowFieldCatalogView(LoginRequiredMixin, TemplateView):
+    """Searchable inventory of fields configured on workflow templates."""
 
-    Lists template-scoped FieldDefinition rows. Canonical Property Definition CRUD
-    remains Future (PAR-DATA-001) and requires an approved PDR/ADR before schema expansion.
-    """
-
-    template_name = 'contracts/data_manager_hub.html'
+    template_name = 'contracts/workflow_field_catalog.html'
 
     def dispatch(self, request, *args, **kwargs):
         organization = getattr(request, 'organization', None) or get_user_organization(request.user)
@@ -332,10 +354,111 @@ class DataManagerHubView(LoginRequiredMixin, TemplateView):
                     | Q(workflow_template__organization__isnull=True)
                 )
                 .select_related('workflow_template')
-                .order_by('workflow_template__name', 'section', 'order', 'key')
             )
+
+        search_query = self.request.GET.get('q', '').strip()
+        selected_workflow = self.request.GET.get('workflow', '').strip()
+        selected_section = self.request.GET.get('section', '').strip()
+        selected_type = self.request.GET.get('type', '').strip()
+        selected_required = self.request.GET.get('required', '').strip()
+        sort_key = self.request.GET.get('sort', 'workflow').strip()
+        sort_direction = self.request.GET.get('direction', 'asc').strip()
+
+        workflow_options = list(
+            fields.order_by('workflow_template__name', 'workflow_template_id')
+            .values_list('workflow_template_id', 'workflow_template__name')
+            .distinct()
+        )
+        section_labels = {
+            **dict(FieldDefinition.Section.choices),
+            FieldDefinition.Section.PRIVACY_QUESTIONS: 'Privacy questions',
+            FieldDefinition.Section.SMART_QUESTIONS: 'Smart questions',
+        }
+        field_type_labels = {
+            **dict(FieldDefinition.FieldType.choices),
+            FieldDefinition.FieldType.TEXTAREA: 'Long text',
+        }
+        section_options = [
+            (value, section_labels.get(value, label))
+            for value, label in FieldDefinition.Section.choices
+        ]
+        type_options = [
+            (value, field_type_labels.get(value, label))
+            for value, label in FieldDefinition.FieldType.choices
+        ]
+
+        if search_query:
+            fields = fields.filter(Q(label__icontains=search_query) | Q(key__icontains=search_query))
+        if selected_workflow and any(str(pk) == selected_workflow for pk, _name in workflow_options):
+            fields = fields.filter(workflow_template_id=selected_workflow)
+        else:
+            selected_workflow = ''
+        if selected_section in dict(FieldDefinition.Section.choices):
+            fields = fields.filter(section=selected_section)
+        else:
+            selected_section = ''
+        if selected_type in dict(FieldDefinition.FieldType.choices):
+            fields = fields.filter(field_type=selected_type)
+        else:
+            selected_type = ''
+        if selected_required == 'yes':
+            fields = fields.filter(is_required=True)
+        elif selected_required == 'no':
+            fields = fields.filter(is_required=False)
+        else:
+            selected_required = ''
+
+        sort_fields = {
+            'field': 'label',
+            'key': 'key',
+            'type': 'field_type',
+            'workflow': 'workflow_template__name',
+            'section': 'section',
+            'required': 'is_required',
+        }
+        if sort_key not in sort_fields:
+            sort_key = 'workflow'
+        if sort_direction not in ('asc', 'desc'):
+            sort_direction = 'asc'
+        sort_field = sort_fields[sort_key]
+        direction_prefix = '-' if sort_direction == 'desc' else ''
+        ordering = [f'{direction_prefix}{sort_field}']
+        for tie_breaker in ('workflow_template__name', 'section', 'order', 'label'):
+            if tie_breaker != sort_field:
+                ordering.append(tie_breaker)
+
+        page_obj = Paginator(fields.order_by(*ordering), 50).get_page(self.request.GET.get('page'))
+        field_definition_count = page_obj.paginator.count
+        field_definitions = list(page_obj.object_list)
+        for field in field_definitions:
+            field.display_section = section_labels.get(field.section) or 'Not specified'
+            field.display_type = field_type_labels.get(field.field_type) or 'Not specified'
+
+        def page_url(page_number):
+            query = self.request.GET.copy()
+            query['page'] = page_number
+            return f'{reverse("contracts:workflow_field_catalog")}?{query.urlencode()}'
+
         ctx['hub_organization'] = organization
         ctx['hub_unavailable'] = organization is None
-        ctx['field_definitions'] = fields[:200]
-        ctx['field_definition_count'] = fields.count() if organization is not None else 0
+        ctx['catalog_url'] = reverse('contracts:workflow_field_catalog')
+        ctx['field_definitions'] = field_definitions
+        ctx['field_definition_count'] = field_definition_count
+        ctx['search_query'] = search_query
+        ctx['selected_workflow'] = selected_workflow
+        ctx['selected_section'] = selected_section
+        ctx['selected_type'] = selected_type
+        ctx['selected_required'] = selected_required
+        ctx['workflow_options'] = workflow_options
+        ctx['section_options'] = section_options
+        ctx['type_options'] = type_options
+        ctx['filters_active'] = any((search_query, selected_workflow, selected_section, selected_type, selected_required))
+        ctx['sort_key'] = sort_key
+        ctx['sort_direction'] = sort_direction
+        ctx['page_obj'] = page_obj
+        ctx['previous_page_url'] = page_url(page_obj.previous_page_number()) if page_obj.has_previous() else ''
+        ctx['next_page_url'] = page_url(page_obj.next_page_number()) if page_obj.has_next() else ''
         return ctx
+
+
+DataManagerHubView = WorkflowFieldCatalogView

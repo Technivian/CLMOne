@@ -121,6 +121,10 @@ class WorkflowTemplateVersioningTests(TestCase):
         self.assertEqual(list_response.status_code, 200)
         self.assertContains(list_response, 'v1')
         self.assertContains(list_response, 'Intake')
+        self.assertContains(list_response, 'dc-ds-card-grid--operational')
+        self.assertContains(list_response, 'dc-ds-card--operational')
+        self.assertContains(list_response, 'dc-ds-card__footer')
+        self.assertContains(list_response, 'template-tile__inline-cta')
 
         detail_response = self.client.get(reverse('contracts:workflow_template_detail', args=[self.template.pk]))
         self.assertEqual(detail_response.status_code, 200)

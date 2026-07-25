@@ -37,25 +37,25 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    min-height: 0;
+    min-height: 212px;
     height: 100%;
-    padding: 12px;
+    padding: var(--space-20);
     text-decoration: none;
     color: inherit;
     outline: none;
     cursor: pointer;
     border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
-    border-radius: var(--wtl-radius);
-    background: #fff;
-    box-shadow: var(--wtl-shadow);
+    border-radius: var(--radius-premium-card);
+    background: var(--card);
+    box-shadow: var(--shadow-card-subtle);
     overflow: visible;
     transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
   }
   .workflow-templates-page .template-tile.dc-ds-surface,
   .workflow-templates-page .template-tile.dc-ds-surface--interactive {
-    border-radius: var(--wtl-radius);
-    box-shadow: var(--wtl-shadow);
-    background: #fff;
+    border-radius: var(--radius-premium-card);
+    box-shadow: var(--shadow-card-subtle);
+    background: var(--card);
     transform: none;
   }
   .workflow-templates-page .template-tile.dc-ds-surface--interactive:hover,
@@ -72,8 +72,8 @@
   .workflow-templates-page .template-tile:hover:not([aria-disabled="true"]),
   .workflow-templates-page .template-tile:focus-within:not([aria-disabled="true"]) {
     border-color: color-mix(in srgb, var(--seal) 55%, var(--line));
-    background: color-mix(in srgb, var(--seal) 6%, #fff);
-    box-shadow: var(--wtl-shadow-hover);
+    background: color-mix(in srgb, var(--seal) 3%, var(--card));
+    box-shadow: var(--shadow-surface-expressive);
     /* Avoid transform — it makes position:fixed menus use the card as containing block. */
     transform: none;
   }
@@ -155,8 +155,32 @@
     display: flex;
     flex-wrap: nowrap;
     align-items: center;
+    flex: 1 1 auto;
     gap: 4px;
+    margin: 0;
     overflow: hidden;
+  }
+  .workflow-templates-page .template-tile__workflow-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+    margin-top: var(--space-12);
+    min-width: 0;
+  }
+  .workflow-templates-page .template-tile__inline-cta {
+    flex: 0 0 auto;
+    color: var(--seal-dark, var(--seal));
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.2;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .workflow-templates-page .template-tile__workflow-row .template-tile__stage--more { display: none; }
+  .workflow-templates-page .template-tile__inline-cta:hover { text-decoration: underline; }
+  .workflow-templates-page .template-tile__inline-cta:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
   }
   .workflow-templates-page .template-tile__stage {
     display: inline-flex;
@@ -212,6 +236,17 @@
     padding-top: 8px;
     border-top: 1px solid var(--hairline, var(--line));
     min-height: 28px;
+  }
+  .workflow-templates-page.is-browse .template-tile:not(.is-incomplete) .template-tile__foot {
+    min-height: 0;
+    margin-top: 0;
+    padding: 0;
+    border-top: 0;
+  }
+  .workflow-templates-page.is-browse .template-tile:not(.is-incomplete) .template-tile__actions {
+    position: absolute;
+    right: var(--space-12);
+    bottom: var(--space-12);
   }
   .workflow-templates-page .template-tile__cta {
     color: var(--seal-dark, var(--seal));
@@ -490,10 +525,10 @@
     </section>
   </form>
 
-  <div class="template-card-grid" role="{% if selection_mode %}listbox{% else %}list{% endif %}" aria-label="Workflow templates"{% if selection_mode %} aria-multiselectable="false"{% endif %}>
+  <div class="template-card-grid dc-ds-card-grid dc-ds-card-grid--operational" role="{% if selection_mode %}listbox{% else %}list{% endif %}" aria-label="Workflow templates"{% if selection_mode %} aria-multiselectable="false"{% endif %}>
     {% for card in template_cards %}
     <article
-      class="template-tile dc-ds-surface dc-ds-surface--interactive{% if card.is_incomplete %} is-incomplete{% endif %}"
+      class="template-tile dc-ds-card dc-ds-card--operational dc-ds-card--interactive{% if card.is_incomplete %} is-incomplete{% endif %}"
       data-template-id="{{ card.template.pk }}"
       data-template-name="{{ card.name }}"
       data-designer-url="{{ card.designer_url }}"
@@ -517,14 +552,14 @@
       </span>
       {% endif %}
 
-      <div class="template-tile__top">
-        <span class="template-tile__icon" aria-hidden="true">
+      <div class="template-tile__top dc-ds-card__header">
+        <span class="template-tile__icon dc-ds-card__icon" aria-hidden="true">
           {% include "design_system/icon.html" with name=card.icon_key class_name="dc-ds-icon" %}
         </span>
-        <div class="template-tile__main">
-          <div class="template-tile__title-row">
-            <h3 class="template-tile__title">{{ card.name }}</h3>
-            <div class="template-tile__badges">
+        <div class="template-tile__main dc-ds-card__heading">
+          <div class="template-tile__title-row dc-ds-card__title-row">
+            <h3 class="template-tile__title dc-ds-card__title">{{ card.name }}</h3>
+            <div class="template-tile__badges dc-ds-card__badges">
               <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ card.status_tone }}">{{ card.status_label }}</span>
               <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--neutral">{{ card.version_label }}</span>
               {% if selection_mode and card.selectable %}
@@ -532,55 +567,54 @@
               {% endif %}
             </div>
           </div>
-          <p class="template-tile__type">{{ card.contract_type_label }}</p>
+          <p class="template-tile__type dc-ds-card__subtitle">{{ card.contract_type_label }}</p>
         </div>
       </div>
 
+      {% if card.description %}<p class="dc-ds-card__body">{{ card.description }}</p>{% endif %}
+
       {% if not card.stages_empty %}
-      <div class="template-tile__path" aria-label="Workflow path">
-        {% for stage in card.stage_names %}
-          {% if not forloop.first %}<span class="template-tile__stage-join" aria-hidden="true"></span>{% endif %}
-          <span class="template-tile__stage">{{ stage }}</span>
-        {% endfor %}
-        {% if card.stage_more_count %}
-          <span class="template-tile__stage-join" aria-hidden="true"></span>
-          <span class="template-tile__stage template-tile__stage--more">+{{ card.stage_more_count }} more</span>
+      <div class="template-tile__workflow-row">
+        <div class="template-tile__path dc-ds-card__chip-list" aria-label="Workflow path">
+          {% for stage in card.stage_names %}
+            {% if not forloop.first %}<span class="template-tile__stage-join" aria-hidden="true"></span>{% endif %}
+            <span class="template-tile__stage dc-ds-card__chip">{{ stage }}</span>
+          {% endfor %}
+          {% if card.stage_more_count %}
+            <span class="template-tile__stage-join" aria-hidden="true"></span>
+            <span class="template-tile__stage template-tile__stage--more dc-ds-card__chip dc-ds-card__chip--more">+{{ card.stage_more_count }} more</span>
+          {% endif %}
+        </div>
+        {% if not selection_mode %}
+        <a href="{{ card.designer_url }}" class="template-tile__inline-cta js-tile-action" data-stop-tile="true" aria-label="Open designer for {{ card.name }}" title="Open designer">Open →</a>
         {% endif %}
       </div>
       {% endif %}
 
       {% if card.is_incomplete and card.incomplete_reason %}
-      <p class="template-tile__setup">{{ card.incomplete_reason }}</p>
+      <p class="template-tile__setup dc-ds-card__notice">{{ card.incomplete_reason }}</p>
       {% elif selection_mode and not card.selectable and card.select_disabled_reason %}
-      <p class="template-tile__setup">{{ card.select_disabled_reason }}</p>
+      <p class="template-tile__setup dc-ds-card__notice">{{ card.select_disabled_reason }}</p>
       {% endif %}
 
       <p class="template-tile__meta">
         Updated {{ card.updated_at|date:"j M Y" }}
-        <span class="template-tile__meta-sep"></span>Used by {{ card.active_workflow_count }}
-        {% if card.show_owner %}
-        <span class="template-tile__meta-sep"></span>Owner {{ card.owner_label }}
-        {% endif %}
-        {% if card.has_unpublished_changes %}
-        <span class="template-tile__meta-sep"></span>Unpublished changes
-        {% endif %}
+        <span class="template-tile__meta-sep"></span>{{ card.active_workflow_count }} uses
       </p>
 
-      <div class="template-tile__foot">
-        {% if selection_mode %}
+      <div class="template-tile__foot dc-ds-card__footer">
+        {% if selection_mode or card.stages_empty %}
           {% if card.selectable %}
-          <span class="template-tile__cta" aria-hidden="true">Select template →</span>
+          <span class="template-tile__cta dc-ds-card__primary-action" aria-hidden="true">Select template →</span>
           {% else %}
-          <span class="template-tile__cta" aria-hidden="true">{% if card.is_incomplete %}Finish setup →{% else %}Unavailable{% endif %}</span>
+          <span class="template-tile__cta dc-ds-card__primary-action" aria-hidden="true">{% if card.is_incomplete %}Finish setup →{% else %}Unavailable{% endif %}</span>
           {% endif %}
-        {% else %}
-          <span class="template-tile__cta" aria-hidden="true">{% if card.is_incomplete %}Finish setup →{% else %}Open designer →{% endif %}</span>
         {% endif %}
 
-        <div class="template-tile__actions">
+        <div class="template-tile__actions dc-ds-card__secondary-actions">
           <a
             href="{{ card.designer_url }}"
-            class="template-tile__action js-tile-action"
+            class="template-tile__action dc-ds-card__action js-tile-action"
             data-stop-tile="true"
             aria-label="Open designer for {{ card.name }}"
             title="Open designer"
@@ -589,7 +623,7 @@
           </a>
           <form method="post" action="{% url 'contracts:workflow_template_duplicate' card.template.pk %}" class="js-tile-action" data-stop-tile="true">
             {% csrf_token %}
-            <button type="submit" class="template-tile__action" aria-label="Duplicate {{ card.name }}" title="Duplicate">
+            <button type="submit" class="template-tile__action dc-ds-card__action" aria-label="Duplicate {{ card.name }}" title="Duplicate">
               {% include "design_system/icon.html" with name="copy" %}
             </button>
           </form>

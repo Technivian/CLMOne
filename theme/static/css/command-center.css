@@ -1353,8 +1353,8 @@ body:has(.cc-v3) .dc-ds-shell__topbar .global-search-input {
 /* Portfolio hero hierarchy: the portfolio summary is the card; the signals
    and priority are supporting information, not separate competing surfaces. */
 .cc-v3-hero.cc-v3-portfolio-hero {
-  gap: var(--space-18);
-  padding: var(--space-24) var(--space-28) var(--space-24);
+  gap: var(--space-16);
+  padding: var(--space-20) var(--space-24) var(--space-16);
 }
 .cc-v3-portfolio-header {
   grid-template-columns: minmax(0, 1fr) 174px;
@@ -1566,6 +1566,112 @@ body:has(.cc-v3) .cc-v3-matters .cc-v3-table th {
   }
 }
 
+/* Portfolio intervention layout: Command Center is an organization-level
+   management surface. The personal queue remains exclusively in My Work. */
+.cc-v3-primary,
+.cc-v3-portfolio-operations,
+.cc-v3-matters { grid-column: 1 / -1; }
+
+.cc-v3-score-context {
+  display: grid;
+  gap: var(--space-4);
+  margin: var(--space-8) 0 0;
+  color: color-mix(in srgb, var(--clmone-white) 74%, transparent);
+  font: var(--text-meta);
+  line-height: 1.35;
+}
+.cc-v3-score-context span { color: color-mix(in srgb, var(--clmone-white) 88%, transparent); }
+
+.cc-v3-portfolio-operations {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 304px;
+  gap: var(--space-16);
+  align-items: start;
+}
+.cc-v3-portfolio-action-list,
+.cc-v3-deadlines,
+.cc-v3-matters {
+  min-height: 0;
+  padding: var(--space-20);
+}
+.cc-v3-section-note {
+  color: var(--ink-500);
+  font: var(--text-meta);
+  text-align: right;
+}
+.cc-v3-operational-list { margin-top: var(--space-12); }
+.cc-v3-operational-head,
+.cc-v3-operational-row {
+  display: grid;
+  grid-template-columns: minmax(190px, 2.1fr) minmax(120px, 1.15fr) minmax(64px, .55fr) minmax(74px, .6fr) minmax(94px, .8fr) minmax(170px, 1.7fr);
+  gap: var(--space-12);
+  align-items: center;
+}
+.cc-v3-operational-head {
+  padding: 0 0 var(--space-8);
+  border-bottom: 1px solid var(--line);
+  color: var(--ink-500);
+  font: var(--text-eyebrow);
+}
+.cc-v3-operational-row {
+  min-height: 56px;
+  padding: var(--space-8) 0;
+  border-bottom: 1px solid var(--hairline);
+  color: var(--ink-700);
+  font: var(--text-meta);
+  text-decoration: none;
+  transition: background-color var(--transition-base);
+}
+.cc-v3-operational-row:hover { background: var(--well); }
+.cc-v3-operational-row > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cc-v3-operational-row > span:first-child,
+.cc-v3-operational-row > span:last-child { overflow: visible; text-overflow: clip; white-space: normal; }
+.cc-v3-operational-row strong { color: var(--ink-900); font-weight: 650; }
+.cc-v3-next-action { color: var(--seal-dark); font-weight: 650; text-decoration: none; }
+.cc-v3-severity { color: var(--ink-600); font-weight: 650; }
+.cc-v3-severity[data-severity="critical"],
+.cc-v3-severity[data-severity="high"] { color: var(--status-danger-fg); }
+.cc-v3-severity[data-severity="medium"] { color: var(--status-pending-fg); }
+.cc-v3-attention-table-wrap { margin-top: var(--space-12); }
+.cc-v3-attention-table { min-width: 780px; }
+.cc-v3-attention-table caption { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); }
+.cc-v3-attention-table th,
+.cc-v3-attention-table td { padding: var(--space-8) var(--space-12); vertical-align: middle; }
+.cc-v3-attention-table th { color: var(--ink-500); font: var(--text-eyebrow); }
+.cc-v3-attention-table td { color: var(--ink-700); font: var(--text-meta); }
+.cc-v3-attention-table td:nth-child(1) { width: 22%; }
+.cc-v3-attention-table td:nth-child(2) { width: 35%; }
+.cc-v3-attention-table td:nth-child(3) { width: 12%; }
+.cc-v3-attention-table td:nth-child(4) { width: 16%; }
+.cc-v3-attention-table td:nth-child(5) { width: 15%; }
+.cc-v3-attention-table td > a:not(.cc-v3-next-action) { color: var(--ink-900); font-weight: 650; text-decoration: none; }
+.cc-v3-attention-table tr:hover { background: var(--well); }
+.cc-v3-attention-empty {
+  display: grid;
+  gap: var(--space-4);
+  margin-top: var(--space-12);
+  padding: var(--space-16) var(--space-20);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-subpanel);
+  background: var(--well);
+  color: var(--ink-600);
+  font: var(--text-meta);
+}
+.cc-v3-attention-empty strong { color: var(--ink-900); font-weight: 650; }
+
+@media (max-width: 960px) {
+  .cc-v3-portfolio-operations { grid-template-columns: 1fr; }
+}
+@media (max-width: 720px) {
+  .cc-v3-section-head { align-items: flex-start; flex-direction: column; }
+  .cc-v3-section-note { text-align: left; }
+  .cc-v3-operational-head { display: none; }
+  .cc-v3-operational-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-8) var(--space-12); padding: var(--space-12) 0; }
+  .cc-v3-operational-row > span { white-space: normal; }
+  .cc-v3-operational-row > span::before { content: attr(data-label); display: block; margin-bottom: var(--space-4); color: var(--ink-500); font: var(--text-eyebrow); }
+  .cc-v3-operational-row > span:first-child { grid-column: 1 / -1; }
+}
+
 @media (min-width: 1221px) {
   body:has(.cc-v3) .cc-v3-layout {
     --cc-v3-operational-stack-height: 252px;
@@ -1608,4 +1714,36 @@ body:has(.cc-v3) .cc-v3-matters .cc-v3-table th {
     min-height: 0;
     max-height: none;
   }
+}
+
+/* Final compact pass: retain the portfolio hierarchy while making the hero
+   decisively shorter and reserving list width for the intervention itself. */
+.cc-v3-hero.cc-v3-portfolio-hero {
+  gap: var(--space-12);
+  padding: var(--space-16) var(--space-24);
+}
+.cc-v3-portfolio-header { gap: var(--space-12); }
+.cc-v3-portfolio-score {
+  width: 84px;
+  height: 84px;
+}
+.cc-v3-portfolio-score .cc-v3-score-copy strong { font-size: 28px; }
+.cc-v3-score-breakdown { margin-top: var(--space-4); }
+.cc-v3-top-priority {
+  gap: var(--space-8);
+  padding: var(--space-12) var(--space-16);
+}
+.cc-v3-top-priority-head { padding-bottom: var(--space-8); }
+.cc-v3-top-priority-body,
+.cc-v3-top-priority-insights { gap: var(--space-12); }
+.cc-v3-portfolio-actions { padding-top: 0; }
+.cc-v3-score-context {
+  display: block;
+  margin-top: var(--space-4);
+  white-space: nowrap;
+}
+.cc-v3-score-context span { margin: 0 var(--space-4); }
+
+@media (max-width: 1040px) {
+  .cc-v3-hero.cc-v3-portfolio-hero { padding: var(--space-16) var(--space-20); }
 }

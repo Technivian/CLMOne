@@ -11,13 +11,18 @@ not fork their anatomy.
 | Button | `button.html` | Primary, secondary, ghost, danger; optional Lucide icon |
 | Icon | `icon.html` | Approved central Lucide path set |
 | Status badge | `status_badge.html` | Neutral, success, progress, attention, danger, special |
+| Card shell | `card.html` | Launch, catalog, and operational cards with one shared anatomy |
 | Surface | `surface_card.html` | Header, metadata slot, unframed body |
 | Metric | `metric_card.html` | Label, comparable value, supporting note |
 | Form field | `form_field.html` | Label, control, help, error |
+| Simple record form | `record_form.html` | Wide main-and-rail create/edit composition using the canonical field and action primitives |
+| Boolean form choice | `form_field.html` | Compact checkbox-and-label choice surface with linked label, help, errors, focus, and disabled states |
 | Empty state | `empty_state.html` | Clear condition and one recovery path |
 | Attention banner | `attention_banner.html` | Status message, not decoration |
 | Data table | `.dc-ds-table` | Semantic table markup and horizontal containment |
 | Table toolbar | `.dc-ds-table-toolbar` | Flat filter, sort, and action controls above a table |
+| Table sort control | `.dc-ds-table-sort` | Accessible sortable-header control with the active direction indicator |
+| Table column menu | `.dc-ds-table-column-menu` | Optional visibility controls for non-critical table columns |
 | Table selection | `.dc-ds-table-selection` | Announced selected-row actions; selection remains native checkbox behavior |
 | Table pagination | `.dc-ds-table-pagination` | Result count and labelled previous/next controls |
 | Table state | `.dc-ds-table-state` | Loading, empty, or recoverable-error content inside table geometry |
@@ -72,6 +77,10 @@ Metric cards use `dc-ds-metric--expressive` in spacious dashboards and
 `dc-ds-metric__value--clear` only when a queue is explicitly clear. Setup rows
 use `setup_action.html`; do not fork their icon/copy/arrow anatomy.
 
+Use [`CARDS.md`](CARDS.md) for the shared card shell, its approved variants,
+and the mapping of product surfaces. Do not create a local card anatomy where
+one of those variants fits.
+
 ## Tables
 
 - Standard operational tables use this semantic column order when the fields
@@ -100,12 +109,30 @@ use `setup_action.html`; do not fork their icon/copy/arrow anatomy.
 - Use `.dc-ds-table-toolbar` with the shared `filter_search_bar.html` partial
   for flat server-owned filters. Use `.dc-ds-table-selection` only when a
   native checkbox selection model is available.
+- A standard desktop table toolbar is one compact row: scoped search grows to
+  use the available space, direct select filters remain compact, and the result
+  count and primary action sit at the end of the row. A direct filter must not
+  inherit the full-width form-control rule or force an otherwise viable
+  desktop toolbar onto multiple rows.
+- Use `clm-list-shell` / `clm-list-filter-controls` for the richer
+  Contracts-style list toolbar and `filter_search_bar.html` for the standard
+  server-rendered toolbar. Do not add page-owned widths, stacked controls, or
+  replacement toolbar anatomy to solve a layout issue.
+- Keep the always-visible toolbar to search plus the most useful one or two
+  filters. Put additional or less-frequent filters in the shared Filters
+  drawer; do not turn the toolbar into a form grid.
+- On narrow screens, toolbar controls may stack in reading order. This is the
+  intentional responsive exception, not a desktop fallback. Preserve labelled
+  controls and the same filtering behavior at every breakpoint.
 - Use `.dc-ds-table-state` with `role="status"` for asynchronous loading.
   Recoverable errors and no-result conditions use `empty_state.html` within a
   spanning table cell, preserving the table's column geometry.
 - Use sticky headers only inside an explicit scroll container.
 - Sorting, filtering, selection, pagination, and column visibility require
   visible state and accessible names.
+- Use `.dc-ds-table-sort` for sortable headers and expose the active direction
+  through `aria-sort`. Use `.dc-ds-table-column-menu` only for supporting
+  columns; a table's primary record column remains visible.
 - Rows provide shared hover and keyboard-focus feedback. Only rows with a real
   destination or action use the pointer cursor; navigable rows must also expose
   an equivalent keyboard interaction.

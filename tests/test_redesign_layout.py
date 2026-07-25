@@ -93,10 +93,9 @@ class RedesignLayoutTests(TestCase):
         self.assertContains(response, 'Blocking issue')
         self.assertContains(response, 'Recommended action')
 
-    def test_dashboard_right_rail(self):
-        # The right rail (attention / AI insight / activity) only renders
-        # on the populated dashboard; an empty workspace gets the
-        # onboarding checklist instead.
+    def test_dashboard_portfolio_operations(self):
+        # Portfolio operations complement the hero without duplicating My Work
+        # or a specialist workspace as a dashboard navigation card.
         organization = self._enable_clm_dashboard()
         Contract.objects.create(
             organization=organization,
@@ -106,9 +105,10 @@ class RedesignLayoutTests(TestCase):
             created_by=self.user,
         )
         response = self.client.get(reverse('dashboard'))
-        self.assertContains(response, 'Action queue')
-        self.assertContains(response, 'Upcoming Deadlines')
-        self.assertContains(response, 'Recent Matters')
+        self.assertContains(response, 'Portfolio actions')
+        self.assertContains(response, 'Upcoming deadlines')
+        self.assertContains(response, 'Contracts needing attention')
+        self.assertNotContains(response, 'Action queue')
 
     def tearDown(self):
         if 'FEATURE_REDESIGN' in os.environ:

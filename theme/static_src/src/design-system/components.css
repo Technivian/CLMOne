@@ -78,7 +78,13 @@
 .dc-ds-record-layout__main { min-width: 0; }
 .dc-ds-record-form { display: grid; gap: var(--space-20); }
 .dc-ds-record-form__field { min-width: 0; }
-.dc-ds-record-form--admin .dc-ds-form-field__control :is(input, select) { min-height: 42px; }
+.dc-ds-record-form__fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-20);
+}
+.dc-ds-record-form__field--wide { grid-column: 1 / -1; }
+.dc-ds-record-form--admin .dc-ds-form-field__control :is(input:not([type="checkbox"]):not([type="radio"]), select) { min-height: 42px; }
 .dc-ds-record-form--admin .dc-ds-form-field__control textarea { min-height: 112px; }
 
 .dc-ds-record-notice {
@@ -215,6 +221,8 @@
 
 @media (max-width: 640px) {
   .dc-ds-record-rail { grid-template-columns: 1fr; }
+  .dc-ds-record-form__fields { grid-template-columns: 1fr; }
+  .dc-ds-record-form__field--wide { grid-column: auto; }
   .dc-ds-form-actions { flex-direction: column-reverse; justify-content: stretch; }
   .dc-ds-form-actions > * { width: 100%; }
 }
@@ -353,6 +361,16 @@
   margin-bottom: 0;
 }
 
+/* Toolbar controls are full-width by default when used in forms. In a list
+   toolbar, direct filters are compact controls beside the search field; they
+   must not claim the entire row. Filter drawers retain the full-width control
+   treatment because their fields are intentionally stacked in a grid. */
+.clm-list-page .clm-list-filter-controls > select.dc-ds-control {
+  flex: 0 1 12rem;
+  width: 12rem;
+  max-width: 100%;
+}
+
 .clm-list-page.dc-ds-page-flow,
 .repo-page.dc-ds-page-flow {
   gap: var(--space-12);
@@ -367,6 +385,57 @@
 }
 
 .dc-ds-list-toolbar { min-width: 0; }
+
+/* Workflow Field Catalog follows the governed compact list-table scaffold. */
+.workflow-field-catalog-page .dc-ds-list-meta { margin: 0; }
+.workflow-field-catalog-page .clm-list-result-count {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink-700);
+  font-size: 13px;
+  font-weight: 600;
+}
+.workflow-field-catalog-page #workflow-field-catalog-table {
+  min-width: 980px;
+  table-layout: fixed;
+  width: 100%;
+}
+.workflow-field-catalog-page #workflow-field-catalog-table th,
+.workflow-field-catalog-page #workflow-field-catalog-table td {
+  padding: var(--space-8) var(--space-12);
+  vertical-align: middle;
+}
+.workflow-field-catalog-page #workflow-field-catalog-table th[data-col="field"],
+.workflow-field-catalog-page #workflow-field-catalog-table td[data-col="field"] { width: 30%; }
+.workflow-field-catalog-page #workflow-field-catalog-table th[data-col="key"],
+.workflow-field-catalog-page #workflow-field-catalog-table td[data-col="key"] { width: 17%; }
+.workflow-field-catalog-page #workflow-field-catalog-table th[data-col="type"],
+.workflow-field-catalog-page #workflow-field-catalog-table td[data-col="type"] { width: 11%; }
+.workflow-field-catalog-page #workflow-field-catalog-table th[data-col="workflow"],
+.workflow-field-catalog-page #workflow-field-catalog-table td[data-col="workflow"] { width: 21%; }
+.workflow-field-catalog-page #workflow-field-catalog-table th[data-col="section"],
+.workflow-field-catalog-page #workflow-field-catalog-table td[data-col="section"] { width: 12%; }
+.workflow-field-catalog-page #workflow-field-catalog-table th[data-col="required"],
+.workflow-field-catalog-page #workflow-field-catalog-table td[data-col="required"] {
+  width: 112px;
+  white-space: nowrap;
+}
+.workflow-field-catalog-page .workflow-field-catalog__field {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink-900);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.workflow-field-catalog-page #workflow-field-catalog-table code {
+  color: var(--ink-700);
+  font-size: 12px;
+}
 
 /* List pages use page-flow gap for toolbar → content rhythm; no under-search rule. */
 .dc-ds-list-page > .dc-ds-filterbar {
@@ -408,6 +477,236 @@
 }
 
 .dc-ds-card-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+/* Shared card system. Variants change information emphasis, not the card's
+   anatomy: header → concise body → structured meta → stable footer action. */
+.dc-ds-card {
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 100%;
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-20);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-premium-card);
+  background: var(--card);
+  box-shadow: var(--shadow-card-subtle);
+  color: var(--ink-900);
+}
+
+.dc-ds-card--interactive {
+  color: inherit;
+  text-decoration: none;
+  transition: border-color var(--transition-base), box-shadow var(--transition-base), background-color var(--transition-base);
+}
+.dc-ds-card--interactive:hover:not([aria-disabled="true"]) {
+  border-color: color-mix(in srgb, var(--seal) 42%, var(--color-border-soft));
+  background: color-mix(in srgb, var(--seal) 3%, var(--card));
+  box-shadow: var(--shadow-surface-expressive);
+}
+.dc-ds-card--interactive:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.dc-ds-card[aria-disabled="true"] { cursor: not-allowed; opacity: .84; }
+
+.dc-ds-card__header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-12);
+  min-width: 0;
+}
+.dc-ds-card__icon {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--seal) 18%, var(--line));
+  border-radius: var(--radius-subpanel);
+  background: var(--seal-bg);
+  color: var(--seal-dark);
+}
+.dc-ds-card__icon .dc-ds-icon { width: 18px; height: 18px; }
+.dc-ds-card__heading { min-width: 0; flex: 1 1 auto; }
+.dc-ds-card__title-row { display: flex; align-items: flex-start; gap: var(--space-8); min-width: 0; }
+.dc-ds-card__title {
+  min-width: 0;
+  color: var(--ink-900);
+  font: var(--text-heading);
+  font-size: 15px;
+  font-weight: 650;
+  line-height: 1.35;
+}
+.dc-ds-card__subtitle {
+  display: block;
+  margin-top: var(--space-4);
+  color: var(--ink-500);
+  font: var(--text-meta);
+}
+.dc-ds-card__count {
+  flex: 0 0 auto;
+  color: var(--ink-700);
+  font-size: var(--font-size-small);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.dc-ds-card__body {
+  margin: var(--space-16) 0 0;
+  color: var(--ink-500);
+  font: var(--text-small);
+  line-height: 1.5;
+}
+.dc-ds-card__meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-8);
+  margin: var(--space-16) 0 0;
+  padding: var(--space-12) 0 0;
+  border-top: 1px solid var(--hairline);
+  list-style: none;
+}
+.dc-ds-card__meta-item {
+  min-width: 0;
+  color: var(--ink-500);
+  font: var(--text-meta);
+}
+.dc-ds-card__meta-item > span,
+.dc-ds-card__meta-item > strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dc-ds-card__meta-item > strong { margin-top: 2px; color: var(--ink-700); font-weight: 600; }
+.dc-ds-card__meta-item--more { color: var(--ink-600); font-weight: 600; }
+.dc-ds-card__meta-action-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  margin-top: var(--space-16);
+  padding-top: var(--space-12);
+  border-top: 1px solid var(--hairline);
+}
+.dc-ds-card__meta-action-row .dc-ds-card__meta {
+  flex: 1 1 auto;
+  margin: 0;
+  padding: 0;
+  border-top: 0;
+}
+.dc-ds-card__inline-action {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--space-4);
+  color: var(--seal-dark);
+  font: var(--text-meta);
+  font-weight: 650;
+  white-space: nowrap;
+}
+.dc-ds-card__inline-action .dc-ds-icon { width: 14px; height: 14px; }
+.dc-ds-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-12);
+  min-height: 32px;
+  margin-top: auto;
+  padding-top: var(--space-16);
+  border-top: 1px solid var(--hairline);
+}
+.dc-ds-card__primary-action {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  color: var(--seal-dark);
+  font: var(--text-meta);
+  font-weight: 650;
+}
+.dc-ds-card__primary-action .dc-ds-icon { width: 14px; height: 14px; }
+.dc-ds-card__chip-list { display: flex; flex-wrap: wrap; gap: var(--space-4); margin: var(--space-16) 0 0; }
+.dc-ds-card__chip {
+  display: inline-flex;
+  align-items: center;
+  max-width: 9rem;
+  min-height: 22px;
+  padding: 0 var(--space-8);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--well);
+  color: var(--ink-700);
+  font: var(--text-meta);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dc-ds-card__chip:nth-child(n+4):not(.dc-ds-card__chip--more) { display: none; }
+.dc-ds-card__chip--more { border-style: dashed; color: var(--ink-500); }
+.dc-ds-card__notice { margin: var(--space-12) 0 0; color: var(--status-pending-fg); font: var(--text-meta); font-weight: 600; }
+.dc-ds-card__secondary-actions { display: inline-flex; align-items: center; gap: var(--space-4); }
+.dc-ds-card__action {
+  width: 28px;
+  height: 28px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--card);
+  color: var(--ink-700);
+  cursor: pointer;
+  text-decoration: none;
+}
+.dc-ds-card__action:hover { border-color: color-mix(in srgb, var(--seal) 40%, var(--line)); color: var(--seal-dark); }
+.dc-ds-card__action:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+.dc-ds-card__action .dc-ds-icon { width: 14px; height: 14px; }
+
+.dc-ds-card--launch { min-height: 220px; }
+.dc-ds-card--catalog { min-height: 184px; }
+.dc-ds-card--catalog .dc-ds-card__body { margin-top: var(--space-12); }
+.dc-ds-card--catalog .dc-ds-card__meta-action-row {
+  margin-top: var(--space-12);
+  padding-top: var(--space-8);
+}
+.dc-ds-card--operational { min-height: 212px; padding: var(--space-20); }
+.dc-ds-card--operational .dc-ds-card__icon { width: 36px; height: 36px; }
+.dc-ds-card--operational .dc-ds-card__body {
+  display: -webkit-box;
+  margin-top: var(--space-12);
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+.dc-ds-card--operational .dc-ds-card__chip-list { margin-top: var(--space-12); }
+.dc-ds-card--operational .dc-ds-card__footer { min-height: 28px; padding-top: var(--space-12); }
+
+.dc-ds-card-grid--launch { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.dc-ds-card-grid--catalog {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-12);
+}
+.dc-ds-card-grid--operational { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.dc-ds-card-grid[data-cols="1"] { grid-template-columns: minmax(0, 1fr); max-width: 420px; }
+.dc-ds-card-grid[data-cols="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+@container (max-width: 236px) {
+  .dc-ds-card__header { display: grid; grid-template-columns: 40px minmax(0, 1fr); }
+  .dc-ds-card__count { grid-column: 2; margin-top: var(--space-4); text-align: left; }
+}
+
+@media (max-width: 1024px) {
+  .dc-ds-card-grid--launch,
+  .dc-ds-card-grid--operational { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .dc-ds-card,
+  .dc-ds-card--operational { min-height: 0; padding: var(--space-20); }
+  .dc-ds-card-grid--launch,
+  .dc-ds-card-grid--catalog,
+  .dc-ds-card-grid--operational,
+  .dc-ds-card-grid[data-cols="1"],
+  .dc-ds-card-grid[data-cols="2"] { grid-template-columns: 1fr; max-width: none; }
+  .dc-ds-card__meta { grid-template-columns: 1fr; }
+}
 
 .dc-ds-page-hero {
   display: flex;
@@ -823,6 +1122,24 @@ body:has(.topbar-page-title:not(:empty)) .dc-ds-page-hero:not(:has(.dc-ds-action
 .dc-ds-control--textarea { min-height: 90px; resize: vertical; }
 .dc-ds-check { width: 18px; height: 18px; accent-color: var(--seal); }
 
+/* Boolean fields use the same compact choice pattern wherever form_field.html
+   is used, rather than separating a native checkbox from its text label. */
+.dc-ds-form-field--choice {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-8);
+  align-items: start;
+  padding: var(--space-12);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--well);
+}
+.dc-ds-form-field--choice .dc-ds-form-field__control { display: flex; padding-top: 1px; }
+.dc-ds-form-field--choice .dc-ds-form-field__label { margin: 0; cursor: pointer; }
+.dc-ds-form-field__choice-copy { min-width: 0; }
+.dc-ds-form-field--choice .dc-ds-form-field__help { margin: var(--space-4) 0 0; }
+.dc-ds-form-field--choice .dc-ds-form-field__errors { margin-top: var(--space-4); }
+
 .dc-ds-alert {
   display: flex;
   align-items: flex-start;
@@ -1125,6 +1442,7 @@ body:has(.topbar-page-title:not(:empty)) .dc-ds-page-hero:not(:has(.dc-ds-action
 }
 
 .dc-ds-filterbar__search {
+  flex: 1 1 320px;
   min-width: 260px;
   min-height: 36px;
   padding: 0 var(--ds-space-3);
@@ -1135,6 +1453,15 @@ body:has(.topbar-page-title:not(:empty)) .dc-ds-page-hero:not(:has(.dc-ds-action
 }
 
 .dc-ds-filterbar__search:focus { outline: none; border-color: var(--ds-color-trust); box-shadow: var(--ds-focus-ring); }
+
+/* The generic list toolbar is also used by server-rendered table lists. Keep
+   direct select filters compact beside search and actions, rather than letting
+   the base form-control width force a second row. */
+.dc-ds-filterbar > .dc-ds-actions > select.dc-ds-control {
+  flex: 0 1 12rem;
+  width: 12rem;
+  max-width: 100%;
+}
 
 .dc-ds-settings-section {
   display: grid;
@@ -1327,6 +1654,48 @@ body:has(.topbar-page-title:not(:empty)) .dc-ds-page-hero:not(:has(.dc-ds-action
   overflow: hidden;
 }
 
+.dc-ds-table [data-col].is-hidden { display: none; }
+
+.dc-ds-table-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+}
+.dc-ds-table-sort:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.dc-ds-table th[aria-sort="ascending"] .dc-ds-table-sort__indicator::after { content: "▲"; font-size: 9px; }
+.dc-ds-table th[aria-sort="descending"] .dc-ds-table-sort__indicator::after { content: "▼"; font-size: 9px; }
+
+.dc-ds-table-column-menu { position: relative; }
+.dc-ds-table-column-menu__panel {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + var(--space-8));
+  right: 0;
+  display: none;
+  min-width: 190px;
+  padding: var(--space-12);
+}
+.dc-ds-table-column-menu.is-open .dc-ds-table-column-menu__panel { display: grid; gap: var(--space-8); }
+.dc-ds-table-column-menu__panel label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  color: var(--ink-800);
+  cursor: pointer;
+  font: var(--text-small);
+}
+
 .dc-ds-table-cell-text {
   display: block;
   min-width: 0;
@@ -1470,6 +1839,15 @@ body:has(.topbar-page-title:not(:empty)) .dc-ds-page-hero:not(:has(.dc-ds-action
   .dc-ds-surface__head-actions { width: 100%; }
   .dc-ds-surface__head-actions .dc-ds-button { width: 100%; }
   .dc-ds-settings-section { grid-template-columns: 1fr; }
+  .dc-ds-filterbar > .dc-ds-actions { width: 100%; }
+  .dc-ds-filterbar > .dc-ds-actions > select.dc-ds-control { flex-basis: 100%; width: 100%; }
+}
+
+@media (max-width: 700px) {
+  .clm-list-page .clm-list-filter-controls > select.dc-ds-control {
+    flex-basis: 100%;
+    width: 100%;
+  }
 }
 
 .dc-ds-dense-row__main {

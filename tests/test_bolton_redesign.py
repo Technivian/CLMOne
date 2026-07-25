@@ -74,7 +74,7 @@ class BoltonRedesignTestCase(TestCase):
         self.assertContains(response, 'Health score unavailable')
         self.assertContains(response, 'Add first contract')
         self.assertContains(response, 'dc-ds-metric__value--clear')
-        self.assertContains(response, 'No active issues')
+        self.assertContains(response, 'No additional portfolio actions')
 
     def test_dashboard_container_constraint(self):
         response = self.client.get(reverse('dashboard'))
@@ -106,9 +106,9 @@ class BoltonRedesignTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Top priority')
         self.assertContains(response, 'Governance controls')
-        self.assertContains(response, 'Action queue')
-        self.assertContains(response, 'Upcoming Deadlines')
-        self.assertContains(response, 'Recent Matters')
+        self.assertContains(response, 'Portfolio actions')
+        self.assertContains(response, 'Upcoming deadlines')
+        self.assertContains(response, 'Contracts needing attention')
 
     def test_legal_pulse_zero_states_are_meaningful_not_bare_zeros(self):
         # No seeded data at all: every Legal Pulse metric is zero, so each
@@ -137,7 +137,7 @@ class BoltonRedesignTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, 'data-filters-popover')
         self.assertNotContains(response, 'data-filters-toggle')
-        self.assertContains(response, 'Action queue')
+        self.assertContains(response, 'Portfolio actions')
         self.assertNotContains(response, 'Privacy reviews')
         self.assertNotContains(response, 'Commercial reviews')
         self.assertNotContains(response, 'Self-serve ready')

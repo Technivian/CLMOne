@@ -1,22 +1,9 @@
 {% extends "base.html" %}
 {% block title %}{{ object|yesno:"Edit,New" }} Ethical Wall – CLM One{% endblock %}
 {% block authenticated_page_title %}{{ object|yesno:"Edit,New" }} Ethical Wall{% endblock %}
+{% block authenticated_page_subtitle %}Set the governed access boundary and its applicable members or matters.{% endblock %}
 {% block authenticated_page_back %}<a href="{% url 'contracts:ethical_wall_list' %}" class="topbar-back-link" data-workspace-back aria-label="Back to ethical walls" title="Back to ethical walls">{% include "design_system/icon.html" with name="arrow-left" %}</a>{% endblock %}
 {% block content %}
-<div class="dc-ds-page dc-ds-page-flow dc-ds-record-page"><div class="dc-ds-record-content dc-ds-record-content--narrow">
-            <form method="post" enctype="multipart/form-data" class="panel panel-inner dc-ds-surface dc-ds-record-form">
-                {% csrf_token %}
-                {% for field in form %}
-                <div class="mb-4">
-                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-                    {{ field }}
-                    {% if field.help_text %}<p class="c-muted text-xs mt-1">{{ field.help_text }}</p>{% endif %}
-                    {% if field.errors %}<p class="c-danger text-xs mt-1">{{ field.errors|join:", " }}</p>{% endif %}
-                </div>
-                {% endfor %}
-                <div class="dc-ds-form-actions">
-                    <button type="submit" class="dc-ds-button dc-ds-button--primary">Save</button>
-                </div>
-            </form>
-</div></div>
+{% url 'contracts:ethical_wall_list' as cancel_href %}
+{% include "design_system/record_form.html" with form=form cancel_href=cancel_href submit_label="Save ethical wall" %}
 {% endblock %}

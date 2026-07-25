@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 from django.conf import settings
@@ -265,7 +266,10 @@ class DesignSystemPhaseTwoATests(SimpleTestCase):
             'repository.html': ('authenticated_page_title', 'dc-ds-list-page', 'dc-ds-list-toolbar', '_workspace_tabs.html'),
             'document_list.html': ('authenticated_page_title', 'dc-ds-list-page', 'dc-ds-list-header', 'dc-ds-actions'),
             'clause_category_list.html': ('authenticated_page_title', 'dc-ds-list-page', 'dc-ds-list-header', 'dc-ds-actions'),
-            'clause_template_list.html': ('authenticated_page_title', 'dc-ds-list-page', 'dc-ds-list-header', 'dc-ds-actions'),
+            'clause_template_list.html': (
+                'authenticated_page_title', 'dc-ds-list-page', 'clm-list-shell',
+                'Search clauses', 'clause-library-category', 'clause-library-scope',
+            ),
             'approval_request_list.html': ('authenticated_page_title', 'dc-ds-list-page', 'dc-ds-list-toolbar', '_workflow_designer_tabs.html'),
             # Intentional Workflow Ops unification: approval rules use the shared
             # list-page toolbar + workflow ops tabs include (not page_scaffold).
@@ -283,6 +287,49 @@ class DesignSystemPhaseTwoATests(SimpleTestCase):
                 with self.subTest(template=template_name, value=value):
                     self.assertNotIn(value, content)
 
+    def test_shared_list_toolbars_keep_direct_filters_inline_on_desktop(self):
+        """Full-width form controls must not break a table toolbar into rows."""
+        for selector in (
+            '.clm-list-page .clm-list-filter-controls > select.dc-ds-control',
+            '.dc-ds-filterbar > .dc-ds-actions > select.dc-ds-control',
+            '.dc-ds-filterbar__search',
+        ):
+            with self.subTest(selector=selector):
+                self.assertIn(selector, self.components)
+
+        self.assertIn('flex: 1 1 320px;', self.components)
+        self.assertIn('flex: 0 1 12rem;', self.components)
+        self.assertRegex(
+            self.components,
+            re.compile(
+                r'@media \(max-width: 700px\) \{\s*'
+                r'\.clm-list-page \.clm-list-filter-controls > select\.dc-ds-control \{\s*'
+                r'flex-basis: 100%;\s*width: 100%;',
+                re.MULTILINE,
+            ),
+        )
+        self.assertRegex(
+            self.components,
+            re.compile(
+                r'@media \(max-width: 640px\) \{[\s\S]*?'
+                r'\.dc-ds-filterbar > \.dc-ds-actions > select\.dc-ds-control '
+                r'\{ flex-basis: 100%; width: 100%; \}',
+                re.MULTILINE,
+            ),
+        )
+
+    def test_table_toolbar_contract_is_documented(self):
+        documentation = (self.root / 'docs' / 'design-system' / 'COMPONENTS.md').read_text()
+        for rule in (
+            'A standard desktop table toolbar is one compact row',
+            'direct select filters remain compact',
+            'full-width form-control rule',
+            'Use `clm-list-shell` / `clm-list-filter-controls`',
+            'On narrow screens, toolbar controls may stack in reading order',
+        ):
+            with self.subTest(rule=rule):
+                self.assertIn(rule, documentation)
+
     def test_phase_four_a_standard_record_pages_use_canonical_scaffolds(self):
         templates = self.root / 'theme' / 'templates' / 'contracts'
         for selector in (
@@ -295,7 +342,11 @@ class DesignSystemPhaseTwoATests(SimpleTestCase):
             'client_form.html': ('authenticated_page_title', 'dc-ds-record-page', 'dc-ds-record-content--narrow'),
             'client_detail.html': ('authenticated_page_title', 'authenticated_page_subtitle', 'dc-ds-record-sections'),
             'clause_category_form.html': ('authenticated_page_back', 'dc-ds-record-page', 'dc-ds-record-content--centered'),
-            'clause_template_form.html': ('authenticated_page_back', 'dc-ds-record-page', 'dc-ds-record-content--centered'),
+            'clause_template_form.html': (
+                'authenticated_page_back', 'authenticated_page_subtitle',
+                'dc-ds-record-page', 'dc-ds-record-layout--with-rail',
+                'dc-ds-record-form', 'dc-ds-form-actions',
+            ),
             'approval_request_form.html': ('authenticated_page_back', 'dc-ds-record-layout--with-rail', 'dc-ds-record-notice', 'dc-ds-form-actions'),
         }
         for template_name, required in expectations.items():
@@ -311,6 +362,16 @@ class DesignSystemPhaseTwoATests(SimpleTestCase):
                     self.assertNotIn(value, content)
         premium = (self.root / 'theme' / 'static_src' / 'src' / 'design-system' / 'premium.css').read_text()
         self.assertNotIn('approval-request-actions', premium)
+
+    def test_clause_template_form_uses_grouped_fields_and_versioned_save_language(self):
+        template = (self.root / 'theme' / 'templates' / 'contracts' / 'clause_template_form.html').read_text()
+        for value in (
+            'Clause details', 'Clause text', 'Applicability', 'Negotiation guidance',
+            'Versioned change', 'Saving creates a new draft version.',
+            'Save new version', 'form.non_field_errors',
+        ):
+            with self.subTest(value=value):
+                self.assertIn(value, template)
 
     def test_phase_four_b_counterparty_and_governance_records_use_shared_scaffolds(self):
         templates = self.root / 'theme' / 'templates' / 'contracts'

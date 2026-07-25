@@ -208,7 +208,9 @@ Governed document templates, clauses, positions, fallbacks, and negotiation guid
 
 ### Data Manager
 
-The canonical schema registry for contract data.
+Reserved for the future canonical schema registry for contract data.
+
+Current workflow-template field inventories are exposed through the Workflow Field Catalog linked from configuration surfaces, not through the first-class Data Manager destination.
 
 ### Entities
 

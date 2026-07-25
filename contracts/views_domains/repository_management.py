@@ -191,6 +191,11 @@ class ClauseTemplateListView(TenantScopedQuerysetMixin, LoginRequiredMixin, List
         ctx = super().get_context_data(**kwargs)
         org = self.get_organization()
         ctx['categories'] = scope_queryset_for_organization(ClauseCategory.objects.all(), org)
+        ctx['clause_count'] = ctx['object_list'].count()
+        ctx['scope_options'] = ClauseTemplate.JurisdictionScope.choices
+        ctx['search_query'] = self.request.GET.get('q', '')
+        ctx['selected_category'] = self.request.GET.get('category', '')
+        ctx['selected_scope'] = self.request.GET.get('scope', '')
         return ctx
 
 

@@ -1,27 +1,106 @@
 {% extends "base.html" %}
 {% block title %}{{ object|yesno:"Edit,New" }} Clause Template – CLM One{% endblock %}
 {% block authenticated_page_title %}{{ object|yesno:"Edit,New" }} Clause Template{% endblock %}
+{% block authenticated_page_subtitle %}Maintain the clause text, applicability, and negotiation guidance.{% endblock %}
 {% block authenticated_page_back %}
 <a href="{% url 'contracts:clause_template_list' %}" class="topbar-back-link" data-workspace-back aria-label="Back to clause library" title="Back to clause library">
   {% include "design_system/icon.html" with name="arrow-left" %}
 </a>
 {% endblock %}
 {% block content %}
-<div class="dc-ds-page dc-ds-page-flow dc-ds-record-page">
-  <div class="dc-ds-record-content dc-ds-record-content--narrow dc-ds-record-content--centered">
-    <div class="panel panel-inner dc-ds-surface">
-      <form method="post" enctype="multipart/form-data">
+<div class="dc-ds-page dc-ds-page--wide dc-ds-page-flow dc-ds-record-page">
+  <div class="dc-ds-record-layout--with-rail">
+    <section class="panel dc-ds-surface dc-ds-record-layout__main" aria-labelledby="clause-template-details-title">
+      <div class="panel-head">
+        <div>
+          <h2 id="clause-template-details-title" class="panel-title">Clause details</h2>
+          <p class="dc-ds-form-field__help">Define the approved clause text and the conditions that govern where it can be used.</p>
+        </div>
+      </div>
+      <form method="post" enctype="multipart/form-data" class="panel-inner dc-ds-record-form dc-ds-record-form--admin">
         {% csrf_token %}
-        {% for field in form %}
-        {% include "design_system/form_field.html" with field=field class_name="mb-4" preserve_help=True %}
-        {% endfor %}
-        <div class="flex justify-end gap-3 mt-6">
-          <a href="{% url 'contracts:clause_template_list' %}" class="dc-ds-button dc-ds-button--quiet px-4 py-2 text-sm font-medium rounded-lg">Cancel</a>
-          <button type="submit" class="dc-ds-button dc-ds-button--primary text-white px-4 py-2 text-sm font-semibold rounded-lg">Save</button>
+
+        {% if form.non_field_errors %}
+          <div class="dc-ds-form-errors" role="alert">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <fieldset class="dc-ds-record-section">
+          <legend class="dc-ds-surface__title">Identity</legend>
+          <p class="dc-ds-form-field__help">Use a recognizable title and, where available, a clause category.</p>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+            <div class="md:col-span-2">{% include "design_system/form_field.html" with field=form.title preserve_help=True %}</div>
+            {% include "design_system/form_field.html" with field=form.category preserve_help=True %}
+          </div>
+        </fieldset>
+
+        <fieldset class="dc-ds-record-section">
+          <legend class="dc-ds-surface__title">Clause text</legend>
+          <p class="dc-ds-form-field__help">Record the standard wording and, if needed, the approved fallback position.</p>
+          <div class="grid grid-cols-1 gap-4 mt-4">
+            {% include "design_system/form_field.html" with field=form.content preserve_help=True %}
+            {% include "design_system/form_field.html" with field=form.fallback_content preserve_help=True %}
+          </div>
+        </fieldset>
+
+        <fieldset class="dc-ds-record-section">
+          <legend class="dc-ds-surface__title">Applicability</legend>
+          <p class="dc-ds-form-field__help">Set where the clause applies and whether it is required for the stated contract types.</p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            {% include "design_system/form_field.html" with field=form.jurisdiction_scope preserve_help=True %}
+            {% include "design_system/form_field.html" with field=form.applicable_contract_types preserve_help=True %}
+            <div class="dc-ds-form-field{% if form.is_mandatory.errors %} dc-ds-form-field--error{% endif %} md:col-span-2">
+              <label class="dc-ds-record-checklist-item" for="{{ form.is_mandatory.id_for_label }}">
+                <span>
+                  <strong>Mandatory clause</strong><br>
+                  <span class="c-muted">Require this clause for the applicable contract types.</span>
+                </span>
+                {{ form.is_mandatory }}
+              </label>
+              {% if form.is_mandatory.errors %}
+                <div class="dc-ds-form-field__errors" id="{{ form.is_mandatory.id_for_label }}-errors" role="alert">
+                  {% for error in form.is_mandatory.errors %}<p>{{ error }}</p>{% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="dc-ds-record-section">
+          <legend class="dc-ds-surface__title">Negotiation guidance</legend>
+          <p class="dc-ds-form-field__help">Add internal guidance and tags that help reviewers find and use this clause consistently.</p>
+          <div class="grid grid-cols-1 gap-4 mt-4">
+            {% include "design_system/form_field.html" with field=form.playbook_notes preserve_help=True %}
+            {% include "design_system/form_field.html" with field=form.tags preserve_help=True %}
+          </div>
+        </fieldset>
+
+        <div class="dc-ds-form-actions">
+          <a href="{% url 'contracts:clause_template_list' %}" class="dc-ds-button dc-ds-button--quiet">Cancel</a>
+          <button type="submit" class="dc-ds-button dc-ds-button--primary">{{ object|yesno:"Save new version,Create clause" }}</button>
         </div>
       </form>
-    </div>
-  </div>
+    </section>
 
+    <aside class="dc-ds-record-rail" aria-label="Clause template guidance">
+      {% if object %}
+        <section class="panel dc-ds-surface">
+          <div class="panel-inner">
+            <h2 class="dc-ds-record-rail__title">Versioned change</h2>
+            <p class="dc-ds-record-rail__copy">Saving creates a new draft version. The current clause remains unchanged.</p>
+          </div>
+        </section>
+      {% endif %}
+      <section class="panel dc-ds-surface">
+        <div class="panel-inner">
+          <h2 class="dc-ds-record-rail__title">Before you save</h2>
+          <ol class="dc-ds-record-steps">
+            <li><span class="dc-ds-record-steps__number">1</span><span>Confirm the standard wording is complete and clear.</span></li>
+            <li><span class="dc-ds-record-steps__number">2</span><span>Set the scope and any contract-type applicability.</span></li>
+            <li><span class="dc-ds-record-steps__number">3</span><span>Add negotiation guidance only for internal reviewers.</span></li>
+          </ol>
+        </div>
+      </section>
+    </aside>
+  </div>
 </div>
 {% endblock %}

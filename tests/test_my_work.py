@@ -65,6 +65,7 @@ class MyWorkPageTests(TestCase):
         content = response.content.decode()
         self.assertLess(content.index('id="my-work-search"'), content.index('id="my-work-filters-toggle"'))
         self.assertLess(content.index('my-work-inline-summary'), content.index('id="my-work-search"'))
+        self.assertLess(content.index('clm-list-view-actions my-work-toolbar-actions'), content.index('clm-list-filter-controls my-work-active-panel'))
         self.assertNotIn('my-work-summary-wrap', content)
 
     def test_my_work_shows_assigned_approval(self):
@@ -114,6 +115,31 @@ class MyWorkPageTests(TestCase):
         self.assertContains(response, 'Complete data transfer assessment')
         self.assertContains(response, 'Privacy')
 
+    def test_my_work_limits_header_quick_views_to_nonzero_personal_shortcuts(self):
+        DPAReviewPack.objects.create(
+            organization=self.org,
+            contract=self.contract,
+            counterparty=self.counterparty,
+            reviewer=self.owner,
+            approval_status=DPAReviewPack.ApprovalStatus.UNDER_REVIEW,
+        )
+        Deadline.objects.create(
+            title='Complete renewal obligation',
+            contract=self.contract,
+            assigned_to=self.owner,
+            due_date=date.today() + timedelta(days=14),
+            created_by=self.owner,
+        )
+
+        response = self.client.get(reverse('contracts:my_work'))
+        self.assertContains(response, 'data-summary-filter="awaiting_review"')
+        self.assertContains(response, 'data-summary-filter="upcoming_obligations"')
+        self.assertNotContains(response, 'data-summary-filter="due_today"')
+        self.assertNotContains(response, 'data-summary-filter="overdue"')
+        self.assertNotContains(response, 'data-summary-filter="questions_for_me"')
+        self.assertNotContains(response, 'data-summary-filter="returned_to_me"')
+        self.assertContains(response, 'legacySummaryFilters')
+
     def test_my_work_empty_state_when_no_assignments(self):
         other_client = Client()
         other_client.login(username='mw_reviewer', password='testpass123!')
@@ -140,5 +166,6 @@ class MyWorkPageTests(TestCase):
             due_date=timezone.now() - timedelta(days=2),
         )
         response = self.client.get(reverse('contracts:my_work'))
-        self.assertContains(response, 'data-summary-filter="overdue"')
-        self.assertContains(response, 'Overdue')
+        self.assertNotContains(response, 'data-summary-filter="overdue"')
+        self.assertContains(response, 'id="my-work-filter-due"')
+        self.assertContains(response, '<option value="overdue">Overdue</option>')

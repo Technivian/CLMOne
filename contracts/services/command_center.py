@@ -268,6 +268,92 @@ def group_recommended_actions(rows, today=None, limit=5):
     return result
 
 
+def _portfolio_contract_key(row):
+    """Return a stable display-level contract key without changing source data."""
+    contract = row.get('contract')
+    if contract is not None and getattr(contract, 'pk', None):
+        return f'contract:{contract.pk}'
+    return (
+        row.get('contract_id')
+        or row.get('workspace_href')
+        or row.get('href')
+        or (row.get('title') or '').casefold()
+    )
+
+
+def _portfolio_issue_key(row):
+    return (
+        _portfolio_contract_key(row),
+        (row.get('attention_explanation') or row.get('blocking_issue')
+         or row.get('recommendation') or row.get('next_action')
+         or row.get('title') or '').casefold(),
+    )
+
+
+def _portfolio_row_summary(row, today=None):
+    """Project an existing governed row into the Command Center list contract."""
+    today = today or date.today()
+    contract = row.get('contract')
+    due_date = _date_from_datetime(row.get('due_date'))
+    contract_title = (
+        getattr(contract, 'title', None)
+        or row.get('contract_title')
+        or row.get('title')
+        or 'Contract'
+    )
+    return {
+        'href': row.get('workspace_href') or row.get('href'),
+        'contract': contract_title,
+        'issue': (
+            row.get('attention_explanation')
+            or row.get('blocking_issue')
+            or row.get('highest_risk_signal')
+            or 'Review required'
+        ),
+        'severity': row.get('risk_label') or 'Not assessed',
+        'owner': row.get('owner_label') or 'Unassigned',
+        'due': _format_due_label(due_date, today) if due_date else 'No due date',
+        'next_action': row.get('recommendation') or row.get('next_action') or 'Open',
+        'issue_key': _portfolio_issue_key(row),
+        'contract_key': _portfolio_contract_key(row),
+    }
+
+
+def partition_portfolio_interventions(rows, today=None, action_limit=3, attention_limit=4):
+    """Give the dashboard non-overlapping portfolio intervention views.
+
+    The Command Center can explain the highest-priority issue in its hero, but
+    must not echo that same issue in two more lists. This presentation helper
+    uses the already-authorized, ranked row projection and never mutates source
+    rows, permissions, statuses, or workflow state.
+    """
+    ranked = rank_command_center_rows(rows, today=today)
+    priority = ranked[0] if ranked else None
+    seen_issue_keys = {_portfolio_issue_key(priority)} if priority else set()
+    seen_contract_keys = {_portfolio_contract_key(priority)} if priority else set()
+    portfolio_actions = []
+    contracts_needing_attention = []
+
+    for row in ranked[1:]:
+        summary = _portfolio_row_summary(row, today=today)
+        if summary['issue_key'] in seen_issue_keys or summary['contract_key'] in seen_contract_keys:
+            continue
+        if len(portfolio_actions) < action_limit:
+            portfolio_actions.append(summary)
+        elif len(contracts_needing_attention) < attention_limit:
+            contracts_needing_attention.append(summary)
+        else:
+            break
+        seen_issue_keys.add(summary['issue_key'])
+        seen_contract_keys.add(summary['contract_key'])
+
+    return {
+        'priority': priority,
+        'portfolio_actions': portfolio_actions,
+        'contracts_needing_attention': contracts_needing_attention,
+    }
+
+
 def format_deadline_status(due_date, today=None):
     today = today or date.today()
     if not due_date:
@@ -329,13 +415,16 @@ def _format_due_label(due_date, today):
     if not due_date:
         return 'No due date'
     if due_date < today:
-        return 'Overdue'
+        days = (today - due_date).days
+        return f"Overdue by {days} day{'s' if days != 1 else ''}"
     if due_date == today:
-        return 'Today'
+        return 'Due today'
     delta_days = (due_date - today).days
+    if delta_days == 1:
+        return 'Due tomorrow'
     if delta_days <= 7:
-        return f'{delta_days} day' if delta_days == 1 else f'{delta_days} days'
-    return due_date.strftime('%d %b %Y')
+        return f'Due in {delta_days} days'
+    return f"Due {due_date.strftime('%d %b %Y')}"
 
 
 def _format_due_note(due_date, today):

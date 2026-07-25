@@ -1,55 +1,9 @@
 {% extends "base.html" %}
-{% block title %}{% if form.instance.pk %}Edit Checklist{% else %}New Compliance Checklist{% endif %} – CLM One{% endblock %}
+{% block title %}{% if form.instance.pk %}Edit Compliance Checklist{% else %}New Compliance Checklist{% endif %} – CLM One{% endblock %}
 {% block authenticated_page_title %}{% if form.instance.pk %}Edit Compliance Checklist{% else %}New Compliance Checklist{% endif %}{% endblock %}
-{% block authenticated_page_subtitle %}{% if form.instance.pk %}Update checklist details and settings.{% else %}Create a new compliance checklist.{% endif %}{% endblock %}
+{% block authenticated_page_subtitle %}Maintain the checklist details and its current governance status.{% endblock %}
 {% block authenticated_page_back %}<a href="{% url 'contracts:compliance_checklist_list' %}" class="topbar-back-link" data-workspace-back aria-label="Back to compliance checklists" title="Back to compliance checklists">{% include "design_system/icon.html" with name="arrow-left" %}</a>{% endblock %}
 {% block content %}
-<div class="dc-ds-page dc-ds-page-flow dc-ds-record-page"><div class="dc-ds-record-content dc-ds-record-content--narrow">
-            <form method="post" enctype="multipart/form-data" class="panel panel-inner dc-ds-surface dc-ds-record-form">
-                {% csrf_token %}
-                {% if form.non_field_errors %}
-                <div class="mb-4">
-                    {% for error in form.non_field_errors %}
-                    <p class="text-sm c-danger">{{ error }}</p>
-                    {% endfor %}
-                </div>
-                {% endif %}
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="md:col-span-2">
-                        <label for="{{ form.name.id_for_label }}" class="form-label">Checklist Name</label>
-                        {{ form.name }}
-                        {% if form.name.errors %}<p class="text-xs c-danger mt-1">{{ form.name.errors|join:", " }}</p>{% endif %}
-                    </div>
-                    <div class="md:col-span-2">
-                        <label for="{{ form.regulation.id_for_label }}" class="form-label">Regulation</label>
-                        {{ form.regulation }}
-                        {% if form.regulation.errors %}<p class="text-xs c-danger mt-1">{{ form.regulation.errors|join:", " }}</p>{% endif %}
-                    </div>
-                    <div>
-                        <label for="{{ form.status.id_for_label }}" class="form-label">Status</label>
-                        {{ form.status }}
-                        {% if form.status.errors %}<p class="text-xs c-danger mt-1">{{ form.status.errors|join:", " }}</p>{% endif %}
-                    </div>
-                    <div>
-                        <label for="{{ form.due_date.id_for_label }}" class="form-label">Due Date</label>
-                        {{ form.due_date }}
-                        {% if form.due_date.errors %}<p class="text-xs c-danger mt-1">{{ form.due_date.errors|join:", " }}</p>{% endif %}
-                    </div>
-                    <div>
-                        <label for="{{ form.reviewed_by.id_for_label }}" class="form-label">Reviewed By</label>
-                        {{ form.reviewed_by }}
-                        {% if form.reviewed_by.errors %}<p class="text-xs c-danger mt-1">{{ form.reviewed_by.errors|join:", " }}</p>{% endif %}
-                    </div>
-                    <div>
-                        <label for="{{ form.attachments.id_for_label }}" class="form-label">Attachment <span class="c-muted">(Optional)</span></label>
-                        {{ form.attachments }}
-                        {% if form.attachments.errors %}<p class="text-xs c-danger mt-1">{{ form.attachments.errors|join:", " }}</p>{% endif %}
-                    </div>
-                </div>
-                <div class="dc-ds-form-actions">
-                    <a href="{% url 'contracts:compliance_checklist_list' %}" class="dc-ds-button dc-ds-button--quiet">Cancel</a>
-                    <button type="submit" class="dc-ds-button dc-ds-button--primary">Save Checklist</button>
-                </div>
-            </form>
-</div></div>
+{% url 'contracts:compliance_checklist_list' as cancel_href %}
+{% include "design_system/record_form.html" with form=form cancel_href=cancel_href submit_label="Save compliance checklist" %}
 {% endblock %}

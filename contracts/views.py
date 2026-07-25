@@ -270,8 +270,8 @@ from .views_domains.core import (
     switch_organization,
 )
 from .views_domains.workspace_nav import (
-    DataManagerHubView,
     MyWorkView,
+    WorkflowFieldCatalogView,
     TemplatesPlaybooksHubView,
 )
 from .views_domains.work_amplifiers import (

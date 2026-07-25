@@ -77,13 +77,47 @@ class DesignSystemTests(TestCase):
         self.assertIn('btn-primary', rendered)
         self.assertIn('btn-secondary', rendered)
 
-    def test_card_component_snippet(self):
+    def test_shared_card_shell_renders_all_required_slots_and_limits_meta(self):
         template = Template(
-            '<div class="card"><div class="card-header"></div><div class="card-content"></div></div>'
+            '{% include "design_system/card.html" with '
+            'card_variant="launch" card_href="/start/" card_icon="file-text" '
+            'card_title="New agreement" card_subtitle="Contract request" '
+            'card_description="Start from an approved route." '
+            'card_meta=meta card_action_label="Start request" card_role="listitem" %}'
         )
-        rendered = template.render(Context({}))
-        self.assertIn('card-header', rendered)
-        self.assertIn('card-content', rendered)
+        rendered = template.render(Context({
+            'meta': [
+                {'label': 'One', 'value': '1'},
+                {'label': 'Two', 'value': '2'},
+                {'label': 'Three', 'value': '3'},
+                {'label': 'Four', 'value': '4'},
+            ],
+        }))
+        for slot in (
+            'dc-ds-card--launch',
+            'dc-ds-card__header',
+            'dc-ds-card__body',
+            'dc-ds-card__meta',
+            'dc-ds-card__footer',
+            'role="listitem"',
+        ):
+            self.assertIn(slot, rendered)
+        self.assertIn('+1 more', rendered)
+        self.assertNotIn('>4<', rendered)
+
+    def test_catalog_card_can_place_its_primary_action_with_metadata(self):
+        template = Template(
+            '{% include "design_system/card.html" with '
+            'card_variant="catalog" card_href="/catalog/" card_title="Clause library" '
+            'card_meta=meta card_action_label="Open Clause Library" '
+            'card_action_placement="inline" %}'
+        )
+        rendered = template.render(Context({
+            'meta': [{'label': 'Status', 'value': 'Ready'}],
+        }))
+        self.assertIn('dc-ds-card__meta-action-row', rendered)
+        self.assertIn('dc-ds-card__inline-action', rendered)
+        self.assertNotIn('dc-ds-card__footer', rendered)
 
     def test_dense_admin_row_adapter_renders_core_slots(self):
         template = Template(
@@ -136,6 +170,7 @@ class DesignSystemTests(TestCase):
             'README.md',
             'FOUNDATIONS.md',
             'COMPONENTS.md',
+            'CARDS.md',
             'DOMAIN_PATTERNS.md',
             'INTERACTIONS.md',
             'PAGE_ARCHETYPES.md',
@@ -152,6 +187,29 @@ class DesignSystemTests(TestCase):
             self.assertIn(token, tokens)
         self.assertIn('CLMOne.toast', runtime)
         self.assertIn('commandPalette', runtime)
+
+    def test_shared_card_system_has_all_approved_variants_and_consumer_rules(self):
+        root = Path(settings.BASE_DIR)
+        components = (
+            root / 'theme' / 'static_src' / 'src' / 'design-system' / 'components.css'
+        ).read_text()
+        card_template = (root / 'theme' / 'templates' / 'design_system' / 'card.html').read_text()
+        card_docs = (root / 'docs' / 'design-system' / 'CARDS.md').read_text()
+
+        for variant in ('launch', 'catalog', 'operational'):
+            self.assertIn(f'.dc-ds-card--{variant}', components)
+            self.assertIn(variant.title(), card_docs)
+        self.assertIn('dc-ds-card__chip:nth-child(n+4)', components)
+        self.assertIn('card_role', card_template)
+        self.assertIn('header → body → meta → footer', card_docs)
+
+    def test_catalog_card_uses_the_documented_compact_density(self):
+        components = (
+            Path(settings.BASE_DIR) / 'theme' / 'static_src' / 'src'
+            / 'design-system' / 'components.css'
+        ).read_text()
+        self.assertIn('.dc-ds-card--catalog { min-height: 184px; }', components)
+        self.assertIn('gap: var(--space-12);', components)
 
     def test_casefile_is_the_light_only_shell_standard(self):
         root = Path(settings.BASE_DIR)
@@ -460,6 +518,40 @@ class DesignSystemTests(TestCase):
             self.assertIn('dc-ds-table', content)
             self.assertIn('data-table-core="server"', content)
 
+    def test_simple_record_forms_share_the_canonical_form_composition(self):
+        root = Path(settings.BASE_DIR)
+        template_root = root / 'theme' / 'templates' / 'contracts'
+        audited_forms = (
+            'clause_category_form.html',
+            'client_form.html',
+            'compliance_checklist_form.html',
+            'counterparty_form.html',
+            'data_inventory_form.html',
+            'deadline_form.html',
+            'ethical_wall_form.html',
+            'legal_hold_form.html',
+            'matter_form.html',
+            'retention_policy_form.html',
+            'risk_log_form.html',
+            'subprocessor_form.html',
+            'transfer_record_form.html',
+        )
+        for name in audited_forms:
+            content = (template_root / name).read_text()
+            with self.subTest(form=name):
+                self.assertIn('design_system/record_form.html', content)
+                self.assertNotIn('page-wrap', content)
+
+        composition = (root / 'theme' / 'templates' / 'design_system' / 'record_form.html').read_text()
+        components = (root / 'theme' / 'static_src' / 'src' / 'design-system' / 'components.css').read_text()
+        self.assertIn('design_system/form_field.html', composition)
+        self.assertIn('design_system/form_errors.html', composition)
+        self.assertIn('dc-ds-record-layout--with-rail', composition)
+        self.assertIn('dc-ds-record-rail', composition)
+        self.assertIn('field.widget_type == "checkbox"', composition)
+        self.assertIn('dc-ds-record-form__fields', components)
+        self.assertIn('dc-ds-form-field--choice', components)
+
     def test_authenticated_tables_share_compact_interaction_contract(self):
         root = Path(settings.BASE_DIR)
         components = (
@@ -525,8 +617,9 @@ class DesignSystemTests(TestCase):
         )
         assert_header_order(
             'components/_obligations_matrix_table.html',
-            ('data-col="obligation"', 'data-col="contract"', 'data-col="status"',
-             'data-col="owner"', 'data-col="due"', 'data-col="actions"'),
+            ('data-col="obligation"', 'data-col="type"', 'data-col="contract"',
+             'data-col="status"', 'data-col="owner"', 'data-col="due"',
+             'data-col="next_action"', 'data-col="actions"'),
         )
         assert_header_order(
             'contracts/repository.html',

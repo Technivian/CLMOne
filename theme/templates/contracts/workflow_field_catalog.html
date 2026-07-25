@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+{% block title %}Workflow Field Catalog – CLM One{% endblock %}
+{% block authenticated_page_title %}Workflow Field Catalog{% endblock %}
+{% block authenticated_page_back %}<a href="{% url 'contracts:templates_playbooks_hub' %}" class="topbar-back-link" data-workspace-back aria-label="Back to Templates and Playbooks" title="Back to Templates and Playbooks">{% include "design_system/icon.html" with name="arrow-left" %}</a>{% endblock %}
+{% block content %}
+{% include "components/_list_page_shell_styles.html" %}
+<div id="workflow-field-catalog-root" class="dc-ds-page dc-ds-page--wide dc-ds-page-flow dc-ds-list-page clm-list-page workflow-field-catalog-page">
+  {% if hub_unavailable %}
+    <div class="dc-ds-surface">
+      <p class="c-danger">No active workspace is available for Workflow Field Catalog.</p>
+    </div>
+  {% else %}
+    <form method="get" action="{{ catalog_url }}" id="workflow-field-catalog-filters-form">
+      <input type="hidden" id="workflow-field-catalog-sort" name="sort" value="{{ sort_key }}">
+      <input type="hidden" id="workflow-field-catalog-direction" name="direction" value="{{ sort_direction }}">
+      <header class="clm-list-shell dc-ds-filterbar dc-ds-table-toolbar dc-ds-list-toolbar" aria-label="Workflow field catalog controls">
+        <div class="clm-list-filter-controls">
+          <div class="clm-list-search-field">
+            {% include "design_system/icon.html" with name="search" class_name="clm-list-search-icon" %}
+            <label class="sr-only" for="workflow-field-search">Search fields</label>
+            <input class="dc-ds-control" type="search" id="workflow-field-search" name="q" value="{{ search_query }}" placeholder="Search fields">
+          </div>
+          <div class="clm-list-actions-stack">
+            <p class="clm-list-result-count" aria-live="polite">{{ field_definition_count }} field{{ field_definition_count|pluralize }}</p>
+            <div id="workflow-field-catalog-column-menu" class="dc-ds-table-column-menu">
+              <button id="workflow-field-catalog-column-toggle" type="button" class="clm-list-filter-toggle dc-ds-button dc-ds-button--ghost" aria-expanded="false" aria-controls="workflow-field-catalog-column-panel">Columns</button>
+              <div id="workflow-field-catalog-column-panel" class="dc-ds-table-column-menu__panel dc-ds-surface" role="group" aria-label="Visible columns">
+                <label><input type="checkbox" data-col-toggle="key" checked> Key</label>
+                <label><input type="checkbox" data-col-toggle="type" checked> Type</label>
+                <label><input type="checkbox" data-col-toggle="workflow" checked> Workflow template</label>
+                <label><input type="checkbox" data-col-toggle="section" checked> Section</label>
+                <label><input type="checkbox" data-col-toggle="required" checked> Required</label>
+              </div>
+            </div>
+            <button id="workflow-field-catalog-filter-toggle" type="button" class="clm-list-filter-toggle dc-ds-button dc-ds-button--ghost" aria-expanded="{% if filters_active %}true{% else %}false{% endif %}" aria-controls="workflow-field-catalog-filters">Filters</button>
+          </div>
+        </div>
+      </header>
+
+      <section id="workflow-field-catalog-filters" class="clm-list-filter-drawer dc-ds-surface p-3{% if filters_active %} is-open{% endif %}" aria-label="Filters">
+        <div class="clm-list-filter-drawer__header">
+          <h2 class="clm-list-filter-drawer__title">Filters</h2>
+          <div class="clm-list-filter-drawer__actions">
+            <a class="dc-ds-button dc-ds-button--quiet text-sm" href="{{ catalog_url }}">Clear filters</a>
+            <button class="dc-ds-button dc-ds-button--primary text-sm" type="submit">Apply filters</button>
+          </div>
+        </div>
+        <div class="clm-list-filter-drawer__body">
+          <label for="workflow-field-workflow">Workflow template
+            <select class="dc-ds-control" id="workflow-field-workflow" name="workflow">
+              <option value="">All workflow templates</option>
+              {% for workflow_id, workflow_name in workflow_options %}
+                <option value="{{ workflow_id }}" {% if selected_workflow == workflow_id|stringformat:"s" %}selected{% endif %}>{{ workflow_name }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label for="workflow-field-section">Section
+            <select class="dc-ds-control" id="workflow-field-section" name="section">
+              <option value="">All sections</option>
+              {% for value, label in section_options %}
+                <option value="{{ value }}" {% if selected_section == value %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label for="workflow-field-type">Type
+            <select class="dc-ds-control" id="workflow-field-type" name="type">
+              <option value="">All types</option>
+              {% for value, label in type_options %}
+                <option value="{{ value }}" {% if selected_type == value %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label for="workflow-field-required">Required
+            <select class="dc-ds-control" id="workflow-field-required" name="required">
+              <option value="">Any requirement</option>
+              <option value="yes" {% if selected_required == "yes" %}selected{% endif %}>Required</option>
+              <option value="no" {% if selected_required == "no" %}selected{% endif %}>Optional</option>
+            </select>
+          </label>
+        </div>
+      </section>
+    </form>
+
+    {% if field_definitions %}
+      <div class="dc-ds-table-wrap">
+        <table id="workflow-field-catalog-table" class="dc-ds-table dc-ds-table--fixed" data-table-core="server" aria-label="Workflow fields">
+          <caption class="sr-only">Workflow fields and their template configuration.</caption>
+          <thead>
+            <tr>
+              <th scope="col" data-col="field" aria-sort="{% if sort_key == 'field' %}{% if sort_direction == 'asc' %}ascending{% else %}descending{% endif %}{% else %}none{% endif %}"><button type="button" class="dc-ds-table-sort" data-sort="field">Field<span class="dc-ds-table-sort__indicator" aria-hidden="true"></span></button></th>
+              <th scope="col" data-col="key" aria-sort="{% if sort_key == 'key' %}{% if sort_direction == 'asc' %}ascending{% else %}descending{% endif %}{% else %}none{% endif %}"><button type="button" class="dc-ds-table-sort" data-sort="key">Key<span class="dc-ds-table-sort__indicator" aria-hidden="true"></span></button></th>
+              <th scope="col" data-col="type" aria-sort="{% if sort_key == 'type' %}{% if sort_direction == 'asc' %}ascending{% else %}descending{% endif %}{% else %}none{% endif %}"><button type="button" class="dc-ds-table-sort" data-sort="type">Type<span class="dc-ds-table-sort__indicator" aria-hidden="true"></span></button></th>
+              <th scope="col" data-col="workflow" aria-sort="{% if sort_key == 'workflow' %}{% if sort_direction == 'asc' %}ascending{% else %}descending{% endif %}{% else %}none{% endif %}"><button type="button" class="dc-ds-table-sort" data-sort="workflow">Workflow template<span class="dc-ds-table-sort__indicator" aria-hidden="true"></span></button></th>
+              <th scope="col" data-col="section" aria-sort="{% if sort_key == 'section' %}{% if sort_direction == 'asc' %}ascending{% else %}descending{% endif %}{% else %}none{% endif %}"><button type="button" class="dc-ds-table-sort" data-sort="section">Section<span class="dc-ds-table-sort__indicator" aria-hidden="true"></span></button></th>
+              <th scope="col" data-col="required" aria-sort="{% if sort_key == 'required' %}{% if sort_direction == 'asc' %}ascending{% else %}descending{% endif %}{% else %}none{% endif %}"><button type="button" class="dc-ds-table-sort" data-sort="required">Required<span class="dc-ds-table-sort__indicator" aria-hidden="true"></span></button></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for field in field_definitions %}
+              <tr>
+                <td data-col="field"><span class="workflow-field-catalog__field">{{ field.label }}</span></td>
+                <td data-col="key"><span class="dc-ds-table-cell-text"><code title="{{ field.key }}">{{ field.key }}</code></span></td>
+                <td data-col="type"><span class="dc-ds-table-cell-text" title="{{ field.display_type }}">{{ field.display_type }}</span></td>
+                <td data-col="workflow"><span class="dc-ds-table-cell-text" title="{{ field.workflow_template.name }}">{{ field.workflow_template.name }}</span></td>
+                <td data-col="section"><span class="dc-ds-table-cell-text" title="{{ field.display_section }}">{{ field.display_section }}</span></td>
+                <td data-col="required">
+                  {% if field.is_required %}
+                    <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--attention">Required</span>
+                  {% else %}
+                    <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--neutral">Optional</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% if page_obj.paginator.num_pages > 1 %}
+        <nav class="dc-ds-table-pagination" aria-label="Workflow field catalog pages">
+          <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+          <div class="dc-ds-table-pagination__actions">
+            {% if previous_page_url %}<a class="dc-ds-button dc-ds-button--quiet" href="{{ previous_page_url }}" rel="prev">Previous</a>{% endif %}
+            {% if next_page_url %}<a class="dc-ds-button dc-ds-button--quiet" href="{{ next_page_url }}" rel="next">Next</a>{% endif %}
+          </div>
+        </nav>
+      {% endif %}
+    {% elif filters_active %}
+      {% include "design_system/empty_state.html" with icon="workflow" title="No workflow fields found" reason="No workflow fields match the current filters." how="Adjust the filters and try again." %}
+    {% else %}
+      {% include "design_system/empty_state.html" with icon="workflow" title="No workflow fields yet" reason="Workflow fields appear here when they are configured on a workflow template." how="Open Workflow Designer to configure fields for a workflow template." %}
+    {% endif %}
+  {% endif %}
+</div>
+<script nonce="{{ csp_nonce }}">
+(function () {
+  var root = document.getElementById('workflow-field-catalog-root');
+  var form = document.getElementById('workflow-field-catalog-filters-form');
+  if (!root || !form) return;
+
+  var filterToggle = document.getElementById('workflow-field-catalog-filter-toggle');
+  var filterDrawer = document.getElementById('workflow-field-catalog-filters');
+  if (filterToggle && filterDrawer) {
+    filterToggle.addEventListener('click', function () {
+      var open = filterDrawer.classList.toggle('is-open');
+      filterToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+  }
+
+  var columnMenu = document.getElementById('workflow-field-catalog-column-menu');
+  var columnToggle = document.getElementById('workflow-field-catalog-column-toggle');
+  var table = document.getElementById('workflow-field-catalog-table');
+  var storageKey = 'clmone.workflow-field-catalog.columns.v1';
+  var visibleColumns = { key: true, type: true, workflow: true, section: true, required: true };
+  try {
+    var saved = JSON.parse(localStorage.getItem(storageKey) || '{}');
+    Object.keys(visibleColumns).forEach(function (key) {
+      if (typeof saved[key] === 'boolean') visibleColumns[key] = saved[key];
+    });
+  } catch (error) { /* Ignore unavailable or malformed local storage. */ }
+
+  function applyColumnVisibility() {
+    if (!table) return;
+    Object.keys(visibleColumns).forEach(function (key) {
+      var visible = visibleColumns[key] !== false;
+      table.querySelectorAll('[data-col="' + key + '"]').forEach(function (cell) {
+        cell.classList.toggle('is-hidden', !visible);
+      });
+      var control = root.querySelector('[data-col-toggle="' + key + '"]');
+      if (control) control.checked = visible;
+    });
+  }
+  function persistColumnVisibility() {
+    try { localStorage.setItem(storageKey, JSON.stringify(visibleColumns)); } catch (error) { /* Keep the current view. */ }
+  }
+  if (columnToggle && columnMenu) {
+    columnToggle.addEventListener('click', function () {
+      var open = columnMenu.classList.toggle('is-open');
+      columnToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    document.addEventListener('click', function (event) {
+      if (!columnMenu.contains(event.target)) {
+        columnMenu.classList.remove('is-open');
+        columnToggle.setAttribute('aria-expanded', 'false');
+      }
+    });
+  }
+  root.querySelectorAll('[data-col-toggle]').forEach(function (control) {
+    control.addEventListener('change', function () {
+      var key = control.getAttribute('data-col-toggle');
+      if (!Object.prototype.hasOwnProperty.call(visibleColumns, key)) return;
+      visibleColumns[key] = !!control.checked;
+      applyColumnVisibility();
+      persistColumnVisibility();
+    });
+  });
+  applyColumnVisibility();
+
+  var searchInput = document.getElementById('workflow-field-search');
+  var searchTimer;
+  if (searchInput) {
+    searchInput.addEventListener('input', function () {
+      window.clearTimeout(searchTimer);
+      searchTimer = window.setTimeout(function () { form.requestSubmit(); }, 280);
+    });
+  }
+  root.querySelectorAll('#workflow-field-catalog-filters select').forEach(function (control) {
+    control.addEventListener('change', function () { form.requestSubmit(); });
+  });
+
+  var sortInput = document.getElementById('workflow-field-catalog-sort');
+  var directionInput = document.getElementById('workflow-field-catalog-direction');
+  root.querySelectorAll('.dc-ds-table-sort[data-sort]').forEach(function (button) {
+    button.addEventListener('click', function () {
+      var key = button.getAttribute('data-sort');
+      if (!sortInput || !directionInput) return;
+      directionInput.value = sortInput.value === key && directionInput.value === 'asc' ? 'desc' : 'asc';
+      sortInput.value = key;
+      form.requestSubmit();
+    });
+  });
+
+  document.addEventListener('keydown', function (event) {
+    if (event.key !== 'Escape') return;
+    if (filterDrawer) filterDrawer.classList.remove('is-open');
+    if (filterToggle) filterToggle.setAttribute('aria-expanded', 'false');
+    if (columnMenu) columnMenu.classList.remove('is-open');
+    if (columnToggle) columnToggle.setAttribute('aria-expanded', 'false');
+  });
+})();
+</script>
+{% endblock %}

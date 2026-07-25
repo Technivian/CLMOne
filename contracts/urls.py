@@ -1,4 +1,5 @@
 from django.urls import path
+from django.views.generic import RedirectView
 from . import views
 from .api import views as api_views
 from .views_domains.subscription import (
@@ -331,7 +332,12 @@ urlpatterns = [
     path('my-work/saved-views/<int:view_id>/', views.my_work_saved_view_detail_api, name='my_work_saved_view_detail_api'),
     path('ops/work-health/', views.WorkHealthReportView.as_view(), name='work_health_report'),
     path('templates-playbooks/', views.TemplatesPlaybooksHubView.as_view(), name='templates_playbooks_hub'),
-    path('data-manager/', views.DataManagerHubView.as_view(), name='data_manager_hub'),
+    path('workflow-field-catalog/', views.WorkflowFieldCatalogView.as_view(), name='workflow_field_catalog'),
+    path(
+        'data-manager/',
+        RedirectView.as_view(pattern_name='contracts:workflow_field_catalog', permanent=True),
+        name='data_manager_legacy_redirect',
+    ),
 
     # Counterparties
     path('counterparties/', views.CounterpartyListView.as_view(), name='counterparty_list'),

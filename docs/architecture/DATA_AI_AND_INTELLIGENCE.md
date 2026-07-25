@@ -5,11 +5,11 @@
 
 **Authority:** Accepted supporting documentation ([PDR-0003](../governance/decisions/pdr/PDR-0003-documentation-operating-model.md)). Does not supersede the active Governance Charter at [`../governance/GOVERNANCE_CHARTER.md`](../governance/GOVERNANCE_CHARTER.md). Charter v3 remains separately proposed.
 
-## 1. Data Manager is foundational
+## 1. Canonical Data Manager is foundational
 
 CLM One must maintain one canonical registry for reusable data definitions.
 
-Data Manager governs:
+The future governed Data Manager governs:
 
 - property definitions;
 - contract types;
@@ -46,7 +46,22 @@ Every Property Definition must include:
 
 Near-duplicate properties must be prevented.
 
-## 3. Data quality
+## 3. Workflow field usage inventory
+
+Current workflow-template field catalogs are not the canonical Data Manager.
+
+Workflow Field Usage rows may include:
+
+- workflow template;
+- section;
+- required state;
+- ordering;
+- defaults;
+- visibility.
+
+These are template-scoped usage controls. They do not redefine the reusable Property Definition itself.
+
+## 4. Data quality
 
 The platform must track:
 
@@ -59,7 +74,7 @@ The platform must track:
 - duplicate entities;
 - duplicate records.
 
-## 4. Search
+## 5. Search
 
 Search must support:
 
@@ -75,7 +90,7 @@ Search must support:
 
 Search results must respect object-level access before result rendering.
 
-## 5. AI capabilities
+## 6. AI capabilities
 
 Allowed categories:
 
@@ -93,7 +108,7 @@ Allowed categories:
 - portfolio explanation;
 - drafting assistance.
 
-## 6. AI suggestion model
+## 7. AI suggestion model
 
 Every AI Suggestion must record:
 
@@ -111,7 +126,7 @@ Every AI Suggestion must record:
 - final authoritative value if accepted;
 - audit event.
 
-## 7. Human verification
+## 8. Human verification
 
 AI output remains non-authoritative until:
 

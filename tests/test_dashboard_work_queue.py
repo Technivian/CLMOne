@@ -89,7 +89,7 @@ class DashboardEmptyStateTests(TestCase):
         self.assertIn('Health score unavailable', body)
         self.assertIn('Add first contract', body)
         self.assertIn('Risk findings', body)
-        self.assertIn('Configure deadlines', body)
+        self.assertIn('Deadline tracking not configured', body)
 
     def test_onboarding_checklist_hidden_once_a_contract_exists(self):
         organization = get_user_organization(self.user)
@@ -103,7 +103,7 @@ class DashboardEmptyStateTests(TestCase):
         response = self.client.get(reverse('dashboard'))
         self.assertNotContains(response, 'Set up contract operations')
         self.assertContains(response, 'Command Center')
-        self.assertContains(response, 'Recent Matters')
+        self.assertContains(response, 'Contracts needing attention')
 
 
 class DashboardQueueRowContentTests(TestCase):

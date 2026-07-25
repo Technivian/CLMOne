@@ -1,0 +1,39 @@
+<div class="dc-ds-page dc-ds-page--wide dc-ds-page-flow dc-ds-record-page">
+  <div class="dc-ds-record-layout--with-rail">
+    <section class="panel dc-ds-surface dc-ds-record-layout__main" aria-labelledby="record-form-details-title">
+      <div class="panel-head">
+        <div>
+          <h2 id="record-form-details-title" class="panel-title">{{ section_title|default:"Record details" }}</h2>
+          {% if section_copy %}<p class="dc-ds-record-rail__copy">{{ section_copy }}</p>{% endif %}
+        </div>
+      </div>
+      <form method="post" enctype="multipart/form-data" class="panel-inner dc-ds-record-form dc-ds-record-form--admin">
+        {% csrf_token %}
+        {% include "design_system/form_errors.html" with form=form %}
+        <div class="dc-ds-record-form__fields">
+          {% for field in form %}
+            {% if field.widget_type == "checkbox" %}
+              {% include "design_system/form_field.html" with field=field class_name="dc-ds-record-form__field dc-ds-record-form__field--wide" preserve_help=True %}
+            {% elif field.name == 'name' or field.name == 'title' or field.name == 'address' or field.name == 'notes' or field.name == 'description' or field.name == 'content' or field.name == 'mitigation_steps' %}
+              {% include "design_system/form_field.html" with field=field class_name="dc-ds-record-form__field dc-ds-record-form__field--wide" preserve_help=True %}
+            {% else %}
+              {% include "design_system/form_field.html" with field=field class_name="dc-ds-record-form__field" preserve_help=True %}
+            {% endif %}
+          {% endfor %}
+        </div>
+        <div class="dc-ds-form-actions">
+          {% if cancel_href %}<a href="{{ cancel_href }}" class="dc-ds-button dc-ds-button--quiet">{{ cancel_label|default:"Cancel" }}</a>{% endif %}
+          <button type="submit" class="dc-ds-button dc-ds-button--primary">{{ submit_label|default:"Save" }}</button>
+        </div>
+      </form>
+    </section>
+    <aside class="dc-ds-record-rail" aria-label="Record guidance">
+      <section class="panel dc-ds-surface">
+        <div class="panel-inner">
+          <h2 class="dc-ds-record-rail__title">{{ guidance_title|default:"Before you save" }}</h2>
+          <p class="dc-ds-record-rail__copy">{{ guidance_copy|default:"Confirm the record is complete and accurate. You can update it later from its detail page." }}</p>
+        </div>
+      </section>
+    </aside>
+  </div>
+</div>

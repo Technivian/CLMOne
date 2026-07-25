@@ -207,7 +207,7 @@ class UIButtonAndFlowIntegrityTests(TestCase):
         # should show the current zero-state hero copy rather than a bare "0".
         self.assertContains(dashboard_response, 'dc-ds-metric__value--clear')
         self.assertContains(dashboard_response, 'Top priority')
-        self.assertContains(dashboard_response, 'Action queue')
+        self.assertContains(dashboard_response, 'Portfolio actions')
 
         list_response = self.client.get(reverse('contracts:contract_list'))
         self.assertEqual(list_response.status_code, 200)

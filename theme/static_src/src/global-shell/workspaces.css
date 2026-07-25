@@ -294,17 +294,12 @@
   font: var(--text-display);
   letter-spacing: -0.02em;
 }
-.dc-ds-workspace--record .contract-command-badges {
+.dc-ds-workspace--record .contract-command-status-tags {
   display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-}
-.dc-ds-workspace--record .contract-command-stage {
-  color: var(--ink-600);
-  font: var(--text-small);
-  font-weight: 550;
-  letter-spacing: 0.01em;
+  gap: var(--space-6);
+  padding-right: var(--space-12);
 }
 .dc-ds-workspace--record .contract-command-context {
   display: flex;
@@ -325,6 +320,9 @@
   padding-left: 0;
 }
 .dc-ds-workspace--record .contract-command-meta + .contract-command-meta {
+  border-left: 1px solid var(--hairline, var(--line));
+}
+.dc-ds-workspace--record .contract-command-status-tags + .contract-command-meta {
   border-left: 1px solid var(--hairline, var(--line));
 }
 .dc-ds-workspace--record .contract-command-meta__label {

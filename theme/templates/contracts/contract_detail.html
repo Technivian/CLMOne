@@ -18,10 +18,11 @@
       <div class="contract-command-title">
         <h1 class="arch-title">{{ contract.title }}</h1>
       </div>
-      <div class="contract-command-badges" aria-label="Contract status and stage">
-        <span class="contract-command-position dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ contract.status|contract_status_badge_tone }}">{{ contract.get_status_display }} · {{ contract.get_lifecycle_stage_display }}</span>
-      </div>
       <div class="contract-command-context" aria-label="Contract identity">
+        <span class="contract-command-status-tags" aria-label="Contract status and stage">
+          <span class="dc-ds-badge dc-ds-badge--{{ contract.status|contract_status_badge_tone }}">{{ contract.get_status_display }}</span>
+          <span class="dc-ds-badge dc-ds-badge--{{ contract.lifecycle_stage|lifecycle_stage_badge_tone }}">{{ contract.get_lifecycle_stage_display }}</span>
+        </span>
         <span class="contract-command-meta">
           <span class="contract-command-meta__label">Owner</span>
           <span class="contract-command-meta__value contract-command-owner">

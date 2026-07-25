@@ -41,6 +41,7 @@ The Phase 1 inventory is retained as superseded:
 - [Foundations](FOUNDATIONS.md)
 - [Frontend Architecture](ARCHITECTURE.md)
 - [Components](COMPONENTS.md)
+- [Card System](CARDS.md)
 - [Domain Patterns](DOMAIN_PATTERNS.md)
 - [Interactions](INTERACTIONS.md)
 - [Page Archetypes](PAGE_ARCHETYPES.md)

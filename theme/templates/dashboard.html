@@ -32,6 +32,7 @@
                 </ul>
               </div>
             </details>
+            <p class="cc-v3-score-context">Updated {{ portfolio_score_freshness|date:"j M Y" }} <span aria-hidden="true">·</span> {{ portfolio_health_factors|length }} controls assessed</p>
             {% else %}
             <div class="cc-v3-score-unavailable" role="status" aria-label="Health score unavailable until a contract is added">
               <strong>—</strong><span>/100</span><em>Score pending</em>
@@ -59,7 +60,7 @@
         {% endif %}
         <div class="cc-v3-hero-actions cc-v3-portfolio-actions">
           {% if portfolio_health_available %}
-          <a class="dc-ds-button dc-ds-button--primary" href="{% url 'contracts:repository' %}">Review priority actions <span class="cc-v3-cta-arrow" aria-hidden="true">→</span></a>
+          <a class="dc-ds-button dc-ds-button--primary" href="{% url 'contracts:repository' %}">Review priority action <span class="cc-v3-cta-arrow" aria-hidden="true">→</span></a>
           <a class="dc-ds-button dc-ds-button--link" href="{% url 'contracts:repository' %}">View all contracts</a>
           {% else %}
           <a class="dc-ds-button dc-ds-button--primary" href="{% url 'contracts:contract_template_picker' %}">Add first contract <span class="cc-v3-cta-arrow" aria-hidden="true">→</span></a>
@@ -81,65 +82,51 @@
       </section>
     </div>
 
-    <section class="cc-v3-card cc-v3-matters dc-ds-surface dc-ds-surface--expressive" aria-labelledby="recent-matters-title">
-        <div class="cc-v3-section-head"><h2 id="recent-matters-title">Contracts needing attention</h2><a class="dc-ds-button dc-ds-button--link" href="{% url 'contracts:repository' %}">Open contracts</a></div>
-        <div class="cc-v3-rail-body cc-v3-rail-list">
-          {% for row in priority_queue_rows|slice:":3" %}
-          <a class="cc-v3-action-row" href="{{ row.workspace_href }}">
-            <span class="cc-v3-action-copy">
-              <strong>{{ row.title }}</strong>
-              <span class="cc-v3-action-explanation">{{ row.next_action|default:row.action_label|default:"Open" }}{% if row.priority_reason %} · {{ row.priority_reason }}{% elif row.blocking_issue %} · {{ row.blocking_issue }}{% endif %}</span>
-              <span class="cc-v3-action-entities">{{ row.owner_label }}{% if row.counterparty %} · {{ row.counterparty }}{% endif %}</span>
-            </span>
-            <span class="cc-v3-action-date">{{ row.risk_label|default:"Review" }} →</span>
+    <div class="cc-v3-portfolio-operations" aria-label="Portfolio intervention lists">
+      <section class="cc-v3-card cc-v3-portfolio-action-list dc-ds-surface dc-ds-surface--expressive" aria-labelledby="portfolio-actions-title">
+        <div class="cc-v3-section-head"><h2 id="portfolio-actions-title">Portfolio actions</h2><span class="cc-v3-section-note">Organization-wide interventions</span></div>
+        <div class="cc-v3-operational-list cc-v3-operational-list--actions" role="list" aria-label="Portfolio actions">
+          <div class="cc-v3-operational-head" aria-hidden="true"><span>Issue</span><span>Affected contract</span><span>Severity</span><span>Owner</span><span>Due date</span><span>Next action</span></div>
+          {% for action in portfolio_actions %}
+          <a class="cc-v3-operational-row" href="{{ action.href }}" role="listitem">
+            <span data-label="Issue"><strong>{{ action.issue }}</strong></span><span data-label="Affected contract">{{ action.contract }}</span><span data-label="Severity" class="cc-v3-severity" data-severity="{{ action.severity|lower }}">{{ action.severity }}</span><span data-label="Owner">{{ action.owner }}</span><span data-label="Due date">{{ action.due }}</span><span data-label="Next action" class="cc-v3-next-action">{{ action.next_action }} <span aria-hidden="true">→</span></span>
           </a>
           {% empty %}
-          <div class="cc-v3-empty"><span class="cc-v3-empty-icon" aria-hidden="true">{% include "design_system/icon.html" with name="folder" %}</span><strong>No contracts need attention</strong><span>Governed work surfaces in Contracts, Approvals, and Obligations.</span></div>
+          <div class="cc-v3-rail-state"><span>No additional portfolio actions</span><strong class="is-clear">The highest-priority issue is shown above.</strong></div>
           {% endfor %}
-          <div class="cc-v3-setup-block" style="margin-top:12px;">
-            <div class="dc-ds-setup-list">
-              {% url 'contracts:my_work' as my_work_url %}{% include "design_system/setup_action.html" with href=my_work_url icon="check-square" label="Open My Work" copy="Personal action hub for assigned approvals, tasks, and reviews." %}
-              {% url 'contracts:approval_request_list' as approvals_url %}{% include "design_system/setup_action.html" with href=approvals_url icon="circle-check" label="Reviews & Approvals" copy="Specialist approval workspace." %}
-              {% url 'contracts:obligations_workspace' as obligations_url %}{% include "design_system/setup_action.html" with href=obligations_url icon="calendar" label="Obligations" copy="Complete obligation workspace." %}
-            </div>
-          </div>
-        </div>
-    </section>
-
-    <aside class="cc-v3-rail" aria-label="Command Center recommendations and deadlines">
-      <section class="cc-v3-card cc-v3-rail-card cc-v3-actions dc-ds-surface dc-ds-surface--expressive" aria-labelledby="recommended-actions-title">
-        <div class="cc-v3-section-head"><h2 id="recommended-actions-title">Action queue</h2>{% if clm_recommended_actions %}<a class="dc-ds-button dc-ds-button--link" href="{% url 'contracts:my_work' %}">My Work</a>{% endif %}</div>
-        <div class="cc-v3-rail-body cc-v3-rail-list">
-          {% if blocked_work_count %}
-          <div class="cc-v3-rail-state cc-v3-rail-state--blocked" role="status">
-            <span>Blocked work</span>
-            <strong>{{ blocked_work_count }} item{{ blocked_work_count|pluralize }} waiting on a dependency or approval</strong>
-          </div>
-          {% endif %}
-          {% for action in clm_recommended_actions|slice:":4" %}
-          <a class="cc-v3-action-row" href="{{ action.href }}"><span class="cc-v3-action-copy"><strong>{% if action.category %}<span class="cc-v3-action-category">{{ action.category }}</span> · {% endif %}{{ action.title }}{% if action.count > 1 %} · {{ action.count }} contracts{% endif %}</strong><span class="cc-v3-action-explanation">{{ action.explanation }}</span><span class="cc-v3-action-entities">{{ action.owner_text|default:action.counterparty_text }}</span></span><span class="cc-v3-action-date">{% if action.due_label %}{{ action.due_label }}{% else %}Open{% endif %} →</span></a>
-          {% empty %}<div class="cc-v3-rail-state"><span>No active issues</span><strong class="is-clear">Monitored queues are clear.</strong></div>{% endfor %}
-          {% if clm_setup_required_count %}<div class="cc-v3-setup-block"><span class="cc-v3-setup-label">Setup required</span><div class="dc-ds-setup-list">{% if not approval_path_configured %}{% url 'contracts:approval_rule_list' as approval_rules_url %}{% include "design_system/setup_action.html" with href=approval_rules_url icon="workflow" label="Configure approvals" copy="Define who reviews contract decisions." %}{% endif %}{% if not dpa_monitoring_configured %}{% url 'contracts:dpa_review_pack_list' as dpa_reviews_url %}{% include "design_system/setup_action.html" with href=dpa_reviews_url icon="file-text" label="Configure DPA reviews" copy="Enable cross-document monitoring." %}{% endif %}{% if reviewer_setup_required %}{% url 'contracts:organization_team' as organization_team_url %}{% include "design_system/setup_action.html" with href=organization_team_url icon="user-plus" label="Invite a reviewer" copy="Add a legal, privacy, or finance owner." %}{% endif %}</div></div>{% endif %}
         </div>
       </section>
 
-      <section class="cc-v3-card cc-v3-rail-card cc-v3-deadlines dc-ds-surface dc-ds-surface--expressive" aria-labelledby="upcoming-deadlines-title">
-        <div class="cc-v3-section-head"><h2 id="upcoming-deadlines-title">Upcoming obligations</h2><a class="dc-ds-button dc-ds-button--link" href="{% url 'contracts:obligations_workspace' %}">Open Obligations</a></div>
+      <section class="cc-v3-card cc-v3-deadlines dc-ds-surface dc-ds-surface--expressive" aria-labelledby="upcoming-deadlines-title">
+        <div class="cc-v3-section-head"><h2 id="upcoming-deadlines-title">Upcoming deadlines</h2></div>
         <div class="cc-v3-rail-body">
           {% for item in clm_upcoming_obligations|slice:":2" %}<a class="cc-v3-deadline-row" href="{{ item.href }}"><span class="cc-v3-calendar" aria-hidden="true">{% include "design_system/icon.html" with name="calendar" %}</span><span class="cc-v3-deadline-copy"><strong>{{ item.title }}</strong><span>{{ item.counterparty }}</span></span><span class="cc-v3-date-status{% if item.status_tone == 'overdue' %} is-overdue{% endif %}">{{ item.status_label }}</span></a>
-          {% empty %}
-          {% if deadline_tracking_configured %}
-          <div class="cc-v3-rail-state"><span>No upcoming deadlines</span><strong class="is-clear">Nothing due in the next 30 days.</strong></div>
-          {% else %}
-          <div class="cc-v3-rail-state"><span>Deadline tracking</span><strong class="is-setup-required">Not configured</strong></div>
-          <div class="cc-v3-setup-block"><span class="cc-v3-setup-label">Setup required</span><div class="dc-ds-setup-list">
-            {% url 'contracts:deadline_create' as deadline_create_url %}{% include "design_system/setup_action.html" with href=deadline_create_url icon="calendar" label="Configure deadlines" copy="Add renewal, notice, and approval dates." %}
-          </div></div>
-          {% endif %}
-          {% endfor %}
+          {% empty %}<div class="cc-v3-rail-state"><span>{% if deadline_tracking_configured %}No upcoming deadlines{% else %}Deadline tracking not configured{% endif %}</span><strong class="{% if deadline_tracking_configured %}is-clear{% else %}is-setup-required{% endif %}">{% if deadline_tracking_configured %}Nothing due in the next 30 days.{% else %}Add governed dates to monitor due work here.{% endif %}</strong></div>{% endfor %}
         </div>
       </section>
-    </aside>
+    </div>
+
+    <section class="cc-v3-card cc-v3-matters dc-ds-surface dc-ds-surface--expressive" aria-labelledby="contracts-attention-title">
+      <div class="cc-v3-section-head"><h2 id="contracts-attention-title">Contracts needing attention</h2><span class="cc-v3-section-note">Other portfolio items requiring attention</span></div>
+      {% if contracts_needing_attention %}
+      <div class="dc-ds-table-wrap cc-v3-attention-table-wrap">
+        <table class="dc-ds-table cc-v3-attention-table">
+          <caption>Additional contracts needing attention</caption>
+          <thead><tr><th scope="col">Contract</th><th scope="col">Issue</th><th scope="col">Severity</th><th scope="col">Owner</th><th scope="col">Action</th></tr></thead>
+          <tbody>
+            {% for contract in contracts_needing_attention %}
+            <tr><td><a href="{{ contract.href }}">{{ contract.contract }}</a></td><td>{{ contract.issue }}</td><td><span class="cc-v3-severity" data-severity="{{ contract.severity|lower }}">{{ contract.severity }}</span></td><td>{{ contract.owner }}</td><td><a class="cc-v3-next-action" href="{{ contract.href }}">{{ contract.next_action }} <span aria-hidden="true">→</span></a></td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="cc-v3-attention-empty" role="status">
+        <strong>No other contracts need attention</strong>
+        <span>The current priority issues are shown above.</span>
+      </div>
+      {% endif %}
+    </section>
   </div>
 </main>
 {% endblock %}

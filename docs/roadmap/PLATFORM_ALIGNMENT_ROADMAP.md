@@ -71,7 +71,7 @@ Parallel Milestone 1 hygiene:
 | PAR-WF-002 | Govern live instance template migration | Foundation | Reason + AuditLog; Proposed ADR-0010 (non-authorizing) |
 | PAR-WF-003 | Default new templates unpublished | Foundation | Model + migration 0105 |
 | PAR-WF-005 | Workflow invariant tests | Foundation | `tests/test_platform_workflow_invariants.py` |
-| PAR-NAV-001 | Data Manager + Entities nav | Pilot hardening | Hub + Counterparty as Entities |
+| PAR-NAV-001 | Workflow Field Catalog + Entities nav | Pilot hardening | Linked field catalog + Counterparty as Entities |
 | PAR-SEC-001 | Auth redirect / isolation defects | Pilot hardening | **Completed** — auth bypass + tenant activity check. Residual list assertion is **PAR-SEC-003** (not attached here). |
 | PAR-WORK-001 | My Work vs Command Center boundaries | Pilot hardening | `docs/product/MY_WORK_AND_COMMAND_CENTER_BOUNDARIES.md` |
 | PAR-CORE-001 | PDR-0002 lifecycle vocabulary + ownership | Pilot hardening | **Completed** 2026-07-22 |
@@ -178,7 +178,7 @@ Invariant suite covers defaults, mutate gate, simulation dry-run, migration audi
 
 ### PAR-NAV-001 — Completed
 
-Nav: Data Manager → `/contracts/data-manager/`; Entities → counterparties list. Hub documents Property Definition gap.
+Nav: Workflow Field Catalog → `/contracts/workflow-field-catalog/`; Entities → counterparties list. Hub documents Property Definition gap.
 
 - Last updated: 2026-07-21
 
@@ -475,16 +475,16 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 |---|---|
 | Status | Future roadmap (Milestone 4) — **not Completed** |
 | Priority | P1 |
-| Problem | Property Definitions not centrally governed; `FieldDefinition` is template-scoped; Data Manager hub is interim only. |
-| Governance source | DATA_AI_AND_INTELLIGENCE; CANONICAL_DOMAIN_MODEL §2.7; UX_NAVIGATION Data Manager |
-| Current evidence | Data Manager hub (PAR-NAV-001); FieldDefinition per template; gap G Property row |
+| Problem | Property Definitions not centrally governed; `FieldDefinition` is template-scoped; Workflow Field Catalog is interim only. |
+| Governance source | DATA_AI_AND_INTELLIGENCE; CANONICAL_DOMAIN_MODEL §2.7; UX_NAVIGATION Workflow Field Catalog |
+| Current evidence | Workflow Field Catalog (PAR-NAV-001); FieldDefinition per template; gap G Property row |
 | Target outcome | Central Property Definition catalogue with governed CRUD, deprecation (no silent repurpose) |
 | Dependencies | PAR-NAV-001 hub; ADR/PDR for model |
 | Decision required | **PDR and/or ADR** for Property Definition schema |
 | Migration impact | Medium — map FieldDefinition → Property Definition |
 | Security and permissions impact | Configuration-role only; pilot may keep config nav hidden until ready |
 | Audit requirements | Create/update/deprecate audited |
-| UX requirements | Data Manager becomes real catalogue, not gap stub |
+| UX requirements | Data Manager remains reserved for the future governed registry; Workflow Field Catalog stays linked from configuration surfaces |
 | Tests | CRUD authz; deprecation invariants; isolation |
 | Rollback strategy | Dual-read FieldDefinition; flag UI |
 | Acceptance criteria | Decision accepted; CRUD live; tests + migration + docs; hub gap closed |
@@ -552,7 +552,7 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | Governance source | DATA_AI_AND_INTELLIGENCE; gap G-AI-01 |
 | Current evidence | ClauseRecommendation accept flags; pilot AI kill switch |
 | Target outcome | Every AI suggestion stores provider/model/prompt hash (or equivalent) and verification state |
-| Dependencies | AI feature flags; may follow Data Manager property stability |
+| Dependencies | AI feature flags; may follow canonical property registry stability |
 | Decision required | None for additive provenance fields; PDR if suggestion lifecycle vocabulary changes |
 | Migration impact | Additive columns/backfill nullable |
 | Security and permissions impact | AI endpoints remain authz-aligned with search; kill switch respected |

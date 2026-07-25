@@ -339,6 +339,7 @@ class ContractTypeEntryCard:
     start_url: str
     section_key: str
     section_label: str
+    meta: List[dict]
 
 
 @dataclass
@@ -449,6 +450,13 @@ def _build_entry_card(
         start_url=href,
         section_key=section_key,
         section_label=section_label,
+        meta=[
+            {
+                'label': 'Starting template',
+                'value': setup.template.name if setup.template else 'Approved template route',
+            },
+            {'label': 'Expected review', 'value': expected_review},
+        ],
     )
 
 

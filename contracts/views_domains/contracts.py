@@ -70,6 +70,7 @@ from contracts.services.command_center import (
     get_workflow_type_summary,
     governed_recommendation,
     group_recommended_actions,
+    partition_portfolio_interventions,
     rank_command_center_rows,
 )
 from contracts.services.contract_launch_setup import get_entry_card_sections, get_launch_setup_map
@@ -2444,6 +2445,12 @@ def dashboard(request):
             row['recommendation_reason'] = row.get('risk_label') or 'Action required'
 
     priority_queue_rows = rank_command_center_rows(priority_queue_rows, today=today)
+    portfolio_interventions = partition_portfolio_interventions(
+        priority_queue_rows,
+        today=today,
+    )
+    portfolio_actions = portfolio_interventions['portfolio_actions']
+    contracts_needing_attention = portfolio_interventions['contracts_needing_attention']
     # Open Governed Actions must represent real workflow issues only — no
     # onboarding-checklist substitution when the workspace has none. An
     # empty workspace renders the panel's real "No open governed actions"
@@ -2507,7 +2514,7 @@ def dashboard(request):
         reviewer_setup_required,
     ))
 
-    priority_feature = priority_queue_rows[0] if priority_queue_rows else None
+    priority_feature = portfolio_interventions['priority']
     priority_feature_reason = ''
     priority_feature_score = 0
     priority_feature_band = 'No active risk'
@@ -2694,6 +2701,8 @@ def dashboard(request):
     else:
         portfolio_health_band = 'At risk'
         portfolio_health_summary = 'Multiple portfolio signals require attention. Start with the priority contract, then clear the remaining governed actions.'
+    portfolio_score_controls = [factor['label'] for factor in portfolio_health_factors]
+    portfolio_score_freshness = command_center_last_updated
     audit_event_count = AuditLog.objects.filter(organization=org).count() if org else 0
     audit_ready_count = AuditLog.objects.filter(organization=org).exclude(entry_hash='').count() if org else 0
     audit_readiness_percent = _percent(audit_ready_count, audit_event_count)
@@ -2981,6 +2990,8 @@ def dashboard(request):
         'attention_total': attention_total,
         'attention_summary': attention_summary,
         'priority_queue_rows': priority_queue_rows,
+        'portfolio_actions': portfolio_actions,
+        'contracts_needing_attention': contracts_needing_attention,
         'priority_feature': priority_feature,
         'priority_feature_reason': priority_feature_reason,
         'priority_feature_score': priority_feature_score,
@@ -3067,6 +3078,8 @@ def dashboard(request):
         'portfolio_health_available': portfolio_health_available,
         'portfolio_health_score': portfolio_health_score,
         'portfolio_health_factors': portfolio_health_factors,
+        'portfolio_score_controls': portfolio_score_controls,
+        'portfolio_score_freshness': portfolio_score_freshness,
         'portfolio_health_band': portfolio_health_band,
         'portfolio_health_summary': portfolio_health_summary,
         'portfolio_deadline_count': portfolio_deadline_count,
