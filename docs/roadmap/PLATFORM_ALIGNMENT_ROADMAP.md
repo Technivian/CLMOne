@@ -75,8 +75,8 @@ authorize enforcement, privilege, authority, flag, repair, or production work.
 |---|---:|---|
 | **Unique PAR IDs in this roadmap** | **26** | All distinct `PAR-*` identifiers below |
 | Completed unique PAR IDs | 16 | Includes `PAR-AUD-001`, `PAR-CORE-001`, `PAR-CORE-003`, `PAR-CORE-002`, `PAR-DOC-001`, `PAR-APR-001`, `PAR-SEC-003`, `PAR-ID-001`, `PAR-EXC-001` |
-| Closed — deferred implementation | 1 | `PAR-APR-002`; its successor work remains separately authorized backlog |
-| In progress | 1 | `PAR-SEC-002` — Pilot Hardening characterization complete; enforcement blocked pending policy acceptance and separate authorization |
+| Closed — deferred implementation | 2 | `PAR-APR-002`, `PAR-SEC-002`; successor work remains separately authorized backlog |
+| In progress | 0 | No active Pilot Hardening enforcement PAR |
 | Blocked unique PAR IDs | 1 | `PAR-WF-010` |
 | Future / residual unique PAR IDs | 7 | `PAR-SEC-003` is Closed; `PAR-SEC-002` has moved to In progress |
 | Non-PAR Milestone 1 follow-ups | 1 | Playwright DPA bootstrap (`M1-E2E-001`) |
@@ -89,9 +89,9 @@ authorize enforcement, privilege, authority, flag, repair, or production work.
 
 **Completed (16):** `PAR-WF-001`, `PAR-AUD-001`, `PAR-WF-002`, `PAR-WF-003`, `PAR-WF-005`, `PAR-NAV-001`, `PAR-SEC-001`, `PAR-WORK-001`, `PAR-CORE-001`, `PAR-CORE-003`, `PAR-CORE-002`, `PAR-DOC-001`, `PAR-APR-001`, `PAR-SEC-003`, `PAR-ID-001`, `PAR-EXC-001`
 
-**In progress (1):** `PAR-SEC-002` — Pilot Hardening characterization complete; no enforcement implementation authority
+**In progress (0):** None
 
-**Closed — deferred implementation (1):** `PAR-APR-002`
+**Closed — deferred implementation (2):** `PAR-APR-002`, `PAR-SEC-002`
 
 **Blocked (1):** `PAR-WF-010`
 
@@ -104,8 +104,10 @@ authorize enforcement, privilege, authority, flag, repair, or production work.
 ## Immediate next items
 
 No **Platform Alignment** PAR is active. The Platform Alignment tranche is
-**Closed — deferred successor backlog**. Pilot Hardening has one active
-baseline: `PAR-SEC-002`; it has no implementation authorization.
+**Closed — deferred successor backlog**. The Pilot Hardening enforcement slice
+for `PAR-SEC-002` is also **Closed — Deferred** because independent Product,
+Engineering, and Security reviewers are unavailable; no implementation
+authorization was granted.
 
 1. **PAR-WF-010** — production cutover **blocked** pending Accepted ADR-0012 — **not started this slice**
 2. **PAR-ID-002** — ADMIN process-role reconciliation — Future residual — **not started this slice**
@@ -319,16 +321,16 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 
 | Field | Content |
 |---|---|
-| Status | **In progress — characterization complete; enforcement blocked pending policy acceptance and separate authorization** (2026-07-25) |
+| Status | **Closed — Deferred implementation** (2026-07-25): characterization complete and policy scope accepted; independent Product, Engineering, and Security approvals unavailable for the exact implementation scope. |
 | Priority | P1 |
 | Milestone | 1 — Finish pilot hardening |
 | Problem | Gap audit rows: same access rules for search/analytics/AI are mixed; client-side hide is not authorization (GUARDRAILS §6). |
 | Governance source | `docs/architecture/SECURITY_PRIVACY_ACCESS_AND_AUDIT.md`; ENGINEERING_GUARDRAILS; gap audit matrix → PAR-SEC-002 |
-| Current evidence | [Baseline audit](../audits/evidence/2026-07-24-par-sec-002/BASELINE_AUDIT.md) merged through PR #113; [characterization route matrix](../audits/evidence/2026-07-25-par-sec-002-characterization/ROUTE_MATRIX.md) merged through PR #119 (`809b5760`) records current route/role behavior, Ethical-Wall observation, metadata/telemetry inventory, and default-off content-free counters. [PDR-0008](../governance/decisions/pdr/PDR-0008-object-level-read-enforcement-policy.md) is a Proposed Product/Security policy package only. Runtime authorization remains unchanged. |
+| Current evidence | [Baseline audit](../audits/evidence/2026-07-24-par-sec-002/BASELINE_AUDIT.md) merged through PR #113; [characterization route matrix](../audits/evidence/2026-07-25-par-sec-002-characterization/ROUTE_MATRIX.md) merged through PR #119 (`809b5760`) records current route/role behavior, Ethical-Wall observation, metadata/telemetry inventory, and default-off content-free counters. PDR-0008 and Addendum 001 were accepted for policy scope through PR #120 (`35180b5c`); runtime authorization remains unchanged. Authorization package PR #124 (`70ec18f2`) remained unmerged with no submitted independent reviews. See the deferral record for the exact blocker. |
 | Target outcome | Search, analytics, and AI endpoints enforce the same tenant + permission rules as primary contract APIs; UI hide never substitutes for server checks |
 | Owners | **@haroonwahed** — named Programme, Product, Engineering, and Security owner under the Pilot Hardening bootstrap; recorded as the sole direct human administrator. This declaration does not replace independent reviews required for enforcement. |
-| Dependencies | Completed route/control inventory and characterization. PDR-0008 remains Proposed; its acceptance and separate authorization are required before enforcement can safely interpret Ethical Walls, confidential records, role scope, aggregates, telemetry, or AI context. `PAR-AI-001` surfaces may be characterized without claiming AI provenance complete. |
-| Decision required | **PDR-0008 Addendum 001 accepts the policy scope only.** A separate authorization is still required for every enforcement implementation or activation. |
+| Dependencies | Completed route/control inventory and characterization. PDR-0008 policy scope is accepted, but the separate implementation authorization gate was not satisfied. `PAR-AI-001` surfaces may be characterized without claiming AI provenance complete. |
+| Decision required | Future reactivation requires a new exact-SHA authorization package with independent Product, Engineering, and Security GitHub approvals, green CI, reversible controls, and an operator record. |
 | Migration impact | None expected |
 | Security and permissions impact | **High** — close authz gaps; regression tests mandatory |
 | Audit requirements | Denied cross-tenant access attempts remain free of contract content in logs; establish evidence for restricted-record denial, aggregate/facet suppression, telemetry minimization, and AI context exclusion before enforcement. |
@@ -336,8 +338,8 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | Tests | Baseline: focused authorization suite **159/160 pass**, with one documented unrelated UI assertion failure. Characterization adds unauthenticated, owner/member, cross-tenant AI, Ethical-Wall, telemetry, and default-off counter tests; enforcement remains blocked pending the required policy decision. |
 | Rollback strategy | Characterization is merged with its observation control committed off. The smallest proposed enforcement slice is default-off contract-search result/facet filtering only, with a named non-production environment, explicit allowlist, generic content-free deny/empty outcomes, and flag-off restoration of the legacy read path. It cannot proceed until PDR-0008 is accepted, independent reviews, green CI, and separately reviewed rollback controls are present. |
 | Acceptance criteria | For each in-scope route, a server-side policy is demonstrably applied before records, facets, aggregates, telemetry, or AI context are returned; client hiding is not relied on; cross-tenant and restricted-record denial is content-free; required CI and authorization evidence are green. |
-| Evidence | `docs/audits/evidence/2026-07-24-par-sec-002/BASELINE_AUDIT.md`; `docs/audits/evidence/2026-07-25-par-sec-002-characterization/ROUTE_MATRIX.md`; `docs/audits/evidence/2026-07-25-par-sec-002-policy/POLICY_PACKAGE.md`; PDR-0008 and Addendum 001 |
-| PR/commits | PR #113 baseline merge `10177cc5d`; PR #119 characterization merge `809b5760`; policy PR #120 `136675003f`; Addendum PR pending |
+| Evidence | `docs/audits/evidence/2026-07-24-par-sec-002/BASELINE_AUDIT.md`; `docs/audits/evidence/2026-07-25-par-sec-002-characterization/ROUTE_MATRIX.md`; `docs/audits/evidence/2026-07-25-par-sec-002-policy/POLICY_PACKAGE.md`; PDR-0008 and Addendum 001; authorization package PR #124; deferral record `docs/audits/evidence/2026-07-25-par-sec-002-search-facets-authorization/DEFERRAL.md` |
+| PR/commits | PR #113 baseline merge `10177cc5d`; PR #119 characterization merge `809b5760`; PR #120 policy merge `35180b5c` (including Addendum PR #121 merge `1fc32eb5`); PR #124 authorization package `70ec18f2` (not merged) |
 | Last updated | 2026-07-25 |
 
 ---
