@@ -87,9 +87,17 @@ if ! curl -s -o /dev/null "${E2E_BASE_URL}/login/"; then
 fi
 
 echo "[verify-ui] Running Playwright smoke tests..."
-E2E_BASE_URL="${E2E_BASE_URL}" \
-E2E_USERNAME="${E2E_USERNAME}" \
-E2E_PASSWORD="${E2E_PASSWORD}" \
-npm --prefix client run test:e2e
+if [[ -n "${PLAYWRIGHT_JSON_OUTPUT:-}" ]]; then
+  mkdir -p "$(dirname "${PLAYWRIGHT_JSON_OUTPUT}")"
+  E2E_BASE_URL="${E2E_BASE_URL}" \
+  E2E_USERNAME="${E2E_USERNAME}" \
+  E2E_PASSWORD="${E2E_PASSWORD}" \
+  npm --prefix client exec -- playwright test --config=playwright.config.js --reporter=json > "${PLAYWRIGHT_JSON_OUTPUT}"
+else
+  E2E_BASE_URL="${E2E_BASE_URL}" \
+  E2E_USERNAME="${E2E_USERNAME}" \
+  E2E_PASSWORD="${E2E_PASSWORD}" \
+  npm --prefix client run test:e2e
+fi
 
 echo "[verify-ui] Completed successfully."

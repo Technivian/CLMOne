@@ -14,6 +14,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -39,7 +41,16 @@ jobs:
         run: python manage.py audit_null_organizations
 
       - name: Ensure verifier is executable
-        run: chmod +x scripts/verify_ui.sh
+        run: chmod +x scripts/verify_ui.sh scripts/run_browser_regression_gate.sh
 
-      - name: Run UI verification suite
-        run: ./scripts/verify_ui.sh || echo "UI verification is non-blocking during migration refactor window"
+      - name: Run browser regression gate
+        env:
+          BASE_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: ./scripts/run_browser_regression_gate.sh "$BASE_REF"
+
+      - name: Upload browser artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-regression-artifacts
+          path: browser-gate-artifacts
