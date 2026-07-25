@@ -43,6 +43,7 @@ from contracts.services.clause_policy import get_clause_fallback_summary, valida
 from contracts.services.clause_versions import compare_clause_versions, clone_clause_template_version, list_clause_template_versions
 from contracts.services.clause_variants import resolve_clause_variant
 from contracts.services.semantic_search import rank_clause_templates_semantic
+from contracts.services.par_sec_002_observation import observe_request
 from contracts.middleware import log_action
 
 
@@ -383,6 +384,7 @@ class EthicalWallUpdateView(TenantScopedFormMixin, TenantScopedQuerysetMixin, Lo
 @login_required
 def global_search(request):
     org = get_user_organization(request.user)
+    observe_request('search.global', request.user, org)
     params, active_preset = _search_request_params(request, org)
     q = params['q']
     result_type = params['type']

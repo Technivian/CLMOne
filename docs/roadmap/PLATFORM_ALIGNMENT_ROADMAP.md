@@ -1,7 +1,7 @@
 # Platform Alignment Roadmap
 
 **Created:** 2026-07-21  
-**Last refined:** 2026-07-22 (Tranche-1 integration / PR-scope normalization)  
+**Last refined:** 2026-07-25 (Platform Alignment tranche freeze; Pilot Hardening PAR-SEC-002 characterization and policy planning)
 **Authority:** Gap audit `docs/audits/2026-07-21-platform-gap-audit.md` · active `docs/governance/GOVERNANCE_CHARTER.md` · Accepted PDR-0003  
 **Branch:** `main` @ Tranche-1 merge (`c52d699a`) · PAR-APR follow-up: `cursor/feat-par-apr-001-foundation-governance`  
 **Living document:** update statuses only with implementation, tests, audit evidence, migration evidence (if any), documentation, and rollback proof.
@@ -21,27 +21,81 @@ execution gate, or historical record. See
 
 ---
 
+## Governance reconciliation
+
+PR #82 was closed without merge as superseded by Governance Charter §16 and
+`main` commit `3eba3602211c58ad73d6612201d6e8587f21f689`. Its editable
+evidence-table policy and associated branch remain historical context only;
+active templates and guidance use the GitHub review-and-release evidence model
+above. This reconciliation changes no Motion 4, canonical-authority, or PAR
+status.
+
+---
+
+## Qualified Platform Alignment closeout
+
+**PASS — Platform Alignment tranche closed with inherited full-suite
+residuals and no active PAR.** The reviewed evidence baseline is
+`706f20b8b84833d97f85342c8182283c8d1fcfea`; see the
+[final closeout record](../audits/evidence/2026-07-24-platform-alignment-final-closeout.md).
+The controlled full-suite comparison remains non-green only for its recorded
+inherited residuals (70 identical failure/error identifiers; no new regression).
+PAR-APR-002 has now closed as **Deferred implementation** after its scoped
+characterization, DPA decision, and ApprovalRoute evidence work. Its unresolved
+implementation is explicitly captured in the successor backlog below; it does
+not make implementation or cutover part of this closed tranche. Historical
+stale PRs [#60](https://github.com/Technivian/CLMOne/pull/60),
+[#64](https://github.com/Technivian/CLMOne/pull/64), and
+[#65](https://github.com/Technivian/CLMOne/pull/65) are closed without merge;
+their branches are retained as historical context.
+
+---
+
+## Platform Alignment tranche freeze
+
+**Frozen:** `main` at
+`8dbc26b71146803111e20e4bfdb552349d2613a7` (PR
+[#110](https://github.com/Technivian/CLMOne/pull/110) merge). The permanent
+[tranche freeze record](../audits/evidence/2026-07-24-platform-alignment-tranche-freeze.md)
+links the final immutable SHA, PR #109, PR #110, the completed/deferred PAR
+inventory, and the deferred successor backlog.
+
+There are **no active Platform Alignment PARs**. This freeze does not approve
+any successor item, cutover, authority change, migration, permission change,
+repair, production activation, or legacy retirement. The next programme area
+is **Pilot Hardening**. Its `PAR-SEC-002` baseline was initiated separately on
+2026-07-24; its evidence is limited to an authorization inventory and does not
+authorize enforcement, privilege, authority, flag, repair, or production work.
+
+---
+
 ## Catalogue count (reconciled)
 
 | Rollup | Count | Notes |
 |---|---:|---|
-| **Unique PAR IDs in this roadmap** | **24** | All distinct `PAR-*` identifiers below |
-| Completed unique PAR IDs | 15 | Includes `PAR-AUD-001`, `PAR-CORE-001`, `PAR-CORE-003`, `PAR-CORE-002`, `PAR-DOC-001`, `PAR-APR-001`, `PAR-SEC-003`, `PAR-ID-001` |
-| In progress | 1 | `PAR-EXC-001` |
-| Future / residual unique PAR IDs | 8 | Includes `PAR-SEC-002` (PAR-SEC-003 Closed); `PAR-ID-002` residual not started |
+| **Unique PAR IDs in this roadmap** | **26** | All distinct `PAR-*` identifiers below |
+| Completed unique PAR IDs | 16 | Includes `PAR-AUD-001`, `PAR-CORE-001`, `PAR-CORE-003`, `PAR-CORE-002`, `PAR-DOC-001`, `PAR-APR-001`, `PAR-SEC-003`, `PAR-ID-001`, `PAR-EXC-001` |
+| Closed — deferred implementation | 2 | `PAR-APR-002`, `PAR-SEC-002`; successor work remains separately authorized backlog |
+| In progress | 0 | No active Pilot Hardening enforcement PAR |
+| Blocked unique PAR IDs | 1 | `PAR-WF-010` |
+| Future / residual unique PAR IDs | 7 | `PAR-SEC-003` is Closed; `PAR-SEC-002` has moved to In progress |
 | Non-PAR Milestone 1 follow-ups | 1 | Playwright DPA bootstrap (`M1-E2E-001`) |
 
 ### Bundling rule for `PAR-AUD-001`
 
-`PAR-AUD-001` remains intentionally bundled with `PAR-WF-001` for delivery and is **included** in the unique total of **24**.
+`PAR-AUD-001` remains intentionally bundled with `PAR-WF-001` for delivery and is **included** in the unique total of **26**.
 
 ### Unique PAR ID inventory
 
-**Completed (15):** `PAR-WF-001`, `PAR-AUD-001`, `PAR-WF-002`, `PAR-WF-003`, `PAR-WF-005`, `PAR-NAV-001`, `PAR-SEC-001`, `PAR-WORK-001`, `PAR-CORE-001`, `PAR-CORE-003`, `PAR-CORE-002`, `PAR-DOC-001`, `PAR-APR-001`, `PAR-SEC-003`, `PAR-ID-001`
+**Completed (16):** `PAR-WF-001`, `PAR-AUD-001`, `PAR-WF-002`, `PAR-WF-003`, `PAR-WF-005`, `PAR-NAV-001`, `PAR-SEC-001`, `PAR-WORK-001`, `PAR-CORE-001`, `PAR-CORE-003`, `PAR-CORE-002`, `PAR-DOC-001`, `PAR-APR-001`, `PAR-SEC-003`, `PAR-ID-001`, `PAR-EXC-001`
 
-**In progress (1):** `PAR-EXC-001`
+**In progress (0):** None
 
-**Future / residual (8):** `PAR-SEC-002`, `PAR-WF-010`, `PAR-DATA-001`, `PAR-OBL-001`, `PAR-OBL-002`, `PAR-AI-001`, `PAR-ENT-001`, `PAR-INT-001`
+**Closed — deferred implementation (2):** `PAR-APR-002`, `PAR-SEC-002`
+
+**Blocked (1):** `PAR-WF-010`
+
+**Future / residual (7):** `PAR-ID-002`, `PAR-DATA-001`, `PAR-OBL-001`, `PAR-OBL-002`, `PAR-AI-001`, `PAR-ENT-001`, `PAR-INT-001`
 
 **Blocked (1):** `PAR-WF-010` — discovery complete; production cutover blocked pending Accepted ADR-0012
 
@@ -49,11 +103,15 @@ execution gate, or historical record. See
 
 ## Immediate next items
 
-1. **PAR-EXC-001** — Governed Exception (Milestone 3) — **In progress** (ADR-0015 **Accepted**; controlled-pilot dual-write **PASS**; PR #78/#79 history preserved; PR #81 is the non-production canonical-read package; committed defaults remain off; **no flags enabled**; **blocker:** named Release Authority `@haroonwahed` must approve the unchanged PR #81 SHA; CI must remain green before canonical-read implementation may start)
+No **Platform Alignment** PAR is active. The Platform Alignment tranche is
+**Closed — deferred successor backlog**. The Pilot Hardening enforcement slice
+for `PAR-SEC-002` is also **Closed — Deferred** because independent Product,
+Engineering, and Security reviewers are unavailable; no implementation
+authorization was granted.
 
-2. **PAR-APR-002** — legacy approval cutover — **Planned** — **not started this slice**
-3. **PAR-WF-010** — production cutover **blocked** pending Accepted ADR-0012 — **not started this slice**
-4. **PAR-ID-002** — ADMIN process-role reconciliation — Future residual — **not started this slice**
+1. **PAR-WF-010** — production cutover **blocked** pending Accepted ADR-0012 — **not started this slice**
+2. **PAR-ID-002** — ADMIN process-role reconciliation — Future residual — **not started this slice**
+3. **PAR-APR-002 successor backlog** — separately authorised planning and implementation only; see the closeout section below
 
 Parallel Milestone 1 hygiene:
 
@@ -71,7 +129,7 @@ Parallel Milestone 1 hygiene:
 | PAR-WF-002 | Govern live instance template migration | Foundation | Reason + AuditLog; Proposed ADR-0010 (non-authorizing) |
 | PAR-WF-003 | Default new templates unpublished | Foundation | Model + migration 0105 |
 | PAR-WF-005 | Workflow invariant tests | Foundation | `tests/test_platform_workflow_invariants.py` |
-| PAR-NAV-001 | Workflow Field Catalog + Entities nav | Pilot hardening | Linked field catalog + Counterparty as Entities |
+| PAR-NAV-001 | Data Manager + Entities nav | Pilot hardening | Hub + Counterparty as Entities |
 | PAR-SEC-001 | Auth redirect / isolation defects | Pilot hardening | **Completed** — auth bypass + tenant activity check. Residual list assertion is **PAR-SEC-003** (not attached here). |
 | PAR-WORK-001 | My Work vs Command Center boundaries | Pilot hardening | `docs/product/MY_WORK_AND_COMMAND_CENTER_BOUNDARIES.md` |
 | PAR-CORE-001 | PDR-0002 lifecycle vocabulary + ownership | Pilot hardening | **Completed** 2026-07-22 |
@@ -107,7 +165,7 @@ Parallel Milestone 1 hygiene:
 | ID / work | Title | Priority | Status |
 |---|---|---|---|
 | **PAR-CORE-001** | Complete remaining PDR-0002 UI/test drift | P0 | **Completed** |
-| **PAR-SEC-002** | Uniform authz for search/analytics/AI; client-hide ≠ authorization | P1 | Future |
+| **PAR-SEC-002** | Uniform authz for search/analytics/AI; client-hide ≠ authorization | P1 | **In progress — characterization complete; enforcement blocked pending PDR-0008 acceptance and separate authorization** |
 | **PAR-SEC-003** | Stale ContractIsolationTest repository-redirect assertion | P1 | **Closed** |
 | M1-E2E-001 | Fix Playwright DPA bootstrap | P1 | Future (non-PAR) |
 
@@ -125,9 +183,9 @@ Parallel Milestone 1 hygiene:
 | ID | Title | Priority | Status |
 |---|---|---|---|
 | PAR-APR-001 | Approval Requirement/Decision split | P1 | **Completed** |
-| PAR-APR-002 | Legacy approval cutover | P1 | **Planned** |
+| PAR-APR-002 | Legacy approval cutover | P1 | **Closed — Deferred implementation** |
 | PAR-ID-001 | Role Definition reconciliation | P1 | **Completed** |
-| PAR-EXC-001 | Governed Exception | P1 | **In progress** |
+| PAR-EXC-001 | Governed Exception | P1 | **Completed** |
 
 ### Milestone 4 — Canonical data and post-signature
 
@@ -178,7 +236,7 @@ Invariant suite covers defaults, mutate gate, simulation dry-run, migration audi
 
 ### PAR-NAV-001 — Completed
 
-Nav: Workflow Field Catalog → `/contracts/workflow-field-catalog/`; Entities → counterparties list. Hub documents Property Definition gap.
+Nav: Data Manager → `/contracts/data-manager/`; Entities → counterparties list. Hub documents Property Definition gap.
 
 - Last updated: 2026-07-21
 
@@ -263,25 +321,26 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 
 | Field | Content |
 |---|---|
-| Status | Future roadmap (Milestone 1) — **not Completed** |
+| Status | **Closed — Deferred implementation** (2026-07-25): characterization complete and policy scope accepted; independent Product, Engineering, and Security approvals unavailable for the exact implementation scope. |
 | Priority | P1 |
 | Milestone | 1 — Finish pilot hardening |
 | Problem | Gap audit rows: same access rules for search/analytics/AI are mixed; client-side hide is not authorization (GUARDRAILS §6). |
 | Governance source | `docs/architecture/SECURITY_PRIVACY_ACCESS_AND_AUDIT.md`; ENGINEERING_GUARDRAILS; gap audit matrix → PAR-SEC-002 |
-| Current evidence | Tenancy helpers mixed; AI kill switch in pilot middleware; gap audit Partially compliant |
+| Current evidence | [Baseline audit](../audits/evidence/2026-07-24-par-sec-002/BASELINE_AUDIT.md) merged through PR #113; [characterization route matrix](../audits/evidence/2026-07-25-par-sec-002-characterization/ROUTE_MATRIX.md) merged through PR #119 (`809b5760`) records current route/role behavior, Ethical-Wall observation, metadata/telemetry inventory, and default-off content-free counters. PDR-0008 and Addendum 001 were accepted for policy scope through PR #120 (`35180b5c`); runtime authorization remains unchanged. Authorization package PR #124 (`70ec18f2`) remained unmerged with no submitted independent reviews. See the deferral record for the exact blocker. |
 | Target outcome | Search, analytics, and AI endpoints enforce the same tenant + permission rules as primary contract APIs; UI hide never substitutes for server checks |
-| Dependencies | Inventory of search/AI/analytics routes; may touch `PAR-AI-001` surfaces without claiming AI provenance complete |
-| Decision required | None for enforcement parity; ADR only if new permission model introduced |
+| Owners | **@haroonwahed** — named Programme, Product, Engineering, and Security owner under the Pilot Hardening bootstrap; recorded as the sole direct human administrator. This declaration does not replace independent reviews required for enforcement. |
+| Dependencies | Completed route/control inventory and characterization. PDR-0008 policy scope is accepted, but the separate implementation authorization gate was not satisfied. `PAR-AI-001` surfaces may be characterized without claiming AI provenance complete. |
+| Decision required | Future reactivation requires a new exact-SHA authorization package with independent Product, Engineering, and Security GitHub approvals, green CI, reversible controls, and an operator record. |
 | Migration impact | None expected |
 | Security and permissions impact | **High** — close authz gaps; regression tests mandatory |
-| Audit requirements | Denied cross-tenant access attempts remain free of contract content in logs |
+| Audit requirements | Denied cross-tenant access attempts remain free of contract content in logs; establish evidence for restricted-record denial, aggregate/facet suppression, telemetry minimization, and AI context exclusion before enforcement. |
 | UX requirements | Forbidden/empty states honest; no “hidden but callable” controls |
-| Tests | Cross-tenant + unauthenticated tests for search/AI/analytics; permission matrix |
-| Rollback strategy | Revert authz harden commits behind flags if needed |
-| Acceptance criteria | Matrix rows for uniform authz and client-hide≠authz move to Compliant for in-scope routes; tests green |
-| Evidence | TBD |
-| PR/commits | TBD |
-| Last updated | 2026-07-22 |
+| Tests | Baseline: focused authorization suite **159/160 pass**, with one documented unrelated UI assertion failure. Characterization adds unauthenticated, owner/member, cross-tenant AI, Ethical-Wall, telemetry, and default-off counter tests; enforcement remains blocked pending the required policy decision. |
+| Rollback strategy | Characterization is merged with its observation control committed off. The smallest proposed enforcement slice is default-off contract-search result/facet filtering only, with a named non-production environment, explicit allowlist, generic content-free deny/empty outcomes, and flag-off restoration of the legacy read path. It cannot proceed until PDR-0008 is accepted, independent reviews, green CI, and separately reviewed rollback controls are present. |
+| Acceptance criteria | For each in-scope route, a server-side policy is demonstrably applied before records, facets, aggregates, telemetry, or AI context are returned; client hiding is not relied on; cross-tenant and restricted-record denial is content-free; required CI and authorization evidence are green. |
+| Evidence | `docs/audits/evidence/2026-07-24-par-sec-002/BASELINE_AUDIT.md`; `docs/audits/evidence/2026-07-25-par-sec-002-characterization/ROUTE_MATRIX.md`; `docs/audits/evidence/2026-07-25-par-sec-002-policy/POLICY_PACKAGE.md`; PDR-0008 and Addendum 001; authorization package PR #124; deferral record `docs/audits/evidence/2026-07-25-par-sec-002-search-facets-authorization/DEFERRAL.md` |
+| PR/commits | PR #113 baseline merge `10177cc5d`; PR #119 characterization merge `809b5760`; PR #120 policy merge `35180b5c` (including Addendum PR #121 merge `1fc32eb5`); PR #124 authorization package `70ec18f2` (not merged) |
+| Last updated | 2026-07-25 |
 
 ---
 
@@ -411,6 +470,44 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | Next | **PAR-EXC-001** (In progress); **PAR-ID-001 Completed** |
 | Last updated | 2026-07-22 |
 
+### PAR-APR-002 — Legacy approval cutover
+
+| Field | Content |
+|---|---|
+| Status | **Closed — Deferred implementation.** Legacy `ApprovalRequest` remains authoritative. |
+| Priority | P1 |
+| Objective | Retire `ApprovalRequest` as the approval read authority only after canonical `ApprovalRequirement` / immutable `ApprovalDecision` behaviour is demonstrably equivalent, the residual approval flows are reconciled, and a separately authorised cutover plan exists. This planning slice does not retire, remove, or deactivate the legacy model. |
+| Scope completed | Inventory and classification of legacy approval reads/writes; characterization of parity and isolation; DPA review state planning; and ApprovalRoute evidence/decision planning. This closeout implements none of those deferred runtime changes. |
+| Verified completed baseline | **Completed:** ADR-0013 foundation; migration `0111`; canonical requirement and immutable decision models; canonical requirement creation, decision recording, version binding, invalidation, audit events, and legacy mirror linkage; foundation approval, authorization, inbox, and DPA regression coverage. |
+| Verified partial baseline | **Partial:** canonical and legacy records coexist, but the workflow service, inbox, contract lifecycle signature/activation gates, and many operational/API surfaces still query `ApprovalRequest`; lifecycle currently requires both open canonical requirements and legacy approval status. The legacy model therefore remains authoritative in practice. |
+| Unresolved and deferred | **Deferred implementation:** lifecycle, inbox, API, operations, ABSTAIN, explicit REVOKE, canonical/legacy read parity, immutable route identity, route-to-requirement creation boundary, cutover rehearsal, and authorization for legacy read retirement. Physical removal of `ApprovalRequest` and any dual-write sunset require a separately authorised, reversible cutover. Production activation, privilege/permission changes, data repair, ADMIN authority, and legacy retirement execution are not part of this PAR. |
+| Dependencies | **Met for completed planning:** PAR-APR-001 / ADR-0013 foundation, PAR-SEC-003 closure, the expired characterization exception, PDR-0005, and ApprovalRoute evidence. **Still blocking every successor implementation:** a separately authorised scope, accepted governing decision where required, green CI, and cutover/rollback evidence. |
+| Current test evidence | 2026-07-24 focused baseline: **119/120** selected approval, authorization, inbox, DPA, and workflow tests passed. The single failure is `tests.test_workflow_routing.WorkflowRoutingTests.test_workflow_dashboard_and_detail_surface_routing_endpoints`: it expects the dashboard not to contain `/contracts/approval-rules/`, but the rendered command surface includes it. The ApprovalRoute evidence slice adds **3/3** passing characterization tests; its focused baseline/approval/tenancy/permission selection passed **98** tests and Django system checks passed. `tests.test_workflow_operations` retains six known setup errors from an invalid `ACTIVE` / `INTERNAL_REVIEW` lifecycle fixture. The evidence and PDR slices do not touch that fixture, model, lifecycle validator, route code, or runtime approval service, so these are unrelated baseline defects. |
+| Closeout criteria | **Met for planning/evidence only:** the non-migration call sites are classified; characterization is complete; PDR-0005 resolves the DPA planning decision; ApprovalRoute evidence is complete; PDR-0007 remains Proposed / Deferred; and no authority changed. The former cutover acceptance criteria remain successor work, not an assertion of completion. |
+| Release gates | Planning and characterization remain non-authorizing. No flag grants authority. Any future non-production canonical authority requires the repository governance gate applicable at that time, green CI, reversible default-off controls, and an operator record. Legacy retirement, production activation, permissions/privileges, automatic repair, or ADMIN authority require independent Product, Engineering, and Security approval, green CI, and a release record. |
+| Phase status | **Entry-gate inventory: Completed. Characterization: Completed. DPA decision: Completed (PDR-0005). ApprovalRoute evidence: Completed. Residual reconciliation implementation: Deferred. Read cutover: Blocked. Retirement: Deferred.** |
+| DPA planning result | **Completed — planning only.** `DPAReviewPack.approval_status` remains a separate, human-controlled DPA/privacy-review lifecycle state. `ApprovalRequest` remains the generic approval read authority; no DPA-to-canonical linkage or authority change is approved. See [`DPA_RECONCILIATION_PLANNING_BRIEF.md`](../audits/evidence/2026-07-22-par-apr-002/DPA_RECONCILIATION_PLANNING_BRIEF.md). |
+| DPA inventory finding | **Completed — PR #98:** no valid persisted DPA-to-generic-approval linkage exists; shared contract, organization, reviewer, timing, or status label is insufficient. All DPA statuses remain unmappable until a separately governed linkage rule exists. Fixture-only counts and dependency evidence are in [`DPA_INVENTORY_EVIDENCE.md`](../audits/evidence/2026-07-22-par-apr-002/DPA_INVENTORY_EVIDENCE.md). |
+| DPA reconciliation decision | **Completed — planning decision only.** PDR-0005 accepts DPA as a specialist workflow gate. Do not introduce a local DPA-to-generic relationship or infer one from current rows. Privacy Review retains its specialist, human-controlled DPA state; generic approval remains separately authoritative. |
+| ApprovalRoute reconciliation finding | **Completed — evidence only.** `ApprovalRoute` is template configuration; runtime legacy requests are selected from `ApprovalRule` and canonical requirements mirror those legacy requests. No route ID, tenant-owned route key, workflow/template-version snapshot, document-version snapshot, or route-to-request/requirement relationship exists. Fixture characterization found 0 direct links, 1 missing mapping, 2 duplicate-order rows, 1 ambiguous category, and 0 explicit stale-route controls. See [`APPROVAL_ROUTE_RECONCILIATION_INVENTORY.md`](../audits/evidence/2026-07-22-par-apr-002/APPROVAL_ROUTE_RECONCILIATION_INVENTORY.md). |
+| ApprovalRoute reconciliation decision | **Proposed / Deferred — planning only.** PDR-0007 proposes that an immutable, version-bound `ApprovalRoute` remain a selector for a separate runtime approval service. It does not create requirements directly and does not replace workflow configuration. The PDR authorizes no model, migration, mapping, dual-write, read authority, or runtime behaviour. |
+| Successor backlog | See the explicit, separately governed backlog immediately after this table. No successor is active or authorised by this closeout. |
+| Likely files for that future slice | `docs/audits/evidence/2026-07-22-par-apr-002/` (baseline matrix and test record); a new focused APR-002 characterization test under `tests/`; and, only if a test seam is genuinely needed, the narrow read boundary in `contracts/services/approval_workflow.py`. Later, separately scoped phases are likely to affect `contracts/services/contract_lifecycle.py`, `contracts/views_domains/privacy_approvals.py`, `contracts/models.py`, and each owned legacy call site. |
+| Required tests and evidence | Focused canonical-foundation, approval workflow, authorization, inbox, DPA, and workflow-routing tests; a call-site inventory excluding migrations; canonical/legacy parity and mismatch fixtures; tenant-isolation and permission-denial tests; CI result; immutable reviewed SHA; and, before an authority change, an approved cutover/rollback and operator record. |
+| Closure boundary | No canonical read cutover or legacy retirement occurred. No model, migration, mapping, flag, authority, permission, dual-write, repair, or production behaviour changed. |
+| Evidence | `docs/audits/evidence/2026-07-22-par-apr-001/`; `docs/audits/evidence/2026-07-22-par-apr-002/CLOSURE_CHECKLIST.md`; `docs/audits/evidence/2026-07-22-par-apr-002/APPROVAL_ROUTE_RECONCILIATION_INVENTORY.md`; [`PAR_APR_002_CLOSEOUT.md`](../audits/evidence/2026-07-24-par-apr-002/PAR_APR_002_CLOSEOUT.md); ADR-0013; PDR-0005; PDR-0007. |
+| Last updated | 2026-07-24 |
+
+#### PAR-APR-002 successor backlog (all require separate authorization)
+
+| Backlog item | Current disposition | Minimum prerequisite |
+|---|---|---|
+| ApprovalRoute runtime boundary | Future planning/implementation | Resolve or accept PDR-0007; define workflow-version aggregate, stable route source tuple, precedence vocabulary, and transition policy. |
+| Remaining legacy read ownership | Future reconciliation | Owned call-site plan, parity fixtures, tenant and permission evidence; legacy remains authoritative until an approved cutover. |
+| Decision semantics | Future design | Define governed ABSTAIN and explicit REVOKE lifecycle, UI, API, inbox, audit, and operations behaviour. |
+| Reversible canonical read cutover | Blocked | Separate authorization, green CI, default-off/reversible controls, rehearsed rollback, and named-environment operator evidence. |
+| Legacy `ApprovalRequest` retirement | Deferred | Completed and accepted cutover evidence, no remaining legacy dependency, independent approvals where required, and a release record. |
+
 ### PAR-ID-001 — Role Definition reconciliation
 
 | Field | Content |
@@ -441,28 +538,28 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 
 | Field | Content |
 |---|---|
-| Status | **In progress** (2026-07-24) — ADR-0015 **Accepted**; controlled-pilot dual-write activation **PASS**; monitoring PR #78 was merged prematurely `e26a2bdc` and its correction trail is preserved by PR #79 `83a0a00f`; monitoring remains read-only. PR [#81](https://github.com/Technivian/CLMOne/pull/81) carries the non-production canonical-read package; **no flags enabled**; committed defaults remain **off**; legacy authoritative; **blocker:** named Release Authority `@haroonwahed` must approve the unchanged SHA while CI remains green; break-glass / signature-provider residuals inventoried |
+| Status | **Completed** (2026-07-24) — ADR-0015 **Accepted**; controlled-pilot dual-write activation **PASS**; monitoring PR #78 was merged prematurely `e26a2bdc` and its correction trail is preserved by PR #79 `83a0a00f`; monitoring remains read-only. Authorization PR #81 and default-off implementation PR #85 merged; the named non-production canonical-read observation **PASS**; flags are off, allowlists empty, and legacy remains authoritative; break-glass / signature-provider residuals inventoried |
 
 | Priority | P1 |
 | Problem | No first-class governed Exception; risk/actions are scattered. |
 | Governance source | CANONICAL_DOMAIN_MODEL §2.33; gap G-DOM-03 |
-| Current evidence | `docs/audits/evidence/2026-07-22-par-exc-001/` (incl. `CONTROLLED_PILOT_DUAL_WRITE_ACTIVATION_RESULTS.md`) |
+| Current evidence | `docs/audits/evidence/2026-07-22-par-exc-001/` (incl. `CONTROLLED_PILOT_DUAL_WRITE_ACTIVATION_RESULTS.md` and `CANONICAL_READ_OPERATOR_RESULTS.md`) |
 | Target outcome | Governed `ExceptionRequest` / `ExceptionDecision` with owner, expiry, authority, compensating controls, privilege tokens, immutable history, tenant isolation |
 | Dependencies | PAR-APR-001 pattern helpful (**met**); ADR-0015 Acceptance (**met**); Motion 2 dual-write (**Authorized** default-off); Motion 3 activation (**Authorized** + operational **PASS**) |
-| Decision required | **ADR-0015 Accepted**; controlled-pilot dual-write **PASS**; PR #81 requires the named Release Authority's approval for its unchanged SHA and green CI before the separate default-off canonical-read implementation may start |
+| Decision required | **ADR-0015 Accepted**; controlled-pilot dual-write **PASS**; PR #81 sole-maintainer exception, exact-SHA attestation, and green CI satisfied; PR #85 implementation and named observation **PASS** |
 | Migration impact | Additive `0114` + `0115` (`correlation_id`); no legacy backfill; dual-write default-off |
-| Security and permissions impact | Server-side authz; Critical security bypass requires explicit Security approval; cross-tenant prohibited; legacy authoritative until read cutover |
+| Security and permissions impact | Server-side authz; Critical security bypass requires explicit Security approval; cross-tenant prohibited; no permission mutation; legacy authority restored after observation |
 | Audit requirements | `exception.request.*`, `exception.decision.recorded`, `exception.activated`, `exception.dual_write_failed`, `exception.security_gate_blocked`, `exception.cross_tenant.denied` |
 | UX requirements | Exception surfaces deferred until cutover; no hero clutter |
 | Tests | `tests/test_par_exc_001_exception.py` (11 OK) + `tests/test_par_exc_001_dual_write.py` (16 OK) + activation harness PASS |
-| Rollback strategy | Flags default off; reverse `0115` then `0114`; dual-write rollback = flag-off + clear allowlist (**drilled PASS**); canonical-read rollback = flag-off + clear allowlist (required before enablement) |
-| Acceptance criteria | Accepted ADR (**met**); six priority paths dual-write merged default-off; controlled-pilot activation **PASS**; remaining paths inventoried; canonical read requires the Release Authority/CI gate on PR #81, a separate default-off implementation, and a PASS operator run followed by flag-off restoration — **keep In progress** |
+| Rollback strategy | Flags default off; reverse `0115` then `0114`; dual-write rollback = flag-off + clear allowlist (**drilled PASS**); canonical-read rollback = flag-off + clear allowlist (**PASS**; both flags off and allowlists empty) |
+| Acceptance criteria | Accepted ADR (**met**); six priority paths dual-write merged default-off; controlled-pilot activation **PASS**; remaining paths inventoried; canonical-read exact-SHA/CI gate, separate default-off implementation, and named-environment PASS observation completed with flag-off restoration — **Completed** |
 | Evidence | `docs/audits/evidence/2026-07-22-par-exc-001/` (incl. `CANONICAL_READ_AUTHORITY_AUTHORIZATION.md`) |
 | Accepted ADR | **ADR-0015** (Accepted 2026-07-22T19:12:39Z) |
-| PR/commits | Foundation PR #66 merge `982b0900`; dual-write PR #69 merge `f19eae42`; Motion 3 auth PR #74 merge `058c5ed0`; monitoring PR #78 merge `e26a2bdc` (premature); correction PR #79 merge `83a0a00f`; Motion 4 PR #81 open |
-| Last updated | 2026-07-23 |
+| PR/commits | Foundation PR #66 merge `982b0900`; dual-write PR #69 merge `f19eae42`; Motion 3 auth PR #74 merge `058c5ed0`; monitoring PR #78 merge `e26a2bdc` (premature); correction PR #79 merge `83a0a00f`; authorization PR #81 merge `3eba3602`; canonical-read PR #85 merge `86625b95`; closure PR #87 merge `6f58cb81` |
+| Last updated | 2026-07-24 |
 | Explicit non-starts | PAR-APR-002, PAR-WF-010, PAR-ID-002 |
-| Next cutover step | Obtain the named Release Authority's approval for PR #81's unchanged SHA while CI is green; merge only after those gates pass; then implement default-off canonical read in a separate reviewed PR and run it only in the named environment. **Exact blocker:** PR #81 has no Release Authority approval. Do not start PAR-APR-002 / PAR-WF-010 / PAR-ID-002 here. |
+| Next roadmap item | PAR-APR-002 legacy approval cutover — planned and not started in this slice |
 
 
 ---
@@ -475,16 +572,16 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 |---|---|
 | Status | Future roadmap (Milestone 4) — **not Completed** |
 | Priority | P1 |
-| Problem | Property Definitions not centrally governed; `FieldDefinition` is template-scoped; Workflow Field Catalog is interim only. |
-| Governance source | DATA_AI_AND_INTELLIGENCE; CANONICAL_DOMAIN_MODEL §2.7; UX_NAVIGATION Workflow Field Catalog |
-| Current evidence | Workflow Field Catalog (PAR-NAV-001); FieldDefinition per template; gap G Property row |
+| Problem | Property Definitions not centrally governed; `FieldDefinition` is template-scoped; Data Manager hub is interim only. |
+| Governance source | DATA_AI_AND_INTELLIGENCE; CANONICAL_DOMAIN_MODEL §2.7; UX_NAVIGATION Data Manager |
+| Current evidence | Data Manager hub (PAR-NAV-001); FieldDefinition per template; gap G Property row |
 | Target outcome | Central Property Definition catalogue with governed CRUD, deprecation (no silent repurpose) |
 | Dependencies | PAR-NAV-001 hub; ADR/PDR for model |
 | Decision required | **PDR and/or ADR** for Property Definition schema |
 | Migration impact | Medium — map FieldDefinition → Property Definition |
 | Security and permissions impact | Configuration-role only; pilot may keep config nav hidden until ready |
 | Audit requirements | Create/update/deprecate audited |
-| UX requirements | Data Manager remains reserved for the future governed registry; Workflow Field Catalog stays linked from configuration surfaces |
+| UX requirements | Data Manager becomes real catalogue, not gap stub |
 | Tests | CRUD authz; deprecation invariants; isolation |
 | Rollback strategy | Dual-read FieldDefinition; flag UI |
 | Acceptance criteria | Decision accepted; CRUD live; tests + migration + docs; hub gap closed |
@@ -552,7 +649,7 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | Governance source | DATA_AI_AND_INTELLIGENCE; gap G-AI-01 |
 | Current evidence | ClauseRecommendation accept flags; pilot AI kill switch |
 | Target outcome | Every AI suggestion stores provider/model/prompt hash (or equivalent) and verification state |
-| Dependencies | AI feature flags; may follow canonical property registry stability |
+| Dependencies | AI feature flags; may follow Data Manager property stability |
 | Decision required | None for additive provenance fields; PDR if suggestion lifecycle vocabulary changes |
 | Migration impact | Additive columns/backfill nullable |
 | Security and permissions impact | AI endpoints remain authz-aligned with search; kill switch respected |
@@ -638,6 +735,14 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | 2026-07-22 | **PAR-WF-010 discovery complete (Blocked):** evidence `2026-07-22-par-wf-010`; Proposed ADR-0012; characterization tests; production cutover blocked pending Accepted ADR |
 | 2026-07-22 | **Tranche-1 integration gate Completed:** PR #50 merged to `main` @ `c52d699a` |
 | 2026-07-22 | **PAR-APR-001 Completed:** `ApprovalRequirement` + `ApprovalDecision`; migration 0111; ADR-0013 **Accepted**; evidence `2026-07-22-par-apr-001`; cutover residuals → PAR-APR-002 |
+| 2026-07-24 | **PAR-APR-002 DPA planning completed:** planning brief records `DPAReviewPack.approval_status` as a separate, human-controlled DPA/privacy-review state; `ApprovalRequest` remains authoritative. The next scope to submit for authorization is evidence-only linkage/status-mapping inventory with tenant and permission characterization; reconciliation implementation, read cutover, and retirement remain unauthorized. |
+| 2026-07-24 | **PAR-APR-002 DPA inventory prepared (evidence-only):** no persisted DPA-to-generic approval relationship; no status map accepted; fixture inventory retains unlinked DPA and generic rows and verifies organization scoping. DPA state remains human-controlled; legacy `ApprovalRequest` remains authoritative. |
+| 2026-07-24 | **PAR-APR-002 DPA relationship decision:** defer any DPA-to-generic approval relationship pending a broader approval-domain ADR/PDR. No inferred linkage or status map is safe; future design must resolve explicit association, ownership, version, lifecycle, tenant, permission, and audit rules before implementation. |
+| 2026-07-24 | **PAR-APR-002 combined decision accepted:** PDR-0005 selects DPA as a specialist workflow gate, retaining separate Privacy Review and generic Approval ownership. It authorizes no implementation, mapping, migration, authority change, or legacy retirement; all such work remains blocked pending separate authorization. |
+| 2026-07-24 | **PAR-APR-002 ApprovalRoute evidence and decision prepared:** PR #105 completed the evidence-only inventory (0 direct links, 1 missing mapping, 2 duplicate-order rows, 1 ambiguous category, and no explicit stale-route controls). PDR-0007 proposes a versioned route selector and separate runtime approval-service boundary; it remains planning-only and Proposed. The six `tests.test_workflow_operations` invalid `ACTIVE` / `INTERNAL_REVIEW` fixture setup errors are unrelated baseline defects. No model, migration, mapping, authority, dual-write, read cutover, or legacy change is authorised. |
+| 2026-07-24 | **PAR-APR-002 ApprovalRoute characterization completed:** template route configuration is separate from rule-selected legacy approval creation and canonical mirroring. No governed route-to-requirement identity or version binding exists; duplicate, ambiguous, missing, and stale-route handling requires a separately authorized additive decision. Legacy approval reads remain authoritative. |
+| 2026-07-24 | **PAR-APR-002 Closed — Deferred implementation:** characterization, the DPA planning decision (PDR-0005), and ApprovalRoute evidence are complete. PDR-0007 remains Proposed / Deferred. Lifecycle, inbox, API, operations, ABSTAIN, REVOKE, legacy-read ownership, reversible cutover, and retirement are explicit successor backlog only. No canonical read cutover or legacy retirement occurred; `ApprovalRequest` remains authoritative. No PAR remains active and the Platform Alignment tranche is closed with deferred successor backlog. |
+| 2026-07-24 | **Platform Alignment tranche frozen:** permanent record [`2026-07-24-platform-alignment-tranche-freeze.md`](../audits/evidence/2026-07-24-platform-alignment-tranche-freeze.md) anchors final `main` SHA `8dbc26b71146803111e20e4bfdb552349d2613a7`, PR #109, and PR #110. All completed and deferred PARs plus the five successor backlog items are enumerated there. There are no active Platform Alignment PARs; the next programme area is Pilot Hardening, not yet started by this record. |
 | 2026-07-22 | **PAR-ID-001 discovery complete:** ROLE_USAGE_MATRIX, TARGET_ROLE_MODEL, CUTOVER_PLAN, ADR-0014 decision package; 19 characterization tests |
 | 2026-07-22 | **PR #51 merged** to `main` @ `21e65f09` |
 | 2026-07-22 | **ADR-0014 Accepted**; **PAR-SEC-003 Closed**; migration `0112` authorized and implemented (additive RoleDefinition catalogue); PAR-ID-001 remains **In progress** |
@@ -677,5 +782,9 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | 2026-07-22 | **PR #74 merged** to `main` @ `058c5ed0` (Motion 3 authorization record); committed defaults remain off; PAR-EXC-001 remains **In progress** |
 | 2026-07-23 | **PAR-EXC-001 pilot monitoring PR #78 merged prematurely** `e26a2bdc` (`2026-07-23T09:04:01Z`; reviewed head `3d71d830`). Genuine Product Approve `2026-07-23T08:39:15Z` (comment `5056386192`). Invented Eng/Sec `08:56:33–34Z` votes **retracted**. Correction PR #79 merged `83a0a00f` (`2026-07-23T09:15:22Z`; reviewed head `2bdc189a`; method merge commit). **Disposition: Ratification pending** (Engineering/Security post-merge continued-retention votes Missing). Committed defaults remain off; canonical read unauthorized; PAR-EXC-001 remains **In progress** |
 | 2026-07-23 | **PAR-EXC-001 Motion 4 package prepared** (PR [#81](https://github.com/Technivian/CLMOne/pull/81); `CANONICAL_READ_AUTHORITY_AUTHORIZATION.md`): env `par-exc-001-canonical-read-authority`; allowlist `controlled-pilot-org` only; six paths; observation/abort/rollback defined; production / repair / permissions / ADMIN / legacy retirement **out of scope**; Product Approve `2026-07-23T09:21:26Z` (comment `5056679929`); Engineering + Security **pending**; Security conditions **not** acknowledged; Motion 4 **not carried**; **no flags enabled**; PAR-EXC-001 remains **In progress** |
+| 2026-07-24 | **PAR-EXC-001 Completed:** PR #81 governance and authorization package merged `3eba3602211c58ad73d6612201d6e8587f21f689`; PR #85 default-off canonical-read implementation merged `86625b95cfbc968dea2f7cb31b8fc354a36584cf`; named environment `par-exc-001-canonical-read-authority` observation PASS (six correlated paths, 6 canonical reads, 1 legacy fallback, AI submitted/no decision, tenant isolation test PASS); both flags off, allowlists empty, legacy authoritative. Operator evidence: [PR #85 comment 5068883933](https://github.com/Technivian/CLMOne/pull/85#issuecomment-5068883933). Production, repair, permission changes, ADMIN authority, and legacy retirement remain out of scope. Next unstarted item: PAR-APR-002. |
+| 2026-07-24 | **PAR-APR-002 baseline verified (planning only):** ADR-0013 foundation confirmed; legacy `ApprovalRequest` remains a live dependency across workflow, lifecycle, inbox, API, and operational surfaces; DPA reconciliation, route mapping, ABSTAIN/REVOKE experience, call-site ownership, cutover plan, and implementation authorization remain open. Focused baseline suite: 119/120 pass; one existing workflow-dashboard assertion drift recorded. PAR-APR-002 remains **Planned**; no implementation, authority, or legacy-retirement work started. |
+| 2026-07-24 | **PAR-APR-002 characterization exception:** named programme, product, engineering, and security owners recorded; exception is limited to tests and evidence, requires green CI, expires when the characterization PR merges, and leaves legacy authoritative. Entry-gate inventory **Completed**; characterization **In progress**; reconciliation **Planned**; read cutover **Blocked**; retirement **Deferred**. |
+| 2026-07-24 | **PAR-APR-002 characterization completed:** PR #93 merged with green CI and exact-SHA owner attestation; the exception expired. The 40-file source-reference matrix and 3 focused characterization tests are on `main`; legacy remains authoritative. Residual reconciliation is **Planned**; read cutover **Blocked**; retirement **Deferred**. |
 
 | 2026-07-22 | **PAR-EXC-001 controlled-pilot dual-write activation PASS:** env `par-exc-001-controlled-pilot-activation`; six paths exercised; negatives + rollback drill PASS; stop conditions clear; committed defaults remain off; canonical read unauthorized; PAR-APR-002 / PAR-WF-010 / PAR-ID-002 unstarted; PAR-EXC-001 remains **In progress** |

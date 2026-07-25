@@ -78,6 +78,12 @@ preserved and must not be rewritten.
   Release Authority (`@haroonwahed`), green CI for the unchanged reviewed SHA,
   reversible default-off flags, documented abort/rollback controls, and a
   named-environment operator record.
+- Single-maintainer exception: only when GitHub shows exactly one direct human
+  collaborator with push or admin access, a repository-owner GitHub attestation
+  may replace independent review for a non-production, reversible, default-off
+  change. It must name the exact SHA, have green CI and unchanged scope, retain
+  documented abort/rollback and an operator record, and restore flags off after
+  observation. It never applies to the actions in the next bullet.
 - Production activation, permission or privilege changes, automatic repair,
   ADMIN authority, and legacy retirement: approved Product, Engineering, and
   Security GitHub reviews that are independent of one another, plus green CI

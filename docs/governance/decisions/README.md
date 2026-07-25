@@ -78,6 +78,10 @@ Do not fabricate approved decisions. Do not mark a record Accepted without docum
 | [0002-contract-stage-and-status.md](pdr/0002-contract-stage-and-status.md) | See file |
 | [PDR-0003-documentation-operating-model.md](pdr/PDR-0003-documentation-operating-model.md) | Accepted |
 | [PDR-0004-github-review-and-release-evidence.md](pdr/PDR-0004-github-review-and-release-evidence.md) | Proposed |
+| [PDR-0005-dpa-specialist-workflow-gate.md](pdr/PDR-0005-dpa-specialist-workflow-gate.md) | Accepted |
+| [PDR-0006-canonical-workflow-versioning-and-contract-execution-authority.md](pdr/PDR-0006-canonical-workflow-versioning-and-contract-execution-authority.md) | Approved |
+| [PDR-0007-approval-route-runtime-boundary.md](pdr/PDR-0007-approval-route-runtime-boundary.md) | Proposed |
+| [PDR-0008-object-level-read-enforcement-policy.md](pdr/PDR-0008-object-level-read-enforcement-policy.md) | Proposed — PAR-SEC-002 planning only |
 
 ### Exceptions
 
