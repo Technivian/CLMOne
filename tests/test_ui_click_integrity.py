@@ -1,5 +1,5 @@
 from html.parser import HTMLParser
-from urllib.parse import urlparse
+from urllib.parse import urlencode, urlparse
 
 from django.contrib.auth.models import User
 from django.test import TestCase
@@ -108,6 +108,27 @@ class UIButtonAndFlowIntegrityTests(TestCase):
             self.fail(f'Unresolvable target on {source_page}: {raw_target}')
 
     def test_click_targets_and_forms_are_wired_on_core_pages(self):
+        legacy_contract_list = reverse('contracts:contract_list')
+        repository = reverse('contracts:repository')
+        legacy_deadline_list = reverse('contracts:deadline_list')
+        obligations_workspace = reverse('contracts:obligations_workspace')
+        legacy_query = urlencode({'q': 'UI Integrity'})
+
+        # `/contracts/` is an authenticated compatibility alias, not a rendered
+        # list page. It must preserve navigation context when it reaches the
+        # canonical repository, and it must not let anonymous users bypass the
+        # login boundary.
+        alias_response = self.client.get(f'{legacy_contract_list}?{legacy_query}')
+        self.assertRedirects(alias_response, f'{repository}?{legacy_query}')
+        anonymous_response = self.client_class().get(legacy_contract_list)
+        self.assertRedirects(
+            anonymous_response,
+            f"{reverse('login')}?{urlencode({'next': legacy_contract_list})}",
+        )
+        deadline_alias_response = self.client.get(legacy_deadline_list)
+        self.assertRedirects(deadline_alias_response, obligations_workspace)
+        self.assertEqual(self.client.get(obligations_workspace).status_code, 200)
+
         expected_back_links = {
             reverse('contracts:contract_create'): reverse('contracts:repository'),
             reverse('contracts:contract_template_picker'): reverse('contracts:repository'),
@@ -115,9 +136,7 @@ class UIButtonAndFlowIntegrityTests(TestCase):
             reverse('contracts:contract_update', kwargs={'pk': self.contract.pk}): reverse(
                 'contracts:contract_detail', kwargs={'pk': self.contract.pk}
             ),
-            reverse('contracts:contract_list'): reverse('contracts:repository'),
             reverse('contracts:document_list'): reverse('contracts:repository'),
-            reverse('contracts:deadline_list'): reverse('contracts:obligations_workspace'),
             reverse('contracts:legal_task_kanban'): reverse('contracts:obligations_workspace'),
             reverse('contracts:risk_log_list'): reverse('contracts:privacy_dashboard'),
             reverse('contracts:budget_list'): reverse('contracts:reports_dashboard'),
@@ -138,10 +157,8 @@ class UIButtonAndFlowIntegrityTests(TestCase):
 
         pages = [
             reverse('dashboard'),
-            reverse('contracts:contract_list'),
             reverse('contracts:global_search'),
             reverse('contracts:document_list'),
-            reverse('contracts:deadline_list'),
             reverse('contracts:legal_task_kanban'),
             reverse('contracts:risk_log_list'),
             reverse('contracts:budget_list'),
@@ -210,13 +227,14 @@ class UIButtonAndFlowIntegrityTests(TestCase):
         self.assertContains(dashboard_response, 'Action queue')
 
         list_response = self.client.get(reverse('contracts:contract_list'))
-        self.assertEqual(list_response.status_code, 200)
-        self.assertContains(list_response, 'Contract Workspace')
-        self.assertContains(list_response, 'Search active contract work...')
-        # The page header no longer duplicates the create CTA ("New Case"
-        # pointed at the same route); the top bar carries the single
-        # "New Contract" entry point on every page.
-        self.assertContains(list_response, 'New Contract')
+        self.assertRedirects(list_response, reverse('contracts:repository'))
+        repository_response = self.client.get(reverse('contracts:repository'))
+        self.assertEqual(repository_response.status_code, 200)
+        self.assertContains(repository_response, 'Contracts repository')
+        self.assertContains(repository_response, 'Search contracts')
+        # The repository is now the rendered destination and owns its start
+        # action; the legacy list must not be required to render its old CTA.
+        self.assertContains(repository_response, 'Start new contract')
 
         detail_response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': Contract.objects.first().pk}))
         self.assertEqual(detail_response.status_code, 200)
