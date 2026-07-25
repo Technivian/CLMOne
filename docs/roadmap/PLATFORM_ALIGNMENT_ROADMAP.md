@@ -1,7 +1,7 @@
 # Platform Alignment Roadmap
 
 **Created:** 2026-07-21  
-**Last refined:** 2026-07-25 (Platform Alignment tranche freeze; Pilot Hardening PAR-SEC-002 characterization and policy planning)
+**Last refined:** 2026-07-25 (Platform Alignment and Pilot Hardening tranche freezes)
 **Authority:** Gap audit `docs/audits/2026-07-21-platform-gap-audit.md` · active `docs/governance/GOVERNANCE_CHARTER.md` · Accepted PDR-0003  
 **Branch:** `main` @ Tranche-1 merge (`c52d699a`) · PAR-APR follow-up: `cursor/feat-par-apr-001-foundation-governance`  
 **Living document:** update statuses only with implementation, tests, audit evidence, migration evidence (if any), documentation, and rollback proof.
@@ -63,9 +63,11 @@ inventory, and the deferred successor backlog.
 There are **no active Platform Alignment PARs**. This freeze does not approve
 any successor item, cutover, authority change, migration, permission change,
 repair, production activation, or legacy retirement. The next programme area
-is **Pilot Hardening**. Its `PAR-SEC-002` baseline was initiated separately on
-2026-07-24; its evidence is limited to an authorization inventory and does not
-authorize enforcement, privilege, authority, flag, repair, or production work.
+is **Pilot Hardening**. The Pilot Hardening tranche is now separately frozen at
+`main` `618d4b3b81f523598efcb1c8a36a109e96ffec33`; see the [permanent Pilot
+Hardening freeze record](../audits/evidence/2026-07-25-pilot-hardening-tranche-freeze.md).
+Its deferred successor backlog does not authorize enforcement, privilege,
+authority, flag, repair, or production work.
 
 ---
 
@@ -78,7 +80,7 @@ authorize enforcement, privilege, authority, flag, repair, or production work.
 | Closed — deferred implementation | 2 | `PAR-APR-002`, `PAR-SEC-002`; successor work remains separately authorized backlog |
 | In progress | 0 | No active Pilot Hardening enforcement PAR |
 | Blocked unique PAR IDs | 1 | `PAR-WF-010` |
-| Future / residual unique PAR IDs | 7 | `PAR-SEC-003` is Closed; `PAR-SEC-002` has moved to In progress |
+| Future / residual unique PAR IDs | 7 | `PAR-SEC-003` is Closed; `PAR-SEC-002` is Closed — deferred implementation |
 | Non-PAR Milestone 1 follow-ups | 1 | Playwright DPA bootstrap (`M1-E2E-001`) |
 
 ### Bundling rule for `PAR-AUD-001`
@@ -116,7 +118,7 @@ authorization was granted.
 Parallel Milestone 1 hygiene:
 
 - `M1-E2E-001` Fix Playwright DPA bootstrap
-- `PAR-SEC-002` Uniform authz / client-hide ≠ authorization
+- `PAR-SEC-002` deferred enforcement successor — separate authorization required
 
 ---
 
@@ -165,7 +167,7 @@ Parallel Milestone 1 hygiene:
 | ID / work | Title | Priority | Status |
 |---|---|---|---|
 | **PAR-CORE-001** | Complete remaining PDR-0002 UI/test drift | P0 | **Completed** |
-| **PAR-SEC-002** | Uniform authz for search/analytics/AI; client-hide ≠ authorization | P1 | **In progress — characterization complete; enforcement blocked pending PDR-0008 acceptance and separate authorization** |
+| **PAR-SEC-002** | Uniform authz for search/analytics/AI; client-hide ≠ authorization | P1 | **Closed — Deferred implementation** |
 | **PAR-SEC-003** | Stale ContractIsolationTest repository-redirect assertion | P1 | **Closed** |
 | M1-E2E-001 | Fix Playwright DPA bootstrap | P1 | Future (non-PAR) |
 
@@ -742,7 +744,8 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | 2026-07-24 | **PAR-APR-002 ApprovalRoute evidence and decision prepared:** PR #105 completed the evidence-only inventory (0 direct links, 1 missing mapping, 2 duplicate-order rows, 1 ambiguous category, and no explicit stale-route controls). PDR-0007 proposes a versioned route selector and separate runtime approval-service boundary; it remains planning-only and Proposed. The six `tests.test_workflow_operations` invalid `ACTIVE` / `INTERNAL_REVIEW` fixture setup errors are unrelated baseline defects. No model, migration, mapping, authority, dual-write, read cutover, or legacy change is authorised. |
 | 2026-07-24 | **PAR-APR-002 ApprovalRoute characterization completed:** template route configuration is separate from rule-selected legacy approval creation and canonical mirroring. No governed route-to-requirement identity or version binding exists; duplicate, ambiguous, missing, and stale-route handling requires a separately authorized additive decision. Legacy approval reads remain authoritative. |
 | 2026-07-24 | **PAR-APR-002 Closed — Deferred implementation:** characterization, the DPA planning decision (PDR-0005), and ApprovalRoute evidence are complete. PDR-0007 remains Proposed / Deferred. Lifecycle, inbox, API, operations, ABSTAIN, REVOKE, legacy-read ownership, reversible cutover, and retirement are explicit successor backlog only. No canonical read cutover or legacy retirement occurred; `ApprovalRequest` remains authoritative. No PAR remains active and the Platform Alignment tranche is closed with deferred successor backlog. |
-| 2026-07-24 | **Platform Alignment tranche frozen:** permanent record [`2026-07-24-platform-alignment-tranche-freeze.md`](../audits/evidence/2026-07-24-platform-alignment-tranche-freeze.md) anchors final `main` SHA `8dbc26b71146803111e20e4bfdb552349d2613a7`, PR #109, and PR #110. All completed and deferred PARs plus the five successor backlog items are enumerated there. There are no active Platform Alignment PARs; the next programme area is Pilot Hardening, not yet started by this record. |
+| 2026-07-24 | **Platform Alignment tranche frozen:** permanent record [`2026-07-24-platform-alignment-tranche-freeze.md`](../audits/evidence/2026-07-24-platform-alignment-tranche-freeze.md) anchors final `main` SHA `8dbc26b71146803111e20e4bfdb552349d2613a7`, PR #109, and PR #110. All completed and deferred PARs plus the five successor backlog items are enumerated there. There are no active Platform Alignment PARs; Pilot Hardening was initiated as the next programme area. |
+| 2026-07-25 | **Pilot Hardening tranche frozen:** permanent record [`2026-07-25-pilot-hardening-tranche-freeze.md`](../audits/evidence/2026-07-25-pilot-hardening-tranche-freeze.md) anchors `main` SHA `618d4b3b`, PR #124 deferral, and PR #125 closure. PAR-SEC-002 is Closed — Deferred implementation; no Pilot Hardening PAR remains active. |
 | 2026-07-22 | **PAR-ID-001 discovery complete:** ROLE_USAGE_MATRIX, TARGET_ROLE_MODEL, CUTOVER_PLAN, ADR-0014 decision package; 19 characterization tests |
 | 2026-07-22 | **PR #51 merged** to `main` @ `21e65f09` |
 | 2026-07-22 | **ADR-0014 Accepted**; **PAR-SEC-003 Closed**; migration `0112` authorized and implemented (additive RoleDefinition catalogue); PAR-ID-001 remains **In progress** |
