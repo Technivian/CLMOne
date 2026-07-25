@@ -58,6 +58,7 @@ from contracts.models import (
     CounterpartyCollaborationParticipant,
 )
 from contracts.permissions import ContractAction, can_access_contract_action, can_manage_organization
+from contracts.services.par_sec_002_observation import observe_request
 from contracts.services.queue_rows import TERMINAL_STATUSES, assignee_map_for_contracts, latest_activity_map
 from contracts.services.command_center import (
     COMPACT_LIFECYCLE_LABELS,
@@ -1847,6 +1848,7 @@ class RepositoryView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
 @require_POST
 def contract_ai_assistant(request, pk):
     organization = get_user_organization(request.user)
+    observe_request('ai.contract_assistant', request.user, organization)
     contract = get_object_or_404(scope_queryset_for_organization(Contract.objects.all(), organization), id=pk)
     if not can_access_contract_action(request.user, contract, ContractAction.COMMENT):
         return HttpResponseForbidden('You do not have access to this contract organization.')
