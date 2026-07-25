@@ -1,7 +1,7 @@
 # Platform Alignment Roadmap
 
 **Created:** 2026-07-21  
-**Last refined:** 2026-07-25 (Platform Alignment tranche freeze; Pilot Hardening PAR-SEC-002 characterization and policy planning)
+**Last refined:** 2026-07-25 (Platform Alignment freeze and Pilot Hardening PAR-SEC-002 deferred closure)
 **Authority:** Gap audit `docs/audits/2026-07-21-platform-gap-audit.md` · active `docs/governance/GOVERNANCE_CHARTER.md` · Accepted PDR-0003  
 **Branch:** `main` @ Tranche-1 merge (`c52d699a`) · PAR-APR follow-up: `cursor/feat-par-apr-001-foundation-governance`  
 **Living document:** update statuses only with implementation, tests, audit evidence, migration evidence (if any), documentation, and rollback proof.
@@ -63,9 +63,9 @@ inventory, and the deferred successor backlog.
 There are **no active Platform Alignment PARs**. This freeze does not approve
 any successor item, cutover, authority change, migration, permission change,
 repair, production activation, or legacy retirement. The next programme area
-is **Pilot Hardening**. Its `PAR-SEC-002` baseline was initiated separately on
-2026-07-24; its evidence is limited to an authorization inventory and does not
-authorize enforcement, privilege, authority, flag, repair, or production work.
+is **Pilot Hardening**. Its only tracked item, `PAR-SEC-002`, is now closed with
+deferred implementation; its evidence does not authorize enforcement, privilege,
+authority, flag, repair, or production work.
 
 ---
 
@@ -78,7 +78,7 @@ authorize enforcement, privilege, authority, flag, repair, or production work.
 | Closed — deferred implementation | 2 | `PAR-APR-002`, `PAR-SEC-002`; successor work remains separately authorized backlog |
 | In progress | 0 | No active Pilot Hardening enforcement PAR |
 | Blocked unique PAR IDs | 1 | `PAR-WF-010` |
-| Future / residual unique PAR IDs | 7 | `PAR-SEC-003` is Closed; `PAR-SEC-002` has moved to In progress |
+| Future / residual unique PAR IDs | 7 | `PAR-SEC-003` is Closed; `PAR-SEC-002` is Closed — deferred implementation |
 | Non-PAR Milestone 1 follow-ups | 1 | Playwright DPA bootstrap (`M1-E2E-001`) |
 
 ### Bundling rule for `PAR-AUD-001`
@@ -116,7 +116,7 @@ authorization was granted.
 Parallel Milestone 1 hygiene:
 
 - `M1-E2E-001` Fix Playwright DPA bootstrap
-- `PAR-SEC-002` Uniform authz / client-hide ≠ authorization
+- `PAR-SEC-002` deferred enforcement successor — reactivation requires independent authorization
 
 ---
 
@@ -165,7 +165,7 @@ Parallel Milestone 1 hygiene:
 | ID / work | Title | Priority | Status |
 |---|---|---|---|
 | **PAR-CORE-001** | Complete remaining PDR-0002 UI/test drift | P0 | **Completed** |
-| **PAR-SEC-002** | Uniform authz for search/analytics/AI; client-hide ≠ authorization | P1 | **In progress — characterization complete; enforcement blocked pending PDR-0008 acceptance and separate authorization** |
+| **PAR-SEC-002** | Uniform authz for search/analytics/AI; client-hide ≠ authorization | P1 | **Closed — Deferred implementation** |
 | **PAR-SEC-003** | Stale ContractIsolationTest repository-redirect assertion | P1 | **Closed** |
 | M1-E2E-001 | Fix Playwright DPA bootstrap | P1 | Future (non-PAR) |
 
@@ -335,11 +335,11 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | Security and permissions impact | **High** — close authz gaps; regression tests mandatory |
 | Audit requirements | Denied cross-tenant access attempts remain free of contract content in logs; establish evidence for restricted-record denial, aggregate/facet suppression, telemetry minimization, and AI context exclusion before enforcement. |
 | UX requirements | Forbidden/empty states honest; no “hidden but callable” controls |
-| Tests | Baseline: focused authorization suite **159/160 pass**, with one documented unrelated UI assertion failure. Characterization adds unauthenticated, owner/member, cross-tenant AI, Ethical-Wall, telemetry, and default-off counter tests; enforcement remains blocked pending the required policy decision. |
-| Rollback strategy | Characterization is merged with its observation control committed off. The smallest proposed enforcement slice is default-off contract-search result/facet filtering only, with a named non-production environment, explicit allowlist, generic content-free deny/empty outcomes, and flag-off restoration of the legacy read path. It cannot proceed until PDR-0008 is accepted, independent reviews, green CI, and separately reviewed rollback controls are present. |
+| Tests | Baseline: focused authorization suite **159/160 pass**, with one documented unrelated UI assertion failure. Characterization adds unauthenticated, owner/member, cross-tenant AI, Ethical-Wall, telemetry, and default-off counter tests. Enforcement was not implemented or activated. |
+| Rollback strategy | Characterization remains merged with its observation control committed off. The proposed enforcement slice is deferred; any future reactivation requires a named non-production environment, explicit allowlist, generic content-free deny/empty outcomes, independent reviews, green CI, and separately reviewed rollback controls. |
 | Acceptance criteria | For each in-scope route, a server-side policy is demonstrably applied before records, facets, aggregates, telemetry, or AI context are returned; client hiding is not relied on; cross-tenant and restricted-record denial is content-free; required CI and authorization evidence are green. |
 | Evidence | `docs/audits/evidence/2026-07-24-par-sec-002/BASELINE_AUDIT.md`; `docs/audits/evidence/2026-07-25-par-sec-002-characterization/ROUTE_MATRIX.md`; `docs/audits/evidence/2026-07-25-par-sec-002-policy/POLICY_PACKAGE.md`; PDR-0008 and Addendum 001; authorization package PR #124; deferral record `docs/audits/evidence/2026-07-25-par-sec-002-search-facets-authorization/DEFERRAL.md` |
-| PR/commits | PR #113 baseline merge `10177cc5d`; PR #119 characterization merge `809b5760`; PR #120 policy merge `35180b5c` (including Addendum PR #121 merge `1fc32eb5`); PR #124 authorization package `70ec18f2` (not merged) |
+| PR/commits | PR #113 baseline merge `10177cc5d`; PR #119 characterization merge `809b5760`; PR #120 policy merge `35180b5c` (including Addendum PR #121 merge `1fc32eb5`); PR #124 authorization package `70ec18f2` (closed, not merged); PR #125 deferral closure merge `618d4b3b` |
 | Last updated | 2026-07-25 |
 
 ---
@@ -786,5 +786,6 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | 2026-07-24 | **PAR-APR-002 baseline verified (planning only):** ADR-0013 foundation confirmed; legacy `ApprovalRequest` remains a live dependency across workflow, lifecycle, inbox, API, and operational surfaces; DPA reconciliation, route mapping, ABSTAIN/REVOKE experience, call-site ownership, cutover plan, and implementation authorization remain open. Focused baseline suite: 119/120 pass; one existing workflow-dashboard assertion drift recorded. PAR-APR-002 remains **Planned**; no implementation, authority, or legacy-retirement work started. |
 | 2026-07-24 | **PAR-APR-002 characterization exception:** named programme, product, engineering, and security owners recorded; exception is limited to tests and evidence, requires green CI, expires when the characterization PR merges, and leaves legacy authoritative. Entry-gate inventory **Completed**; characterization **In progress**; reconciliation **Planned**; read cutover **Blocked**; retirement **Deferred**. |
 | 2026-07-24 | **PAR-APR-002 characterization completed:** PR #93 merged with green CI and exact-SHA owner attestation; the exception expired. The 40-file source-reference matrix and 3 focused characterization tests are on `main`; legacy remains authoritative. Residual reconciliation is **Planned**; read cutover **Blocked**; retirement **Deferred**. |
+| 2026-07-25 | **PAR-SEC-002 closed — Deferred implementation:** PR #124 completed all six checks but had no independent Product, Engineering, or Security reviews and was closed without merge. PR #125 merged the docs-only deferral record at `618d4b3b`; policy scope remains accepted, enforcement was not implemented, runtime behavior is unchanged, and no Pilot Hardening PAR remains active. |
 
 | 2026-07-22 | **PAR-EXC-001 controlled-pilot dual-write activation PASS:** env `par-exc-001-controlled-pilot-activation`; six paths exercised; negatives + rollback drill PASS; stop conditions clear; committed defaults remain off; canonical read unauthorized; PAR-APR-002 / PAR-WF-010 / PAR-ID-002 unstarted; PAR-EXC-001 remains **In progress** |
