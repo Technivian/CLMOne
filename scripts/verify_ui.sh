@@ -92,7 +92,7 @@ if [[ -n "${PLAYWRIGHT_JSON_OUTPUT:-}" ]]; then
   E2E_BASE_URL="${E2E_BASE_URL}" \
   E2E_USERNAME="${E2E_USERNAME}" \
   E2E_PASSWORD="${E2E_PASSWORD}" \
-  npm --prefix client exec -- playwright test --config=playwright.config.js --reporter=json > "${PLAYWRIGHT_JSON_OUTPUT}"
+  npm --prefix client exec -- playwright test --config=client/playwright.config.js --reporter=json > "${PLAYWRIGHT_JSON_OUTPUT}"
 else
   E2E_BASE_URL="${E2E_BASE_URL}" \
   E2E_USERNAME="${E2E_USERNAME}" \
