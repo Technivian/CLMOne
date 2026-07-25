@@ -319,12 +319,12 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 
 | Field | Content |
 |---|---|
-| Status | **In progress — verified baseline; implementation unstarted** (2026-07-24) |
+| Status | **In progress — baseline merged; characterization in progress** (2026-07-25) |
 | Priority | P1 |
 | Milestone | 1 — Finish pilot hardening |
 | Problem | Gap audit rows: same access rules for search/analytics/AI are mixed; client-side hide is not authorization (GUARDRAILS §6). |
 | Governance source | `docs/architecture/SECURITY_PRIVACY_ACCESS_AND_AUDIT.md`; ENGINEERING_GUARDRAILS; gap audit matrix → PAR-SEC-002 |
-| Current evidence | [PAR-SEC-002 baseline audit](../audits/evidence/2026-07-24-par-sec-002/BASELINE_AUDIT.md): authenticated tenant scoping is verified on the inventoried routes; the AI provider is disabled by default without a key and controlled-pilot middleware blocks configured AI paths. `VIEW`, `COMMENT`, and `AI` currently permit every active organization member, and active `EthicalWall` records are not consulted by the inventoried read paths. |
+| Current evidence | [Baseline audit](../audits/evidence/2026-07-24-par-sec-002/BASELINE_AUDIT.md) merged through PR #113; [characterization route matrix](../audits/evidence/2026-07-25-par-sec-002-characterization/ROUTE_MATRIX.md) records current route/role behavior, Ethical-Wall observation, metadata/telemetry inventory, and default-off content-free counters. Runtime authorization remains unchanged. |
 | Target outcome | Search, analytics, and AI endpoints enforce the same tenant + permission rules as primary contract APIs; UI hide never substitutes for server checks |
 | Owners | **Missing — no programme, Product, Engineering, or Security owner is recorded for this PAR. No owner is inferred from repository access or historic evidence.** |
 | Dependencies | Completed route/control inventory. A separately authorized object-level read-policy decision is required before enforcement can safely interpret Ethical Walls, confidential records, or role scope; `PAR-AI-001` surfaces may be characterized without claiming AI provenance complete. |
@@ -333,12 +333,12 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | Security and permissions impact | **High** — close authz gaps; regression tests mandatory |
 | Audit requirements | Denied cross-tenant access attempts remain free of contract content in logs; establish evidence for restricted-record denial, aggregate/facet suppression, telemetry minimization, and AI context exclusion before enforcement. |
 | UX requirements | Forbidden/empty states honest; no “hidden but callable” controls |
-| Tests | Baseline: focused authorization suite **159/160 pass**, with one documented unrelated UI assertion failure. Required next: route/method authorization matrix; cross-tenant, unauthenticated, low-privilege and Ethical-Wall/restricted-record tests; aggregate/facet and telemetry non-leakage; AI context exclusion; sanitized-denial audit tests. |
+| Tests | Baseline: focused authorization suite **159/160 pass**, with one documented unrelated UI assertion failure. Characterization adds unauthenticated, owner/member, cross-tenant AI, Ethical-Wall, telemetry, and default-off counter tests; enforcement remains blocked pending the required policy decision. |
 | Rollback strategy | First implementation must be default-off and observational only, with no change to results, authority, permissions, or flags when disabled; revert the isolated change and retain its aggregate evidence. Any enforcement slice requires separately reviewed rollback controls. |
 | Acceptance criteria | For each in-scope route, a server-side policy is demonstrably applied before records, facets, aggregates, telemetry, or AI context are returned; client hiding is not relied on; cross-tenant and restricted-record denial is content-free; required CI and authorization evidence are green. |
-| Evidence | `docs/audits/evidence/2026-07-24-par-sec-002/BASELINE_AUDIT.md` |
+| Evidence | `docs/audits/evidence/2026-07-24-par-sec-002/BASELINE_AUDIT.md`; `docs/audits/evidence/2026-07-25-par-sec-002-characterization/ROUTE_MATRIX.md` |
 | PR/commits | TBD |
-| Last updated | 2026-07-24 |
+| Last updated | 2026-07-25 |
 
 ---
 

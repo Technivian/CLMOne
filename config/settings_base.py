@@ -542,6 +542,11 @@ TRUST_ACCOUNTING_ENABLED = _bool_env('TRUST_ACCOUNTING_ENABLED', default=True)
 # hermetic tests and general development remain unaffected.
 CONTROLLED_PILOT_ENABLED = _bool_env('CONTROLLED_PILOT_ENABLED', default=False)
 
+# PAR-SEC-002 — characterization-only route observation (default OFF).
+# This controls content-free, process-local counters only; it never evaluates
+# access, changes a result, filters a queryset, or grants authority.
+PAR_SEC_002_OBSERVATION_ENABLED = _bool_env('PAR_SEC_002_OBSERVATION_ENABLED', default=False)
+
 # PAR-ID-001 Slice 3 — feature-flagged shadow sync / parity (default OFF).
 # When enabled, selected UserProfile.role writes mirror into org-scoped
 # ProcessRoleAssignment. Legacy profile role remains authoritative for runtime.

@@ -102,6 +102,7 @@ from contracts.services.search_api import (
     get_contract_search_service,
     get_clause_search_service,
 )
+from contracts.services.par_sec_002_observation import observe_request
 from contracts.models import SearchTelemetryEvent
 from contracts.services.subprocessor_alerts import get_subprocessor_alert_service
 from contracts.services.retention_jobs import get_retention_service
@@ -132,6 +133,7 @@ def executive_analytics_api(request):
     organization, error = _require_org_member_context(request)
     if error:
         return error
+    observe_request('analytics.executive', request.user, organization)
     return JsonResponse(build_executive_analytics_snapshot(organization))
 
 
@@ -217,6 +219,7 @@ def executive_dashboard_preset_delete_api(request, preset_id):
 @require_http_methods(['GET'])
 def clause_analytics_stats(request):
     org = get_user_organization(request.user)
+    observe_request('analytics.clause_stats', request.user, org)
     svc = get_clause_analytics_service()
     stats = svc.get_clause_usage_stats(org)
     return JsonResponse({'stats': stats})
@@ -402,6 +405,7 @@ def playbook_for_contract(request, contract_id):
 @require_http_methods(['GET'])
 def api_contract_search(request):
     org = get_user_organization(request.user)
+    observe_request('search.contract_api', request.user, org)
     svc = get_contract_search_service()
     q = request.GET.get('q', '')
     filters = {
@@ -431,6 +435,7 @@ def api_contract_search(request):
 @require_http_methods(['GET'])
 def api_clause_search(request):
     org = get_user_organization(request.user)
+    observe_request('search.clause_api', request.user, org)
     svc = get_clause_search_service()
     q = request.GET.get('q', '')
     filters = {
@@ -460,6 +465,7 @@ def api_clause_search(request):
 @require_http_methods(['GET'])
 def api_search_facets(request):
     org = get_user_organization(request.user)
+    observe_request('search.facets_api', request.user, org)
     svc = get_contract_search_service()
     facets = svc.get_contract_facets(org)
     return JsonResponse(facets)
@@ -469,6 +475,7 @@ def api_search_facets(request):
 @require_http_methods(['GET'])
 def api_search_telemetry(request):
     org = get_user_organization(request.user)
+    observe_request('search.telemetry_api', request.user, org)
     events = SearchTelemetryEvent.objects.filter(organization=org)[:50]
     return JsonResponse({'events': [
         {
@@ -560,5 +567,4 @@ def work_operating_metrics_api(request):
         from contracts.services.work_instrumentation import build_adoption_evidence
         payload['adoption'] = build_adoption_evidence(org, days=days)
     return JsonResponse(payload)
-
 
