@@ -1,5 +1,6 @@
 
 import os
+from urllib.parse import urlencode
 
 from django.contrib.auth.models import User
 from django.test import Client, TestCase
@@ -74,12 +75,26 @@ class RedesignComponentsTestCase(TestCase):
             created_by=self.user,
         )
 
-        response = self.client.get(reverse('contracts:contract_list'))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Test Contract')
-        self.assertContains(response, 'Search active contract work...')
-        self.assertContains(response, 'All')
-        self.assertContains(response, 'New Contract')
+        legacy_list = reverse('contracts:contract_list')
+        repository = reverse('contracts:repository')
+
+        response = self.client.get(legacy_list)
+        self.assertRedirects(response, repository)
+        repository_response = self.client.get(repository)
+        self.assertEqual(repository_response.status_code, 200)
+        # The repository loads tenant-scoped rows through its governed client
+        # data endpoint; this server-rendered assertion protects the page and
+        # navigation contract while the browser suite covers row rendering.
+        self.assertContains(repository_response, 'id="contracts-table"')
+        self.assertContains(repository_response, 'Search contracts')
+        self.assertContains(repository_response, 'Start new contract')
+        self.assertContains(repository_response, 'clmone-repository.js')
+
+        anonymous_response = Client().get(legacy_list)
+        self.assertRedirects(
+            anonymous_response,
+            f"{reverse('login')}?{urlencode({'next': legacy_list})}",
+        )
 
     def test_navigation_structure(self):
         # The legacy sectioned sidebar has been removed from the product
