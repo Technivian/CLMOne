@@ -129,17 +129,17 @@ class ContractDetailShellTests(TestCase):
             self.assertIn(label, body)
         self.assertIn('contract-overview-grid', body)
         self.assertIn('dc-ds-workspace__rail--sticky', body)
-        self.assertNotIn('Status:', body)
-        self.assertNotIn('Stage:', body)
+        self.assertIn('Status: Active', body)
+        self.assertIn('Stage: Obligation tracking', body)
         self.assertIn('Active', body)
         self.assertIn('Obligation tracking', body)
         self.assertIn('contract-command-status-tags', body)
         self.assertIn('Upcoming milestone', body)
         self.assertNotIn('View all details', body)
         self.assertIn('contract-next-steps__action', body)
-        self.assertNotIn('>Contracts</h1>', body)
+        self.assertIn('>Contracts</h1>', body)
         self.assertIn('data-suppress-title-promotion', body)
-        self.assertIn(f'topbar-page-title">{self.contract.title}', response.content.decode())
+        self.assertIn('topbar-page-title">Contracts', response.content.decode())
         self.assertIn('class="topbar-back-link"', response.content.decode())
         self.assertIn('border-bottom: 1px solid var(--hairline, var(--line));', open('theme/static_src/src/global-shell/workspaces.css').read())
         snapshot = response.context['overview_risk_snapshot']
@@ -216,15 +216,16 @@ class ContractDetailMetadataHeaderTests(TestCase):
         self.assertIn('In progress', body)
         self.assertIn('Negotiation', body)
         self.assertIn('contract-command-status-tags', body)
-        self.assertNotIn('Status:', body)
-        self.assertNotIn('Stage:', body)
+        self.assertIn('Status: In progress', body)
+        self.assertIn('Stage: Negotiation', body)
         self.assertIn('Northwind Logistics LLC', body)
         self.assertIn('contract-command-owner__avatar', body)
         self.assertIn('Rowan', body)
         self.assertIn('Updated', body)
         self.assertIn('v1', body)
-        self.assertIn('contract-command-meta__value', body)
-        self.assertRegex(body, r'contract-command-meta__value[^>]*>\$125,000<')
+        self.assertIn('$125,000', body)
+        self.assertNotIn('contract-command-meta__label">Version', body)
+        self.assertNotIn('contract-command-meta__label">Value', body)
         self.assertNotIn('dc-ds-workspace__metadata-grid', body)
 
     def test_header_places_separate_bordered_status_tags_before_owner(self):
@@ -232,8 +233,8 @@ class ContractDetailMetadataHeaderTests(TestCase):
         body = page_body(response.content.decode())
 
         self.assertIn('contract-command-status-tags', body)
-        self.assertIn('dc-ds-badge--progress">In progress</span>', body)
-        self.assertIn('dc-ds-badge--progress">Negotiation</span>', body)
+        self.assertIn('dc-ds-badge--progress">Status: In progress</span>', body)
+        self.assertIn('dc-ds-badge--progress">Stage: Negotiation</span>', body)
         self.assertNotIn('contract-command-position', body)
         self.assertLess(
             body.index('contract-command-status-tags'),
@@ -246,6 +247,42 @@ class ContractDetailMetadataHeaderTests(TestCase):
         self.assertNotIn('aria-label="Contract command summary"', body)
         self.assertNotIn('dc-ds-workspace__metadata-grid', body)
         self.assertIn('aria-label="Contract identity"', body)
+
+    def test_primary_approval_action_names_the_first_actionable_step(self):
+        reviewer = User.objects.create_user(username='cdetail_finance_reviewer', password='testpass123')
+        OrganizationMembership.objects.create(
+            organization=self.organization, user=reviewer,
+            role=OrganizationMembership.Role.MEMBER, is_active=True,
+        )
+        Document.objects.create(
+            organization=self.organization, title='Header source',
+            document_type=Document.DocType.CONTRACT, version=1,
+            contract=self.contract, uploaded_by=self.owner,
+        )
+        ApprovalRequest.objects.create(
+            organization=self.organization, contract=self.contract,
+            approval_step='PRIVACY', status=ApprovalRequest.Status.PENDING,
+            assigned_to=reviewer, sort_order=20,
+        )
+        ApprovalRequest.objects.create(
+            organization=self.organization, contract=self.contract,
+            approval_step='FINANCE — value exceeds EUR 100,000',
+            status=ApprovalRequest.Status.PENDING,
+            assigned_to=reviewer, sort_order=10,
+        )
+
+        reviewer_client = TestClient()
+        reviewer_client.login(username='cdetail_finance_reviewer', password='testpass123')
+        response = reviewer_client.get(detail_url(self.contract.pk))
+
+        self.assertEqual(
+            response.context['contract_command']['primary_action']['label'],
+            'Review Finance approval',
+        )
+        self.assertEqual(
+            response.context['contract_command']['next_action'],
+            'Record the finance approval decision.',
+        )
 
     def test_phase_one_summary_shows_paper_source_and_workflow_checklist(self):
         reviewer = User.objects.create_user(username='cdetail_route_reviewer', password='testpass123')
@@ -319,10 +356,17 @@ class ContractDetailMetadataHeaderTests(TestCase):
         self.assertIn('Rowan', body)
 
     def test_no_owner_renders_unassigned_not_a_crash(self):
-        self.contract.owner = None
-        self.contract.created_by = None
-        self.contract.save(update_fields=['owner', 'created_by', 'updated_at'])
-        response = self.client.get(detail_url(self.contract.pk))
+        viewer = User.objects.create_user(username='cdetail_ownerless_viewer', password='testpass123')
+        OrganizationMembership.objects.create(
+            organization=self.organization, user=viewer,
+            role=OrganizationMembership.Role.MEMBER, is_active=True,
+        )
+        # Deleting a historical user uses the configured SET_NULL behaviour
+        # instead of attempting an impermissible provenance mutation.
+        self.owner.delete()
+        viewer_client = TestClient()
+        viewer_client.login(username='cdetail_ownerless_viewer', password='testpass123')
+        response = viewer_client.get(detail_url(self.contract.pk))
         body = page_body(response.content.decode())
         self.assertIn('Unassigned', body)
 
@@ -748,6 +792,21 @@ class ContractDetailCopyQualityTests(TestCase):
         self.assertNotIn('In opvolging', body)
         self.assertIsNone(ISO_TIMESTAMP_RE.search(body), 'Found a raw ISO timestamp in the Contract Detail response')
 
+    def test_reassessment_summary_explains_the_absence_of_open_findings(self):
+        contract = Contract.objects.create(
+            organization=self.organization, title='Reassessment Copy Contract', content='Seed',
+            status=Contract.Status.IN_PROGRESS,
+            lifecycle_stage=Contract.LifecycleStage.INTERNAL_REVIEW,
+            risk_level=Contract.RiskLevel.LOW,
+            created_by=self.user,
+        )
+
+        response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': contract.pk}))
+        body = page_body(response.content.decode())
+
+        self.assertIn('Risk reassessment required', body)
+        self.assertIn('No open risk findings are recorded; reassessment is required.', body)
+
 
 class ContractDetailStateConsistencyTests(TestCase):
     def setUp(self):
@@ -950,8 +1009,10 @@ class ContractDetailTerminologyAndBlockerTests(TestCase):
         self.assertNotIn('>Lifecycle</dt>', body)
         self.assertNotIn('Workflow checklist', body)
         self.assertIn('dc-ds-workspace__rail--sticky', body)
-        self.assertIn('>Status</dt>', body)
-        self.assertIn('>Stage</dt>', body)
+        self.assertIn('Status: In progress', body)
+        self.assertIn('Stage: Drafting', body)
+        self.assertNotIn('>Status</dt>', body)
+        self.assertNotIn('>Stage</dt>', body)
         self.assertNotIn('Quick links', body)
         self.assertIn('data-workspace-tabs', body)
         self.assertIn('contract-overview-grid', body)

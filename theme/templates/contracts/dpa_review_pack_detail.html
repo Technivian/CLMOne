@@ -29,7 +29,7 @@
     </div>
     <div class="dc-ds-workspace__actions">
       {% if review_command.show_primary_action %}
-        {% if review_command.primary_action.mode == 'analyze' and can_edit %}
+        {% if review_command.primary_action.mode == 'analyze' and can_edit and ai_features_enabled %}
         <button type="button" id="dpa-run-analysis-btn" class="dc-ds-button dc-ds-button--primary" data-analyze-url="{% url 'contracts:dpa_review_run_analysis' review_pack.pk %}">{{ review_command.primary_action.label }}</button>
         {% else %}
         <a href="{{ review_command.primary_action.href }}" class="dc-ds-button dc-ds-button--primary">{{ review_command.primary_action.label }}</a>
@@ -38,7 +38,7 @@
       <details class="dc-ds-workspace__actions-menu">
         <summary class="dc-ds-button dc-ds-button--quiet">Actions</summary>
         <div class="dc-ds-workspace__actions-panel dc-ds-surface" role="menu" aria-label="DPA review actions">
-          {% if can_edit %}
+          {% if can_edit and ai_features_enabled %}
           <button type="button" id="dpa-run-analysis-menu-btn" class="dc-ds-workspace__actions-item" role="menuitem" data-analyze-url="{% url 'contracts:dpa_review_run_analysis' review_pack.pk %}">Run analysis</button>
           <button type="button" id="dpa-generate-memo-btn" class="dc-ds-workspace__actions-item" role="menuitem" data-memo-url="{% url 'contracts:dpa_review_generate_memo' review_pack.pk %}">Generate memo</button>
           {% endif %}
@@ -64,7 +64,7 @@
             <p class="contract-action-card__eyebrow" id="dpa-decision-needed-heading">Decision required</p>
             <p class="contract-action-card__body">{{ review_command.next_action }}</p>
           </div>
-          {% if review_command.primary_action.mode == 'analyze' and can_edit %}
+          {% if review_command.primary_action.mode == 'analyze' and can_edit and ai_features_enabled %}
           <button type="button" class="dc-ds-button dc-ds-button--primary" data-analyze-trigger data-analyze-url="{% url 'contracts:dpa_review_run_analysis' review_pack.pk %}">{{ review_command.primary_action.label }}</button>
           {% else %}
           <a href="{{ review_command.primary_action.href }}" class="dc-ds-button dc-ds-button--primary">{{ review_command.primary_action.label }}</a>
@@ -75,7 +75,7 @@
           <div class="dc-ds-workspace__surface-head">
             <div>
               <h2 id="dpa-review-summary-heading" class="dc-ds-workspace__surface-title">Review summary</h2>
-              <p class="dc-ds-workspace__surface-kicker">Role, approval gate, and analysis posture — not raw extraction dumps.</p>
+              <p class="dc-ds-workspace__surface-kicker">Role, approval gate, and review posture.</p>
             </div>
           </div>
           <div class="dc-ds-workspace__surface-body">
@@ -83,7 +83,11 @@
               <div class="contract-detail-row"><dt>Role</dt><dd>{{ review_pack.get_role_qualification_display }}</dd></div>
               <div class="contract-detail-row"><dt>Approval status</dt><dd>{{ review_pack.get_approval_status_display }}</dd></div>
               <div class="contract-detail-row"><dt>Open risks</dt><dd>{{ risk_summary.open }} of {{ risk_summary.total }}</dd></div>
-              <div class="contract-detail-row"><dt>Last analyzed</dt><dd>{% if review_pack.last_analyzed_at %}{{ review_pack.last_analyzed_at|date:"M d, Y H:i" }}{% else %}Not analyzed{% endif %}</dd></div>
+              {% if ai_features_enabled %}
+              <div class="contract-detail-row"><dt>Last analysis</dt><dd>{% if review_pack.last_analyzed_at %}{{ review_pack.last_analyzed_at|date:"M d, Y H:i" }}{% else %}Not available{% endif %}</dd></div>
+              {% else %}
+              <div class="contract-detail-row"><dt>Review baseline</dt><dd>{% if review_pack.last_analyzed_at %}{{ review_pack.last_analyzed_at|date:"M d, Y H:i" }}{% else %}Not available{% endif %}</dd></div>
+              {% endif %}
             </dl>
           </div>
         </section>
@@ -266,7 +270,7 @@
               {% endfor %}
             </div>
             {% else %}
-            <p class="contract-empty">No risk items yet — run analysis or add findings manually.</p>
+            <p class="contract-empty">No risk items yet — add findings manually.</p>
             {% endif %}
           </div>
         </section>
@@ -428,12 +432,12 @@
     </aside>
   </div>
 
-  {% if show_decision_bar %}
+  {% if show_decision_bar and not presenter_read_only %}
   <div id="dpa-decision-bar" class="dpa-decision-bar" role="region" aria-label="Approval decision">
     <div class="dpa-decision-bar__inner">
       <div class="dpa-decision-bar__copy">
         <p class="dpa-decision-bar__eyebrow">Approval decision</p>
-        <p class="dpa-decision-bar__hint">Approved is a final human decision — never set by analysis.</p>
+        <p class="dpa-decision-bar__hint">Approved is a final human decision — never set automatically.</p>
       </div>
       <div class="dpa-decision-bar__controls">
         <label class="u-sr-only" for="dpa-approval-comment">Decision note</label>

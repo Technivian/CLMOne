@@ -61,6 +61,10 @@ from contracts.services.signature_audit import (
     log_signature_packet_retry,
 )
 from contracts.services.signature_workspace import build_signature_packet, build_signature_workspace
+from contracts.services.payrollminds_demo import (
+    PRESENTER_READ_ONLY_MESSAGE,
+    is_payrollminds_presenter_workspace,
+)
 from contracts.view_support import (
     TenantAssignCreateMixin,
     TenantScopedFormMixin,
@@ -105,6 +109,11 @@ class SignatureRequestCreateView(TenantScopedFormMixin, TenantAssignCreateMixin,
     success_url = reverse_lazy('contracts:signature_request_list')
     scoped_form_fields = {'contract': Contract, 'document': Document}
 
+    def dispatch(self, request, *args, **kwargs):
+        if is_payrollminds_presenter_workspace(self.get_organization()):
+            return HttpResponseForbidden(PRESENTER_READ_ONLY_MESSAGE)
+        return super().dispatch(request, *args, **kwargs)
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['actor'] = self.request.user
@@ -131,6 +140,7 @@ class SignatureRequestDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, 
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        presenter_read_only = is_payrollminds_presenter_workspace(self.object.organization)
         context['available_transitions'] = self.object.available_transitions_for_actor(self.request.user)
         context['needs_follow_up'] = self.object.is_follow_up_due()
         context['follow_up_threshold_days'] = 7
@@ -142,6 +152,10 @@ class SignatureRequestDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, 
         )
         context['packet_detail_url'] = reverse('contracts:signature_packet_detail', kwargs={'contract_pk': self.object.contract_id})
         context['packet_summary'] = build_signature_packet(self.object.organization, self.object.contract)
+        context['presenter_read_only'] = presenter_read_only
+        if presenter_read_only:
+            context['available_transitions'] = []
+            context['can_send_reminder'] = False
         return context
 
 
@@ -164,6 +178,8 @@ def _signature_reminder_recipients(signature_request):
 @require_POST
 def signature_request_send_reminder(request, pk):
     org = get_user_organization(request.user)
+    if is_payrollminds_presenter_workspace(org):
+        return HttpResponseForbidden(PRESENTER_READ_ONLY_MESSAGE)
     queryset = scope_queryset_for_organization(SignatureRequest.objects.select_related('contract', 'document', 'created_by'), org)
     signature_request = get_object_or_404(queryset, pk=pk)
     if not (signature_request.created_by_id == request.user.id or can_manage_organization(request.user, signature_request.organization)):
@@ -223,6 +239,11 @@ class SignatureRequestUpdateView(TenantScopedFormMixin, TenantScopedQuerysetMixi
     success_url = reverse_lazy('contracts:signature_request_list')
     scoped_form_fields = {'contract': Contract, 'document': Document}
 
+    def dispatch(self, request, *args, **kwargs):
+        if is_payrollminds_presenter_workspace(self.get_organization()):
+            return HttpResponseForbidden(PRESENTER_READ_ONLY_MESSAGE)
+        return super().dispatch(request, *args, **kwargs)
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['actor'] = self.request.user
@@ -233,6 +254,8 @@ class SignatureRequestUpdateView(TenantScopedFormMixin, TenantScopedQuerysetMixi
 @require_POST
 def signature_request_transition(request, pk, new_status):
     org = get_user_organization(request.user)
+    if is_payrollminds_presenter_workspace(org):
+        return HttpResponseForbidden(PRESENTER_READ_ONLY_MESSAGE)
     queryset = scope_queryset_for_organization(SignatureRequest.objects.select_related('contract', 'document', 'created_by'), org)
     signature_request = get_object_or_404(queryset, pk=pk)
     try:
@@ -261,6 +284,8 @@ def signature_request_transition(request, pk, new_status):
 @require_POST
 def signature_request_send(request, pk):
     org = get_user_organization(request.user)
+    if is_payrollminds_presenter_workspace(org):
+        return HttpResponseForbidden(PRESENTER_READ_ONLY_MESSAGE)
     queryset = scope_queryset_for_organization(
         SignatureRequest.objects.select_related('contract', 'document', 'created_by'), org
     )
@@ -298,6 +323,8 @@ def signature_request_send(request, pk):
 @require_POST
 def signature_request_refresh(request, pk):
     org = get_user_organization(request.user)
+    if is_payrollminds_presenter_workspace(org):
+        return HttpResponseForbidden(PRESENTER_READ_ONLY_MESSAGE)
     queryset = scope_queryset_for_organization(
         SignatureRequest.objects.select_related('contract', 'document', 'created_by'), org
     )
@@ -330,6 +357,7 @@ class SignaturePacketDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, D
         packet = build_signature_packet(self.get_organization(), self.object)
         context['packet'] = packet
         context.update(packet)
+        context['presenter_read_only'] = is_payrollminds_presenter_workspace(self.object.organization)
         return context
 
 
@@ -357,6 +385,8 @@ def _packet_action_allowed(request, contract):
 @require_POST
 def signature_packet_resend(request, contract_pk):
     org, contract, signatures = _packet_queryset(request, contract_pk)
+    if is_payrollminds_presenter_workspace(org):
+        return HttpResponseForbidden(PRESENTER_READ_ONLY_MESSAGE)
     if not _packet_action_allowed(request, contract):
         return HttpResponseForbidden('You are not authorized to resend this signature packet.')
 
@@ -390,6 +420,8 @@ def signature_packet_resend(request, contract_pk):
 @require_POST
 def signature_packet_cancel(request, contract_pk):
     org, contract, signatures = _packet_queryset(request, contract_pk)
+    if is_payrollminds_presenter_workspace(org):
+        return HttpResponseForbidden(PRESENTER_READ_ONLY_MESSAGE)
     if not _packet_action_allowed(request, contract):
         return HttpResponseForbidden('You are not authorized to cancel this signature packet.')
 
@@ -420,6 +452,8 @@ def signature_packet_cancel(request, contract_pk):
 @require_POST
 def signature_packet_retry(request, contract_pk):
     org, contract, signatures = _packet_queryset(request, contract_pk)
+    if is_payrollminds_presenter_workspace(org):
+        return HttpResponseForbidden(PRESENTER_READ_ONLY_MESSAGE)
     if not _packet_action_allowed(request, contract):
         return HttpResponseForbidden('You are not authorized to retry this signature packet.')
 
@@ -757,6 +791,7 @@ class ApprovalRequestListView(TenantScopedQuerysetMixin, LoginRequiredMixin, Lis
 
         org = self.get_organization()
         user = self.request.user
+        presenter_read_only = is_payrollminds_presenter_workspace(org)
         now = timezone.now()
         today = timezone.localdate()
         can_manage = can_manage_organization(user, org) if org else False
@@ -867,10 +902,16 @@ class ApprovalRequestListView(TenantScopedQuerysetMixin, LoginRequiredMixin, Lis
                     'blocking_issue': blocker['blocking_issue'],
                     'blocker_owner': blocker['blocker_owner'],
                     'can_decide': (
+                        not presenter_read_only
+                        and
                         approval.status in ('PENDING', 'ESCALATED')
                         and actor_can_decide(approval, user, 'approve')
                     ),
-                    'can_reassign': can_manage and approval.status in ('PENDING', 'ESCALATED'),
+                    'can_reassign': (
+                        not presenter_read_only
+                        and can_manage
+                        and approval.status in ('PENDING', 'ESCALATED')
+                    ),
                     'approve_url': reverse('contracts:approval_approve_api', kwargs={'approval_id': approval.pk}),
                     'reject_url': reverse('contracts:approval_reject_api', kwargs={'approval_id': approval.pk}),
                     'return_url': reverse('contracts:approval_request_changes_api', kwargs={'approval_id': approval.pk}),

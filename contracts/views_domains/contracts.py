@@ -109,6 +109,7 @@ from contracts.services.contract_detail_workspace import (
 )
 from contracts.services.ai_policy import evaluate_prompt
 from contracts.services.ai_actions import build_action_plan, execute_action_plan
+from contracts.services.payrollminds_demo import is_payrollminds_presenter_workspace
 from config.feature_flags import is_feature_redesign_enabled
 
 from .contract_helpers import _build_contract_ai_response, build_contract_lifecycle_guidance
@@ -463,6 +464,7 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
         ).exclude(pk=case_record.owner_id or case_record.created_by_id).distinct().order_by(
             'first_name', 'last_name', 'username',
         )
+        ctx['is_payrollminds_presenter_workspace'] = is_payrollminds_presenter_workspace(org)
         ctx['can_edit'] = can_access_contract_action(self.request.user, case_record, ContractAction.EDIT)
         if 'attach_document_form' not in ctx:
             ctx['attach_document_form'] = self._attachment_form()
@@ -504,21 +506,28 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
         }
         ctx['signature_routing_blockers'] = get_signature_routing_blockers(case_record)
         ctx['can_route_for_signature'] = ctx['can_edit'] and not ctx['signature_routing_blockers']
-        ctx['open_approval'] = case_record.approval_requests.filter(
-            status__in=[ApprovalRequest.Status.PENDING, ApprovalRequest.Status.ESCALATED],
-        ).select_related('assigned_to').order_by('-created_at').first()
-        if ctx['open_approval']:
-            from contracts.services.approval_workflow import actor_can_decide
-            ctx['can_decide_approval'] = actor_can_decide(
-                ctx['open_approval'], self.request.user, 'approve',
-            )
-        else:
-            ctx['can_decide_approval'] = False
-        ctx['dpa_review_pack'] = case_record.dpa_review_packs.order_by('-created_at').first()
         pending_approvals = [
             approval for approval in approval_requests
             if approval.status in (ApprovalRequest.Status.PENDING, ApprovalRequest.Status.ESCALATED)
         ]
+        # Select the first decision the current user may take in the route's
+        # canonical order.  The header CTA must not point to an arbitrary
+        # later approval merely because it was created most recently.
+        from contracts.services.approval_workflow import actor_can_decide
+        ctx['open_approval'] = next(
+            (
+                approval for approval in pending_approvals
+                if actor_can_decide(approval, self.request.user, 'approve')
+            ),
+            None,
+        )
+        ctx['can_decide_approval'] = ctx['open_approval'] is not None
+        if ctx['is_payrollminds_presenter_workspace']:
+            # The synthetic presenter route shows the approval state but
+            # never offers a live decision.
+            ctx['open_approval'] = None
+            ctx['can_decide_approval'] = False
+        ctx['dpa_review_pack'] = case_record.dpa_review_packs.order_by('-created_at').first()
         activity_feed = []
 
         def _actor_snapshot(user):
@@ -762,6 +771,7 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
             token in str(risk_label).casefold()
             for token in ('not assessed', 'incomplete', 'reassessment required')
         )
+        requires_reassessment = 'reassessment required' in str(risk_label).casefold()
         if incomplete_risk:
             # Reserve green for completed assessments with no material risk.
             risk_tone = 'attention'
@@ -830,6 +840,7 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
             'findings': list(ctx['open_findings'][:3]),
             'high_risk_count': len(ctx['high_risk_findings']),
             'open_count': len(ctx['open_findings']),
+            'requires_reassessment': requires_reassessment,
         }
         ctx['lifecycle_path'] = lifecycle_steps(case_record)
         ctx['overview_progress'] = build_overview_progress(
@@ -1685,6 +1696,8 @@ def contract_submit_for_review(request, pk):
 @require_POST
 def contract_approval_decision(request, pk, approval_id, decision):
     organization = get_user_organization(request.user)
+    if is_payrollminds_presenter_workspace(organization):
+        return HttpResponseForbidden('This synthetic PayrollMinds demo workspace is read-only during presentation.')
     contract = get_object_or_404(
         scope_queryset_for_organization(Contract.objects.all(), organization), pk=pk,
     )
@@ -2740,6 +2753,11 @@ def dashboard(request):
             'href': reverse('contracts:dpa_review_pack_list'),
         },
     ]
+    if is_payrollminds_presenter_workspace(org):
+        clm_governance_signals = [
+            signal for signal in clm_governance_signals
+            if signal['label'] != 'Audit infrastructure'
+        ]
 
     selected_conflict = clm_top_conflicts[0] if clm_top_conflicts else None
     selected_playbook_position = None

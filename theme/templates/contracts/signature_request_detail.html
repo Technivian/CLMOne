@@ -15,8 +15,10 @@
         </div>
         <div class="page-actions">
             <a href="{% url 'contracts:signature_request_list' %}" class="dc-ds-button dc-ds-button--quiet">Back to List</a>
+            {% if not presenter_read_only %}
             <a href="{{ packet_detail_url }}" class="dc-ds-button dc-ds-button--quiet">Packet Workspace</a>
             <a href="{% url 'contracts:signature_request_update' object.pk %}" class="dc-ds-button dc-ds-button--primary text-white">Edit</a>
+            {% endif %}
         </div>
     </div>
 
@@ -121,9 +123,12 @@
         <div class="space-y-4">
             <div class="panel">
                 <div class="panel-head">
-                    <span class="panel-title">Quick Actions</span>
+                    <span class="panel-title">{% if presenter_read_only %}Presentation status{% else %}Quick Actions{% endif %}</span>
                 </div>
                 <div class="panel-inner">
+                    {% if presenter_read_only %}
+                    <p class="text-sm c-muted">This synthetic signature preparation record is read-only during the presentation.</p>
+                    {% else %}
                     {% if object.status == 'PENDING' %}
                     <form method="post" action="{% url 'contracts:signature_request_send' object.pk %}" class="mb-4">
                         {% csrf_token %}
@@ -163,6 +168,7 @@
                         {% csrf_token %}
                         <button type="submit" class="dc-ds-button dc-ds-button--quiet w-full">Send reminder</button>
                     </form>
+                    {% endif %}
                     {% endif %}
                 </div>
             </div>

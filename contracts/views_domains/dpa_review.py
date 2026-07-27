@@ -30,17 +30,30 @@ from contracts.models import (
     DPAReviewPack,
     DPARiskItem,
     DPARiskItemNote,
+    OrgPolicy,
 )
 from contracts.permissions import ContractAction, can_access_contract_action, can_manage_organization
 from contracts.services.assignments import QUEUE_EMPTY_PERSONAL, reviewer_privacy_packs_queryset
 from contracts.services.dpa_conflict import check_cross_document_conflicts
 from contracts.services.dpa_review import generate_review_memo, run_dpa_analysis
+from contracts.services.payrollminds_demo import (
+    PRESENTER_READ_ONLY_MESSAGE,
+    is_payrollminds_presenter_workspace,
+)
 from contracts.tenancy import get_user_organization
 from contracts.view_support import TenantScopedQuerysetMixin
 
 
 def _can_review_pack(user, review_pack):
     return can_manage_organization(user, review_pack.organization) or review_pack.reviewer_id == user.id
+
+
+def _ai_features_enabled_for_organization(organization):
+    """Respect an explicit workspace policy while retaining the platform default."""
+    enabled = OrgPolicy.objects.filter(
+        organization=organization,
+    ).values_list('ai_features_enabled', flat=True).first()
+    return True if enabled is None else enabled
 
 
 DPA_APPROVAL_TRANSITIONS = {
@@ -556,7 +569,14 @@ def _build_review_categories(pack, risk_items):
     return rows
 
 
-def _primary_action_for_pack(pack, unresolved_risks, critical_risk_count, can_edit, can_approve):
+def _primary_action_for_pack(
+    pack,
+    unresolved_risks,
+    critical_risk_count,
+    can_edit,
+    can_approve,
+    ai_features_enabled=True,
+):
     """One contextual primary CTA for the review header."""
     next_action = _next_action_for_pack(pack, unresolved_risks, critical_risk_count)
     if next_action == 'Resolve role qualification':
@@ -573,10 +593,17 @@ def _primary_action_for_pack(pack, unresolved_risks, critical_risk_count, can_ed
             'mode': 'link',
             'next_action': next_action,
         }
-    if next_action == 'Start review' and can_edit and not pack.last_analyzed_at:
+    if next_action == 'Start review' and can_edit and not pack.last_analyzed_at and ai_features_enabled:
         return {
             'label': 'Run analysis',
             'mode': 'analyze',
+            'next_action': next_action,
+        }
+    if next_action == 'Start review':
+        return {
+            'label': 'Review findings',
+            'href': '?tab=findings',
+            'mode': 'link',
             'next_action': next_action,
         }
     if next_action in {'Complete approval decision', 'Resolve escalation', 'Revise after rejection'} and can_approve:
@@ -851,8 +878,15 @@ class DPAReviewPackDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, Det
         risk_summary = _risk_summary_for_pack(risk_items)
         can_edit = can_access_contract_action(self.request.user, review_pack.contract, ContractAction.EDIT)
         can_review = _can_review_pack(self.request.user, review_pack)
+        presenter_read_only = is_payrollminds_presenter_workspace(review_pack.organization)
+        ai_features_enabled = _ai_features_enabled_for_organization(review_pack.organization)
         primary = _primary_action_for_pack(
-            review_pack, unresolved, critical_count, can_edit=can_edit, can_approve=can_review,
+            review_pack,
+            unresolved,
+            critical_count,
+            can_edit=can_edit,
+            can_approve=can_review,
+            ai_features_enabled=ai_features_enabled,
         )
         active_tab = (self.request.GET.get('tab') or 'overview').strip().lower()
         allowed_tabs = {'overview', 'findings', 'risks', 'documents', 'history'}
@@ -868,8 +902,10 @@ class DPAReviewPackDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, Det
         ][:5]
         ctx['approval_history'] = review_pack.approval_history.all()
         ctx['can_edit'] = can_edit
-        ctx['can_review'] = can_review
-        ctx['can_approve'] = can_review
+        ctx['presenter_read_only'] = presenter_read_only
+        ctx['can_review'] = can_review and not presenter_read_only
+        ctx['can_approve'] = can_review and not presenter_read_only
+        ctx['ai_features_enabled'] = ai_features_enabled
         ctx['risk_summary'] = risk_summary
         ctx['active_tab'] = active_tab
         ctx['workspace_tabs'] = _workspace_tabs_for_pack(review_pack, active_tab)
@@ -912,7 +948,10 @@ class DPAReviewPackDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, Det
         )
         ctx['linked_documents'] = list(review_pack.documents.all())
         ctx['related_contracts'] = list(review_pack.related_contracts.all())
-        ctx['show_decision_bar'] = can_review and review_pack.approval_status != DPAReviewPack.ApprovalStatus.APPROVED
+        ctx['show_decision_bar'] = (
+            ctx['can_review']
+            and review_pack.approval_status != DPAReviewPack.ApprovalStatus.APPROVED
+        )
         return ctx
 
 
@@ -1003,6 +1042,8 @@ def dpa_review_run_analysis(request, pk):
     review_pack = _get_owned_review_pack_or_404(request, pk, prefetch_related_contracts=True)
     if not can_access_contract_action(request.user, review_pack.contract, ContractAction.EDIT):
         return JsonResponse({'error': 'You do not have permission to analyze this DPA.'}, status=403)
+    if not _ai_features_enabled_for_organization(review_pack.organization):
+        return JsonResponse({'error': 'Automated review actions are disabled by workspace policy.'}, status=403)
 
     suggestions = run_dpa_analysis(review_pack)
     review_pack.last_analyzed_at = timezone.now()
@@ -1054,6 +1095,8 @@ def dpa_review_set_approval_status(request, pk):
         return JsonResponse({'error': 'Authentication required.'}, status=403)
 
     review_pack = _get_owned_review_pack_or_404(request, pk)
+    if is_payrollminds_presenter_workspace(review_pack.organization):
+        return JsonResponse({'error': PRESENTER_READ_ONLY_MESSAGE}, status=403)
     if not _can_review_pack(request.user, review_pack):
         return JsonResponse({'error': 'Only the assigned reviewer or a workspace admin can set DPA review status.'}, status=403)
 
@@ -1384,6 +1427,8 @@ def dpa_review_generate_memo(request, pk):
     review_pack = _get_owned_review_pack_or_404(request, pk, prefetch_related_contracts=True)
     if not can_access_contract_action(request.user, review_pack.contract, ContractAction.EDIT):
         return JsonResponse({'error': 'You do not have permission to generate this memo.'}, status=403)
+    if not _ai_features_enabled_for_organization(review_pack.organization):
+        return JsonResponse({'error': 'Automated review actions are disabled by workspace policy.'}, status=403)
 
     review_pack.review_memo = generate_review_memo(review_pack)
     review_pack.review_memo_generated_at = timezone.now()
