@@ -26,6 +26,7 @@ from contracts.models import (
     DPAReviewPack,
     DPARiskItem,
     DPARiskItemNote,
+    OrgPolicy,
     Organization,
     OrganizationMembership,
 )
@@ -561,6 +562,12 @@ class DPAReviewPackViewTests(TestCase):
         self.assertIn('Generate memo', admin_body)
         self.assertIn('Run analysis', admin_body)
 
+        OrgPolicy.objects.create(organization=self.organization, ai_features_enabled=False)
+        disabled_body = admin_client.get(url).content.decode().split('<div id="djDebug"', 1)[0]
+        self.assertNotIn('Generate memo', disabled_body)
+        self.assertNotIn('Run analysis', disabled_body)
+        self.assertIn('Review findings', disabled_body)
+
         findings = client.get(f'{url}?tab=findings')
         self.assertEqual(findings.status_code, 200)
         findings_body = findings.content.decode().split('<div id="djDebug"', 1)[0]
@@ -605,6 +612,23 @@ class DPAReviewPackViewTests(TestCase):
         self.assertTrue(risk.detection_rule)
         self.assertTrue(risk.source_section)
         self.assertIn(risk.confidence, {DPARiskItem.Confidence.HIGH, DPARiskItem.Confidence.MEDIUM, DPARiskItem.Confidence.NEEDS_HUMAN_CHECK})
+
+    def test_automated_review_actions_respect_the_workspace_ai_policy(self):
+        OrgPolicy.objects.create(organization=self.organization, ai_features_enabled=False)
+        client = TestClient()
+        client.login(username=self.admin.username, password='testpass123')
+
+        analysis_response = client.post(
+            reverse('contracts:dpa_review_run_analysis', kwargs={'pk': self.review_pack.pk}),
+            data=json.dumps({}),
+            content_type='application/json',
+        )
+        memo_response = client.post(
+            reverse('contracts:dpa_review_generate_memo', kwargs={'pk': self.review_pack.pk}),
+        )
+
+        self.assertEqual(analysis_response.status_code, 403)
+        self.assertEqual(memo_response.status_code, 403)
 
     def test_run_analysis_persists_cross_document_conflict_and_memo_evidence(self):
         self.review_pack.related_contracts.add(_make_msa(self.organization, self.admin))

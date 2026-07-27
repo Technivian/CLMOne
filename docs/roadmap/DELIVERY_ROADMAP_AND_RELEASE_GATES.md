@@ -11,6 +11,38 @@ Build the platform in domain order, not page order.
 
 A beautiful surface on an unstable domain model creates expensive rework.
 
+## PayrollMinds Demo Readiness tranche
+
+**Status:** Complete — demo readiness Ready (synthetic design-partner demo only, 2026-07-27)
+**Purpose:** prepare one resettable, fictional design-partner demonstration of
+the governed contract journey for a Global Payroll Transformation Engagement.
+
+This is a controlled demonstration proposition, not a production-readiness
+claim. It uses only a local, synthetic `payrollminds-demo` workspace; no real
+PayrollMinds, client, employee, or payroll data may be introduced. AI remains
+disabled. The tranche does not reopen closed Platform Alignment or Pilot
+Hardening work, change permissions, or claim completion of Ethical-Wall,
+analytics, or AI-redaction enforcement.
+
+Immediate deliverables are the resettable seed, focused journey evidence, a
+demo script, pitch outline, pilot proposal, security-and-maturity statement,
+backup recording plan, presenter click-path checklist, and a short
+impact-ordered polish backlog. The live rehearsal found and removed
+presenter-visible extraction-review copy from the synthetic SOW. The global
+audit ledger remains excluded because of the known audit-fixture chain failure;
+the demo uses contract-scoped activity evidence and makes no audit-chain or SLA
+escalation claim. See
+[`../pilot/PAYROLLMINDS_DEMO_READINESS.md`](../pilot/PAYROLLMINDS_DEMO_READINESS.md).
+
+The final GO audit passed for a server-enforced, read-only presenter route in
+the synthetic `payrollminds-demo` workspace only. Focused permission tests,
+the 225-test demo selection, seed/reset regression, Django checks, browser
+smoke, final screenshots, and the validated backup walkthrough support this
+limited demo status. The demonstration remains a synthetic operational
+snapshot: it does not establish production readiness or expand the excluded
+audit, SLA escalation, AI, analytics, Ethical-Wall, live-signature, or
+real-data scope.
+
 ## 2. Stage 0: Constitutional foundation
 
 Deliver:

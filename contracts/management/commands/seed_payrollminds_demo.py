@@ -1,30 +1,37 @@
-"""Seed a coherent Payrollminds buyer demo without touching other workspaces."""
+"""Seed a resettable, synthetic PayrollMinds design-partner demo workspace."""
+import os
 from datetime import timedelta
 
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
 
+from config.db_safety import is_running_on_deployed_platform
 from contracts.middleware import log_action
 from contracts.models import (
     ApprovalRequest,
     AuditLog,
     Contract,
     ContractVersion,
+    Counterparty,
     Deadline,
     Document,
+    DocumentOCRReview,
     DPAApprovalHistoryEntry,
     DPAReviewPack,
     DPARiskItem,
     Organization,
     OrganizationMembership,
+    OrgPolicy,
     SignatureRequest,
     UserProfile,
 )
 
 
-DEMO_PASSWORD = 'CLMOneMVP!2026'
+DEMO_ORG_SLUG = 'payrollminds-demo'
+DEMO_EMAIL_DOMAIN = 'payrollminds-demo.example'
+DEMO_PASSWORD = os.environ.get('PAYROLLMINDS_DEMO_PASSWORD', 'payrollminds-demo-2026!')
 
 
 def _pdf_bytes(title, lines):
@@ -75,14 +82,27 @@ def _pdf_bytes(title, lines):
 
 
 class Command(BaseCommand):
-    help = 'Create or update the complete Payrollminds demo workspace.'
+    help = 'Create a resettable, local-only synthetic PayrollMinds demo workspace.'
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--reset',
+            action='store_true',
+            help='Delete and recreate this demo workspace’s own synthetic records only.',
+        )
 
     def handle(self, *args, **options):
+        if is_running_on_deployed_platform():
+            raise CommandError(
+                'seed_payrollminds_demo refuses to run on a deployed platform. '
+                'It creates fictional, non-production demo data for local rehearsal only.'
+            )
+
         User = get_user_model()
         now = timezone.now()
         today = timezone.localdate()
         organization, _ = Organization.objects.update_or_create(
-            slug='payrollminds-demo',
+            slug=DEMO_ORG_SLUG,
             defaults={
                 'name': 'Payrollminds Demo Workspace',
                 'workspace_mode': Organization.WorkspaceMode.IN_HOUSE_CLM,
@@ -90,6 +110,17 @@ class Command(BaseCommand):
                 'require_mfa': False,
             },
         )
+        if options['reset']:
+            self._reset_workspace(organization)
+        OrgPolicy.objects.update_or_create(
+            organization=organization,
+            defaults={
+                'ai_features_enabled': False,
+                'data_transfer_review_required': True,
+                'require_approval_above_value': 100000,
+            },
+        )
+
         users = {}
         for username, first_name, last_name, department, membership_role, profile_role in (
             (
@@ -108,13 +139,17 @@ class Command(BaseCommand):
                 'payrollminds_finance', 'Sophie', 'Bakker', 'Finance',
                 OrganizationMembership.Role.MEMBER, UserProfile.Role.ADMIN,
             ),
+            (
+                'payrollminds_privacy', 'Robin', 'Visser', 'Privacy',
+                OrganizationMembership.Role.MEMBER, UserProfile.Role.SENIOR_ASSOCIATE,
+            ),
         ):
             user, _ = User.objects.update_or_create(
                 username=username,
                 defaults={
                     'first_name': first_name,
                     'last_name': last_name,
-                    'email': f'{username}@demo.clmone.local',
+                    'email': f'{username}@{DEMO_EMAIL_DOMAIN}',
                     'is_active': True,
                 },
             )
@@ -145,7 +180,7 @@ class Command(BaseCommand):
                 'owner': 'payrollminds_legal',
                 'value': 180000,
                 'start': today - timedelta(days=120),
-                'end': today + timedelta(days=18),
+                'end': today + timedelta(days=90),
                 'risk': Contract.RiskLevel.LOW,
                 'content': (
                     'Executed enterprise payroll services agreement. Annual fees are EUR 180,000. '
@@ -157,27 +192,40 @@ class Command(BaseCommand):
                     'jurisdiction': 'Amsterdam',
                     'auto_renew': True,
                     'notice_period_days': 60,
-                    'renewal_date': today + timedelta(days=18),
+                    'renewal_date': today + timedelta(days=90),
+                    'termination_notice_date': today + timedelta(days=30),
                     'dpa_attached': True,
                 },
             },
             {
-                'title': 'Atlas Workforce Order Confirmation 2026',
-                'contract_type': Contract.ContractType.ORDER_CONFIRMATION,
+                'title': 'Global Payroll Transformation Engagement — Implementation SOW',
+                'contract_type': Contract.ContractType.SOW,
                 'counterparty': 'Atlas Workforce B.V.',
                 'status': Contract.Status.IN_PROGRESS,
                 'stage': 'APPROVAL',
                 'owner': 'payrollminds_procurement',
-                'value': 42000,
+                'value': 240000,
                 'start': today + timedelta(days=14),
                 'end': today + timedelta(days=379),
                 'risk': Contract.RiskLevel.MEDIUM,
                 'content': (
-                    'Order confirmation under MSA-PM-2026-001 for payroll implementation and '
-                    'managed service support in the Netherlands and Belgium. Finance approval '
-                    'is required before signature.'
+                    'Implementation SOW under the Payrollminds Master Services Agreement for a '
+                    'global payroll transformation across the Netherlands, Germany, Belgium, and '
+                    'the United Kingdom. Named delivery vendors are Atlas Workforce B.V. and '
+                    'CloudPay Europe S.à r.l. Finance approval is required because the value '
+                    'exceeds the EUR 100,000 approval threshold.'
                 ),
-                'extra': {'governing_law': 'Netherlands', 'jurisdiction': 'Amsterdam'},
+                'extra': {
+                    'governing_law': 'Netherlands',
+                    'jurisdiction': 'Amsterdam',
+                    'business_unit': 'Global Payroll Transformation · NL · DE · BE · GB',
+                    'personal_data_processing': True,
+                    'sensitive_data_flag': True,
+                    'counterparty_privacy_review_required': True,
+                    'data_transfer_flag': True,
+                    'dpa_attached': True,
+                    'scc_attached': True,
+                },
             },
             {
                 'title': 'Consultancy Services Agreement — HRIS rollout',
@@ -308,15 +356,27 @@ class Command(BaseCommand):
             contracts[record['title']] = contract
 
         msa = contracts['Payrollminds Master Services Agreement']
-        order_confirmation = contracts['Atlas Workforce Order Confirmation 2026']
+        sow = contracts['Global Payroll Transformation Engagement — Implementation SOW']
         consultancy = contracts['Consultancy Services Agreement — HRIS rollout']
         dpa = contracts['Data Processing Agreement — Cloud payroll']
         nda = contracts['Mutual NDA — FinTalent partnership']
         addendum = contracts['Addendum — 2026 pricing and service levels']
 
-        if order_confirmation.parent_contract_id != msa.pk:
-            order_confirmation.parent_contract = msa
-            order_confirmation.save(update_fields=['parent_contract', 'updated_at'])
+        if sow.parent_contract_id != msa.pk:
+            sow.parent_contract = msa
+            sow.save(update_fields=['parent_contract', 'updated_at'])
+
+        for name, entity_type, jurisdiction in (
+            ('Atlas Workforce B.V.', Counterparty.EntityType.CORPORATION, 'Netherlands'),
+            ('CloudPay Europe S.à r.l.', Counterparty.EntityType.CORPORATION, 'Luxembourg'),
+            ('FinTalent Group B.V.', Counterparty.EntityType.CORPORATION, 'Netherlands'),
+            ('Northstar Benefits B.V.', Counterparty.EntityType.CORPORATION, 'Netherlands'),
+        ):
+            Counterparty.objects.update_or_create(
+                organization=organization,
+                name=name,
+                defaults={'entity_type': entity_type, 'jurisdiction': jurisdiction, 'is_active': True},
+            )
 
         for contract, snapshots in (
             (
@@ -327,8 +387,8 @@ class Command(BaseCommand):
                 ),
             ),
             (
-                order_confirmation,
-                ((1, Contract.Status.IN_PROGRESS, order_confirmation.content, 'Order confirmation routed for Legal and Finance approval.'),),
+                sow,
+                ((1, Contract.Status.IN_PROGRESS, sow.content, 'Global payroll SOW routed for Legal, Finance, and Privacy approval.'),),
             ),
             (
                 dpa,
@@ -380,19 +440,25 @@ class Command(BaseCommand):
                 'Renewal decision due: %s' % msa.end_date.isoformat(),
             ),
         )
-        order_document = self._document(
-            organization, order_confirmation, users['payrollminds_procurement'],
-            title='Atlas Workforce Order Confirmation 2026',
-            filename='atlas-workforce-order-confirmation-2026.pdf',
+        sow_document = self._document(
+            organization, sow, users['payrollminds_procurement'],
+            title='Global Payroll Transformation Engagement — Implementation SOW',
+            filename='global-payroll-transformation-sow.pdf',
             version=1,
             status=Document.Status.DRAFT,
             lines=(
                 'Governing agreement: Payrollminds Master Services Agreement.',
-                'Implementation and managed payroll services.',
-                'Order value: EUR 42,000.',
-                'Current route: Legal approved; Finance pending.',
+                'Countries: Netherlands, Germany, Belgium, United Kingdom.',
+                'Named vendors: Atlas Workforce B.V.; CloudPay Europe S.à r.l.',
+                'Engagement value: EUR 240,000.',
+                'Current route: Legal approved; Finance and Privacy pending.',
             ),
         )
+        # Keep the presenter-visible SOW record free of extraction-review UI.
+        # The PayrollMinds proposition keeps AI and automated extraction out of
+        # scope; the document itself remains a normal, downloadable synthetic
+        # record for the demo.
+        DocumentOCRReview.objects.filter(document=sow_document).delete()
         dpa_document = self._document(
             organization, dpa, users['payrollminds_legal'],
             title='CloudPay Europe DPA — counterparty paper',
@@ -419,10 +485,22 @@ class Command(BaseCommand):
                 'Current stage: internal review.',
             ),
         )
+        self._document(
+            organization, nda, users['payrollminds_procurement'],
+            title='Mutual NDA — FinTalent partnership',
+            filename='fintalent-mutual-nda.pdf',
+            version=1,
+            status=Document.Status.DRAFT,
+            lines=(
+                'Mutual NDA for the Global Payroll Transformation Engagement.',
+                'Purpose: evaluate a fictional payroll transformation partnership.',
+                'No real client, employee, or payroll data is included in this demonstration.',
+            ),
+        )
 
         ApprovalRequest.objects.update_or_create(
             organization=organization,
-            contract=order_confirmation,
+            contract=sow,
             approval_step='LEGAL',
             defaults={
                 'status': ApprovalRequest.Status.APPROVED,
@@ -435,8 +513,8 @@ class Command(BaseCommand):
         )
         ApprovalRequest.objects.update_or_create(
             organization=organization,
-            contract=order_confirmation,
-            approval_step='FINANCE',
+            contract=sow,
+            approval_step='FINANCE — value exceeds EUR 100,000',
             defaults={
                 'status': ApprovalRequest.Status.PENDING,
                 'assigned_to': users['payrollminds_finance'],
@@ -448,11 +526,11 @@ class Command(BaseCommand):
         )
         ApprovalRequest.objects.update_or_create(
             organization=organization,
-            contract=dpa,
+            contract=sow,
             approval_step='PRIVACY',
             defaults={
                 'status': ApprovalRequest.Status.PENDING,
-                'assigned_to': users['payrollminds_legal'],
+                'assigned_to': users['payrollminds_privacy'],
                 'decided_by': None,
                 'decided_at': None,
                 'comments': 'Resolve open breach, audit, and liability positions.',
@@ -475,6 +553,21 @@ class Command(BaseCommand):
                 'viewed_at': now - timedelta(days=121, hours=20),
                 'signed_at': now - timedelta(days=120),
                 'ip_address': '192.0.2.25',
+                'order': 1,
+                'created_by': users['payrollminds_admin'],
+            },
+        )
+        SignatureRequest.objects.update_or_create(
+            organization=organization,
+            contract=sow,
+            signer_email='signatory@atlasworkforce.example',
+            defaults={
+                'document': sow_document,
+                'signer_name': 'Elise van Dijk',
+                'signer_role': 'Commercial Director',
+                'status': SignatureRequest.Status.PENDING,
+                'external_id': 'DEMO-ATLAS-SOW-2026-001',
+                'esign_provider': 'demo',
                 'order': 1,
                 'created_by': users['payrollminds_admin'],
             },
@@ -564,7 +657,7 @@ class Command(BaseCommand):
                 'evidence_text': 'Processor shall provide full breach notice within 24 hours.',
                 'source_section': 'Security incident notification',
                 'status': DPARiskItem.Status.OPEN,
-                'detected_automatically': True,
+                'detected_automatically': False,
             },
             {
                 'category': DPARiskItem.Category.AUDIT,
@@ -577,7 +670,7 @@ class Command(BaseCommand):
                 'evidence_text': 'Controller may audit processor facilities at any time on reasonable notice.',
                 'source_section': 'Audit rights',
                 'status': DPARiskItem.Status.NEEDS_DPO_SECURITY_INPUT,
-                'detected_automatically': True,
+                'detected_automatically': False,
             },
             {
                 'category': DPARiskItem.Category.LIABILITY,
@@ -591,7 +684,7 @@ class Command(BaseCommand):
                 'related_contract_evidence_text': 'Aggregate liability is limited to fees paid in the preceding twelve months.',
                 'source_section': 'Liability',
                 'status': DPARiskItem.Status.ESCALATED,
-                'detected_automatically': True,
+                'detected_automatically': False,
                 'is_cross_document_conflict': True,
                 'conflict_type': 'DPA_MSA_LIABILITY_CAP',
             },
@@ -617,8 +710,8 @@ class Command(BaseCommand):
 
         deadlines = (
             (
-                msa, 'MSA renewal decision', Deadline.DeadlineType.RENEWAL,
-                Deadline.Priority.HIGH, today + timedelta(days=18), users['payrollminds_legal'],
+                msa, 'MSA renewal and notice decision', Deadline.DeadlineType.RENEWAL,
+                Deadline.Priority.HIGH, today + timedelta(days=30), users['payrollminds_legal'],
                 'Decide whether to renew, renegotiate, or serve notice before the commercial window closes.',
             ),
             (
@@ -672,6 +765,16 @@ class Command(BaseCommand):
             'dpa.review_opened',
             {'review_pack_id': review_pack.pk, 'open_risk_count': 3},
         )
+        self._audit_once(
+            organization, users['payrollminds_procurement'], sow, AuditLog.Action.CREATE,
+            'contract.intake_captured',
+            {'countries': ['NL', 'DE', 'BE', 'GB'], 'value_eur': '240000.00', 'privacy_review_required': True},
+        )
+        self._audit_once(
+            organization, users['payrollminds_admin'], sow, AuditLog.Action.UPDATE,
+            'contract.conditional_approval_routed',
+            {'condition': 'Value exceeds EUR 100,000; Finance approval required.'},
+        )
 
         self.stdout.write(self.style.SUCCESS(
             'Payrollminds demo ready: '
@@ -680,6 +783,20 @@ class Command(BaseCommand):
             f'{organization.approval_requests.count()} approvals)'
         ))
         self.stdout.write(f'  payrollminds_admin / {DEMO_PASSWORD}')
+
+    @staticmethod
+    def _reset_workspace(organization):
+        """Remove only this workspace's synthetic, re-creatable records.
+
+        Audit history deliberately remains append-only. User accounts are shared
+        identity objects, so their membership is refreshed rather than deleting
+        the users themselves.
+        """
+        for document in Document.objects.filter(organization=organization).exclude(file=''):
+            document.file.delete(save=False)
+        Contract.objects.filter(organization=organization).delete()
+        Counterparty.objects.filter(organization=organization).delete()
+        OrganizationMembership.objects.filter(organization=organization).delete()
 
     @staticmethod
     def _document(

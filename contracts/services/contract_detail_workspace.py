@@ -443,13 +443,14 @@ def build_contract_command(
             if risk_sig not in current_blockers:
                 current_blockers.append(risk_sig)
     elif can_decide_approval and open_approval:
+        approval_step = (open_approval.approval_step or 'outstanding').split(' — ', 1)[0].title()
         primary_action = {
-            'label': 'Record review decision',
+            'label': f'Review {approval_step} approval',
             'target': contract_detail_tab_url(pk, 'approvals'),
             'mode': 'link',
             'key': 'decide',
         }
-        next_action = 'Record the outstanding approval decision.'
+        next_action = f'Record the {approval_step.lower()} approval decision.'
     elif can_submit_for_review:
         primary_action = {
             'label': 'Submit for review',

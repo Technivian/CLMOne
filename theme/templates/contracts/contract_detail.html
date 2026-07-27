@@ -2,7 +2,7 @@
 {% load clmone_format %}
 {% load clmone_components %}
 {% block title %}{{ contract.title }} – CLM One{% endblock %}
-{% block authenticated_page_title %}{{ contract.title }}{% endblock %}
+{% block authenticated_page_title %}Contracts{% endblock %}
 {% block authenticated_page_subtitle %}{% endblock %}
 {% block authenticated_page_context_attrs %} data-suppress-title-promotion{% endblock %}
 {% block authenticated_page_back %}
@@ -20,8 +20,8 @@
       </div>
       <div class="contract-command-context" aria-label="Contract identity">
         <span class="contract-command-status-tags" aria-label="Contract status and stage">
-          <span class="dc-ds-badge dc-ds-badge--{{ contract.status|contract_status_badge_tone }}">{{ contract.get_status_display }}</span>
-          <span class="dc-ds-badge dc-ds-badge--{{ contract.lifecycle_stage|lifecycle_stage_badge_tone }}">{{ contract.get_lifecycle_stage_display }}</span>
+          <span class="dc-ds-badge dc-ds-badge--{{ contract.status|contract_status_badge_tone }}">Status: {{ contract.get_status_display }}</span>
+          <span class="dc-ds-badge dc-ds-badge--{{ contract.lifecycle_stage|lifecycle_stage_badge_tone }}">Stage: {{ contract.get_lifecycle_stage_display }}</span>
         </span>
         <span class="contract-command-meta">
           <span class="contract-command-meta__label">Owner</span>
@@ -37,14 +37,6 @@
         <span class="contract-command-meta">
           <span class="contract-command-meta__label">Updated</span>
           <span class="contract-command-meta__value">{{ contract.updated_at|date:"j M Y" }}</span>
-        </span>
-        <span class="contract-command-meta">
-          <span class="contract-command-meta__label">Version</span>
-          <span class="contract-command-meta__value">v{% if primary_document %}{{ primary_document.version }}{% else %}1{% endif %}</span>
-        </span>
-        <span class="contract-command-meta">
-          <span class="contract-command-meta__label">Value</span>
-          <span class="contract-command-meta__value">{% if contract.value %}{{ contract.value|money_compact:contract.currency }}{% else %}—{% endif %}</span>
         </span>
       </div>
     </div>
@@ -135,11 +127,11 @@
             </div>
             <dl class="contract-details-dl">
               <div class="contract-details-dl__row"><dt>Type</dt><dd>{{ contract.get_contract_type_display }}</dd></div>
-              <div class="contract-details-dl__row"><dt>Counterparty</dt><dd>{{ contract.counterparty|default:"—" }}</dd></div>
-              <div class="contract-details-dl__row"><dt>Client</dt><dd>{% if contract.client %}{{ contract.client.name }}{% else %}—{% endif %}</dd></div>
-              <div class="contract-details-dl__row"><dt>Governing law</dt><dd>{{ contract.governing_law|default:"—" }}</dd></div>
-              <div class="contract-details-dl__row"><dt>Paper source</dt><dd>{{ contract.get_paper_source_display|default:"—" }}</dd></div>
-              <div class="contract-details-dl__row"><dt>Source document</dt><dd>{% if primary_document %}<a href="{% url 'contracts:document_detail' primary_document.pk %}" class="c-link">{{ primary_document.title }}</a>{% else %}—{% endif %}</dd></div>
+              {% if contract.counterparty %}<div class="contract-details-dl__row"><dt>Counterparty</dt><dd>{{ contract.counterparty }}</dd></div>{% endif %}
+              {% if contract.client %}<div class="contract-details-dl__row"><dt>Client</dt><dd>{{ contract.client.name }}</dd></div>{% endif %}
+              {% if contract.governing_law %}<div class="contract-details-dl__row"><dt>Governing law</dt><dd>{{ contract.governing_law }}</dd></div>{% endif %}
+              {% if contract.paper_source %}<div class="contract-details-dl__row"><dt>Paper source</dt><dd>{{ contract.get_paper_source_display }}</dd></div>{% endif %}
+              {% if primary_document %}<div class="contract-details-dl__row"><dt>Source document</dt><dd><a href="{% url 'contracts:document_detail' primary_document.pk %}" class="c-link">{{ primary_document.title }}</a></dd></div>{% endif %}
             </dl>
             {% if related_case_matter or contract.parent_contract or contract.linked_contracts.exists %}
             <div class="contract-overview-related">
@@ -449,7 +441,7 @@
       {% elif active_tab == 'activity' %}
       <div id="contract-tab-activity" role="tabpanel" aria-labelledby="tab-activity">
         <section class="dc-ds-workspace__surface" aria-labelledby="activity-heading">
-          <div class="dc-ds-workspace__surface-head"><div><h2 id="activity-heading" class="dc-ds-workspace__surface-title">Audit trail</h2><p class="dc-ds-workspace__surface-kicker">Audit trail events and internal notes, ordered newest first.</p></div><div class="contract-head-actions"><a href="{% url 'contracts:audit_log_list' %}" class="contract-head-link">Full audit log</a>{% if can_comment %}<button type="button" class="contract-head-link" data-open-note-dialog>Add note</button>{% endif %}</div></div>
+          <div class="dc-ds-workspace__surface-head"><div><h2 id="activity-heading" class="dc-ds-workspace__surface-title">Audit trail</h2><p class="dc-ds-workspace__surface-kicker">Audit trail events and internal notes, ordered newest first.</p></div><div class="contract-head-actions">{% if not is_payrollminds_presenter_workspace %}<a href="{% url 'contracts:audit_log_list' %}" class="contract-head-link">Full audit log</a>{% endif %}{% if can_comment and not is_payrollminds_presenter_workspace %}<button type="button" class="contract-head-link" data-open-note-dialog>Add note</button>{% endif %}</div></div>
           <div class="dc-ds-workspace__surface-body">{% if contract_activity_feed %}<div class="contract-activity-feed">{% for item in contract_activity_feed %}<div class="contract-activity-feed-row"><div class="contract-activity-feed-main"><div class="contract-activity-feed-head"><span class="contract-activity-feed-avatar" aria-hidden="true">{{ item.actor_initial }}</span><div class="contract-activity-feed-copy"><div class="contract-activity-feed-title"><strong>{{ item.title }}</strong><span class="contract-activity-feed-kind">{{ item.badge_label }}</span></div><div class="contract-activity-feed-meta">{{ item.actor_name }} · {{ item.timestamp|timesince }} ago</div></div></div><p class="contract-activity-feed-text">{{ item.detail|truncatechars:180 }}</p></div><span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ item.badge_class|legacy_badge_tone }} contract-activity-feed-badge">{{ item.badge_label }}</span></div>{% endfor %}</div>{% else %}<p class="contract-empty">No internal activity recorded for this contract.</p>{% endif %}</div>
         </section>
       </div>
@@ -463,13 +455,9 @@
         </div>
         <div class="dc-ds-workspace__surface-body">
           <dl class="contract-detail-list">
-            <div class="contract-detail-row"><dt>Status</dt><dd>{{ contract.get_status_display }}</dd></div>
-            <div class="contract-detail-row"><dt>Stage</dt><dd>{{ contract.get_lifecycle_stage_display }}</dd></div>
             <div class="contract-detail-row"><dt>Document state</dt><dd>{% if primary_document %}{{ primary_document.get_status_display }}{% else %}—{% endif %}</dd></div>
-            <div class="contract-detail-row"><dt>Version</dt><dd>{% if primary_document %}{{ primary_document.version }}{% else %}1{% endif %}</dd></div>
-            <div class="contract-detail-row"><dt>Owner</dt><dd>{% if owner %}{{ owner.get_full_name|default:owner.username }}{% else %}Unassigned{% endif %}</dd></div>
-            <div class="contract-detail-row"><dt>Counterparty</dt><dd>{{ contract.counterparty|default:"—" }}</dd></div>
-            <div class="contract-detail-row"><dt>Value</dt><dd>{% if contract.value %}{{ contract.value|money:contract.currency }}{% else %}—{% endif %}</dd></div>
+            <div class="contract-detail-row"><dt>Version</dt><dd>v{% if primary_document %}{{ primary_document.version }}{% else %}1{% endif %}</dd></div>
+            {% if contract.value %}<div class="contract-detail-row"><dt>Value</dt><dd>{{ contract.value|money_compact:contract.currency }}</dd></div>{% endif %}
             <div class="contract-detail-row"><dt>Upcoming milestone</dt><dd>{% if next_milestone %}{{ next_milestone.label }} · {{ next_milestone.date|date:"M d, Y" }}{% else %}—{% endif %}</dd></div>
           </dl>
         </div>
@@ -490,7 +478,7 @@
               Top open finding: {{ overview_risk_snapshot.findings.0.title }}.
             </p>
             {% else %}
-            <p class="contract-risk-summary__copy">No unresolved risk findings are recorded for this contract.</p>
+            <p class="contract-risk-summary__copy">{% if overview_risk_snapshot.requires_reassessment %}No open risk findings are recorded; reassessment is required.{% else %}No unresolved risk findings are recorded for this contract.{% endif %}</p>
             {% endif %}
             {% else %}
             <p class="contract-risk-summary__status">

@@ -16,6 +16,10 @@ from contracts.middleware import log_action
 from contracts.models import Contract, Deadline, Matter
 from contracts.permissions import ContractAction, can_access_contract_action
 from contracts.services.assignments import open_obligations_queryset
+from contracts.services.payrollminds_demo import (
+    PRESENTER_READ_ONLY_MESSAGE,
+    is_payrollminds_presenter_workspace,
+)
 from contracts.templatetags.clmone_format import obligation_compliance_status
 from contracts.tenancy import get_user_organization
 from contracts.view_support import (
@@ -345,6 +349,7 @@ class ObligationsWorkspaceView(LoginRequiredMixin, TemplateView):
             search_query or selected_status or selected_owner
             or selected_contract or selected_type or selected_due
         )
+        context['presenter_read_only'] = is_payrollminds_presenter_workspace(org)
         from contracts.services.assignments import QUEUE_EMPTY_PERSONAL
         if selected_view == 'mine' and not filtered:
             title, copy, how = QUEUE_EMPTY_PERSONAL['obligations_mine']
@@ -367,6 +372,11 @@ class DeadlineCreateView(TenantScopedFormMixin, TenantAssignCreateMixin, LoginRe
         'contract': Contract,
         'assigned_to': organization_user_queryset,
     }
+
+    def dispatch(self, request, *args, **kwargs):
+        if is_payrollminds_presenter_workspace(self.get_organization()):
+            return HttpResponseForbidden(PRESENTER_READ_ONLY_MESSAGE)
+        return super().dispatch(request, *args, **kwargs)
 
     def get_initial(self):
         initial = super().get_initial()
@@ -414,6 +424,8 @@ class DeadlineUpdateView(TenantScopedFormMixin, TenantScopedQuerysetMixin, Login
         return Deadline.objects.for_organization(org)
 
     def dispatch(self, request, *args, **kwargs):
+        if is_payrollminds_presenter_workspace(self.get_organization()):
+            return HttpResponseForbidden(PRESENTER_READ_ONLY_MESSAGE)
         deadline = self.get_object()
         self.original_values = {
             field: getattr(deadline, field)
@@ -456,6 +468,10 @@ def deadline_complete(request, pk):
         request._cached_organization = get_user_organization(request.user)
     organization = request._cached_organization
     wants_json = _wants_json(request)
+    if is_payrollminds_presenter_workspace(organization):
+        if wants_json:
+            return JsonResponse({'error': PRESENTER_READ_ONLY_MESSAGE}, status=403)
+        return HttpResponseForbidden(PRESENTER_READ_ONLY_MESSAGE)
 
     deadline_queryset = Deadline.objects.for_organization(organization)
     deadline = get_object_or_404(deadline_queryset, pk=pk)
@@ -507,6 +523,10 @@ def deadline_defer(request, pk):
     """Defer an open obligation by seven days and record the reason in audit."""
     organization = get_user_organization(request.user)
     wants_json = _wants_json(request)
+    if is_payrollminds_presenter_workspace(organization):
+        if wants_json:
+            return JsonResponse({'error': PRESENTER_READ_ONLY_MESSAGE}, status=403)
+        return HttpResponseForbidden(PRESENTER_READ_ONLY_MESSAGE)
     deadline = get_object_or_404(Deadline.objects.for_organization(organization), pk=pk)
     if deadline.contract and not can_access_contract_action(request.user, deadline.contract, ContractAction.EDIT):
         if wants_json:
@@ -586,6 +606,10 @@ def deadline_escalate(request, pk):
     """Escalate an open obligation to critical priority and leave an audit trail."""
     organization = get_user_organization(request.user)
     wants_json = _wants_json(request)
+    if is_payrollminds_presenter_workspace(organization):
+        if wants_json:
+            return JsonResponse({'error': PRESENTER_READ_ONLY_MESSAGE}, status=403)
+        return HttpResponseForbidden(PRESENTER_READ_ONLY_MESSAGE)
     deadline = get_object_or_404(Deadline.objects.for_organization(organization), pk=pk)
     if deadline.contract and not can_access_contract_action(request.user, deadline.contract, ContractAction.EDIT):
         if wants_json:
@@ -629,6 +653,8 @@ def deadline_escalate(request, pk):
 @require_POST
 def deadline_delete(request, pk):
     organization = get_user_organization(request.user)
+    if is_payrollminds_presenter_workspace(organization):
+        return HttpResponseForbidden(PRESENTER_READ_ONLY_MESSAGE)
     deadline = get_object_or_404(Deadline.objects.for_organization(organization), pk=pk)
     if deadline.contract and not can_access_contract_action(request.user, deadline.contract, ContractAction.EDIT):
         return HttpResponseForbidden('You do not have permission to delete this contract deadline.')

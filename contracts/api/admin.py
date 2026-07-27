@@ -98,6 +98,10 @@ from contracts.services.approval_workflow import (
     ApprovalAccessDenied,
     get_approval_workflow_service,
 )
+from contracts.services.payrollminds_demo import (
+    PRESENTER_READ_ONLY_MESSAGE,
+    is_payrollminds_presenter_workspace,
+)
 from contracts.services.clause_analytics import get_clause_analytics_service
 from contracts.services.mandatory_clauses import get_mandatory_enforcement_service
 from contracts.services.playbook import get_playbook_service
@@ -412,6 +416,8 @@ def _stamp_work_surface(request, data=None):
 @login_required
 @require_http_methods(['POST'])
 def approval_approve_api(request, approval_id):
+    if is_payrollminds_presenter_workspace(get_user_organization(request.user)):
+        return JsonResponse({'error': PRESENTER_READ_ONLY_MESSAGE}, status=403)
     data = json.loads(request.body or '{}')
     _stamp_work_surface(request, data)
     svc = get_approval_workflow_service()
@@ -429,6 +435,8 @@ def approval_approve_api(request, approval_id):
 @login_required
 @require_http_methods(['POST'])
 def approval_reject_api(request, approval_id):
+    if is_payrollminds_presenter_workspace(get_user_organization(request.user)):
+        return JsonResponse({'error': PRESENTER_READ_ONLY_MESSAGE}, status=403)
     data = json.loads(request.body or '{}')
     _stamp_work_surface(request, data)
     svc = get_approval_workflow_service()
@@ -446,6 +454,8 @@ def approval_reject_api(request, approval_id):
 @login_required
 @require_http_methods(['POST'])
 def approval_request_changes_api(request, approval_id):
+    if is_payrollminds_presenter_workspace(get_user_organization(request.user)):
+        return JsonResponse({'error': PRESENTER_READ_ONLY_MESSAGE}, status=403)
     data = json.loads(request.body or '{}')
     _stamp_work_surface(request, data)
     svc = get_approval_workflow_service()
