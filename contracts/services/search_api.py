@@ -1,6 +1,7 @@
 """Search & Analytics API service layer."""
 from __future__ import annotations
 
+import logging
 import math
 from dataclasses import dataclass, field
 from typing import Any
@@ -8,6 +9,7 @@ from typing import Any
 from django.db.models import Count, Q
 
 from contracts.models import Contract, ClauseTemplate, SearchTelemetryEvent
+from contracts.services import object_read_policy
 
 _SearchTelemetryEventDoesNotExist = SearchTelemetryEvent.DoesNotExist
 
@@ -15,6 +17,7 @@ _SearchTelemetryEventDoesNotExist = SearchTelemetryEvent.DoesNotExist
 # are small (tens to low hundreds per org); this keeps pagination totals correct
 # without an unbounded ranking pass.
 _CLAUSE_SEARCH_MAX = 500
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -34,9 +37,12 @@ class ContractSearchAPIService:
         filters: dict | None = None,
         page: int = 1,
         page_size: int = 20,
+        *,
+        user=None,
     ) -> PaginatedResult:
         filters = filters or {}
         qs = Contract.objects.filter(organization=org)
+        qs = self._eligible_contracts(qs, org=org, user=user)
 
         if q:
             qs = qs.filter(
@@ -93,8 +99,9 @@ class ContractSearchAPIService:
             total_pages=total_pages,
         )
 
-    def get_contract_facets(self, org) -> dict:
+    def get_contract_facets(self, org, *, user=None) -> dict:
         base_qs = Contract.objects.filter(organization=org)
+        base_qs = self._eligible_contracts(base_qs, org=org, user=user)
 
         statuses = list(
             base_qs.values('status').annotate(count=Count('status')).order_by('-count')
@@ -115,6 +122,30 @@ class ContractSearchAPIService:
             'contract_types': [{'value': r['contract_type'], 'count': r['count']} for r in contract_types],
             'jurisdictions': [{'value': r['jurisdiction'], 'count': r['count']} for r in jurisdictions],
         }
+
+    @staticmethod
+    def _eligible_contracts(qs, *, org, user):
+        state = object_read_policy.contract_search_enforcement_state(org)
+        if state == object_read_policy.SearchEnforcementState.LEGACY:
+            return qs
+        if state == object_read_policy.SearchEnforcementState.ABORT_FAIL_CLOSED:
+            logger.warning(
+                'object_read_policy outcome=rollback_fail_closed '
+                'surface=contract_search'
+            )
+            return qs.none()
+        if state == object_read_policy.SearchEnforcementState.FAIL_CLOSED:
+            logger.error('object_read_policy outcome=policy_error surface=contract_search')
+            return qs.none()
+        try:
+            return object_read_policy.filter_contract_queryset(
+                qs,
+                organization=org,
+                user=user,
+            )
+        except Exception:
+            logger.error('object_read_policy outcome=policy_error surface=contract_search')
+            return qs.none()
 
     def record_search_event(self, org, query: str, result_count: int, user) -> None:
         SearchTelemetryEvent.objects.create(
