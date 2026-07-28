@@ -75,6 +75,7 @@ Platform modules, workflow engine, data/AI, and security.
 | Document | Purpose | Status |
 |---|---|---|
 | [DELIVERY_ROADMAP_AND_RELEASE_GATES.md](roadmap/DELIVERY_ROADMAP_AND_RELEASE_GATES.md) | Build sequence and release gates | Accepted |
+| [REPOSITORY_ESSENTIALS_PHASE_1.md](roadmap/REPOSITORY_ESSENTIALS_PHASE_1.md) | Phase 1 repository baseline, delivery order, and first-slice boundary | Proposed — planning only |
 
 ## What agents should read
 
