@@ -45,6 +45,8 @@ Proposed documents (including Charter v3) do not supersede approved governance u
 
 Current code does not override approved governance documentation unless the
 repository owner explicitly directs a scope-specific exception.
+Owner-directed repository authorization is governed by accepted
+`docs/governance/decisions/pdr/PDR-0010-owner-directed-release-authorization.md`.
 
 If implementation conflicts with the approved Charter or an approved decision record:
 
