@@ -28,7 +28,6 @@ from contracts.models import (
     ContractType,
     Counterparty,
     Organization,
-    OrganizationMembership,
 )
 from contracts.permissions import can_manage_organization
 from contracts.services.audit import append_audit
@@ -51,7 +50,6 @@ TEMPLATE_COLUMNS = (
     'title',
     'contract_type',
     'counterparty',
-    'owner_email',
     'status',
     'lifecycle_stage',
     'start_date',
@@ -115,8 +113,6 @@ class PreparedRow:
     contract_type_id: int
     counterparty: str
     counterparty_id: int
-    owner_email: str
-    owner_id: int | None
     status: str
     lifecycle_stage: str
     start_date: date | None
@@ -141,7 +137,6 @@ class PreparedRow:
             'title': self.title,
             'contract_type': self.contract_type,
             'counterparty': self.counterparty,
-            'owner_email': self.owner_email,
             'status': self.status,
             'lifecycle_stage': self.lifecycle_stage,
             'start_date': self.start_date,
@@ -192,7 +187,6 @@ def csv_template_text() -> str:
             'Synthetic payroll services agreement',
             'MSA',
             'Synthetic Payroll Services B.V.',
-            '',
             'ACTIVE',
             'OBLIGATION_TRACKING',
             '2026-01-01',
@@ -410,47 +404,22 @@ class RepositoryCsvImportService:
                 is_active=True,
             )
         }
-        owner_memberships = {
-            membership.user_id: membership
-            for membership in OrganizationMembership.objects.select_related('user').filter(
-                organization=organization,
-                user_id__in={row.owner_id for row in rows if row.owner_id is not None},
-                is_active=True,
-                user__is_active=True,
-            )
-        }
         for row in rows:
             counterparty = counterparties.get(row.counterparty_id)
             contract_type = contract_types.get(row.contract_type_id)
-            owner_membership = (
-                owner_memberships.get(row.owner_id)
-                if row.owner_id is not None
-                else None
-            )
             if (
                 counterparty is None
                 or _normalize_text(counterparty.name) != _normalize_text(row.counterparty)
                 or contract_type is None
                 or contract_type.code != row.contract_type
-                or (
-                    row.owner_id is not None
-                    and (
-                        owner_membership is None
-                        or _normalize_text(owner_membership.user.email)
-                        != _normalize_text(row.owner_email)
-                    )
-                )
             ):
-                raise ImportConflictError(
-                    'A mapped owner, contract type, or counterparty changed; run a new dry-run.'
-                )
-            owner = owner_membership.user if owner_membership is not None else actor
+                raise ImportConflictError('A mapped contract type or counterparty changed; run a new dry-run.')
 
             contract = Contract(
                 organization=organization,
                 title=row.title,
                 counterparty=counterparty.name,
-                owner=owner,
+                owner=actor,
                 created_by=actor,
                 start_date=row.start_date,
                 end_date=row.end_date,
@@ -485,7 +454,6 @@ class RepositoryCsvImportService:
                     'contract_id': contract.pk,
                     'contract_type_id': contract_type.pk,
                     'counterparty_id': counterparty.pk,
-                    'owner_id': owner.pk,
                     'mapped_fields': list(TEMPLATE_COLUMNS),
                     'visibility': 'private_workspace',
                 },
@@ -699,15 +667,6 @@ class RepositoryCsvImportService:
             contract_type.code: contract_type
             for contract_type in ContractType.objects.filter(is_active=True)
         }
-        owner_map: dict[str, list[OrganizationMembership]] = {}
-        for membership in OrganizationMembership.objects.select_related('user').filter(
-            organization=organization,
-            is_active=True,
-            user__is_active=True,
-        ).order_by('pk'):
-            normalized_email = _normalize_text(membership.user.email)
-            if normalized_email:
-                owner_map.setdefault(normalized_email, []).append(membership)
         existing_keys = {
             (
                 _normalize_text(title),
@@ -782,19 +741,6 @@ class RepositoryCsvImportService:
                         'counterparty',
                         'too_long',
                         'The mapped counterparty name is too long for a contract record.',
-                    )
-                )
-
-            raw_owner_email = _clean_text(raw.get('owner_email'))
-            mapped_owners = owner_map.get(_normalize_text(raw_owner_email), [])
-            owner_membership = mapped_owners[0] if len(mapped_owners) == 1 else None
-            if raw_owner_email and len(mapped_owners) != 1:
-                issues.append(
-                    _issue(
-                        index,
-                        'owner_email',
-                        'invalid_mapping',
-                        'owner_email must match exactly one active member in this workspace.',
                     )
                 )
 
@@ -891,12 +837,7 @@ class RepositoryCsvImportService:
                     )
                 )
 
-            if (
-                title
-                and contract_type
-                and counterparty
-                and (not raw_owner_email or owner_membership is not None)
-            ):
+            if title and contract_type and counterparty:
                 row = PreparedRow(
                     row=index,
                     title=title,
@@ -904,16 +845,6 @@ class RepositoryCsvImportService:
                     contract_type_id=contract_type.pk,
                     counterparty=counterparty.name,
                     counterparty_id=counterparty.pk,
-                    owner_email=(
-                        owner_membership.user.email
-                        if owner_membership is not None
-                        else ''
-                    ),
-                    owner_id=(
-                        owner_membership.user_id
-                        if owner_membership is not None
-                        else None
-                    ),
                     status=resolved_status,
                     lifecycle_stage=resolved_stage,
                     start_date=start_date,

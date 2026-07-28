@@ -50,7 +50,6 @@ def valid_row(
     title='Synthetic Services Agreement',
     contract_type='MSA',
     counterparty='Synthetic Payroll Services B.V.',
-    owner_email='',
     status='ACTIVE',
     lifecycle_stage='OBLIGATION_TRACKING',
     start_date='2026-01-01',
@@ -64,7 +63,6 @@ def valid_row(
             title,
             contract_type,
             counterparty,
-            owner_email,
             status,
             lifecycle_stage,
             start_date,
@@ -84,7 +82,6 @@ class RepositoryCsvImportFixtureMixin:
         )
         self.owner = User.objects.create_user(
             username='synthetic-import-owner',
-            email='synthetic-import-owner@example.test',
             password='safe-test-password',
         )
         OrganizationMembership.objects.create(
@@ -282,61 +279,6 @@ class RepositoryCsvImportServiceTests(RepositoryCsvImportFixtureMixin, TestCase)
         self.assertEqual(contract.provenance_correlation_id, result.correlation_id)
         self.assertIsNotNone(contract.provenance_locked_at)
         self.assertEqual(Document.objects.filter(contract=contract).count(), 0)
-
-    def test_owner_email_maps_only_one_active_member_in_the_same_workspace(self):
-        assignee = User.objects.create_user(
-            username='synthetic-assignee',
-            email='synthetic-assignee@example.test',
-        )
-        OrganizationMembership.objects.create(
-            organization=self.organization,
-            user=assignee,
-            role=OrganizationMembership.Role.MEMBER,
-            is_active=True,
-        )
-        payload = csv_bytes(valid_row(owner_email='SYNTHETIC-ASSIGNEE@example.test'))
-        preview = self.service.preview(
-            organization=self.organization,
-            actor=self.owner,
-            csv_bytes=payload,
-        )
-
-        self.assertTrue(preview.is_valid, [issue.as_dict() for issue in preview.issues])
-        result = self.service.commit(
-            organization=self.organization,
-            actor=self.owner,
-            csv_bytes=payload,
-            preview_token=preview.preview_token,
-        )
-        self.assertEqual(Contract.objects.get(pk=result.contract_ids[0]).owner, assignee)
-
-        other = Organization.objects.create(name='Foreign Owner Workspace', slug='foreign-owner-workspace')
-        foreign_owner = User.objects.create_user(
-            username='foreign-owner',
-            email='foreign-owner@example.test',
-        )
-        OrganizationMembership.objects.create(
-            organization=other,
-            user=foreign_owner,
-            role=OrganizationMembership.Role.OWNER,
-            is_active=True,
-        )
-        rejected = self.service.preview(
-            organization=self.organization,
-            actor=self.owner,
-            csv_bytes=csv_bytes(
-                valid_row(
-                    title='Foreign owner attempt',
-                    owner_email=foreign_owner.email,
-                )
-            ),
-        )
-        self.assertEqual(
-            [(issue.field, issue.code) for issue in rejected.issues],
-            [('owner_email', 'invalid_mapping')],
-        )
-        self.assertNotIn('Foreign Owner Workspace', rejected.issues[0].message)
-        self.assertNotIn(foreign_owner.username, rejected.issues[0].message)
 
     def test_repeat_submission_is_detected_and_never_overwrites(self):
         payload = csv_bytes(valid_row())
