@@ -8,6 +8,7 @@ from config.feature_flags import (
     is_clmone_mode_enabled,
     is_cms_aegis_mode_enabled,
     is_mochadocs_mode_enabled,
+    is_repository_csv_import_enabled,
     is_test_mode_enabled
 )
 from .back_navigation import resolve_shell_back
@@ -116,6 +117,7 @@ def feature_flags(request):
         'BILLING_SELF_SERVE_ENABLED': getattr(settings, 'BILLING_SELF_SERVE_ENABLED', True),
         'TRUST_ACCOUNTING_ENABLED': getattr(settings, 'TRUST_ACCOUNTING_ENABLED', True),
         'CONTROLLED_PILOT_ENABLED': getattr(settings, 'CONTROLLED_PILOT_ENABLED', False),
+        'REPOSITORY_CSV_IMPORT_ENABLED': is_repository_csv_import_enabled(),
         'BUILD_SHA': getattr(settings, 'BUILD_SHA', 'unknown'),
         'BUILD_LABEL': getattr(settings, 'BUILD_LABEL', 'commit unknown'),
         'csp_nonce': getattr(request, 'csp_nonce', ''),

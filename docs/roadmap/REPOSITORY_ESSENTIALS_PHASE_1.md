@@ -1,10 +1,13 @@
 # Repository Essentials — Phase 1
 
-**Status:** Proposed — planning and baseline only; no capability is authorized
-for activation by this document.
+**Status:** First-slice implementation **Completed** — CSV-assisted import is
+implemented behind a committed-default-off flag. The repository owner
+authorized bounded synthetic, non-production use on 28 July 2026. Production
+and real-data use remain out of scope.
 
-**Baseline:** `main` at `dde31d0850f9a7f29cfefdc76b33ef28e28225cc`, the
-merged PR #128 commit (27 July 2026). Platform Alignment and Pilot Hardening
+**Implementation baseline:** `main` at
+`0d62db10392fe066b43d6f349ac7c66c5ea87f1d`, after the planning baseline and
+UI test recovery merged (28 July 2026). Platform Alignment and Pilot Hardening
 remain closed. The PayrollMinds demonstration remains a synthetic,
 design-partner demonstration only: no real PayrollMinds, client, employee, or
 payroll data; no production-readiness claim.
@@ -38,7 +41,7 @@ Phase 1 must not:
 
 | Capability | State | Baseline evidence and reusable components | Gap / gate |
 |---|---|---|---|
-| Bulk contract import and migration | **Partial** | `InboundImportService` parses CSV/JSON, dry-runs, validates lifecycle pairs, uses `persist_contract_with_imported_lifecycle`, and stamps immutable `Contract` provenance. Existing integration endpoints are at `/api/integrations/import/csv/` and `/json/`. | No user-facing template or workspace flow, permission gate, duplicate policy, batch/run object, row diagnostics, counterparty normalization, key-date mapping, compensating rollback, or import fixtures. Current endpoint is login-only, so it is not pilot-ready. |
+| Bulk contract import and migration | **Ready (owner-authorized, default-off implementation)** | `RepositoryCsvImportService` adds a private-workspace template, zero-mutation dry-run, deterministic row diagnostics, create-only duplicate detection, canonical type/counterparty/lifecycle/key-date mapping, signed commit/rollback tokens, immutable provenance/correlation evidence, append-only audit, and compensating archival. Synthetic fixture/reset and tenant-isolation coverage are included. | Bounded synthetic, non-production use is owner-authorized. The flag remains committed off by default; no client data, document upload, external access, automatic processing, or production-readiness claim is authorized. |
 | Repository metadata, filtering, and dependable search | **Unsafe** | Repository list, `ContractSearchAPIService`, search presets, contract type catalogue, contract key dates, and tenant scoping exist. | Search/list/facet paths are tenant-scoped but not consistently protected by the proposed object-level evaluator. PDR-0008 bars a visibility-changing implementation until separately authorized. Document text search is absent. |
 | Renewal, notice, and deadline reminders | **Partial** | `Contract` has renewal/end/notice dates; `Deadline`, obligations workspace, renewal playbook, scheduled jobs, and notification service exist. | Playbook creates unassigned deadline rows; it does not calculate a canonical notice date from contract terms, prove delivery/escalation, or provide reminder policy/version/evidence. Automated delivery requires separate authorization. |
 | One e-signature integration | **Partial** | `SignatureRequest`, document-version binding, provider abstraction, simulated null provider, DocuSign/Documenso adapters, webhook reconciliation, and audit helpers exist. | Live provider credentials, OAuth/token rotation, callback/webhook production assurance, signature authority, and provider operational controls are not authorized. PayrollMinds scope explicitly excludes live e-sign. |
@@ -259,7 +262,7 @@ AI-assisted extraction.
 
 | Order | Capability / slice | Owner | Current state | Dependencies | Acceptance evidence | Risk | Status |
 |---:|---|---|---|---|---|---|---|
-| 1 | CSV-assisted private-workspace import and import-led onboarding | Product + Engineering + Security | Planning | Existing lifecycle/provenance; scoped import authorization | Synthetic fixture, dry-run, duplicate, isolation, audit, compensation tests | Medium | **First implementation candidate** |
+| 1 | CSV-assisted private-workspace import | Product + Engineering + Security | **Completed** | Existing lifecycle/provenance and repository-owner authorization | Synthetic fixture, dry-run, duplicate, isolation, audit, compensation, exact-SHA CI and rollback evidence | Medium | **Owner-authorized for bounded synthetic non-production use; default off** |
 | 2 | Repository metadata, filters, and policy-safe search | Product + Engineering + Security | Blocked | Accepted/authorized PDR-0008 enforcement | Object-policy/no-leak/facet tests and rollback drill | High | Deferred |
 | 3 | Renewal/notice/deadline reminders | Product + Engineering | Partial | Import dates, ownership, notification policy | Time-boundary, idempotency, delivery/audit tests | Medium | Deferred |
 | 4 | Entity and contract-family profiles | Product + Engineering + Security | Blocked | Canonical ownership/migration decision | Relationship, isolation, reversal tests | High | Deferred |
@@ -268,11 +271,10 @@ AI-assisted extraction.
 | 7 | Microsoft SSO | Product + Engineering + Security | Blocked | Identity authorization and Entra tenant policy | Federation/MFA/provisioning tests | High | Deferred |
 | 8 | OCR enrichment and advanced search | Product + Engineering + Security | Blocked | Search enforcement, OCR/classification/retention design | OCR/index/verification/no-leak tests | High | Deferred |
 
-## First authorized implementation PR: proposed scope
+## First implementation PR scope
 
-The first implementation PR may begin only after this planning PR merges and
-normal low-risk review/green CI is recorded. It is a create-only,
-default-off CSV-assisted import into one private workspace. It includes the
+The first implementation is a create-only, default-off CSV-assisted import
+into one private workspace. It includes the
 template, validation preview, duplicate policy, explicit confirmation, mapped
 contract/counterparty/key-date data, correlation/provenance/audit evidence,
 compensating rollback, synthetic fixtures, and focused tests. It excludes
@@ -289,6 +291,48 @@ and focused tests. It reuses `Contract`, `ContractType`, `Counterparty`,
 `TenantScoped*` mixins, `get_user_organization`, and
 `can_access_contract_action`/organization-management checks; it does not add
 another contract, entity, or property model.
+
+## First-slice implementation and operations
+
+The first slice implements a workspace-owner/administrator HTML workflow at a
+feature-gated repository route. `REPOSITORY_CSV_IMPORT_ENABLED` is committed
+`false`. When enabled in an authorized non-production environment, the
+workflow provides:
+
+- a UTF-8 CSV template with contract title, canonical contract type, exact
+  same-workspace active counterparty, canonical lifecycle position, and key
+  dates;
+- a read-only dry-run with deterministic row/field/code errors and a signed,
+  time-limited token bound to the exact CSV bytes, workspace, actor, and opaque
+  correlation ID;
+- an explicit commit that revalidates under a workspace lock, creates canonical
+  `Contract` rows only, and refuses in-file or same-workspace duplicates;
+- immutable `IMPORT_CSV` provenance and canonical append-only audit events for
+  batch start/completion and each created row; and
+- a signed compensating rollback that remains callable after the exposure flag
+  is turned off, archives every unchanged contract from the batch, and refuses
+  the whole rollback if any imported record changed.
+
+The slice creates no document, external share, signature request, identity
+connection, reminder, AI/OCR output, credential, new permission, or production
+activation. Imported records are workspace-scoped and have no document or
+external-access object. Counterparties are never auto-created or resolved
+outside the active workspace.
+
+Abort before commit by leaving the preview page or switching the feature flag
+off. After commit, preserve the returned rollback token and correlation ID,
+switch the feature flag off, and apply compensating rollback while the imported
+records remain unchanged. Rollback preserves the records, provenance, and audit
+chain by moving them to the canonical `ARCHIVED` /
+`OBLIGATION_TRACKING` position; it never deletes them.
+
+## Release evidence
+
+GitHub currently permits a pull request to merge while checks are still
+running because required-check enforcement is not configured. This
+implementation does not attempt a repository-setting change. Merge only after
+all required checks are green for the unchanged head SHA. The repository
+owner's explicit authorization is the governing product and release decision.
 
 ## Implementation PR prompt
 

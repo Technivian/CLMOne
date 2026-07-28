@@ -20,6 +20,18 @@ EVENT_CATALOGUE_UPDATED = 'contract_type.catalogue.updated'
 
 # Explicit unmappable bucket — never silently merge distinct legacy strings.
 UNMAPPED_LEGACY_CODE = 'OTHER'
+IMPORT_TYPE_ALIASES = {
+    'SERVICE': 'SOW',
+    'SERVICES': 'SOW',
+    'MASTER_SERVICE_AGREEMENT': 'MSA',
+    'MASTER SERVICES AGREEMENT': 'MSA',
+    'NON_DISCLOSURE': 'NDA',
+    'NON-DISCLOSURE': 'NDA',
+    'DATA_PROCESSING': 'DPA',
+    'SUPPLIER': 'VENDOR',
+    'SUPPLIER_AGREEMENT': 'VENDOR',
+    'ADDENDUM': 'AMENDMENT',
+}
 
 
 class ContractTypeCatalogueError(ValidationError):
@@ -38,6 +50,15 @@ def valid_codes() -> frozenset[str]:
 
 def normalize_code(raw: str | None) -> str:
     return (raw or '').strip().upper()
+
+
+def normalize_import_code(raw: str | None, *, unknown_to_other: bool = True) -> str | None:
+    """Pure import-code normalization shared by preview and persistence paths."""
+    normalized = normalize_code(raw)
+    normalized = IMPORT_TYPE_ALIASES.get(normalized, normalized)
+    if normalized in valid_codes():
+        return normalized
+    return UNMAPPED_LEGACY_CODE if unknown_to_other else None
 
 
 def catalogue_label_for_code(code: str) -> str:
@@ -115,23 +136,7 @@ def resolve_import_code(raw: str | None) -> tuple[str, object]:
   Legacy aliases map explicitly; unknown values become ``OTHER`` without
   inventing new codes.
     """
-    normalized = normalize_code(raw)
-    legacy_aliases = {
-        'SERVICE': 'SOW',
-        'SERVICES': 'SOW',
-        'MASTER_SERVICE_AGREEMENT': 'MSA',
-        'MASTER SERVICES AGREEMENT': 'MSA',
-        'NON_DISCLOSURE': 'NDA',
-        'NON-DISCLOSURE': 'NDA',
-        'DATA_PROCESSING': 'DPA',
-        'SUPPLIER': 'VENDOR',
-        'SUPPLIER_AGREEMENT': 'VENDOR',
-        'ADDENDUM': 'AMENDMENT',
-    }
-    if normalized in legacy_aliases:
-        normalized = legacy_aliases[normalized]
-    if normalized not in valid_codes():
-        normalized = UNMAPPED_LEGACY_CODE
+    normalized = normalize_import_code(raw, unknown_to_other=True)
     row = ensure_catalogue_row(normalized)
     return normalized, row
 
@@ -189,11 +194,7 @@ def form_choices(*, include_blank: bool = True) -> list[tuple[str, str]]:
 def validate_import_contract_type(raw: str | None) -> list[str]:
     if not (raw or '').strip():
         return []
-    normalized = normalize_code(raw)
-    legacy_ok = normalized in {
-        'SERVICE', 'SERVICES', 'MASTER_SERVICE_AGREEMENT', 'SUPPLIER', 'SUPPLIER_AGREEMENT', 'ADDENDUM',
-    }
-    if normalized in valid_codes() or legacy_ok:
+    if normalize_import_code(raw, unknown_to_other=False):
         return []
     return [f'invalid contract_type "{raw}"']
 

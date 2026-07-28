@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Import contracts · CLM One{% endblock %}
+{% block authenticated_page_title %}Import contracts{% endblock %}
+{% block authenticated_page_subtitle %}Validate a create-only CSV before adding private records to this workspace.{% endblock %}
+
+{% block authenticated_topbar_back %}
+<a href="{% url 'contracts:repository' %}" class="topbar-back-link" data-workspace-back aria-label="Back to contracts" title="Back to contracts">
+  <span aria-hidden="true">←</span>
+  <span>Contracts</span>
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="dc-ds-record-page">
+  {% if REPOSITORY_CSV_IMPORT_ENABLED %}
+  <section class="dc-ds-surface p-5" aria-labelledby="csv-import-heading">
+    <div class="flex items-start justify-between gap-4 flex-wrap">
+      <div>
+        <h2 id="csv-import-heading" class="text-lg font-semibold">CSV-assisted import</h2>
+        <p class="c-muted mt-1">
+          Dry-run reads the file without writing data. Commit creates new contract records only;
+          it never uploads documents or overwrites existing records.
+        </p>
+      </div>
+      <a class="dc-ds-button dc-ds-button--secondary" href="{% url 'contracts:repository_csv_import_template' %}">
+        Download CSV template
+      </a>
+    </div>
+
+    {% if form_error %}
+      <div class="dc-ds-alert dc-ds-alert--danger mt-4" role="alert">{{ form_error }}</div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data" class="dc-ds-record-form mt-5" aria-label="Dry-run CSV import">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="dry_run">
+      <div class="dc-ds-field">
+        <label class="dc-ds-label" for="csv-file-preview">CSV file</label>
+        <input
+          class="dc-ds-control"
+          id="csv-file-preview"
+          name="csv_file"
+          type="file"
+          accept=".csv,text/csv"
+          required
+          aria-describedby="csv-file-help"
+        >
+        <p class="dc-ds-help" id="csv-file-help">UTF-8 CSV, at most 1 MiB and 500 rows. Use synthetic data only.</p>
+      </div>
+      <div class="dc-ds-form-actions">
+        <button class="dc-ds-button dc-ds-button--primary" type="submit">Run dry-run</button>
+      </div>
+    </form>
+  </section>
+  {% endif %}
+
+  {% if preview %}
+    <section class="dc-ds-surface p-5 mt-5" aria-labelledby="validation-results-heading" aria-live="polite">
+      <h2 id="validation-results-heading" class="text-lg font-semibold">Validation results</h2>
+      <p class="c-muted mt-1">
+        {{ preview.rows|length }} row{{ preview.rows|length|pluralize }} read;
+        {{ preview.issues|length }} blocking issue{{ preview.issues|length|pluralize }}.
+      </p>
+
+      {% if preview.issues %}
+        <div class="dc-ds-table-wrap mt-4">
+          <table class="dc-ds-table" aria-label="CSV row validation errors">
+            <caption class="sr-only">Deterministic row-level validation errors</caption>
+            <thead>
+              <tr><th scope="col">Row</th><th scope="col">Field</th><th scope="col">Code</th><th scope="col">Error</th></tr>
+            </thead>
+            <tbody>
+              {% for issue in preview.issues %}
+                <tr>
+                  <td>{{ issue.row }}</td>
+                  <td>{{ issue.field }}</td>
+                  <td>{{ issue.code }}</td>
+                  <td>{{ issue.message }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="dc-ds-alert dc-ds-alert--success mt-4" role="status">
+          Dry-run passed. No records or audit events were created.
+        </div>
+        <form method="post" enctype="multipart/form-data" class="dc-ds-record-form mt-5" aria-label="Commit validated CSV import">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="commit">
+          <input type="hidden" name="preview_token" value="{{ preview.preview_token }}">
+          <div class="dc-ds-field">
+            <label class="dc-ds-label" for="csv-file-commit">Re-select the validated CSV</label>
+            <input
+              class="dc-ds-control"
+              id="csv-file-commit"
+              name="csv_file"
+              type="file"
+              accept=".csv,text/csv"
+              required
+              aria-describedby="csv-file-commit-help"
+            >
+            <p class="dc-ds-help" id="csv-file-commit-help">
+              Commit is accepted only when the bytes exactly match this dry-run.
+            </p>
+          </div>
+          <div class="dc-ds-form-actions">
+            <button class="dc-ds-button dc-ds-button--primary" type="submit">Commit {{ preview.rows|length }} contract{{ preview.rows|length|pluralize }}</button>
+          </div>
+        </form>
+      {% endif %}
+    </section>
+  {% endif %}
+
+  {% if commit_result %}
+    <section class="dc-ds-surface p-5 mt-5" aria-labelledby="commit-result-heading">
+      <h2 id="commit-result-heading" class="text-lg font-semibold">Import committed</h2>
+      <div class="dc-ds-alert dc-ds-alert--success mt-3" role="status">
+        {{ commit_result.contract_ids|length }} private workspace contract{{ commit_result.contract_ids|length|pluralize }} created.
+        Correlation ID: <span class="font-mono">{{ commit_result.correlation_id }}</span>
+      </div>
+      <form method="post" action="{% url 'contracts:repository_csv_import_rollback' %}" class="dc-ds-record-form mt-5" aria-label="Compensating rollback">
+        {% csrf_token %}
+        <input type="hidden" name="rollback_token" value="{{ commit_result.rollback_token }}">
+        <p class="c-muted">
+          Rollback archives every unchanged contract from this import. It never deletes records and refuses partial rollback after an independent change.
+        </p>
+        <div class="dc-ds-form-actions">
+          <button class="dc-ds-button dc-ds-button--danger" type="submit">Archive imported contracts</button>
+          <a class="dc-ds-button dc-ds-button--secondary" href="{% url 'contracts:repository' %}">Open repository</a>
+        </div>
+      </form>
+    </section>
+  {% endif %}
+
+  {% if rollback_result %}
+    <section class="dc-ds-surface p-5 mt-5" aria-labelledby="rollback-result-heading">
+      <h2 id="rollback-result-heading" class="text-lg font-semibold">Compensating rollback completed</h2>
+      <div class="dc-ds-alert dc-ds-alert--success mt-3" role="status">
+        {{ rollback_result.archived_contract_ids|length }} imported contract{{ rollback_result.archived_contract_ids|length|pluralize }} archived.
+        Correlation ID: <span class="font-mono">{{ rollback_result.correlation_id }}</span>
+      </div>
+    </section>
+  {% endif %}
+</div>
+{% endblock %}
