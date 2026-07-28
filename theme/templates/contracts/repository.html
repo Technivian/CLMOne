@@ -269,6 +269,9 @@
       {% include "components/_workspace_tabs.html" with tabs=hub_tabs aria_label="Contract operations" nav_class="repo-view-tabs" %}
       <div class="repo-view-actions">
         <a href="{% url 'contracts:risk_log_list' %}" class="dc-ds-button dc-ds-button--ghost">{{ risk_review_label }}</a>
+        {% if REPOSITORY_CSV_IMPORT_ENABLED and CAN_MANAGE_ORGANIZATION %}
+          <a href="{% url 'contracts:repository_csv_import' %}" class="dc-ds-button dc-ds-button--ghost">Import CSV</a>
+        {% endif %}
         <a href="{% url 'contracts:contract_template_picker' %}" class="dc-ds-button dc-ds-button--primary">Start new contract</a>
       </div>
     </div>

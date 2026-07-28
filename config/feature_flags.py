@@ -36,6 +36,12 @@ def is_test_mode():
     """Alias for is_test_mode_enabled"""
     return is_test_mode_enabled()
 
+
+def is_repository_csv_import_enabled():
+    """Default-off gate for private-workspace, create-only CSV import."""
+    return get_feature_flag('REPOSITORY_CSV_IMPORT_ENABLED', False)
+
+
 # Cache for feature flags to avoid repeated lookups
 cache = {}
 

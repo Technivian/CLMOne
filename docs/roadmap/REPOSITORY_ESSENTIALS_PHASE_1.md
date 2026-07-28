@@ -1,11 +1,13 @@
 # Repository Essentials — Phase 1
 
-**Status:** Proposed — planning and baseline only; no capability is authorized
-for activation by this document.
+**Status:** Implementation in progress — the first CSV-import slice is
+implemented behind a committed-default-off flag. This document does not
+authorize activation.
 
-**Baseline:** `main` at `dde31d0850f9a7f29cfefdc76b33ef28e28225cc`, the
-merged PR #128 commit (27 July 2026). Platform Alignment and Pilot Hardening
-remain closed. The PayrollMinds demonstration remains a synthetic,
+**Implementation baseline:** `main` at
+`456ec197647bce85e718d80f5a7eef6b6af9fc85`, after the planning baseline and
+design-system CI recovery merged (28 July 2026). Platform Alignment and Pilot
+Hardening remain closed. The PayrollMinds demonstration remains a synthetic,
 design-partner demonstration only: no real PayrollMinds, client, employee, or
 payroll data; no production-readiness claim.
 
@@ -259,7 +261,7 @@ AI-assisted extraction.
 
 | Order | Capability / slice | Owner | Current state | Dependencies | Acceptance evidence | Risk | Status |
 |---:|---|---|---|---|---|---|---|
-| 1 | CSV-assisted private-workspace import and import-led onboarding | Product + Engineering + Security | Planning | Existing lifecycle/provenance; scoped import authorization | Synthetic fixture, dry-run, duplicate, isolation, audit, compensation tests | Medium | **First implementation candidate** |
+| 1 | CSV-assisted private-workspace import | Product + Engineering + Security | Implementation | Existing lifecycle/provenance; scoped import authorization | Synthetic fixture, dry-run, duplicate, isolation, audit, compensation tests | Medium | **Default-off implementation PR; activation not authorized** |
 | 2 | Repository metadata, filters, and policy-safe search | Product + Engineering + Security | Blocked | Accepted/authorized PDR-0008 enforcement | Object-policy/no-leak/facet tests and rollback drill | High | Deferred |
 | 3 | Renewal/notice/deadline reminders | Product + Engineering | Partial | Import dates, ownership, notification policy | Time-boundary, idempotency, delivery/audit tests | Medium | Deferred |
 | 4 | Entity and contract-family profiles | Product + Engineering + Security | Blocked | Canonical ownership/migration decision | Relationship, isolation, reversal tests | High | Deferred |
@@ -289,6 +291,52 @@ and focused tests. It reuses `Contract`, `ContractType`, `Counterparty`,
 `TenantScoped*` mixins, `get_user_organization`, and
 `can_access_contract_action`/organization-management checks; it does not add
 another contract, entity, or property model.
+
+## First-slice implementation and operations
+
+The first slice implements a workspace-owner/administrator HTML workflow at a
+feature-gated repository route. `REPOSITORY_CSV_IMPORT_ENABLED` is committed
+`false`. When enabled in an authorized non-production environment, the
+workflow provides:
+
+- a UTF-8 CSV template with contract title, canonical contract type, exact
+  same-workspace active counterparty, canonical lifecycle position, and key
+  dates;
+- a read-only dry-run with deterministic row/field/code errors and a signed,
+  time-limited token bound to the exact CSV bytes, workspace, actor, and opaque
+  correlation ID;
+- an explicit commit that revalidates under a workspace lock, creates canonical
+  `Contract` rows only, and refuses in-file or same-workspace duplicates;
+- immutable `IMPORT_CSV` provenance and canonical append-only audit events for
+  batch start/completion and each created row; and
+- a signed compensating rollback that remains callable after the exposure flag
+  is turned off, archives every unchanged contract from the batch, and refuses
+  the whole rollback if any imported record changed.
+
+The slice creates no document, external share, signature request, identity
+connection, reminder, AI/OCR output, credential, new permission, or production
+activation. Imported records are workspace-scoped and have no document or
+external-access object. Counterparties are never auto-created or resolved
+outside the active workspace.
+
+Abort before commit by leaving the preview page or switching the feature flag
+off. After commit, preserve the returned rollback token and correlation ID,
+switch the feature flag off, and apply compensating rollback while the imported
+records remain unchanged. Rollback preserves the records, provenance, and audit
+chain by moving them to the canonical `ARCHIVED` /
+`OBLIGATION_TRACKING` position; it never deletes them.
+
+## Release-governance gap
+
+GitHub currently permits a pull request to merge while checks are still
+running because required-check enforcement is not configured. This
+implementation does not attempt a repository-setting change. Until that
+control is separately supported and authorized, release evidence must include
+a manual verification that every required check is green for the unchanged
+head SHA, followed by the repository owner's exact-SHA attestation in GitHub.
+The PR must not merge based on mergeability status alone. Any source or
+metadata scope change after attestation invalidates the attestation and
+requires another full CI run and exact-SHA attestation.
 
 ## Implementation PR prompt
 

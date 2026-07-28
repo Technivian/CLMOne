@@ -15,6 +15,11 @@ from .views_domains.design_preview import (
     design_preview_relationship_detail,
     design_preview_review_studio,
 )
+from .views_domains.repository_import import (
+    repository_csv_import,
+    repository_csv_import_rollback,
+    repository_csv_import_template,
+)
 
 app_name = 'contracts'
 
@@ -452,6 +457,17 @@ urlpatterns = [
     path('search/', views.global_search, name='global_search'),
 
     # Contracts
+    path('repository/import/', repository_csv_import, name='repository_csv_import'),
+    path(
+        'repository/import/template.csv',
+        repository_csv_import_template,
+        name='repository_csv_import_template',
+    ),
+    path(
+        'repository/import/rollback/',
+        repository_csv_import_rollback,
+        name='repository_csv_import_rollback',
+    ),
     # External collaboration is isolated from organization membership. Keep
     # these routes explicit and before the contract shell for auditability.
     path('collaborate/<uuid:token>/', views.counterparty_collaboration_portal, name='counterparty_collaboration_portal'),
