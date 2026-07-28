@@ -420,7 +420,13 @@ def api_contract_search(request):
         page = max(1, int(request.GET.get('page', 1)))
     except (ValueError, TypeError):
         page = 1
-    result = svc.search_contracts(org, q=q, filters=filters, page=page)
+    result = svc.search_contracts(
+        org,
+        user=request.user,
+        q=q,
+        filters=filters,
+        page=page,
+    )
     svc.record_search_event(org, q, result.total, request.user)
     return JsonResponse({
         'results': result.results,
@@ -467,7 +473,7 @@ def api_search_facets(request):
     org = get_user_organization(request.user)
     observe_request('search.facets_api', request.user, org)
     svc = get_contract_search_service()
-    facets = svc.get_contract_facets(org)
+    facets = svc.get_contract_facets(org, user=request.user)
     return JsonResponse(facets)
 
 
@@ -567,4 +573,3 @@ def work_operating_metrics_api(request):
         from contracts.services.work_instrumentation import build_adoption_evidence
         payload['adoption'] = build_adoption_evidence(org, days=days)
     return JsonResponse(payload)
-

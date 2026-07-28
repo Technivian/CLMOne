@@ -547,6 +547,28 @@ REPOSITORY_CSV_IMPORT_ENABLED = _bool_env('REPOSITORY_CSV_IMPORT_ENABLED', defau
 # This controls content-free, process-local counters only; it never evaluates
 # access, changes a result, filters a queryset, or grants authority.
 PAR_SEC_002_OBSERVATION_ENABLED = _bool_env('PAR_SEC_002_OBSERVATION_ENABLED', default=False)
+# PAR-SEC-002 smallest enforcement slice: contract-search results and facets.
+# Activation requires both a named non-production environment and an explicit
+# workspace slug allowlist. Empty allowlists keep the evaluator inactive.
+PAR_SEC_002_SEARCH_ENFORCEMENT_ENABLED = _bool_env(
+    'PAR_SEC_002_SEARCH_ENFORCEMENT_ENABLED',
+    default=False,
+)
+# Emergency rollback for an activated allowlisted workspace. This switch is
+# intentionally independent of the exposure flag so rollback cannot restore
+# the pre-policy unfiltered path.
+PAR_SEC_002_SEARCH_ABORT_FAIL_CLOSED = _bool_env(
+    'PAR_SEC_002_SEARCH_ABORT_FAIL_CLOSED',
+    default=False,
+)
+PAR_SEC_002_SEARCH_ENFORCEMENT_ENVIRONMENTS = os.getenv(
+    'PAR_SEC_002_SEARCH_ENFORCEMENT_ENVIRONMENTS',
+    '',
+).strip()
+PAR_SEC_002_SEARCH_ENFORCEMENT_ORG_ALLOWLIST = os.getenv(
+    'PAR_SEC_002_SEARCH_ENFORCEMENT_ORG_ALLOWLIST',
+    '',
+).strip()
 
 # PAR-ID-001 Slice 3 — feature-flagged shadow sync / parity (default OFF).
 # When enabled, selected UserProfile.role writes mirror into org-scoped
