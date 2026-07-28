@@ -1,8 +1,8 @@
 # CLM One Governance Charter
 
-Version: 2.4
+Version: 2.5
 Status: Mandatory — canonical repository governance document
-Last amended: 2026-07-25 (supersedes CMS Aegis `DESIGN_CONSTITUTION.md` v1.5 per ADR-0009)
+Last amended: 2026-07-28 (owner-directed authorization adopted by PDR-0010)
 Purpose: enforce one coherent enterprise-grade product language across all CLM One pages
 
 Product name: **CLM One** is the only customer-facing product name. Historical
@@ -404,13 +404,20 @@ never hardcoded silently into a template.
   claims ambiguous between "reviewers must catch this" and "CI will catch
   this."
 
-## 16) Repository evidence and release control (amended 2026-07-24, v2.2)
+## 16) Repository evidence and release control (amended 2026-07-28, v2.5)
 
-GitHub is the authority for repository change approval and release evidence.
-The authoritative record comprises submitted GitHub PR reviews, check results,
-the immutable reviewed and merged commit SHAs, and deployment or operator logs.
-Documentation may link to those records but must not recreate them as editable
-approval evidence.
+GitHub is the default system of record for repository change approval and
+release evidence. The authoritative record comprises submitted GitHub PR
+reviews, check results, immutable reviewed and merged commit SHAs, and
+deployment or operator logs.
+
+Under PDR-0010, an explicit, attributable, scope-specific instruction from the
+repository owner—recorded in an owner-controlled Codex workspace, GitHub pull
+request, issue, release, or deployment record—may replace a human-review gate.
+The resulting pull request or release record must state the authorized scope.
+It does not waive CI, rollback, tenant isolation, audit, or operational
+evidence unless the owner separately and explicitly addresses that control.
+The gates below are the defaults when no such owner instruction exists.
 
 - Do not use manually maintained vote tables, copied approval statements, or
   manually entered approval timestamps in active authorization packages.
@@ -450,6 +457,8 @@ approval evidence.
 - Production activation, permission or privilege changes, automatic repair,
   ADMIN authority, and legacy retirement require approved Product,
   Engineering, and Security GitHub reviews that are independent of one
-  another, green CI, and a release record.
+  another, green CI, and a release record unless the repository owner records
+  an explicit, scope-specific authorization.
 - A feature flag only controls exposure. It never grants authority, bypasses
-  required review, or substitutes for an operator or release record.
+  required review, or substitutes for an operator or release record. Authority
+  comes from the applicable gate or an explicit repository-owner decision.

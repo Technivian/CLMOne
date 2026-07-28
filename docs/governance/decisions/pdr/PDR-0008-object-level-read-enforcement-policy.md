@@ -1,6 +1,8 @@
 # PDR-0008: Object-level read enforcement policy for search, analytics, and AI
 
-**Status:** Proposed — policy scope accepted in Addendum 001; implementation authority not granted.
+**Status:** Proposed — policy scope accepted in Addendum 001; implementation
+requires either the stated review gate or explicit repository-owner
+authorization for a defined scope.
 **Date:** 2026-07-25
 **Owner:** Pilot Hardening PAR-SEC-002 — Programme, Product, Engineering, and Security: `@haroonwahed` (the recorded sole direct human administrator)
 **Affected Charter sections:** §16 Repository evidence and release control
