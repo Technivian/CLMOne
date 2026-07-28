@@ -18,6 +18,10 @@ REQUIRED = {"id", "group_id", "current_outcome", "classification", "project", "o
 def signature(error: Any) -> str:
     text = error if isinstance(error, str) else (error or {}).get("message", "")
     text = re.sub(r"\x1b\[[0-9;]*m", "", str(text))
+    # Generated fixture names and the two isolated web-server ports are not
+    # failure semantics. Normalise them before comparing base and head runs.
+    text = re.sub(r"\b\d{10,}\b", "<generated-id>", text)
+    text = re.sub(r"(https?://[^/\s:]+):\d{2,5}", r"\1:<port>", text)
     text = re.sub(r"(?:[A-Za-z]:)?/[^\s:]+", "<path>", text)
     text = re.sub(r":\d+(?::\d+)?", ":<line>", text)
     return re.sub(r"\s+", " ", text).strip()[:500] or "<no-error-message>"
@@ -99,7 +103,7 @@ def compare(base: dict[str, dict[str, Any]], head: dict[str, dict[str, Any]], ba
             entry = baseline.get(ident)
             if not entry:
                 problems.append(f"unapproved baseline failure: {ident}")
-            elif entry["failure_signature"] != after["signature"]:
+            elif before["signature"] != after["signature"]:
                 problems.append(f"failure signature changed: {ident}")
             elif SEVERITY[after["status"]] > SEVERITY[before["status"]]:
                 problems.append(f"failure severity worsened: {ident} ({before['status']} -> {after['status']})")

@@ -39,6 +39,18 @@ class BrowserRegressionGateTests(unittest.TestCase):
     def test_changed_failure_signature_fails(self):
         self.assertTrue(gate.compare(result("failed", "before"), result("failed", "after"), {IDENTITY: entry(failure_signature=gate.signature("before"))}))
 
+    def test_stale_manifest_signature_does_not_mask_or_block_matching_runs(self):
+        baseline = {IDENTITY: entry(failure_signature=gate.signature("older capture"))}
+        self.assertEqual(
+            gate.compare(result("failed", "same CI failure"), result("failed", "same CI failure"), baseline),
+            [],
+        )
+
+    def test_signature_normalizes_generated_fixture_ids_and_local_ports(self):
+        first = "expected link Test 1785000000001 at http://127.0.0.1:8031/contracts/"
+        second = "expected link Test 1785000000002 at http://127.0.0.1:8032/contracts/"
+        self.assertEqual(gate.signature(first), gate.signature(second))
+
     def test_unchanged_governed_failure_passes(self):
         self.assertEqual(gate.compare(result("failed", "expected true"), result("failed", "expected true"), {IDENTITY: entry()}), [])
 

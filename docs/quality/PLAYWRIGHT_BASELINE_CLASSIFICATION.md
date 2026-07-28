@@ -18,6 +18,10 @@ browser journey must be green before activation.
 | PWB-05 pilot assertions | 5 | UNKNOWN | Authentication, finance and NDA pilot assertions have unresolved route/policy/fixture evidence. Product and Quality must decide each case before expiry. |
 
 Every record has a hard 2026-08-31 expiry, CLM One Quality owner, exact
-identity/signature safeguard, remediation reference and exit criterion. The
-comparator rejects missing, changed, expired, unmatched or wildcard records and
+identity, captured signature, remediation reference and exit criterion. The
+comparator validates that exact governed identity set against the isolated base
+run, then compares normalized signatures between that base run and the PR head
+run on the same CI runner. This prevents generated fixture IDs, ephemeral local
+ports, and runner-specific screenshot wording from creating a false regression.
+It still rejects missing, changed, expired, unmatched or wildcard records and
 does not allow a failure to become a timeout, crash, skip or removed test.
