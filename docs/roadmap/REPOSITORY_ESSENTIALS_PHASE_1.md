@@ -1,13 +1,13 @@
 # Repository Essentials — Phase 1
 
-**Status:** Implementation in progress — the first CSV-import slice is
-implemented behind a committed-default-off flag. This document does not
-authorize activation.
+**Status:** First-slice implementation **Completed** — CSV-assisted import is
+implemented behind a committed-default-off flag. Activation remains
+**Blocked / Unauthorized**; this document does not authorize activation.
 
 **Implementation baseline:** `main` at
-`456ec197647bce85e718d80f5a7eef6b6af9fc85`, after the planning baseline and
-design-system CI recovery merged (28 July 2026). Platform Alignment and Pilot
-Hardening remain closed. The PayrollMinds demonstration remains a synthetic,
+`0d62db10392fe066b43d6f349ac7c66c5ea87f1d`, after the planning baseline and
+UI test recovery merged (28 July 2026). Platform Alignment and Pilot Hardening
+remain closed. The PayrollMinds demonstration remains a synthetic,
 design-partner demonstration only: no real PayrollMinds, client, employee, or
 payroll data; no production-readiness claim.
 
@@ -40,7 +40,7 @@ Phase 1 must not:
 
 | Capability | State | Baseline evidence and reusable components | Gap / gate |
 |---|---|---|---|
-| Bulk contract import and migration | **Partial** | `InboundImportService` parses CSV/JSON, dry-runs, validates lifecycle pairs, uses `persist_contract_with_imported_lifecycle`, and stamps immutable `Contract` provenance. Existing integration endpoints are at `/api/integrations/import/csv/` and `/json/`. | No user-facing template or workspace flow, permission gate, duplicate policy, batch/run object, row diagnostics, counterparty normalization, key-date mapping, compensating rollback, or import fixtures. Current endpoint is login-only, so it is not pilot-ready. |
+| Bulk contract import and migration | **Ready (default-off implementation)** | `RepositoryCsvImportService` adds a private-workspace template, zero-mutation dry-run, deterministic row diagnostics, create-only duplicate detection, canonical type/counterparty/lifecycle/key-date mapping, signed commit/rollback tokens, immutable provenance/correlation evidence, append-only audit, and compensating archival. Synthetic fixture/reset and tenant-isolation coverage are included. | Activation is **Blocked / Unauthorized**. The flag remains committed off; no operator window, client data, document upload, external access, automatic processing, or production-readiness claim is authorized. |
 | Repository metadata, filtering, and dependable search | **Unsafe** | Repository list, `ContractSearchAPIService`, search presets, contract type catalogue, contract key dates, and tenant scoping exist. | Search/list/facet paths are tenant-scoped but not consistently protected by the proposed object-level evaluator. PDR-0008 bars a visibility-changing implementation until separately authorized. Document text search is absent. |
 | Renewal, notice, and deadline reminders | **Partial** | `Contract` has renewal/end/notice dates; `Deadline`, obligations workspace, renewal playbook, scheduled jobs, and notification service exist. | Playbook creates unassigned deadline rows; it does not calculate a canonical notice date from contract terms, prove delivery/escalation, or provide reminder policy/version/evidence. Automated delivery requires separate authorization. |
 | One e-signature integration | **Partial** | `SignatureRequest`, document-version binding, provider abstraction, simulated null provider, DocuSign/Documenso adapters, webhook reconciliation, and audit helpers exist. | Live provider credentials, OAuth/token rotation, callback/webhook production assurance, signature authority, and provider operational controls are not authorized. PayrollMinds scope explicitly excludes live e-sign. |
@@ -261,7 +261,7 @@ AI-assisted extraction.
 
 | Order | Capability / slice | Owner | Current state | Dependencies | Acceptance evidence | Risk | Status |
 |---:|---|---|---|---|---|---|---|
-| 1 | CSV-assisted private-workspace import | Product + Engineering + Security | Implementation | Existing lifecycle/provenance; scoped import authorization | Synthetic fixture, dry-run, duplicate, isolation, audit, compensation tests | Medium | **Default-off implementation PR; activation not authorized** |
+| 1 | CSV-assisted private-workspace import | Product + Engineering + Security | **Completed** | Existing lifecycle/provenance and scoped import authorization satisfied for default-off code only | Synthetic fixture, dry-run, duplicate, isolation, audit, compensation, exact-SHA CI and rollback evidence | Medium | **Implementation Completed; activation Blocked / Unauthorized; flag off** |
 | 2 | Repository metadata, filters, and policy-safe search | Product + Engineering + Security | Blocked | Accepted/authorized PDR-0008 enforcement | Object-policy/no-leak/facet tests and rollback drill | High | Deferred |
 | 3 | Renewal/notice/deadline reminders | Product + Engineering | Partial | Import dates, ownership, notification policy | Time-boundary, idempotency, delivery/audit tests | Medium | Deferred |
 | 4 | Entity and contract-family profiles | Product + Engineering + Security | Blocked | Canonical ownership/migration decision | Relationship, isolation, reversal tests | High | Deferred |
