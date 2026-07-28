@@ -263,9 +263,17 @@ class DesignSystemPhaseOneFoundationTests(SimpleTestCase):
         self.assertIn('class="command-center cc-v3"', dashboard)
         self.assertIn('dc-ds-button dc-ds-button--primary', dashboard)
         self.assertIn('dc-ds-button dc-ds-button--link', dashboard)
-        self.assertIn('dc-ds-setup-list', dashboard)
         self.assertIn('dc-ds-surface--feature', dashboard)
         self.assertIn('dc-ds-metric', dashboard)
+        # The Command Center uses one governed empty state rather than the
+        # retired setup-list component. Keep its status semantics and recovery
+        # action under test so the empty portfolio remains accessible.
+        for empty_state_hook in (
+            'cc-v3-portfolio-hero--empty', 'cc-v3-score-unavailable',
+            'cc-v3-top-priority--empty', 'role="status"', 'Add first contract',
+        ):
+            with self.subTest(empty_state_hook=empty_state_hook):
+                self.assertIn(empty_state_hook, dashboard)
         for retired in (
             'is-primary',
             'is-secondary',

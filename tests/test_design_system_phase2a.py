@@ -207,19 +207,40 @@ class DesignSystemPhaseTwoATests(SimpleTestCase):
     def test_phase_two_b_five_record_and_admin_form_families_use_shared_apis(self):
         templates = self.root / 'theme' / 'templates' / 'contracts'
         partial = (self.root / 'theme' / 'templates' / 'design_system' / 'form_field.html').read_text()
+        record_form = (self.root / 'theme' / 'templates' / 'design_system' / 'record_form.html').read_text()
         self.assertIn('preserve_help', partial)
+        # Form pages now delegate their layout and field chrome to one shared
+        # partial. Assert the rendered source of truth rather than requiring
+        # every thin route wrapper to duplicate its implementation details.
+        for value in (
+            'dc-ds-surface', 'dc-ds-record-form', 'dc-ds-form-actions',
+            'design_system/form_field.html', 'aria-labelledby="record-form-details-title"',
+        ):
+            with self.subTest(value=value):
+                self.assertIn(value, record_form)
+        self.assertNotIn('<style', record_form)
         for template_name in (
-            'clause_category_form.html', 'clause_template_form.html',
-            'counterparty_form.html', 'data_inventory_form.html', 'dsar_form.html',
+            'clause_category_form.html', 'counterparty_form.html',
+            'data_inventory_form.html',
             'legal_hold_form.html', 'retention_policy_form.html',
-            'signature_request_form.html', 'subprocessor_form.html',
-            'transfer_record_form.html', 'approval_request_form.html',
+            'subprocessor_form.html', 'transfer_record_form.html',
+        ):
+            with self.subTest(template=template_name):
+                content = (templates / template_name).read_text()
+                self.assertIn('design_system/record_form.html', content)
+        for template_name in (
+            'clause_template_form.html', 'dsar_form.html', 'signature_request_form.html',
+            'approval_request_form.html',
         ):
             with self.subTest(template=template_name):
                 content = (templates / template_name).read_text()
                 self.assertIn('dc-ds-surface', content)
                 self.assertIn('design_system/form_field.html', content)
-        for template_name in ('client_form.html', 'matter_form.html', 'deadline_form.html', 'document_form.html'):
+        for template_name in ('client_form.html', 'matter_form.html', 'deadline_form.html'):
+            with self.subTest(template=template_name):
+                content = (templates / template_name).read_text()
+                self.assertIn('design_system/record_form.html', content)
+        for template_name in ('document_form.html',):
             with self.subTest(template=template_name):
                 content = (templates / template_name).read_text()
                 self.assertIn('dc-ds-surface', content)
@@ -338,10 +359,14 @@ class DesignSystemPhaseTwoATests(SimpleTestCase):
             '.dc-ds-record-notice', '.dc-ds-form-actions',
         ):
             self.assertIn(selector, self.components)
+        record_form = (self.root / 'theme' / 'templates' / 'design_system' / 'record_form.html').read_text()
+        for value in ('dc-ds-record-page', 'dc-ds-record-layout--with-rail', 'dc-ds-record-form', 'dc-ds-form-actions'):
+            with self.subTest(shared_record_form=value):
+                self.assertIn(value, record_form)
         expectations = {
-            'client_form.html': ('authenticated_page_title', 'dc-ds-record-page', 'dc-ds-record-content--narrow'),
+            'client_form.html': ('authenticated_page_title', 'design_system/record_form.html'),
             'client_detail.html': ('authenticated_page_title', 'authenticated_page_subtitle', 'dc-ds-record-sections'),
-            'clause_category_form.html': ('authenticated_page_back', 'dc-ds-record-page', 'dc-ds-record-content--centered'),
+            'clause_category_form.html': ('authenticated_page_back', 'design_system/record_form.html'),
             'clause_template_form.html': (
                 'authenticated_page_back', 'authenticated_page_subtitle',
                 'dc-ds-record-page', 'dc-ds-record-layout--with-rail',
@@ -382,19 +407,19 @@ class DesignSystemPhaseTwoATests(SimpleTestCase):
             self.assertIn(selector, self.components)
         expectations = {
             'counterparty_detail.html': ('authenticated_page_back', 'dc-ds-record-metadata', 'dc-ds-page-hero'),
-            'counterparty_form.html': ('authenticated_page_back', 'dc-ds-record-form', 'dc-ds-form-actions'),
+            'counterparty_form.html': ('authenticated_page_back', 'design_system/record_form.html'),
             'compliance_checklist_detail.html': ('authenticated_page_back', 'dc-ds-record-checklist-item', 'dc-ds-record-sections'),
-            'compliance_checklist_form.html': ('authenticated_page_subtitle', 'dc-ds-record-form', 'dc-ds-form-actions'),
+            'compliance_checklist_form.html': ('authenticated_page_subtitle', 'design_system/record_form.html'),
             'data_inventory_detail.html': ('authenticated_page_back', 'dc-ds-record-metadata', 'dc-ds-page-hero'),
-            'data_inventory_form.html': ('authenticated_page_back', 'dc-ds-record-form', 'dc-ds-form-actions'),
+            'data_inventory_form.html': ('authenticated_page_back', 'design_system/record_form.html'),
             'legal_hold_detail.html': ('authenticated_page_back', 'dc-ds-record-metadata', 'dc-ds-page-hero'),
-            'legal_hold_form.html': ('authenticated_page_back', 'dc-ds-record-form', 'dc-ds-form-actions'),
+            'legal_hold_form.html': ('authenticated_page_back', 'design_system/record_form.html'),
             'subprocessor_detail.html': ('authenticated_page_back', 'dc-ds-record-metadata', 'dc-ds-page-hero'),
-            'subprocessor_form.html': ('authenticated_page_back', 'dc-ds-record-form', 'dc-ds-form-actions'),
-            'transfer_record_form.html': ('authenticated_page_back', 'dc-ds-record-form', 'dc-ds-form-actions'),
-            'retention_policy_form.html': ('authenticated_page_back', 'dc-ds-record-form', 'dc-ds-form-actions'),
-            'risk_log_form.html': ('authenticated_page_back', 'dc-ds-record-form', 'dc-ds-form-actions'),
-            'ethical_wall_form.html': ('authenticated_page_back', 'dc-ds-record-form', 'dc-ds-form-actions'),
+            'subprocessor_form.html': ('authenticated_page_back', 'design_system/record_form.html'),
+            'transfer_record_form.html': ('authenticated_page_back', 'design_system/record_form.html'),
+            'retention_policy_form.html': ('authenticated_page_back', 'design_system/record_form.html'),
+            'risk_log_form.html': ('authenticated_page_back', 'design_system/record_form.html'),
+            'ethical_wall_form.html': ('authenticated_page_back', 'design_system/record_form.html'),
         }
         for template_name, required in expectations.items():
             content = (templates / template_name).read_text()
