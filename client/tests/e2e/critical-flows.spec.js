@@ -97,8 +97,10 @@ test('critical contract create and edit flow works', async ({ page }) => {
   await expect(page.getByText('Contract details').first()).toBeVisible();
   await expect(page.getByText('Contract lifecycle').first()).toBeVisible();
   await expect(page.getByText('View full workflow')).toHaveCount(0);
-  // Compact header shows record status · workflow stage (never dual "Draft"/"Drafting").
-  await expect(page.getByText('In progress · Drafting').first()).toBeVisible();
+  // The record shell presents the canonical record status and workflow stage
+  // as distinct labelled dimensions.
+  await expect(page.getByText('Status: In progress', { exact: true }).first()).toBeVisible();
+  await expect(page.getByText('Stage: Drafting', { exact: true }).first()).toBeVisible();
   const detailUrl = page.url().replace(/\/$/, '');
   await page.goto(`${detailUrl}/edit/`);
   await expect(page).toHaveURL(/\/contracts\/\d+\/edit\/?$/);

@@ -43,6 +43,10 @@ async function capture(page, path, marker, name) {
   if (name === 'list') {
     await expect(page.locator('#contracts-tbody')).not.toContainText('Loading contracts', { timeout: 15000 });
   }
+  // Chromium can otherwise capture a transient font-raster frame while the
+  // sortable repository headers are being painted. Waiting for the browser's
+  // font set preserves pixel-exact comparison without adding diff tolerance.
+  await page.evaluate(() => document.fonts.ready);
   await expect(page).toHaveScreenshot(`phase-1-${name}.png`, options);
 }
 
