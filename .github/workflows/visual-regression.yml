@@ -32,9 +32,9 @@ on:
 jobs:
   visual-baselines:
     name: Phase 1 visual baselines (no auto-regen)
-    # Snapshots are captured on ubuntu-latest to match agent/CI Chromium rendering.
-    # Snapshots are captured on macOS to match the committed darwin suffix.
-    runs-on: macos-14
+    # Linux Chromium is the canonical exact-pixel renderer. Native macOS
+    # CoreText can alternate antialias pixels between otherwise identical runs.
+    runs-on: ubuntu-latest
     timeout-minutes: 45
 
     steps:
