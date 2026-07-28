@@ -3,6 +3,15 @@ const { test, expect } = require('@playwright/test');
 const username = process.env.E2E_USERNAME || 'e2e_owner';
 const password = process.env.E2E_PASSWORD || 'e2e_pass_123';
 
+// Native macOS font rasterisation varies between local and hosted runners.
+// Disable LCD subpixel text only for this visual spec so the committed
+// baselines remain pixel-exact across both environments.
+test.use({
+  launchOptions: {
+    args: ['--disable-lcd-text'],
+  },
+});
+
 async function login(page) {
   await page.goto('/login/');
   await page.fill('input[name="username"]', username);
@@ -47,6 +56,9 @@ async function capture(page, path, marker, name) {
   // sortable repository headers are being painted. Waiting for the browser's
   // font set preserves pixel-exact comparison without adding diff tolerance.
   await page.evaluate(() => document.fonts.ready);
+  // The login submit click lands over a contract-type card after navigation
+  // on some hosts. Keep snapshots in the neutral, non-hover product state.
+  await page.mouse.move(0, 0);
   await expect(page).toHaveScreenshot(`phase-1-${name}.png`, options);
 }
 
