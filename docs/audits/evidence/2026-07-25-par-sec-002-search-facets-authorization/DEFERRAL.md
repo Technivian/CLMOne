@@ -36,6 +36,7 @@ canonical reads, and legacy retirement remain out of scope.
 Reopening requires a new or reactivated authorization package, independent
 Product, Engineering, and Security GitHub approvals on the exact proposed
 implementation SHA, all required CI green, reversible controls, and a named
-operator record. Feature flags alone cannot grant authority.
+operator record, unless the repository owner records an explicit,
+scope-specific authorization. Feature flags alone cannot grant authority.
 
 This closure record itself contains no runtime or release activation.
