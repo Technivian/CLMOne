@@ -590,6 +590,10 @@ TRUST_ACCOUNTING_ENABLED = _bool_env('TRUST_ACCOUNTING_ENABLED', default=True)
 # hermetic tests and general development remain unaffected.
 CONTROLLED_PILOT_ENABLED = _bool_env('CONTROLLED_PILOT_ENABLED', default=False)
 REPOSITORY_CSV_IMPORT_ENABLED = _bool_env('REPOSITORY_CSV_IMPORT_ENABLED', default=False)
+# External counterparty collaboration currently relies on an emailed bearer
+# capability plus email confirmation. Keep the entire surface fail-closed until
+# an approved external-identity and sharing design replaces that mechanism.
+EXTERNAL_COLLABORATION_ENABLED = _bool_env('EXTERNAL_COLLABORATION_ENABLED', default=False)
 
 # PAR-SEC-002 — characterization-only route observation (default OFF).
 # This controls content-free, process-local counters only; it never evaluates

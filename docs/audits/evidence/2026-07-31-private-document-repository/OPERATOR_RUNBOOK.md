@@ -26,14 +26,15 @@ Active Ethical Walls are inherited through the document's canonical
 cross-workspace references are excluded. Denied and malformed policy outcomes
 return empty results or generic not-found responses.
 
-When the bounded repository policy is active, internal create/edit views
-remove `share_with_counterparty` and version services receive an explicit
-`False`, including when a caller forges the removed POST field. Flag-off
-workspaces retain the existing explicit sharing control and behavior. Existing
-internal upload paths also reuse one pre-storage 50 MB and conservative
-extension allowlist validator; browser MIME values remain untrusted metadata.
-Existing external-collaboration code and previously shared records are not
-activated, expanded, migrated, or deleted by this slice.
+Internal create/edit views remove `share_with_counterparty` and version
+services receive an explicit `False` whenever either the bounded repository
+policy is active or the independent external-collaboration gate is off,
+including when a caller forges the removed POST field. The legacy sharing
+control is available only when `EXTERNAL_COLLABORATION_ENABLED=true`; that
+setting is committed off and is not approved for activation. Existing internal
+upload paths also reuse one pre-storage 50 MB and conservative extension
+allowlist validator; browser MIME values remain untrusted metadata. Previously
+shared records are not exposed, migrated, or deleted by this slice.
 
 ## Committed state
 

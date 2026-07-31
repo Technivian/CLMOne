@@ -42,6 +42,11 @@ def is_repository_csv_import_enabled():
     return get_feature_flag('REPOSITORY_CSV_IMPORT_ENABLED', False)
 
 
+def is_external_collaboration_enabled():
+    """Fail-closed gate for the legacy external collaboration surface."""
+    return get_feature_flag('EXTERNAL_COLLABORATION_ENABLED', False)
+
+
 # Cache for feature flags to avoid repeated lookups
 cache = {}
 
