@@ -113,6 +113,11 @@ def feature_flags(request):
         'MOCHADOCS_MODE': is_mochadocs_mode_enabled(),
         'TEST_MODE': is_test_mode_enabled(),
         'SSO_ENABLED': getattr(settings, 'SSO_ENABLED', False),
+        'MICROSOFT_ENTRA_SSO_ENABLED': getattr(
+            settings,
+            'MICROSOFT_ENTRA_SSO_ENABLED',
+            False,
+        ),
         'GEMINI_AI_ENABLED': getattr(settings, 'GEMINI_AI_ENABLED', False),
         'BILLING_SELF_SERVE_ENABLED': getattr(settings, 'BILLING_SELF_SERVE_ENABLED', True),
         'TRUST_ACCOUNTING_ENABLED': getattr(settings, 'TRUST_ACCOUNTING_ENABLED', True),

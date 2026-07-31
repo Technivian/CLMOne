@@ -40,12 +40,23 @@ def _request_meta(request):
 def _audit_login_success(sender, request, user, **kwargs):
     from contracts.services.audit import append_audit
     ip, ua, rid = _request_meta(request)
+    authentication_method = (
+        getattr(request, 'clmone_auth_provider', 'password')
+        if request is not None
+        else 'unknown'
+    )
     try:
         append_audit(
             action='LOGIN', model_name='User', organization=_org_for(user), user=user,
             object_id=getattr(user, 'id', None), object_repr=getattr(user, 'username', ''),
             event_type='auth.login_succeeded', actor_type='human', outcome='success',
-            request_id=rid, ip_address=ip, user_agent=ua, changes={'event': 'auth.login_succeeded'},
+            request_id=rid,
+            ip_address=ip,
+            user_agent=ua,
+            changes={
+                'event': 'auth.login_succeeded',
+                'authentication_method': authentication_method,
+            },
         )
     except Exception:
         logger.exception('audit login_succeeded failed')

@@ -74,8 +74,13 @@
             {% with next_url=request.GET.next|default:'/dashboard/' %}
             <a href="{% url 'oidc_authentication_init' %}?next={{ next_url|urlencode }}"
                class="dc-ds-button dc-ds-auth-provider">
+                {% if MICROSOFT_ENTRA_SSO_ENABLED %}
+                {% include "design_system/provider_icon.html" with provider="microsoft" %}
+                Continue with Microsoft
+                {% else %}
                 {% include "design_system/provider_icon.html" with provider="google" %}
                 Sign in with Google
+                {% endif %}
             </a>
             {% endwith %}
             {% endif %}
