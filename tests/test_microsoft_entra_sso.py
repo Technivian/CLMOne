@@ -1,8 +1,10 @@
 """Default-off Microsoft Entra OIDC security and presentation coverage."""
 
+import json
 import os
 import subprocess
 import sys
+from io import StringIO
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -10,6 +12,8 @@ from unittest.mock import patch
 from django.contrib.auth import get_user_model
 from django.contrib.auth.signals import user_logged_in
 from django.core.exceptions import SuspiciousOperation
+from django.core.management import call_command
+from django.core.management.base import CommandError
 from django.template import engines
 from django.test import RequestFactory, TestCase, override_settings
 
@@ -24,6 +28,7 @@ from contracts.models import (
 User = get_user_model()
 TENANT_ID = '4f6f6627-bcac-4e9b-8af9-b499d197cd86'
 ENTRA_SETTINGS = {
+    'SSO_ENABLED': True,
     'MICROSOFT_ENTRA_SSO_ENABLED': True,
     'MICROSOFT_ENTRA_TENANT_ID': TENANT_ID,
     'MICROSOFT_ENTRA_ORG_ALLOWLIST': ['synthetic-payroll-workspace'],
@@ -40,6 +45,11 @@ ENTRA_SETTINGS = {
     ),
     'OIDC_VERIFY_SSL': True,
     'SSO_ALLOWED_EMAIL_DOMAINS': ['payrollminds.example'],
+    'OIDC_OP_DISCOVERY_ENDPOINT': (
+        'https://login.microsoftonline.com/'
+        f'{TENANT_ID}/v2.0/.well-known/openid-configuration'
+    ),
+    'APP_BASE_URL': 'https://synthetic-nonprod.example',
 }
 
 
@@ -268,6 +278,146 @@ class MicrosoftEntraConfigurationTests(TestCase):
                     'ImproperlyConfigured',
                     result.stderr,
                 )
+
+
+@override_settings(**ENTRA_SETTINGS)
+class MicrosoftEntraActivationPreflightTests(TestCase):
+    def setUp(self):
+        self.organization = Organization.objects.create(
+            name='Synthetic Payroll Workspace',
+            slug='synthetic-payroll-workspace',
+            identity_provider=Organization.IdentityProvider.OIDC,
+        )
+        self.user = User.objects.create_user(
+            username='synthetic-entra-user',
+            email='legal@payrollminds.example',
+        )
+        OrganizationMembership.objects.create(
+            organization=self.organization,
+            user=self.user,
+            role=OrganizationMembership.Role.MEMBER,
+            is_active=True,
+        )
+
+    def _run(self, **overrides):
+        output = StringIO()
+        arguments = {
+            'environment': 'synthetic-non-production',
+            'workspace': self.organization.slug,
+            'redirect_uri': 'https://synthetic-nonprod.example/oidc/callback/',
+            'stdout': output,
+            **overrides,
+        }
+        call_command('verify_microsoft_entra_activation', **arguments)
+        return output.getvalue()
+
+    def test_valid_preflight_is_read_only_and_does_not_disclose_secrets(self):
+        before = {
+            'organizations': Organization.objects.count(),
+            'memberships': OrganizationMembership.objects.count(),
+            'users': User.objects.count(),
+        }
+
+        output = self._run()
+        report = json.loads(output.splitlines()[0])
+
+        self.assertTrue(report['ready'])
+        self.assertTrue(all(report['checks'].values()))
+        self.assertEqual(
+            before,
+            {
+                'organizations': Organization.objects.count(),
+                'memberships': OrganizationMembership.objects.count(),
+                'users': User.objects.count(),
+            },
+        )
+        for sensitive_value in (
+            TENANT_ID,
+            'synthetic-client-id',
+            'synthetic-secret',
+            self.user.email,
+        ):
+            self.assertNotIn(sensitive_value, output)
+
+    def test_production_environment_and_redirect_mismatch_fail_closed(self):
+        for overrides in (
+            {'environment': 'production'},
+            {'redirect_uri': 'https://wrong.example/oidc/callback/'},
+        ):
+            with self.subTest(overrides=overrides):
+                output = StringIO()
+                with self.assertRaisesMessage(
+                    CommandError,
+                    'Microsoft Entra activation preflight failed.',
+                ):
+                    self._run(stdout=output, **overrides)
+                report = json.loads(output.getvalue().splitlines()[0])
+                self.assertFalse(report['ready'])
+
+    def test_disabled_feature_and_missing_workspace_fail_closed(self):
+        cases = (
+            ({'MICROSOFT_ENTRA_SSO_ENABLED': False}, {}),
+            ({'SSO_ENABLED': False}, {}),
+            ({}, {'workspace': 'missing-synthetic-workspace'}),
+        )
+        for settings_overrides, command_overrides in cases:
+            with self.subTest(
+                settings=settings_overrides,
+                command=command_overrides,
+            ):
+                output = StringIO()
+                with self.settings(**settings_overrides):
+                    with self.assertRaises(CommandError):
+                        self._run(stdout=output, **command_overrides)
+                report = json.loads(output.getvalue().splitlines()[0])
+                self.assertFalse(report['ready'])
+
+    def test_workspace_and_preprovisioned_identity_failures_are_deterministic(self):
+        cases = (
+            ('inactive_workspace', lambda: Organization.objects.filter(
+                pk=self.organization.pk,
+            ).update(is_active=False)),
+            ('non_oidc_workspace', lambda: Organization.objects.filter(
+                pk=self.organization.pk,
+            ).update(identity_provider=Organization.IdentityProvider.SAML)),
+            ('inactive_membership', lambda: OrganizationMembership.objects.filter(
+                organization=self.organization,
+            ).update(is_active=False)),
+            ('wrong_domain', lambda: User.objects.filter(pk=self.user.pk).update(
+                email='legal@outside.example',
+            )),
+        )
+        for _name, mutate in cases:
+            with self.subTest(case=_name):
+                self.organization.is_active = True
+                self.organization.identity_provider = Organization.IdentityProvider.OIDC
+                self.organization.save(update_fields=['is_active', 'identity_provider'])
+                self.user.email = 'legal@payrollminds.example'
+                self.user.save(update_fields=['email'])
+                OrganizationMembership.objects.filter(
+                    organization=self.organization,
+                ).update(is_active=True)
+                mutate()
+                with self.assertRaises(CommandError):
+                    self._run()
+
+    def test_duplicate_case_insensitive_identity_fails_closed(self):
+        duplicate = User.objects.create_user(
+            username='duplicate-synthetic-entra-user',
+            email='LEGAL@payrollminds.example',
+        )
+        OrganizationMembership.objects.create(
+            organization=self.organization,
+            user=duplicate,
+            role=OrganizationMembership.Role.MEMBER,
+            is_active=True,
+        )
+
+        output = StringIO()
+        with self.assertRaises(CommandError):
+            self._run(stdout=output)
+        report = json.loads(output.getvalue().splitlines()[0])
+        self.assertFalse(report['checks']['preprovisioned_identities_unique'])
 
 
 class MicrosoftEntraPresentationTests(TestCase):

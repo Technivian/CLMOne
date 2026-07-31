@@ -74,15 +74,30 @@ domain/workspace allowlist, or `OIDC_CREATE_USER=true`.
 
 Use synthetic identities only:
 
-1. Verify password login and recovery still work.
-2. Open `/login/` and select **Continue with Microsoft**.
-3. Confirm the exact pre-provisioned user reaches only their existing
+1. Run the read-only activation preflight before opening the login window:
+
+   ```bash
+   .venv/bin/python manage.py verify_microsoft_entra_activation \
+     --environment=<named-non-production-environment> \
+     --workspace=<synthetic-workspace-slug> \
+     --redirect-uri=https://<non-production-host>/oidc/callback/
+   ```
+
+   The command emits deterministic boolean checks only. It never prints the
+   tenant ID, client ID, client secret, identity email, token, or claim. A
+   failed check exits non-zero and makes no database change.
+2. Verify password login and recovery still work.
+3. Open `/login/` and select **Continue with Microsoft**.
+4. Confirm the exact pre-provisioned user reaches only their existing
    workspace and role.
-4. Confirm an unknown user, inactive user, inactive membership, wrong domain,
+5. Confirm an unknown user, inactive user, inactive membership, wrong domain,
    wrong tenant, `common` issuer, and duplicate email are denied generically.
-5. Confirm sign-in produces an append-only `auth.login_succeeded` event with
+6. Confirm sign-in produces an append-only `auth.login_succeeded` event with
    `authentication_method=microsoft_entra` and no token or claim content.
-6. Confirm logout and idle-session/MFA policy still apply.
+7. Confirm logout and idle-session/MFA policy still apply.
+
+The preflight does not create the Entra application, store a credential,
+change an identity or role, call Microsoft, or grant activation authority.
 
 ## Abort and rollback
 

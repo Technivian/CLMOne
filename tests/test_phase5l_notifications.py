@@ -468,8 +468,8 @@ class RecoveryCodeServiceTests(TestCase):
         APP_BASE_URL=APP_BASE,
         EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
     )
-    def test_profile_view_uses_canonical_service_for_recovery_code(self):
-        """Profile view must route recovery codes through consume_recovery_code."""
+    def test_profile_ignores_recovery_code_and_challenge_consumes_it(self):
+        """Only the authentication challenge may consume a recovery code."""
         codes = self.profile.issue_mfa_recovery_codes()
         c = Client()
         c.force_login(self.user)
@@ -477,22 +477,33 @@ class RecoveryCodeServiceTests(TestCase):
         session['mfa_verified'] = True
         session.save()
         before = AuditLog.objects.filter(event_type='mfa.recovery_code_used').count()
-        c.post(reverse('profile'), {
+        profile_response = c.post(reverse('profile'), {
+            'action': 'save_identity',
             'first_name': self.user.first_name,
             'last_name': self.user.last_name,
             'email': self.user.email,
-            'role': getattr(self.profile, 'role', ''),
             'phone': '',
-            'bar_number': '',
             'department': '',
-            'hourly_rate': '',
             'bio': '',
-            'mfa_enabled': 'on',
-            'mfa_enrollment_code': '',
             'mfa_recovery_code': codes[0],
         })
+        self.assertEqual(profile_response.status_code, 302)
+        self.profile.refresh_from_db()
+        self.assertEqual(self.profile.mfa_recovery_code_count, 8)
+        self.assertEqual(
+            AuditLog.objects.filter(event_type='mfa.recovery_code_used').count(),
+            before,
+        )
+
+        session = c.session
+        session['mfa_verified'] = False
+        session.save()
+        challenge_response = c.post(reverse('mfa_challenge'), {'code': codes[0]})
+        self.assertEqual(challenge_response.status_code, 302)
+        self.profile.refresh_from_db()
+        self.assertEqual(self.profile.mfa_recovery_code_count, 7)
         after = AuditLog.objects.filter(event_type='mfa.recovery_code_used').count()
-        self.assertEqual(after - before, 1, 'Audit event not written from profile path')
+        self.assertEqual(after - before, 1, 'Challenge consumption must be audited once')
 
 
 # =============================================================================
