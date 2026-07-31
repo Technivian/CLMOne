@@ -43,6 +43,21 @@ async function capture(page, path, marker, name) {
   // These are intentionally covered by its functional tests but cannot form
   // a stable visual fixture across a date boundary.
   if (name === 'dashboard') {
+    await page.locator('.cc-v3-score-context').evaluate((node) => {
+      // The fixture's freshness date is intentionally "today". Freeze only
+      // that text node to the date represented by the approved baseline while
+      // retaining pixel coverage for the score context and control count.
+      node.childNodes[0].textContent = 'Updated 28 Jul 2026 ';
+    });
+    await page.locator('.cc-v3-date-status').evaluateAll((nodes) => {
+      // Workflow due dates are derived from the day the fixture is seeded.
+      // Preserve the approved one-line/two-line mask geometry across calendar
+      // boundaries without changing mask coverage or screenshot tolerance.
+      const approvedLabels = ['Due tomorrow', 'Due today'];
+      nodes.forEach((node, index) => {
+        if (approvedLabels[index]) node.textContent = approvedLabels[index];
+      });
+    });
     options.mask = [
       page.locator('.cc-v3-action-date'),
       page.locator('.cc-v3-date-status'),
