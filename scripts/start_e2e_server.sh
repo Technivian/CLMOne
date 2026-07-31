@@ -6,6 +6,14 @@ PY="$ROOT_DIR/.venv/bin/python"
 if [ ! -x "$PY" ]; then
   PY=python
 fi
+E2E_PORT="${E2E_PORT:-8010}"
+
+case "$E2E_PORT" in
+  *[!0-9]*|'')
+    echo "E2E_PORT must be a positive integer" >&2
+    exit 2
+    ;;
+esac
 
 export DJANGO_E2E=1
 export DJANGO_SETTINGS_MODULE="${DJANGO_SETTINGS_MODULE:-config.settings_development}"
@@ -144,5 +152,6 @@ ClauseTemplate.objects.get_or_create(
   --organization-slug e2e-command-center \
   --username e2e_owner
 "$PY" "$ROOT_DIR/manage.py" seed_payrollminds_demo
+"$PY" "$ROOT_DIR/manage.py" audit_null_organizations
 
-exec "$PY" "$ROOT_DIR/manage.py" runserver 127.0.0.1:8010 --noreload
+exec "$PY" "$ROOT_DIR/manage.py" runserver "127.0.0.1:${E2E_PORT}" --noreload
