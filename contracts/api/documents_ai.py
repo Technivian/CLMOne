@@ -20,7 +20,11 @@ from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.dateparse import parse_date
-from contracts.services.repository import BulkUpdateValidationError, get_repository_service
+from contracts.services.repository import (
+    BulkUpdateValidationError,
+    apply_repository_contract_policy,
+    get_repository_service,
+)
 from contracts.services.salesforce import (
     CANONICAL_CONTRACT_FIELDS,
     build_salesforce_authorize_url,
@@ -135,10 +139,14 @@ from contracts.api._helpers import (
 
 # ── Document upload ingestion ─────────────────────────────────────────────────
 
-_ALLOWED_UPLOAD_EXTENSIONS = {
-    '.pdf', '.docx', '.txt', '.md', '.csv', '.html', '.xml', '.json',
-}
-_MAX_UPLOAD_BYTES = 50 * 1024 * 1024  # 50 MB
+from contracts.services.document_upload_policy import (
+    DocumentUploadValidationError,
+    validate_document_upload,
+)
+from contracts.services.document_repository_policy import (
+    apply_document_relation_policy,
+    document_repository_enforcement_active,
+)
 
 
 _REVIEW_STEP_LABELS = ('Uploaded', 'Extracting', 'Classifying', 'Matching playbook', 'AI reviewing', 'Review ready')
@@ -248,19 +256,16 @@ def document_extract_preview_api(request):
     if uploaded_file is None:
         return _error_response(request, 'No file provided.', 400)
 
-    if uploaded_file.size > _MAX_UPLOAD_BYTES:
-        return _error_response(request, f'File exceeds maximum size of {_MAX_UPLOAD_BYTES // (1024*1024)} MB.', 413)
-
-    import os
-    filename = uploaded_file.name or ''
-    ext = os.path.splitext(filename)[1].lower()
-    if ext not in _ALLOWED_UPLOAD_EXTENSIONS:
+    try:
+        validate_document_upload(uploaded_file)
+    except DocumentUploadValidationError as exc:
         return _error_response(
             request,
-            f'File type {ext!r} is not supported. Allowed: {", ".join(sorted(_ALLOWED_UPLOAD_EXTENSIONS))}',
-            415,
+            exc.messages[0],
+            exc.status_code,
         )
 
+    filename = uploaded_file.name or ''
     text, source = extract_text_from_upload(uploaded_file, filename)
     result = extract_agreement_metadata(text, filename=filename, extraction_source=source)
     return JsonResponse({'ok': True, 'extraction': result.to_dict()})
@@ -285,26 +290,35 @@ def document_upload_api(request):
     if uploaded_file is None:
         return _error_response(request, 'No file provided.', 400)
 
-    if uploaded_file.size > _MAX_UPLOAD_BYTES:
-        return _error_response(request, f'File exceeds maximum size of {_MAX_UPLOAD_BYTES // (1024*1024)} MB.', 413)
-
-    import os
-    ext = os.path.splitext(uploaded_file.name)[1].lower()
-    if ext not in _ALLOWED_UPLOAD_EXTENSIONS:
+    try:
+        validate_document_upload(uploaded_file)
+    except DocumentUploadValidationError as exc:
         return _error_response(
             request,
-            f'File type {ext!r} is not supported. Allowed: {", ".join(sorted(_ALLOWED_UPLOAD_EXTENSIONS))}',
-            415,
+            exc.messages[0],
+            exc.status_code,
         )
 
     contract_id = request.POST.get('contract_id')
     contract = None
     if contract_id:
-        contract = Contract.objects.filter(
-            id=contract_id,
+        contract = apply_repository_contract_policy(
+            Contract.objects.filter(
+                id=contract_id,
+                organization=organization,
+            ),
             organization=organization,
+            user=request.user,
+            surface='document_upload_contract',
         ).first()
-        if contract is None:
+        if contract is None or (
+            document_repository_enforcement_active(organization)
+            and not can_access_contract_action(
+                request.user,
+                contract,
+                ContractAction.EDIT,
+            )
+        ):
             return _error_response(request, 'Contract not found or access denied.', 404)
 
     create_contract = request.POST.get('create_contract') in {'1', 'true', 'True', 'on'}
@@ -335,7 +349,15 @@ def document_upload_api(request):
                 return _error_response(request, 'Contract value cannot be negative.', 400)
         matter = None
         if request.POST.get('matter_id'):
-            matter = Matter.objects.filter(pk=request.POST['matter_id'], organization=organization).first()
+            matter = apply_document_relation_policy(
+                Matter.objects.filter(
+                    pk=request.POST['matter_id'],
+                    organization=organization,
+                ),
+                organization=organization,
+                user=request.user,
+                surface='document_upload_matter',
+            ).first()
             if matter is None:
                 return _error_response(request, 'Related matter not found or access denied.', 404)
         contract_payload = {
@@ -459,8 +481,8 @@ def document_upload_api(request):
                 ensure_dpa_review_pack(contract, request.user, request=request)
     except Exception:
         logger.exception(
-            'document_upload_failed title=%r org=%s',
-            title, organization.id if organization else None,
+            'document_upload_failed org=%s',
+            organization.id if organization else None,
         )
         # Best-effort: if the file was committed to object storage before the
         # DB INSERT failed, delete the orphaned object so storage and the DB

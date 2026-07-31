@@ -34,6 +34,30 @@ from contracts.view_support import (
 )
 from contracts.services.document_versions import compare_document_versions
 from contracts.services.document_ocr import queue_document_ocr_review
+from contracts.services.document_repository_policy import (
+    apply_document_relation_policy,
+    apply_document_repository_policy,
+    document_repository_enforcement_active,
+)
+from contracts.services.repository import apply_repository_contract_policy
+
+
+def _document_queryset_for_request(request, organization, queryset, *, surface):
+    return apply_document_repository_policy(
+        queryset,
+        organization=organization,
+        user=request.user,
+        surface=surface,
+    )
+
+
+def _contract_queryset_for_request(request, organization, queryset, *, surface):
+    return apply_repository_contract_policy(
+        queryset,
+        organization=organization,
+        user=request.user,
+        surface=surface,
+    )
 
 
 class ClientListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
@@ -363,6 +387,12 @@ class DocumentListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
             Document.objects.select_related('contract', 'matter', 'client', 'uploaded_by'),
             org,
         ).filter(is_deleted=False)  # soft-deleted documents are hidden from listings
+        qs = _document_queryset_for_request(
+            self.request,
+            org,
+            qs,
+            surface='document_list',
+        )
         q = self.request.GET.get('q')
         doc_type = self.request.GET.get('type')
         if q:
@@ -379,17 +409,41 @@ class DocumentDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
 
     def get_queryset(self):
         org = self.get_organization()
-        return scope_queryset_for_organization(Document.objects.all(), org).filter(is_deleted=False)
+        qs = scope_queryset_for_organization(Document.objects.all(), org).filter(is_deleted=False)
+        return _document_queryset_for_request(
+            self.request,
+            org,
+            qs,
+            surface='document_detail',
+        )
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
+        org = self.get_organization()
+        eligible_documents = _document_queryset_for_request(
+            self.request,
+            org,
+            scope_queryset_for_organization(Document.objects.all(), org),
+            surface='document_versions',
+        )
         ancestor_chain = []
         current_document = self.object
-        while current_document.parent_document_id:
-            current_document = current_document.parent_document
+        visited_ids = {current_document.pk}
+        while (
+            current_document.parent_document_id
+            and current_document.parent_document_id not in visited_ids
+        ):
+            current_document = eligible_documents.filter(
+                pk=current_document.parent_document_id
+            ).first()
+            if current_document is None:
+                break
+            visited_ids.add(current_document.pk)
             ancestor_chain.append(current_document)
         ctx['version_chain'] = list(reversed(ancestor_chain))
-        ctx['versions'] = Document.objects.filter(parent_document=self.object).order_by('-version')
+        ctx['versions'] = eligible_documents.filter(
+            parent_document=self.object,
+        ).order_by('-version')
         return ctx
 
 
@@ -400,14 +454,24 @@ class DocumentCompareView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailV
 
     def get_queryset(self):
         org = self.get_organization()
-        return scope_queryset_for_organization(Document.objects.all(), org).filter(is_deleted=False)
+        qs = scope_queryset_for_organization(Document.objects.all(), org).filter(is_deleted=False)
+        return _document_queryset_for_request(
+            self.request,
+            org,
+            qs,
+            surface='document_compare',
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        other_document = get_object_or_404(
-            scope_queryset_for_organization(Document.objects.all(), self.get_organization()),
-            pk=self.kwargs['other_pk'],
+        org = self.get_organization()
+        other_documents = _document_queryset_for_request(
+            self.request,
+            org,
+            scope_queryset_for_organization(Document.objects.all(), org),
+            surface='document_compare_other',
         )
+        other_document = get_object_or_404(other_documents, pk=self.kwargs['other_pk'])
         context['other_document'] = other_document
         context['comparison'] = compare_document_versions(self.object, other_document)
         return context
@@ -419,6 +483,26 @@ class DocumentCreateView(TenantScopedFormMixin, TenantAssignCreateMixin, LoginRe
     template_name = 'contracts/document_form.html'
     success_url = reverse_lazy('contracts:document_list')
     scoped_form_fields = {'contract': Contract, 'matter': Matter, 'client': Client}
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        org = self.get_organization()
+        if document_repository_enforcement_active(org):
+            form.fields.pop('share_with_counterparty', None)
+        form.fields['contract'].queryset = _contract_queryset_for_request(
+            self.request,
+            org,
+            form.fields['contract'].queryset,
+            surface='document_create_contract_options',
+        )
+        for field_name in ('client', 'matter'):
+            form.fields[field_name].queryset = apply_document_relation_policy(
+                form.fields[field_name].queryset,
+                organization=org,
+                user=self.request.user,
+                surface=f'document_create_{field_name}_options',
+            )
+        return form
 
     def form_valid(self, form):
         set_organization_on_instance(form.instance, get_user_organization(self.request.user))
@@ -444,7 +528,13 @@ class DocumentCreateView(TenantScopedFormMixin, TenantAssignCreateMixin, LoginRe
             tags=staged.tags,
             is_privileged=staged.is_privileged,
             is_confidential=staged.is_confidential,
-            share_with_counterparty=staged.share_with_counterparty,
+            share_with_counterparty=(
+                False
+                if document_repository_enforcement_active(
+                    get_user_organization(self.request.user)
+                )
+                else staged.share_with_counterparty
+            ),
             request=self.request,
             supersede_prior=False,
         )
@@ -463,7 +553,33 @@ class DocumentUpdateView(TenantScopedFormMixin, TenantScopedQuerysetMixin, Login
 
     def get_queryset(self):
         org = self.get_organization()
-        return scope_queryset_for_organization(Document.objects.all(), org)
+        qs = scope_queryset_for_organization(Document.objects.all(), org)
+        return _document_queryset_for_request(
+            self.request,
+            org,
+            qs,
+            surface='document_update',
+        )
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        org = self.get_organization()
+        if document_repository_enforcement_active(org):
+            form.fields.pop('share_with_counterparty', None)
+        form.fields['contract'].queryset = _contract_queryset_for_request(
+            self.request,
+            org,
+            form.fields['contract'].queryset,
+            surface='document_update_contract_options',
+        )
+        for field_name in ('client', 'matter'):
+            form.fields[field_name].queryset = apply_document_relation_policy(
+                form.fields[field_name].queryset,
+                organization=org,
+                user=self.request.user,
+                surface=f'document_update_{field_name}_options',
+            )
+        return form
 
     def dispatch(self, request, *args, **kwargs):
         document = self.get_object()
@@ -495,6 +611,13 @@ class DocumentUpdateView(TenantScopedFormMixin, TenantScopedQuerysetMixin, Login
             tags=staged_document.tags,
             is_privileged=staged_document.is_privileged,
             is_confidential=staged_document.is_confidential,
+            share_with_counterparty=(
+                False
+                if document_repository_enforcement_active(
+                    get_user_organization(self.request.user)
+                )
+                else staged_document.share_with_counterparty
+            ),
             request=self.request,
             supersede_prior=True,
         )
@@ -511,7 +634,13 @@ class DocumentDeleteView(TenantScopedQuerysetMixin, LoginRequiredMixin, DeleteVi
 
     def get_queryset(self):
         org = get_user_organization(self.request.user)
-        return scope_queryset_for_organization(Document.objects.all(), org)
+        qs = scope_queryset_for_organization(Document.objects.all(), org)
+        return _document_queryset_for_request(
+            self.request,
+            org,
+            qs,
+            surface='document_delete',
+        )
 
     def form_valid(self, form):
         # Authorization + retention + soft-delete + chained audit all live in the
@@ -545,25 +674,42 @@ def document_download(request, pk):
     if org is None:
         raise Http404
 
-    # Cross-tenant attempts: detect a foreign document to audit the block, but
-    # never reveal it (still 404). The blocked event is filed on the ACTOR's org.
-    scoped = scope_queryset_for_organization(Document.objects.all(), org)
+    # Audit every denied/missing lookup identically. Avoid an unscoped
+    # existence probe so response work does not vary based on a foreign row.
+    scoped = _document_queryset_for_request(
+        request,
+        org,
+        scope_queryset_for_organization(Document.objects.all(), org),
+        surface='document_download',
+    )
     document = scoped.filter(pk=pk).first()
     if document is None:
-        if Document.objects.filter(pk=pk).exists():
+        log_action(
+            request.user, AuditLog.Action.VIEW, 'Document',
+            object_id=None, object_repr='document access blocked',
+            organization=org, event_type='document.access_blocked', outcome='blocked',
+            changes={'event': 'document.access_blocked', 'attempted_document_id': pk},
+            request=request,
+        )
+        raise Http404
+
+    # Preserve the canonical linked-contract permission check. Under bounded
+    # repository enforcement, denied and missing objects remain
+    # indistinguishable; with the gate off, retain the existing 403 behaviour.
+    if document.contract_id and not can_access_contract_action(
+        request.user,
+        document.contract,
+        ContractAction.VIEW,
+    ):
+        if document_repository_enforcement_active(org):
             log_action(
                 request.user, AuditLog.Action.VIEW, 'Document',
-                object_id=None, object_repr='cross-tenant document access blocked',
+                object_id=None, object_repr='document access blocked',
                 organization=org, event_type='document.access_blocked', outcome='blocked',
                 changes={'event': 'document.access_blocked', 'attempted_document_id': pk},
                 request=request,
             )
-        raise Http404
-
-    # Document permission: VIEW on the linked contract where present.
-    if document.contract_id and not can_access_contract_action(
-        request.user, document.contract, ContractAction.VIEW
-    ):
+            raise Http404
         return HttpResponseForbidden('You do not have permission to access this document.')
 
     # Deletion/retention state (soft-delete added in 4E; defensive until then).
@@ -602,6 +748,13 @@ class DocumentOCRQueueView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListVi
             DocumentOCRReview.objects.select_related('document', 'reviewed_by'),
             org,
         )
+        eligible_documents = _document_queryset_for_request(
+            self.request,
+            org,
+            Document.objects.all(),
+            surface='document_ocr_queue',
+        )
+        qs = qs.filter(document_id__in=eligible_documents.values('pk'))
         status = self.request.GET.get('status')
         if status:
             qs = qs.filter(status=status)
@@ -615,10 +768,17 @@ class DocumentOCRReviewUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin,
 
     def get_queryset(self):
         org = self.get_organization()
-        return scope_queryset_for_organization(
+        qs = scope_queryset_for_organization(
             DocumentOCRReview.objects.select_related('document', 'reviewed_by'),
             org,
         )
+        eligible_documents = _document_queryset_for_request(
+            self.request,
+            org,
+            Document.objects.all(),
+            surface='document_ocr_review',
+        )
+        return qs.filter(document_id__in=eligible_documents.values('pk'))
 
     def form_valid(self, form):
         review = form.save(commit=False)

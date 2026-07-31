@@ -237,11 +237,14 @@ class TestDocumentUploadApiView(unittest.TestCase):
         with (
             patch('contracts.api.documents_ai.get_user_organization', return_value=mock_org),
             patch('contracts.api.documents_ai.Document') as MockDocument,
+            patch(
+                'contracts.services.document_version_service.create_document_version',
+                return_value=(mock_doc, MagicMock()),
+            ) as mock_create_version,
         ):
             MockDocument.DocType.OTHER = 'other'
             MockDocument.DocType.choices = [('other', 'Other')]
             MockDocument.Status.DRAFT = 'draft'
-            MockDocument.return_value = mock_doc
 
             from contracts.api.views import document_upload_api
             req = self._make_request(
@@ -254,6 +257,7 @@ class TestDocumentUploadApiView(unittest.TestCase):
         data = json.loads(resp.content)
         self.assertTrue(data['ok'])
         self.assertEqual(data['document_id'], 99)
+        mock_create_version.assert_called_once()
 
 
 class TestContractAiExtractApiView(unittest.TestCase):

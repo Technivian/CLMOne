@@ -9,7 +9,14 @@ from django.conf import settings
 from django.db.models import Q, QuerySet
 from django.utils import timezone
 
-from contracts.models import Contract, EthicalWall, OrganizationMembership
+from contracts.models import (
+    Client,
+    Contract,
+    Document,
+    EthicalWall,
+    Matter,
+    OrganizationMembership,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -96,15 +103,9 @@ def contract_repository_enforcement_state(organization) -> SearchEnforcementStat
     )
 
 
-def filter_contract_queryset(
-    queryset: QuerySet,
-    *,
-    organization,
-    user,
-    surface: str = 'contract_search',
-) -> QuerySet:
-    """Return only contracts eligible for this requester under Ethical Walls."""
-    if queryset.model is not Contract or organization is None:
+def _restricted_scope_ids(*, organization, user) -> tuple[set[int], set[int]]:
+    """Validate the requester and return client/matter scopes denied by active walls."""
+    if organization is None:
         raise ObjectReadPolicyUnavailable('Unsupported object policy input.')
     if not user or not getattr(user, 'is_authenticated', False) or not user.is_active:
         raise ObjectReadPolicyUnavailable('Requester membership cannot be established.')
@@ -157,6 +158,24 @@ def filter_contract_queryset(
         if wall['matter_id'] is not None:
             restricted_matter_ids.add(wall['matter_id'])
 
+    return restricted_client_ids, restricted_matter_ids
+
+
+def filter_contract_queryset(
+    queryset: QuerySet,
+    *,
+    organization,
+    user,
+    surface: str = 'contract_search',
+) -> QuerySet:
+    """Return only contracts eligible for this requester under Ethical Walls."""
+    if queryset.model is not Contract:
+        raise ObjectReadPolicyUnavailable('Unsupported object policy input.')
+    restricted_client_ids, restricted_matter_ids = _restricted_scope_ids(
+        organization=organization,
+        user=user,
+    )
+
     eligible = queryset.filter(organization=organization)
     eligible = eligible.filter(
         Q(client__isnull=True) | Q(client__organization=organization),
@@ -171,6 +190,118 @@ def filter_contract_queryset(
             Q(client_id__in=restricted_client_ids)
             | Q(matter_id__in=restricted_matter_ids)
             | Q(matter__client_id__in=restricted_client_ids)
+        )
+        logger.info('object_read_policy outcome=deny surface=%s', surface)
+    else:
+        logger.info('object_read_policy outcome=allow surface=%s', surface)
+    return eligible.distinct()
+
+
+def filter_document_queryset(
+    queryset: QuerySet,
+    *,
+    organization,
+    user,
+    surface: str = 'document_repository',
+) -> QuerySet:
+    """Return documents the requester may discover or open.
+
+    Document visibility inherits active Ethical Walls from every canonical
+    relationship that can carry a client or matter.  Relationally inconsistent
+    cross-workspace references are excluded even when the document row itself
+    carries the requester's organization.
+    """
+    if queryset.model is not Document:
+        raise ObjectReadPolicyUnavailable('Unsupported object policy input.')
+    restricted_client_ids, restricted_matter_ids = _restricted_scope_ids(
+        organization=organization,
+        user=user,
+    )
+    eligible_contracts = Contract.objects.filter(organization=organization).filter(
+        Q(client__isnull=True) | Q(client__organization=organization),
+        Q(matter__isnull=True)
+        | Q(
+            matter__organization=organization,
+            matter__client__organization=organization,
+        ),
+    )
+    if restricted_client_ids or restricted_matter_ids:
+        eligible_contracts = eligible_contracts.exclude(
+            Q(client_id__in=restricted_client_ids)
+            | Q(matter_id__in=restricted_matter_ids)
+            | Q(matter__client_id__in=restricted_client_ids)
+        )
+    eligible_contract_ids = eligible_contracts.values('pk')
+
+    eligible = queryset.filter(
+        organization=organization,
+        is_deleted=False,
+    ).filter(
+        Q(client__isnull=True) | Q(client__organization=organization),
+        Q(matter__isnull=True)
+        | Q(
+            matter__organization=organization,
+            matter__client__organization=organization,
+        ),
+        Q(contract__isnull=True) | Q(contract_id__in=eligible_contract_ids),
+    )
+    if restricted_client_ids or restricted_matter_ids:
+        eligible = eligible.exclude(
+            Q(client_id__in=restricted_client_ids)
+            | Q(matter_id__in=restricted_matter_ids)
+            | Q(matter__client_id__in=restricted_client_ids)
+        )
+        logger.info('object_read_policy outcome=deny surface=%s', surface)
+    else:
+        logger.info('object_read_policy outcome=allow surface=%s', surface)
+    return eligible.distinct()
+
+
+def filter_client_queryset(
+    queryset: QuerySet,
+    *,
+    organization,
+    user,
+    surface: str = 'document_client_options',
+) -> QuerySet:
+    """Filter client choices used by secured document repository forms."""
+    if queryset.model is not Client:
+        raise ObjectReadPolicyUnavailable('Unsupported object policy input.')
+    restricted_client_ids, _ = _restricted_scope_ids(
+        organization=organization,
+        user=user,
+    )
+    eligible = queryset.filter(organization=organization)
+    if restricted_client_ids:
+        eligible = eligible.exclude(pk__in=restricted_client_ids)
+        logger.info('object_read_policy outcome=deny surface=%s', surface)
+    else:
+        logger.info('object_read_policy outcome=allow surface=%s', surface)
+    return eligible.distinct()
+
+
+def filter_matter_queryset(
+    queryset: QuerySet,
+    *,
+    organization,
+    user,
+    surface: str = 'document_matter_options',
+) -> QuerySet:
+    """Filter matter choices used by secured document repository forms."""
+    if queryset.model is not Matter:
+        raise ObjectReadPolicyUnavailable('Unsupported object policy input.')
+    restricted_client_ids, restricted_matter_ids = _restricted_scope_ids(
+        organization=organization,
+        user=user,
+    )
+    eligible = queryset.filter(
+        organization=organization,
+        client__organization=organization,
+    )
+    if restricted_client_ids or restricted_matter_ids:
+        eligible = eligible.exclude(
+            Q(pk__in=restricted_matter_ids)
+            | Q(client_id__in=restricted_client_ids)
         )
         logger.info('object_read_policy outcome=deny surface=%s', surface)
     else:

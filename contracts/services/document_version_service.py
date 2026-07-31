@@ -397,6 +397,12 @@ def assert_document_version_immutable(instance, *, previous: dict | None) -> Non
     for field in IMMUTABLE_DOCUMENT_FIELDS:
         old = previous.get(field)
         new = getattr(instance, field, None)
+        if field == 'file':
+            # values('file') returns the stored object-key string while the
+            # model instance exposes a FieldFile. Compare canonical names so
+            # metadata-only saves do not look like content replacement.
+            old = str(old or '')
+            new = str(getattr(new, 'name', '') or '')
         if field.endswith('_id'):
             new = getattr(instance, field.replace('_id', '') + '_id', None) if hasattr(instance, field) else new
         if old != new:
