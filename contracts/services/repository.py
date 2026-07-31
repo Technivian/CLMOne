@@ -4,6 +4,7 @@ Repository service layer for contracts
 Provides abstraction between UI and data layer
 """
 from datetime import date, timedelta
+import logging
 
 from django.contrib.auth.models import User
 from contracts.models import Contract
@@ -28,7 +29,13 @@ from contracts.templatetags.clmone_format import (
     money,
 )
 from contracts.services.workflow_operations import split_exception_from_title
+from contracts.services.object_read_policy import (
+    SearchEnforcementState,
+    contract_repository_enforcement_state,
+    filter_contract_queryset,
+)
 
+logger = logging.getLogger(__name__)
 
 # Compact next-action verbs for repository payloads (hidden on All contracts;
 # surfaces that need them — My work / Approvals — can reuse the same wording).
@@ -83,6 +90,41 @@ def _repository_stage_label(contract) -> tuple[str, str]:
 
 class BulkUpdateValidationError(Exception):
     """Raised when bulk update payload fails validation."""
+
+
+def apply_repository_contract_policy(queryset, *, organization, user, surface):
+    """Apply the separately gated repository policy before any projection."""
+    state = contract_repository_enforcement_state(organization)
+    if state is SearchEnforcementState.LEGACY:
+        return queryset
+    if state in {
+        SearchEnforcementState.FAIL_CLOSED,
+        SearchEnforcementState.ABORT_FAIL_CLOSED,
+    }:
+        outcome = (
+            'rollback_fail_closed'
+            if state is SearchEnforcementState.ABORT_FAIL_CLOSED
+            else 'configuration_fail_closed'
+        )
+        logger.warning(
+            'object_read_policy outcome=%s surface=%s',
+            outcome,
+            surface,
+        )
+        return queryset.none()
+    try:
+        return filter_contract_queryset(
+            queryset,
+            organization=organization,
+            user=user,
+            surface=surface,
+        )
+    except Exception:
+        # The externally observable result is deliberately content-free. The
+        # exception and any object identifiers must never enter application
+        # logs because policy inputs can themselves be restricted metadata.
+        logger.error('object_read_policy outcome=policy_error surface=%s', surface)
+        return queryset.none()
 
 
 def get_repository_service(user: User):
@@ -200,6 +242,12 @@ class DjangoRepositoryService:
             Contract.objects.select_related('created_by', 'owner').prefetch_related('documents'),
             self.organization,
         )
+        queryset = apply_repository_contract_policy(
+            queryset,
+            organization=self.organization,
+            user=self.user,
+            surface='repository_list',
+        )
         
         # Apply search
         if params.q:
@@ -297,6 +345,12 @@ class DjangoRepositoryService:
         """Get single contract by ID"""
         try:
             queryset = scope_queryset_for_organization(Contract.objects.all(), self.organization)
+            queryset = apply_repository_contract_policy(
+                queryset,
+                organization=self.organization,
+                user=self.user,
+                surface='repository_detail_api',
+            )
             contract = queryset.get(id=contract_id)
             assignee_map = assignee_map_for_contracts(self.organization, [contract.pk])
             activity_map = latest_activity_map(self.organization, [contract.pk])
@@ -333,6 +387,12 @@ class DjangoRepositoryService:
         )
         lifecycle = get_contract_lifecycle_service()
         queryset = scope_queryset_for_organization(Contract.objects.filter(id__in=contract_ids), self.organization)
+        queryset = apply_repository_contract_policy(
+            queryset,
+            organization=self.organization,
+            user=self.user,
+            surface='repository_bulk_update',
+        )
         updated_count = 0
         for contract in queryset.select_related('organization', 'created_by'):
             changed = False

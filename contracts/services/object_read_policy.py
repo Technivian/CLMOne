@@ -1,4 +1,4 @@
-"""Reusable object-read policy boundary for the PAR-SEC-002 search slice."""
+"""Reusable object-read policy boundary for PAR-SEC-002 contract surfaces."""
 
 from __future__ import annotations
 
@@ -35,16 +35,23 @@ def _configured_values(setting_name: str) -> set[str]:
     return {str(value).strip().casefold() for value in values if str(value).strip()}
 
 
-def contract_search_enforcement_state(organization) -> SearchEnforcementState:
-    """Resolve the reversible gate without broadening its configured scope."""
+def _contract_enforcement_state(
+    organization,
+    *,
+    enabled_setting: str,
+    abort_setting: str,
+    environments_setting: str,
+    org_allowlist_setting: str,
+) -> SearchEnforcementState:
+    """Resolve a reversible, environment/workspace-bounded enforcement gate."""
     enforcement_enabled = getattr(
         settings,
-        'PAR_SEC_002_SEARCH_ENFORCEMENT_ENABLED',
+        enabled_setting,
         False,
     )
     abort_fail_closed = getattr(
         settings,
-        'PAR_SEC_002_SEARCH_ABORT_FAIL_CLOSED',
+        abort_setting,
         False,
     )
     if not enforcement_enabled and not abort_fail_closed:
@@ -52,9 +59,7 @@ def contract_search_enforcement_state(organization) -> SearchEnforcementState:
     if organization is None:
         return SearchEnforcementState.FAIL_CLOSED
 
-    allowlisted_orgs = _configured_values(
-        'PAR_SEC_002_SEARCH_ENFORCEMENT_ORG_ALLOWLIST'
-    )
+    allowlisted_orgs = _configured_values(org_allowlist_setting)
     if str(organization.slug).casefold() not in allowlisted_orgs:
         return SearchEnforcementState.LEGACY
     if abort_fail_closed:
@@ -63,12 +68,32 @@ def contract_search_enforcement_state(organization) -> SearchEnforcementState:
         return SearchEnforcementState.LEGACY
 
     environment = str(getattr(settings, 'DJANGO_ENV', '') or '').strip().casefold()
-    allowlisted_environments = _configured_values(
-        'PAR_SEC_002_SEARCH_ENFORCEMENT_ENVIRONMENTS'
-    )
+    allowlisted_environments = _configured_values(environments_setting)
     if environment == 'production' or environment not in allowlisted_environments:
         return SearchEnforcementState.FAIL_CLOSED
     return SearchEnforcementState.ENFORCE
+
+
+def contract_search_enforcement_state(organization) -> SearchEnforcementState:
+    """Resolve the existing search/facet gate without broadening its scope."""
+    return _contract_enforcement_state(
+        organization,
+        enabled_setting='PAR_SEC_002_SEARCH_ENFORCEMENT_ENABLED',
+        abort_setting='PAR_SEC_002_SEARCH_ABORT_FAIL_CLOSED',
+        environments_setting='PAR_SEC_002_SEARCH_ENFORCEMENT_ENVIRONMENTS',
+        org_allowlist_setting='PAR_SEC_002_SEARCH_ENFORCEMENT_ORG_ALLOWLIST',
+    )
+
+
+def contract_repository_enforcement_state(organization) -> SearchEnforcementState:
+    """Resolve the separate repository/read-path enforcement gate."""
+    return _contract_enforcement_state(
+        organization,
+        enabled_setting='PAR_SEC_002_REPOSITORY_ENFORCEMENT_ENABLED',
+        abort_setting='PAR_SEC_002_REPOSITORY_ABORT_FAIL_CLOSED',
+        environments_setting='PAR_SEC_002_REPOSITORY_ENFORCEMENT_ENVIRONMENTS',
+        org_allowlist_setting='PAR_SEC_002_REPOSITORY_ENFORCEMENT_ORG_ALLOWLIST',
+    )
 
 
 def filter_contract_queryset(
@@ -76,6 +101,7 @@ def filter_contract_queryset(
     *,
     organization,
     user,
+    surface: str = 'contract_search',
 ) -> QuerySet:
     """Return only contracts eligible for this requester under Ethical Walls."""
     if queryset.model is not Contract or organization is None:
@@ -146,7 +172,7 @@ def filter_contract_queryset(
             | Q(matter_id__in=restricted_matter_ids)
             | Q(matter__client_id__in=restricted_client_ids)
         )
-        logger.info('object_read_policy outcome=deny surface=contract_search')
+        logger.info('object_read_policy outcome=deny surface=%s', surface)
     else:
-        logger.info('object_read_policy outcome=allow surface=contract_search')
+        logger.info('object_read_policy outcome=allow surface=%s', surface)
     return eligible.distinct()

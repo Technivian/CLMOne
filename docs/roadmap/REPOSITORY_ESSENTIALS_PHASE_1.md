@@ -6,9 +6,10 @@ authorized bounded synthetic, non-production use on 28 July 2026. Production
 and real-data use remain out of scope.
 
 **Implementation baseline:** `main` at
-`0d62db10392fe066b43d6f349ac7c66c5ea87f1d`, after the planning baseline and
-UI test recovery merged (28 July 2026). Platform Alignment and Pilot Hardening
-remain closed. The PayrollMinds demonstration remains a synthetic,
+`d081d3543e89d20b7f1d53a8230582ca590bc89a`, after the planning baseline,
+CSV-import implementation, UI recovery, and the bounded search/facet policy
+slice merged (31 July 2026). Platform Alignment and Pilot Hardening remain
+closed. The PayrollMinds demonstration remains a synthetic,
 design-partner demonstration only: no real PayrollMinds, client, employee, or
 payroll data; no production-readiness claim.
 
@@ -42,7 +43,7 @@ Phase 1 must not:
 | Capability | State | Baseline evidence and reusable components | Gap / gate |
 |---|---|---|---|
 | Bulk contract import and migration | **Ready (owner-authorized, default-off implementation)** | `RepositoryCsvImportService` adds a private-workspace template, zero-mutation dry-run, deterministic row diagnostics, create-only duplicate detection, canonical type/counterparty/lifecycle/key-date mapping, signed commit/rollback tokens, immutable provenance/correlation evidence, append-only audit, and compensating archival. Synthetic fixture/reset and tenant-isolation coverage are included. | Bounded synthetic, non-production use is owner-authorized. The flag remains committed off by default; no client data, document upload, external access, automatic processing, or production-readiness claim is authorized. |
-| Repository metadata, filtering, and dependable search | **Partial — bounded R2 slice implemented** | A default-off, environment/workspace-allowlisted evaluator protects contract-search results and facets before metadata, totals, pagination, or aggregation. Repository list, search presets, contract type catalogue, contract key dates, and tenant scoping also exist. | Repository list projections, saved views, export, autocomplete, and document text are not covered by this first slice and remain deferred. |
+| Repository metadata, filtering, and dependable search | **Partial — bounded R2 and repository-boundary slices implemented** | Separate default-off, environment/workspace-allowlisted gates reuse one Ethical-Wall evaluator. Search results/facets and canonical repository rows, totals, KPI counts, counterparty options, detail/edit lookups, and bulk lifecycle actions are filtered before projection or mutation. Search presets, contract type catalogue, contract key dates, and tenant scoping also exist. | Global-search projections, saved-view outputs, browser export assurance, autocomplete, document-only routes, document text, and API-token actor policy remain deferred. No enforcement gate is activated. |
 | Renewal, notice, and deadline reminders | **Partial** | `Contract` has renewal/end/notice dates; `Deadline`, obligations workspace, renewal playbook, scheduled jobs, and notification service exist. | Playbook creates unassigned deadline rows; it does not calculate a canonical notice date from contract terms, prove delivery/escalation, or provide reminder policy/version/evidence. Automated delivery requires separate authorization. |
 | One e-signature integration | **Partial** | `SignatureRequest`, document-version binding, provider abstraction, simulated null provider, DocuSign/Documenso adapters, webhook reconciliation, and audit helpers exist. | Live provider credentials, OAuth/token rotation, callback/webhook production assurance, signature authority, and provider operational controls are not authorized. PayrollMinds scope explicitly excludes live e-sign. |
 | Secure external document sharing | **Unsafe** | Contract-scoped counterparty collaboration supports explicit document flags, expiry, revocation, audit events, revisions, and private-by-default documents. | The portal uses a bearer capability URL plus email confirmation rather than authenticated external identity, and has no accepted external-sharing authorization package. It must not be extended as public/anonymous sharing. |
@@ -263,7 +264,7 @@ AI-assisted extraction.
 | Order | Capability / slice | Owner | Current state | Dependencies | Acceptance evidence | Risk | Status |
 |---:|---|---|---|---|---|---|---|
 | 1 | CSV-assisted private-workspace import | Product + Engineering + Security | **Completed** | Existing lifecycle/provenance and repository-owner authorization | Synthetic fixture, dry-run, duplicate, isolation, audit, compensation, exact-SHA CI and rollback evidence | Medium | **Owner-authorized for bounded synthetic non-production use; default off** |
-| 2 | Repository metadata, filters, and policy-safe search | Product + Engineering + Security | **In progress** | Owner-authorized PDR-0008 search/facet slice; remaining projection inventory | Object-policy/no-leak/facet tests, query-cost bound, route inventory, and fail-closed abort runbook | High | **Contract-search results/facets implemented default off; broader R2 deferred** |
+| 2 | Repository metadata, filters, and policy-safe search | Product + Engineering + Security | **In progress** | Owner-directed repository/security priority; remaining global-search/document projection inventory | Object-policy/no-leak/facet and repository tests, query-cost bound, route inventories, content-free logs, and fail-closed abort runbooks | High | **Search/facets plus repository list/count/detail/edit/bulk boundary implemented default off; activation and remaining projections blocked** |
 | 3 | Renewal/notice/deadline reminders | Product + Engineering | Partial | Import dates, ownership, notification policy | Time-boundary, idempotency, delivery/audit tests | Medium | Deferred |
 | 4 | Entity and contract-family profiles | Product + Engineering + Security | Blocked | Canonical ownership/migration decision | Relationship, isolation, reversal tests | High | Deferred |
 | 5 | Secure external sharing | Product + Engineering + Security | Unsafe | External-access authorization, identity, file safety | Recipient/revocation/no-leak tests | High | Deferred |

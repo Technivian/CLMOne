@@ -569,6 +569,26 @@ PAR_SEC_002_SEARCH_ENFORCEMENT_ORG_ALLOWLIST = os.getenv(
     'PAR_SEC_002_SEARCH_ENFORCEMENT_ORG_ALLOWLIST',
     '',
 ).strip()
+# PAR-SEC-002 repository read boundary. This deliberately has an independent
+# gate from search/facets so rollout cannot silently broaden an earlier
+# authorization. It covers repository rows, counts/filter metadata, canonical
+# detail reads, and repository bulk actions. Empty allowlists keep it inactive.
+PAR_SEC_002_REPOSITORY_ENFORCEMENT_ENABLED = _bool_env(
+    'PAR_SEC_002_REPOSITORY_ENFORCEMENT_ENABLED',
+    default=False,
+)
+PAR_SEC_002_REPOSITORY_ABORT_FAIL_CLOSED = _bool_env(
+    'PAR_SEC_002_REPOSITORY_ABORT_FAIL_CLOSED',
+    default=False,
+)
+PAR_SEC_002_REPOSITORY_ENFORCEMENT_ENVIRONMENTS = os.getenv(
+    'PAR_SEC_002_REPOSITORY_ENFORCEMENT_ENVIRONMENTS',
+    '',
+).strip()
+PAR_SEC_002_REPOSITORY_ENFORCEMENT_ORG_ALLOWLIST = os.getenv(
+    'PAR_SEC_002_REPOSITORY_ENFORCEMENT_ORG_ALLOWLIST',
+    '',
+).strip()
 
 # PAR-ID-001 Slice 3 — feature-flagged shadow sync / parity (default OFF).
 # When enabled, selected UserProfile.role writes mirror into org-scoped

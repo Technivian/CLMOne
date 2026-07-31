@@ -110,6 +110,7 @@ from contracts.services.contract_detail_workspace import (
 from contracts.services.ai_policy import evaluate_prompt
 from contracts.services.ai_actions import build_action_plan, execute_action_plan
 from contracts.services.payrollminds_demo import is_payrollminds_presenter_workspace
+from contracts.services.repository import apply_repository_contract_policy
 from config.feature_flags import is_feature_redesign_enabled
 
 from .contract_helpers import _build_contract_ai_response, build_contract_lifecycle_guidance
@@ -322,7 +323,13 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
 
     def get_queryset(self):
         org = get_user_organization(self.request.user)
-        return scope_queryset_for_organization(Contract.objects.all(), org)
+        queryset = scope_queryset_for_organization(Contract.objects.all(), org)
+        return apply_repository_contract_policy(
+            queryset,
+            organization=org,
+            user=self.request.user,
+            surface='contract_detail',
+        )
 
     def _attachment_form(self, data=None, files=None):
         """Build the existing upload form with this contract fixed server-side."""
@@ -1459,7 +1466,13 @@ class ContractUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin, UpdateVi
 
     def get_queryset(self):
         org = get_user_organization(self.request.user)
-        return scope_queryset_for_organization(Contract.objects.all(), org)
+        queryset = scope_queryset_for_organization(Contract.objects.all(), org)
+        return apply_repository_contract_policy(
+            queryset,
+            organization=org,
+            user=self.request.user,
+            surface='contract_update',
+        )
 
     def _revision_unlocked(self):
         contract = getattr(self, 'object', None) or getattr(self, 'original_contract', None)
@@ -1786,7 +1799,16 @@ class RepositoryView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         org = get_user_organization(self.request.user)
-        return scope_queryset_for_organization(Contract.objects.select_related('created_by', 'owner'), org).order_by('-updated_at', '-created_at')
+        queryset = scope_queryset_for_organization(
+            Contract.objects.select_related('created_by', 'owner'),
+            org,
+        )
+        return apply_repository_contract_policy(
+            queryset,
+            organization=org,
+            user=self.request.user,
+            surface='repository_page',
+        ).order_by('-updated_at', '-created_at')
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -1804,6 +1826,12 @@ class RepositoryView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
         elif status_values == ('ACTIVE',) and not stage_values and not expiring_days:
             active_tab = 'active'
         tenant_contracts = scope_queryset_for_organization(Contract.objects.all(), org)
+        tenant_contracts = apply_repository_contract_policy(
+            tenant_contracts,
+            organization=org,
+            user=self.request.user,
+            surface='repository_metadata',
+        )
         expiry_cutoff = timezone.localdate() + timedelta(days=30)
         contract_stats = tenant_contracts.aggregate(
             total=Count('id'),
