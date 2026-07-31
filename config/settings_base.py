@@ -303,6 +303,21 @@ OIDC_RP_CLIENT_ID = os.getenv('OIDC_RP_CLIENT_ID', '')
 OIDC_RP_CLIENT_SECRET = os.getenv('OIDC_RP_CLIENT_SECRET', '')
 OIDC_RP_SIGN_ALGO = os.getenv('OIDC_RP_SIGN_ALGO', 'RS256')
 OIDC_RP_SCOPES = os.getenv('OIDC_RP_SCOPES', 'openid email profile')
+MICROSOFT_ENTRA_SSO_ENABLED = _bool_env(
+    'MICROSOFT_ENTRA_SSO_ENABLED',
+    default=False,
+)
+MICROSOFT_ENTRA_TENANT_ID = os.getenv(
+    'MICROSOFT_ENTRA_TENANT_ID',
+    '',
+).strip()
+MICROSOFT_ENTRA_ORG_ALLOWLIST = _csv_env(
+    'MICROSOFT_ENTRA_ORG_ALLOWLIST',
+)
+OIDC_CREATE_USER = _bool_env(
+    'OIDC_CREATE_USER',
+    default=not MICROSOFT_ENTRA_SSO_ENABLED,
+)
 SSO_ALLOWED_EMAIL_DOMAINS = [d.strip().lower() for d in os.getenv('SSO_ALLOWED_EMAIL_DOMAINS', '').split(',') if d.strip()]
 OIDC_OP_AUTHORIZATION_ENDPOINT = os.getenv('OIDC_OP_AUTHORIZATION_ENDPOINT', '')
 OIDC_OP_TOKEN_ENDPOINT = os.getenv('OIDC_OP_TOKEN_ENDPOINT', '')
@@ -334,6 +349,39 @@ if SSO_ENABLED:
             'OIDC_OP_DISCOVERY_ENDPOINT or all explicit endpoints '
             '(OIDC_OP_AUTHORIZATION_ENDPOINT, OIDC_OP_TOKEN_ENDPOINT, '
             'OIDC_OP_USER_ENDPOINT, OIDC_OP_JWKS_ENDPOINT).'
+        )
+
+if MICROSOFT_ENTRA_SSO_ENABLED:
+    if not SSO_ENABLED:
+        raise ImproperlyConfigured(
+            'MICROSOFT_ENTRA_SSO_ENABLED requires SSO_ENABLED=true.'
+        )
+    try:
+        import uuid
+        normalized_entra_tenant_id = str(uuid.UUID(MICROSOFT_ENTRA_TENANT_ID))
+    except (ValueError, AttributeError):
+        raise ImproperlyConfigured(
+            'MICROSOFT_ENTRA_TENANT_ID must be a tenant-specific UUID.'
+        ) from None
+    expected_entra_discovery = (
+        'https://login.microsoftonline.com/'
+        f'{normalized_entra_tenant_id}/v2.0/.well-known/openid-configuration'
+    )
+    if OIDC_OP_DISCOVERY_ENDPOINT.rstrip('/') != expected_entra_discovery:
+        raise ImproperlyConfigured(
+            'Microsoft Entra SSO requires the tenant-specific HTTPS discovery endpoint.'
+        )
+    if OIDC_CREATE_USER:
+        raise ImproperlyConfigured(
+            'Microsoft Entra SSO requires OIDC_CREATE_USER=false.'
+        )
+    if not SSO_ALLOWED_EMAIL_DOMAINS:
+        raise ImproperlyConfigured(
+            'Microsoft Entra SSO requires an explicit SSO_ALLOWED_EMAIL_DOMAINS allowlist.'
+        )
+    if not MICROSOFT_ENTRA_ORG_ALLOWLIST:
+        raise ImproperlyConfigured(
+            'Microsoft Entra SSO requires an explicit MICROSOFT_ENTRA_ORG_ALLOWLIST.'
         )
 
 MEDIA_URL = '/media/'
