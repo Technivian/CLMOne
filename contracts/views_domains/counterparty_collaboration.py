@@ -6,6 +6,7 @@ invited email before a session grants access.  It never creates a workspace
 membership or exposes internal notes, approvals, AI review, or search.
 """
 from datetime import timedelta
+from functools import wraps
 from hmac import compare_digest
 
 from django.conf import settings
@@ -20,6 +21,7 @@ from django.views.decorators.http import require_POST
 from django.db.models import Q
 
 from contracts.forms import CounterpartyCollaborationInviteForm
+from config.feature_flags import is_external_collaboration_enabled
 from contracts.middleware import log_action
 from contracts.models import (
     AuditLog,
@@ -33,6 +35,22 @@ from contracts.tenancy import get_user_organization
 
 
 PORTAL_SESSION_PREFIX = 'counterparty-collaboration:'
+
+
+def external_collaboration_required(view):
+    """Return one content-free response while external sharing is disabled.
+
+    This decorator must remain outermost so disabled internal routes do not
+    reveal authentication state and public routes do not resolve a token,
+    participant, contract, document, or task before the gate is checked.
+    """
+    @wraps(view)
+    def wrapped(request, *args, **kwargs):
+        if not is_external_collaboration_enabled():
+            raise Http404
+        return view(request, *args, **kwargs)
+
+    return wrapped
 
 
 def _portal_session_key(participant):
@@ -71,6 +89,7 @@ def _audit_external(request, participant, *, action, event_type, changes=None, o
     )
 
 
+@external_collaboration_required
 @login_required
 @require_POST
 def counterparty_collaboration_invite(request, pk):
@@ -137,6 +156,7 @@ def counterparty_collaboration_invite(request, pk):
     return redirect('contracts:contract_detail', pk=contract.pk)
 
 
+@external_collaboration_required
 @login_required
 @require_POST
 def counterparty_collaboration_revoke(request, pk, participant_id):
@@ -160,6 +180,7 @@ def counterparty_collaboration_revoke(request, pk, participant_id):
     return redirect('contracts:contract_detail', pk=contract.pk)
 
 
+@external_collaboration_required
 @login_required
 @require_POST
 def counterparty_collaboration_create_item(request, pk):
@@ -193,6 +214,7 @@ def counterparty_collaboration_create_item(request, pk):
     return redirect('contracts:contract_detail', pk=contract.pk)
 
 
+@external_collaboration_required
 def counterparty_collaboration_portal(request, token):
     participant = _portal_participant_or_404(token)
     session_key = _portal_session_key(participant)
@@ -249,6 +271,7 @@ def counterparty_collaboration_portal(request, token):
     })
 
 
+@external_collaboration_required
 @require_POST
 def counterparty_collaboration_add_comment(request, token):
     participant = _verified_portal_participant_or_404(request, token)
@@ -267,6 +290,7 @@ def counterparty_collaboration_add_comment(request, token):
     return redirect('contracts:counterparty_collaboration_portal', token=participant.token)
 
 
+@external_collaboration_required
 @require_POST
 def counterparty_collaboration_upload_revision(request, token):
     participant = _verified_portal_participant_or_404(request, token)
@@ -312,6 +336,7 @@ def counterparty_collaboration_upload_revision(request, token):
     return redirect('contracts:counterparty_collaboration_portal', token=participant.token)
 
 
+@external_collaboration_required
 @require_POST
 def counterparty_collaboration_complete_task(request, token, item_id):
     participant = _verified_portal_participant_or_404(request, token)
@@ -329,6 +354,7 @@ def counterparty_collaboration_complete_task(request, token, item_id):
     return redirect('contracts:counterparty_collaboration_portal', token=participant.token)
 
 
+@external_collaboration_required
 def counterparty_collaboration_document_download(request, token, document_id):
     participant = _verified_portal_participant_or_404(request, token)
     if not participant.can_view_documents:

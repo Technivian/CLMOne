@@ -370,7 +370,8 @@ class PrivateDocumentRepositoryTests(TestCase):
         self.assertEqual(response.status_code, 404)
         self.assertNotContains(response, self.visible_document.title, status_code=404)
 
-    def test_flag_off_preserves_existing_explicit_sharing_control(self):
+    @override_settings(EXTERNAL_COLLABORATION_ENABLED=True)
+    def test_explicit_sharing_control_requires_separate_external_gate(self):
         form_response = self.client.get(reverse('contracts:document_create'))
         self.assertIn('share_with_counterparty', form_response.context['form'].fields)
 

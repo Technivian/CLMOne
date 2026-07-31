@@ -12,6 +12,7 @@ from django.utils import timezone
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 
 from contracts.forms import ClientForm, DocumentForm, DocumentOCRReviewForm, MatterForm
+from config.feature_flags import is_external_collaboration_enabled
 from contracts.middleware import log_action
 from contracts.models import (
     ApprovalRequest,
@@ -487,7 +488,10 @@ class DocumentCreateView(TenantScopedFormMixin, TenantAssignCreateMixin, LoginRe
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
         org = self.get_organization()
-        if document_repository_enforcement_active(org):
+        if (
+            document_repository_enforcement_active(org)
+            or not is_external_collaboration_enabled()
+        ):
             form.fields.pop('share_with_counterparty', None)
         form.fields['contract'].queryset = _contract_queryset_for_request(
             self.request,
@@ -529,11 +533,14 @@ class DocumentCreateView(TenantScopedFormMixin, TenantAssignCreateMixin, LoginRe
             is_privileged=staged.is_privileged,
             is_confidential=staged.is_confidential,
             share_with_counterparty=(
-                False
-                if document_repository_enforcement_active(
-                    get_user_organization(self.request.user)
+                staged.share_with_counterparty
+                if (
+                    is_external_collaboration_enabled()
+                    and not document_repository_enforcement_active(
+                        get_user_organization(self.request.user)
+                    )
                 )
-                else staged.share_with_counterparty
+                else False
             ),
             request=self.request,
             supersede_prior=False,
@@ -564,7 +571,10 @@ class DocumentUpdateView(TenantScopedFormMixin, TenantScopedQuerysetMixin, Login
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
         org = self.get_organization()
-        if document_repository_enforcement_active(org):
+        if (
+            document_repository_enforcement_active(org)
+            or not is_external_collaboration_enabled()
+        ):
             form.fields.pop('share_with_counterparty', None)
         form.fields['contract'].queryset = _contract_queryset_for_request(
             self.request,
@@ -612,11 +622,14 @@ class DocumentUpdateView(TenantScopedFormMixin, TenantScopedQuerysetMixin, Login
             is_privileged=staged_document.is_privileged,
             is_confidential=staged_document.is_confidential,
             share_with_counterparty=(
-                False
-                if document_repository_enforcement_active(
-                    get_user_organization(self.request.user)
+                staged_document.share_with_counterparty
+                if (
+                    is_external_collaboration_enabled()
+                    and not document_repository_enforcement_active(
+                        get_user_organization(self.request.user)
+                    )
                 )
-                else staged_document.share_with_counterparty
+                else False
             ),
             request=self.request,
             supersede_prior=True,

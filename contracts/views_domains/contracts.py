@@ -17,6 +17,7 @@ from django.views.decorators.http import require_POST
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
 from contracts.forms import ContractForm, DocumentForm, UserProfileForm
+from config.feature_flags import is_external_collaboration_enabled
 from contracts.middleware import log_action
 from contracts.models import (
     AuditLog,
@@ -343,6 +344,8 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
         # posted relation to retarget it to another record.
         for field_name in ('contract', 'matter', 'client'):
             form.fields.pop(field_name, None)
+        if not is_external_collaboration_enabled():
+            form.fields.pop('share_with_counterparty', None)
         return form
 
     def post(self, request, *args, **kwargs):
@@ -581,15 +584,20 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
         ctx['contract_activity_feed'] = activity_feed[:12]
         ctx['recent_activity_feed'] = activity_feed[:5]
         ctx['negotiation_threads'] = negotiation_threads
-        collaboration_participants = list(
-            case_record.counterparty_collaboration_participants.select_related('invited_by').all()[:20]
-        )
-        collaboration_items = list(
-            case_record.counterparty_collaboration_items.select_related(
-                'participant', 'created_by', 'document'
-            ).all()[:8]
-        )
+        collaboration_enabled = is_external_collaboration_enabled()
+        collaboration_participants = []
+        collaboration_items = []
+        if collaboration_enabled:
+            collaboration_participants = list(
+                case_record.counterparty_collaboration_participants.select_related('invited_by').all()[:20]
+            )
+            collaboration_items = list(
+                case_record.counterparty_collaboration_items.select_related(
+                    'participant', 'created_by', 'document'
+                ).all()[:8]
+            )
         ctx['counterparty_collaboration'] = {
+            'enabled': collaboration_enabled,
             'participants': collaboration_participants,
             'items': collaboration_items,
             'active_count': sum(
@@ -599,10 +607,13 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
                     CounterpartyCollaborationParticipant.Status.ACTIVE,
                 ) and participant.is_accessible
             ),
-            'shared_document_count': case_record.documents.filter(
-                share_with_counterparty=True, is_privileged=False, is_deleted=False,
-            ).count(),
-            'can_manage': ctx['can_edit'],
+            'shared_document_count': (
+                case_record.documents.filter(
+                    share_with_counterparty=True, is_privileged=False, is_deleted=False,
+                ).count()
+                if collaboration_enabled else 0
+            ),
+            'can_manage': collaboration_enabled and ctx['can_edit'],
         }
         approved_count = sum(
             1 for approval in approval_requests
