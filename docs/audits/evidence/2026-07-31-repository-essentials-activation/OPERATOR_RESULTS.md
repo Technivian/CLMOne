@@ -1,10 +1,15 @@
 # Repository Essentials bounded activation results
 
-**Result:** PASS  
-**Implementation SHA:** `88350bbc36f7f1efdc992741be0bfa3bfb73b53e`  
-**Named environment:** `repo-essentials-synthetic-2026-07-31`  
-**Workspace allowlist:** `synthetic-repository-activation` only  
-**Data:** disposable synthetic records only  
+**Result:** PASS
+
+**Implementation SHA:** `88350bbc36f7f1efdc992741be0bfa3bfb73b53e`
+
+**Named environment:** `repo-essentials-synthetic-2026-07-31`
+
+**Workspace allowlist:** `synthetic-repository-activation` only
+
+**Data:** disposable synthetic records only
+
 **Final state:** CSV, repository enforcement, repository abort, search
 enforcement, search abort, and external collaboration all off
 
