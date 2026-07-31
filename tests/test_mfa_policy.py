@@ -82,17 +82,13 @@ class MfaPolicyTests(TestCase):
         update = self.client.post(
             reverse('profile'),
             data={
+                'action': 'save_identity',
                 'first_name': 'Mfa',
                 'last_name': 'User',
                 'email': 'mfa@example.com',
-                'role': self.profile.role,
                 'phone': '555-0100',
-                'bar_number': '',
                 'department': '',
-                'hourly_rate': '',
                 'bio': 'Updated bio',
-                'mfa_enabled': 'on',
-                'mfa_enrollment_code': '',
             },
         )
         self.assertEqual(update.status_code, 302)
@@ -133,22 +129,14 @@ class MfaPolicyTests(TestCase):
         self.assertIsNotNone(recovery_codes)
         self.assertEqual(len(recovery_codes), 8)
 
+        # Recovery codes are authentication factors. They are consumed only at
+        # the MFA challenge, never by the redesigned profile forms.
+        session = self.client.session
+        session['mfa_verified'] = False
+        session.save()
         submit = self.client.post(
-            reverse('profile'),
-            data={
-                'first_name': 'Mfa',
-                'last_name': 'User',
-                'email': 'mfa@example.com',
-                'role': self.profile.role,
-                'phone': '',
-                'bar_number': '',
-                'department': '',
-                'hourly_rate': '',
-                'bio': 'Security focused',
-                'mfa_enabled': 'on',
-                'mfa_enrollment_code': '',
-                'mfa_recovery_code': recovery_codes[0],
-            },
+            reverse('mfa_challenge'),
+            data={'code': recovery_codes[0]},
         )
         self.assertEqual(submit.status_code, 302)
         self.profile.refresh_from_db()
@@ -158,5 +146,11 @@ class MfaPolicyTests(TestCase):
                 user=self.user,
                 model_name='UserProfile',
                 changes__event='mfa_recovery_codes_generated',
+            ).exists()
+        )
+        self.assertTrue(
+            AuditLog.objects.filter(
+                user=self.user,
+                event_type='mfa.recovery_code_used',
             ).exists()
         )
