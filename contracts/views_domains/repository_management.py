@@ -44,6 +44,11 @@ from contracts.services.clause_versions import compare_clause_versions, clone_cl
 from contracts.services.clause_variants import resolve_clause_variant
 from contracts.services.semantic_search import rank_clause_templates_semantic
 from contracts.services.par_sec_002_observation import observe_request
+from contracts.services.document_repository_policy import (
+    apply_document_relation_policy,
+    apply_document_repository_policy,
+)
+from contracts.services.repository import apply_repository_contract_policy
 from contracts.middleware import log_action
 
 
@@ -393,7 +398,12 @@ def global_search(request):
     search_mode = params['search_mode']
     results = {}
     if q:
-        case_queryset = get_scoped_queryset_for_request(request, Case).filter(
+        case_queryset = apply_repository_contract_policy(
+            get_scoped_queryset_for_request(request, Case),
+            organization=org,
+            user=request.user,
+            surface='global_search_contracts',
+        ).filter(
             Q(title__icontains=q) | Q(counterparty__icontains=q) | Q(content__icontains=q)
         )
         if contract_status:
@@ -404,14 +414,24 @@ def global_search(request):
             case_results = _ranked_queryset(case_queryset, q, title_field='title')[:10]
         results['cases'] = case_results
         results['contracts'] = case_results
-        client_queryset = get_scoped_queryset_for_request(request, Client).filter(
+        client_queryset = apply_document_relation_policy(
+            get_scoped_queryset_for_request(request, Client),
+            organization=org,
+            user=request.user,
+            surface='global_search_clients',
+        ).filter(
             Q(name__icontains=q) | Q(email__icontains=q) | Q(industry__icontains=q)
         )
         if result_type and result_type not in {'client', 'clients'}:
             results['clients'] = client_queryset.none()
         else:
             results['clients'] = _ranked_queryset(client_queryset, q, title_field='name')[:10]
-        case_matter_queryset = get_scoped_queryset_for_request(request, CaseMatter).filter(
+        case_matter_queryset = apply_document_relation_policy(
+            get_scoped_queryset_for_request(request, CaseMatter),
+            organization=org,
+            user=request.user,
+            surface='global_search_matters',
+        ).filter(
             Q(title__icontains=q) | Q(matter_number__icontains=q) | Q(description__icontains=q)
         )
         if result_type and result_type not in {'matter', 'matters', 'case_matter', 'case_matters'}:
@@ -419,7 +439,12 @@ def global_search(request):
         else:
             results['case_matters'] = _ranked_queryset(case_matter_queryset, q, title_field='title')[:10]
         results['matters'] = results['case_matters']
-        document_queryset = get_scoped_queryset_for_request(request, Document).filter(
+        document_queryset = apply_document_repository_policy(
+            get_scoped_queryset_for_request(request, Document),
+            organization=org,
+            user=request.user,
+            surface='global_search_documents',
+        ).filter(
             Q(title__icontains=q) | Q(description__icontains=q) | Q(tags__icontains=q)
         )
         if result_type and result_type not in {'document', 'documents'}:

@@ -4,6 +4,7 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth import password_validation
 from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import UploadedFile
 from .permissions import can_manage_organization
 from .services.clause_policy import validate_clause_policy
 from .services.clause_variants import resolve_clause_variant
@@ -307,6 +308,16 @@ class DocumentForm(forms.ModelForm):
 
     def clean_status(self):
         return self.cleaned_data.get('status') or Document.Status.DRAFT
+
+    def clean_file(self):
+        uploaded_file = self.cleaned_data.get('file')
+        # On edit Django may return the existing FieldFile. Validate only a new
+        # browser upload so metadata-only changes never read remote storage.
+        if isinstance(uploaded_file, UploadedFile):
+            from contracts.services.document_upload_policy import validate_document_upload
+
+            validate_document_upload(uploaded_file)
+        return uploaded_file
 
     def clean(self):
         cleaned_data = super().clean()

@@ -72,7 +72,7 @@ class RepositoryFilterMarkupTests(TestCase):
         self.assertIn('>Owner</', html)
         self.assertIn('>Type</', html)
         self.assertIn('min-width: 1200px', html)
-        self.assertIn('position: sticky; left: 44px', html)
+        self.assertIn('position: sticky; left: 40px', html)
         self.assertIn('repo-result-count', html)
         self.assertIn('background: transparent', html)
 
@@ -96,7 +96,7 @@ class RepositoryFilterMarkupTests(TestCase):
         self.assertIn('text-overflow: ellipsis', html)
         self.assertIn('min-width: 145px', html)
         self.assertIn('min-width: 230px', html)
-        self.assertIn('padding: 16px 12px', html)
+        self.assertIn('padding: 8px 12px', html)
         self.assertNotIn('data-col="next_action"', js)
 
 
