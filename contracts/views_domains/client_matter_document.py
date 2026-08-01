@@ -4,6 +4,7 @@ from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.files.uploadedfile import UploadedFile
 from django.db.models import Case, Count, IntegerField, Q, Sum, When
 from django.http import Http404, HttpResponseForbidden, HttpResponseRedirect
 from django.urls import reverse, reverse_lazy
@@ -14,6 +15,10 @@ from django.views.generic import CreateView, DeleteView, DetailView, ListView, U
 from contracts.forms import ClientForm, DocumentForm, DocumentOCRReviewForm, MatterForm
 from config.feature_flags import is_external_collaboration_enabled
 from contracts.middleware import log_action
+from contracts.services.document_ingestion import (
+    DocumentIngestionError,
+    quarantine_and_scan_if_enforced,
+)
 from contracts.models import (
     ApprovalRequest,
     AuditLog,
@@ -516,6 +521,35 @@ class DocumentCreateView(TenantScopedFormMixin, TenantAssignCreateMixin, LoginRe
 
         staged = form.save(commit=False)
         organization = get_user_organization(self.request.user)
+        ingestion_attempt = None
+        uploaded_file = form.cleaned_data.get('file')
+        if isinstance(uploaded_file, UploadedFile):
+            try:
+                ingestion_attempt = quarantine_and_scan_if_enforced(
+                    organization=organization,
+                    uploaded_file=uploaded_file,
+                    actor=self.request.user,
+                    contract=staged.contract,
+                    matter=staged.matter,
+                    client=staged.client,
+                )
+            except DocumentIngestionError:
+                messages.error(self.request, 'The document could not be accepted for security review.')
+                return redirect(self.success_url)
+        if ingestion_attempt is not None:
+            if ingestion_attempt.status == ingestion_attempt.Status.CLEAN:
+                messages.success(
+                    self.request,
+                    'The document passed scanning and remains quarantined until explicit release. '
+                    f'Correlation ID: {ingestion_attempt.correlation_id}',
+                )
+            else:
+                messages.error(
+                    self.request,
+                    'The document was not released. Contact security with correlation ID '
+                    f'{ingestion_attempt.correlation_id}.',
+                )
+            return redirect(self.success_url)
         document, _version = create_document_version(
             organization=organization,
             title=staged.title,
@@ -602,6 +636,36 @@ class DocumentUpdateView(TenantScopedFormMixin, TenantScopedQuerysetMixin, Login
         original_document = getattr(self, 'original_document', None) or self.get_object()
         staged_document = form.save(commit=False)
         from contracts.services.document_version_service import create_document_version
+
+        ingestion_attempt = None
+        uploaded_file = form.cleaned_data.get('file')
+        if isinstance(uploaded_file, UploadedFile):
+            try:
+                ingestion_attempt = quarantine_and_scan_if_enforced(
+                    organization=original_document.organization,
+                    uploaded_file=uploaded_file,
+                    actor=self.request.user,
+                    contract=staged_document.contract,
+                    matter=staged_document.matter,
+                    client=staged_document.client,
+                )
+            except DocumentIngestionError:
+                messages.error(self.request, 'The document could not be accepted for security review.')
+                return redirect('contracts:document_detail', pk=original_document.pk)
+        if ingestion_attempt is not None:
+            if ingestion_attempt.status == ingestion_attempt.Status.CLEAN:
+                messages.success(
+                    self.request,
+                    'The new version passed scanning and remains quarantined until explicit release. '
+                    f'Correlation ID: {ingestion_attempt.correlation_id}',
+                )
+            else:
+                messages.error(
+                    self.request,
+                    'The new version was not released. Contact security with correlation ID '
+                    f'{ingestion_attempt.correlation_id}.',
+                )
+            return redirect('contracts:document_detail', pk=original_document.pk)
 
         document, _version = create_document_version(
             organization=original_document.organization,

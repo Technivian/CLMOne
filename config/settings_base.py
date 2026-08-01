@@ -277,6 +277,44 @@ else:
         'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage'},
     }
 
+# Quarantine never shares the ordinary media namespace or public media URL.
+# Production may point this alias at a separate private S3 bucket and a
+# least-privilege worker credential without changing canonical document
+# storage.  Local development uses a non-served directory outside MEDIA_ROOT.
+DOCUMENT_QUARANTINE_STORAGE_BACKEND = os.getenv(
+    'DOCUMENT_QUARANTINE_STORAGE_BACKEND',
+    'filesystem',
+).strip().lower()
+if DOCUMENT_QUARANTINE_STORAGE_BACKEND == 's3':
+    _quarantine_bucket = os.getenv('DOCUMENT_QUARANTINE_BUCKET_NAME', '').strip()
+    if not _quarantine_bucket:
+        raise ImproperlyConfigured(
+            'DOCUMENT_QUARANTINE_STORAGE_BACKEND=s3 requires '
+            'DOCUMENT_QUARANTINE_BUCKET_NAME.'
+        )
+    _quarantine_s3_options = {
+        'bucket_name': _quarantine_bucket,
+        'region_name': os.getenv('DOCUMENT_QUARANTINE_REGION_NAME', '').strip() or None,
+        'access_key': os.getenv('DOCUMENT_QUARANTINE_ACCESS_KEY_ID', '').strip() or None,
+        'secret_key': os.getenv('DOCUMENT_QUARANTINE_SECRET_ACCESS_KEY', '').strip() or None,
+        'endpoint_url': os.getenv('DOCUMENT_QUARANTINE_ENDPOINT_URL', '').strip() or None,
+        'default_acl': 'private',
+        'querystring_auth': True,
+        'file_overwrite': False,
+    }
+    STORAGES['quarantine'] = {
+        'BACKEND': 'storages.backends.s3.S3Storage',
+        'OPTIONS': {k: v for k, v in _quarantine_s3_options.items() if v is not None},
+    }
+else:
+    STORAGES['quarantine'] = {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+        'OPTIONS': {
+            'location': str(BASE_DIR / '.document-quarantine'),
+            'base_url': None,
+        },
+    }
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CLMONE_MODE = False
@@ -594,6 +632,68 @@ REPOSITORY_CSV_IMPORT_ENABLED = _bool_env('REPOSITORY_CSV_IMPORT_ENABLED', defau
 # capability plus email confirmation. Keep the entire surface fail-closed until
 # an approved external-identity and sharing design replaces that mechanism.
 EXTERNAL_COLLABORATION_ENABLED = _bool_env('EXTERNAL_COLLABORATION_ENABLED', default=False)
+
+# Quarantine-first document ingestion.  All controls are committed off.  An
+# activation requires a named environment and workspace, a configured scanner,
+# private quarantine storage, retention policy and exact-SHA release evidence.
+DOCUMENT_QUARANTINE_ENFORCEMENT_ENABLED = _bool_env(
+    'DOCUMENT_QUARANTINE_ENFORCEMENT_ENABLED',
+    default=False,
+)
+DOCUMENT_QUARANTINE_ABORT_FAIL_CLOSED = _bool_env(
+    'DOCUMENT_QUARANTINE_ABORT_FAIL_CLOSED',
+    default=False,
+)
+DOCUMENT_QUARANTINE_RELEASE_ENABLED = _bool_env(
+    'DOCUMENT_QUARANTINE_RELEASE_ENABLED',
+    default=False,
+)
+DOCUMENT_QUARANTINE_PURGE_ENABLED = _bool_env(
+    'DOCUMENT_QUARANTINE_PURGE_ENABLED',
+    default=False,
+)
+DOCUMENT_QUARANTINE_ENVIRONMENTS = os.getenv(
+    'DOCUMENT_QUARANTINE_ENVIRONMENTS',
+    '',
+).strip()
+DOCUMENT_QUARANTINE_ORG_ALLOWLIST = os.getenv(
+    'DOCUMENT_QUARANTINE_ORG_ALLOWLIST',
+    '',
+).strip()
+DOCUMENT_MALWARE_SCANNER_CLASS = os.getenv(
+    'DOCUMENT_MALWARE_SCANNER_CLASS',
+    '',
+).strip()
+DOCUMENT_QUARANTINE_RETENTION_DAYS = int(
+    os.getenv('DOCUMENT_QUARANTINE_RETENTION_DAYS', '0') or '0'
+)
+DOCUMENT_MALWARE_SCAN_TIMEOUT_SECONDS = int(
+    os.getenv('DOCUMENT_MALWARE_SCAN_TIMEOUT_SECONDS', '30') or '30'
+)
+CLAMAV_HOST = os.getenv('CLAMAV_HOST', '127.0.0.1').strip()
+CLAMAV_PORT = int(os.getenv('CLAMAV_PORT', '3310') or '3310')
+CLAMAV_UNIX_SOCKET = os.getenv('CLAMAV_UNIX_SOCKET', '').strip()
+if DOCUMENT_QUARANTINE_STORAGE_BACKEND not in {'filesystem', 's3'}:
+    raise ImproperlyConfigured(
+        'DOCUMENT_QUARANTINE_STORAGE_BACKEND must be filesystem or s3.'
+    )
+if DOCUMENT_QUARANTINE_ENFORCEMENT_ENABLED:
+    if not DOCUMENT_QUARANTINE_ENVIRONMENTS or not DOCUMENT_QUARANTINE_ORG_ALLOWLIST:
+        raise ImproperlyConfigured(
+            'Document quarantine enforcement requires explicit environment and workspace allowlists.'
+        )
+    if not DOCUMENT_MALWARE_SCANNER_CLASS:
+        raise ImproperlyConfigured(
+            'Document quarantine enforcement requires DOCUMENT_MALWARE_SCANNER_CLASS.'
+        )
+if DOCUMENT_QUARANTINE_RELEASE_ENABLED and not DOCUMENT_QUARANTINE_ENFORCEMENT_ENABLED:
+    raise ImproperlyConfigured(
+        'Document quarantine release requires enforcement to be enabled.'
+    )
+if DOCUMENT_QUARANTINE_PURGE_ENABLED and DOCUMENT_QUARANTINE_RETENTION_DAYS <= 0:
+    raise ImproperlyConfigured(
+        'Document quarantine purge requires a positive retention period.'
+    )
 
 # PAR-SEC-002 — characterization-only route observation (default OFF).
 # This controls content-free, process-local counters only; it never evaluates

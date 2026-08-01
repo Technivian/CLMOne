@@ -1612,6 +1612,106 @@ class DocumentVersion(models.Model):
         super().save(*args, **kwargs)
 
 
+class DocumentIngestionAttempt(models.Model):
+    """Tenant-scoped pre-release evidence for quarantine-first ingestion.
+
+    This is a technical security workflow, not a second Document model.  A
+    canonical ``Document`` and immutable ``DocumentVersion`` only exist after
+    an explicit clean release through ``DocumentIngestionService``.
+    """
+
+    class Status(models.TextChoices):
+        RECEIVED = 'RECEIVED', 'Received'
+        QUARANTINED = 'QUARANTINED', 'Quarantined'
+        SCANNING = 'SCANNING', 'Scanning'
+        CLEAN = 'CLEAN', 'Clean'
+        REJECTED = 'REJECTED', 'Rejected'
+        ERROR = 'ERROR', 'Error'
+        RELEASED = 'RELEASED', 'Released'
+        EXPIRED = 'EXPIRED', 'Expired'
+
+    class Verdict(models.TextChoices):
+        UNKNOWN = 'UNKNOWN', 'Unknown'
+        CLEAN = 'CLEAN', 'Clean'
+        MALICIOUS = 'MALICIOUS', 'Malicious'
+        UNSCANNABLE = 'UNSCANNABLE', 'Unscannable'
+        ERROR = 'ERROR', 'Error'
+
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.PROTECT,
+        related_name='document_ingestion_attempts',
+    )
+    correlation_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.RECEIVED)
+    verdict = models.CharField(max_length=20, choices=Verdict.choices, default=Verdict.UNKNOWN)
+    quarantine_object_key = models.CharField(max_length=500, blank=True, default='')
+    file_hash = models.CharField(max_length=64)
+    file_size = models.PositiveBigIntegerField()
+    detected_media_type = models.CharField(max_length=100)
+    scanner_provider = models.CharField(max_length=100, blank=True, default='')
+    scanner_signature_version = models.CharField(max_length=120, blank=True, default='')
+    failure_code = models.CharField(max_length=64, blank=True, default='')
+    contract = models.ForeignKey(
+        Contract,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='document_ingestion_attempts',
+    )
+    matter = models.ForeignKey(
+        Matter,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='document_ingestion_attempts',
+    )
+    client = models.ForeignKey(
+        Client,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='document_ingestion_attempts',
+    )
+    uploaded_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='document_ingestion_attempts',
+    )
+    released_document = models.ForeignKey(
+        Document,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='ingestion_attempts',
+    )
+    released_document_version = models.ForeignKey(
+        DocumentVersion,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='ingestion_attempts',
+    )
+    received_at = models.DateTimeField(auto_now_add=True)
+    scan_started_at = models.DateTimeField(null=True, blank=True)
+    scanned_at = models.DateTimeField(null=True, blank=True)
+    released_at = models.DateTimeField(null=True, blank=True)
+    cleanup_completed_at = models.DateTimeField(null=True, blank=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-received_at']
+        indexes = [
+            models.Index(fields=['organization', 'status', 'received_at'], name='docing_org_status_ix'),
+            models.Index(fields=['organization', 'file_hash'], name='docing_org_hash_ix'),
+        ]
+
+    def __str__(self):
+        return f'Ingestion {self.correlation_id} ({self.status})'
+
+
 class DocumentOCRReview(models.Model):
     class Status(models.TextChoices):
         PENDING = 'PENDING', 'Pending'

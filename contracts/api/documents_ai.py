@@ -147,6 +147,12 @@ from contracts.services.document_repository_policy import (
     apply_document_relation_policy,
     document_repository_enforcement_active,
 )
+from contracts.services.document_ingestion import (
+    DocumentIngestionError,
+    IngestionState,
+    document_ingestion_state,
+    get_document_ingestion_service,
+)
 
 
 _REVIEW_STEP_LABELS = ('Uploaded', 'Extracting', 'Classifying', 'Matching playbook', 'AI reviewing', 'Review ready')
@@ -251,6 +257,16 @@ def document_extract_preview_api(request):
     organization = get_user_organization(request.user)
     if organization is None:
         return _error_response(request, 'No organization found for this user.', 400)
+    ingestion_state = document_ingestion_state(organization)
+    if ingestion_state is IngestionState.FAIL_CLOSED:
+        return _error_response(request, 'Document processing is unavailable.', 404)
+    if ingestion_state is IngestionState.ENFORCE:
+        # Never inspect or extract untrusted bytes before a clean verdict.
+        return _error_response(
+            request,
+            'Document preview is unavailable until the file passes security review.',
+            409,
+        )
 
     uploaded_file = request.FILES.get('file')
     if uploaded_file is None:
@@ -320,6 +336,34 @@ def document_upload_api(request):
             )
         ):
             return _error_response(request, 'Contract not found or access denied.', 404)
+
+    ingestion_state = document_ingestion_state(organization)
+    if ingestion_state is IngestionState.FAIL_CLOSED:
+        return _error_response(request, 'Document ingestion is unavailable.', 404)
+    if ingestion_state is IngestionState.ENFORCE:
+        if request.POST.get('create_contract') in {'1', 'true', 'True', 'on'}:
+            return _error_response(
+                request,
+                'Create the contract record before submitting its document for security review.',
+                409,
+            )
+        try:
+            ingestion = get_document_ingestion_service()
+            attempt = ingestion.quarantine(
+                organization=organization,
+                uploaded_file=uploaded_file,
+                actor=request.user,
+                contract=contract,
+            )
+            attempt = ingestion.scan(attempt=attempt, actor=request.user)
+        except DocumentIngestionError:
+            return _error_response(request, 'The document could not be accepted.', 400)
+        return JsonResponse({
+            'ok': True,
+            'correlation_id': str(attempt.correlation_id),
+            'status': attempt.status,
+            'releasable': attempt.status == attempt.Status.CLEAN,
+        }, status=202)
 
     create_contract = request.POST.get('create_contract') in {'1', 'true', 'True', 'on'}
     contract_payload = None
