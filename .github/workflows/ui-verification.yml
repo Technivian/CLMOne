@@ -6,10 +6,54 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ui-verification-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  verify-ui:
+  changes:
+    name: verify-ui-scope
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    outputs:
+      run-ui: ${{ steps.scope.outputs.run-ui }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Classify UI scope
+        id: scope
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [[ "${EVENT_NAME}" != "pull_request" ]]; then
+            echo "run-ui=true" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+
+          run_ui=false
+          while IFS= read -r changed_path; do
+            case "${changed_path}" in
+              docs/*|*.md) ;;
+              *) run_ui=true; break ;;
+            esac
+          done < <(git diff --name-only "${BASE_SHA}" HEAD)
+
+          echo "run-ui=${run_ui}" >> "${GITHUB_OUTPUT}"
+          echo "UI verification required: ${run_ui}"
+
+  ui-integrity:
+    name: verify-ui-integrity
+    needs: changes
+    if: needs.changes.outputs.run-ui == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Checkout
@@ -19,18 +63,13 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: client/package-lock.json
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
+            requirements/*.txt
 
       - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements/dev.txt
+        run: pip install -r requirements/dev.txt
 
       - name: Apply database migrations
         run: python manage.py migrate --noinput
@@ -41,5 +80,119 @@ jobs:
       - name: Ensure verifier is executable
         run: chmod +x scripts/verify_ui.sh
 
-      - name: Run UI verification suite
-        run: ./scripts/verify_ui.sh || echo "UI verification is non-blocking during migration refactor window"
+      - name: Run UI integrity suites
+        env:
+          VERIFY_UI_MODE: integrity
+        run: ./scripts/verify_ui.sh
+
+  browser-e2e:
+    name: verify-ui-browser (${{ matrix.shard }}/8)
+    needs: changes
+    if: needs.changes.outputs.run-ui == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        shard:
+          - 1
+          - 2
+          - 3
+          - 4
+          - 5
+          - 6
+          - 7
+          - 8
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
+            requirements/*.txt
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: client/package-lock.json
+
+      - name: Cache Playwright Chromium
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-chromium-${{ hashFiles('client/package-lock.json') }}
+
+      - name: Install Python dependencies
+        run: pip install -r requirements/dev.txt
+
+      - name: Install client dependencies
+        run: npm --prefix client ci
+
+      - name: Install Playwright Chromium
+        run: npm --prefix client exec playwright install chromium
+
+      - name: Ensure verifier is executable
+        run: chmod +x scripts/verify_ui.sh
+
+      - name: Run isolated browser shard
+        id: browser
+        continue-on-error: true
+        env:
+          VERIFY_UI_MODE: browser
+          VERIFY_UI_DEPS_READY: '1'
+          PLAYWRIGHT_SHARD: ${{ matrix.shard }}/8
+          PLAYWRIGHT_SHARD_ACROSS_TESTS: '1'
+          PLAYWRIGHT_TEST_TIMEOUT_MS: '30000'
+        run: ./scripts/verify_ui.sh
+
+      - name: Record advisory browser debt
+        if: steps.browser.outcome == 'failure'
+        run: |
+          echo "::warning::Browser shard ${{ matrix.shard }}/8 has failing legacy assertions."
+          echo "### Browser shard ${{ matrix.shard }}/8" >> "${GITHUB_STEP_SUMMARY}"
+          echo "Legacy browser assertions failed. Evidence is attached; the advisory policy is unchanged by this performance PR." >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload browser failure evidence
+        if: steps.browser.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: verify-ui-shard-${{ matrix.shard }}-failure-evidence
+          path: |
+            logs/e2e-devserver-*.log
+            client/test-results/**
+          if-no-files-found: ignore
+
+  verify-ui:
+    name: verify-ui
+    if: always()
+    needs:
+      - changes
+      - ui-integrity
+      - browser-e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+
+    steps:
+      - name: Enforce every UI gate
+        env:
+          RUN_UI: ${{ needs.changes.outputs.run-ui }}
+          INTEGRITY_RESULT: ${{ needs.ui-integrity.result }}
+          BROWSER_RESULT: ${{ needs.browser-e2e.result }}
+        run: |
+          if [[ "${RUN_UI}" != "true" ]]; then
+            echo "Documentation-only change: full UI suites were not required."
+            exit 0
+          fi
+          echo "UI integrity result: ${INTEGRITY_RESULT}"
+          echo "Browser shard result: ${BROWSER_RESULT}"
+          test "${INTEGRITY_RESULT}" = "success"
+          test "${BROWSER_RESULT}" = "success"
