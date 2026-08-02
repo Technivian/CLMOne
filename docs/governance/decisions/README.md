@@ -70,6 +70,7 @@ Do not fabricate approved decisions. Do not mark a record Accepted without docum
 | [0014-role-definition-reconciliation.md](adr/0014-role-definition-reconciliation.md) | Accepted |
 | [0015-exception-request-decision-model.md](adr/0015-exception-request-decision-model.md) | **Accepted** |
 | [ADR-0016-document-ingestion-quarantine-and-malware-scanning.md](adr/ADR-0016-document-ingestion-quarantine-and-malware-scanning.md) | Accepted — implementation default off; activation separately governed |
+| [ADR-0017-payrollminds-isolated-pilot-release-topology.md](adr/ADR-0017-payrollminds-isolated-pilot-release-topology.md) | Proposed — no deployment or activation authority |
 
 ### PDRs
 
@@ -84,10 +85,15 @@ Do not fabricate approved decisions. Do not mark a record Accepted without docum
 | [PDR-0007-approval-route-runtime-boundary.md](pdr/PDR-0007-approval-route-runtime-boundary.md) | Proposed |
 | [PDR-0008-object-level-read-enforcement-policy.md](pdr/PDR-0008-object-level-read-enforcement-policy.md) | Proposed — PAR-SEC-002 planning only |
 | [PDR-0010-owner-directed-release-authorization.md](pdr/PDR-0010-owner-directed-release-authorization.md) | Accepted — owner-directed repository authorization |
+| [PDR-0011-payrollminds-controlled-pilot-scope-and-governance.md](pdr/PDR-0011-payrollminds-controlled-pilot-scope-and-governance.md) | Proposed — no pilot activation authority |
 
 ### Exceptions
 
-No active exceptions yet. Use [EXCEPTION_TEMPLATE.md](exceptions/EXCEPTION_TEMPLATE.md).
+| Record | Status |
+|---|---|
+| [EXC-0001-payrollminds-deferred-enterprise-capabilities.md](exceptions/EXC-0001-payrollminds-deferred-enterprise-capabilities.md) | Proposed — inactive until approved; expires 2026-09-30 if activated |
+
+Use [EXCEPTION_TEMPLATE.md](exceptions/EXCEPTION_TEMPLATE.md) for new exceptions.
 
 ## Authority reminder
 
