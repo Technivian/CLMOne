@@ -122,7 +122,7 @@ Representative blockers include Contract form/status drift, role-walkthrough aut
 
 ## CI, rollback, and recommendation
 
-#147, #148, #149, #150, and #152 have green required CI on their current heads. #151 has green release-evidence/security/UI jobs and `quality-and-tenancy` still in progress. No combined-RC PR CI exists.
+#147 through #152 have green required CI on their current heads. No combined-RC PR CI exists.
 
 No merge order is authorized while the full suite and browser gate fail. After source-branch repairs and green CI, merge #147, #148, #149, #150, #151, then #152; rebuild a fresh RC and run two complete passing suites on one SHA.
 
