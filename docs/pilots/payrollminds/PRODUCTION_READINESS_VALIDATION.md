@@ -31,6 +31,22 @@ bash -n scripts/db_restore_drill.sh
 exit status: 0
 ```
 
+```text
+python manage.py test tests.test_cross_tenant_isolation -v 1
+Ran 75 tests in 17.138s
+OK
+System check identified no issues (0 silenced).
+
+python manage.py audit_null_organizations
+NULL organization audit
+----------------------
+No NULL organization rows found.
+```
+
+The audit command was run after applying existing migrations to this isolated
+local worktree database. That local preparation neither creates a migration in
+this PR nor proves a production migration.
+
 The exercised guards cover production configuration rejection/secure cookies,
 private object-storage requirements and document-download auditing,
 health/scheduler observability, job retry/dead-letter behavior, restore-drill
