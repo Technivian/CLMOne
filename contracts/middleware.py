@@ -6,7 +6,7 @@ from uuid import uuid4
 
 from django.conf import settings
 from django.core.cache import cache
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse
 
@@ -107,6 +107,19 @@ class ControlledPilotScopeMiddleware:
                 decision,
             )
             if request.user.is_authenticated:
+                if decision in {'ai_disabled', 'ai_out_of_scope'} and '/api/' in path:
+                    # API clients need an explicit, recoverable state rather
+                    # than a dashboard redirect.  This response is not tied to
+                    # a resolved object, so it does not disclose existence.
+                    return JsonResponse(
+                        {
+                            'error': (
+                                'AI provider processing is unavailable in this controlled pilot. '
+                                'Enter and verify metadata manually.'
+                            )
+                        },
+                        status=403,
+                    )
                 try:
                     from django.contrib import messages
                     if decision == 'law_firm_module_retired':
@@ -172,15 +185,17 @@ class ControlledPilotScopeMiddleware:
             if not any(path.startswith(p) for p in self._PILOT_ALLOWED_NEW_PREFIXES):
                 return 'freeform_create_out_of_scope'
 
-        # Unrestricted AI entry points when kill switch is off (pilot default).
-        if not ai_on:
-            if '/ai-' in path or path.endswith('/ai-assistant/') or '/ai-assistant' in path:
-                return 'ai_disabled'
-            if '/api/' in path and any(
-                token in path
-                for token in ('/ai-extract', '/ai-suggest', '/ai-draft', '/ai-clauses')
-            ):
-                return 'ai_disabled'
+        # External AI has no approved PayrollMinds pilot use case.  This is
+        # deliberately independent of GEMINI_AI_ENABLED so an accidental
+        # environment variable cannot permit document egress.  The API views
+        # repeat the check for direct invocation without this middleware.
+        if '/ai-' in path or path.endswith('/ai-assistant/') or '/ai-assistant' in path:
+            return 'ai_disabled' if not ai_on else 'ai_out_of_scope'
+        if '/api/' in path and any(
+            token in path
+            for token in ('/ai-extract', '/ai-suggest', '/ai-draft', '/ai-clauses')
+        ):
+            return 'ai_disabled' if not ai_on else 'ai_out_of_scope'
 
         return None
 

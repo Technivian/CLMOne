@@ -182,11 +182,9 @@ def extract_clause_spans(
         if pos == -1:
             pos = text.lower().find(span_text.lower())
         if pos == -1:
-            logger.debug(
-                "ai_extraction: quoted span not located in document %s, skipping: %.80s",
-                document.pk,
-                span_text,
-            )
+            # Do not put a contract excerpt in application logs.  The source
+            # document remains available to an authorized reviewer instead.
+            logger.debug("ai_extraction: quoted span not located; skipping")
             continue
         try:
             confidence_value = min(1.0, max(0.0, float(item.get('confidence', 0))))

@@ -16,9 +16,9 @@ The default-off path uses only canonical CLM One records and services:
    the canonical `Contract` with locked `UPLOAD` provenance, then the canonical
    `Document` and immutable `DocumentVersion`, all in one transaction.
 4. The `DocumentReviewRun` records that those initial values are
-   `human_entered` and that suggestions are non-authoritative. Existing AI
-   review surfaces remain suggestions requiring their existing confirmation
-   controls; failed extraction never prevents manual entry.
+   `human_entered` and that suggestions are non-authoritative. External AI
+   review/provider surfaces are blocked in controlled-pilot mode; failed local
+   extraction never prevents manual entry.
 5. The Contract owner is the releasing user. In the existing PAR-SEC-002
    allowlisted mode, ordinary members can discover only records they own or
    created; active workspace owners and admins retain their defined operational
