@@ -18,7 +18,7 @@ PR. No new domain, access, audit, or ingestion model is introduced.
 | Search exposes private relationship metadata | The existing search policy uses the same Client/Matter evaluator | Search results contain no private contract, client, matter, or document row |
 | Former member retains record access | Existing active-membership evaluation fails closed | Deactivation removes repository results and direct access |
 | Download or export bypasses policy | Existing parent controls require permission and append audit evidence; regression tests cover protected document download and owner/admin-only audit export | Focused security suite |
-| Credential is committed | `platform-guardrails` now runs Gitleaks on PRs and main pushes | Workflow validation pending CI for this exact SHA |
+| Credential is committed | `platform-guardrails` now runs pinned TruffleHog OSS on PRs and main pushes | Workflow validation pending CI for this exact SHA |
 
 ## Email-ingestion boundary
 
