@@ -139,9 +139,9 @@ jobs:
         run: bandit -q -r contracts config -lll
 
       - name: Secret scan
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: trufflesecurity/trufflehog@65725840a041bf31aec4473016b803900070127d
+        with:
+          version: v3.95.0
 
       - name: Npm dependency vulnerability baseline gate
         env:
