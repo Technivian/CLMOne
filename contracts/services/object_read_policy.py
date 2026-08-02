@@ -161,6 +161,38 @@ def _restricted_scope_ids(*, organization, user) -> tuple[set[int], set[int]]:
     return restricted_client_ids, restricted_matter_ids
 
 
+def _is_workspace_privileged(*, organization, user) -> bool:
+    """Return whether the active member may administer private pilot records.
+
+    This is deliberately not an override for Ethical Walls.  It only supplies
+    the defined-role part of the private-by-default pilot policy; an active
+    Ethical Wall continues to deny discovery for every role.
+    """
+    return OrganizationMembership.objects.filter(
+        organization=organization,
+        user=user,
+        is_active=True,
+        organization__is_active=True,
+        role__in=[
+            OrganizationMembership.Role.OWNER,
+            OrganizationMembership.Role.ADMIN,
+        ],
+    ).exists()
+
+
+def _apply_private_contract_access(queryset: QuerySet, *, organization, user) -> QuerySet:
+    """Apply the bounded pilot's owner/creator access baseline.
+
+    The existing PAR-SEC-002 gate is the single activation boundary.  When it
+    is active, ordinary members discover only records they own or created;
+    workspace owners and admins retain their defined operational role.  No
+    new ACL table or parallel permission concept is introduced.
+    """
+    if _is_workspace_privileged(organization=organization, user=user):
+        return queryset
+    return queryset.filter(Q(owner=user) | Q(created_by=user))
+
+
 def filter_contract_queryset(
     queryset: QuerySet,
     *,
@@ -194,7 +226,11 @@ def filter_contract_queryset(
         logger.info('object_read_policy outcome=deny surface=%s', surface)
     else:
         logger.info('object_read_policy outcome=allow surface=%s', surface)
-    return eligible.distinct()
+    return _apply_private_contract_access(
+        eligible,
+        organization=organization,
+        user=user,
+    ).distinct()
 
 
 def filter_document_queryset(
@@ -231,6 +267,11 @@ def filter_document_queryset(
             | Q(matter_id__in=restricted_matter_ids)
             | Q(matter__client_id__in=restricted_client_ids)
         )
+    eligible_contracts = _apply_private_contract_access(
+        eligible_contracts,
+        organization=organization,
+        user=user,
+    )
     eligible_contract_ids = eligible_contracts.values('pk')
 
     eligible = queryset.filter(
@@ -254,6 +295,10 @@ def filter_document_queryset(
         logger.info('object_read_policy outcome=deny surface=%s', surface)
     else:
         logger.info('object_read_policy outcome=allow surface=%s', surface)
+    if not _is_workspace_privileged(organization=organization, user=user):
+        eligible = eligible.filter(
+            Q(contract_id__in=eligible_contract_ids) | Q(contract__isnull=True, uploaded_by=user)
+        )
     return eligible.distinct()
 
 
@@ -277,6 +322,15 @@ def filter_client_queryset(
         logger.info('object_read_policy outcome=deny surface=%s', surface)
     else:
         logger.info('object_read_policy outcome=allow surface=%s', surface)
+    if not _is_workspace_privileged(organization=organization, user=user):
+        eligible_contracts = _apply_private_contract_access(
+            Contract.objects.filter(organization=organization),
+            organization=organization,
+            user=user,
+        )
+        eligible = eligible.filter(
+            Q(contracts__in=eligible_contracts) | Q(documents__uploaded_by=user)
+        )
     return eligible.distinct()
 
 
@@ -306,4 +360,11 @@ def filter_matter_queryset(
         logger.info('object_read_policy outcome=deny surface=%s', surface)
     else:
         logger.info('object_read_policy outcome=allow surface=%s', surface)
+    if not _is_workspace_privileged(organization=organization, user=user):
+        eligible_contracts = _apply_private_contract_access(
+            Contract.objects.filter(organization=organization),
+            organization=organization,
+            user=user,
+        )
+        eligible = eligible.filter(contracts__in=eligible_contracts)
     return eligible.distinct()

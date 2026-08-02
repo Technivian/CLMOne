@@ -1010,7 +1010,19 @@ def upload_signed_contract(request):
 def contract_review_workspace(request, pk):
     """Single review surface for an uploaded agreement version and its evidence."""
     organization = get_user_organization(request.user)
-    contract = get_object_or_404(Contract, pk=pk, organization=organization)
+    contract = apply_repository_contract_policy(
+        Contract.objects.filter(pk=pk, organization=organization),
+        organization=organization,
+        user=request.user,
+        surface='contract_review_workspace',
+    ).first()
+    if contract is None or not can_access_contract_action(
+        request.user,
+        contract,
+        ContractAction.VIEW,
+    ):
+        # A private-record denial must not reveal that the contract exists.
+        return get_object_or_404(Contract.objects.none(), pk=pk)
     review_run = contract.document_review_runs.select_related('document').order_by('-started_at').first()
     document = review_run.document if review_run else contract.documents.order_by('-version', '-created_at').first()
 
