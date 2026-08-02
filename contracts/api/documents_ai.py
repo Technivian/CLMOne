@@ -290,7 +290,7 @@ def document_extract_preview_api(request):
 @login_required
 @require_http_methods(['POST'])
 def document_upload_api(request):
-    """Ingest a contract document file: upload → hash → OCR queue → AI extraction.
+    """Ingest a contract document file: upload → hash → OCR queue → human review.
 
     Multipart POST:
       file        — required, the document file
@@ -857,6 +857,18 @@ def _resolve_ai_contract(request, contract_id, *, action=ContractAction.AI, requ
     if not can_access_contract_action(request.user, contract, action):
         return organization, contract, _error_response(
             request, 'You do not have permission to perform this action.', 403,
+        )
+    # PayrollMinds has no approved external-AI use case at launch.  Keep this
+    # check in the server-side resolver as well as the pilot middleware: API
+    # views and jobs are sometimes exercised without middleware, and a visible
+    # navigation control is not an authorization or data-egress boundary.
+    # Local, deterministic metadata hints remain available through the upload
+    # preview and do not call an AI provider.
+    if getattr(settings, 'CONTROLLED_PILOT_ENABLED', False):
+        return organization, contract, _error_response(
+            request,
+            'AI provider processing is unavailable in this controlled pilot. Enter and verify metadata manually.',
+            403,
         )
     policy, _ = OrgPolicy.objects.get_or_create(organization=organization)
     if not policy.ai_features_enabled:
