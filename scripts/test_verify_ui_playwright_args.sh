@@ -48,8 +48,8 @@ assert_args $'--prefix\nclient\nrun\ntest:e2e'
 run_playwright '--shard=1/8'
 assert_args $'--prefix\nclient\nrun\ntest:e2e\n--\n--shard=1/8'
 
-run_playwright '--shard=1/8' '--project=chromium'
-assert_args $'--prefix\nclient\nrun\ntest:e2e\n--\n--shard=1/8\n--project=chromium'
+run_playwright '--shard=1/8' '--grep=contract review' '--project=chromium'
+assert_args $'--prefix\nclient\nrun\ntest:e2e\n--\n--shard=1/8\n--grep=contract review\n--project=chromium'
 
 if validate_playwright_shard 'bad/shard'; then
   echo "invalid shard was accepted" >&2
