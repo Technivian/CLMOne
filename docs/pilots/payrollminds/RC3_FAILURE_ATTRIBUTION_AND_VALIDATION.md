@@ -118,10 +118,12 @@ removes browser CI `continue-on-error`, so a failing browser shard fails the
 gate and still uploads diagnostic artifacts.
 
 The repaired local entry point reached Playwright and started the configured
-90-test suite. It demonstrated genuine legacy browser failures (for example canonical
-layout, Command Center, field review, retired invoice surfaces, and mobile
-list assertions). Its complete final result is not a green validation and is a
-release blocker. No assertion was weakened or snapshot accepted.
+90-test suite. The diagnostic run was stopped after a post-test stall and
+reported **19 passed, 42 failed, 1 interrupted, and 28 not run** in **13.7m**.
+It demonstrated genuine legacy browser failures (for example canonical layout,
+Command Center, field review, retired invoice surfaces, and mobile list
+assertions). This is not a completed or green validation and is a release
+blocker. No assertion was weakened or snapshot accepted.
 
 ## 5. Synthetic UAT, release gate, and RC3
 
