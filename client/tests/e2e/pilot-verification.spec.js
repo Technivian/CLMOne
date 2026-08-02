@@ -68,6 +68,9 @@ async function clearDraftingBlockers(page) {
     await confirmBtn.click();
     await expect(page).toHaveURL(/\/contracts\/workflows\/\d+/);
   }
+  // Check the operational menu state, not merely the collapsed DOM. A blocked
+  // action must be gone once every drafting blocker has been resolved.
+  await openWorkspaceActions(page);
   await expect(page.getByText(/Send to Legal Review · blocked/)).toHaveCount(0);
 }
 
@@ -255,8 +258,8 @@ test.describe('Verification: NDA supported actions', () => {
     await expect(page).toHaveURL(/\/contracts\/workflows\/\d+\/?$/);
     await expect(page.getByRole('button', { name: 'Send for signature' })).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Export Word' })).toHaveCount(0);
+    await openWorkspaceActions(page);
     await expect(page.getByText('Send to Legal Review · not required')).toBeVisible();
-    await page.locator('details.dc-ds-workspace__actions-menu summary').click();
     await page.getByRole('menuitem', { name: 'View contract record' }).click();
     await expect(page).toHaveURL(/\/contracts\/\d+\/?$/);
     await page.reload();
@@ -337,7 +340,8 @@ test.describe('Verification: lifecycle Stage vs Status', () => {
     await page.check('[data-field-key="injunctive_relief_included"]');
     await page.click('#submit-nda-btn');
     await expect(page).toHaveURL(/\/contracts\/workflows\/\d+/);
-    await page.getByRole('link', { name: 'View contract record' }).click();
+    await openWorkspaceActions(page);
+    await page.getByRole('menuitem', { name: 'View contract record' }).click();
     await expect(page).toHaveURL(/\/contracts\/\d+\/?$/);
     const contractId = page.url().match(/\/contracts\/(\d+)/)[1];
 
