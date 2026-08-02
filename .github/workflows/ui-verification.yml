@@ -41,5 +41,116 @@ jobs:
       - name: Ensure verifier is executable
         run: chmod +x scripts/verify_ui.sh
 
+<<<<<<< HEAD
       - name: Run UI verification suite
         run: ./scripts/verify_ui.sh || echo "UI verification is non-blocking during migration refactor window"
+=======
+      - name: Run UI integrity suites
+        env:
+          VERIFY_UI_MODE: integrity
+        run: ./scripts/verify_ui.sh
+
+  browser-e2e:
+    name: verify-ui-browser (${{ matrix.shard }}/8)
+    needs: changes
+    if: needs.changes.outputs.run-ui == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        shard:
+          - 1
+          - 2
+          - 3
+          - 4
+          - 5
+          - 6
+          - 7
+          - 8
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
+            requirements/*.txt
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: client/package-lock.json
+
+      - name: Cache Playwright Chromium
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-chromium-${{ hashFiles('client/package-lock.json') }}
+
+      - name: Install Python dependencies
+        run: pip install -r requirements/dev.txt
+
+      - name: Install client dependencies
+        run: npm --prefix client ci
+
+      - name: Install Playwright Chromium
+        run: npm --prefix client exec playwright install chromium
+
+      - name: Ensure verifier is executable
+        run: chmod +x scripts/verify_ui.sh
+
+      - name: Run isolated browser shard
+        id: browser
+        env:
+          VERIFY_UI_MODE: browser
+          VERIFY_UI_DEPS_READY: '1'
+          PLAYWRIGHT_SHARD: ${{ matrix.shard }}/8
+          PLAYWRIGHT_SHARD_ACROSS_TESTS: '1'
+          PLAYWRIGHT_TEST_TIMEOUT_MS: '30000'
+        run: ./scripts/verify_ui.sh
+
+      - name: Upload browser failure evidence
+        if: steps.browser.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: verify-ui-shard-${{ matrix.shard }}-failure-evidence
+          path: |
+            logs/e2e-devserver-*.log
+            client/test-results/**
+          if-no-files-found: ignore
+
+  verify-ui:
+    name: verify-ui
+    if: always()
+    needs:
+      - changes
+      - ui-integrity
+      - browser-e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+
+    steps:
+      - name: Enforce every UI gate
+        env:
+          RUN_UI: ${{ needs.changes.outputs.run-ui }}
+          INTEGRITY_RESULT: ${{ needs.ui-integrity.result }}
+          BROWSER_RESULT: ${{ needs.browser-e2e.result }}
+        run: |
+          if [[ "${RUN_UI}" != "true" ]]; then
+            echo "Documentation-only change: full UI suites were not required."
+            exit 0
+          fi
+          echo "UI integrity result: ${INTEGRITY_RESULT}"
+          echo "Browser shard result: ${BROWSER_RESULT}"
+          test "${INTEGRITY_RESULT}" = "success"
+          test "${BROWSER_RESULT}" = "success"
+>>>>>>> d21ae2a8 (fix(ci): run Playwright without empty-array failure)

@@ -520,27 +520,14 @@ body:has(.cc-v3) .dc-ds-shell__topbar .global-search-input {
   line-height: 27px;
   font-weight: 650;
 }
-/* Semantic state: clear = monitored green, setup/action = amber stuck signal.
-   Action required is the stronger amber callout (card tint + left rail). */
+/* Semantic state is communicated by the card, icon, count, and supporting
+   copy. A second status dot would duplicate the signal and can conflict with
+   the card's own semantic colour. */
 .cc-v3-kpi-value.is-setup-required { color: var(--status-pending-fg); }
 .cc-v3-kpi-value.is-action-required { color: var(--status-pending-fg); }
 .cc-v3-kpi-value.is-setup-required::before,
 .cc-v3-kpi-value.is-action-required::before {
-  content: "";
-  width: 7px;
-  height: 7px;
-  display: inline-block;
-  margin-right: 7px;
-  border-radius: 50%;
-  vertical-align: 2px;
-}
-.cc-v3-kpi-value.is-setup-required::before {
-  background: var(--status-pending-fg);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--status-pending-fg) 12%, transparent);
-}
-.cc-v3-kpi-value.is-action-required::before {
-  background: var(--status-pending-fg);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--status-pending-fg) 16%, transparent);
+  content: none;
 }
 
 .cc-v3-rail-card { padding: 20px 20px 0; }
@@ -1746,4 +1733,276 @@ body:has(.cc-v3) .cc-v3-matters .cc-v3-table th {
 
 @media (max-width: 1040px) {
   .cc-v3-hero.cc-v3-portfolio-hero { padding: var(--space-16) var(--space-20); }
+}
+
+/* Command Center reference hierarchy: one portfolio decision, a concise
+   numeric queue scan, then a control table. These rules only compose
+   existing dashboard primitives and use the shared token vocabulary. */
+.cc-v3-hero.cc-v3-portfolio-hero {
+  gap: var(--space-16);
+  padding: var(--space-20) var(--space-24);
+}
+
+.cc-v3-portfolio-header {
+  grid-template-columns: minmax(0, 1fr) 174px;
+  gap: var(--space-24);
+}
+
+.cc-v3-portfolio-score-panel { width: 174px; }
+.cc-v3-portfolio-score { width: 92px; height: 92px; }
+.cc-v3-portfolio-score .cc-v3-score-copy strong { font-size: 30px; }
+.cc-v3-portfolio-score .cc-v3-score-copy em {
+  color: var(--color-state-next-dot);
+  font: var(--text-meta);
+  font-weight: 650;
+}
+
+.cc-v3-top-priority {
+  padding: var(--space-12) var(--space-16);
+  border-color: color-mix(in srgb, var(--clmone-white) 14%, transparent);
+  background: color-mix(in srgb, var(--color-brand-foundation) 26%, transparent);
+}
+
+.cc-v3-top-priority-body {
+  grid-template-columns: minmax(250px, .9fr) minmax(0, 1.4fr) auto;
+  align-items: center;
+  gap: var(--space-20);
+}
+
+.cc-v3-top-priority-actions {
+  display: grid;
+  grid-template-columns: max-content max-content;
+  gap: var(--space-8);
+  align-items: center;
+}
+
+.cc-v3-top-priority-actions .dc-ds-button {
+  min-height: 38px;
+  padding: 0 var(--space-12);
+  border-radius: var(--radius-control);
+  font: var(--text-meta);
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.cc-v3-top-priority-actions .dc-ds-button--primary {
+  background: var(--color-brand-primary);
+  color: var(--clmone-white);
+}
+
+.cc-v3-top-priority-actions .dc-ds-button--secondary {
+  border-color: color-mix(in srgb, var(--clmone-white) 46%, transparent);
+  background: transparent;
+  color: var(--clmone-white);
+}
+
+.cc-v3-top-priority-actions .dc-ds-button--secondary:hover {
+  background: color-mix(in srgb, var(--clmone-white) 10%, transparent);
+}
+
+.cc-v3-kpis {
+  grid-auto-rows: 116px;
+  gap: var(--space-12);
+  margin: var(--space-16) 0;
+}
+
+.cc-v3-kpi {
+  min-height: 116px;
+  height: 116px;
+  padding: var(--space-14) var(--space-16);
+  border-left: 1px solid var(--color-border-soft);
+  background: var(--card);
+}
+
+.cc-v3-kpi:hover { transform: none; }
+.cc-v3-kpi-top { grid-template-columns: 34px minmax(0, 1fr) auto; gap: var(--space-10); }
+.cc-v3-kpi-icon { width: 34px; height: 34px; border-radius: var(--radius-pill); }
+.cc-v3-kpi-label { align-self: center; color: var(--ink-900); font: var(--text-meta); font-weight: 650; }
+.cc-v3-kpi-arrow { align-self: center; color: var(--ink-500); font-size: 22px; line-height: 1; }
+.cc-v3-kpi-value,
+.cc-v3-kpi-value.is-clear { margin-top: var(--space-8); color: var(--ink-900); font-size: 32px; line-height: 1; font-weight: 650; }
+.cc-v3-kpi-value.is-clear::before { content: none; }
+.cc-v3-kpi-meta { margin-top: var(--space-6); color: var(--ink-600); font: var(--text-meta); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* A signal's count and its status form one statement. Keeping them on the
+   same baseline removes the duplicated count while preserving a concise,
+   non-colour status cue. */
+.cc-v3-kpi { grid-template-rows: auto auto; }
+.cc-v3-kpi-stat {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-8);
+  min-width: 0;
+  margin-top: var(--space-8);
+}
+.cc-v3-kpi-stat .cc-v3-kpi-value,
+.cc-v3-kpi-stat .cc-v3-kpi-value.is-action-required,
+.cc-v3-kpi-stat .cc-v3-kpi-value.is-setup-required {
+  flex: 0 0 auto;
+  margin: 0;
+  font-size: 32px;
+  line-height: 1;
+  font-weight: 650;
+}
+.cc-v3-kpi-stat .cc-v3-kpi-meta {
+  min-width: 0;
+  margin: 0;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+/* Each portfolio signal has its own truthful, token-backed state. The label
+   and supporting sentence carry the state for users who do not perceive color. */
+body:has(.cc-v3) .cc-v3-kpi.cc-v3-kpi--approvals {
+  border-color: var(--color-status-info-border);
+  border-left: 1px solid var(--color-status-info-border);
+  background: color-mix(in srgb, var(--status-progress-bg) 30%, var(--card));
+}
+body:has(.cc-v3) .cc-v3-kpi.cc-v3-kpi--risk {
+  border-color: var(--color-status-error-border);
+  border-left: 1px solid var(--color-status-error-border);
+  background: color-mix(in srgb, var(--status-danger-bg) 34%, var(--card));
+}
+body:has(.cc-v3) .cc-v3-kpi.cc-v3-kpi--conflicts {
+  border-color: var(--color-status-warning-border);
+  border-left: 1px solid var(--color-status-warning-border);
+  background: color-mix(in srgb, var(--status-pending-bg) 34%, var(--card));
+}
+body:has(.cc-v3) .cc-v3-kpi.cc-v3-kpi--deadlines.is-on-track {
+  border-color: var(--color-status-success-border);
+  border-left: 1px solid var(--color-status-success-border);
+  background: color-mix(in srgb, var(--status-positive-bg) 30%, var(--card));
+}
+body:has(.cc-v3) .cc-v3-kpi.cc-v3-kpi--deadlines.is-overdue {
+  border-color: var(--color-status-error-border);
+  border-left: 1px solid var(--color-status-error-border);
+  background: color-mix(in srgb, var(--status-danger-bg) 34%, var(--card));
+}
+.cc-v3-kpi--approvals .cc-v3-kpi-value { color: var(--status-progress-fg); }
+.cc-v3-kpi--risk .cc-v3-kpi-value { color: var(--status-danger-fg); }
+.cc-v3-kpi--conflicts .cc-v3-kpi-value { color: var(--status-pending-fg); }
+.cc-v3-kpi--deadlines.is-on-track .cc-v3-kpi-value { color: var(--status-positive-fg); }
+.cc-v3-kpi--deadlines.is-overdue .cc-v3-kpi-value { color: var(--status-danger-fg); }
+body:has(.cc-v3) .cc-v3-kpi--approvals .cc-v3-kpi-icon { background: var(--status-progress-bg); color: var(--status-progress-fg); }
+body:has(.cc-v3) .cc-v3-kpi--risk .cc-v3-kpi-icon { background: var(--status-danger-bg); color: var(--status-danger-fg); }
+body:has(.cc-v3) .cc-v3-kpi--conflicts .cc-v3-kpi-icon { background: var(--status-pending-bg); color: var(--status-pending-fg); }
+body:has(.cc-v3) .cc-v3-kpi--deadlines.is-on-track .cc-v3-kpi-icon { background: var(--status-positive-bg); color: var(--status-positive-fg); }
+body:has(.cc-v3) .cc-v3-kpi--deadlines.is-overdue .cc-v3-kpi-icon { background: var(--status-danger-bg); color: var(--status-danger-fg); }
+
+.cc-v3-governance {
+  display: block;
+  min-height: 0;
+  margin-bottom: var(--space-24);
+  padding: var(--space-16) var(--space-24);
+}
+
+.cc-v3-governance-title {
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 0 0 var(--space-12);
+  overflow: visible;
+  clip: auto;
+  color: var(--ink-900);
+  font: var(--text-section);
+}
+
+.cc-v3-governance-list { border-top: 1px solid var(--hairline); }
+.cc-v3-governance-item {
+  display: grid;
+  grid-template-columns: 16px minmax(180px, 1.25fr) minmax(124px, .8fr) minmax(180px, 1.2fr) auto;
+  gap: var(--space-16);
+  min-height: 58px;
+  padding: var(--space-12) var(--space-8);
+  border: 0;
+  border-bottom: 1px solid var(--hairline);
+  border-radius: 0;
+  color: var(--ink-700);
+}
+
+.cc-v3-governance-item:last-child { border-bottom: 0; }
+.cc-v3-governance-item:hover { background: var(--color-surface-card-hover); transform: none; }
+.cc-v3-governance-item.is-emphasis {
+  grid-template-columns: 16px minmax(180px, 1.25fr) minmax(124px, .8fr) minmax(180px, 1.2fr) auto;
+  margin: 0;
+  border: 0;
+  border-bottom: 1px solid var(--hairline);
+  border-radius: 0;
+  background: transparent;
+}
+
+.cc-v3-governance-item .status-dot { align-self: center; }
+.cc-v3-governance-copy strong { color: var(--ink-900); font: var(--text-small); font-weight: 600; }
+.cc-v3-governance-state {
+  grid-column: 3;
+  justify-self: start;
+  align-self: center;
+  color: var(--ink-700);
+  font: var(--text-meta);
+  font-weight: 650;
+  text-align: left;
+}
+.cc-v3-governance-item.is-emphasis .cc-v3-governance-state { color: var(--status-pending-fg); }
+.cc-v3-governance-detail { color: var(--ink-500); font: var(--text-meta); }
+.cc-v3-governance-action { color: var(--seal-dark); font: var(--text-meta); font-weight: 650; white-space: nowrap; }
+.cc-v3-governance-item.is-emphasis::after { content: none; }
+
+@media (max-width: 1180px) {
+  .cc-v3-top-priority-body { grid-template-columns: minmax(220px, .85fr) minmax(0, 1.35fr); }
+  .cc-v3-top-priority-actions { grid-column: 1 / -1; justify-content: start; }
+}
+
+@media (max-width: 860px) {
+  .cc-v3-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 116px; }
+  .cc-v3-kpi { min-height: 116px; height: 116px; }
+  .cc-v3-governance-item,
+  .cc-v3-governance-item.is-emphasis { grid-template-columns: 16px minmax(0, 1fr) auto; gap: var(--space-12); }
+  .cc-v3-governance-detail { grid-column: 2 / 4; }
+}
+
+@media (max-width: 560px) {
+  .cc-v3-portfolio-header { grid-template-columns: 1fr; gap: var(--space-16); }
+  .cc-v3-portfolio-score-panel { width: auto; justify-self: start; }
+  .cc-v3-top-priority-body { grid-template-columns: 1fr; }
+  .cc-v3-top-priority-actions { grid-template-columns: 1fr; width: 100%; }
+  .cc-v3-top-priority-actions .dc-ds-button { width: 100%; }
+  .cc-v3-kpis { grid-template-columns: 1fr; grid-auto-rows: auto; }
+  .cc-v3-kpi { min-height: 116px; height: auto; }
+  .cc-v3-governance { padding: var(--space-16); }
+  .cc-v3-governance-item,
+  .cc-v3-governance-item.is-emphasis { grid-template-columns: 16px minmax(0, 1fr); }
+  .cc-v3-governance-state,
+  .cc-v3-governance-detail { grid-column: 2; }
+  .cc-v3-governance-action { grid-column: 2; }
+}
+
+@media (min-width: 901px) {
+  body:has(.cc-v3) .cc-v3-kpis { grid-auto-rows: 116px; }
+  body:has(.cc-v3) .cc-v3-kpi { min-height: 116px; height: 116px; }
+}
+
+/* A deadline row has three deliberate columns: icon, record context, and
+   due state. Top-align every column so a long deadline title cannot make the
+   icon or due state appear to belong to a different record. */
+.cc-v3-deadlines .cc-v3-rail-body { gap: 0; }
+.cc-v3-deadline-row {
+  grid-template-columns: 40px minmax(0, 1fr) minmax(92px, max-content);
+  align-items: start;
+  column-gap: var(--space-12);
+  padding: var(--space-12) 0;
+}
+.cc-v3-deadline-row .cc-v3-calendar { margin-top: var(--space-2); }
+.cc-v3-deadline-copy {
+  display: grid;
+  min-width: 0;
+  align-content: start;
+  gap: var(--space-4);
+}
+.cc-v3-deadline-copy strong { margin: 0; }
+.cc-v3-deadline-copy span { margin-top: 0; }
+.cc-v3-date-status {
+  align-self: start;
+  justify-self: end;
+  min-width: 92px;
+  white-space: normal;
 }

@@ -77,6 +77,32 @@ class ContractDetailShellTests(TestCase):
         response = self.client.get(detail_url(self.contract.pk))
         self.assertEqual(response.status_code, 200)
 
+    def test_run_review_command_opens_the_review_workspace(self):
+        contract = Contract.objects.create(
+            organization=self.organization,
+            title='Reviewable agreement',
+            content='Seed',
+            status=Contract.Status.IN_PROGRESS,
+            created_by=self.user,
+        )
+        Document.objects.create(
+            organization=self.organization,
+            title='Review source',
+            document_type=Document.DocType.CONTRACT,
+            version=1,
+            contract=contract,
+            uploaded_by=self.user,
+        )
+
+        response = self.client.get(detail_url(contract.pk, 'workflow'))
+
+        action = response.context['contract_command']['primary_action']
+        self.assertEqual(action['label'], 'Open review workspace')
+        self.assertEqual(
+            action['target'],
+            reverse('contracts:contract_review_workspace', kwargs={'pk': contract.pk}),
+        )
+
     def test_uses_shared_page_wrap_shell(self):
         response = self.client.get(detail_url(self.contract.pk))
         self.assertContains(response, 'dc-ds-shell')

@@ -219,6 +219,34 @@ class RepositoryApiRowShapeTests(TestCase):
         self.assertEqual(row['stage_display'], 'Obligations')
         self.assertEqual(row['stage_display_full'], 'Obligation tracking')
 
+    def test_stage_and_status_sort_their_own_canonical_fields(self):
+        drafting = Contract.objects.create(
+            organization=self.organization,
+            title='Drafting contract',
+            status=Contract.Status.IN_PROGRESS,
+            lifecycle_stage=Contract.LifecycleStage.DRAFTING,
+            created_by=self.user,
+        )
+        executed = Contract.objects.create(
+            organization=self.organization,
+            title='Executed contract',
+            status=Contract.Status.ACTIVE,
+            lifecycle_stage=Contract.LifecycleStage.EXECUTED,
+            created_by=self.user,
+        )
+
+        stage_rows = self.client.get(
+            reverse('contracts:contracts_api'), {'sort': 'stage'}
+        ).json()['contracts']
+        status_rows = self.client.get(
+            reverse('contracts:contracts_api'), {'sort': 'status'}
+        ).json()['contracts']
+
+        stage_ids = [row['id'] for row in stage_rows]
+        status_ids = [row['id'] for row in status_rows]
+        self.assertLess(stage_ids.index(str(drafting.pk)), stage_ids.index(str(executed.pk)))
+        self.assertLess(status_ids.index(str(executed.pk)), status_ids.index(str(drafting.pk)))
+
     def test_unassigned_contract_has_no_assignee(self):
         Contract.objects.create(
             organization=self.organization,

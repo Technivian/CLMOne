@@ -1,0 +1,83 @@
+{"kind":"deck","id":"pr/lft60y","name":"Deck"}
+{"kind":"layout","layoutId":"8ca2b894-6592-4fc3-9925-351030c7d705","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"791f8808-575c-4f90-829e-439b26ff6bac","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/9is66k","slide":1,"title":"CLM ONE FOR PAYROLL ADMINS","textShapes":6}
+{"kind":"textbox","id":"sh/6tsr2lor","slide":1,"name":"cover-kicker","text":"CLM ONE FOR PAYROLL ADMINS","textPreview":"CLM ONE FOR PAYROLL ADMINS","textChars":26,"textLines":1,"bbox":[42,42,420,24]}
+{"kind":"shape","id":"sh/twjax0ni","slide":1,"name":"rule-42-82","bbox":[42,82,1196,0]}
+{"kind":"textbox","id":"sh/sva94v6x","slide":1,"name":"cover-title","text":"Payroll agreements\nshouldn’t live in inboxes.","textPreview":"Payroll agreements | shouldn’t live in inboxes.","textChars":45,"textLines":2,"bbox":[42,190,770,220]}
+{"kind":"textbox","id":"sh/jq1sr65g","slide":1,"name":"cover-subtitle","text":"CLM One gives payroll teams one controlled place to intake, confirm, and manage the agreements that affect operations.","textPreview":"CLM One gives payroll teams one controlled place to intake, confirm, and manage the agreements that affect operations.","textChars":118,"textLines":1,"bbox":[42,472,610,105]}
+{"kind":"shape","id":"sh/i58rylov","slide":1,"name":"cover-field","bbox":[866,160,330,330]}
+{"kind":"textbox","id":"sh/5sjatgn6","slide":1,"name":"cover-field-label","text":"ONE CONTROLLED RECORD","textPreview":"ONE CONTROLLED RECORD","textChars":21,"textLines":1,"bbox":[900,220,245,28]}
+{"kind":"textbox","id":"sh/kra90b61","slide":1,"name":"cover-field-copy","text":"Source document\n+ extracted metadata\n+ human confirmation\n+ audit trail","textPreview":"Source document | + extracted metadata | + human confirmation | + audit trail","textChars":71,"textLines":4,"bbox":[900,278,250,150]}
+{"kind":"textbox","id":"sh/3mls3a5k","slide":1,"name":"cover-page","text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[1188,656,50,22]}
+{"kind":"notes","id":"nt/9is66k","slide":1,"text":"[Sources]\nNo external sources. Content is based on the CLM One product capabilities supplied in this conversation."}
+{"kind":"slide","id":"sl/iiw8pc","slide":2,"title":"THE PROBLEM","textShapes":13}
+{"kind":"textbox","id":"sh/m9sjqxgf","slide":2,"name":"eyebrow-2","text":"THE PROBLEM","textPreview":"THE PROBLEM","textChars":11,"textLines":1,"bbox":[42,36,300,24]}
+{"kind":"textbox","id":"sh/9cj21sfq","slide":2,"name":"page-2","text":"2","textPreview":"2","textChars":1,"textLines":1,"bbox":[1190,656,48,22]}
+{"kind":"shape","id":"sh/8ba1snyl","slide":2,"name":"rule-42-72","bbox":[42,72,1196,0]}
+{"kind":"textbox","id":"sh/velk32xw","slide":2,"name":"problem-title","text":"The friction is operational, not legal.","textPreview":"The friction is operational, not legal.","textChars":39,"textLines":1,"bbox":[42,116,1040,58]}
+{"kind":"textbox","id":"sh/udsjuxgb","slide":2,"name":"problem-sub","text":"When agreements are scattered, payroll teams lose the context needed to act with confidence.","textPreview":"When agreements are scattered, payroll teams lose the context needed to act with confidence.","textChars":92,"textLines":1,"bbox":[42,188,850,38]}
+{"kind":"shape","id":"sh/hg325cf2","slide":2,"name":"rule-42-290","bbox":[42,290,336,0]}
+{"kind":"textbox","id":"sh/wfu1w7yh","slide":2,"name":"problem-number-0","text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[42,315,80,38]}
+{"kind":"textbox","id":"sh/jilk7mx8","slide":2,"name":"problem-head-0","text":"Files arrive everywhere","textPreview":"Files arrive everywhere","textChars":23,"textLines":1,"bbox":[42,374,336,70]}
+{"kind":"textbox","id":"sh/ihcjyhgn","slide":2,"name":"problem-copy-0","text":"Email attachments, shared drives, and individual folders create an incomplete picture.","textPreview":"Email attachments, shared drives, and individual folders create an incomplete picture.","textChars":86,"textLines":1,"bbox":[42,462,336,110]}
+{"kind":"shape","id":"sh/one1sreh","slide":2,"name":"rule-442-290","bbox":[442,290,336,0]}
+{"kind":"textbox","id":"sh/po72lwvm","slide":2,"name":"problem-number-1","text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[442,315,80,38]}
+{"kind":"textbox","id":"sh/2lwjq1wb","slide":2,"name":"problem-head-1","text":"Ownership is unclear","textPreview":"Ownership is unclear","textChars":20,"textLines":1,"bbox":[442,374,336,70]}
+{"kind":"textbox","id":"sh/3m5kj6dw","slide":2,"name":"problem-copy-1","text":"Teams cannot quickly see who is accountable for a contract or its follow-up.","textPreview":"Teams cannot quickly see who is accountable for a contract or its follow-up.","textChars":76,"textLines":1,"bbox":[442,462,336,110]}
+{"kind":"shape","id":"sh/cry1wbed","slide":2,"name":"rule-842-290","bbox":[842,290,336,0]}
+{"kind":"textbox","id":"sh/ds72pgvy","slide":2,"name":"problem-number-2","text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[842,315,80,38]}
+{"kind":"textbox","id":"sh/qpgju1w7","slide":2,"name":"problem-head-2","text":"Key obligations are easy to miss","textPreview":"Key obligations are easy to miss","textChars":32,"textLines":1,"bbox":[842,374,336,70]}
+{"kind":"textbox","id":"sh/bqpkn6ds","slide":2,"name":"problem-copy-2","text":"Dates, terms, and compliance actions remain trapped in documents instead of daily operations.","textPreview":"Dates, terms, and compliance actions remain trapped in documents instead of daily operations.","textChars":93,"textLines":1,"bbox":[842,462,336,110]}
+{"kind":"notes","id":"nt/iiw8pc","slide":2,"text":"[Sources]\nNo external sources. Content is based on the CLM One product capabilities supplied in this conversation."}
+{"kind":"slide","id":"sl/sev4ab","slide":3,"title":"HOW IT WORKS","textShapes":17}
+{"kind":"textbox","id":"sh/pcnmt0vq","slide":3,"name":"eyebrow-3","text":"HOW IT WORKS","textPreview":"HOW IT WORKS","textChars":12,"textLines":1,"bbox":[42,36,300,24]}
+{"kind":"textbox","id":"sh/2pwnylwf","slide":3,"name":"page-3","text":"3","textPreview":"3","textChars":1,"textLines":1,"bbox":[1190,656,48,22]}
+{"kind":"shape","id":"sh/na54rqdk","slide":3,"name":"rule-42-72","bbox":[42,72,1196,0]}
+{"kind":"textbox","id":"sh/cfe54veh","slide":3,"name":"workflow-title","text":"CLM One turns contract intake into a controlled workflow.","textPreview":"CLM One turns contract intake into a controlled workflow.","textChars":57,"textLines":1,"bbox":[42,116,1110,58]}
+{"kind":"textbox","id":"sh/xg7mx0v2","slide":3,"name":"workflow-sub","text":"Automation accelerates preparation; people remain responsible for confirmation and decisions.","textPreview":"Automation accelerates preparation; people remain responsible for confirmation and decisions.","textChars":93,"textLines":1,"bbox":[42,188,1000,36]}
+{"kind":"shape","id":"sh/adwn25wb","slide":3,"name":"workflow-arrow-0","bbox":[303,402,42,28]}
+{"kind":"shape","id":"sh/be54vqdw","slide":3,"name":"workflow-arrow-1","bbox":[605,402,42,28]}
+{"kind":"shape","id":"sh/sjulsbex","slide":3,"name":"workflow-arrow-2","bbox":[907,402,42,28]}
+{"kind":"shape","id":"sh/dk3mlgvi","slide":3,"name":"workflow-card-0","bbox":[42,306,250,214]}
+{"kind":"shape","id":"sh/90nitsfe","slide":3,"name":"workflow-card-1","bbox":[344,306,250,214]}
+{"kind":"shape","id":"sh/8zuhknyt","slide":3,"name":"workflow-card-2","bbox":[646,306,250,214]}
+{"kind":"shape","id":"sh/7yl0rix8","slide":3,"name":"workflow-card-3","bbox":[948,306,250,214]}
+{"kind":"textbox","id":"sh/mxczixgn","slide":3,"name":"workflow-number-0","text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[62,332,60,26]}
+{"kind":"textbox","id":"sh/honixcfa","slide":3,"name":"workflow-head-0","text":"IMPORT OR FORWARD","textPreview":"IMPORT OR FORWARD","textChars":17,"textLines":1,"bbox":[62,380,210,52]}
+{"kind":"textbox","id":"sh/wneho7yp","slide":3,"name":"workflow-copy-0","text":"Bring in a folder of files or forward email attachments.","textPreview":"Bring in a folder of files or forward email attachments.","textChars":56,"textLines":1,"bbox":[62,448,205,58]}
+{"kind":"textbox","id":"sh/vm50v2x4","slide":3,"name":"workflow-number-1","text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[364,332,60,26]}
+{"kind":"textbox","id":"sh/u1wzmxgj","slide":3,"name":"workflow-head-1","text":"EXTRACT","textPreview":"EXTRACT","textChars":7,"textLines":1,"bbox":[364,380,210,52]}
+{"kind":"textbox","id":"sh/5s7i1cf6","slide":3,"name":"workflow-copy-1","text":"Capture readable metadata and preserve it as unverified review context.","textPreview":"Capture readable metadata and preserve it as unverified review context.","textChars":71,"textLines":1,"bbox":[364,448,205,58]}
+{"kind":"textbox","id":"sh/4rehs7y1","slide":3,"name":"workflow-number-2","text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[666,332,60,26]}
+{"kind":"textbox","id":"sh/o76tkfa9","slide":3,"name":"workflow-head-2","text":"CONFIRM","textPreview":"CONFIRM","textChars":7,"textLines":1,"bbox":[666,380,210,52]}
+{"kind":"textbox","id":"sh/p8fadkru","slide":3,"name":"workflow-copy-2","text":"A reviewer verifies ownership, dates, type, and other key details.","textPreview":"A reviewer verifies ownership, dates, type, and other key details.","textChars":66,"textLines":1,"bbox":[666,448,205,58]}
+{"kind":"textbox","id":"sh/25obi5s3","slide":3,"name":"workflow-number-3","text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[968,332,60,26]}
+{"kind":"textbox","id":"sh/n6xsba9o","slide":3,"name":"workflow-head-3","text":"MANAGE","textPreview":"MANAGE","textChars":6,"textLines":1,"bbox":[968,380,210,52]}
+{"kind":"textbox","id":"sh/cbqtoza5","slide":3,"name":"workflow-copy-3","text":"Keep the source, audit trail, and follow-up work in one record.","textPreview":"Keep the source, audit trail, and follow-up work in one record.","textChars":63,"textLines":1,"bbox":[968,448,205,58]}
+{"kind":"textbox","id":"sh/xczah4rq","slide":3,"name":"workflow-bottom","text":"Every imported document retains its source version and an auditable path back to how it entered CLM One.","textPreview":"Every imported document retains its source version and an auditable path back to how it entered CLM One.","textChars":104,"textLines":1,"bbox":[42,584,980,31]}
+{"kind":"notes","id":"nt/sev4ab","slide":3,"text":"[Sources]\nNo external sources. Content is based on the CLM One product capabilities supplied in this conversation."}
+{"kind":"slide","id":"sl/7aqq5t","slide":4,"title":"WHY PAYROLL TEAMS CARE","textShapes":10}
+{"kind":"textbox","id":"sh/7i1czix0","slide":4,"name":"eyebrow-4","text":"WHY PAYROLL TEAMS CARE","textPreview":"WHY PAYROLL TEAMS CARE","textChars":22,"textLines":1,"bbox":[42,36,300,24]}
+{"kind":"textbox","id":"sh/8jad8nyl","slide":4,"name":"page-4","text":"4","textPreview":"4","textChars":1,"textLines":1,"bbox":[1190,656,48,22]}
+{"kind":"shape","id":"sh/tk3u1sf6","slide":4,"name":"rule-42-72","bbox":[42,72,1196,0]}
+{"kind":"textbox","id":"sh/ydsb2dgj","slide":4,"name":"benefits-title","text":"What payroll admins gain immediately","textPreview":"What payroll admins gain immediately","textChars":36,"textLines":1,"bbox":[42,116,850,58]}
+{"kind":"textbox","id":"sh/je1cvix4","slide":4,"name":"benefits-sub","text":"A clearer operating model for agreements that affect people, payments, and compliance.","textPreview":"A clearer operating model for agreements that affect people, payments, and compliance.","textChars":86,"textLines":1,"bbox":[42,188,950,36]}
+{"kind":"shape","id":"sh/kfat43yp","slide":4,"name":"benefit-panel-0","bbox":[42,310,350,240]}
+{"kind":"textbox","id":"sh/lgjux8fa","slide":4,"name":"benefit-label-0","text":"ONE RECORD","textPreview":"ONE RECORD","textChars":10,"textLines":1,"bbox":[70,348,285,32]}
+{"kind":"textbox","id":"sh/i9cvexgn","slide":4,"name":"benefit-copy-0","text":"A single place to find the source agreement, current context, and activity history.","textPreview":"A single place to find the source agreement, current context, and activity history.","textChars":83,"textLines":1,"bbox":[70,410,286,88]}
+{"kind":"shape","id":"sh/3alc72x8","slide":4,"name":"benefit-panel-1","bbox":[442,310,350,240]}
+{"kind":"textbox","id":"sh/r21k361w","slide":4,"name":"benefit-label-1","text":"CLEAR OWNERSHIP","textPreview":"CLEAR OWNERSHIP","textChars":15,"textLines":1,"bbox":[470,348,285,32]}
+{"kind":"textbox","id":"sh/61sja10b","slide":4,"name":"benefit-copy-1","text":"Each record can be routed to the person responsible for confirmation and follow-up.","textPreview":"Each record can be routed to the person responsible for confirmation and follow-up.","textChars":83,"textLines":1,"bbox":[470,410,286,88]}
+{"kind":"shape","id":"sh/t4j25wj2","slide":4,"name":"benefit-panel-2","bbox":[842,310,350,240]}
+{"kind":"textbox","id":"sh/s3a1cbih","slide":4,"name":"benefit-label-2","text":"AUDITABLE ACTIONS","textPreview":"AUDITABLE ACTIONS","textChars":17,"textLines":1,"bbox":[870,348,285,32]}
+{"kind":"textbox","id":"sh/f61k7618","slide":4,"name":"benefit-copy-2","text":"Imports, extracted metadata, and review activity are visible and traceable.","textPreview":"Imports, extracted metadata, and review activity are visible and traceable.","textChars":75,"textLines":1,"bbox":[870,410,286,88]}
+{"kind":"notes","id":"nt/7aqq5t","slide":4,"text":"[Sources]\nNo external sources. Content is based on the CLM One product capabilities supplied in this conversation."}
+{"kind":"slide","id":"sl/cxtj10","slide":5,"title":"THE OUTCOME","textShapes":5}
+{"kind":"textbox","id":"sh/qpkjy9s3","slide":5,"name":"close-kicker","text":"THE OUTCOME","textPreview":"THE OUTCOME","textChars":11,"textLines":1,"bbox":[42,42,300,24]}
+{"kind":"shape","id":"sh/dsvitobu","slide":5,"name":"rule-42-82","bbox":[42,82,1196,0]}
+{"kind":"textbox","id":"sh/cr210ja9","slide":5,"name":"close-title","text":"A reliable contract record\nfor payroll operations.","textPreview":"A reliable contract record | for payroll operations.","textChars":50,"textLines":2,"bbox":[42,176,900,220]}
+{"kind":"textbox","id":"sh/32t0nuts","slide":5,"name":"close-copy","text":"Start with one existing folder or shared inbox.\nBring the agreements in, confirm what matters, and give payroll a dependable operational record.","textPreview":"Start with one existing folder or shared inbox. | Bring the agreements in, confirm what matters, and give payroll a dependable operationa...","textChars":144,"textLines":2,"bbox":[42,506,780,92]}
+{"kind":"textbox","id":"sh/21kzups7","slide":5,"name":"close-call","text":"CLM ONE","textPreview":"CLM ONE","textChars":7,"textLines":1,"bbox":[1010,550,185,34]}
+{"kind":"textbox","id":"sh/pobip4by","slide":5,"name":"close-page","text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[1188,656,50,22]}
+{"kind":"notes","id":"nt/cxtj10","slide":5,"text":"[Sources]\nNo external sources. Content is based on the CLM One product capabilities supplied in this conversation."}

@@ -410,7 +410,7 @@ GitHub is the authority for repository change approval and release evidence.
 The authoritative record comprises submitted GitHub PR reviews, check results,
 the immutable reviewed and merged commit SHAs, and deployment or operator logs.
 Documentation may link to those records but must not recreate them as editable
-approval evidence.
+approval evidence. This is active rule unless the owner of the repo states differently.
 
 - Do not use manually maintained vote tables, copied approval statements, or
   manually entered approval timestamps in active authorization packages.
@@ -450,6 +450,6 @@ approval evidence.
 - Production activation, permission or privilege changes, automatic repair,
   ADMIN authority, and legacy retirement require approved Product,
   Engineering, and Security GitHub reviews that are independent of one
-  another, green CI, and a release record.
+  another, green CI, and a release record unless the owner of the repo states differently.
 - A feature flag only controls exposure. It never grants authority, bypasses
   required review, or substitutes for an operator or release record.

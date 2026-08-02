@@ -491,6 +491,11 @@ APP_BASE_URL = os.getenv('APP_BASE_URL', 'http://localhost:8000').strip()
 # failure notification to this address when a scheduled job run fails.
 OPERATOR_ALERT_EMAIL = os.getenv('OPERATOR_ALERT_EMAIL', '').strip()
 
+# Inbound attachment forwarding is an external integration and remains off
+# until an operator has configured a scoped token and completed its release
+# controls. Browser-based mass import does not depend on this switch.
+EMAIL_FORWARDED_INGESTION_ENABLED = _bool_env('EMAIL_FORWARDED_INGESTION_ENABLED', default=False)
+
 # SMTP — defaults to console backend in dev; set EMAIL_HOST to enable real sending.
 _email_host = os.getenv('EMAIL_HOST', '').strip()
 if _email_host:

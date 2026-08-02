@@ -1,0 +1,4 @@
+No external sources or visual assets used. The deck is based on the CLM One
+capabilities described in this conversation: controlled document import,
+email-forwarded ingestion, immutable document provenance, unverified metadata
+extraction, human confirmation, and audit trails.

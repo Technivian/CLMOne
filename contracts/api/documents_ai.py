@@ -268,6 +268,72 @@ def document_extract_preview_api(request):
 
 @login_required
 @require_http_methods(['POST'])
+def document_mass_import_api(request):
+    """Import up to 50 agreements through the canonical document pipeline."""
+    from contracts.services.document_ingestion import (
+        DocumentIngestionError,
+        get_document_ingestion_service,
+    )
+
+    organization = get_user_organization(request.user)
+    try:
+        result = get_document_ingestion_service().ingest_batch(
+            organization=organization,
+            files=request.FILES.getlist('files') or request.FILES.getlist('file'),
+            actor=request.user,
+            channel='mass_import',
+            request=request,
+        )
+    except DocumentIngestionError as exc:
+        return _error_response(request, str(exc), 400)
+    return JsonResponse({'ok': True, **result.to_dict()}, status=201)
+
+
+@csrf_exempt
+@require_http_methods(['POST'])
+def email_forwarded_document_ingest_api(request):
+    """Accept mail-provider forwarded attachments through a scoped bearer token.
+
+    The endpoint is deliberately deployment-disabled by default.  A forwarding
+    provider must supply an existing ``contracts:write`` API token and a stable
+    Message-ID.  Only attachment bytes are persisted; sender, subject, and
+    message body are never retained in audit metadata.
+    """
+    from contracts.services.document_ingestion import (
+        DocumentIngestionError,
+        get_document_ingestion_service,
+    )
+
+    if not getattr(settings, 'EMAIL_FORWARDED_INGESTION_ENABLED', False):
+        return _error_response(request, 'Email-forwarded ingestion is not enabled for this deployment.', 404)
+    organization, _token, api_token = _resolve_api_organization(request, required_scope='contracts:write')
+    if organization is None or api_token is None:
+        return _error_response(request, 'A valid scoped API token is required.', 401)
+    message_id = (
+        request.headers.get('X-Message-Id')
+        or request.POST.get('message_id')
+        or ''
+    ).strip()
+    if not message_id or len(message_id) > 512:
+        return _error_response(request, 'A valid forwarded message ID is required.', 400)
+    try:
+        result = get_document_ingestion_service().ingest_batch(
+            organization=organization,
+            files=request.FILES.getlist('attachments') or request.FILES.getlist('files'),
+            # A bearer token identifies an integration, not an impersonated
+            # workspace user. Provenance carries its hashed source identity.
+            actor=None,
+            channel='email_forwarded',
+            request=request,
+            source_message_id=message_id,
+        )
+    except DocumentIngestionError as exc:
+        return _error_response(request, str(exc), 400)
+    return JsonResponse({'ok': True, **result.to_dict()}, status=201)
+
+
+@login_required
+@require_http_methods(['POST'])
 def document_upload_api(request):
     """Ingest a contract document file: upload → hash → OCR queue → AI extraction.
 

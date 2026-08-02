@@ -289,6 +289,26 @@ Before release, verify:
 - agent context;
 - support and operational readiness.
 
+### 10.1 Owner-directed repository authorization
+
+Subject to acceptance of PDR-0010, the authenticated GitHub repository owner
+`@haroonwahed` is the final Product, Engineering, Security, and Release
+Authority for CLM One repository changes.
+
+- An explicit owner instruction recorded in an owner-controlled Codex
+  workspace, GitHub pull request, issue, release, or deployment record is
+  sufficient authorization for the stated scope.
+- Independent Product, Engineering, and Security reviews are optional advisory
+  controls rather than mandatory gates.
+- Green CI on the exact release SHA remains the normal technical gate.
+- An owner may override a failed or unavailable CI check only through an
+  explicit decision naming the check, reason, scope, rollback plan, and target
+  SHA.
+- Runtime permissions, tenant isolation, audit, testing, migration, rollback,
+  and operational evidence remain mandatory engineering responsibilities.
+- Historical reviews, attestations, releases, and incident records remain
+  immutable evidence.
+
 ## 11. Amendment procedure
 
 Every amendment must state:

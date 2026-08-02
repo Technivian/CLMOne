@@ -9,14 +9,14 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
 from django.db.models import Count, Q, Sum
-from django.http import HttpResponseForbidden, JsonResponse
+from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
-from contracts.forms import ContractForm, DocumentForm, UserProfileForm
+from contracts.forms import ContractForm, ContractImportPreviewForm, DocumentForm, UserProfileForm
 from contracts.middleware import log_action
 from contracts.models import (
     AuditLog,
@@ -885,6 +885,13 @@ def legal_front_door(request):
             'href': reverse('contracts:upload_signed_contract'),
         },
         {
+            'key': 'mass_import',
+            'title': 'Import contract documents',
+            'description': 'Import several existing agreements, preserving source versions and sending extracted details to review.',
+            'icon': 'upload',
+            'href': reverse('contracts:mass_document_import'),
+        },
+        {
             'key': 'dpa_review',
             'title': 'Start DPA review',
             'description': 'Assess an existing contract for privacy risk — SCC position, subprocessors, data transfers.',
@@ -954,6 +961,76 @@ def upload_signed_contract(request):
         'ai_review_unavailable_reason': ai_review_unavailable_reason,
         'hide_app_footer': True,
     })
+
+
+@login_required
+def mass_document_import(request):
+    """Render the workspace batch-import surface; writes stay in the API service."""
+    return render(request, 'contracts/mass_document_import.html', {
+        'hide_app_footer': True,
+        'email_forwarding_endpoint': (
+            settings.APP_BASE_URL.rstrip('/')
+            + reverse('contracts:email_forwarded_document_ingest_api')
+        ),
+    })
+
+
+@login_required
+def contract_import_preview(request):
+    """Preview a private contract CSV import without persisting records."""
+    organization = get_user_organization(request.user)
+    if not can_manage_organization(request.user, organization):
+        return HttpResponseForbidden('Only organization owners/admins can preview contract imports.')
+
+    result = None
+    if request.method == 'POST':
+        form = ContractImportPreviewForm(request.POST, request.FILES)
+        if form.is_valid():
+            try:
+                csv_text = form.cleaned_data['csv_file'].read().decode('utf-8-sig')
+            except UnicodeDecodeError:
+                form.add_error('csv_file', 'CSV files must be UTF-8 encoded.')
+            else:
+                from contracts.services.inbound_import import get_inbound_import_service
+                result = get_inbound_import_service().import_contracts_from_csv(
+                    organization, csv_text, request.user, dry_run=True,
+                )
+                log_action(
+                    request.user,
+                    AuditLog.Action.VIEW,
+                    'Organization',
+                    organization.pk,
+                    changes={
+                        'event': 'contract.import_previewed',
+                        'valid_row_count': result.imported_count,
+                        'invalid_row_count': result.skipped_count,
+                    },
+                    request=request,
+                    organization=organization,
+                )
+    else:
+        form = ContractImportPreviewForm()
+
+    return render(request, 'contracts/contract_import_preview.html', {
+        'form': form,
+        'result': result,
+        'hide_app_footer': True,
+    })
+
+
+@login_required
+def contract_import_template_download(request):
+    organization = get_user_organization(request.user)
+    if not can_manage_organization(request.user, organization):
+        return HttpResponseForbidden('Only organization owners/admins can download the contract import template.')
+
+    response = HttpResponse(
+        'title,counterparty,contract_type,owner_email,status,lifecycle_stage,start_date,end_date,renewal_date,notice_period_days,termination_notice_date\n'
+        'Example agreement,Example counterparty,NDA,,DRAFT,DRAFTING,2026-01-01,2027-01-01,2026-12-01,60,2026-11-02\n',
+        content_type='text/csv; charset=utf-8',
+    )
+    response['Content-Disposition'] = 'attachment; filename="clm-one-contract-import-template.csv"'
+    return response
 
 
 @login_required

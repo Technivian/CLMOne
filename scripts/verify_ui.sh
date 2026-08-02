@@ -9,6 +9,22 @@ if [[ ! -x "$PYTHON_BIN" ]]; then
   PYTHON_BIN="python"
 fi
 
+<<<<<<< HEAD
+=======
+VERIFY_UI_MODE="${VERIFY_UI_MODE:-all}"
+case "$VERIFY_UI_MODE" in
+  all|integrity|browser) ;;
+  *)
+    echo "[verify-ui] Unknown VERIFY_UI_MODE: ${VERIFY_UI_MODE}" >&2
+    echo "[verify-ui] Expected one of: all, integrity, browser" >&2
+    exit 2
+    ;;
+esac
+
+source "$ROOT_DIR/scripts/lib/playwright_runner.sh"
+validate_playwright_shard "${PLAYWRIGHT_SHARD:-}"
+
+>>>>>>> d21ae2a8 (fix(ci): run Playwright without empty-array failure)
 DEFAULT_E2E_PORT="${E2E_PORT:-8010}"
 E2E_PORT="$DEFAULT_E2E_PORT"
 
@@ -87,9 +103,27 @@ if ! curl -s -o /dev/null "${E2E_BASE_URL}/login/"; then
 fi
 
 echo "[verify-ui] Running Playwright smoke tests..."
+<<<<<<< HEAD
 E2E_BASE_URL="${E2E_BASE_URL}" \
 E2E_USERNAME="${E2E_USERNAME}" \
 E2E_PASSWORD="${E2E_PASSWORD}" \
 npm --prefix client run test:e2e
+=======
+if [[ -n "${PLAYWRIGHT_SHARD:-}" ]]; then
+  echo "[verify-ui] Running isolated Playwright shard ${PLAYWRIGHT_SHARD}."
+fi
+
+if [[ -n "${PLAYWRIGHT_SHARD:-}" ]]; then
+  E2E_BASE_URL="${E2E_BASE_URL}" \
+  E2E_USERNAME="${E2E_USERNAME}" \
+  E2E_PASSWORD="${E2E_PASSWORD}" \
+  run_playwright "--shard=${PLAYWRIGHT_SHARD}"
+else
+  E2E_BASE_URL="${E2E_BASE_URL}" \
+  E2E_USERNAME="${E2E_USERNAME}" \
+  E2E_PASSWORD="${E2E_PASSWORD}" \
+  run_playwright
+fi
+>>>>>>> d21ae2a8 (fix(ci): run Playwright without empty-array failure)
 
 echo "[verify-ui] Completed successfully."

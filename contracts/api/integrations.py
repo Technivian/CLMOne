@@ -137,6 +137,40 @@ def _require_org_admin_for_salesforce(request):
     return organization, None
 
 
+def _require_org_admin_for_import_preview(request):
+    if not getattr(request.user, 'is_authenticated', False):
+        return None, _error_response(request, 'Authentication required.', 401)
+    organization = get_user_organization(request.user)
+    if organization is None:
+        return None, _error_response(request, 'No active organization context.', 403)
+    if not can_manage_organization(request.user, organization):
+        return None, _error_response(request, 'Only organization admins/owners can preview imports.', 403)
+    if request.GET.get('dry_run', '').lower() not in ('true', '1', 'yes'):
+        return None, _error_response(
+            request,
+            'Import previews require dry_run=true. Committing an import is not available from this endpoint.',
+            400,
+        )
+    return organization, None
+
+
+def _record_contract_import_preview(request, organization, result):
+    """Record preview evidence without retaining submitted contract content."""
+    log_action(
+        request.user,
+        AuditLog.Action.VIEW,
+        'Organization',
+        organization.pk,
+        changes={
+            'event': 'contract.import_previewed',
+            'valid_row_count': result.imported_count,
+            'invalid_row_count': result.skipped_count,
+        },
+        request=request,
+        organization=organization,
+    )
+
+
 @login_required
 @require_http_methods(["GET"])
 def salesforce_connection_status_api(request):
@@ -792,11 +826,16 @@ def api_webhook_requeue(request, delivery_id):
 @login_required
 @require_http_methods(['POST'])
 def api_import_contracts_csv(request):
-    org = get_user_organization(request.user)
+    org, error = _require_org_admin_for_import_preview(request)
+    if error:
+        return error
     svc = get_inbound_import_service()
-    csv_text = request.body.decode('utf-8', errors='replace')
-    dry_run = request.GET.get('dry_run', '').lower() in ('true', '1', 'yes')
-    result = svc.import_contracts_from_csv(org, csv_text, request.user, dry_run=dry_run)
+    try:
+        csv_text = request.body.decode('utf-8-sig')
+    except UnicodeDecodeError:
+        return JsonResponse({'error': 'CSV files must be UTF-8 encoded.'}, status=400)
+    result = svc.import_contracts_from_csv(org, csv_text, request.user, dry_run=True)
+    _record_contract_import_preview(request, org, result)
     return JsonResponse({
         'imported_count': result.imported_count,
         'skipped_count': result.skipped_count,
@@ -808,7 +847,9 @@ def api_import_contracts_csv(request):
 @login_required
 @require_http_methods(['POST'])
 def api_import_contracts_json(request):
-    org = get_user_organization(request.user)
+    org, error = _require_org_admin_for_import_preview(request)
+    if error:
+        return error
     svc = get_inbound_import_service()
     try:
         data = json.loads(request.body)
@@ -816,8 +857,8 @@ def api_import_contracts_json(request):
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
     if not isinstance(data, list):
         return JsonResponse({'error': 'Expected a JSON array'}, status=400)
-    dry_run = request.GET.get('dry_run', '').lower() in ('true', '1', 'yes')
-    result = svc.import_contracts_from_json(org, data, request.user, dry_run=dry_run)
+    result = svc.import_contracts_from_json(org, data, request.user, dry_run=True)
+    _record_contract_import_preview(request, org, result)
     return JsonResponse({
         'imported_count': result.imported_count,
         'skipped_count': result.skipped_count,
@@ -857,4 +898,3 @@ def api_crm_trigger_sync(request):
         return JsonResponse(result)
     except ValueError as e:
         return JsonResponse({'error': str(e)}, status=400)
-

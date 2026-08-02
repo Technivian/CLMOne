@@ -30,6 +30,22 @@ from contracts.models import (
 
 User = get_user_model()
 
+
+class ContractImportPreviewForm(forms.Form):
+    csv_file = forms.FileField(
+        label='Contract CSV file',
+        help_text='CSV only. Preview validates rows and does not create contracts.',
+        widget=forms.ClearableFileInput(attrs={'class': 'dc-ds-control form-file', 'accept': '.csv,text/csv'}),
+    )
+
+    def clean_csv_file(self):
+        uploaded = self.cleaned_data['csv_file']
+        if not uploaded.name.lower().endswith('.csv'):
+            raise ValidationError('Upload a CSV file.')
+        if uploaded.size > 2 * 1024 * 1024:
+            raise ValidationError('CSV previews are limited to 2 MB.')
+        return uploaded
+
 # Canonical form API first; legacy classes remain co-applied only as temporary
 # visual compatibility adapters. This one shared construction path covers all
 # Django widget forms without changing validation, names, or permissions.

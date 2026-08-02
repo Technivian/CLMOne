@@ -43,7 +43,7 @@ The current approved Governance Charter remains authoritative:
 Accepted supporting documentation (PDR-0003) does not amend the constitution.
 Proposed documents (including Charter v3) do not supersede approved governance until formally approved.
 
-Current code does not override approved governance documentation.
+Current code does not override approved governance documentation unless the owner of the repo specifically states differently.
 
 If implementation conflicts with the approved Charter or an approved decision record:
 
@@ -67,11 +67,7 @@ Decision records live under `docs/governance/decisions/`. See `docs/governance/d
 
 ## GitHub review and release evidence
 
-For new authorization and release work, use GitHub submitted PR reviews, CI
-results, immutable reviewed and merged SHAs, and deployment or operator logs
-as evidence. Do not create or rely on manual vote tables, copied approval
-statements, or manually entered approval timestamps. Historical evidence is
-preserved and must not be rewritten.
+For new authorization and release work, use GitHub submitted PR reviews, CI results, immutable reviewed and merged SHAs, and deployment or operator logs as evidence unless the owner of the repo states differently.
 
 - Low-risk default-off work: green CI and normal review.
 - Non-production canonical authority: an approved GitHub review by the named
@@ -90,7 +86,7 @@ preserved and must not be rewritten.
   and a release record.
 
 A feature flag does not grant authority. Never enable one before the
-applicable gate is satisfied.
+applicable gate is satisfied unless the owner of the repo states differently.
 
 ## Cursor Cloud specific instructions
 
