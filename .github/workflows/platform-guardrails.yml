@@ -140,8 +140,6 @@ jobs:
 
       - name: Secret scan
         uses: trufflesecurity/trufflehog@65725840a041bf31aec4473016b803900070127d
-        with:
-          version: v3.95.0
 
       - name: Npm dependency vulnerability baseline gate
         env:
