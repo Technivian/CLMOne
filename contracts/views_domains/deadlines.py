@@ -15,6 +15,11 @@ from contracts.forms import DeadlineForm
 from contracts.middleware import log_action
 from contracts.models import Contract, Deadline, Matter
 from contracts.permissions import ContractAction, can_access_contract_action
+from contracts.services.repository import apply_repository_contract_policy
+from contracts.services.object_read_policy import (
+    SearchEnforcementState,
+    contract_repository_enforcement_state,
+)
 from contracts.services.assignments import open_obligations_queryset
 from contracts.services.payrollminds_demo import (
     PRESENTER_READ_ONLY_MESSAGE,
@@ -100,6 +105,27 @@ def _matches_due_period(obligation, due_period, today):
     return True
 
 
+def _visible_deadlines_queryset(*, organization, user):
+    """Return deadlines whose linked Contract is visible at the read boundary.
+
+    The pilot deliberately uses the existing Deadline model.  Its workspace
+    scope is inherited through Contract; filtering the contract relation here
+    prevents due dates and reminder titles from becoming a metadata side
+    channel for private records.
+    """
+    if contract_repository_enforcement_state(organization) is SearchEnforcementState.LEGACY:
+        return Deadline.objects.for_organization(organization)
+    visible_contracts = apply_repository_contract_policy(
+        Contract.objects.filter(organization=organization),
+        organization=organization,
+        user=user,
+        surface='obligations_workspace',
+    )
+    return Deadline.objects.for_organization(organization).filter(
+        contract__in=visible_contracts,
+    )
+
+
 class DeadlineListView(LoginRequiredMixin, ListView):
     """Legacy deadlines list — Phase 4 retires it in favor of Obligations."""
 
@@ -140,7 +166,10 @@ class DeadlineListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         org = self.get_organization()
-        queryset = Deadline.objects.select_related('matter', 'contract', 'assigned_to').for_organization(org)
+        queryset = _visible_deadlines_queryset(
+            organization=org,
+            user=self.request.user,
+        ).select_related('matter', 'contract', 'assigned_to')
         show = self.request.GET.get('show', 'upcoming')
         if show == 'overdue':
             queryset = queryset.filter(is_completed=False, due_date__lt=date.today())
@@ -153,7 +182,10 @@ class DeadlineListView(LoginRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         org = self.get_organization()
-        org_deadlines = Deadline.objects.for_organization(org)
+        org_deadlines = _visible_deadlines_queryset(
+            organization=org,
+            user=self.request.user,
+        )
         context['overdue_count'] = org_deadlines.filter(is_completed=False, due_date__lt=date.today()).count()
         context['upcoming_count'] = org_deadlines.filter(is_completed=False, due_date__gte=date.today()).count()
         context['show'] = self.request.GET.get('show', 'upcoming')
@@ -189,8 +221,10 @@ class ObligationsWorkspaceView(LoginRequiredMixin, TemplateView):
         params = self.request.GET
 
         all_obligations = list(
-            Deadline.objects
-            .for_organization(org)
+            _visible_deadlines_queryset(
+                organization=org,
+                user=self.request.user,
+            )
             .select_related('matter', 'contract', 'assigned_to')
             .order_by('due_date')
         )
@@ -382,12 +416,27 @@ class DeadlineCreateView(TenantScopedFormMixin, TenantAssignCreateMixin, LoginRe
         initial = super().get_initial()
         contract_id = self.request.GET.get('contract')
         if contract_id:
-            contract = Contract.objects.filter(
-                organization=self.get_organization(), pk=contract_id,
+            organization = self.get_organization()
+            contract = apply_repository_contract_policy(
+                Contract.objects.filter(organization=organization, pk=contract_id),
+                organization=organization,
+                user=self.request.user,
+                surface='deadline_create_initial',
             ).first()
             if contract:
                 initial['contract'] = contract
         return initial
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        organization = self.get_organization()
+        form.fields['contract'].queryset = apply_repository_contract_policy(
+            form.fields['contract'].queryset,
+            organization=organization,
+            user=self.request.user,
+            surface='deadline_create_contract_options',
+        )
+        return form
 
     def form_valid(self, form):
         if form.instance.contract and not can_access_contract_action(self.request.user, form.instance.contract, ContractAction.EDIT):
@@ -421,7 +470,18 @@ class DeadlineUpdateView(TenantScopedFormMixin, TenantScopedQuerysetMixin, Login
         org = self.get_organization()
         if not org:
             return Deadline.objects.none()
-        return Deadline.objects.for_organization(org)
+        return _visible_deadlines_queryset(organization=org, user=self.request.user)
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        organization = self.get_organization()
+        form.fields['contract'].queryset = apply_repository_contract_policy(
+            form.fields['contract'].queryset,
+            organization=organization,
+            user=self.request.user,
+            surface='deadline_update_contract_options',
+        )
+        return form
 
     def dispatch(self, request, *args, **kwargs):
         if is_payrollminds_presenter_workspace(self.get_organization()):
@@ -473,7 +533,10 @@ def deadline_complete(request, pk):
             return JsonResponse({'error': PRESENTER_READ_ONLY_MESSAGE}, status=403)
         return HttpResponseForbidden(PRESENTER_READ_ONLY_MESSAGE)
 
-    deadline_queryset = Deadline.objects.for_organization(organization)
+    deadline_queryset = _visible_deadlines_queryset(
+        organization=organization,
+        user=request.user,
+    )
     deadline = get_object_or_404(deadline_queryset, pk=pk)
     if deadline.contract and not can_access_contract_action(request.user, deadline.contract, ContractAction.EDIT):
         if wants_json:
@@ -527,7 +590,10 @@ def deadline_defer(request, pk):
         if wants_json:
             return JsonResponse({'error': PRESENTER_READ_ONLY_MESSAGE}, status=403)
         return HttpResponseForbidden(PRESENTER_READ_ONLY_MESSAGE)
-    deadline = get_object_or_404(Deadline.objects.for_organization(organization), pk=pk)
+    deadline = get_object_or_404(
+        _visible_deadlines_queryset(organization=organization, user=request.user),
+        pk=pk,
+    )
     if deadline.contract and not can_access_contract_action(request.user, deadline.contract, ContractAction.EDIT):
         if wants_json:
             return JsonResponse({'error': 'You do not have permission to defer this obligation.'}, status=403)
@@ -610,7 +676,10 @@ def deadline_escalate(request, pk):
         if wants_json:
             return JsonResponse({'error': PRESENTER_READ_ONLY_MESSAGE}, status=403)
         return HttpResponseForbidden(PRESENTER_READ_ONLY_MESSAGE)
-    deadline = get_object_or_404(Deadline.objects.for_organization(organization), pk=pk)
+    deadline = get_object_or_404(
+        _visible_deadlines_queryset(organization=organization, user=request.user),
+        pk=pk,
+    )
     if deadline.contract and not can_access_contract_action(request.user, deadline.contract, ContractAction.EDIT):
         if wants_json:
             return JsonResponse({'error': 'You do not have permission to escalate this obligation.'}, status=403)
@@ -655,7 +724,10 @@ def deadline_delete(request, pk):
     organization = get_user_organization(request.user)
     if is_payrollminds_presenter_workspace(organization):
         return HttpResponseForbidden(PRESENTER_READ_ONLY_MESSAGE)
-    deadline = get_object_or_404(Deadline.objects.for_organization(organization), pk=pk)
+    deadline = get_object_or_404(
+        _visible_deadlines_queryset(organization=organization, user=request.user),
+        pk=pk,
+    )
     if deadline.contract and not can_access_contract_action(request.user, deadline.contract, ContractAction.EDIT):
         return HttpResponseForbidden('You do not have permission to delete this contract deadline.')
     snapshot = {

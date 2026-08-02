@@ -76,6 +76,29 @@ def can_access_contract_action(user, contract, action=ContractAction.VIEW):
         return False
 
     if action in [ContractAction.VIEW, ContractAction.COMMENT, ContractAction.AI]:
+        # PAR-SEC-002 is the one bounded, default-off policy activation point.
+        # In its pilot allowlist, ordinary members may only read a contract
+        # they own or created.  Defined workspace administrator roles retain
+        # operational access, while the queryset policy still applies Ethical
+        # Walls before an object can be discovered.
+        from contracts.services.object_read_policy import (
+            SearchEnforcementState,
+            contract_repository_enforcement_state,
+        )
+
+        policy_state = contract_repository_enforcement_state(contract.organization)
+        if policy_state in {
+            SearchEnforcementState.FAIL_CLOSED,
+            SearchEnforcementState.ABORT_FAIL_CLOSED,
+        }:
+            return False
+        if policy_state is SearchEnforcementState.ENFORCE:
+            if membership.role in [
+                OrganizationMembership.Role.OWNER,
+                OrganizationMembership.Role.ADMIN,
+            ]:
+                return True
+            return user.id in {contract.owner_id, contract.created_by_id}
         return True
 
     if action == ContractAction.EDIT:
