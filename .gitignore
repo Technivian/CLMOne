@@ -11,6 +11,7 @@ db.sqlite3-journal
 *.sqlite3-wal
 *.sqlite3-shm
 media/
+.document-quarantine/
 *.log
 .cache/
 .local/

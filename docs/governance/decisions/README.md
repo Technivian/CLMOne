@@ -69,7 +69,7 @@ Do not fabricate approved decisions. Do not mark a record Accepted without docum
 | [0013-approval-requirement-decision-split.md](adr/0013-approval-requirement-decision-split.md) | Accepted |
 | [0014-role-definition-reconciliation.md](adr/0014-role-definition-reconciliation.md) | Accepted |
 | [0015-exception-request-decision-model.md](adr/0015-exception-request-decision-model.md) | **Accepted** |
-| [ADR-0016-document-ingestion-quarantine-and-malware-scanning.md](adr/ADR-0016-document-ingestion-quarantine-and-malware-scanning.md) | Proposed |
+| [ADR-0016-document-ingestion-quarantine-and-malware-scanning.md](adr/ADR-0016-document-ingestion-quarantine-and-malware-scanning.md) | Accepted — implementation default off; activation separately governed |
 
 ### PDRs
 

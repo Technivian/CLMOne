@@ -7,6 +7,7 @@ from django.contrib.auth import get_user_model
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.files.uploadedfile import UploadedFile
 from django.db import transaction
 from django.db.models import Count, Q, Sum
 from django.http import HttpResponseForbidden, JsonResponse
@@ -19,6 +20,10 @@ from django.views.generic import CreateView, DetailView, ListView, UpdateView
 from contracts.forms import ContractForm, DocumentForm, UserProfileForm
 from config.feature_flags import is_external_collaboration_enabled
 from contracts.middleware import log_action
+from contracts.services.document_ingestion import (
+    DocumentIngestionError,
+    quarantine_and_scan_if_enforced,
+)
 from contracts.models import (
     AuditLog,
     Budget,
@@ -364,6 +369,33 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
 
         staged = form.save(commit=False)
         organization = get_user_organization(request.user)
+        ingestion_attempt = None
+        uploaded_file = form.cleaned_data.get('file')
+        if isinstance(uploaded_file, UploadedFile):
+            try:
+                ingestion_attempt = quarantine_and_scan_if_enforced(
+                    organization=organization,
+                    uploaded_file=uploaded_file,
+                    actor=request.user,
+                    contract=self.object,
+                )
+            except DocumentIngestionError:
+                messages.error(request, 'The document could not be accepted for security review.')
+                return redirect(contract_detail_tab_url(self.object.pk, 'documents'))
+        if ingestion_attempt is not None:
+            if ingestion_attempt.status == ingestion_attempt.Status.CLEAN:
+                messages.success(
+                    request,
+                    'The document passed scanning and remains quarantined until explicit release. '
+                    f'Correlation ID: {ingestion_attempt.correlation_id}',
+                )
+            else:
+                messages.error(
+                    request,
+                    'The document was not released. Contact security with correlation ID '
+                    f'{ingestion_attempt.correlation_id}.',
+                )
+            return redirect(contract_detail_tab_url(self.object.pk, 'documents'))
         document, _version = create_document_version(
             organization=organization,
             title=staged.title,
