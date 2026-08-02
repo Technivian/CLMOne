@@ -432,6 +432,11 @@ class OrganizationInvitationTests(TestCase):
         body = response.content.decode()
         self.assertIn('OrganizationInvitation', body)
         self.assertIn('export@example.com', body)
+        self.assertTrue(AuditLog.objects.filter(
+            organization=self.organization,
+            event_type='organization.activity_exported',
+            user=self.owner,
+        ).exists())
 
     def test_admin_can_export_organization_activity_csv(self):
         self.client.login(username='admin', password='testpass123')

@@ -693,6 +693,20 @@ def organization_activity_export(request):
             log.ip_address or '',
         ])
 
+    # The export itself is material evidence access.  Record only the bounded
+    # outcome, never the request filters or exported row contents.
+    log_action(
+        request.user,
+        AuditLog.Action.VIEW,
+        'Organization',
+        object_id=organization.id,
+        object_repr=organization.name,
+        organization=organization,
+        request=request,
+        event_type='organization.activity_exported',
+        changes={'event': 'organization.activity_exported'},
+    )
+
     return response
 
 

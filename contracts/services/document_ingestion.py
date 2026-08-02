@@ -26,10 +26,13 @@ from django.utils import timezone
 from django.utils.module_loading import import_string
 
 from contracts.middleware import log_action
+from contracts.permissions import can_manage_organization
 from contracts.models import (
     AuditLog,
+    Contract,
     Document,
     DocumentIngestionAttempt,
+    DocumentReviewRun,
     LegalHold,
     OrganizationMembership,
 )
@@ -77,6 +80,66 @@ class DocumentReleaseDenied(DocumentIngestionError):
     pass
 
 
+class ContractRecordCreationDenied(DocumentIngestionError):
+    """Raised when a clean intake cannot become a governed Contract Record."""
+
+
+def _create_upload_contract_record(*, organization, actor, fields, request=None):
+    """Create the canonical Contract Record with locked upload provenance."""
+    from contracts.services.contract_provenance import (
+        EVENT_PROVENANCE_ASSIGNED,
+        EVENT_RECORD_CREATED,
+        OriginKind,
+        apply_provenance_fields,
+        provenance_snapshot,
+    )
+    from contracts.services.contract_versions import get_version_service
+
+    contract = Contract(organization=organization, created_by=actor, **fields)
+    apply_provenance_fields(
+        contract,
+        origin_kind=OriginKind.UPLOAD,
+        origin_channel='document_ingestion_release',
+        actor=actor,
+        lock=True,
+        validate=True,
+    )
+    contract.save()
+    get_version_service().create_version(
+        contract,
+        changed_by=actor,
+        change_summary='Contract Record created from a clean document-ingestion release.',
+    )
+    snapshot = provenance_snapshot(contract)
+    log_action(
+        actor,
+        AuditLog.Action.CREATE,
+        'Contract',
+        contract.pk,
+        str(contract),
+        organization=organization,
+        request=request,
+        event_type=EVENT_RECORD_CREATED,
+        changes={
+            'event': EVENT_RECORD_CREATED,
+            'provenance': snapshot,
+            'metadata_authority': 'human_entered',
+        },
+    )
+    log_action(
+        actor,
+        AuditLog.Action.CREATE,
+        'Contract',
+        contract.pk,
+        str(contract),
+        organization=organization,
+        request=request,
+        event_type=EVENT_PROVENANCE_ASSIGNED,
+        changes={'event': EVENT_PROVENANCE_ASSIGNED, 'provenance': snapshot},
+    )
+    return contract
+
+
 def _csv_setting(name: str) -> set[str]:
     value = getattr(settings, name, '') or ''
     return {part.strip() for part in str(value).split(',') if part.strip()}
@@ -117,6 +180,17 @@ def _assert_target_tenant(organization, *targets) -> None:
             continue
         if getattr(target, 'organization_id', None) != organization.pk:
             raise PermissionDenied('Document ingestion is not available.')
+
+
+def _assert_attempt_access(*, actor, attempt) -> None:
+    """Keep a pre-release object private to its uploader or defined admins."""
+    _assert_actor_access(actor, attempt.organization)
+    if (
+        attempt.uploaded_by_id
+        and attempt.uploaded_by_id != getattr(actor, 'pk', None)
+        and not can_manage_organization(actor, attempt.organization)
+    ):
+        raise PermissionDenied('Document ingestion is not available.')
 
 
 def _detect_media_type(spooled_file, extension: str) -> str:
@@ -273,7 +347,7 @@ class DocumentIngestionService:
         ).get(pk=attempt.pk)
         if document_ingestion_state(attempt.organization) is not IngestionState.ENFORCE:
             raise DocumentIngestionUnavailable('Document scanning is unavailable.')
-        _assert_actor_access(actor, attempt.organization)
+        _assert_attempt_access(actor=actor, attempt=attempt)
         if attempt.status in {
             DocumentIngestionAttempt.Status.CLEAN,
             DocumentIngestionAttempt.Status.REJECTED,
@@ -370,7 +444,7 @@ class DocumentIngestionService:
             'organization', 'contract', 'matter', 'client', 'released_document',
             'released_document_version',
         ).get(pk=attempt.pk)
-        _assert_actor_access(actor, attempt.organization)
+        _assert_attempt_access(actor=actor, attempt=attempt)
         if attempt.status == DocumentIngestionAttempt.Status.RELEASED:
             return attempt.released_document, attempt.released_document_version
         if (
@@ -446,6 +520,78 @@ class DocumentIngestionService:
         )
         return document, version
 
+    @transaction.atomic
+    def create_contract_and_release(
+        self,
+        *,
+        attempt,
+        actor,
+        contract_fields,
+        title,
+        document_type=Document.DocType.CONTRACT,
+        description='',
+        tags='',
+        request=None,
+    ):
+        """Atomically materialize the canonical Contract and Document Version.
+
+        A DocumentVersion's Contract relation is immutable.  Consequently the
+        human-entered Contract Record is created in the same atomic release
+        operation after the clean verdict, before canonical file materializes.
+        A failed scan never creates either record, and a failed release rolls
+        the record back with the version.
+        """
+        attempt = DocumentIngestionAttempt.objects.select_for_update().select_related(
+            'organization', 'contract',
+        ).get(pk=attempt.pk)
+        _assert_attempt_access(actor=actor, attempt=attempt)
+        if attempt.contract_id:
+            raise ContractRecordCreationDenied('Contract record creation is unavailable.')
+        if attempt.status != DocumentIngestionAttempt.Status.CLEAN:
+            raise ContractRecordCreationDenied('Contract record creation is unavailable.')
+        if not isinstance(contract_fields, dict):
+            raise ContractRecordCreationDenied('Contract record creation is unavailable.')
+        try:
+            contract = _create_upload_contract_record(
+                organization=attempt.organization,
+                actor=actor,
+                fields=contract_fields,
+                request=request,
+            )
+            attempt.contract = contract
+            attempt.save(update_fields=['contract'])
+            document, version = self.release(
+                attempt=attempt,
+                actor=actor,
+                title=title,
+                document_type=document_type,
+                status=Document.Status.DRAFT,
+                description=description,
+                source='manual_upload',
+                tags=tags,
+                request=request,
+            )
+            DocumentReviewRun.objects.create(
+                organization=attempt.organization,
+                contract=contract,
+                document=document,
+                status=DocumentReviewRun.Status.UPLOADED,
+                current_step='Uploaded',
+                progress_steps=['Uploaded', 'Human metadata verification'],
+                extracted_metadata={},
+                governance_sources={
+                    'metadata_authority': 'human_entered',
+                    'suggestions_authoritative': False,
+                    'ingestion_correlation_id': str(attempt.correlation_id),
+                },
+                primary_next_action='Verify or enter the contract metadata before further review.',
+            )
+        except DocumentIngestionError:
+            raise
+        except Exception as exc:
+            raise ContractRecordCreationDenied('Contract record creation is unavailable.') from exc
+        return contract, document, version
+
     def _cleanup_released_quarantine(self, *, attempt_id, actor) -> None:
         attempt = DocumentIngestionAttempt.objects.select_related('organization').get(pk=attempt_id)
         storage = storages[self.storage_alias]
@@ -484,7 +630,7 @@ class DocumentIngestionService:
             'organization', 'contract',
         ).get(pk=attempt.pk)
         if not system:
-            _assert_actor_access(actor, attempt.organization)
+            _assert_attempt_access(actor=actor, attempt=attempt)
         retention_days = int(getattr(settings, 'DOCUMENT_QUARANTINE_RETENTION_DAYS', 0) or 0)
         if (
             retention_days <= 0
