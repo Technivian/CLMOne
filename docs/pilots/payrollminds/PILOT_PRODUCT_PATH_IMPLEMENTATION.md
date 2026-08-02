@@ -65,6 +65,28 @@ cleared.
 
 ## Residual limitations and required evidence
 
+## Release-evidence validation (2026-08-02)
+
+The following source-SHA checks were repeated for
+`fec9b205a42d976a35ccb093f68c6cf3e5371487` before updating the PR evidence
+checklist:
+
+- `python manage.py check` — passed.
+- `python manage.py test tests.test_cross_tenant_isolation -v 1` — 75 tests
+  passed.
+- `python manage.py migrate --noinput` and `python manage.py
+  audit_null_organizations` — passed; the audit reported no violations.
+- `git diff --check` — passed.
+- Fail-closed rollback drill: `tests.test_document_ingestion_security`,
+  `tests.test_par_sec_002_repository_enforcement`, and
+  `tests.test_private_document_repository` — 45 tests passed. The drill
+  confirms that the quarantine and repository abort switches deny or hide data
+  rather than falling back to an unfiltered path.
+
+This is source-branch release-evidence remediation only. It does not enable a
+pilot, alter production configuration, add a feature, or constitute combined
+release-candidate validation.
+
 - This is a code path only; it does not enable a production workspace or grant
   any user access.
 - Named record sharing beyond owner/creator plus defined workspace
