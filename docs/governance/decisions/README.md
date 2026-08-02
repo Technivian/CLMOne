@@ -71,6 +71,7 @@ Do not fabricate approved decisions. Do not mark a record Accepted without docum
 | [0015-exception-request-decision-model.md](adr/0015-exception-request-decision-model.md) | **Accepted** |
 | [ADR-0016-document-ingestion-quarantine-and-malware-scanning.md](adr/ADR-0016-document-ingestion-quarantine-and-malware-scanning.md) | Accepted — implementation default off; activation separately governed |
 | [ADR-0017-payrollminds-isolated-pilot-release-topology.md](adr/ADR-0017-payrollminds-isolated-pilot-release-topology.md) | Proposed — no deployment or activation authority |
+| [ADR-0018-payrollminds-pilot-production-topology.md](adr/ADR-0018-payrollminds-pilot-production-topology.md) | Proposed — target design only; no deployment or activation authority |
 
 ### PDRs
 

@@ -1,4 +1,4 @@
-# ADR-0017: PayrollMinds pilot production topology
+# ADR-0018: PayrollMinds pilot production topology
 
 **Status:** Proposed
 **Date:** 2026-08-02
