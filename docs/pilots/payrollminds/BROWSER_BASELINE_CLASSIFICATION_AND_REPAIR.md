@@ -34,8 +34,10 @@ npm --prefix client exec -- playwright test --config=client/playwright.config.js
 The previous local diagnostic was interrupted by its outer session after 61
 tests. That is not accepted as a terminal baseline. CI's eight isolated shards
 continue to collect and execute their assigned tests; their assertion failures
-remain visible because masking was removed. The complete two-run browser
-baseline and `release-baseline/browser-failures.json` are not yet complete.
+remain visible because masking was removed. The first terminal CI run is
+`30767778512` for PR #153 SHA `12c82a34c3d02227287dd97f56d758443082559e`:
+**38 passed and 52 failed**. The complete two-run browser baseline and
+`release-baseline/browser-failures.json` are not yet complete.
 
 ## Repairs in PR #154
 
