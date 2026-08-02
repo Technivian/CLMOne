@@ -84,6 +84,7 @@ class ParSec002SearchFixtureMixin:
             status=Contract.Status.IN_PROGRESS,
             contract_type=Contract.ContractType.NDA,
             jurisdiction='BE',
+            owner=self.member,
             created_by=self.owner,
         )
         self.service = ContractSearchAPIService()
@@ -152,7 +153,10 @@ class ParSec002SearchEnforcementTests(ParSec002SearchFixtureMixin, TestCase):
                 user=self.member,
             )
         self.assertEqual(result.total, 1)
-        self.assertLessEqual(len(queries), 5)
+        # Private-by-default enforcement adds one active-membership lookup to
+        # the Ethical Wall policy path. The total remains bounded by the
+        # policy shape, not by the number of contracts or walls.
+        self.assertLessEqual(len(queries), 6)
 
     @override_settings(**ENFORCEMENT)
     def test_matter_wall_expiry_and_multiple_walls_are_additive(self):
@@ -163,7 +167,7 @@ class ParSec002SearchEnforcementTests(ParSec002SearchFixtureMixin, TestCase):
         )
         self.assertEqual(
             self.service.search_contracts(self.organization, user=self.member).total,
-            3,
+            1,
         )
         expired.expires_at = None
         expired.save(update_fields=['expires_at'])
