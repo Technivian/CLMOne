@@ -43,6 +43,7 @@ from contracts.services.document_ocr import queue_document_ocr_review
 from contracts.services.document_repository_policy import (
     apply_document_relation_policy,
     apply_document_repository_policy,
+    apply_related_object_read_policy,
     document_repository_enforcement_active,
 )
 from contracts.services.repository import apply_repository_contract_policy
@@ -74,7 +75,12 @@ class ClientListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         org = get_user_organization(self.request.user)
-        qs = scope_queryset_for_organization(Client.objects.all(), org)
+        qs = apply_related_object_read_policy(
+            scope_queryset_for_organization(Client.objects.all(), org),
+            organization=org,
+            user=self.request.user,
+            surface='client_list',
+        )
         q = self.request.GET.get('q')
         status = self.request.GET.get('status')
         client_type = self.request.GET.get('type')
@@ -89,7 +95,12 @@ class ClientListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         org = get_user_organization(self.request.user)
-        tenant_clients = scope_queryset_for_organization(Client.objects.all(), org)
+        tenant_clients = apply_related_object_read_policy(
+            scope_queryset_for_organization(Client.objects.all(), org),
+            organization=org,
+            user=self.request.user,
+            surface='client_list_counts',
+        )
         client_stats = tenant_clients.aggregate(
             total=Count('id'),
             active=Count('id', filter=Q(status='ACTIVE')),
@@ -107,14 +118,35 @@ class ClientDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailView
 
     def get_queryset(self):
         org = get_user_organization(self.request.user)
-        return scope_queryset_for_organization(Client.objects.all(), org)
+        return apply_related_object_read_policy(
+            scope_queryset_for_organization(Client.objects.all(), org),
+            organization=org,
+            user=self.request.user,
+            surface='client_detail',
+        )
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx['matters'] = self.object.matters.all()[:10]
-        ctx['contracts'] = self.object.contracts.all()[:10]
+        org = get_user_organization(self.request.user)
+        ctx['matters'] = apply_related_object_read_policy(
+            self.object.matters.all(),
+            organization=org,
+            user=self.request.user,
+            surface='client_detail_matters',
+        )[:10]
+        ctx['contracts'] = _contract_queryset_for_request(
+            self.request,
+            org,
+            self.object.contracts.all(),
+            surface='client_detail_contracts',
+        )[:10]
         ctx['invoices'] = self.object.invoices.all()[:10]
-        ctx['documents'] = self.object.documents.all()[:10]
+        ctx['documents'] = _document_queryset_for_request(
+            self.request,
+            org,
+            self.object.documents.all(),
+            surface='client_detail_documents',
+        )[:10]
         return ctx
 
 
@@ -149,7 +181,12 @@ class ClientUpdateView(TenantScopedFormMixin, TenantScopedQuerysetMixin, LoginRe
 
     def get_queryset(self):
         org = get_user_organization(self.request.user)
-        return scope_queryset_for_organization(Client.objects.all(), org)
+        return apply_related_object_read_policy(
+            scope_queryset_for_organization(Client.objects.all(), org),
+            organization=org,
+            user=self.request.user,
+            surface='client_update',
+        )
 
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -166,7 +203,15 @@ class MatterListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         org = self.get_organization()
-        qs = scope_queryset_for_organization(Matter.objects.select_related('client', 'responsible_attorney'), org)
+        qs = apply_related_object_read_policy(
+            scope_queryset_for_organization(
+                Matter.objects.select_related('client', 'responsible_attorney'),
+                org,
+            ),
+            organization=org,
+            user=self.request.user,
+            surface='matter_list',
+        )
         q = self.request.GET.get('q')
         status = self.request.GET.get('status')
         practice_area = self.request.GET.get('practice_area')
@@ -181,7 +226,12 @@ class MatterListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         org = self.get_organization()
-        tenant_matters = scope_queryset_for_organization(Matter.objects.all(), org)
+        tenant_matters = apply_related_object_read_policy(
+            scope_queryset_for_organization(Matter.objects.all(), org),
+            organization=org,
+            user=self.request.user,
+            surface='matter_list_counts',
+        )
         matter_stats = tenant_matters.aggregate(
             total=Count('id'),
             active=Count('id', filter=Q(status='ACTIVE')),
@@ -199,7 +249,12 @@ class MatterDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailView
 
     def get_queryset(self):
         org = self.get_organization()
-        return scope_queryset_for_organization(Matter.objects.all(), org)
+        return apply_related_object_read_policy(
+            scope_queryset_for_organization(Matter.objects.all(), org),
+            organization=org,
+            user=self.request.user,
+            surface='matter_detail',
+        )
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -209,8 +264,18 @@ class MatterDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailView
         is_in_house_clm = workspace_mode == 'in_house_clm'
         ctx['is_in_house_clm'] = is_in_house_clm
 
-        ctx['contracts'] = matter.contracts.all().order_by('-updated_at')
-        ctx['documents'] = matter.documents.filter(is_deleted=False).order_by('-created_at')[:10]
+        ctx['contracts'] = _contract_queryset_for_request(
+            self.request,
+            org,
+            matter.contracts.all(),
+            surface='matter_detail_contracts',
+        ).order_by('-updated_at')
+        ctx['documents'] = _document_queryset_for_request(
+            self.request,
+            org,
+            matter.documents.filter(is_deleted=False),
+            surface='matter_detail_documents',
+        ).order_by('-created_at')[:10]
         ctx['time_entries'] = matter.time_entries.all()[:10]
         ctx['tasks'] = matter.tasks.all()[:10]
         ctx['deadlines'] = matter.deadlines.filter(is_completed=False).order_by('due_date')[:10]
@@ -348,6 +413,16 @@ class MatterCreateView(TenantScopedFormMixin, TenantAssignCreateMixin, LoginRequ
     def get_success_url(self):
         return reverse('contracts:matter_detail', kwargs={'pk': self.object.pk})
 
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        form.fields['client'].queryset = apply_related_object_read_policy(
+            form.fields['client'].queryset,
+            organization=self.get_organization(),
+            user=self.request.user,
+            surface='matter_create_client_options',
+        )
+        return form
+
     def form_valid(self, form):
         set_organization_on_instance(form.instance, get_user_organization(self.request.user))
         form.instance.created_by = self.request.user
@@ -372,7 +447,22 @@ class MatterUpdateView(TenantScopedFormMixin, TenantScopedQuerysetMixin, LoginRe
 
     def get_queryset(self):
         org = self.get_organization()
-        return scope_queryset_for_organization(Matter.objects.all(), org)
+        return apply_related_object_read_policy(
+            scope_queryset_for_organization(Matter.objects.all(), org),
+            organization=org,
+            user=self.request.user,
+            surface='matter_update',
+        )
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        form.fields['client'].queryset = apply_related_object_read_policy(
+            form.fields['client'].queryset,
+            organization=self.get_organization(),
+            user=self.request.user,
+            surface='matter_update_client_options',
+        )
+        return form
 
     def form_valid(self, form):
         response = super().form_valid(form)
