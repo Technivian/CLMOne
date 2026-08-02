@@ -117,6 +117,13 @@ multiple, and invalid arguments; an invalid shard exits 2. The repair also
 removes browser CI `continue-on-error`, so a failing browser shard fails the
 gate and still uploads diagnostic artifacts.
 
+Fresh isolated validation of the PR head also passed `python manage.py check`,
+the 75-test `tests.test_cross_tenant_isolation` suite, and
+`python manage.py audit_null_organizations` after applying migrations to a
+temporary SQLite database. This confirms the runner change has no schema or
+tenant-integrity side effect; it does not convert the failed browser suite into
+a green release result.
+
 The repaired local entry point reached Playwright and started the configured
 90-test suite. The diagnostic run was stopped after a post-test stall and
 reported **19 passed, 42 failed, 1 interrupted, and 28 not run** in **13.7m**.
