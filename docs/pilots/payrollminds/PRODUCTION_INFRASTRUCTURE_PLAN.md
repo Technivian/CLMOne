@@ -2,7 +2,7 @@
 
 **Status:** Proposed — no resources provisioned, public endpoint activated, or
 customer data accepted.
-**Decision dependency:** Proposed ADR-0017.
+**Decision dependency:** Proposed ADR-0018.
 **Blocker source:** `PAYROLLMINDS_LAUNCH_READINESS.md` PM-OPS-01/02,
 PM-SEC-04/05, PM-PRIV-01, and PM-QLT-01.
 
