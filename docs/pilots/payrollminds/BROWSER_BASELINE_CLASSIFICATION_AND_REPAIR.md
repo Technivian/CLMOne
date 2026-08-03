@@ -58,6 +58,13 @@ currently classified **F — unresolved** pending scope and workflow-state root
 cause analysis; no blocked action was forced clickable and no assertion was
 weakened.
 
+The second terminal browser run is `30768405771` for PR #154 SHA
+`8fa8be5b51fbaeb10ba379ecc44827ef7409b640`: **40 passed and 50 failed**.
+The two repaired pilot expectations account for the two-test improvement from
+the PR #153 runner baseline; the remaining MSA journeys are still failures.
+This is not a stable two-run pass result: the two runs used different SHAs and
+both retain unresolved failures.
+
 ## Current blocker and next required evidence
 
 The branch cannot be declared ready for UAT/envelope work until all 90 tests
