@@ -96,6 +96,16 @@ test-fixture and governed-expectation correction only: migration impact is
 none; security, tenancy, and authorization behavior are unchanged; submission
 continues to create the existing approval and immutable audit evidence.
 
+## Registry status
+
+`release-baseline/browser-test-manifest.json` records the exact 90-test
+Playwright collection, including stable IDs, source locations, titles, and
+project. `release-baseline/browser-failures.json` has one schema-complete
+record for each of those 90 tests. Its run-result and classification fields are
+explicitly `pending`; it must not be used for exception analysis until two
+same-SHA clean runs and two same-SHA repaired runs provide the required
+terminal evidence.
+
 ## Current blocker and next required evidence
 
 The branch cannot be declared ready for UAT/envelope work until all 90 tests
