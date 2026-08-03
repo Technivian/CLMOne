@@ -100,6 +100,10 @@ async function generateMsa(page, { counterparty, value, confirmThreshold }) {
   await fillField(page, 'jurisdiction', 'Amsterdam');
   await fillField(page, 'liability_cap', '1x annual fees');
   await fillField(page, 'confidentiality_period', '3 years');
+  // The generated MSA includes Special Conditions as a governed drafting
+  // section. Supplying its normal input is required before the human-review
+  // confirmations can make the document ready for submission.
+  await fillField(page, 'special_conditions', 'No additional special conditions.');
   await selectField(page, 'ip_ownership', 'Provider');
   await checkField(page, 'sow_required');
   await checkField(page, 'deliverables_defined');
@@ -184,6 +188,11 @@ test.describe('Verification: MSA finance threshold matrix', () => {
       value: 100000,
       confirmThreshold: false,
     });
+    await openWorkspaceActions(page);
+    await expect(page.getByText('Send to Finance · blocked')).toBeVisible();
+    await expect(page.locator('.dc-ds-workspace__sticky-copy')).toContainText(
+      /Resolve|Complete|Confirm/i,
+    );
     await clearDraftingBlockers(page);
     await openWorkspaceActions(page);
     await expect(page.getByRole('menuitem', { name: 'Send to Finance' })).toBeVisible();
@@ -192,7 +201,8 @@ test.describe('Verification: MSA finance threshold matrix', () => {
     const exactUrl = page.url();
     await page.reload();
     await expect(page).toHaveURL(exactUrl);
-    await page.getByRole('button', { name: /Review Finance|Review MSA|Review privacy|Review generated|Review approval|Confirm drafting|open exception/i }).first().click();
+    await openWorkspaceActions(page);
+    await page.getByRole('menuitem', { name: 'Review approval route' }).click();
     const exactDrawer = page.getByRole('dialog', { name: 'Governance details' });
     await expect(exactDrawer.getByRole('heading', { name: 'Audit details' })).toBeVisible();
     await expect(exactDrawer).toContainText(/Finance|review|submitted|Audit|approval/i);
@@ -219,6 +229,11 @@ test.describe('Verification: MSA finance threshold matrix', () => {
       value: 150000,
       confirmThreshold: true,
     });
+    await openWorkspaceActions(page);
+    await expect(page.getByText('Send to Legal Review · blocked')).toBeVisible();
+    await expect(page.locator('.dc-ds-workspace__sticky-copy')).toContainText(
+      /Resolve|Complete|Confirm/i,
+    );
     await clearDraftingBlockers(page);
     await openWorkspaceActions(page);
     await page.getByRole('menuitem', { name: 'Send to Legal Review' }).click();
@@ -227,7 +242,8 @@ test.describe('Verification: MSA finance threshold matrix', () => {
     await page.reload();
     await expect(page).toHaveURL(workflowUrl);
     // Governance drawer carries Audit details for MSA (no Activity rail tab).
-    await page.getByRole('button', { name: /Review Finance|Review MSA|Review privacy|Review generated|Review approval|Confirm drafting|open exception/i }).first().click();
+    await openWorkspaceActions(page);
+    await page.getByRole('menuitem', { name: 'Review approval route' }).click();
     const governanceDrawer = page.getByRole('dialog', { name: 'Governance details' });
     await expect(governanceDrawer.getByRole('heading', { name: 'Audit details' })).toBeVisible();
     await expect(governanceDrawer).toContainText(/Legal|review|submitted|Audit|approval/i);

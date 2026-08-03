@@ -65,6 +65,37 @@ the PR #153 runner baseline; the remaining MSA journeys are still failures.
 This is not a stable two-run pass result: the two runs used different SHAs and
 both retain unresolved failures.
 
+## MSA finance and legal journey repair
+
+Both remaining MSA failures were **A — incomplete happy-path fixture**. The
+browser helper created the canonical MSA with an empty `special_conditions`
+field. The generated document has a Special Conditions drafting section, whose
+canonical rule reports `Needs input` when that field is empty. Human
+confirmation only resolves `Needs review` sections, so the governed submission
+actions correctly remained disabled.
+
+The repair supplies the ordinary `special_conditions` input, keeps the initial
+blocked-action and visible-reason assertions, resolves the recorded exception,
+confirms each AI-assisted section through its server-side endpoint, and then
+submits through the existing Finance or Legal route. It does not mutate a
+workflow state in the browser, change permissions, or bypass a disabled
+action. The audit route is now opened through the canonical Actions menu after
+submission, rather than a non-existent header button.
+
+Focused evidence on the repaired fresh worktree:
+
+```text
+PLAYWRIGHT_TEST_TIMEOUT_MS=30000 npm --prefix client run test:e2e -- \
+  client/tests/e2e/pilot-verification.spec.js --grep 'MSA finance threshold matrix'
+
+2 passed (29.6s)
+```
+
+The affected file is `client/tests/e2e/pilot-verification.spec.js`. This is a
+test-fixture and governed-expectation correction only: migration impact is
+none; security, tenancy, and authorization behavior are unchanged; submission
+continues to create the existing approval and immutable audit evidence.
+
 ## Current blocker and next required evidence
 
 The branch cannot be declared ready for UAT/envelope work until all 90 tests
