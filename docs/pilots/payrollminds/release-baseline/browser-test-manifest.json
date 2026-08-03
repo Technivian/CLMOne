@@ -1,0 +1,818 @@
+{
+  "schema_version": 1,
+  "collected_from": "npm --prefix client exec -- playwright test --config=client/playwright.config.js --list --reporter=json",
+  "source_sha": "e18474e8a657e910b0516d2961b02a7c4bdf47c2",
+  "expected_test_count": 90,
+  "tests": [
+    {
+      "id": "fcac23b42f5942783f9d-afc9dfafbd8fbb3b76cf",
+      "file": "client/tests/e2e/canonical-page-layout.spec.js",
+      "title": "canonical-page-layout.spec.js › canonical workspaces fit 390px mobile without page overflow",
+      "line": 25,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "fcac23b42f5942783f9d-52edd03349ac746fa499",
+      "file": "client/tests/e2e/canonical-page-layout.spec.js",
+      "title": "canonical-page-layout.spec.js › canonical workspaces fit desktop without page overflow",
+      "line": 25,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "9e24326c6c84b9aae2de-7d2490bc0040d4b5e052",
+      "file": "client/tests/e2e/command-center-demo.spec.js",
+      "title": "command-center-demo.spec.js › Command Center demo shows DPA, MSA, and NDA workflows with workspace links",
+      "line": 15,
+      "column": 1,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "d3423a6dec4bff43ec8a-bc0c98de23428e11624e",
+      "file": "client/tests/e2e/contract-field-review.spec.js",
+      "title": "contract-field-review.spec.js › Contract field review (Sub-block B) › runs, renders structured results, and phrases overdue dates correctly",
+      "line": 57,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "d3423a6dec4bff43ec8a-1a9217ac4de00eb7548d",
+      "file": "client/tests/e2e/contract-field-review.spec.js",
+      "title": "contract-field-review.spec.js › Contract field review (Sub-block B) › shows an error state and re-enables the button on a policy-rejected prompt",
+      "line": 106,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "d3423a6dec4bff43ec8a-2c017268bc8dcf22decf",
+      "file": "client/tests/e2e/contract-field-review.spec.js",
+      "title": "contract-field-review.spec.js › Contract field review (Sub-block B) › disables the button during the request to prevent duplicate submissions",
+      "line": 127,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "e14dd59f59bd59baee8e-ed53cd382dba3763351b",
+      "file": "client/tests/e2e/critical-flows.spec.js",
+      "title": "critical-flows.spec.js › critical contract create and edit flow works",
+      "line": 70,
+      "column": 1,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "e14dd59f59bd59baee8e-1de963c13317565a8828",
+      "file": "client/tests/e2e/critical-flows.spec.js",
+      "title": "critical-flows.spec.js › critical invoice and time-entry submissions accept valid precision",
+      "line": 116,
+      "column": 1,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "e14dd59f59bd59baee8e-34ab4b02f642781316b9",
+      "file": "client/tests/e2e/critical-flows.spec.js",
+      "title": "critical-flows.spec.js › critical redesigned workflow path works end-to-end",
+      "line": 143,
+      "column": 1,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "0815266e2b373abe5480-c54a5633e5a90a03711a",
+      "file": "client/tests/e2e/dpa-cockpit.spec.js",
+      "title": "dpa-cockpit.spec.js › DPA intake exposes the current accessible heading",
+      "line": 23,
+      "column": 1,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "0815266e2b373abe5480-1597233b7e54ae6ff2f7",
+      "file": "client/tests/e2e/dpa-cockpit.spec.js",
+      "title": "dpa-cockpit.spec.js › DPA governed workspace keeps drafting layout, clause-link, and overflow contracts",
+      "line": 30,
+      "column": 1,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "712090e5dc3187d4673e-2aab6375eaeb394b4897",
+      "file": "client/tests/e2e/dpa-workflow.spec.js",
+      "title": "dpa-workflow.spec.js › DPA four-step builder validates, generates, and opens the contract record",
+      "line": 31,
+      "column": 1,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "2c450ddd9493523d7369-33c437967b18c8d26f87",
+      "file": "client/tests/e2e/msa-workflow.spec.js",
+      "title": "msa-workflow.spec.js › MSA governed drafting cockpit generates a workflow workspace and dashboard queue row",
+      "line": 53,
+      "column": 1,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "f2651e76d1da201d3b4f-b613d495e975bf84b61f",
+      "file": "client/tests/e2e/nda-workflow.spec.js",
+      "title": "nda-workflow.spec.js › NDA self-serve cockpit generates a governed workspace and dashboard row",
+      "line": 15,
+      "column": 1,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "f8620b41f80b0ca10072-4aa1e4cea4011faa09eb",
+      "file": "client/tests/e2e/new-contract-launcher.spec.js",
+      "title": "new-contract-launcher.spec.js › New Contract launcher › shows sections, metadata, upload action, and searchable cards",
+      "line": 15,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "f8620b41f80b0ca10072-2850cdfd8c0c53a5d570",
+      "file": "client/tests/e2e/new-contract-launcher.spec.js",
+      "title": "new-contract-launcher.spec.js › New Contract launcher › keeps a left-aligned 1-column grid on mobile",
+      "line": 59,
+      "column": 5,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "f8620b41f80b0ca10072-0ee8f1f156591e82f8b6",
+      "file": "client/tests/e2e/new-contract-launcher.spec.js",
+      "title": "new-contract-launcher.spec.js › New Contract launcher › keeps a left-aligned 2-column grid on tablet",
+      "line": 59,
+      "column": 5,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "f8620b41f80b0ca10072-084e8de66c0d42bf2193",
+      "file": "client/tests/e2e/new-contract-launcher.spec.js",
+      "title": "new-contract-launcher.spec.js › New Contract launcher › keeps a left-aligned 3-column grid on desktop",
+      "line": 59,
+      "column": 5,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "800d2b7dba63f5988d01-a4fb7de2788492e7e90e",
+      "file": "client/tests/e2e/payrollminds-buyer-demo.spec.js",
+      "title": "payrollminds-buyer-demo.spec.js › Payrollminds buyer demo tells a complete contract lifecycle story",
+      "line": 22,
+      "column": 1,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "800d2b7dba63f5988d01-f001ad7a342be2e43ebe",
+      "file": "client/tests/e2e/payrollminds-buyer-demo.spec.js",
+      "title": "payrollminds-buyer-demo.spec.js › Payrollminds repository and contract detail fit a 390 px mobile viewport",
+      "line": 86,
+      "column": 1,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "33901bce72702da02a7d-924b55790fb2e244e84d",
+      "file": "client/tests/e2e/phase-2a-components.spec.js",
+      "title": "phase-2a-components.spec.js › Phase 2A shared components › list controls retain keyboard focus and responsive sizing",
+      "line": 30,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "33901bce72702da02a7d-46f8026b65fb76299c74",
+      "file": "client/tests/e2e/phase-2a-components.spec.js",
+      "title": "phase-2a-components.spec.js › Phase 2A shared components › contract form retains canonical actions and validation feedback",
+      "line": 52,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "33901bce72702da02a7d-cf6b99e1f41720e7eb2f",
+      "file": "client/tests/e2e/phase-2a-components.spec.js",
+      "title": "phase-2a-components.spec.js › Phase 2A shared components › detail modal uses canonical actions and controls",
+      "line": 70,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "29ed2972350ecb1766f9-4753e2042891a08768bb",
+      "file": "client/tests/e2e/phase-2b1-buttons-badges.spec.js",
+      "title": "phase-2b1-buttons-badges.spec.js › Phase 2B.1 canonical buttons and badges › list family keeps canonical actions and semantic badges responsive",
+      "line": 20,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "29ed2972350ecb1766f9-7c315d97f921507e9e10",
+      "file": "client/tests/e2e/phase-2b1-buttons-badges.spec.js",
+      "title": "phase-2b1-buttons-badges.spec.js › Phase 2B.1 canonical buttons and badges › standard detail and modal actions preserve keyboard focus",
+      "line": 32,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "29ed2972350ecb1766f9-e09ae741f62c7a897c38",
+      "file": "client/tests/e2e/phase-2b1-buttons-badges.spec.js",
+      "title": "phase-2b1-buttons-badges.spec.js › Phase 2B.1 canonical buttons and badges › admin settings preserve destructive and primary actions",
+      "line": 47,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "f1901f02f341fbefe840-92185555d7fd73f84572",
+      "file": "client/tests/e2e/phase-2b2-badge-semantics.spec.js",
+      "title": "phase-2b2-badge-semantics.spec.js › Phase 2B.2 canonical badge semantics render in dense and responsive layouts",
+      "line": 6,
+      "column": 1,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "0b7a7653555a0bd633f1-7598607be74a1d7e0e62",
+      "file": "client/tests/e2e/phase-2b3-contract-document-statuses.spec.js",
+      "title": "phase-2b3-contract-document-statuses.spec.js › Phase 2B.3 status routes and the populated contract drawer remain responsive",
+      "line": 14,
+      "column": 1,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "cff08f68624ffecd25a5-545a22d21fa4d130cc03",
+      "file": "client/tests/e2e/phase-2b5-standard-forms-panels.spec.js",
+      "title": "phase-2b5-standard-forms-panels.spec.js › Phase 2B.5 standard record and admin forms › record form preserves canonical controls, validation, and responsive layout",
+      "line": 21,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "cff08f68624ffecd25a5-9a416527281cc4a7c777",
+      "file": "client/tests/e2e/phase-2b5-standard-forms-panels.spec.js",
+      "title": "phase-2b5-standard-forms-panels.spec.js › Phase 2B.5 standard record and admin forms › admin approval form uses the shared field partial and canonical panels",
+      "line": 42,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "6ac8114eb10074ca31d4-2282b3f4c2acb3e15cb7",
+      "file": "client/tests/e2e/phase-3a-standard-lists.spec.js",
+      "title": "phase-3a-standard-lists.spec.js › Phase 3A standard lists and tables › repository retains selection, async states, pagination, and mobile overflow",
+      "line": 21,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "6ac8114eb10074ca31d4-293f34c4d32054357b2c",
+      "file": "client/tests/e2e/phase-3a-standard-lists.spec.js",
+      "title": "phase-3a-standard-lists.spec.js › Phase 3A standard lists and tables › repository rows retain compact, centered, and interactive table behavior",
+      "line": 60,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "6ac8114eb10074ca31d4-1f7079e3b7ff307f8c5a",
+      "file": "client/tests/e2e/phase-3a-standard-lists.spec.js",
+      "title": "phase-3a-standard-lists.spec.js › Phase 3A standard lists and tables › my work rows keep compact priority and action layouts",
+      "line": 100,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "6ac8114eb10074ca31d4-97be321eba251589a641",
+      "file": "client/tests/e2e/phase-3a-standard-lists.spec.js",
+      "title": "phase-3a-standard-lists.spec.js › Phase 3A standard lists and tables › my work filter groups remain inline with grey quick-view count badges",
+      "line": 125,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "6ac8114eb10074ca31d4-6f2cfa4c11c801444969",
+      "file": "client/tests/e2e/phase-3a-standard-lists.spec.js",
+      "title": "phase-3a-standard-lists.spec.js › Phase 3A standard lists and tables › operational tables render the canonical hierarchy and selection exceptions",
+      "line": 164,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "6ac8114eb10074ca31d4-d4521cc6c2c1d5a62cad",
+      "file": "client/tests/e2e/phase-3a-standard-lists.spec.js",
+      "title": "phase-3a-standard-lists.spec.js › Phase 3A standard lists and tables › document and approval-admin list families retain canonical semantics and keyboard tabs",
+      "line": 192,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "6ac8114eb10074ca31d4-dce0702d4ecd05ca65b9",
+      "file": "client/tests/e2e/phase-3a-standard-lists.spec.js",
+      "title": "phase-3a-standard-lists.spec.js › Phase 3A standard lists and tables › clause-library administration retains its canonical empty table",
+      "line": 209,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "ef99e9621f4244b0bbc2-bacaa791acb7959a2d87",
+      "file": "client/tests/e2e/phase-3b-list-scaffolds.spec.js",
+      "title": "phase-3b-list-scaffolds.spec.js › Phase 3B standard record-list scaffolds › repository keeps shell navigation and keyboard-operable list tabs",
+      "line": 21,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "ef99e9621f4244b0bbc2-161a7278eaf25f5f0fd5",
+      "file": "client/tests/e2e/phase-3b-list-scaffolds.spec.js",
+      "title": "phase-3b-list-scaffolds.spec.js › Phase 3B standard record-list scaffolds › document and clause-library headers preserve action hierarchy on compact screens",
+      "line": 32,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "ef99e9621f4244b0bbc2-30d4582f3ac064a46bd6",
+      "file": "client/tests/e2e/phase-3b-list-scaffolds.spec.js",
+      "title": "phase-3b-list-scaffolds.spec.js › Phase 3B standard record-list scaffolds › approval administration keeps its title, tabs, and table route semantics",
+      "line": 51,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "779d1e2ca76bed658459-ef73927f33eef8ba5272",
+      "file": "client/tests/e2e/phase-4a-record-scaffolds.spec.js",
+      "title": "phase-4a-record-scaffolds.spec.js › Phase 4A standard record and form scaffolds › client record creation keeps shell title, validation, and keyboard focus",
+      "line": 21,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "779d1e2ca76bed658459-68663a8ee72202834e1e",
+      "file": "client/tests/e2e/phase-4a-record-scaffolds.spec.js",
+      "title": "phase-4a-record-scaffolds.spec.js › Phase 4A standard record and form scaffolds › clause-library forms use labelled list back navigation without duplicated canvas titles",
+      "line": 34,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "779d1e2ca76bed658459-a066cb3eadd019cb47cb",
+      "file": "client/tests/e2e/phase-4a-record-scaffolds.spec.js",
+      "title": "phase-4a-record-scaffolds.spec.js › Phase 4A standard record and form scaffolds › approval administration keeps its notice, rail, actions, and compact layout",
+      "line": 50,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "4f7fc92a3a82dbbe723a-f4b58c519c9a4a8b7ff5",
+      "file": "client/tests/e2e/phase-4b-governance-record-scaffolds.spec.js",
+      "title": "phase-4b-governance-record-scaffolds.spec.js › Phase 4B counterparty and governance record scaffolds › counterparty and privacy record forms use the shell header, shared form actions, and keyboard focus",
+      "line": 21,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "4f7fc92a3a82dbbe723a-6c913a7f199853eb98b7",
+      "file": "client/tests/e2e/phase-4b-governance-record-scaffolds.spec.js",
+      "title": "phase-4b-governance-record-scaffolds.spec.js › Phase 4B counterparty and governance record scaffolds › compliance and governance forms retain subtitles, action hierarchy, and compact layout",
+      "line": 41,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "8bc97880c2cec293510e-52303d88e0ef0f5ea4b6",
+      "file": "client/tests/e2e/phase-5a-app-shell.spec.js",
+      "title": "phase-5a-app-shell.spec.js › Phase 5A authenticated application shell › uses canonical shell hooks while preserving active navigation and keyboard focus",
+      "line": 16,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "8bc97880c2cec293510e-7850afcf6183fe12d77f",
+      "file": "client/tests/e2e/phase-5a-app-shell.spec.js",
+      "title": "phase-5a-app-shell.spec.js › Phase 5A authenticated application shell › keeps mobile navigation operable without viewport overflow",
+      "line": 28,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "8bc97880c2cec293510e-8528b205d1641a5495e6",
+      "file": "client/tests/e2e/phase-5a-app-shell.spec.js",
+      "title": "phase-5a-app-shell.spec.js › Phase 5A authenticated application shell › keeps the dashboard shell consumer aligned at desktop and 390px",
+      "line": 49,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "f0fb41fd16ce65710d14-ce229ae95d14323a4755",
+      "file": "client/tests/e2e/phase-5c-workspace-shell.spec.js",
+      "title": "phase-5c-workspace-shell.spec.js › Phase 5C workspace scaffold › keeps the MSA and contract-detail shared scaffold responsive and focusable",
+      "line": 27,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "f0fb41fd16ce65710d14-6b0484165e5db34bfedd",
+      "file": "client/tests/e2e/phase-5c-workspace-shell.spec.js",
+      "title": "phase-5c-workspace-shell.spec.js › Phase 5C workspace scaffold › keeps the DPA drafting tabs keyboard-operable at 390px",
+      "line": 48,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "b2b658ee7428d119be23-65227b8c732ac35904f8",
+      "file": "client/tests/e2e/phase-5g-builder-errors.spec.js",
+      "title": "phase-5g-builder-errors.spec.js › Phase 5G builder error and blocked states › step 3 failed validation recovers after required answers",
+      "line": 36,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "b2b658ee7428d119be23-3e0a3ae5b037211ed098",
+      "file": "client/tests/e2e/phase-5g-builder-errors.spec.js",
+      "title": "phase-5g-builder-errors.spec.js › Phase 5G builder error and blocked states › review surfaces governance blocked findings and recovers via Back to edit",
+      "line": 64,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "b2b658ee7428d119be23-7f0f365fa78e5284615b",
+      "file": "client/tests/e2e/phase-5g-builder-errors.spec.js",
+      "title": "phase-5g-builder-errors.spec.js › Phase 5G builder error and blocked states › contract record shows deterministic signature routing blockers",
+      "line": 119,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "b2b658ee7428d119be23-79b78faf79505dda1f97",
+      "file": "client/tests/e2e/phase-5g-builder-errors.spec.js",
+      "title": "phase-5g-builder-errors.spec.js › Phase 5G builder error and blocked states › review without intake redirects with recovery messaging",
+      "line": 145,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "a0f8a50d9100f29fce8e-3142d403163959fdbf99",
+      "file": "client/tests/e2e/phase-5h-command-center.spec.js",
+      "title": "phase-5h-command-center.spec.js › Phase 5H Command Center consolidation › keeps expressive hero and canonical CTAs at 1440 and 1280",
+      "line": 26,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "a0f8a50d9100f29fce8e-b4bc5a22a5e8d17a654a",
+      "file": "client/tests/e2e/phase-5h-command-center.spec.js",
+      "title": "phase-5h-command-center.spec.js › Phase 5H Command Center consolidation › keeps 390px operable without overflow and preserves empty/setup states",
+      "line": 44,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "a0f8a50d9100f29fce8e-e6913fb8435b5f8e86c0",
+      "file": "client/tests/e2e/phase-5h-command-center.spec.js",
+      "title": "phase-5h-command-center.spec.js › Phase 5H Command Center consolidation › section toolbar links use canonical link buttons",
+      "line": 59,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "b94496f70713b71f4166-b99fa6cfeef398a0d296",
+      "file": "client/tests/e2e/pilot-baseline-screenshots.spec.js",
+      "title": "pilot-baseline-screenshots.spec.js › Pilot baseline screenshots › capture allowed surfaces",
+      "line": 31,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "3625eb01300667096bb4-359edd748fd6caf3d22a",
+      "file": "client/tests/e2e/pilot-gate.spec.js",
+      "title": "pilot-gate.spec.js › Pilot gate: authentication › successful login reaches dashboard",
+      "line": 20,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "3625eb01300667096bb4-4e602f88111e664919f2",
+      "file": "client/tests/e2e/pilot-gate.spec.js",
+      "title": "pilot-gate.spec.js › Pilot gate: authentication › repeated failed login eventually returns 429",
+      "line": 26,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "3625eb01300667096bb4-310969d9ba295a6b5f4c",
+      "file": "client/tests/e2e/pilot-gate.spec.js",
+      "title": "pilot-gate.spec.js › Pilot gate: authentication › successful login clears failed-attempt counter",
+      "line": 62,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "3625eb01300667096bb4-5ab9e796c2feeb4b9908",
+      "file": "client/tests/e2e/pilot-gate.spec.js",
+      "title": "pilot-gate.spec.js › Pilot gate: NDA supported actions only › NDA workspace hides unsupported CTAs and keeps View contract record",
+      "line": 86,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "3625eb01300667096bb4-631fd6a151f976763b41",
+      "file": "client/tests/e2e/pilot-gate.spec.js",
+      "title": "pilot-gate.spec.js › Pilot gate: DPA supported actions only › DPA workspace hides unsupported CTAs after generate",
+      "line": 117,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "3625eb01300667096bb4-f82d22392a7bc75dd9b4",
+      "file": "client/tests/e2e/pilot-gate.spec.js",
+      "title": "pilot-gate.spec.js › Pilot gate: search fallback › search remains usable and tenant-scoped",
+      "line": 127,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "3625eb01300667096bb4-69784d3cb2f69f84e188",
+      "file": "client/tests/e2e/pilot-gate.spec.js",
+      "title": "pilot-gate.spec.js › Pilot gate: repository stage vs status › repository Stage column sorts by stage key",
+      "line": 136,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "85a61e5caf109bed6bc0-90c6be26775ee24c88f7",
+      "file": "client/tests/e2e/pilot-verification.spec.js",
+      "title": "pilot-verification.spec.js › Verification: authentication › logout returns to login and blocks dashboard",
+      "line": 119,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "85a61e5caf109bed6bc0-f6203c53135678ea95c9",
+      "file": "client/tests/e2e/pilot-verification.spec.js",
+      "title": "pilot-verification.spec.js › Verification: authentication › session idle expiry redirects to login",
+      "line": 131,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "85a61e5caf109bed6bc0-6aa5dab0b2a27377eb80",
+      "file": "client/tests/e2e/pilot-verification.spec.js",
+      "title": "pilot-verification.spec.js › Verification: authentication › unrelated IP is not blocked by another IP counter",
+      "line": 137,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "85a61e5caf109bed6bc0-1536b35a836e87581f42",
+      "file": "client/tests/e2e/pilot-verification.spec.js",
+      "title": "pilot-verification.spec.js › Verification: MSA finance threshold matrix › Finance action absent below $100000 and present at/above threshold",
+      "line": 173,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "85a61e5caf109bed6bc0-f4e91f25482ee5efaf84",
+      "file": "client/tests/e2e/pilot-verification.spec.js",
+      "title": "pilot-verification.spec.js › Verification: MSA finance threshold matrix › Legal submit persists after refresh and shows audit history",
+      "line": 223,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "85a61e5caf109bed6bc0-5f55fd8d92f4e5866d1f",
+      "file": "client/tests/e2e/pilot-verification.spec.js",
+      "title": "pilot-verification.spec.js › Verification: NDA supported actions › click View contract record and Activity audit rail",
+      "line": 255,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "85a61e5caf109bed6bc0-acec5fe67c76effd7c69",
+      "file": "client/tests/e2e/pilot-verification.spec.js",
+      "title": "pilot-verification.spec.js › Verification: DPA supported actions › unsupported CTAs absent; View record + Activity persist",
+      "line": 287,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "85a61e5caf109bed6bc0-42c6f74b0d2508ee3311",
+      "file": "client/tests/e2e/pilot-verification.spec.js",
+      "title": "pilot-verification.spec.js › Verification: search fixtures and tenancy › semantic fixture empty does not 500",
+      "line": 307,
+      "column": 5,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "85a61e5caf109bed6bc0-05a8bbd4e592685e5042",
+      "file": "client/tests/e2e/pilot-verification.spec.js",
+      "title": "pilot-verification.spec.js › Verification: search fixtures and tenancy › semantic fixture error does not 500",
+      "line": 307,
+      "column": 5,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "85a61e5caf109bed6bc0-7b1be4cde39b75ac40f6",
+      "file": "client/tests/e2e/pilot-verification.spec.js",
+      "title": "pilot-verification.spec.js › Verification: search fixtures and tenancy › semantic fixture keyword does not 500",
+      "line": 307,
+      "column": 5,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "85a61e5caf109bed6bc0-c35a44e628eafba9f227",
+      "file": "client/tests/e2e/pilot-verification.spec.js",
+      "title": "pilot-verification.spec.js › Verification: search fixtures and tenancy › semantic fixture list does not 500",
+      "line": 307,
+      "column": 5,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "85a61e5caf109bed6bc0-0a092229bbd817851201",
+      "file": "client/tests/e2e/pilot-verification.spec.js",
+      "title": "pilot-verification.spec.js › Verification: search fixtures and tenancy › semantic fixture malformed does not 500",
+      "line": 307,
+      "column": 5,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "85a61e5caf109bed6bc0-291e79dae9c9edbb74ad",
+      "file": "client/tests/e2e/pilot-verification.spec.js",
+      "title": "pilot-verification.spec.js › Verification: search fixtures and tenancy › semantic fixture timeout does not 500",
+      "line": 307,
+      "column": 5,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "85a61e5caf109bed6bc0-babb54dc5ce083239062",
+      "file": "client/tests/e2e/pilot-verification.spec.js",
+      "title": "pilot-verification.spec.js › Verification: search fixtures and tenancy › semantic fixture valid does not 500",
+      "line": 307,
+      "column": 5,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "85a61e5caf109bed6bc0-fa8b2540038abd86f13e",
+      "file": "client/tests/e2e/pilot-verification.spec.js",
+      "title": "pilot-verification.spec.js › Verification: search fixtures and tenancy › cross-tenant clause title is excluded from results",
+      "line": 319,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "85a61e5caf109bed6bc0-d9ef3ee04bd53f304704",
+      "file": "client/tests/e2e/pilot-verification.spec.js",
+      "title": "pilot-verification.spec.js › Verification: lifecycle Stage vs Status › repository Stage sort and Status filter controls",
+      "line": 330,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "85a61e5caf109bed6bc0-e1a4ff255ffb70f37b3f",
+      "file": "client/tests/e2e/pilot-verification.spec.js",
+      "title": "pilot-verification.spec.js › Verification: lifecycle Stage vs Status › invalid lifecycle stage skip is rejected via repository bulk-update API",
+      "line": 339,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "2c14808d47b386fba9eb-2250723bd43a63e11515",
+      "file": "client/tests/e2e/smoke.spec.js",
+      "title": "smoke.spec.js › login page renders and SSO entry is wired",
+      "line": 15,
+      "column": 1,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "2c14808d47b386fba9eb-769b141bdad93c6217ae",
+      "file": "client/tests/e2e/smoke.spec.js",
+      "title": "smoke.spec.js › local login works and key pages load",
+      "line": 27,
+      "column": 1,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "2c14808d47b386fba9eb-c44dae64a3209abc362a",
+      "file": "client/tests/e2e/smoke.spec.js",
+      "title": "smoke.spec.js › redesigned workspace shells render on key frontend pages",
+      "line": 44,
+      "column": 1,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "257cfc15fcd93e8e1bb7-ad625d5c6d0960d42c47",
+      "file": "client/tests/e2e/visual-baselines.spec.js",
+      "title": "visual-baselines.spec.js › Phase 1 visual baselines › dashboard baseline",
+      "line": 86,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "257cfc15fcd93e8e1bb7-f0db563020cdc84ca2c5",
+      "file": "client/tests/e2e/visual-baselines.spec.js",
+      "title": "visual-baselines.spec.js › Phase 1 visual baselines › list baseline",
+      "line": 90,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "257cfc15fcd93e8e1bb7-97ffa1afe499590fde61",
+      "file": "client/tests/e2e/visual-baselines.spec.js",
+      "title": "visual-baselines.spec.js › Phase 1 visual baselines › form baseline",
+      "line": 94,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "257cfc15fcd93e8e1bb7-4abae29fec94da448a20",
+      "file": "client/tests/e2e/visual-baselines.spec.js",
+      "title": "visual-baselines.spec.js › Phase 1 visual baselines › workspace baseline",
+      "line": 98,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    },
+    {
+      "id": "257cfc15fcd93e8e1bb7-0c224bb7c0472c6e22ca",
+      "file": "client/tests/e2e/visual-baselines.spec.js",
+      "title": "visual-baselines.spec.js › Phase 1 visual baselines › detail baseline",
+      "line": 102,
+      "column": 3,
+      "project": "chromium",
+      "expected_status": "passed"
+    }
+  ]
+}
