@@ -59,13 +59,19 @@ async function clearDraftingBlockers(page) {
     await resolveBtn.click();
     const drawer = page.getByRole('dialog', { name: 'Resolve exception' });
     await expect(drawer).toBeVisible();
-    await drawer.getByRole('button', { name: 'Use approved wording' }).first().click();
+    await Promise.all([
+      page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
+      drawer.getByRole('button', { name: 'Use approved wording' }).first().click(),
+    ]);
     await expect(page).toHaveURL(/\/contracts\/workflows\/\d+/);
   }
   for (let i = 0; i < 30; i += 1) {
     const confirmBtn = page.locator('[data-action-mode="confirm"]').first();
     if (!(await confirmBtn.count())) break;
-    await confirmBtn.click();
+    await Promise.all([
+      page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
+      confirmBtn.click(),
+    ]);
     await expect(page).toHaveURL(/\/contracts\/workflows\/\d+/);
   }
   // Verify the governed document state, not an unrelated review route. Finance
