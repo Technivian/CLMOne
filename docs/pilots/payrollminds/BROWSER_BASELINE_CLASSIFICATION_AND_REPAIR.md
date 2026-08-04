@@ -1,116 +1,81 @@
 # Browser baseline classification and repair
 
-Status: **NO-GO**. This is a working evidence record, not release approval.
-No merge, deployment, real customer data, live credentials, inbound email,
-external AI, signatures, or external portals were enabled.
+Status: **NO-GO**. This is evidence, not release approval. No merge,
+deployment, executable UAT, release-envelope design, real customer data, or
+feature activation occurred.
 
-## Runner assessment
+## Frozen source and execution identities
 
-`origin/main` is `4d194dcc0663b94accf4eb892c508fe70cf2d3a7`.
-The runner repair is PR #153, currently at
-`12c82a34c3d02227287dd97f56d758443082559e`. Its runner-specific validation
-passes on supported local Bash 3.2:
+The validation branch is `codex/payrollminds-browser-baseline-integration` at
+`3d1d60a34eebd8544a613e98bd204bd5acba20f1`. GitHub executed PR #157 as its
+frozen merge commit `45b45a4a` (branch head into then-current main
+`5c73b060d28bca914d570cfc19d205a768ffb3e2`) for both attempts. The branch
+was created from the task-start main `4d194dcc0663b94accf4eb892c508fe70cf2d3a7`;
+no prohibited PR was rebased.
 
-* unset and explicitly empty argument paths run the configured suite;
-* one argument, multiple arguments, and an argument containing a space retain
-  their boundaries;
-* invalid shards fail with exit code 2;
-* no `eval` or unsafe word splitting is used;
-* the Playwright command exit status is returned;
-* `.github/workflows/ui-verification.yml` contains no `continue-on-error`.
+The manifest contains and CI collected exactly 90 Chromium tests. Existing
+stable IDs were retained. The MSA source line moved only because its browser
+helper now waits for same-URL postback navigation; its title and ID did not
+change.
 
-The PR evidence, security, integrity, and runner-specific checks are distinct
-from Playwright assertions. Browser-shard failures therefore indicate
-substantive tests, not the former empty-array runner defect.
+## Terminal runs
 
-## Authoritative browser collection
+| Evidence set | SHA | Executed | Passed | Failed | Terminal state |
+| --- | --- | ---: | ---: | ---: | --- |
+| PR #153 clean run 1 | `12c82a34…` | 90 | 38 | 52 | terminal |
+| PR #153 clean run 2 | `12c82a34…` | 90 | 38 | 52 | terminal |
+| Security-clean run 1 | `45b45a4a` | 90 | 42 | 48 | terminal |
+| Security-clean run 2 | `45b45a4a` | 90 | 42 | 48 | terminal |
 
-The locked Playwright manifest contains **90 tests in 28 files**:
+The final two runs have the same 48-failure set, no skipped, not-run,
+collection, setup, teardown, or runner failures, and all 17
+`pilot-verification.spec.js` tests pass.
 
-```sh
-npm --prefix client exec -- playwright test --config=client/playwright.config.js --list
-```
+Raw CI evidence is retained under UI Verification run
+[`30910072964`](https://github.com/Technivian/CLMOne/actions/runs/30910072964),
+attempts 1 and 2. The clean-run references and per-test artifact locations are
+recorded in `release-baseline/browser-failures.json`.
 
-The previous local diagnostic was interrupted by its outer session after 61
-tests. That is not accepted as a terminal baseline. CI's eight isolated shards
-continue to collect and execute their assigned tests; their assertion failures
-remain visible because masking was removed. The first terminal CI run is
-`30767778512` for PR #153 SHA `12c82a34c3d02227287dd97f56d758443082559e`:
-**38 passed and 52 failed**. The complete two-run browser baseline and
-`release-baseline/browser-failures.json` are not yet complete.
+## Repairs confirmed on the integrated baseline
 
-## Repairs in PR #154
+1. The PR #153 runner repair remains active: Bash 3.2-safe optional arguments,
+   eight-shard execution, and propagated Playwright exits. Its argument harness
+   passes locally.
+2. PR #154's governed-action expectation corrections remain in place.
+3. MSA fixtures now supply `special_conditions` and the threshold acknowledgement
+   through the normal form path where applicable. The browser helper also waits
+   for the actual same-URL postback before inspecting the next governed state.
+   This repaired a CI-only race that left one exception and one review state
+   visible despite a submitted resolution; no lifecycle state is mutated
+   directly and human confirmation remains required.
+4. Focused evidence: the exact shard-7 configuration passes all 11 tests;
+   `tests.test_msa_workflow` passes 25 tests; the complete
+   `pilot-verification.spec.js` passes 17 tests.
 
-PR #154 (`9ffe2b67f7946c0aef340bb5b1490306832b7da7`, pending remote CI) corrects
-three stale browser expectations in `pilot-verification.spec.js`:
+Migration impact is none. The test-only MSA repair does not expand access or
+alter authorization, tenancy, audit, or production feature configuration.
 
-| Original failure | Classification | Repair | Validation |
-| --- | --- | --- | --- |
-| Legal-review blocker count checked while a `<details>` actions menu was closed | D — stale expectation | Open menu, then require no visible blocked action after resolution | Preserves blocked-state assertion |
-| NDA legal-review explanation expected while actions menu was closed | D — stale expectation | Open menu before asserting the disabled explanation | Disabled feature remains disabled |
-| Contract-record action selected as a link despite `role="menuitem"` | D — stale expectation | Assert/click the canonical `menuitem` role | Focused lifecycle test: 1 passed |
+## Registry and classification
 
-The focused `pilot-verification.spec.js` run produced **14 passed and 3
-failed** before the final lifecycle-role repair. The corrected lifecycle test
-then passed. The remaining two failures are MSA finance/legal workflow journeys:
-their actions remain disabled because drafting sections are incomplete. They are
-currently classified **F — unresolved** pending scope and workflow-state root
-cause analysis; no blocked action was forced clickable and no assertion was
-weakened.
+`release-baseline/browser-failures.json` has one complete record for every
+manifest test, including both clean and both security-clean terminal results,
+shards, durations, source locations, artifact references, provenance, and
+relevance fields.
 
-The second terminal browser run is `30768405771` for PR #154 SHA
-`8fa8be5b51fbaeb10ba379ecc44827ef7409b640`: **40 passed and 50 failed**.
-The two repaired pilot expectations account for the two-test improvement from
-the PR #153 runner baseline; the remaining MSA journeys are still failures.
-This is not a stable two-run pass result: the two runs used different SHAs and
-both retain unresolved failures.
+| Classification | Count | Disposition |
+| --- | ---: | --- |
+| Terminal pass | 42 | Retained evidence |
+| H — Unresolved | 48 | Blocks progression |
+| A–G classified failures | 0 | None claimed without proof |
 
-## MSA finance and legal journey repair
+The remaining failures are deliberately **not** placed in category G. Although
+their signatures are stable, no complete proof yet establishes the required
+non-pilot scope, disabled state, absence of shared/pilot/security impact, and
+named remediation ownership for every one. No exception, expiry, or release
+envelope has been created.
 
-Both remaining MSA failures were **A — incomplete happy-path fixture**. The
-browser helper created the canonical MSA with an empty `special_conditions`
-field. The generated document has a Special Conditions drafting section, whose
-canonical rule reports `Needs input` when that field is empty. Human
-confirmation only resolves `Needs review` sections, so the governed submission
-actions correctly remained disabled.
+## Next gate
 
-The repair supplies the ordinary `special_conditions` input, keeps the initial
-blocked-action and visible-reason assertions, resolves the recorded exception,
-confirms each AI-assisted section through its server-side endpoint, and then
-submits through the existing Finance or Legal route. It does not mutate a
-workflow state in the browser, change permissions, or bypass a disabled
-action. The audit route is now opened through the canonical Actions menu after
-submission, rather than a non-existent header button.
-
-Focused evidence on the repaired fresh worktree:
-
-```text
-PLAYWRIGHT_TEST_TIMEOUT_MS=30000 npm --prefix client run test:e2e -- \
-  client/tests/e2e/pilot-verification.spec.js --grep 'MSA finance threshold matrix'
-
-2 passed (29.6s)
-```
-
-The affected file is `client/tests/e2e/pilot-verification.spec.js`. This is a
-test-fixture and governed-expectation correction only: migration impact is
-none; security, tenancy, and authorization behavior are unchanged; submission
-continues to create the existing approval and immutable audit evidence.
-
-## Registry status
-
-`release-baseline/browser-test-manifest.json` records the exact 90-test
-Playwright collection, including stable IDs, source locations, titles, and
-project. `release-baseline/browser-failures.json` has one schema-complete
-record for each of those 90 tests. Its run-result and classification fields are
-explicitly `pending`; it must not be used for exception analysis until two
-same-SHA clean runs and two same-SHA repaired runs provide the required
-terminal evidence.
-
-## Current blocker and next required evidence
-
-The branch cannot be declared ready for UAT/envelope work until all 90 tests
-reach terminal states in two equivalent runs and every failure is individually
-classified. Mandatory browser infrastructure, PayrollMinds-critical, shared
-platform, or security/tenancy failures must be repaired. Only deterministic,
-isolated, inherited non-pilot assertion failures may later be considered for a
-separate proposed exception; no exception has been created here.
+Root-cause triage must classify and repair every applicable mandatory failure
+before any executable UAT or release-envelope work can be authorized. This
+baseline is therefore **NO-GO**.

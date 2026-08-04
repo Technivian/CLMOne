@@ -1,7 +1,7 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "collected_from": "npm --prefix client exec -- playwright test --config=client/playwright.config.js --list --reporter=json",
-  "source_sha": "e18474e8a657e910b0516d2961b02a7c4bdf47c2",
+  "source_sha": "3d1d60a34eebd8544a613e98bd204bd5acba20f1",
   "expected_test_count": 90,
   "tests": [
     {
@@ -593,7 +593,7 @@
       "id": "85a61e5caf109bed6bc0-90c6be26775ee24c88f7",
       "file": "client/tests/e2e/pilot-verification.spec.js",
       "title": "pilot-verification.spec.js › Verification: authentication › logout returns to login and blocks dashboard",
-      "line": 119,
+      "line": 131,
       "column": 3,
       "project": "chromium",
       "expected_status": "passed"
@@ -602,7 +602,7 @@
       "id": "85a61e5caf109bed6bc0-f6203c53135678ea95c9",
       "file": "client/tests/e2e/pilot-verification.spec.js",
       "title": "pilot-verification.spec.js › Verification: authentication › session idle expiry redirects to login",
-      "line": 131,
+      "line": 143,
       "column": 3,
       "project": "chromium",
       "expected_status": "passed"
@@ -611,7 +611,7 @@
       "id": "85a61e5caf109bed6bc0-6aa5dab0b2a27377eb80",
       "file": "client/tests/e2e/pilot-verification.spec.js",
       "title": "pilot-verification.spec.js › Verification: authentication › unrelated IP is not blocked by another IP counter",
-      "line": 137,
+      "line": 149,
       "column": 3,
       "project": "chromium",
       "expected_status": "passed"
@@ -620,7 +620,7 @@
       "id": "85a61e5caf109bed6bc0-1536b35a836e87581f42",
       "file": "client/tests/e2e/pilot-verification.spec.js",
       "title": "pilot-verification.spec.js › Verification: MSA finance threshold matrix › Finance action absent below $100000 and present at/above threshold",
-      "line": 173,
+      "line": 185,
       "column": 3,
       "project": "chromium",
       "expected_status": "passed"
@@ -629,7 +629,7 @@
       "id": "85a61e5caf109bed6bc0-f4e91f25482ee5efaf84",
       "file": "client/tests/e2e/pilot-verification.spec.js",
       "title": "pilot-verification.spec.js › Verification: MSA finance threshold matrix › Legal submit persists after refresh and shows audit history",
-      "line": 223,
+      "line": 237,
       "column": 3,
       "project": "chromium",
       "expected_status": "passed"
@@ -638,7 +638,7 @@
       "id": "85a61e5caf109bed6bc0-5f55fd8d92f4e5866d1f",
       "file": "client/tests/e2e/pilot-verification.spec.js",
       "title": "pilot-verification.spec.js › Verification: NDA supported actions › click View contract record and Activity audit rail",
-      "line": 255,
+      "line": 269,
       "column": 3,
       "project": "chromium",
       "expected_status": "passed"
@@ -647,7 +647,7 @@
       "id": "85a61e5caf109bed6bc0-acec5fe67c76effd7c69",
       "file": "client/tests/e2e/pilot-verification.spec.js",
       "title": "pilot-verification.spec.js › Verification: DPA supported actions › unsupported CTAs absent; View record + Activity persist",
-      "line": 287,
+      "line": 301,
       "column": 3,
       "project": "chromium",
       "expected_status": "passed"
@@ -656,7 +656,7 @@
       "id": "85a61e5caf109bed6bc0-42c6f74b0d2508ee3311",
       "file": "client/tests/e2e/pilot-verification.spec.js",
       "title": "pilot-verification.spec.js › Verification: search fixtures and tenancy › semantic fixture empty does not 500",
-      "line": 307,
+      "line": 321,
       "column": 5,
       "project": "chromium",
       "expected_status": "passed"
@@ -665,7 +665,7 @@
       "id": "85a61e5caf109bed6bc0-05a8bbd4e592685e5042",
       "file": "client/tests/e2e/pilot-verification.spec.js",
       "title": "pilot-verification.spec.js › Verification: search fixtures and tenancy › semantic fixture error does not 500",
-      "line": 307,
+      "line": 321,
       "column": 5,
       "project": "chromium",
       "expected_status": "passed"
@@ -674,7 +674,7 @@
       "id": "85a61e5caf109bed6bc0-7b1be4cde39b75ac40f6",
       "file": "client/tests/e2e/pilot-verification.spec.js",
       "title": "pilot-verification.spec.js › Verification: search fixtures and tenancy › semantic fixture keyword does not 500",
-      "line": 307,
+      "line": 321,
       "column": 5,
       "project": "chromium",
       "expected_status": "passed"
@@ -683,7 +683,7 @@
       "id": "85a61e5caf109bed6bc0-c35a44e628eafba9f227",
       "file": "client/tests/e2e/pilot-verification.spec.js",
       "title": "pilot-verification.spec.js › Verification: search fixtures and tenancy › semantic fixture list does not 500",
-      "line": 307,
+      "line": 321,
       "column": 5,
       "project": "chromium",
       "expected_status": "passed"
@@ -692,7 +692,7 @@
       "id": "85a61e5caf109bed6bc0-0a092229bbd817851201",
       "file": "client/tests/e2e/pilot-verification.spec.js",
       "title": "pilot-verification.spec.js › Verification: search fixtures and tenancy › semantic fixture malformed does not 500",
-      "line": 307,
+      "line": 321,
       "column": 5,
       "project": "chromium",
       "expected_status": "passed"
@@ -701,7 +701,7 @@
       "id": "85a61e5caf109bed6bc0-291e79dae9c9edbb74ad",
       "file": "client/tests/e2e/pilot-verification.spec.js",
       "title": "pilot-verification.spec.js › Verification: search fixtures and tenancy › semantic fixture timeout does not 500",
-      "line": 307,
+      "line": 321,
       "column": 5,
       "project": "chromium",
       "expected_status": "passed"
@@ -710,7 +710,7 @@
       "id": "85a61e5caf109bed6bc0-babb54dc5ce083239062",
       "file": "client/tests/e2e/pilot-verification.spec.js",
       "title": "pilot-verification.spec.js › Verification: search fixtures and tenancy › semantic fixture valid does not 500",
-      "line": 307,
+      "line": 321,
       "column": 5,
       "project": "chromium",
       "expected_status": "passed"
@@ -719,7 +719,7 @@
       "id": "85a61e5caf109bed6bc0-fa8b2540038abd86f13e",
       "file": "client/tests/e2e/pilot-verification.spec.js",
       "title": "pilot-verification.spec.js › Verification: search fixtures and tenancy › cross-tenant clause title is excluded from results",
-      "line": 319,
+      "line": 333,
       "column": 3,
       "project": "chromium",
       "expected_status": "passed"
@@ -728,7 +728,7 @@
       "id": "85a61e5caf109bed6bc0-d9ef3ee04bd53f304704",
       "file": "client/tests/e2e/pilot-verification.spec.js",
       "title": "pilot-verification.spec.js › Verification: lifecycle Stage vs Status › repository Stage sort and Status filter controls",
-      "line": 330,
+      "line": 344,
       "column": 3,
       "project": "chromium",
       "expected_status": "passed"
@@ -737,7 +737,7 @@
       "id": "85a61e5caf109bed6bc0-e1a4ff255ffb70f37b3f",
       "file": "client/tests/e2e/pilot-verification.spec.js",
       "title": "pilot-verification.spec.js › Verification: lifecycle Stage vs Status › invalid lifecycle stage skip is rejected via repository bulk-update API",
-      "line": 339,
+      "line": 353,
       "column": 3,
       "project": "chromium",
       "expected_status": "passed"
@@ -814,5 +814,8 @@
       "project": "chromium",
       "expected_status": "passed"
     }
-  ]
+  ],
+  "ci_execution_merge_sha": "45b45a4a",
+  "collected_test_count": 90,
+  "identifier_note": "Existing stable identifiers were retained. The MSA test source locations moved when same-URL navigation waits were added; title and stable identifier did not change."
 }
