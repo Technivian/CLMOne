@@ -71,6 +71,8 @@ Do not fabricate approved decisions. Do not mark a record Accepted without docum
 | [0015-exception-request-decision-model.md](adr/0015-exception-request-decision-model.md) | **Accepted** |
 | [ADR-0016-document-ingestion-quarantine-and-malware-scanning.md](adr/ADR-0016-document-ingestion-quarantine-and-malware-scanning.md) | Accepted — implementation default off; activation separately governed |
 | [ADR-0017-payrollminds-isolated-pilot-release-topology.md](adr/ADR-0017-payrollminds-isolated-pilot-release-topology.md) | Proposed — no deployment or activation authority |
+| [ADR-0018-payrollminds-pilot-production-topology.md](adr/ADR-0018-payrollminds-pilot-production-topology.md) | Proposed — target design only; no deployment or activation authority |
+| [ADR-0019-payrollminds-ai-provider-disabled-boundary.md](adr/ADR-0019-payrollminds-ai-provider-disabled-boundary.md) | Proposed — provider remains disabled |
 
 ### PDRs
 
@@ -86,12 +88,14 @@ Do not fabricate approved decisions. Do not mark a record Accepted without docum
 | [PDR-0008-object-level-read-enforcement-policy.md](pdr/PDR-0008-object-level-read-enforcement-policy.md) | Proposed — PAR-SEC-002 planning only |
 | [PDR-0010-owner-directed-release-authorization.md](pdr/PDR-0010-owner-directed-release-authorization.md) | Accepted — owner-directed repository authorization |
 | [PDR-0011-payrollminds-controlled-pilot-scope-and-governance.md](pdr/PDR-0011-payrollminds-controlled-pilot-scope-and-governance.md) | Proposed — no pilot activation authority |
+| [PDR-0012-payrollminds-ai-metadata-suggestion-gate.md](pdr/PDR-0012-payrollminds-ai-metadata-suggestion-gate.md) | Proposed — external AI remains disabled |
 
 ### Exceptions
 
 | Record | Status |
 |---|---|
 | [EXC-0001-payrollminds-deferred-enterprise-capabilities.md](exceptions/EXC-0001-payrollminds-deferred-enterprise-capabilities.md) | Proposed — inactive until approved; expires 2026-09-30 if activated |
+| [EXC-0002-payrollminds-ai-metadata-suggestions-deferred.md](exceptions/EXC-0002-payrollminds-ai-metadata-suggestions-deferred.md) | Proposed — inactive; grants no deviation |
 
 Use [EXCEPTION_TEMPLATE.md](exceptions/EXCEPTION_TEMPLATE.md) for new exceptions.
 

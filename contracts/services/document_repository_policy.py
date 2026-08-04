@@ -88,3 +88,18 @@ def apply_document_relation_policy(queryset, *, organization, user, surface):
         return queryset.none()
     logger.error('object_read_policy outcome=policy_error surface=%s', surface)
     return queryset.none()
+
+
+def apply_related_object_read_policy(queryset, *, organization, user, surface):
+    """Apply the repository read boundary to canonical Client/Matter surfaces.
+
+    Client and Matter are relationship metadata that can disclose a private
+    Contract's existence.  They therefore use the same authoritative policy
+    evaluator as document form relations, rather than a view-local check.
+    """
+    return apply_document_relation_policy(
+        queryset,
+        organization=organization,
+        user=user,
+        surface=surface,
+    )

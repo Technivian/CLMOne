@@ -17,9 +17,12 @@ from django.utils import timezone
 
 from contracts.models import (
     AuditLog,
+    Contract,
     Document,
     DocumentIngestionAttempt,
     DocumentOCRReview,
+    DocumentReviewRun,
+    DocumentVersion,
     Organization,
     OrganizationMembership,
 )
@@ -183,6 +186,114 @@ class DocumentIngestionSecurityTests(TestCase):
             organization=self.organization,
             event_type='document.ingestion.released',
             object_id=attempt.pk,
+        ).exists())
+
+    def test_clean_release_can_atomically_create_governed_contract_and_version(self):
+        """Critical pilot path: no Contract exists before a clean verdict."""
+        with self.enabled_settings(DOCUMENT_QUARANTINE_RELEASE_ENABLED=True):
+            attempt = self.service.quarantine(
+                organization=self.organization,
+                uploaded_file=self.upload(),
+                actor=self.user,
+            )
+            attempt = self.service.scan(attempt=attempt, actor=self.user)
+            self.assertEqual(attempt.status, DocumentIngestionAttempt.Status.CLEAN)
+            self.assertFalse(Contract.objects.exists())
+            with self.captureOnCommitCallbacks(execute=True):
+                contract, document, version = self.service.create_contract_and_release(
+                    attempt=attempt,
+                    actor=self.user,
+                    contract_fields={
+                        'title': 'Human-verified PayrollMinds agreement',
+                        'contract_type': Contract.ContractType.NDA,
+                        'counterparty': 'Synthetic counterparty',
+                        'owner': self.user,
+                        'status': Contract.Status.IN_PROGRESS,
+                        'lifecycle_stage': Contract.LifecycleStage.INTAKE,
+                    },
+                    title='source-agreement.txt',
+                )
+
+        attempt.refresh_from_db()
+        self.assertEqual(attempt.status, DocumentIngestionAttempt.Status.RELEASED)
+        self.assertEqual(attempt.contract_id, contract.pk)
+        self.assertEqual(document.contract_id, contract.pk)
+        self.assertEqual(version.contract_id, contract.pk)
+        self.assertEqual(version.organization_id, self.organization.pk)
+        self.assertEqual(version, DocumentVersion.objects.get(pk=version.pk))
+        self.assertEqual(contract.owner_id, self.user.pk)
+        self.assertEqual(contract.origin_kind, Contract.OriginKind.UPLOAD)
+        self.assertTrue(contract.provenance_locked_at)
+        review = DocumentReviewRun.objects.get(document=document)
+        self.assertEqual(review.governance_sources['metadata_authority'], 'human_entered')
+        self.assertFalse(review.governance_sources['suggestions_authoritative'])
+        self.assertTrue(AuditLog.objects.filter(
+            organization=self.organization,
+            event_type='contract.record.created',
+            object_id=contract.pk,
+        ).exists())
+        self.assertTrue(AuditLog.objects.filter(
+            organization=self.organization,
+            event_type='document.version.created',
+            object_id=document.pk,
+        ).exists())
+
+    def test_ingestion_attempt_is_not_releasable_by_another_member(self):
+        member = User.objects.create_user(username='quarantine-member', password='test-pass-123')
+        OrganizationMembership.objects.create(
+            organization=self.organization,
+            user=member,
+            role=OrganizationMembership.Role.MEMBER,
+            is_active=True,
+        )
+        with self.enabled_settings(DOCUMENT_QUARANTINE_RELEASE_ENABLED=True):
+            attempt = self.service.quarantine(
+                organization=self.organization,
+                uploaded_file=self.upload(),
+                actor=self.user,
+            )
+            attempt = self.service.scan(attempt=attempt, actor=self.user)
+            with self.assertRaises(PermissionDenied):
+                self.service.release(attempt=attempt, actor=member, title='Denied')
+            self.client.force_login(member)
+            response = self.client.get(
+                reverse('contracts:document_ingestion_status_api', args=[attempt.correlation_id])
+            )
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(Document.objects.count(), 0)
+
+    def test_api_critical_path_releases_clean_upload_into_contract_record(self):
+        self.client.force_login(self.user)
+        with self.enabled_settings(DOCUMENT_QUARANTINE_RELEASE_ENABLED=True):
+            received = self.client.post(
+                reverse('contracts:document_ingestion_quarantine_api'),
+                {'file': self.upload()},
+            )
+            self.assertEqual(received.status_code, 202)
+            released = self.client.post(
+                reverse(
+                    'contracts:document_ingestion_release_api',
+                    args=[received.json()['correlation_id']],
+                ),
+                {
+                    'title': 'api-source.txt',
+                    'create_contract': 'on',
+                    'contract_title': 'API human-verified agreement',
+                    'contract_type': Contract.ContractType.NDA,
+                    'counterparty': 'Synthetic counterparty',
+                    'start_date': '2030-01-01',
+                    'end_date': '2030-12-31',
+                },
+            )
+
+        self.assertEqual(released.status_code, 201)
+        payload = released.json()
+        contract = Contract.objects.get(pk=payload['contract_id'])
+        self.assertEqual(contract.organization_id, self.organization.pk)
+        self.assertEqual(contract.owner_id, self.user.pk)
+        self.assertTrue(DocumentReviewRun.objects.filter(
+            contract=contract,
+            document_id=payload['document_id'],
         ).exists())
 
     def test_malicious_verdict_is_never_releasable(self):

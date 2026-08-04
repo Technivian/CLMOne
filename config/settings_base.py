@@ -610,7 +610,8 @@ GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-3.5-flash').strip()
 # An explicit GEMINI_AI_ENABLED env override always wins; otherwise AI is on
 # only when a key is present. A pilot deployment sets GEMINI_AI_ENABLED=false
 # to keep confidential contract text off the LLM until the AI-controls work
-# (redaction / opt-in / audit / DPA — roadmap B6) lands.
+# (redaction / opt-in / audit / DPA — roadmap B6) lands.  Controlled-pilot
+# routes additionally fail closed server-side even if this variable is set.
 GEMINI_AI_ENABLED = _bool_env('GEMINI_AI_ENABLED', default=bool(GEMINI_API_KEY))
 
 # ---------------------------------------------------------------------------

@@ -128,7 +128,6 @@ def queue_document_ocr_review(document):
 
 
 def process_pending_document_ocr_reviews(limit=50):
-    from contracts.services.ai_extraction import extract_clause_spans
     processed = 0
     for review in DocumentOCRReview.objects.filter(status=DocumentOCRReview.Status.PENDING).select_related('document', 'document__organization').order_by('created_at')[:limit]:
         extracted_text, confidence_score, source = extract_document_text(review.document)
@@ -137,14 +136,9 @@ def process_pending_document_ocr_reviews(limit=50):
         review.source = source
         review.status = DocumentOCRReview.Status.IN_REVIEW if extracted_text else DocumentOCRReview.Status.PENDING
         review.save(update_fields=['extracted_text', 'confidence_score', 'source', 'status', 'updated_at'])
-        if extracted_text and review.document.organization:
-            try:
-                extract_clause_spans(
-                    extracted_text,
-                    review.document.organization,
-                    review.document,
-                )
-            except Exception:
-                pass
+        # OCR may produce local text for a human review, but it must never
+        # submit contract text to an external AI provider without an
+        # authorized human request and an approved use case.  PayrollMinds
+        # therefore leaves every review in a recoverable manual state.
         processed += 1
     return processed

@@ -110,7 +110,7 @@ class TestQueueDocumentOcrReview(unittest.TestCase):
 
 
 class TestProcessPendingOcrReviews(unittest.TestCase):
-    """Test process_pending_document_ocr_reviews and AI extraction trigger."""
+    """Test local OCR processing without unattended provider submission."""
 
     def test_processes_pending_reviews(self):
         mock_review = MagicMock()
@@ -132,6 +132,7 @@ class TestProcessPendingOcrReviews(unittest.TestCase):
             count = process_pending_document_ocr_reviews(limit=5)
 
         mock_review.save.assert_called_once()
+        mock_spans.assert_not_called()
 
     def test_returns_processed_count(self):
         reviews = [MagicMock(), MagicMock()]
