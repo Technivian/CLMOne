@@ -68,10 +68,16 @@ async function clearDraftingBlockers(page) {
     await confirmBtn.click();
     await expect(page).toHaveURL(/\/contracts\/workflows\/\d+/);
   }
-  // Check the operational menu state, not merely the collapsed DOM. A blocked
-  // action must be gone once every drafting blocker has been resolved.
+  // Verify the governed document state, not an unrelated review route. Finance
+  // and Legal availability are each asserted by their own route-specific
+  // journey after this shared prerequisite helper returns.
   await openWorkspaceActions(page);
-  await expect(page.getByText(/Send to Legal Review · blocked/)).toHaveCount(0);
+  await expect(page.locator('.dc-ds-workspace__doc-overview')).toContainText(
+    /0 exceptions · 0 need review/i,
+  );
+  await expect(page.locator('.dc-ds-workspace__sticky-copy')).toContainText(
+    /All drafting sections are ready/i,
+  );
 }
 
 /**
