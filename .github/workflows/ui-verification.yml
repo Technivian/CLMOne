@@ -145,7 +145,6 @@ jobs:
 
       - name: Run isolated browser shard
         id: browser
-        continue-on-error: true
         env:
           VERIFY_UI_MODE: browser
           VERIFY_UI_DEPS_READY: '1'
@@ -153,13 +152,6 @@ jobs:
           PLAYWRIGHT_SHARD_ACROSS_TESTS: '1'
           PLAYWRIGHT_TEST_TIMEOUT_MS: '30000'
         run: ./scripts/verify_ui.sh
-
-      - name: Record advisory browser debt
-        if: steps.browser.outcome == 'failure'
-        run: |
-          echo "::warning::Browser shard ${{ matrix.shard }}/8 has failing legacy assertions."
-          echo "### Browser shard ${{ matrix.shard }}/8" >> "${GITHUB_STEP_SUMMARY}"
-          echo "Legacy browser assertions failed. Evidence is attached; the advisory policy is unchanged by this performance PR." >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Upload browser failure evidence
         if: steps.browser.outcome == 'failure'
