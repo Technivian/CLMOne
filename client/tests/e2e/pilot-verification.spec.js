@@ -192,7 +192,9 @@ test.describe('Verification: MSA finance threshold matrix', () => {
     await generateMsa(page, {
       counterparty: `Exact Thr ${suffix}`,
       value: 100000,
-      confirmThreshold: false,
+      // The governed threshold acknowledgement is required at the boundary;
+      // drafting confirmation remains a separate, visible prerequisite below.
+      confirmThreshold: true,
     });
     await openWorkspaceActions(page);
     await expect(page.getByText('Send to Finance · blocked')).toBeVisible();
@@ -217,7 +219,7 @@ test.describe('Verification: MSA finance threshold matrix', () => {
     await generateMsa(page, {
       counterparty: `Above Thr ${suffix}`,
       value: 100001,
-      confirmThreshold: false,
+      confirmThreshold: true,
     });
     await clearDraftingBlockers(page);
     await openWorkspaceActions(page);
