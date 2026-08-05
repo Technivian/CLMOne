@@ -1,10 +1,10 @@
 {
-  "source_sha": "3d1d60a34eebd8544a613e98bd204bd5acba20f1",
+  "source_sha": "50aae7d4f090e36eff08a1a0b19ad747373185c6",
   "validated_merge_sha": "45b45a4a",
   "clusters": [
     {
       "cluster_id": "A-CI-SNAPSHOT",
-      "classification": "A \u2014 Infrastructure or isolation defect",
+      "classification": "A — Infrastructure or isolation defect",
       "root_cause_summary": "Missing Linux Playwright snapshot assets; CI cannot evaluate the assertions.",
       "affected_test_ids": [
         "257cfc15fcd93e8e1bb7-ad625d5c6d0960d42c47",
@@ -21,7 +21,7 @@
     },
     {
       "cluster_id": "B-PILOT-JOURNEY",
-      "classification": "B \u2014 PayrollMinds-critical defect",
+      "classification": "B — PayrollMinds-critical defect",
       "root_cause_summary": "Pilot contract/workspace journey or pilot gate assertion does not reach its governed canonical state.",
       "affected_test_ids": [
         "712090e5dc3187d4673e-2aab6375eaeb394b4897",
@@ -41,12 +41,17 @@
       "repair_plan": "Trace route, fixture and policy state; repair smallest canonical-path defect.",
       "first_failing_layer": "Playwright assertion or snapshot resolution",
       "shared_services": "canonical Django routes, browser fixture server, and shared UI/workflow surfaces",
-      "security_relevance": "No direct security signature; mandatory regression review required"
+      "security_relevance": "No direct security signature; mandatory regression review required",
+      "resolution": {
+        "status": "resolved",
+        "resolving_commit": "0111b10de17d92ae7a057815be93b74736c41c76",
+        "focused_result": "16 passed"
+      }
     },
     {
       "cluster_id": "D-SHARED-WORKFLOW",
-      "classification": "D \u2014 Shared-platform defect",
-      "root_cause_summary": "Governed workflow, contract record, or shared lifecycle surface fails a browser assertion.",
+      "classification": "D — Shared-platform defect",
+      "root_cause_summary": "One deterministic structured-review renderer regression plus six stale governed selectors/fixture identities; workflow rules, version pinning, provenance, audit, and server-side authorization were preserved.",
       "affected_test_ids": [
         "d3423a6dec4bff43ec8a-bc0c98de23428e11624e",
         "d3423a6dec4bff43ec8a-1a9217ac4de00eb7548d",
@@ -61,11 +66,18 @@
       "repair_plan": "Trace view, form and workflow runtime; add focused regression.",
       "first_failing_layer": "Playwright assertion or snapshot resolution",
       "shared_services": "canonical Django routes, browser fixture server, and shared UI/workflow surfaces",
-      "security_relevance": "No direct security signature; mandatory regression review required"
+      "security_relevance": "No direct security signature; mandatory regression review required",
+      "resolution": {
+        "status": "resolved",
+        "resolving_commit": "50aae7d4f090e36eff08a1a0b19ad747373185c6",
+        "focused_result": "7 passed",
+        "affected_file_result": "11 passed",
+        "full_suite_result": "All seven identifiers absent from the 31 local failed identifiers."
+      }
     },
     {
       "cluster_id": "D-SHARED-UI",
-      "classification": "D \u2014 Shared-platform defect",
+      "classification": "D — Shared-platform defect",
       "root_cause_summary": "Canonical shared shell, list, form, focus, responsive, or status surface disagrees with browser assertion.",
       "affected_test_ids": [
         "fcac23b42f5942783f9d-afc9dfafbd8fbb3b76cf",
@@ -102,5 +114,15 @@
       "shared_services": "canonical Django routes, browser fixture server, and shared UI/workflow surfaces",
       "security_relevance": "No direct security signature; mandatory regression review required"
     }
-  ]
+  ],
+  "local_validation": {
+    "source_sha": "50aae7d4f090e36eff08a1a0b19ad747373185c6",
+    "collected": 90,
+    "passed": 59,
+    "failed": 31,
+    "skipped": 0,
+    "interrupted": 0,
+    "not_run": 0,
+    "result": "No new stable test identifiers; B and D-SHARED-WORKFLOW identifiers absent from failedTests."
+  }
 }

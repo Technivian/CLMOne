@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "registry_status": "classification_complete_pending_repair",
+  "registry_status": "classification_complete_partial_repairs_validated",
   "expected_test_count": 90,
   "clean_baseline_sha": "12c82a34c3d02227287dd97f56d758443082559e",
   "repaired_baseline_sha": "3d1d60a34eebd8544a613e98bd204bd5acba20f1",
@@ -8,7 +8,7 @@
     {
       "stable_test_identifier": "fcac23b42f5942783f9d-afc9dfafbd8fbb3b76cf",
       "source_file": "client/tests/e2e/canonical-page-layout.spec.js",
-      "title": "canonical-page-layout.spec.js \u203a canonical workspaces fit 390px mobile without page overflow",
+      "title": "canonical-page-layout.spec.js › canonical workspaces fit 390px mobile without page overflow",
       "project_browser": "chromium",
       "shard": "1/8",
       "route_or_surface": "Test source: client/tests/e2e/canonical-page-layout.spec.js",
@@ -65,7 +65,7 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "D \u2014 Shared-platform defect",
+      "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
       "remediation_reference": "Prompt 20 mandatory repair backlog",
       "expiry_candidate": null,
@@ -81,7 +81,7 @@
     {
       "stable_test_identifier": "fcac23b42f5942783f9d-52edd03349ac746fa499",
       "source_file": "client/tests/e2e/canonical-page-layout.spec.js",
-      "title": "canonical-page-layout.spec.js \u203a canonical workspaces fit desktop without page overflow",
+      "title": "canonical-page-layout.spec.js › canonical workspaces fit desktop without page overflow",
       "project_browser": "chromium",
       "shard": "4/8",
       "route_or_surface": "Test source: client/tests/e2e/canonical-page-layout.spec.js",
@@ -138,7 +138,7 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "D \u2014 Shared-platform defect",
+      "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
       "remediation_reference": "Prompt 20 mandatory repair backlog",
       "expiry_candidate": null,
@@ -154,7 +154,7 @@
     {
       "stable_test_identifier": "9e24326c6c84b9aae2de-7d2490bc0040d4b5e052",
       "source_file": "client/tests/e2e/command-center-demo.spec.js",
-      "title": "command-center-demo.spec.js \u203a Command Center demo shows DPA, MSA, and NDA workflows with workspace links",
+      "title": "command-center-demo.spec.js › Command Center demo shows DPA, MSA, and NDA workflows with workspace links",
       "project_browser": "chromium",
       "shard": "1/8",
       "route_or_surface": "Test source: client/tests/e2e/command-center-demo.spec.js",
@@ -211,7 +211,7 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "D \u2014 Shared-platform defect",
+      "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
       "remediation_reference": "Prompt 20 mandatory repair backlog",
       "expiry_candidate": null,
@@ -227,7 +227,7 @@
     {
       "stable_test_identifier": "d3423a6dec4bff43ec8a-bc0c98de23428e11624e",
       "source_file": "client/tests/e2e/contract-field-review.spec.js",
-      "title": "contract-field-review.spec.js \u203a Contract field review (Sub-block B) \u203a runs, renders structured results, and phrases overdue dates correctly",
+      "title": "contract-field-review.spec.js › Contract field review (Sub-block B) › runs, renders structured results, and phrases overdue dates correctly",
       "project_browser": "chromium",
       "shard": "1/8",
       "route_or_surface": "Test source: client/tests/e2e/contract-field-review.spec.js",
@@ -264,9 +264,9 @@
           "https://github.com/Technivian/CLMOne/actions/runs/30910072964 attempt 2 (shard 1/8; raw log /tmp/payrollminds-integration-ui-final2-run2.log)"
         ]
       },
-      "phase": "security_clean_baseline_complete",
+      "phase": "shared_workflow_record_repair_complete",
       "exception_or_assertion_type": "assertion_failure",
-      "normalized_signature": "assertion_failure:client/tests/e2e/contract-field-review.spec.js:Contract field review (Sub-block B) \u203a runs, renders structured results, and phrases overdue dates correctly",
+      "normalized_signature": "assertion_failure:client/tests/e2e/contract-field-review.spec.js:Contract field review (Sub-block B) › runs, renders structured results, and phrases overdue dates correctly",
       "top_relevant_stack_location": "client/tests/e2e/contract-field-review.spec.js:57:3",
       "artifact_references": [
         "https://github.com/Technivian/CLMOne/actions/runs/30767778512",
@@ -276,7 +276,7 @@
       ],
       "earliest_known_appearance": "PR #153 clean baseline run one",
       "inherited_from_main": true,
-      "affected_by_repair": false,
+      "affected_by_repair": true,
       "shared_service_usage": "Django E2E fixture server; canonical UI and authorization surfaces as exercised by the named test.",
       "payrollminds_pilot_relevance": "indirect shared-platform",
       "security_relevance": "no security signature in artifact; mandatory classification retained",
@@ -284,23 +284,29 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "D \u2014 Shared-platform defect",
+      "classification": "D — Shared-platform defect",
       "remediation_owner": "payrollminds shared repair branch",
-      "remediation_reference": "Prompt 20 mandatory repair backlog",
+      "remediation_reference": "Prompt 22 / commit 50aae7d4f090e36eff08a1a0b19ad747373185c6",
       "expiry_candidate": null,
       "notes": "Stable across both validated merge-SHA runs; raw CI artifact 30910072964. No exception candidate created.",
       "changed_by_pr_153": false,
       "changed_by_pr_154": false,
       "changed_by_pr_155": false,
       "shared_platform_relevance": "direct shared canonical route, form, workflow, or UI component; conservative mandatory classification",
-      "root_cause": "Governed workflow, contract record, or shared lifecycle surface fails a browser assertion.",
+      "root_cause": "11 — shared form/application-service defect",
       "root_cause_cluster": "D-SHARED-WORKFLOW",
-      "proposed_repair": "Trace view, form and workflow runtime; add focused regression."
+      "proposed_repair": "Trace view, form and workflow runtime; add focused regression.",
+      "resolution": {
+        "status": "resolved",
+        "resolving_commit": "50aae7d4f090e36eff08a1a0b19ad747373185c6",
+        "focused_evidence": "7 passed (local synthetic E2E)",
+        "full_suite_evidence": "Passed in local 90-test source-SHA run 50aae7d4f090e36eff08a1a0b19ad747373185c6"
+      }
     },
     {
       "stable_test_identifier": "d3423a6dec4bff43ec8a-1a9217ac4de00eb7548d",
       "source_file": "client/tests/e2e/contract-field-review.spec.js",
-      "title": "contract-field-review.spec.js \u203a Contract field review (Sub-block B) \u203a shows an error state and re-enables the button on a policy-rejected prompt",
+      "title": "contract-field-review.spec.js › Contract field review (Sub-block B) › shows an error state and re-enables the button on a policy-rejected prompt",
       "project_browser": "chromium",
       "shard": "1/8",
       "route_or_surface": "Test source: client/tests/e2e/contract-field-review.spec.js",
@@ -337,9 +343,9 @@
           "https://github.com/Technivian/CLMOne/actions/runs/30910072964 attempt 2 (shard 1/8; raw log /tmp/payrollminds-integration-ui-final2-run2.log)"
         ]
       },
-      "phase": "security_clean_baseline_complete",
+      "phase": "shared_workflow_record_repair_complete",
       "exception_or_assertion_type": "assertion_failure",
-      "normalized_signature": "assertion_failure:client/tests/e2e/contract-field-review.spec.js:Contract field review (Sub-block B) \u203a shows an error state and re-enables the button on a policy-rejected prompt",
+      "normalized_signature": "assertion_failure:client/tests/e2e/contract-field-review.spec.js:Contract field review (Sub-block B) › shows an error state and re-enables the button on a policy-rejected prompt",
       "top_relevant_stack_location": "client/tests/e2e/contract-field-review.spec.js:106:3",
       "artifact_references": [
         "https://github.com/Technivian/CLMOne/actions/runs/30767778512",
@@ -349,7 +355,7 @@
       ],
       "earliest_known_appearance": "PR #153 clean baseline run one",
       "inherited_from_main": true,
-      "affected_by_repair": false,
+      "affected_by_repair": true,
       "shared_service_usage": "Django E2E fixture server; canonical UI and authorization surfaces as exercised by the named test.",
       "payrollminds_pilot_relevance": "indirect shared-platform",
       "security_relevance": "no security signature in artifact; mandatory classification retained",
@@ -357,23 +363,29 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "D \u2014 Shared-platform defect",
+      "classification": "D — Shared-platform defect",
       "remediation_owner": "payrollminds shared repair branch",
-      "remediation_reference": "Prompt 20 mandatory repair backlog",
+      "remediation_reference": "Prompt 22 / commit 50aae7d4f090e36eff08a1a0b19ad747373185c6",
       "expiry_candidate": null,
       "notes": "Stable across both validated merge-SHA runs; raw CI artifact 30910072964. No exception candidate created.",
       "changed_by_pr_153": false,
       "changed_by_pr_154": false,
       "changed_by_pr_155": false,
       "shared_platform_relevance": "direct shared canonical route, form, workflow, or UI component; conservative mandatory classification",
-      "root_cause": "Governed workflow, contract record, or shared lifecycle surface fails a browser assertion.",
+      "root_cause": "3 — stale governed expectation",
       "root_cause_cluster": "D-SHARED-WORKFLOW",
-      "proposed_repair": "Trace view, form and workflow runtime; add focused regression."
+      "proposed_repair": "Trace view, form and workflow runtime; add focused regression.",
+      "resolution": {
+        "status": "resolved",
+        "resolving_commit": "50aae7d4f090e36eff08a1a0b19ad747373185c6",
+        "focused_evidence": "7 passed (local synthetic E2E)",
+        "full_suite_evidence": "Passed in local 90-test source-SHA run 50aae7d4f090e36eff08a1a0b19ad747373185c6"
+      }
     },
     {
       "stable_test_identifier": "d3423a6dec4bff43ec8a-2c017268bc8dcf22decf",
       "source_file": "client/tests/e2e/contract-field-review.spec.js",
-      "title": "contract-field-review.spec.js \u203a Contract field review (Sub-block B) \u203a disables the button during the request to prevent duplicate submissions",
+      "title": "contract-field-review.spec.js › Contract field review (Sub-block B) › disables the button during the request to prevent duplicate submissions",
       "project_browser": "chromium",
       "shard": "1/8",
       "route_or_surface": "Test source: client/tests/e2e/contract-field-review.spec.js",
@@ -410,9 +422,9 @@
           "https://github.com/Technivian/CLMOne/actions/runs/30910072964 attempt 2 (shard 1/8; raw log /tmp/payrollminds-integration-ui-final2-run2.log)"
         ]
       },
-      "phase": "security_clean_baseline_complete",
+      "phase": "shared_workflow_record_repair_complete",
       "exception_or_assertion_type": "assertion_failure",
-      "normalized_signature": "assertion_failure:client/tests/e2e/contract-field-review.spec.js:Contract field review (Sub-block B) \u203a disables the button during the request to prevent duplicate submissions",
+      "normalized_signature": "assertion_failure:client/tests/e2e/contract-field-review.spec.js:Contract field review (Sub-block B) › disables the button during the request to prevent duplicate submissions",
       "top_relevant_stack_location": "client/tests/e2e/contract-field-review.spec.js:127:3",
       "artifact_references": [
         "https://github.com/Technivian/CLMOne/actions/runs/30767778512",
@@ -422,7 +434,7 @@
       ],
       "earliest_known_appearance": "PR #153 clean baseline run one",
       "inherited_from_main": true,
-      "affected_by_repair": false,
+      "affected_by_repair": true,
       "shared_service_usage": "Django E2E fixture server; canonical UI and authorization surfaces as exercised by the named test.",
       "payrollminds_pilot_relevance": "indirect shared-platform",
       "security_relevance": "no security signature in artifact; mandatory classification retained",
@@ -430,23 +442,29 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "D \u2014 Shared-platform defect",
+      "classification": "D — Shared-platform defect",
       "remediation_owner": "payrollminds shared repair branch",
-      "remediation_reference": "Prompt 20 mandatory repair backlog",
+      "remediation_reference": "Prompt 22 / commit 50aae7d4f090e36eff08a1a0b19ad747373185c6",
       "expiry_candidate": null,
       "notes": "Stable across both validated merge-SHA runs; raw CI artifact 30910072964. No exception candidate created.",
       "changed_by_pr_153": false,
       "changed_by_pr_154": false,
       "changed_by_pr_155": false,
       "shared_platform_relevance": "direct shared canonical route, form, workflow, or UI component; conservative mandatory classification",
-      "root_cause": "Governed workflow, contract record, or shared lifecycle surface fails a browser assertion.",
+      "root_cause": "3 — stale governed expectation",
       "root_cause_cluster": "D-SHARED-WORKFLOW",
-      "proposed_repair": "Trace view, form and workflow runtime; add focused regression."
+      "proposed_repair": "Trace view, form and workflow runtime; add focused regression.",
+      "resolution": {
+        "status": "resolved",
+        "resolving_commit": "50aae7d4f090e36eff08a1a0b19ad747373185c6",
+        "focused_evidence": "7 passed (local synthetic E2E)",
+        "full_suite_evidence": "Passed in local 90-test source-SHA run 50aae7d4f090e36eff08a1a0b19ad747373185c6"
+      }
     },
     {
       "stable_test_identifier": "e14dd59f59bd59baee8e-ed53cd382dba3763351b",
       "source_file": "client/tests/e2e/critical-flows.spec.js",
-      "title": "critical-flows.spec.js \u203a critical contract create and edit flow works",
+      "title": "critical-flows.spec.js › critical contract create and edit flow works",
       "project_browser": "chromium",
       "shard": "1/8",
       "route_or_surface": "Test source: client/tests/e2e/critical-flows.spec.js",
@@ -519,7 +537,7 @@
     {
       "stable_test_identifier": "e14dd59f59bd59baee8e-1de963c13317565a8828",
       "source_file": "client/tests/e2e/critical-flows.spec.js",
-      "title": "critical-flows.spec.js \u203a critical invoice and time-entry submissions accept valid precision",
+      "title": "critical-flows.spec.js › critical invoice and time-entry submissions accept valid precision",
       "project_browser": "chromium",
       "shard": "1/8",
       "route_or_surface": "Test source: client/tests/e2e/critical-flows.spec.js",
@@ -576,7 +594,7 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "D \u2014 Shared-platform defect",
+      "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
       "remediation_reference": "Prompt 20 mandatory repair backlog",
       "expiry_candidate": null,
@@ -592,7 +610,7 @@
     {
       "stable_test_identifier": "e14dd59f59bd59baee8e-34ab4b02f642781316b9",
       "source_file": "client/tests/e2e/critical-flows.spec.js",
-      "title": "critical-flows.spec.js \u203a critical redesigned workflow path works end-to-end",
+      "title": "critical-flows.spec.js › critical redesigned workflow path works end-to-end",
       "project_browser": "chromium",
       "shard": "1/8",
       "route_or_surface": "Test source: client/tests/e2e/critical-flows.spec.js",
@@ -665,7 +683,7 @@
     {
       "stable_test_identifier": "0815266e2b373abe5480-c54a5633e5a90a03711a",
       "source_file": "client/tests/e2e/dpa-cockpit.spec.js",
-      "title": "dpa-cockpit.spec.js \u203a DPA intake exposes the current accessible heading",
+      "title": "dpa-cockpit.spec.js › DPA intake exposes the current accessible heading",
       "project_browser": "chromium",
       "shard": "1/8",
       "route_or_surface": "Test source: client/tests/e2e/dpa-cockpit.spec.js",
@@ -738,7 +756,7 @@
     {
       "stable_test_identifier": "0815266e2b373abe5480-1597233b7e54ae6ff2f7",
       "source_file": "client/tests/e2e/dpa-cockpit.spec.js",
-      "title": "dpa-cockpit.spec.js \u203a DPA governed workspace keeps drafting layout, clause-link, and overflow contracts",
+      "title": "dpa-cockpit.spec.js › DPA governed workspace keeps drafting layout, clause-link, and overflow contracts",
       "project_browser": "chromium",
       "shard": "1/8",
       "route_or_surface": "Test source: client/tests/e2e/dpa-cockpit.spec.js",
@@ -775,7 +793,7 @@
           "https://github.com/Technivian/CLMOne/actions/runs/30910072964 attempt 2 (shard 1/8; raw log /tmp/payrollminds-integration-ui-final2-run2.log)"
         ]
       },
-      "phase": "security_clean_baseline_complete",
+      "phase": "shared_workflow_record_repair_complete",
       "exception_or_assertion_type": "assertion_failure",
       "normalized_signature": "assertion_failure:client/tests/e2e/dpa-cockpit.spec.js:DPA governed workspace keeps drafting layout, clause-link, and overflow contracts",
       "top_relevant_stack_location": "client/tests/e2e/dpa-cockpit.spec.js:30:1",
@@ -787,7 +805,7 @@
       ],
       "earliest_known_appearance": "PR #153 clean baseline run one",
       "inherited_from_main": true,
-      "affected_by_repair": false,
+      "affected_by_repair": true,
       "shared_service_usage": "Django E2E fixture server; canonical UI and authorization surfaces as exercised by the named test.",
       "payrollminds_pilot_relevance": "indirect shared-platform",
       "security_relevance": "no security signature in artifact; mandatory classification retained",
@@ -795,23 +813,29 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "D \u2014 Shared-platform defect",
+      "classification": "D — Shared-platform defect",
       "remediation_owner": "payrollminds shared repair branch",
-      "remediation_reference": "Prompt 20 mandatory repair backlog",
+      "remediation_reference": "Prompt 22 / commit 50aae7d4f090e36eff08a1a0b19ad747373185c6",
       "expiry_candidate": null,
       "notes": "Stable across both validated merge-SHA runs; raw CI artifact 30910072964. No exception candidate created.",
       "changed_by_pr_153": false,
       "changed_by_pr_154": false,
       "changed_by_pr_155": false,
       "shared_platform_relevance": "direct shared canonical route, form, workflow, or UI component; conservative mandatory classification",
-      "root_cause": "Governed workflow, contract record, or shared lifecycle surface fails a browser assertion.",
+      "root_cause": "3 — stale governed expectation",
       "root_cause_cluster": "D-SHARED-WORKFLOW",
-      "proposed_repair": "Trace view, form and workflow runtime; add focused regression."
+      "proposed_repair": "Trace view, form and workflow runtime; add focused regression.",
+      "resolution": {
+        "status": "resolved",
+        "resolving_commit": "50aae7d4f090e36eff08a1a0b19ad747373185c6",
+        "focused_evidence": "7 passed (local synthetic E2E)",
+        "full_suite_evidence": "Passed in local 90-test source-SHA run 50aae7d4f090e36eff08a1a0b19ad747373185c6"
+      }
     },
     {
       "stable_test_identifier": "712090e5dc3187d4673e-2aab6375eaeb394b4897",
       "source_file": "client/tests/e2e/dpa-workflow.spec.js",
-      "title": "dpa-workflow.spec.js \u203a DPA four-step builder validates, generates, and opens the contract record",
+      "title": "dpa-workflow.spec.js › DPA four-step builder validates, generates, and opens the contract record",
       "project_browser": "chromium",
       "shard": "1/8",
       "route_or_surface": "Test source: client/tests/e2e/dpa-workflow.spec.js",
@@ -848,7 +872,7 @@
           "https://github.com/Technivian/CLMOne/actions/runs/30910072964 attempt 2 (shard 1/8; raw log /tmp/payrollminds-integration-ui-final2-run2.log)"
         ]
       },
-      "phase": "security_clean_baseline_complete",
+      "phase": "payrollminds_critical_repair_complete",
       "exception_or_assertion_type": "assertion_failure",
       "normalized_signature": "assertion_failure:client/tests/e2e/dpa-workflow.spec.js:DPA four-step builder validates, generates, and opens the contract record",
       "top_relevant_stack_location": "client/tests/e2e/dpa-workflow.spec.js:31:1",
@@ -860,7 +884,7 @@
       ],
       "earliest_known_appearance": "PR #153 clean baseline run one",
       "inherited_from_main": true,
-      "affected_by_repair": false,
+      "affected_by_repair": true,
       "shared_service_usage": "Django E2E fixture server; canonical UI and authorization surfaces as exercised by the named test.",
       "payrollminds_pilot_relevance": "direct",
       "security_relevance": "no security signature in artifact; mandatory classification retained",
@@ -868,9 +892,9 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "B \u2014 PayrollMinds-critical defect",
+      "classification": "B — PayrollMinds-critical defect",
       "remediation_owner": "payrollminds browser repair branch",
-      "remediation_reference": "Prompt 20 mandatory repair backlog",
+      "remediation_reference": "PR #161 / commit 0111b10de17d92ae7a057815be93b74736c41c76",
       "expiry_candidate": null,
       "notes": "Stable across both validated merge-SHA runs; raw CI artifact 30910072964. No exception candidate created.",
       "changed_by_pr_153": false,
@@ -879,12 +903,18 @@
       "shared_platform_relevance": "direct shared canonical route, form, workflow, or UI component; conservative mandatory classification",
       "root_cause": "Pilot contract/workspace journey or pilot gate assertion does not reach its governed canonical state.",
       "root_cause_cluster": "B-PILOT-JOURNEY",
-      "proposed_repair": "Trace route, fixture and policy state; repair smallest canonical-path defect."
+      "proposed_repair": "Trace route, fixture and policy state; repair smallest canonical-path defect.",
+      "resolution": {
+        "status": "resolved",
+        "resolving_commit": "0111b10de17d92ae7a057815be93b74736c41c76",
+        "focused_evidence": "16 passed (local synthetic E2E)",
+        "full_suite_evidence": "Passed in local 90-test source-SHA run 50aae7d4f090e36eff08a1a0b19ad747373185c6"
+      }
     },
     {
       "stable_test_identifier": "2c450ddd9493523d7369-33c437967b18c8d26f87",
       "source_file": "client/tests/e2e/msa-workflow.spec.js",
-      "title": "msa-workflow.spec.js \u203a MSA governed drafting cockpit generates a workflow workspace and dashboard queue row",
+      "title": "msa-workflow.spec.js › MSA governed drafting cockpit generates a workflow workspace and dashboard queue row",
       "project_browser": "chromium",
       "shard": "1/8",
       "route_or_surface": "Test source: client/tests/e2e/msa-workflow.spec.js",
@@ -921,7 +951,7 @@
           "https://github.com/Technivian/CLMOne/actions/runs/30910072964 attempt 2 (shard 2/8; raw log /tmp/payrollminds-integration-ui-final2-run2.log)"
         ]
       },
-      "phase": "security_clean_baseline_complete",
+      "phase": "payrollminds_critical_repair_complete",
       "exception_or_assertion_type": "assertion_failure",
       "normalized_signature": "assertion_failure:client/tests/e2e/msa-workflow.spec.js:MSA governed drafting cockpit generates a workflow workspace and dashboard queue row",
       "top_relevant_stack_location": "client/tests/e2e/msa-workflow.spec.js:53:1",
@@ -933,7 +963,7 @@
       ],
       "earliest_known_appearance": "PR #153 clean baseline run one",
       "inherited_from_main": true,
-      "affected_by_repair": false,
+      "affected_by_repair": true,
       "shared_service_usage": "Django E2E fixture server; canonical UI and authorization surfaces as exercised by the named test.",
       "payrollminds_pilot_relevance": "direct",
       "security_relevance": "no security signature in artifact; mandatory classification retained",
@@ -941,9 +971,9 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "B \u2014 PayrollMinds-critical defect",
+      "classification": "B — PayrollMinds-critical defect",
       "remediation_owner": "payrollminds browser repair branch",
-      "remediation_reference": "Prompt 20 mandatory repair backlog",
+      "remediation_reference": "PR #161 / commit 0111b10de17d92ae7a057815be93b74736c41c76",
       "expiry_candidate": null,
       "notes": "Stable across both validated merge-SHA runs; raw CI artifact 30910072964. No exception candidate created.",
       "changed_by_pr_153": false,
@@ -952,12 +982,18 @@
       "shared_platform_relevance": "direct shared canonical route, form, workflow, or UI component; conservative mandatory classification",
       "root_cause": "Pilot contract/workspace journey or pilot gate assertion does not reach its governed canonical state.",
       "root_cause_cluster": "B-PILOT-JOURNEY",
-      "proposed_repair": "Trace route, fixture and policy state; repair smallest canonical-path defect."
+      "proposed_repair": "Trace route, fixture and policy state; repair smallest canonical-path defect.",
+      "resolution": {
+        "status": "resolved",
+        "resolving_commit": "0111b10de17d92ae7a057815be93b74736c41c76",
+        "focused_evidence": "16 passed (local synthetic E2E)",
+        "full_suite_evidence": "Passed in local 90-test source-SHA run 50aae7d4f090e36eff08a1a0b19ad747373185c6"
+      }
     },
     {
       "stable_test_identifier": "f2651e76d1da201d3b4f-b613d495e975bf84b61f",
       "source_file": "client/tests/e2e/nda-workflow.spec.js",
-      "title": "nda-workflow.spec.js \u203a NDA self-serve cockpit generates a governed workspace and dashboard row",
+      "title": "nda-workflow.spec.js › NDA self-serve cockpit generates a governed workspace and dashboard row",
       "project_browser": "chromium",
       "shard": "2/8",
       "route_or_surface": "Test source: client/tests/e2e/nda-workflow.spec.js",
@@ -994,7 +1030,7 @@
           "https://github.com/Technivian/CLMOne/actions/runs/30910072964 attempt 2 (shard 2/8; raw log /tmp/payrollminds-integration-ui-final2-run2.log)"
         ]
       },
-      "phase": "security_clean_baseline_complete",
+      "phase": "payrollminds_critical_repair_complete",
       "exception_or_assertion_type": "assertion_failure",
       "normalized_signature": "assertion_failure:client/tests/e2e/nda-workflow.spec.js:NDA self-serve cockpit generates a governed workspace and dashboard row",
       "top_relevant_stack_location": "client/tests/e2e/nda-workflow.spec.js:15:1",
@@ -1006,7 +1042,7 @@
       ],
       "earliest_known_appearance": "PR #153 clean baseline run one",
       "inherited_from_main": true,
-      "affected_by_repair": false,
+      "affected_by_repair": true,
       "shared_service_usage": "Django E2E fixture server; canonical UI and authorization surfaces as exercised by the named test.",
       "payrollminds_pilot_relevance": "direct",
       "security_relevance": "no security signature in artifact; mandatory classification retained",
@@ -1014,9 +1050,9 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "B \u2014 PayrollMinds-critical defect",
+      "classification": "B — PayrollMinds-critical defect",
       "remediation_owner": "payrollminds browser repair branch",
-      "remediation_reference": "Prompt 20 mandatory repair backlog",
+      "remediation_reference": "PR #161 / commit 0111b10de17d92ae7a057815be93b74736c41c76",
       "expiry_candidate": null,
       "notes": "Stable across both validated merge-SHA runs; raw CI artifact 30910072964. No exception candidate created.",
       "changed_by_pr_153": false,
@@ -1025,12 +1061,18 @@
       "shared_platform_relevance": "direct shared canonical route, form, workflow, or UI component; conservative mandatory classification",
       "root_cause": "Pilot contract/workspace journey or pilot gate assertion does not reach its governed canonical state.",
       "root_cause_cluster": "B-PILOT-JOURNEY",
-      "proposed_repair": "Trace route, fixture and policy state; repair smallest canonical-path defect."
+      "proposed_repair": "Trace route, fixture and policy state; repair smallest canonical-path defect.",
+      "resolution": {
+        "status": "resolved",
+        "resolving_commit": "0111b10de17d92ae7a057815be93b74736c41c76",
+        "focused_evidence": "16 passed (local synthetic E2E)",
+        "full_suite_evidence": "Passed in local 90-test source-SHA run 50aae7d4f090e36eff08a1a0b19ad747373185c6"
+      }
     },
     {
       "stable_test_identifier": "f8620b41f80b0ca10072-4aa1e4cea4011faa09eb",
       "source_file": "client/tests/e2e/new-contract-launcher.spec.js",
-      "title": "new-contract-launcher.spec.js \u203a New Contract launcher \u203a shows sections, metadata, upload action, and searchable cards",
+      "title": "new-contract-launcher.spec.js › New Contract launcher › shows sections, metadata, upload action, and searchable cards",
       "project_browser": "chromium",
       "shard": "2/8",
       "route_or_surface": "Test source: client/tests/e2e/new-contract-launcher.spec.js",
@@ -1067,9 +1109,9 @@
           "https://github.com/Technivian/CLMOne/actions/runs/30910072964 attempt 2 (shard 2/8; raw log /tmp/payrollminds-integration-ui-final2-run2.log)"
         ]
       },
-      "phase": "security_clean_baseline_complete",
+      "phase": "payrollminds_critical_repair_complete",
       "exception_or_assertion_type": "assertion_failure",
-      "normalized_signature": "assertion_failure:client/tests/e2e/new-contract-launcher.spec.js:New Contract launcher \u203a shows sections, metadata, upload action, and searchable cards",
+      "normalized_signature": "assertion_failure:client/tests/e2e/new-contract-launcher.spec.js:New Contract launcher › shows sections, metadata, upload action, and searchable cards",
       "top_relevant_stack_location": "client/tests/e2e/new-contract-launcher.spec.js:15:3",
       "artifact_references": [
         "https://github.com/Technivian/CLMOne/actions/runs/30767778512",
@@ -1079,7 +1121,7 @@
       ],
       "earliest_known_appearance": "PR #153 clean baseline run one",
       "inherited_from_main": true,
-      "affected_by_repair": false,
+      "affected_by_repair": true,
       "shared_service_usage": "Django E2E fixture server; canonical UI and authorization surfaces as exercised by the named test.",
       "payrollminds_pilot_relevance": "direct",
       "security_relevance": "no security signature in artifact; mandatory classification retained",
@@ -1087,9 +1129,9 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "B \u2014 PayrollMinds-critical defect",
+      "classification": "B — PayrollMinds-critical defect",
       "remediation_owner": "payrollminds browser repair branch",
-      "remediation_reference": "Prompt 20 mandatory repair backlog",
+      "remediation_reference": "PR #161 / commit 0111b10de17d92ae7a057815be93b74736c41c76",
       "expiry_candidate": null,
       "notes": "Stable across both validated merge-SHA runs; raw CI artifact 30910072964. No exception candidate created.",
       "changed_by_pr_153": false,
@@ -1098,12 +1140,18 @@
       "shared_platform_relevance": "direct shared canonical route, form, workflow, or UI component; conservative mandatory classification",
       "root_cause": "Pilot contract/workspace journey or pilot gate assertion does not reach its governed canonical state.",
       "root_cause_cluster": "B-PILOT-JOURNEY",
-      "proposed_repair": "Trace route, fixture and policy state; repair smallest canonical-path defect."
+      "proposed_repair": "Trace route, fixture and policy state; repair smallest canonical-path defect.",
+      "resolution": {
+        "status": "resolved",
+        "resolving_commit": "0111b10de17d92ae7a057815be93b74736c41c76",
+        "focused_evidence": "16 passed (local synthetic E2E)",
+        "full_suite_evidence": "Passed in local 90-test source-SHA run 50aae7d4f090e36eff08a1a0b19ad747373185c6"
+      }
     },
     {
       "stable_test_identifier": "f8620b41f80b0ca10072-2850cdfd8c0c53a5d570",
       "source_file": "client/tests/e2e/new-contract-launcher.spec.js",
-      "title": "new-contract-launcher.spec.js \u203a New Contract launcher \u203a keeps a left-aligned 1-column grid on mobile",
+      "title": "new-contract-launcher.spec.js › New Contract launcher › keeps a left-aligned 1-column grid on mobile",
       "project_browser": "chromium",
       "shard": "2/8",
       "route_or_surface": "Test source: client/tests/e2e/new-contract-launcher.spec.js",
@@ -1140,9 +1188,9 @@
           "https://github.com/Technivian/CLMOne/actions/runs/30910072964 attempt 2 (shard 2/8; raw log /tmp/payrollminds-integration-ui-final2-run2.log)"
         ]
       },
-      "phase": "security_clean_baseline_complete",
+      "phase": "payrollminds_critical_repair_complete",
       "exception_or_assertion_type": "assertion_failure",
-      "normalized_signature": "assertion_failure:client/tests/e2e/new-contract-launcher.spec.js:New Contract launcher \u203a keeps a left-aligned 1-column grid on mobile",
+      "normalized_signature": "assertion_failure:client/tests/e2e/new-contract-launcher.spec.js:New Contract launcher › keeps a left-aligned 1-column grid on mobile",
       "top_relevant_stack_location": "client/tests/e2e/new-contract-launcher.spec.js:59:5",
       "artifact_references": [
         "https://github.com/Technivian/CLMOne/actions/runs/30767778512",
@@ -1152,7 +1200,7 @@
       ],
       "earliest_known_appearance": "PR #153 clean baseline run one",
       "inherited_from_main": true,
-      "affected_by_repair": false,
+      "affected_by_repair": true,
       "shared_service_usage": "Django E2E fixture server; canonical UI and authorization surfaces as exercised by the named test.",
       "payrollminds_pilot_relevance": "direct",
       "security_relevance": "no security signature in artifact; mandatory classification retained",
@@ -1160,9 +1208,9 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "B \u2014 PayrollMinds-critical defect",
+      "classification": "B — PayrollMinds-critical defect",
       "remediation_owner": "payrollminds browser repair branch",
-      "remediation_reference": "Prompt 20 mandatory repair backlog",
+      "remediation_reference": "PR #161 / commit 0111b10de17d92ae7a057815be93b74736c41c76",
       "expiry_candidate": null,
       "notes": "Stable across both validated merge-SHA runs; raw CI artifact 30910072964. No exception candidate created.",
       "changed_by_pr_153": false,
@@ -1171,12 +1219,18 @@
       "shared_platform_relevance": "direct shared canonical route, form, workflow, or UI component; conservative mandatory classification",
       "root_cause": "Pilot contract/workspace journey or pilot gate assertion does not reach its governed canonical state.",
       "root_cause_cluster": "B-PILOT-JOURNEY",
-      "proposed_repair": "Trace route, fixture and policy state; repair smallest canonical-path defect."
+      "proposed_repair": "Trace route, fixture and policy state; repair smallest canonical-path defect.",
+      "resolution": {
+        "status": "resolved",
+        "resolving_commit": "0111b10de17d92ae7a057815be93b74736c41c76",
+        "focused_evidence": "16 passed (local synthetic E2E)",
+        "full_suite_evidence": "Passed in local 90-test source-SHA run 50aae7d4f090e36eff08a1a0b19ad747373185c6"
+      }
     },
     {
       "stable_test_identifier": "f8620b41f80b0ca10072-0ee8f1f156591e82f8b6",
       "source_file": "client/tests/e2e/new-contract-launcher.spec.js",
-      "title": "new-contract-launcher.spec.js \u203a New Contract launcher \u203a keeps a left-aligned 2-column grid on tablet",
+      "title": "new-contract-launcher.spec.js › New Contract launcher › keeps a left-aligned 2-column grid on tablet",
       "project_browser": "chromium",
       "shard": "2/8",
       "route_or_surface": "Test source: client/tests/e2e/new-contract-launcher.spec.js",
@@ -1213,9 +1267,9 @@
           "https://github.com/Technivian/CLMOne/actions/runs/30910072964 attempt 2 (shard 2/8; raw log /tmp/payrollminds-integration-ui-final2-run2.log)"
         ]
       },
-      "phase": "security_clean_baseline_complete",
+      "phase": "payrollminds_critical_repair_complete",
       "exception_or_assertion_type": "assertion_failure",
-      "normalized_signature": "assertion_failure:client/tests/e2e/new-contract-launcher.spec.js:New Contract launcher \u203a keeps a left-aligned 2-column grid on tablet",
+      "normalized_signature": "assertion_failure:client/tests/e2e/new-contract-launcher.spec.js:New Contract launcher › keeps a left-aligned 2-column grid on tablet",
       "top_relevant_stack_location": "client/tests/e2e/new-contract-launcher.spec.js:59:5",
       "artifact_references": [
         "https://github.com/Technivian/CLMOne/actions/runs/30767778512",
@@ -1225,7 +1279,7 @@
       ],
       "earliest_known_appearance": "PR #153 clean baseline run one",
       "inherited_from_main": true,
-      "affected_by_repair": false,
+      "affected_by_repair": true,
       "shared_service_usage": "Django E2E fixture server; canonical UI and authorization surfaces as exercised by the named test.",
       "payrollminds_pilot_relevance": "direct",
       "security_relevance": "no security signature in artifact; mandatory classification retained",
@@ -1233,9 +1287,9 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "B \u2014 PayrollMinds-critical defect",
+      "classification": "B — PayrollMinds-critical defect",
       "remediation_owner": "payrollminds browser repair branch",
-      "remediation_reference": "Prompt 20 mandatory repair backlog",
+      "remediation_reference": "PR #161 / commit 0111b10de17d92ae7a057815be93b74736c41c76",
       "expiry_candidate": null,
       "notes": "Stable across both validated merge-SHA runs; raw CI artifact 30910072964. No exception candidate created.",
       "changed_by_pr_153": false,
@@ -1244,12 +1298,18 @@
       "shared_platform_relevance": "direct shared canonical route, form, workflow, or UI component; conservative mandatory classification",
       "root_cause": "Pilot contract/workspace journey or pilot gate assertion does not reach its governed canonical state.",
       "root_cause_cluster": "B-PILOT-JOURNEY",
-      "proposed_repair": "Trace route, fixture and policy state; repair smallest canonical-path defect."
+      "proposed_repair": "Trace route, fixture and policy state; repair smallest canonical-path defect.",
+      "resolution": {
+        "status": "resolved",
+        "resolving_commit": "0111b10de17d92ae7a057815be93b74736c41c76",
+        "focused_evidence": "16 passed (local synthetic E2E)",
+        "full_suite_evidence": "Passed in local 90-test source-SHA run 50aae7d4f090e36eff08a1a0b19ad747373185c6"
+      }
     },
     {
       "stable_test_identifier": "f8620b41f80b0ca10072-084e8de66c0d42bf2193",
       "source_file": "client/tests/e2e/new-contract-launcher.spec.js",
-      "title": "new-contract-launcher.spec.js \u203a New Contract launcher \u203a keeps a left-aligned 3-column grid on desktop",
+      "title": "new-contract-launcher.spec.js › New Contract launcher › keeps a left-aligned 3-column grid on desktop",
       "project_browser": "chromium",
       "shard": "2/8",
       "route_or_surface": "Test source: client/tests/e2e/new-contract-launcher.spec.js",
@@ -1286,9 +1346,9 @@
           "https://github.com/Technivian/CLMOne/actions/runs/30910072964 attempt 2 (shard 2/8; raw log /tmp/payrollminds-integration-ui-final2-run2.log)"
         ]
       },
-      "phase": "security_clean_baseline_complete",
+      "phase": "payrollminds_critical_repair_complete",
       "exception_or_assertion_type": "assertion_failure",
-      "normalized_signature": "assertion_failure:client/tests/e2e/new-contract-launcher.spec.js:New Contract launcher \u203a keeps a left-aligned 3-column grid on desktop",
+      "normalized_signature": "assertion_failure:client/tests/e2e/new-contract-launcher.spec.js:New Contract launcher › keeps a left-aligned 3-column grid on desktop",
       "top_relevant_stack_location": "client/tests/e2e/new-contract-launcher.spec.js:59:5",
       "artifact_references": [
         "https://github.com/Technivian/CLMOne/actions/runs/30767778512",
@@ -1298,7 +1358,7 @@
       ],
       "earliest_known_appearance": "PR #153 clean baseline run one",
       "inherited_from_main": true,
-      "affected_by_repair": false,
+      "affected_by_repair": true,
       "shared_service_usage": "Django E2E fixture server; canonical UI and authorization surfaces as exercised by the named test.",
       "payrollminds_pilot_relevance": "direct",
       "security_relevance": "no security signature in artifact; mandatory classification retained",
@@ -1306,9 +1366,9 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "B \u2014 PayrollMinds-critical defect",
+      "classification": "B — PayrollMinds-critical defect",
       "remediation_owner": "payrollminds browser repair branch",
-      "remediation_reference": "Prompt 20 mandatory repair backlog",
+      "remediation_reference": "PR #161 / commit 0111b10de17d92ae7a057815be93b74736c41c76",
       "expiry_candidate": null,
       "notes": "Stable across both validated merge-SHA runs; raw CI artifact 30910072964. No exception candidate created.",
       "changed_by_pr_153": false,
@@ -1317,12 +1377,18 @@
       "shared_platform_relevance": "direct shared canonical route, form, workflow, or UI component; conservative mandatory classification",
       "root_cause": "Pilot contract/workspace journey or pilot gate assertion does not reach its governed canonical state.",
       "root_cause_cluster": "B-PILOT-JOURNEY",
-      "proposed_repair": "Trace route, fixture and policy state; repair smallest canonical-path defect."
+      "proposed_repair": "Trace route, fixture and policy state; repair smallest canonical-path defect.",
+      "resolution": {
+        "status": "resolved",
+        "resolving_commit": "0111b10de17d92ae7a057815be93b74736c41c76",
+        "focused_evidence": "16 passed (local synthetic E2E)",
+        "full_suite_evidence": "Passed in local 90-test source-SHA run 50aae7d4f090e36eff08a1a0b19ad747373185c6"
+      }
     },
     {
       "stable_test_identifier": "800d2b7dba63f5988d01-a4fb7de2788492e7e90e",
       "source_file": "client/tests/e2e/payrollminds-buyer-demo.spec.js",
-      "title": "payrollminds-buyer-demo.spec.js \u203a Payrollminds buyer demo tells a complete contract lifecycle story",
+      "title": "payrollminds-buyer-demo.spec.js › Payrollminds buyer demo tells a complete contract lifecycle story",
       "project_browser": "chromium",
       "shard": "2/8",
       "route_or_surface": "Test source: client/tests/e2e/payrollminds-buyer-demo.spec.js",
@@ -1359,7 +1425,7 @@
           "https://github.com/Technivian/CLMOne/actions/runs/30910072964 attempt 2 (shard 2/8; raw log /tmp/payrollminds-integration-ui-final2-run2.log)"
         ]
       },
-      "phase": "security_clean_baseline_complete",
+      "phase": "payrollminds_critical_repair_complete",
       "exception_or_assertion_type": "assertion_failure",
       "normalized_signature": "assertion_failure:client/tests/e2e/payrollminds-buyer-demo.spec.js:Payrollminds buyer demo tells a complete contract lifecycle story",
       "top_relevant_stack_location": "client/tests/e2e/payrollminds-buyer-demo.spec.js:22:1",
@@ -1371,7 +1437,7 @@
       ],
       "earliest_known_appearance": "PR #153 clean baseline run one",
       "inherited_from_main": true,
-      "affected_by_repair": false,
+      "affected_by_repair": true,
       "shared_service_usage": "Django E2E fixture server; canonical UI and authorization surfaces as exercised by the named test.",
       "payrollminds_pilot_relevance": "direct",
       "security_relevance": "no security signature in artifact; mandatory classification retained",
@@ -1379,9 +1445,9 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "B \u2014 PayrollMinds-critical defect",
+      "classification": "B — PayrollMinds-critical defect",
       "remediation_owner": "payrollminds browser repair branch",
-      "remediation_reference": "Prompt 20 mandatory repair backlog",
+      "remediation_reference": "PR #161 / commit 0111b10de17d92ae7a057815be93b74736c41c76",
       "expiry_candidate": null,
       "notes": "Stable across both validated merge-SHA runs; raw CI artifact 30910072964. No exception candidate created.",
       "changed_by_pr_153": false,
@@ -1390,12 +1456,18 @@
       "shared_platform_relevance": "direct shared canonical route, form, workflow, or UI component; conservative mandatory classification",
       "root_cause": "Pilot contract/workspace journey or pilot gate assertion does not reach its governed canonical state.",
       "root_cause_cluster": "B-PILOT-JOURNEY",
-      "proposed_repair": "Trace route, fixture and policy state; repair smallest canonical-path defect."
+      "proposed_repair": "Trace route, fixture and policy state; repair smallest canonical-path defect.",
+      "resolution": {
+        "status": "resolved",
+        "resolving_commit": "0111b10de17d92ae7a057815be93b74736c41c76",
+        "focused_evidence": "16 passed (local synthetic E2E)",
+        "full_suite_evidence": "Passed in local 90-test source-SHA run 50aae7d4f090e36eff08a1a0b19ad747373185c6"
+      }
     },
     {
       "stable_test_identifier": "800d2b7dba63f5988d01-f001ad7a342be2e43ebe",
       "source_file": "client/tests/e2e/payrollminds-buyer-demo.spec.js",
-      "title": "payrollminds-buyer-demo.spec.js \u203a Payrollminds repository and contract detail fit a 390 px mobile viewport",
+      "title": "payrollminds-buyer-demo.spec.js › Payrollminds repository and contract detail fit a 390 px mobile viewport",
       "project_browser": "chromium",
       "shard": "2/8",
       "route_or_surface": "Test source: client/tests/e2e/payrollminds-buyer-demo.spec.js",
@@ -1432,7 +1504,7 @@
           "https://github.com/Technivian/CLMOne/actions/runs/30910072964 attempt 2 (shard 2/8; raw log /tmp/payrollminds-integration-ui-final2-run2.log)"
         ]
       },
-      "phase": "security_clean_baseline_complete",
+      "phase": "payrollminds_critical_repair_complete",
       "exception_or_assertion_type": "assertion_failure",
       "normalized_signature": "assertion_failure:client/tests/e2e/payrollminds-buyer-demo.spec.js:Payrollminds repository and contract detail fit a 390 px mobile viewport",
       "top_relevant_stack_location": "client/tests/e2e/payrollminds-buyer-demo.spec.js:86:1",
@@ -1444,7 +1516,7 @@
       ],
       "earliest_known_appearance": "PR #153 clean baseline run one",
       "inherited_from_main": true,
-      "affected_by_repair": false,
+      "affected_by_repair": true,
       "shared_service_usage": "Django E2E fixture server; canonical UI and authorization surfaces as exercised by the named test.",
       "payrollminds_pilot_relevance": "direct",
       "security_relevance": "no security signature in artifact; mandatory classification retained",
@@ -1452,9 +1524,9 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "B \u2014 PayrollMinds-critical defect",
+      "classification": "B — PayrollMinds-critical defect",
       "remediation_owner": "payrollminds browser repair branch",
-      "remediation_reference": "Prompt 20 mandatory repair backlog",
+      "remediation_reference": "PR #161 / commit 0111b10de17d92ae7a057815be93b74736c41c76",
       "expiry_candidate": null,
       "notes": "Stable across both validated merge-SHA runs; raw CI artifact 30910072964. No exception candidate created.",
       "changed_by_pr_153": false,
@@ -1463,12 +1535,18 @@
       "shared_platform_relevance": "direct shared canonical route, form, workflow, or UI component; conservative mandatory classification",
       "root_cause": "Pilot contract/workspace journey or pilot gate assertion does not reach its governed canonical state.",
       "root_cause_cluster": "B-PILOT-JOURNEY",
-      "proposed_repair": "Trace route, fixture and policy state; repair smallest canonical-path defect."
+      "proposed_repair": "Trace route, fixture and policy state; repair smallest canonical-path defect.",
+      "resolution": {
+        "status": "resolved",
+        "resolving_commit": "0111b10de17d92ae7a057815be93b74736c41c76",
+        "focused_evidence": "16 passed (local synthetic E2E)",
+        "full_suite_evidence": "Passed in local 90-test source-SHA run 50aae7d4f090e36eff08a1a0b19ad747373185c6"
+      }
     },
     {
       "stable_test_identifier": "33901bce72702da02a7d-924b55790fb2e244e84d",
       "source_file": "client/tests/e2e/phase-2a-components.spec.js",
-      "title": "phase-2a-components.spec.js \u203a Phase 2A shared components \u203a list controls retain keyboard focus and responsive sizing",
+      "title": "phase-2a-components.spec.js › Phase 2A shared components › list controls retain keyboard focus and responsive sizing",
       "project_browser": "chromium",
       "shard": "2/8",
       "route_or_surface": "Test source: client/tests/e2e/phase-2a-components.spec.js",
@@ -1507,7 +1585,7 @@
       },
       "phase": "security_clean_baseline_complete",
       "exception_or_assertion_type": "assertion_failure",
-      "normalized_signature": "assertion_failure:client/tests/e2e/phase-2a-components.spec.js:Phase 2A shared components \u203a list controls retain keyboard focus and responsive sizing",
+      "normalized_signature": "assertion_failure:client/tests/e2e/phase-2a-components.spec.js:Phase 2A shared components › list controls retain keyboard focus and responsive sizing",
       "top_relevant_stack_location": "client/tests/e2e/phase-2a-components.spec.js:30:3",
       "artifact_references": [
         "https://github.com/Technivian/CLMOne/actions/runs/30767778512",
@@ -1525,7 +1603,7 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "D \u2014 Shared-platform defect",
+      "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
       "remediation_reference": "Prompt 20 mandatory repair backlog",
       "expiry_candidate": null,
@@ -1541,7 +1619,7 @@
     {
       "stable_test_identifier": "33901bce72702da02a7d-46f8026b65fb76299c74",
       "source_file": "client/tests/e2e/phase-2a-components.spec.js",
-      "title": "phase-2a-components.spec.js \u203a Phase 2A shared components \u203a contract form retains canonical actions and validation feedback",
+      "title": "phase-2a-components.spec.js › Phase 2A shared components › contract form retains canonical actions and validation feedback",
       "project_browser": "chromium",
       "shard": "2/8",
       "route_or_surface": "Test source: client/tests/e2e/phase-2a-components.spec.js",
@@ -1580,7 +1658,7 @@
       },
       "phase": "security_clean_baseline_complete",
       "exception_or_assertion_type": "assertion_failure",
-      "normalized_signature": "assertion_failure:client/tests/e2e/phase-2a-components.spec.js:Phase 2A shared components \u203a contract form retains canonical actions and validation feedback",
+      "normalized_signature": "assertion_failure:client/tests/e2e/phase-2a-components.spec.js:Phase 2A shared components › contract form retains canonical actions and validation feedback",
       "top_relevant_stack_location": "client/tests/e2e/phase-2a-components.spec.js:52:3",
       "artifact_references": [
         "https://github.com/Technivian/CLMOne/actions/runs/30767778512",
@@ -1598,7 +1676,7 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "D \u2014 Shared-platform defect",
+      "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
       "remediation_reference": "Prompt 20 mandatory repair backlog",
       "expiry_candidate": null,
@@ -1614,7 +1692,7 @@
     {
       "stable_test_identifier": "33901bce72702da02a7d-cf6b99e1f41720e7eb2f",
       "source_file": "client/tests/e2e/phase-2a-components.spec.js",
-      "title": "phase-2a-components.spec.js \u203a Phase 2A shared components \u203a detail modal uses canonical actions and controls",
+      "title": "phase-2a-components.spec.js › Phase 2A shared components › detail modal uses canonical actions and controls",
       "project_browser": "chromium",
       "shard": "2/8",
       "route_or_surface": "Test source: client/tests/e2e/phase-2a-components.spec.js",
@@ -1653,7 +1731,7 @@
       },
       "phase": "security_clean_baseline_complete",
       "exception_or_assertion_type": "assertion_failure",
-      "normalized_signature": "assertion_failure:client/tests/e2e/phase-2a-components.spec.js:Phase 2A shared components \u203a detail modal uses canonical actions and controls",
+      "normalized_signature": "assertion_failure:client/tests/e2e/phase-2a-components.spec.js:Phase 2A shared components › detail modal uses canonical actions and controls",
       "top_relevant_stack_location": "client/tests/e2e/phase-2a-components.spec.js:70:3",
       "artifact_references": [
         "https://github.com/Technivian/CLMOne/actions/runs/30767778512",
@@ -1671,7 +1749,7 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "D \u2014 Shared-platform defect",
+      "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
       "remediation_reference": "Prompt 20 mandatory repair backlog",
       "expiry_candidate": null,
@@ -1687,7 +1765,7 @@
     {
       "stable_test_identifier": "29ed2972350ecb1766f9-4753e2042891a08768bb",
       "source_file": "client/tests/e2e/phase-2b1-buttons-badges.spec.js",
-      "title": "phase-2b1-buttons-badges.spec.js \u203a Phase 2B.1 canonical buttons and badges \u203a list family keeps canonical actions and semantic badges responsive",
+      "title": "phase-2b1-buttons-badges.spec.js › Phase 2B.1 canonical buttons and badges › list family keeps canonical actions and semantic badges responsive",
       "project_browser": "chromium",
       "shard": "2/8",
       "route_or_surface": "Test source: client/tests/e2e/phase-2b1-buttons-badges.spec.js",
@@ -1726,7 +1804,7 @@
       },
       "phase": "security_clean_baseline_complete",
       "exception_or_assertion_type": "assertion_failure",
-      "normalized_signature": "assertion_failure:client/tests/e2e/phase-2b1-buttons-badges.spec.js:Phase 2B.1 canonical buttons and badges \u203a list family keeps canonical actions and semantic badges responsive",
+      "normalized_signature": "assertion_failure:client/tests/e2e/phase-2b1-buttons-badges.spec.js:Phase 2B.1 canonical buttons and badges › list family keeps canonical actions and semantic badges responsive",
       "top_relevant_stack_location": "client/tests/e2e/phase-2b1-buttons-badges.spec.js:20:3",
       "artifact_references": [
         "https://github.com/Technivian/CLMOne/actions/runs/30767778512",
@@ -1744,7 +1822,7 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "D \u2014 Shared-platform defect",
+      "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
       "remediation_reference": "Prompt 20 mandatory repair backlog",
       "expiry_candidate": null,
@@ -1760,7 +1838,7 @@
     {
       "stable_test_identifier": "29ed2972350ecb1766f9-7c315d97f921507e9e10",
       "source_file": "client/tests/e2e/phase-2b1-buttons-badges.spec.js",
-      "title": "phase-2b1-buttons-badges.spec.js \u203a Phase 2B.1 canonical buttons and badges \u203a standard detail and modal actions preserve keyboard focus",
+      "title": "phase-2b1-buttons-badges.spec.js › Phase 2B.1 canonical buttons and badges › standard detail and modal actions preserve keyboard focus",
       "project_browser": "chromium",
       "shard": "5/8",
       "route_or_surface": "Test source: client/tests/e2e/phase-2b1-buttons-badges.spec.js",
@@ -1799,7 +1877,7 @@
       },
       "phase": "security_clean_baseline_complete",
       "exception_or_assertion_type": "assertion_failure",
-      "normalized_signature": "assertion_failure:client/tests/e2e/phase-2b1-buttons-badges.spec.js:Phase 2B.1 canonical buttons and badges \u203a standard detail and modal actions preserve keyboard focus",
+      "normalized_signature": "assertion_failure:client/tests/e2e/phase-2b1-buttons-badges.spec.js:Phase 2B.1 canonical buttons and badges › standard detail and modal actions preserve keyboard focus",
       "top_relevant_stack_location": "client/tests/e2e/phase-2b1-buttons-badges.spec.js:32:3",
       "artifact_references": [
         "https://github.com/Technivian/CLMOne/actions/runs/30767778512",
@@ -1817,7 +1895,7 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "D \u2014 Shared-platform defect",
+      "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
       "remediation_reference": "Prompt 20 mandatory repair backlog",
       "expiry_candidate": null,
@@ -1833,7 +1911,7 @@
     {
       "stable_test_identifier": "29ed2972350ecb1766f9-e09ae741f62c7a897c38",
       "source_file": "client/tests/e2e/phase-2b1-buttons-badges.spec.js",
-      "title": "phase-2b1-buttons-badges.spec.js \u203a Phase 2B.1 canonical buttons and badges \u203a admin settings preserve destructive and primary actions",
+      "title": "phase-2b1-buttons-badges.spec.js › Phase 2B.1 canonical buttons and badges › admin settings preserve destructive and primary actions",
       "project_browser": "chromium",
       "shard": "3/8",
       "route_or_surface": "Test source: client/tests/e2e/phase-2b1-buttons-badges.spec.js",
@@ -1872,7 +1950,7 @@
       },
       "phase": "security_clean_baseline_complete",
       "exception_or_assertion_type": "assertion_failure",
-      "normalized_signature": "assertion_failure:client/tests/e2e/phase-2b1-buttons-badges.spec.js:Phase 2B.1 canonical buttons and badges \u203a admin settings preserve destructive and primary actions",
+      "normalized_signature": "assertion_failure:client/tests/e2e/phase-2b1-buttons-badges.spec.js:Phase 2B.1 canonical buttons and badges › admin settings preserve destructive and primary actions",
       "top_relevant_stack_location": "client/tests/e2e/phase-2b1-buttons-badges.spec.js:47:3",
       "artifact_references": [
         "https://github.com/Technivian/CLMOne/actions/runs/30767778512",
@@ -1890,7 +1968,7 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "D \u2014 Shared-platform defect",
+      "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
       "remediation_reference": "Prompt 20 mandatory repair backlog",
       "expiry_candidate": null,
@@ -1906,7 +1984,7 @@
     {
       "stable_test_identifier": "f1901f02f341fbefe840-92185555d7fd73f84572",
       "source_file": "client/tests/e2e/phase-2b2-badge-semantics.spec.js",
-      "title": "phase-2b2-badge-semantics.spec.js \u203a Phase 2B.2 canonical badge semantics render in dense and responsive layouts",
+      "title": "phase-2b2-badge-semantics.spec.js › Phase 2B.2 canonical badge semantics render in dense and responsive layouts",
       "project_browser": "chromium",
       "shard": "3/8",
       "route_or_surface": "Test source: client/tests/e2e/phase-2b2-badge-semantics.spec.js",
@@ -1963,7 +2041,7 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "D \u2014 Shared-platform defect",
+      "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
       "remediation_reference": "Prompt 20 mandatory repair backlog",
       "expiry_candidate": null,
@@ -1979,7 +2057,7 @@
     {
       "stable_test_identifier": "0b7a7653555a0bd633f1-7598607be74a1d7e0e62",
       "source_file": "client/tests/e2e/phase-2b3-contract-document-statuses.spec.js",
-      "title": "phase-2b3-contract-document-statuses.spec.js \u203a Phase 2B.3 status routes and the populated contract drawer remain responsive",
+      "title": "phase-2b3-contract-document-statuses.spec.js › Phase 2B.3 status routes and the populated contract drawer remain responsive",
       "project_browser": "chromium",
       "shard": "3/8",
       "route_or_surface": "Test source: client/tests/e2e/phase-2b3-contract-document-statuses.spec.js",
@@ -2036,7 +2114,7 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "D \u2014 Shared-platform defect",
+      "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
       "remediation_reference": "Prompt 20 mandatory repair backlog",
       "expiry_candidate": null,
@@ -2052,7 +2130,7 @@
     {
       "stable_test_identifier": "cff08f68624ffecd25a5-545a22d21fa4d130cc03",
       "source_file": "client/tests/e2e/phase-2b5-standard-forms-panels.spec.js",
-      "title": "phase-2b5-standard-forms-panels.spec.js \u203a Phase 2B.5 standard record and admin forms \u203a record form preserves canonical controls, validation, and responsive layout",
+      "title": "phase-2b5-standard-forms-panels.spec.js › Phase 2B.5 standard record and admin forms › record form preserves canonical controls, validation, and responsive layout",
       "project_browser": "chromium",
       "shard": "3/8",
       "route_or_surface": "Test source: client/tests/e2e/phase-2b5-standard-forms-panels.spec.js",
@@ -2091,7 +2169,7 @@
       },
       "phase": "security_clean_baseline_complete",
       "exception_or_assertion_type": "assertion_failure",
-      "normalized_signature": "assertion_failure:client/tests/e2e/phase-2b5-standard-forms-panels.spec.js:Phase 2B.5 standard record and admin forms \u203a record form preserves canonical controls, validation, and responsive layout",
+      "normalized_signature": "assertion_failure:client/tests/e2e/phase-2b5-standard-forms-panels.spec.js:Phase 2B.5 standard record and admin forms › record form preserves canonical controls, validation, and responsive layout",
       "top_relevant_stack_location": "client/tests/e2e/phase-2b5-standard-forms-panels.spec.js:21:3",
       "artifact_references": [
         "https://github.com/Technivian/CLMOne/actions/runs/30767778512",
@@ -2109,7 +2187,7 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "D \u2014 Shared-platform defect",
+      "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
       "remediation_reference": "Prompt 20 mandatory repair backlog",
       "expiry_candidate": null,
@@ -2125,7 +2203,7 @@
     {
       "stable_test_identifier": "cff08f68624ffecd25a5-9a416527281cc4a7c777",
       "source_file": "client/tests/e2e/phase-2b5-standard-forms-panels.spec.js",
-      "title": "phase-2b5-standard-forms-panels.spec.js \u203a Phase 2B.5 standard record and admin forms \u203a admin approval form uses the shared field partial and canonical panels",
+      "title": "phase-2b5-standard-forms-panels.spec.js › Phase 2B.5 standard record and admin forms › admin approval form uses the shared field partial and canonical panels",
       "project_browser": "chromium",
       "shard": "3/8",
       "route_or_surface": "Test source: client/tests/e2e/phase-2b5-standard-forms-panels.spec.js",
@@ -2164,7 +2242,7 @@
       },
       "phase": "security_clean_baseline_complete",
       "exception_or_assertion_type": "assertion_failure",
-      "normalized_signature": "assertion_failure:client/tests/e2e/phase-2b5-standard-forms-panels.spec.js:Phase 2B.5 standard record and admin forms \u203a admin approval form uses the shared field partial and canonical panels",
+      "normalized_signature": "assertion_failure:client/tests/e2e/phase-2b5-standard-forms-panels.spec.js:Phase 2B.5 standard record and admin forms › admin approval form uses the shared field partial and canonical panels",
       "top_relevant_stack_location": "client/tests/e2e/phase-2b5-standard-forms-panels.spec.js:42:3",
       "artifact_references": [
         "https://github.com/Technivian/CLMOne/actions/runs/30767778512",
@@ -2182,7 +2260,7 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "D \u2014 Shared-platform defect",
+      "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
       "remediation_reference": "Prompt 20 mandatory repair backlog",
       "expiry_candidate": null,
@@ -2198,7 +2276,7 @@
     {
       "stable_test_identifier": "6ac8114eb10074ca31d4-2282b3f4c2acb3e15cb7",
       "source_file": "client/tests/e2e/phase-3a-standard-lists.spec.js",
-      "title": "phase-3a-standard-lists.spec.js \u203a Phase 3A standard lists and tables \u203a repository retains selection, async states, pagination, and mobile overflow",
+      "title": "phase-3a-standard-lists.spec.js › Phase 3A standard lists and tables › repository retains selection, async states, pagination, and mobile overflow",
       "project_browser": "chromium",
       "shard": "3/8",
       "route_or_surface": "Test source: client/tests/e2e/phase-3a-standard-lists.spec.js",
@@ -2237,7 +2315,7 @@
       },
       "phase": "security_clean_baseline_complete",
       "exception_or_assertion_type": "assertion_failure",
-      "normalized_signature": "assertion_failure:client/tests/e2e/phase-3a-standard-lists.spec.js:Phase 3A standard lists and tables \u203a repository retains selection, async states, pagination, and mobile overflow",
+      "normalized_signature": "assertion_failure:client/tests/e2e/phase-3a-standard-lists.spec.js:Phase 3A standard lists and tables › repository retains selection, async states, pagination, and mobile overflow",
       "top_relevant_stack_location": "client/tests/e2e/phase-3a-standard-lists.spec.js:21:3",
       "artifact_references": [
         "https://github.com/Technivian/CLMOne/actions/runs/30767778512",
@@ -2255,7 +2333,7 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "D \u2014 Shared-platform defect",
+      "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
       "remediation_reference": "Prompt 20 mandatory repair backlog",
       "expiry_candidate": null,
@@ -2271,7 +2349,7 @@
     {
       "stable_test_identifier": "6ac8114eb10074ca31d4-293f34c4d32054357b2c",
       "source_file": "client/tests/e2e/phase-3a-standard-lists.spec.js",
-      "title": "phase-3a-standard-lists.spec.js \u203a Phase 3A standard lists and tables \u203a repository rows retain compact, centered, and interactive table behavior",
+      "title": "phase-3a-standard-lists.spec.js › Phase 3A standard lists and tables › repository rows retain compact, centered, and interactive table behavior",
       "project_browser": "chromium",
       "shard": "3/8",
       "route_or_surface": "Test source: client/tests/e2e/phase-3a-standard-lists.spec.js",
@@ -2344,7 +2422,7 @@
     {
       "stable_test_identifier": "6ac8114eb10074ca31d4-1f7079e3b7ff307f8c5a",
       "source_file": "client/tests/e2e/phase-3a-standard-lists.spec.js",
-      "title": "phase-3a-standard-lists.spec.js \u203a Phase 3A standard lists and tables \u203a my work rows keep compact priority and action layouts",
+      "title": "phase-3a-standard-lists.spec.js › Phase 3A standard lists and tables › my work rows keep compact priority and action layouts",
       "project_browser": "chromium",
       "shard": "3/8",
       "route_or_surface": "Test source: client/tests/e2e/phase-3a-standard-lists.spec.js",
@@ -2417,7 +2495,7 @@
     {
       "stable_test_identifier": "6ac8114eb10074ca31d4-97be321eba251589a641",
       "source_file": "client/tests/e2e/phase-3a-standard-lists.spec.js",
-      "title": "phase-3a-standard-lists.spec.js \u203a Phase 3A standard lists and tables \u203a my work filter groups remain inline with grey quick-view count badges",
+      "title": "phase-3a-standard-lists.spec.js › Phase 3A standard lists and tables › my work filter groups remain inline with grey quick-view count badges",
       "project_browser": "chromium",
       "shard": "3/8",
       "route_or_surface": "Test source: client/tests/e2e/phase-3a-standard-lists.spec.js",
@@ -2456,7 +2534,7 @@
       },
       "phase": "security_clean_baseline_complete",
       "exception_or_assertion_type": "assertion_failure",
-      "normalized_signature": "assertion_failure:client/tests/e2e/phase-3a-standard-lists.spec.js:Phase 3A standard lists and tables \u203a my work filter groups remain inline with grey quick-view count badges",
+      "normalized_signature": "assertion_failure:client/tests/e2e/phase-3a-standard-lists.spec.js:Phase 3A standard lists and tables › my work filter groups remain inline with grey quick-view count badges",
       "top_relevant_stack_location": "client/tests/e2e/phase-3a-standard-lists.spec.js:125:3",
       "artifact_references": [
         "https://github.com/Technivian/CLMOne/actions/runs/30767778512",
@@ -2474,7 +2552,7 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "D \u2014 Shared-platform defect",
+      "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
       "remediation_reference": "Prompt 20 mandatory repair backlog",
       "expiry_candidate": null,
@@ -2490,7 +2568,7 @@
     {
       "stable_test_identifier": "6ac8114eb10074ca31d4-6f2cfa4c11c801444969",
       "source_file": "client/tests/e2e/phase-3a-standard-lists.spec.js",
-      "title": "phase-3a-standard-lists.spec.js \u203a Phase 3A standard lists and tables \u203a operational tables render the canonical hierarchy and selection exceptions",
+      "title": "phase-3a-standard-lists.spec.js › Phase 3A standard lists and tables › operational tables render the canonical hierarchy and selection exceptions",
       "project_browser": "chromium",
       "shard": "3/8",
       "route_or_surface": "Test source: client/tests/e2e/phase-3a-standard-lists.spec.js",
@@ -2563,7 +2641,7 @@
     {
       "stable_test_identifier": "6ac8114eb10074ca31d4-d4521cc6c2c1d5a62cad",
       "source_file": "client/tests/e2e/phase-3a-standard-lists.spec.js",
-      "title": "phase-3a-standard-lists.spec.js \u203a Phase 3A standard lists and tables \u203a document and approval-admin list families retain canonical semantics and keyboard tabs",
+      "title": "phase-3a-standard-lists.spec.js › Phase 3A standard lists and tables › document and approval-admin list families retain canonical semantics and keyboard tabs",
       "project_browser": "chromium",
       "shard": "3/8",
       "route_or_surface": "Test source: client/tests/e2e/phase-3a-standard-lists.spec.js",
@@ -2602,7 +2680,7 @@
       },
       "phase": "security_clean_baseline_complete",
       "exception_or_assertion_type": "assertion_failure",
-      "normalized_signature": "assertion_failure:client/tests/e2e/phase-3a-standard-lists.spec.js:Phase 3A standard lists and tables \u203a document and approval-admin list families retain canonical semantics and keyboard tabs",
+      "normalized_signature": "assertion_failure:client/tests/e2e/phase-3a-standard-lists.spec.js:Phase 3A standard lists and tables › document and approval-admin list families retain canonical semantics and keyboard tabs",
       "top_relevant_stack_location": "client/tests/e2e/phase-3a-standard-lists.spec.js:192:3",
       "artifact_references": [
         "https://github.com/Technivian/CLMOne/actions/runs/30767778512",
@@ -2620,7 +2698,7 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "D \u2014 Shared-platform defect",
+      "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
       "remediation_reference": "Prompt 20 mandatory repair backlog",
       "expiry_candidate": null,
@@ -2636,7 +2714,7 @@
     {
       "stable_test_identifier": "6ac8114eb10074ca31d4-dce0702d4ecd05ca65b9",
       "source_file": "client/tests/e2e/phase-3a-standard-lists.spec.js",
-      "title": "phase-3a-standard-lists.spec.js \u203a Phase 3A standard lists and tables \u203a clause-library administration retains its canonical empty table",
+      "title": "phase-3a-standard-lists.spec.js › Phase 3A standard lists and tables › clause-library administration retains its canonical empty table",
       "project_browser": "chromium",
       "shard": "4/8",
       "route_or_surface": "Test source: client/tests/e2e/phase-3a-standard-lists.spec.js",
@@ -2675,7 +2753,7 @@
       },
       "phase": "security_clean_baseline_complete",
       "exception_or_assertion_type": "assertion_failure",
-      "normalized_signature": "assertion_failure:client/tests/e2e/phase-3a-standard-lists.spec.js:Phase 3A standard lists and tables \u203a clause-library administration retains its canonical empty table",
+      "normalized_signature": "assertion_failure:client/tests/e2e/phase-3a-standard-lists.spec.js:Phase 3A standard lists and tables › clause-library administration retains its canonical empty table",
       "top_relevant_stack_location": "client/tests/e2e/phase-3a-standard-lists.spec.js:209:3",
       "artifact_references": [
         "https://github.com/Technivian/CLMOne/actions/runs/30767778512",
@@ -2693,7 +2771,7 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "D \u2014 Shared-platform defect",
+      "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
       "remediation_reference": "Prompt 20 mandatory repair backlog",
       "expiry_candidate": null,
@@ -2709,7 +2787,7 @@
     {
       "stable_test_identifier": "ef99e9621f4244b0bbc2-bacaa791acb7959a2d87",
       "source_file": "client/tests/e2e/phase-3b-list-scaffolds.spec.js",
-      "title": "phase-3b-list-scaffolds.spec.js \u203a Phase 3B standard record-list scaffolds \u203a repository keeps shell navigation and keyboard-operable list tabs",
+      "title": "phase-3b-list-scaffolds.spec.js › Phase 3B standard record-list scaffolds › repository keeps shell navigation and keyboard-operable list tabs",
       "project_browser": "chromium",
       "shard": "4/8",
       "route_or_surface": "Test source: client/tests/e2e/phase-3b-list-scaffolds.spec.js",
@@ -2748,7 +2826,7 @@
       },
       "phase": "security_clean_baseline_complete",
       "exception_or_assertion_type": "assertion_failure",
-      "normalized_signature": "assertion_failure:client/tests/e2e/phase-3b-list-scaffolds.spec.js:Phase 3B standard record-list scaffolds \u203a repository keeps shell navigation and keyboard-operable list tabs",
+      "normalized_signature": "assertion_failure:client/tests/e2e/phase-3b-list-scaffolds.spec.js:Phase 3B standard record-list scaffolds › repository keeps shell navigation and keyboard-operable list tabs",
       "top_relevant_stack_location": "client/tests/e2e/phase-3b-list-scaffolds.spec.js:21:3",
       "artifact_references": [
         "https://github.com/Technivian/CLMOne/actions/runs/30767778512",
@@ -2766,7 +2844,7 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "D \u2014 Shared-platform defect",
+      "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
       "remediation_reference": "Prompt 20 mandatory repair backlog",
       "expiry_candidate": null,
@@ -2782,7 +2860,7 @@
     {
       "stable_test_identifier": "ef99e9621f4244b0bbc2-161a7278eaf25f5f0fd5",
       "source_file": "client/tests/e2e/phase-3b-list-scaffolds.spec.js",
-      "title": "phase-3b-list-scaffolds.spec.js \u203a Phase 3B standard record-list scaffolds \u203a document and clause-library headers preserve action hierarchy on compact screens",
+      "title": "phase-3b-list-scaffolds.spec.js › Phase 3B standard record-list scaffolds › document and clause-library headers preserve action hierarchy on compact screens",
       "project_browser": "chromium",
       "shard": "4/8",
       "route_or_surface": "Test source: client/tests/e2e/phase-3b-list-scaffolds.spec.js",
@@ -2821,7 +2899,7 @@
       },
       "phase": "security_clean_baseline_complete",
       "exception_or_assertion_type": "assertion_failure",
-      "normalized_signature": "assertion_failure:client/tests/e2e/phase-3b-list-scaffolds.spec.js:Phase 3B standard record-list scaffolds \u203a document and clause-library headers preserve action hierarchy on compact screens",
+      "normalized_signature": "assertion_failure:client/tests/e2e/phase-3b-list-scaffolds.spec.js:Phase 3B standard record-list scaffolds › document and clause-library headers preserve action hierarchy on compact screens",
       "top_relevant_stack_location": "client/tests/e2e/phase-3b-list-scaffolds.spec.js:32:3",
       "artifact_references": [
         "https://github.com/Technivian/CLMOne/actions/runs/30767778512",
@@ -2839,7 +2917,7 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "D \u2014 Shared-platform defect",
+      "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
       "remediation_reference": "Prompt 20 mandatory repair backlog",
       "expiry_candidate": null,
@@ -2855,7 +2933,7 @@
     {
       "stable_test_identifier": "ef99e9621f4244b0bbc2-30d4582f3ac064a46bd6",
       "source_file": "client/tests/e2e/phase-3b-list-scaffolds.spec.js",
-      "title": "phase-3b-list-scaffolds.spec.js \u203a Phase 3B standard record-list scaffolds \u203a approval administration keeps its title, tabs, and table route semantics",
+      "title": "phase-3b-list-scaffolds.spec.js › Phase 3B standard record-list scaffolds › approval administration keeps its title, tabs, and table route semantics",
       "project_browser": "chromium",
       "shard": "4/8",
       "route_or_surface": "Test source: client/tests/e2e/phase-3b-list-scaffolds.spec.js",
@@ -2894,7 +2972,7 @@
       },
       "phase": "security_clean_baseline_complete",
       "exception_or_assertion_type": "assertion_failure",
-      "normalized_signature": "assertion_failure:client/tests/e2e/phase-3b-list-scaffolds.spec.js:Phase 3B standard record-list scaffolds \u203a approval administration keeps its title, tabs, and table route semantics",
+      "normalized_signature": "assertion_failure:client/tests/e2e/phase-3b-list-scaffolds.spec.js:Phase 3B standard record-list scaffolds › approval administration keeps its title, tabs, and table route semantics",
       "top_relevant_stack_location": "client/tests/e2e/phase-3b-list-scaffolds.spec.js:51:3",
       "artifact_references": [
         "https://github.com/Technivian/CLMOne/actions/runs/30767778512",
@@ -2912,7 +2990,7 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "D \u2014 Shared-platform defect",
+      "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
       "remediation_reference": "Prompt 20 mandatory repair backlog",
       "expiry_candidate": null,
@@ -2928,7 +3006,7 @@
     {
       "stable_test_identifier": "779d1e2ca76bed658459-ef73927f33eef8ba5272",
       "source_file": "client/tests/e2e/phase-4a-record-scaffolds.spec.js",
-      "title": "phase-4a-record-scaffolds.spec.js \u203a Phase 4A standard record and form scaffolds \u203a client record creation keeps shell title, validation, and keyboard focus",
+      "title": "phase-4a-record-scaffolds.spec.js › Phase 4A standard record and form scaffolds › client record creation keeps shell title, validation, and keyboard focus",
       "project_browser": "chromium",
       "shard": "4/8",
       "route_or_surface": "Test source: client/tests/e2e/phase-4a-record-scaffolds.spec.js",
@@ -2967,7 +3045,7 @@
       },
       "phase": "security_clean_baseline_complete",
       "exception_or_assertion_type": "assertion_failure",
-      "normalized_signature": "assertion_failure:client/tests/e2e/phase-4a-record-scaffolds.spec.js:Phase 4A standard record and form scaffolds \u203a client record creation keeps shell title, validation, and keyboard focus",
+      "normalized_signature": "assertion_failure:client/tests/e2e/phase-4a-record-scaffolds.spec.js:Phase 4A standard record and form scaffolds › client record creation keeps shell title, validation, and keyboard focus",
       "top_relevant_stack_location": "client/tests/e2e/phase-4a-record-scaffolds.spec.js:21:3",
       "artifact_references": [
         "https://github.com/Technivian/CLMOne/actions/runs/30767778512",
@@ -2985,7 +3063,7 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "D \u2014 Shared-platform defect",
+      "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
       "remediation_reference": "Prompt 20 mandatory repair backlog",
       "expiry_candidate": null,
@@ -3001,7 +3079,7 @@
     {
       "stable_test_identifier": "779d1e2ca76bed658459-68663a8ee72202834e1e",
       "source_file": "client/tests/e2e/phase-4a-record-scaffolds.spec.js",
-      "title": "phase-4a-record-scaffolds.spec.js \u203a Phase 4A standard record and form scaffolds \u203a clause-library forms use labelled list back navigation without duplicated canvas titles",
+      "title": "phase-4a-record-scaffolds.spec.js › Phase 4A standard record and form scaffolds › clause-library forms use labelled list back navigation without duplicated canvas titles",
       "project_browser": "chromium",
       "shard": "4/8",
       "route_or_surface": "Test source: client/tests/e2e/phase-4a-record-scaffolds.spec.js",
@@ -3074,7 +3152,7 @@
     {
       "stable_test_identifier": "779d1e2ca76bed658459-a066cb3eadd019cb47cb",
       "source_file": "client/tests/e2e/phase-4a-record-scaffolds.spec.js",
-      "title": "phase-4a-record-scaffolds.spec.js \u203a Phase 4A standard record and form scaffolds \u203a approval administration keeps its notice, rail, actions, and compact layout",
+      "title": "phase-4a-record-scaffolds.spec.js › Phase 4A standard record and form scaffolds › approval administration keeps its notice, rail, actions, and compact layout",
       "project_browser": "chromium",
       "shard": "4/8",
       "route_or_surface": "Test source: client/tests/e2e/phase-4a-record-scaffolds.spec.js",
@@ -3147,7 +3225,7 @@
     {
       "stable_test_identifier": "4f7fc92a3a82dbbe723a-f4b58c519c9a4a8b7ff5",
       "source_file": "client/tests/e2e/phase-4b-governance-record-scaffolds.spec.js",
-      "title": "phase-4b-governance-record-scaffolds.spec.js \u203a Phase 4B counterparty and governance record scaffolds \u203a counterparty and privacy record forms use the shell header, shared form actions, and keyboard focus",
+      "title": "phase-4b-governance-record-scaffolds.spec.js › Phase 4B counterparty and governance record scaffolds › counterparty and privacy record forms use the shell header, shared form actions, and keyboard focus",
       "project_browser": "chromium",
       "shard": "4/8",
       "route_or_surface": "Test source: client/tests/e2e/phase-4b-governance-record-scaffolds.spec.js",
@@ -3186,7 +3264,7 @@
       },
       "phase": "security_clean_baseline_complete",
       "exception_or_assertion_type": "assertion_failure",
-      "normalized_signature": "assertion_failure:client/tests/e2e/phase-4b-governance-record-scaffolds.spec.js:Phase 4B counterparty and governance record scaffolds \u203a counterparty and privacy record forms use the shell header, shared form actions, and keyboard focus",
+      "normalized_signature": "assertion_failure:client/tests/e2e/phase-4b-governance-record-scaffolds.spec.js:Phase 4B counterparty and governance record scaffolds › counterparty and privacy record forms use the shell header, shared form actions, and keyboard focus",
       "top_relevant_stack_location": "client/tests/e2e/phase-4b-governance-record-scaffolds.spec.js:21:3",
       "artifact_references": [
         "https://github.com/Technivian/CLMOne/actions/runs/30767778512",
@@ -3204,7 +3282,7 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "D \u2014 Shared-platform defect",
+      "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
       "remediation_reference": "Prompt 20 mandatory repair backlog",
       "expiry_candidate": null,
@@ -3220,7 +3298,7 @@
     {
       "stable_test_identifier": "4f7fc92a3a82dbbe723a-6c913a7f199853eb98b7",
       "source_file": "client/tests/e2e/phase-4b-governance-record-scaffolds.spec.js",
-      "title": "phase-4b-governance-record-scaffolds.spec.js \u203a Phase 4B counterparty and governance record scaffolds \u203a compliance and governance forms retain subtitles, action hierarchy, and compact layout",
+      "title": "phase-4b-governance-record-scaffolds.spec.js › Phase 4B counterparty and governance record scaffolds › compliance and governance forms retain subtitles, action hierarchy, and compact layout",
       "project_browser": "chromium",
       "shard": "4/8",
       "route_or_surface": "Test source: client/tests/e2e/phase-4b-governance-record-scaffolds.spec.js",
@@ -3259,7 +3337,7 @@
       },
       "phase": "security_clean_baseline_complete",
       "exception_or_assertion_type": "assertion_failure",
-      "normalized_signature": "assertion_failure:client/tests/e2e/phase-4b-governance-record-scaffolds.spec.js:Phase 4B counterparty and governance record scaffolds \u203a compliance and governance forms retain subtitles, action hierarchy, and compact layout",
+      "normalized_signature": "assertion_failure:client/tests/e2e/phase-4b-governance-record-scaffolds.spec.js:Phase 4B counterparty and governance record scaffolds › compliance and governance forms retain subtitles, action hierarchy, and compact layout",
       "top_relevant_stack_location": "client/tests/e2e/phase-4b-governance-record-scaffolds.spec.js:41:3",
       "artifact_references": [
         "https://github.com/Technivian/CLMOne/actions/runs/30767778512",
@@ -3277,7 +3355,7 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "D \u2014 Shared-platform defect",
+      "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
       "remediation_reference": "Prompt 20 mandatory repair backlog",
       "expiry_candidate": null,
@@ -3293,7 +3371,7 @@
     {
       "stable_test_identifier": "8bc97880c2cec293510e-52303d88e0ef0f5ea4b6",
       "source_file": "client/tests/e2e/phase-5a-app-shell.spec.js",
-      "title": "phase-5a-app-shell.spec.js \u203a Phase 5A authenticated application shell \u203a uses canonical shell hooks while preserving active navigation and keyboard focus",
+      "title": "phase-5a-app-shell.spec.js › Phase 5A authenticated application shell › uses canonical shell hooks while preserving active navigation and keyboard focus",
       "project_browser": "chromium",
       "shard": "4/8",
       "route_or_surface": "Test source: client/tests/e2e/phase-5a-app-shell.spec.js",
@@ -3366,7 +3444,7 @@
     {
       "stable_test_identifier": "8bc97880c2cec293510e-7850afcf6183fe12d77f",
       "source_file": "client/tests/e2e/phase-5a-app-shell.spec.js",
-      "title": "phase-5a-app-shell.spec.js \u203a Phase 5A authenticated application shell \u203a keeps mobile navigation operable without viewport overflow",
+      "title": "phase-5a-app-shell.spec.js › Phase 5A authenticated application shell › keeps mobile navigation operable without viewport overflow",
       "project_browser": "chromium",
       "shard": "5/8",
       "route_or_surface": "Test source: client/tests/e2e/phase-5a-app-shell.spec.js",
@@ -3439,7 +3517,7 @@
     {
       "stable_test_identifier": "8bc97880c2cec293510e-8528b205d1641a5495e6",
       "source_file": "client/tests/e2e/phase-5a-app-shell.spec.js",
-      "title": "phase-5a-app-shell.spec.js \u203a Phase 5A authenticated application shell \u203a keeps the dashboard shell consumer aligned at desktop and 390px",
+      "title": "phase-5a-app-shell.spec.js › Phase 5A authenticated application shell › keeps the dashboard shell consumer aligned at desktop and 390px",
       "project_browser": "chromium",
       "shard": "5/8",
       "route_or_surface": "Test source: client/tests/e2e/phase-5a-app-shell.spec.js",
@@ -3512,7 +3590,7 @@
     {
       "stable_test_identifier": "f0fb41fd16ce65710d14-ce229ae95d14323a4755",
       "source_file": "client/tests/e2e/phase-5c-workspace-shell.spec.js",
-      "title": "phase-5c-workspace-shell.spec.js \u203a Phase 5C workspace scaffold \u203a keeps the MSA and contract-detail shared scaffold responsive and focusable",
+      "title": "phase-5c-workspace-shell.spec.js › Phase 5C workspace scaffold › keeps the MSA and contract-detail shared scaffold responsive and focusable",
       "project_browser": "chromium",
       "shard": "5/8",
       "route_or_surface": "Test source: client/tests/e2e/phase-5c-workspace-shell.spec.js",
@@ -3549,9 +3627,9 @@
           "https://github.com/Technivian/CLMOne/actions/runs/30910072964 attempt 2 (shard 5/8; raw log /tmp/payrollminds-integration-ui-final2-run2.log)"
         ]
       },
-      "phase": "security_clean_baseline_complete",
+      "phase": "shared_workflow_record_repair_complete",
       "exception_or_assertion_type": "assertion_failure",
-      "normalized_signature": "assertion_failure:client/tests/e2e/phase-5c-workspace-shell.spec.js:Phase 5C workspace scaffold \u203a keeps the MSA and contract-detail shared scaffold responsive and focusable",
+      "normalized_signature": "assertion_failure:client/tests/e2e/phase-5c-workspace-shell.spec.js:Phase 5C workspace scaffold › keeps the MSA and contract-detail shared scaffold responsive and focusable",
       "top_relevant_stack_location": "client/tests/e2e/phase-5c-workspace-shell.spec.js:27:3",
       "artifact_references": [
         "https://github.com/Technivian/CLMOne/actions/runs/30767778512",
@@ -3561,7 +3639,7 @@
       ],
       "earliest_known_appearance": "PR #153 clean baseline run one",
       "inherited_from_main": true,
-      "affected_by_repair": false,
+      "affected_by_repair": true,
       "shared_service_usage": "Django E2E fixture server; canonical UI and authorization surfaces as exercised by the named test.",
       "payrollminds_pilot_relevance": "indirect shared-platform",
       "security_relevance": "no security signature in artifact; mandatory classification retained",
@@ -3569,23 +3647,29 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "D \u2014 Shared-platform defect",
+      "classification": "D — Shared-platform defect",
       "remediation_owner": "payrollminds shared repair branch",
-      "remediation_reference": "Prompt 20 mandatory repair backlog",
+      "remediation_reference": "Prompt 22 / commit 50aae7d4f090e36eff08a1a0b19ad747373185c6",
       "expiry_candidate": null,
       "notes": "Stable across both validated merge-SHA runs; raw CI artifact 30910072964. No exception candidate created.",
       "changed_by_pr_153": false,
       "changed_by_pr_154": false,
       "changed_by_pr_155": false,
       "shared_platform_relevance": "direct shared canonical route, form, workflow, or UI component; conservative mandatory classification",
-      "root_cause": "Governed workflow, contract record, or shared lifecycle surface fails a browser assertion.",
+      "root_cause": "3 — stale governed expectation",
       "root_cause_cluster": "D-SHARED-WORKFLOW",
-      "proposed_repair": "Trace view, form and workflow runtime; add focused regression."
+      "proposed_repair": "Trace view, form and workflow runtime; add focused regression.",
+      "resolution": {
+        "status": "resolved",
+        "resolving_commit": "50aae7d4f090e36eff08a1a0b19ad747373185c6",
+        "focused_evidence": "7 passed (local synthetic E2E)",
+        "full_suite_evidence": "Passed in local 90-test source-SHA run 50aae7d4f090e36eff08a1a0b19ad747373185c6"
+      }
     },
     {
       "stable_test_identifier": "f0fb41fd16ce65710d14-6b0484165e5db34bfedd",
       "source_file": "client/tests/e2e/phase-5c-workspace-shell.spec.js",
-      "title": "phase-5c-workspace-shell.spec.js \u203a Phase 5C workspace scaffold \u203a keeps the DPA drafting tabs keyboard-operable at 390px",
+      "title": "phase-5c-workspace-shell.spec.js › Phase 5C workspace scaffold › keeps the DPA drafting tabs keyboard-operable at 390px",
       "project_browser": "chromium",
       "shard": "5/8",
       "route_or_surface": "Test source: client/tests/e2e/phase-5c-workspace-shell.spec.js",
@@ -3622,9 +3706,9 @@
           "https://github.com/Technivian/CLMOne/actions/runs/30910072964 attempt 2 (shard 5/8; raw log /tmp/payrollminds-integration-ui-final2-run2.log)"
         ]
       },
-      "phase": "security_clean_baseline_complete",
+      "phase": "shared_workflow_record_repair_complete",
       "exception_or_assertion_type": "assertion_failure",
-      "normalized_signature": "assertion_failure:client/tests/e2e/phase-5c-workspace-shell.spec.js:Phase 5C workspace scaffold \u203a keeps the DPA drafting tabs keyboard-operable at 390px",
+      "normalized_signature": "assertion_failure:client/tests/e2e/phase-5c-workspace-shell.spec.js:Phase 5C workspace scaffold › keeps the DPA drafting tabs keyboard-operable at 390px",
       "top_relevant_stack_location": "client/tests/e2e/phase-5c-workspace-shell.spec.js:48:3",
       "artifact_references": [
         "https://github.com/Technivian/CLMOne/actions/runs/30767778512",
@@ -3634,7 +3718,7 @@
       ],
       "earliest_known_appearance": "PR #153 clean baseline run one",
       "inherited_from_main": true,
-      "affected_by_repair": false,
+      "affected_by_repair": true,
       "shared_service_usage": "Django E2E fixture server; canonical UI and authorization surfaces as exercised by the named test.",
       "payrollminds_pilot_relevance": "indirect shared-platform",
       "security_relevance": "no security signature in artifact; mandatory classification retained",
@@ -3642,23 +3726,29 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "D \u2014 Shared-platform defect",
+      "classification": "D — Shared-platform defect",
       "remediation_owner": "payrollminds shared repair branch",
-      "remediation_reference": "Prompt 20 mandatory repair backlog",
+      "remediation_reference": "Prompt 22 / commit 50aae7d4f090e36eff08a1a0b19ad747373185c6",
       "expiry_candidate": null,
       "notes": "Stable across both validated merge-SHA runs; raw CI artifact 30910072964. No exception candidate created.",
       "changed_by_pr_153": false,
       "changed_by_pr_154": false,
       "changed_by_pr_155": false,
       "shared_platform_relevance": "direct shared canonical route, form, workflow, or UI component; conservative mandatory classification",
-      "root_cause": "Governed workflow, contract record, or shared lifecycle surface fails a browser assertion.",
+      "root_cause": "3 — stale governed expectation",
       "root_cause_cluster": "D-SHARED-WORKFLOW",
-      "proposed_repair": "Trace view, form and workflow runtime; add focused regression."
+      "proposed_repair": "Trace view, form and workflow runtime; add focused regression.",
+      "resolution": {
+        "status": "resolved",
+        "resolving_commit": "50aae7d4f090e36eff08a1a0b19ad747373185c6",
+        "focused_evidence": "7 passed (local synthetic E2E)",
+        "full_suite_evidence": "Passed in local 90-test source-SHA run 50aae7d4f090e36eff08a1a0b19ad747373185c6"
+      }
     },
     {
       "stable_test_identifier": "b2b658ee7428d119be23-65227b8c732ac35904f8",
       "source_file": "client/tests/e2e/phase-5g-builder-errors.spec.js",
-      "title": "phase-5g-builder-errors.spec.js \u203a Phase 5G builder error and blocked states \u203a step 3 failed validation recovers after required answers",
+      "title": "phase-5g-builder-errors.spec.js › Phase 5G builder error and blocked states › step 3 failed validation recovers after required answers",
       "project_browser": "chromium",
       "shard": "5/8",
       "route_or_surface": "Test source: client/tests/e2e/phase-5g-builder-errors.spec.js",
@@ -3731,7 +3821,7 @@
     {
       "stable_test_identifier": "b2b658ee7428d119be23-3e0a3ae5b037211ed098",
       "source_file": "client/tests/e2e/phase-5g-builder-errors.spec.js",
-      "title": "phase-5g-builder-errors.spec.js \u203a Phase 5G builder error and blocked states \u203a review surfaces governance blocked findings and recovers via Back to edit",
+      "title": "phase-5g-builder-errors.spec.js › Phase 5G builder error and blocked states › review surfaces governance blocked findings and recovers via Back to edit",
       "project_browser": "chromium",
       "shard": "5/8",
       "route_or_surface": "Test source: client/tests/e2e/phase-5g-builder-errors.spec.js",
@@ -3804,7 +3894,7 @@
     {
       "stable_test_identifier": "b2b658ee7428d119be23-7f0f365fa78e5284615b",
       "source_file": "client/tests/e2e/phase-5g-builder-errors.spec.js",
-      "title": "phase-5g-builder-errors.spec.js \u203a Phase 5G builder error and blocked states \u203a contract record shows deterministic signature routing blockers",
+      "title": "phase-5g-builder-errors.spec.js › Phase 5G builder error and blocked states › contract record shows deterministic signature routing blockers",
       "project_browser": "chromium",
       "shard": "5/8",
       "route_or_surface": "Test source: client/tests/e2e/phase-5g-builder-errors.spec.js",
@@ -3841,9 +3931,9 @@
           "https://github.com/Technivian/CLMOne/actions/runs/30910072964 attempt 2 (shard 5/8; raw log /tmp/payrollminds-integration-ui-final2-run2.log)"
         ]
       },
-      "phase": "security_clean_baseline_complete",
+      "phase": "shared_workflow_record_repair_complete",
       "exception_or_assertion_type": "assertion_failure",
-      "normalized_signature": "assertion_failure:client/tests/e2e/phase-5g-builder-errors.spec.js:Phase 5G builder error and blocked states \u203a contract record shows deterministic signature routing blockers",
+      "normalized_signature": "assertion_failure:client/tests/e2e/phase-5g-builder-errors.spec.js:Phase 5G builder error and blocked states › contract record shows deterministic signature routing blockers",
       "top_relevant_stack_location": "client/tests/e2e/phase-5g-builder-errors.spec.js:119:3",
       "artifact_references": [
         "https://github.com/Technivian/CLMOne/actions/runs/30767778512",
@@ -3853,7 +3943,7 @@
       ],
       "earliest_known_appearance": "PR #153 clean baseline run one",
       "inherited_from_main": true,
-      "affected_by_repair": false,
+      "affected_by_repair": true,
       "shared_service_usage": "Django E2E fixture server; canonical UI and authorization surfaces as exercised by the named test.",
       "payrollminds_pilot_relevance": "indirect shared-platform",
       "security_relevance": "no security signature in artifact; mandatory classification retained",
@@ -3861,23 +3951,29 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "D \u2014 Shared-platform defect",
+      "classification": "D — Shared-platform defect",
       "remediation_owner": "payrollminds shared repair branch",
-      "remediation_reference": "Prompt 20 mandatory repair backlog",
+      "remediation_reference": "Prompt 22 / commit 50aae7d4f090e36eff08a1a0b19ad747373185c6",
       "expiry_candidate": null,
       "notes": "Stable across both validated merge-SHA runs; raw CI artifact 30910072964. No exception candidate created.",
       "changed_by_pr_153": false,
       "changed_by_pr_154": false,
       "changed_by_pr_155": false,
       "shared_platform_relevance": "direct shared canonical route, form, workflow, or UI component; conservative mandatory classification",
-      "root_cause": "Governed workflow, contract record, or shared lifecycle surface fails a browser assertion.",
+      "root_cause": "3 — stale governed expectation",
       "root_cause_cluster": "D-SHARED-WORKFLOW",
-      "proposed_repair": "Trace view, form and workflow runtime; add focused regression."
+      "proposed_repair": "Trace view, form and workflow runtime; add focused regression.",
+      "resolution": {
+        "status": "resolved",
+        "resolving_commit": "50aae7d4f090e36eff08a1a0b19ad747373185c6",
+        "focused_evidence": "7 passed (local synthetic E2E)",
+        "full_suite_evidence": "Passed in local 90-test source-SHA run 50aae7d4f090e36eff08a1a0b19ad747373185c6"
+      }
     },
     {
       "stable_test_identifier": "b2b658ee7428d119be23-79b78faf79505dda1f97",
       "source_file": "client/tests/e2e/phase-5g-builder-errors.spec.js",
-      "title": "phase-5g-builder-errors.spec.js \u203a Phase 5G builder error and blocked states \u203a review without intake redirects with recovery messaging",
+      "title": "phase-5g-builder-errors.spec.js › Phase 5G builder error and blocked states › review without intake redirects with recovery messaging",
       "project_browser": "chromium",
       "shard": "5/8",
       "route_or_surface": "Test source: client/tests/e2e/phase-5g-builder-errors.spec.js",
@@ -3950,7 +4046,7 @@
     {
       "stable_test_identifier": "a0f8a50d9100f29fce8e-3142d403163959fdbf99",
       "source_file": "client/tests/e2e/phase-5h-command-center.spec.js",
-      "title": "phase-5h-command-center.spec.js \u203a Phase 5H Command Center consolidation \u203a keeps expressive hero and canonical CTAs at 1440 and 1280",
+      "title": "phase-5h-command-center.spec.js › Phase 5H Command Center consolidation › keeps expressive hero and canonical CTAs at 1440 and 1280",
       "project_browser": "chromium",
       "shard": "5/8",
       "route_or_surface": "Test source: client/tests/e2e/phase-5h-command-center.spec.js",
@@ -4023,7 +4119,7 @@
     {
       "stable_test_identifier": "a0f8a50d9100f29fce8e-b4bc5a22a5e8d17a654a",
       "source_file": "client/tests/e2e/phase-5h-command-center.spec.js",
-      "title": "phase-5h-command-center.spec.js \u203a Phase 5H Command Center consolidation \u203a keeps 390px operable without overflow and preserves empty/setup states",
+      "title": "phase-5h-command-center.spec.js › Phase 5H Command Center consolidation › keeps 390px operable without overflow and preserves empty/setup states",
       "project_browser": "chromium",
       "shard": "5/8",
       "route_or_surface": "Test source: client/tests/e2e/phase-5h-command-center.spec.js",
@@ -4062,7 +4158,7 @@
       },
       "phase": "security_clean_baseline_complete",
       "exception_or_assertion_type": "assertion_failure",
-      "normalized_signature": "assertion_failure:client/tests/e2e/phase-5h-command-center.spec.js:Phase 5H Command Center consolidation \u203a keeps 390px operable without overflow and preserves empty/setup states",
+      "normalized_signature": "assertion_failure:client/tests/e2e/phase-5h-command-center.spec.js:Phase 5H Command Center consolidation › keeps 390px operable without overflow and preserves empty/setup states",
       "top_relevant_stack_location": "client/tests/e2e/phase-5h-command-center.spec.js:44:3",
       "artifact_references": [
         "https://github.com/Technivian/CLMOne/actions/runs/30767778512",
@@ -4080,7 +4176,7 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "D \u2014 Shared-platform defect",
+      "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
       "remediation_reference": "Prompt 20 mandatory repair backlog",
       "expiry_candidate": null,
@@ -4096,7 +4192,7 @@
     {
       "stable_test_identifier": "a0f8a50d9100f29fce8e-e6913fb8435b5f8e86c0",
       "source_file": "client/tests/e2e/phase-5h-command-center.spec.js",
-      "title": "phase-5h-command-center.spec.js \u203a Phase 5H Command Center consolidation \u203a section toolbar links use canonical link buttons",
+      "title": "phase-5h-command-center.spec.js › Phase 5H Command Center consolidation › section toolbar links use canonical link buttons",
       "project_browser": "chromium",
       "shard": "5/8",
       "route_or_surface": "Test source: client/tests/e2e/phase-5h-command-center.spec.js",
@@ -4135,7 +4231,7 @@
       },
       "phase": "security_clean_baseline_complete",
       "exception_or_assertion_type": "assertion_failure",
-      "normalized_signature": "assertion_failure:client/tests/e2e/phase-5h-command-center.spec.js:Phase 5H Command Center consolidation \u203a section toolbar links use canonical link buttons",
+      "normalized_signature": "assertion_failure:client/tests/e2e/phase-5h-command-center.spec.js:Phase 5H Command Center consolidation › section toolbar links use canonical link buttons",
       "top_relevant_stack_location": "client/tests/e2e/phase-5h-command-center.spec.js:59:3",
       "artifact_references": [
         "https://github.com/Technivian/CLMOne/actions/runs/30767778512",
@@ -4153,7 +4249,7 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "D \u2014 Shared-platform defect",
+      "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
       "remediation_reference": "Prompt 20 mandatory repair backlog",
       "expiry_candidate": null,
@@ -4169,7 +4265,7 @@
     {
       "stable_test_identifier": "b94496f70713b71f4166-b99fa6cfeef398a0d296",
       "source_file": "client/tests/e2e/pilot-baseline-screenshots.spec.js",
-      "title": "pilot-baseline-screenshots.spec.js \u203a Pilot baseline screenshots \u203a capture allowed surfaces",
+      "title": "pilot-baseline-screenshots.spec.js › Pilot baseline screenshots › capture allowed surfaces",
       "project_browser": "chromium",
       "shard": "8/8",
       "route_or_surface": "Test source: client/tests/e2e/pilot-baseline-screenshots.spec.js",
@@ -4242,7 +4338,7 @@
     {
       "stable_test_identifier": "3625eb01300667096bb4-359edd748fd6caf3d22a",
       "source_file": "client/tests/e2e/pilot-gate.spec.js",
-      "title": "pilot-gate.spec.js \u203a Pilot gate: authentication \u203a successful login reaches dashboard",
+      "title": "pilot-gate.spec.js › Pilot gate: authentication › successful login reaches dashboard",
       "project_browser": "chromium",
       "shard": "6/8",
       "route_or_surface": "Test source: client/tests/e2e/pilot-gate.spec.js",
@@ -4315,7 +4411,7 @@
     {
       "stable_test_identifier": "3625eb01300667096bb4-4e602f88111e664919f2",
       "source_file": "client/tests/e2e/pilot-gate.spec.js",
-      "title": "pilot-gate.spec.js \u203a Pilot gate: authentication \u203a repeated failed login eventually returns 429",
+      "title": "pilot-gate.spec.js › Pilot gate: authentication › repeated failed login eventually returns 429",
       "project_browser": "chromium",
       "shard": "6/8",
       "route_or_surface": "Test source: client/tests/e2e/pilot-gate.spec.js",
@@ -4388,7 +4484,7 @@
     {
       "stable_test_identifier": "3625eb01300667096bb4-310969d9ba295a6b5f4c",
       "source_file": "client/tests/e2e/pilot-gate.spec.js",
-      "title": "pilot-gate.spec.js \u203a Pilot gate: authentication \u203a successful login clears failed-attempt counter",
+      "title": "pilot-gate.spec.js › Pilot gate: authentication › successful login clears failed-attempt counter",
       "project_browser": "chromium",
       "shard": "6/8",
       "route_or_surface": "Test source: client/tests/e2e/pilot-gate.spec.js",
@@ -4461,7 +4557,7 @@
     {
       "stable_test_identifier": "3625eb01300667096bb4-5ab9e796c2feeb4b9908",
       "source_file": "client/tests/e2e/pilot-gate.spec.js",
-      "title": "pilot-gate.spec.js \u203a Pilot gate: NDA supported actions only \u203a NDA workspace hides unsupported CTAs and keeps View contract record",
+      "title": "pilot-gate.spec.js › Pilot gate: NDA supported actions only › NDA workspace hides unsupported CTAs and keeps View contract record",
       "project_browser": "chromium",
       "shard": "6/8",
       "route_or_surface": "Test source: client/tests/e2e/pilot-gate.spec.js",
@@ -4498,9 +4594,9 @@
           "https://github.com/Technivian/CLMOne/actions/runs/30910072964 attempt 2 (shard 6/8; raw log /tmp/payrollminds-integration-ui-final2-run2.log)"
         ]
       },
-      "phase": "security_clean_baseline_complete",
+      "phase": "payrollminds_critical_repair_complete",
       "exception_or_assertion_type": "assertion_failure",
-      "normalized_signature": "assertion_failure:client/tests/e2e/pilot-gate.spec.js:Pilot gate: NDA supported actions only \u203a NDA workspace hides unsupported CTAs and keeps View contract record",
+      "normalized_signature": "assertion_failure:client/tests/e2e/pilot-gate.spec.js:Pilot gate: NDA supported actions only › NDA workspace hides unsupported CTAs and keeps View contract record",
       "top_relevant_stack_location": "client/tests/e2e/pilot-gate.spec.js:86:3",
       "artifact_references": [
         "https://github.com/Technivian/CLMOne/actions/runs/30767778512",
@@ -4510,7 +4606,7 @@
       ],
       "earliest_known_appearance": "PR #153 clean baseline run one",
       "inherited_from_main": true,
-      "affected_by_repair": false,
+      "affected_by_repair": true,
       "shared_service_usage": "Django E2E fixture server; canonical UI and authorization surfaces as exercised by the named test.",
       "payrollminds_pilot_relevance": "direct",
       "security_relevance": "no security signature in artifact; mandatory classification retained",
@@ -4518,9 +4614,9 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "B \u2014 PayrollMinds-critical defect",
+      "classification": "B — PayrollMinds-critical defect",
       "remediation_owner": "payrollminds browser repair branch",
-      "remediation_reference": "Prompt 20 mandatory repair backlog",
+      "remediation_reference": "PR #161 / commit 0111b10de17d92ae7a057815be93b74736c41c76",
       "expiry_candidate": null,
       "notes": "Stable across both validated merge-SHA runs; raw CI artifact 30910072964. No exception candidate created.",
       "changed_by_pr_153": false,
@@ -4529,12 +4625,18 @@
       "shared_platform_relevance": "direct shared canonical route, form, workflow, or UI component; conservative mandatory classification",
       "root_cause": "Pilot contract/workspace journey or pilot gate assertion does not reach its governed canonical state.",
       "root_cause_cluster": "B-PILOT-JOURNEY",
-      "proposed_repair": "Trace route, fixture and policy state; repair smallest canonical-path defect."
+      "proposed_repair": "Trace route, fixture and policy state; repair smallest canonical-path defect.",
+      "resolution": {
+        "status": "resolved",
+        "resolving_commit": "0111b10de17d92ae7a057815be93b74736c41c76",
+        "focused_evidence": "16 passed (local synthetic E2E)",
+        "full_suite_evidence": "Passed in local 90-test source-SHA run 50aae7d4f090e36eff08a1a0b19ad747373185c6"
+      }
     },
     {
       "stable_test_identifier": "3625eb01300667096bb4-631fd6a151f976763b41",
       "source_file": "client/tests/e2e/pilot-gate.spec.js",
-      "title": "pilot-gate.spec.js \u203a Pilot gate: DPA supported actions only \u203a DPA workspace hides unsupported CTAs after generate",
+      "title": "pilot-gate.spec.js › Pilot gate: DPA supported actions only › DPA workspace hides unsupported CTAs after generate",
       "project_browser": "chromium",
       "shard": "6/8",
       "route_or_surface": "Test source: client/tests/e2e/pilot-gate.spec.js",
@@ -4607,7 +4709,7 @@
     {
       "stable_test_identifier": "3625eb01300667096bb4-f82d22392a7bc75dd9b4",
       "source_file": "client/tests/e2e/pilot-gate.spec.js",
-      "title": "pilot-gate.spec.js \u203a Pilot gate: search fallback \u203a search remains usable and tenant-scoped",
+      "title": "pilot-gate.spec.js › Pilot gate: search fallback › search remains usable and tenant-scoped",
       "project_browser": "chromium",
       "shard": "6/8",
       "route_or_surface": "Test source: client/tests/e2e/pilot-gate.spec.js",
@@ -4680,7 +4782,7 @@
     {
       "stable_test_identifier": "3625eb01300667096bb4-69784d3cb2f69f84e188",
       "source_file": "client/tests/e2e/pilot-gate.spec.js",
-      "title": "pilot-gate.spec.js \u203a Pilot gate: repository stage vs status \u203a repository Stage column sorts by stage key",
+      "title": "pilot-gate.spec.js › Pilot gate: repository stage vs status › repository Stage column sorts by stage key",
       "project_browser": "chromium",
       "shard": "6/8",
       "route_or_surface": "Test source: client/tests/e2e/pilot-gate.spec.js",
@@ -4717,9 +4819,9 @@
           "https://github.com/Technivian/CLMOne/actions/runs/30910072964 attempt 2 (shard 6/8; raw log /tmp/payrollminds-integration-ui-final2-run2.log)"
         ]
       },
-      "phase": "security_clean_baseline_complete",
+      "phase": "payrollminds_critical_repair_complete",
       "exception_or_assertion_type": "assertion_failure",
-      "normalized_signature": "assertion_failure:client/tests/e2e/pilot-gate.spec.js:Pilot gate: repository stage vs status \u203a repository Stage column sorts by stage key",
+      "normalized_signature": "assertion_failure:client/tests/e2e/pilot-gate.spec.js:Pilot gate: repository stage vs status › repository Stage column sorts by stage key",
       "top_relevant_stack_location": "client/tests/e2e/pilot-gate.spec.js:136:3",
       "artifact_references": [
         "https://github.com/Technivian/CLMOne/actions/runs/30767778512",
@@ -4729,7 +4831,7 @@
       ],
       "earliest_known_appearance": "PR #153 clean baseline run one",
       "inherited_from_main": true,
-      "affected_by_repair": false,
+      "affected_by_repair": true,
       "shared_service_usage": "Django E2E fixture server; canonical UI and authorization surfaces as exercised by the named test.",
       "payrollminds_pilot_relevance": "direct",
       "security_relevance": "no security signature in artifact; mandatory classification retained",
@@ -4737,9 +4839,9 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "B \u2014 PayrollMinds-critical defect",
+      "classification": "B — PayrollMinds-critical defect",
       "remediation_owner": "payrollminds browser repair branch",
-      "remediation_reference": "Prompt 20 mandatory repair backlog",
+      "remediation_reference": "PR #161 / commit 0111b10de17d92ae7a057815be93b74736c41c76",
       "expiry_candidate": null,
       "notes": "Stable across both validated merge-SHA runs; raw CI artifact 30910072964. No exception candidate created.",
       "changed_by_pr_153": false,
@@ -4748,12 +4850,18 @@
       "shared_platform_relevance": "direct shared canonical route, form, workflow, or UI component; conservative mandatory classification",
       "root_cause": "Pilot contract/workspace journey or pilot gate assertion does not reach its governed canonical state.",
       "root_cause_cluster": "B-PILOT-JOURNEY",
-      "proposed_repair": "Trace route, fixture and policy state; repair smallest canonical-path defect."
+      "proposed_repair": "Trace route, fixture and policy state; repair smallest canonical-path defect.",
+      "resolution": {
+        "status": "resolved",
+        "resolving_commit": "0111b10de17d92ae7a057815be93b74736c41c76",
+        "focused_evidence": "16 passed (local synthetic E2E)",
+        "full_suite_evidence": "Passed in local 90-test source-SHA run 50aae7d4f090e36eff08a1a0b19ad747373185c6"
+      }
     },
     {
       "stable_test_identifier": "85a61e5caf109bed6bc0-90c6be26775ee24c88f7",
       "source_file": "client/tests/e2e/pilot-verification.spec.js",
-      "title": "pilot-verification.spec.js \u203a Verification: authentication \u203a logout returns to login and blocks dashboard",
+      "title": "pilot-verification.spec.js › Verification: authentication › logout returns to login and blocks dashboard",
       "project_browser": "chromium",
       "shard": "6/8",
       "route_or_surface": "Test source: client/tests/e2e/pilot-verification.spec.js",
@@ -4826,7 +4934,7 @@
     {
       "stable_test_identifier": "85a61e5caf109bed6bc0-f6203c53135678ea95c9",
       "source_file": "client/tests/e2e/pilot-verification.spec.js",
-      "title": "pilot-verification.spec.js \u203a Verification: authentication \u203a session idle expiry redirects to login",
+      "title": "pilot-verification.spec.js › Verification: authentication › session idle expiry redirects to login",
       "project_browser": "chromium",
       "shard": "6/8",
       "route_or_surface": "Test source: client/tests/e2e/pilot-verification.spec.js",
@@ -4899,7 +5007,7 @@
     {
       "stable_test_identifier": "85a61e5caf109bed6bc0-6aa5dab0b2a27377eb80",
       "source_file": "client/tests/e2e/pilot-verification.spec.js",
-      "title": "pilot-verification.spec.js \u203a Verification: authentication \u203a unrelated IP is not blocked by another IP counter",
+      "title": "pilot-verification.spec.js › Verification: authentication › unrelated IP is not blocked by another IP counter",
       "project_browser": "chromium",
       "shard": "6/8",
       "route_or_surface": "Test source: client/tests/e2e/pilot-verification.spec.js",
@@ -4972,7 +5080,7 @@
     {
       "stable_test_identifier": "85a61e5caf109bed6bc0-1536b35a836e87581f42",
       "source_file": "client/tests/e2e/pilot-verification.spec.js",
-      "title": "pilot-verification.spec.js \u203a Verification: MSA finance threshold matrix \u203a Finance action absent below $100000 and present at/above threshold",
+      "title": "pilot-verification.spec.js › Verification: MSA finance threshold matrix › Finance action absent below $100000 and present at/above threshold",
       "project_browser": "chromium",
       "shard": "2/8",
       "route_or_surface": "Test source: client/tests/e2e/pilot-verification.spec.js",
@@ -5045,7 +5153,7 @@
     {
       "stable_test_identifier": "85a61e5caf109bed6bc0-f4e91f25482ee5efaf84",
       "source_file": "client/tests/e2e/pilot-verification.spec.js",
-      "title": "pilot-verification.spec.js \u203a Verification: MSA finance threshold matrix \u203a Legal submit persists after refresh and shows audit history",
+      "title": "pilot-verification.spec.js › Verification: MSA finance threshold matrix › Legal submit persists after refresh and shows audit history",
       "project_browser": "chromium",
       "shard": "7/8",
       "route_or_surface": "Test source: client/tests/e2e/pilot-verification.spec.js",
@@ -5118,7 +5226,7 @@
     {
       "stable_test_identifier": "85a61e5caf109bed6bc0-5f55fd8d92f4e5866d1f",
       "source_file": "client/tests/e2e/pilot-verification.spec.js",
-      "title": "pilot-verification.spec.js \u203a Verification: NDA supported actions \u203a click View contract record and Activity audit rail",
+      "title": "pilot-verification.spec.js › Verification: NDA supported actions › click View contract record and Activity audit rail",
       "project_browser": "chromium",
       "shard": "7/8",
       "route_or_surface": "Test source: client/tests/e2e/pilot-verification.spec.js",
@@ -5191,7 +5299,7 @@
     {
       "stable_test_identifier": "85a61e5caf109bed6bc0-acec5fe67c76effd7c69",
       "source_file": "client/tests/e2e/pilot-verification.spec.js",
-      "title": "pilot-verification.spec.js \u203a Verification: DPA supported actions \u203a unsupported CTAs absent; View record + Activity persist",
+      "title": "pilot-verification.spec.js › Verification: DPA supported actions › unsupported CTAs absent; View record + Activity persist",
       "project_browser": "chromium",
       "shard": "7/8",
       "route_or_surface": "Test source: client/tests/e2e/pilot-verification.spec.js",
@@ -5264,7 +5372,7 @@
     {
       "stable_test_identifier": "85a61e5caf109bed6bc0-42c6f74b0d2508ee3311",
       "source_file": "client/tests/e2e/pilot-verification.spec.js",
-      "title": "pilot-verification.spec.js \u203a Verification: search fixtures and tenancy \u203a semantic fixture empty does not 500",
+      "title": "pilot-verification.spec.js › Verification: search fixtures and tenancy › semantic fixture empty does not 500",
       "project_browser": "chromium",
       "shard": "7/8",
       "route_or_surface": "Test source: client/tests/e2e/pilot-verification.spec.js",
@@ -5337,7 +5445,7 @@
     {
       "stable_test_identifier": "85a61e5caf109bed6bc0-05a8bbd4e592685e5042",
       "source_file": "client/tests/e2e/pilot-verification.spec.js",
-      "title": "pilot-verification.spec.js \u203a Verification: search fixtures and tenancy \u203a semantic fixture error does not 500",
+      "title": "pilot-verification.spec.js › Verification: search fixtures and tenancy › semantic fixture error does not 500",
       "project_browser": "chromium",
       "shard": "7/8",
       "route_or_surface": "Test source: client/tests/e2e/pilot-verification.spec.js",
@@ -5410,7 +5518,7 @@
     {
       "stable_test_identifier": "85a61e5caf109bed6bc0-7b1be4cde39b75ac40f6",
       "source_file": "client/tests/e2e/pilot-verification.spec.js",
-      "title": "pilot-verification.spec.js \u203a Verification: search fixtures and tenancy \u203a semantic fixture keyword does not 500",
+      "title": "pilot-verification.spec.js › Verification: search fixtures and tenancy › semantic fixture keyword does not 500",
       "project_browser": "chromium",
       "shard": "7/8",
       "route_or_surface": "Test source: client/tests/e2e/pilot-verification.spec.js",
@@ -5483,7 +5591,7 @@
     {
       "stable_test_identifier": "85a61e5caf109bed6bc0-c35a44e628eafba9f227",
       "source_file": "client/tests/e2e/pilot-verification.spec.js",
-      "title": "pilot-verification.spec.js \u203a Verification: search fixtures and tenancy \u203a semantic fixture list does not 500",
+      "title": "pilot-verification.spec.js › Verification: search fixtures and tenancy › semantic fixture list does not 500",
       "project_browser": "chromium",
       "shard": "7/8",
       "route_or_surface": "Test source: client/tests/e2e/pilot-verification.spec.js",
@@ -5556,7 +5664,7 @@
     {
       "stable_test_identifier": "85a61e5caf109bed6bc0-0a092229bbd817851201",
       "source_file": "client/tests/e2e/pilot-verification.spec.js",
-      "title": "pilot-verification.spec.js \u203a Verification: search fixtures and tenancy \u203a semantic fixture malformed does not 500",
+      "title": "pilot-verification.spec.js › Verification: search fixtures and tenancy › semantic fixture malformed does not 500",
       "project_browser": "chromium",
       "shard": "7/8",
       "route_or_surface": "Test source: client/tests/e2e/pilot-verification.spec.js",
@@ -5629,7 +5737,7 @@
     {
       "stable_test_identifier": "85a61e5caf109bed6bc0-291e79dae9c9edbb74ad",
       "source_file": "client/tests/e2e/pilot-verification.spec.js",
-      "title": "pilot-verification.spec.js \u203a Verification: search fixtures and tenancy \u203a semantic fixture timeout does not 500",
+      "title": "pilot-verification.spec.js › Verification: search fixtures and tenancy › semantic fixture timeout does not 500",
       "project_browser": "chromium",
       "shard": "7/8",
       "route_or_surface": "Test source: client/tests/e2e/pilot-verification.spec.js",
@@ -5702,7 +5810,7 @@
     {
       "stable_test_identifier": "85a61e5caf109bed6bc0-babb54dc5ce083239062",
       "source_file": "client/tests/e2e/pilot-verification.spec.js",
-      "title": "pilot-verification.spec.js \u203a Verification: search fixtures and tenancy \u203a semantic fixture valid does not 500",
+      "title": "pilot-verification.spec.js › Verification: search fixtures and tenancy › semantic fixture valid does not 500",
       "project_browser": "chromium",
       "shard": "7/8",
       "route_or_surface": "Test source: client/tests/e2e/pilot-verification.spec.js",
@@ -5775,7 +5883,7 @@
     {
       "stable_test_identifier": "85a61e5caf109bed6bc0-fa8b2540038abd86f13e",
       "source_file": "client/tests/e2e/pilot-verification.spec.js",
-      "title": "pilot-verification.spec.js \u203a Verification: search fixtures and tenancy \u203a cross-tenant clause title is excluded from results",
+      "title": "pilot-verification.spec.js › Verification: search fixtures and tenancy › cross-tenant clause title is excluded from results",
       "project_browser": "chromium",
       "shard": "7/8",
       "route_or_surface": "Test source: client/tests/e2e/pilot-verification.spec.js",
@@ -5848,7 +5956,7 @@
     {
       "stable_test_identifier": "85a61e5caf109bed6bc0-d9ef3ee04bd53f304704",
       "source_file": "client/tests/e2e/pilot-verification.spec.js",
-      "title": "pilot-verification.spec.js \u203a Verification: lifecycle Stage vs Status \u203a repository Stage sort and Status filter controls",
+      "title": "pilot-verification.spec.js › Verification: lifecycle Stage vs Status › repository Stage sort and Status filter controls",
       "project_browser": "chromium",
       "shard": "8/8",
       "route_or_surface": "Test source: client/tests/e2e/pilot-verification.spec.js",
@@ -5921,7 +6029,7 @@
     {
       "stable_test_identifier": "85a61e5caf109bed6bc0-e1a4ff255ffb70f37b3f",
       "source_file": "client/tests/e2e/pilot-verification.spec.js",
-      "title": "pilot-verification.spec.js \u203a Verification: lifecycle Stage vs Status \u203a invalid lifecycle stage skip is rejected via repository bulk-update API",
+      "title": "pilot-verification.spec.js › Verification: lifecycle Stage vs Status › invalid lifecycle stage skip is rejected via repository bulk-update API",
       "project_browser": "chromium",
       "shard": "8/8",
       "route_or_surface": "Test source: client/tests/e2e/pilot-verification.spec.js",
@@ -5994,7 +6102,7 @@
     {
       "stable_test_identifier": "2c14808d47b386fba9eb-2250723bd43a63e11515",
       "source_file": "client/tests/e2e/smoke.spec.js",
-      "title": "smoke.spec.js \u203a login page renders and SSO entry is wired",
+      "title": "smoke.spec.js › login page renders and SSO entry is wired",
       "project_browser": "chromium",
       "shard": "8/8",
       "route_or_surface": "Test source: client/tests/e2e/smoke.spec.js",
@@ -6067,7 +6175,7 @@
     {
       "stable_test_identifier": "2c14808d47b386fba9eb-769b141bdad93c6217ae",
       "source_file": "client/tests/e2e/smoke.spec.js",
-      "title": "smoke.spec.js \u203a local login works and key pages load",
+      "title": "smoke.spec.js › local login works and key pages load",
       "project_browser": "chromium",
       "shard": "8/8",
       "route_or_surface": "Test source: client/tests/e2e/smoke.spec.js",
@@ -6140,7 +6248,7 @@
     {
       "stable_test_identifier": "2c14808d47b386fba9eb-c44dae64a3209abc362a",
       "source_file": "client/tests/e2e/smoke.spec.js",
-      "title": "smoke.spec.js \u203a redesigned workspace shells render on key frontend pages",
+      "title": "smoke.spec.js › redesigned workspace shells render on key frontend pages",
       "project_browser": "chromium",
       "shard": "8/8",
       "route_or_surface": "Test source: client/tests/e2e/smoke.spec.js",
@@ -6213,7 +6321,7 @@
     {
       "stable_test_identifier": "257cfc15fcd93e8e1bb7-ad625d5c6d0960d42c47",
       "source_file": "client/tests/e2e/visual-baselines.spec.js",
-      "title": "visual-baselines.spec.js \u203a Phase 1 visual baselines \u203a dashboard baseline",
+      "title": "visual-baselines.spec.js › Phase 1 visual baselines › dashboard baseline",
       "project_browser": "chromium",
       "shard": "8/8",
       "route_or_surface": "Test source: client/tests/e2e/visual-baselines.spec.js",
@@ -6252,7 +6360,7 @@
       },
       "phase": "security_clean_baseline_complete",
       "exception_or_assertion_type": "assertion_failure",
-      "normalized_signature": "assertion_failure:client/tests/e2e/visual-baselines.spec.js:Phase 1 visual baselines \u203a dashboard baseline",
+      "normalized_signature": "assertion_failure:client/tests/e2e/visual-baselines.spec.js:Phase 1 visual baselines › dashboard baseline",
       "top_relevant_stack_location": "client/tests/e2e/visual-baselines.spec.js:86:3",
       "artifact_references": [
         "https://github.com/Technivian/CLMOne/actions/runs/30767778512",
@@ -6270,7 +6378,7 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "A \u2014 Infrastructure or isolation defect",
+      "classification": "A — Infrastructure or isolation defect",
       "remediation_owner": "browser visual-baseline source branch",
       "remediation_reference": "Prompt 20 mandatory repair backlog",
       "expiry_candidate": null,
@@ -6286,7 +6394,7 @@
     {
       "stable_test_identifier": "257cfc15fcd93e8e1bb7-f0db563020cdc84ca2c5",
       "source_file": "client/tests/e2e/visual-baselines.spec.js",
-      "title": "visual-baselines.spec.js \u203a Phase 1 visual baselines \u203a list baseline",
+      "title": "visual-baselines.spec.js › Phase 1 visual baselines › list baseline",
       "project_browser": "chromium",
       "shard": "8/8",
       "route_or_surface": "Test source: client/tests/e2e/visual-baselines.spec.js",
@@ -6325,7 +6433,7 @@
       },
       "phase": "security_clean_baseline_complete",
       "exception_or_assertion_type": "assertion_failure",
-      "normalized_signature": "assertion_failure:client/tests/e2e/visual-baselines.spec.js:Phase 1 visual baselines \u203a list baseline",
+      "normalized_signature": "assertion_failure:client/tests/e2e/visual-baselines.spec.js:Phase 1 visual baselines › list baseline",
       "top_relevant_stack_location": "client/tests/e2e/visual-baselines.spec.js:90:3",
       "artifact_references": [
         "https://github.com/Technivian/CLMOne/actions/runs/30767778512",
@@ -6343,7 +6451,7 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "A \u2014 Infrastructure or isolation defect",
+      "classification": "A — Infrastructure or isolation defect",
       "remediation_owner": "browser visual-baseline source branch",
       "remediation_reference": "Prompt 20 mandatory repair backlog",
       "expiry_candidate": null,
@@ -6359,7 +6467,7 @@
     {
       "stable_test_identifier": "257cfc15fcd93e8e1bb7-97ffa1afe499590fde61",
       "source_file": "client/tests/e2e/visual-baselines.spec.js",
-      "title": "visual-baselines.spec.js \u203a Phase 1 visual baselines \u203a form baseline",
+      "title": "visual-baselines.spec.js › Phase 1 visual baselines › form baseline",
       "project_browser": "chromium",
       "shard": "8/8",
       "route_or_surface": "Test source: client/tests/e2e/visual-baselines.spec.js",
@@ -6432,7 +6540,7 @@
     {
       "stable_test_identifier": "257cfc15fcd93e8e1bb7-4abae29fec94da448a20",
       "source_file": "client/tests/e2e/visual-baselines.spec.js",
-      "title": "visual-baselines.spec.js \u203a Phase 1 visual baselines \u203a workspace baseline",
+      "title": "visual-baselines.spec.js › Phase 1 visual baselines › workspace baseline",
       "project_browser": "chromium",
       "shard": "8/8",
       "route_or_surface": "Test source: client/tests/e2e/visual-baselines.spec.js",
@@ -6471,7 +6579,7 @@
       },
       "phase": "security_clean_baseline_complete",
       "exception_or_assertion_type": "assertion_failure",
-      "normalized_signature": "assertion_failure:client/tests/e2e/visual-baselines.spec.js:Phase 1 visual baselines \u203a workspace baseline",
+      "normalized_signature": "assertion_failure:client/tests/e2e/visual-baselines.spec.js:Phase 1 visual baselines › workspace baseline",
       "top_relevant_stack_location": "client/tests/e2e/visual-baselines.spec.js:98:3",
       "artifact_references": [
         "https://github.com/Technivian/CLMOne/actions/runs/30767778512",
@@ -6489,7 +6597,7 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "A \u2014 Infrastructure or isolation defect",
+      "classification": "A — Infrastructure or isolation defect",
       "remediation_owner": "browser visual-baseline source branch",
       "remediation_reference": "Prompt 20 mandatory repair backlog",
       "expiry_candidate": null,
@@ -6505,7 +6613,7 @@
     {
       "stable_test_identifier": "257cfc15fcd93e8e1bb7-0c224bb7c0472c6e22ca",
       "source_file": "client/tests/e2e/visual-baselines.spec.js",
-      "title": "visual-baselines.spec.js \u203a Phase 1 visual baselines \u203a detail baseline",
+      "title": "visual-baselines.spec.js › Phase 1 visual baselines › detail baseline",
       "project_browser": "chromium",
       "shard": "8/8",
       "route_or_surface": "Test source: client/tests/e2e/visual-baselines.spec.js",
@@ -6544,7 +6652,7 @@
       },
       "phase": "security_clean_baseline_complete",
       "exception_or_assertion_type": "assertion_failure",
-      "normalized_signature": "assertion_failure:client/tests/e2e/visual-baselines.spec.js:Phase 1 visual baselines \u203a detail baseline",
+      "normalized_signature": "assertion_failure:client/tests/e2e/visual-baselines.spec.js:Phase 1 visual baselines › detail baseline",
       "top_relevant_stack_location": "client/tests/e2e/visual-baselines.spec.js:102:3",
       "artifact_references": [
         "https://github.com/Technivian/CLMOne/actions/runs/30767778512",
@@ -6562,7 +6670,7 @@
       "privacy_relevance": "no privacy signature in artifact",
       "audit_relevance": "workflow/record routes may emit audit events; preserve audit regression coverage",
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
-      "classification": "A \u2014 Infrastructure or isolation defect",
+      "classification": "A — Infrastructure or isolation defect",
       "remediation_owner": "browser visual-baseline source branch",
       "remediation_reference": "Prompt 20 mandatory repair backlog",
       "expiry_candidate": null,
@@ -6595,8 +6703,10 @@
     "same_failure_set": true
   },
   "classification_counts": {
-    "H \u2014 Unresolved": 48,
-    "Not applicable \u2014 terminal pass": 42
+    "Resolved — PayrollMinds-critical": 11,
+    "Resolved — shared workflow/record": 7,
+    "H — Unresolved": 31,
+    "Not applicable — terminal pass": 42
   },
-  "classification_source": "Prompt 20 artifact analysis; validated CI merge SHA 45b45a4a"
+  "classification_source": "Prompt 20 artifact analysis plus Prompt 21 and Prompt 22 local source-SHA repair evidence"
 }

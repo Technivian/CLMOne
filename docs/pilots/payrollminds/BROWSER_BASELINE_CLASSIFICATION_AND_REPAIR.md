@@ -114,3 +114,25 @@ classified. Mandatory browser infrastructure, PayrollMinds-critical, shared
 platform, or security/tenancy failures must be repaired. Only deterministic,
 isolated, inherited non-pilot assertion failures may later be considered for a
 separate proposed exception; no exception has been created here.
+
+## Prompt 21 and Prompt 22 repair evidence
+
+The historical runner observations above remain retained for traceability.
+They are superseded as the current local source-SHA result by the focused
+repair evidence below; they are not release approval or CI evidence.
+
+On implementation SHA `50aae7d4f090e36eff08a1a0b19ad747373185c6`, the
+Prompt 21 category-B collection passed **16/16** and the Prompt 22 exact
+shared workflow/Contract Record selection passed **7/7**. A subsequent
+unfiltered local collection completed **90/90** tests: **59 passed, 31 failed,
+0 skipped, 0 interrupted**. No category-B or `D-SHARED-WORKFLOW` stable
+identifier failed, and no new stable identifier appeared.
+
+The residual 31 records are the already-classified shared-UI and visual
+baseline records. Their source, classification, and proposed repair ownership
+remain in `release-baseline/browser-failures.json` and
+`release-baseline/browser-root-cause-clusters.json`; this task did not alter
+them, create an exception, or normalize any failure as a pass. The current
+release posture remains **NO-GO** until the remaining browser failures,
+full-unit baseline comparison, security scans, CI, and required independent
+release approvals are complete.

@@ -1,6 +1,7 @@
 # Browser mandatory repair plan
 
-Status: **NO-GO**. No repairs are implemented by Prompt 20.
+Status: **NO-GO**. Prompt 21 and Prompt 22 source-owned repairs are recorded;
+the remaining shared-UI and visual-baseline backlog still blocks release.
 
 ## A-CI-SNAPSHOT (4 tests)
 
@@ -24,8 +25,10 @@ Status: **NO-GO**. No repairs are implemented by Prompt 20.
 
 - Classification: D — Shared-platform defect
 - Owner: payrollminds shared repair branch
-- Repair: Trace view, form and workflow runtime; add focused regression.
-- Verification: focused affected tests, then the unfiltered 90-test suite twice on one SHA.
+- Resolution: commit `50aae7d4f090e36eff08a1a0b19ad747373185c6` repairs one
+  structured-review renderer regression and six stale governed expectations.
+- Verification: 7 focused passed, 11 affected-file tests passed, and all seven
+  identifiers passed in the one unfiltered 90-test source-SHA run.
 - Migration impact: none expected; confirm during repair.
 - Rollback: revert the owning source-PR commit.
 
@@ -37,4 +40,3 @@ Status: **NO-GO**. No repairs are implemented by Prompt 20.
 - Verification: focused affected tests, then the unfiltered 90-test suite twice on one SHA.
 - Migration impact: none expected; confirm during repair.
 - Rollback: revert the owning source-PR commit.
-

@@ -27,12 +27,14 @@ approval, exception, merge instruction, or deployment authorization.
 | MSA `special_conditions` fixture | PR #154 / integrated #157 | Browser repair source branch | PR #159, `96c31f32` | Test fixture must complete canonical drafting input; it is not a platform change. |
 | MSA same-URL postback wait | Unique integration commit `3d1d60a3` | Browser repair source branch unless code-path analysis proves shared application repair | PR #159, `4f589684` | Synchronization correction must not remain integration-only. |
 | Browser manifest and failure registry generation | PR #154 / #157 | Attribution/evidence branch | This branch | Evidence and classification are not product ownership. |
+| Shared workflow/Contract Record repairs | Prompt 22 | PayrollMinds shared repair branch | `codex/payrollminds-shared-workflow-repair`, `50aae7d4` | One renderer regression and verified stale governed expectations; permanent change is source-owned. |
 
 ## Proposed foundation order
 
 1. PR #153 runner repair;
 2. PR #158 dependency-security remediation;
-3. shared repair only if source tracing proves a product-code cause;
+3. shared workflow repair, `50aae7d4`, after source tracing proved the
+   structured-review renderer regression and isolated six stale expectations;
 4. PR #154 browser expectation repair, then PR #159 fixture and postback repair;
 5. integration/evidence branch.
 
