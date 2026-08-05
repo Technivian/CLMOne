@@ -233,6 +233,18 @@ class TotpFlowTests(TestCase):
         self.assertContains(replay, 'was not accepted')
         self.assertFalse(self.client.session.get('mfa_verified', False))
 
+    def test_challenge_input_accepts_alphanumeric_recovery_codes_on_mobile(self):
+        self._enroll()
+        session = self.client.session
+        session['mfa_verified'] = False
+        session.save()
+
+        response = self.client.get(reverse('mfa_challenge'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'inputmode="text"')
+        self.assertNotContains(response, 'inputmode="numeric"')
+
     def test_corrupt_encrypted_secret_fails_closed(self):
         self.profile.mfa_enabled = True
         self.profile.mfa_totp_secret_encrypted = 'enc:v1:not-a-valid-token'
@@ -292,5 +304,28 @@ class TotpFlowTests(TestCase):
             {'code': '000000'},
             REMOTE_ADDR='203.0.113.44',
         )
+        self.assertEqual(blocked.status_code, 429)
+        self.assertIn('Retry-After', blocked)
+
+    @override_settings(MFA_RATE_LIMIT_REQUESTS=2, MFA_RATE_LIMIT_WINDOW_SECONDS=60)
+    def test_enrollment_redirects_do_not_reset_rate_limit(self):
+        for _ in range(2):
+            response = self.client.post(
+                reverse('mfa_enroll'),
+                {'action': 'start_totp'},
+                REMOTE_ADDR='203.0.113.45',
+            )
+            self.assertRedirects(
+                response,
+                reverse('mfa_enroll'),
+                fetch_redirect_response=False,
+            )
+
+        blocked = self.client.post(
+            reverse('mfa_enroll'),
+            {'action': 'start_totp'},
+            REMOTE_ADDR='203.0.113.45',
+        )
+
         self.assertEqual(blocked.status_code, 429)
         self.assertIn('Retry-After', blocked)

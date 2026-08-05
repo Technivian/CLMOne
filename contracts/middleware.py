@@ -272,8 +272,18 @@ class AuthRateLimitMiddleware:
                 response['Retry-After'] = str(retry_after)
                 return response
 
+            mfa_verified_before = bool(request.session.get('mfa_verified'))
             response = self.get_response(request)
-            if path.startswith('/mfa/') and response.status_code == 302:
+            # A redirect alone does not prove successful MFA. Enrollment setup,
+            # resend, and guard redirects are all redirects too and must consume
+            # the rate-limit budget. Clear the bucket only when this request
+            # actually transitions the session into a verified state.
+            if (
+                path.startswith('/mfa/')
+                and response.status_code == 302
+                and not mfa_verified_before
+                and bool(request.session.get('mfa_verified'))
+            ):
                 cache.delete(key)
                 cache.delete(reset_key)
                 return response

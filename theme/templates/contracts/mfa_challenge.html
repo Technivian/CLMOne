@@ -45,7 +45,7 @@
         <input type="hidden" name="next" value="{{ next }}">
         <div class="dc-ds-form-field">
           <label for="id_mfa_code" class="dc-ds-form-field__label">Verification or recovery code</label>
-          <input id="id_mfa_code" name="code" type="text" {% if uses_totp %}inputmode="numeric"{% endif %} autocomplete="one-time-code" maxlength="32" required autofocus autocapitalize="characters" spellcheck="false" class="login-input form-control" aria-describedby="mfa-code-help">
+          <input id="id_mfa_code" name="code" type="text" inputmode="text" autocomplete="one-time-code" maxlength="32" required autofocus autocapitalize="characters" spellcheck="false" class="login-input form-control" aria-describedby="mfa-code-help">
           <p id="mfa-code-help" class="mfa-note">You can use one of your saved recovery codes if your factor is unavailable.</p>
         </div>
         {% include "design_system/button.html" with type="submit" tone="primary" label="Verify" class_name="dc-ds-auth-submit" %}
