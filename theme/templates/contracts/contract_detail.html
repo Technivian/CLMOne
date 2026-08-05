@@ -547,7 +547,66 @@
 (() => {
   const promptField = document.getElementById('ai-assistant-prompt'); const submit = document.getElementById('ai-assistant-submit'); const status = document.getElementById('ai-assistant-status'); const errorBox = document.getElementById('ai-assistant-error'); const output = document.getElementById('ai-assistant-output');
   if (!promptField || !submit || !status || !errorBox || !output) return;
-  submit.addEventListener('click', async () => { status.textContent = 'Reviewing…'; errorBox.classList.add('hidden'); submit.disabled = true; try { const response = await fetch("{% url 'contracts:contract_ai_assistant' contract.pk %}", { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' }, body: JSON.stringify({ prompt: promptField.value }) }); const data = await response.json().catch(() => null); if (!response.ok || !data || data.ok === false) throw new Error((data && data.error) || 'Unable to run the review right now.'); const result = data.response || {}; output.textContent = [result.summary && result.summary.status, result.summary && result.summary.counterparty, ...(result.recommendations || [])].filter(Boolean).join(' · ') || 'No additional recommendations returned.'; output.classList.remove('hidden'); status.textContent = 'Done'; } catch (error) { errorBox.textContent = error.message; errorBox.classList.remove('hidden'); status.textContent = ''; } finally { submit.disabled = false; } });
+  let inFlight = false;
+  const clearNode = (node) => { while (node.firstChild) node.removeChild(node.firstChild); };
+  const section = (labelText) => {
+    const wrap = document.createElement('div');
+    const label = document.createElement('div');
+    label.className = 'contract-subsection-title';
+    label.textContent = labelText;
+    wrap.appendChild(label);
+    return wrap;
+  };
+  const bulletList = (items) => {
+    const list = document.createElement('ul');
+    list.className = 'space-y-1 text-sm c-muted list-disc pl-4 mt-1';
+    items.forEach((item) => { const row = document.createElement('li'); row.textContent = item; list.appendChild(row); });
+    return list;
+  };
+  const renderResult = (result) => {
+    clearNode(output);
+    const summary = result.summary || {};
+    const summaryWrap = section('Summary');
+    const summaryLine = document.createElement('p');
+    summaryLine.className = 'text-sm c-primary font-medium';
+    const summaryParts = [summary.contract_type, summary.status, summary.counterparty].filter(Boolean);
+    summaryLine.textContent = summaryParts.length ? summaryParts.join(' · ') : 'No summary available.';
+    summaryWrap.appendChild(summaryLine);
+    output.appendChild(summaryWrap);
+    [['Key dates', result.timeline], ['Risks', result.risks], ['Recommendations', result.recommendations]].forEach(([label, items]) => {
+      if (Array.isArray(items) && items.length) { const wrap = section(label); wrap.appendChild(bulletList(items)); output.appendChild(wrap); }
+    });
+    if (Array.isArray(result.citations) && result.citations.length) {
+      const wrap = section('Evidence (fields checked)');
+      const citations = result.citations.filter((citation) => citation && citation.field).map((citation) => `${citation.field}: ${citation.value === null || citation.value === undefined || citation.value === '' ? '—' : citation.value}`);
+      if (citations.length) wrap.appendChild(bulletList(citations));
+      output.appendChild(wrap);
+    }
+    output.classList.remove('hidden');
+  };
+  submit.addEventListener('click', async () => {
+    if (inFlight) return;
+    inFlight = true;
+    status.textContent = 'Reviewing…';
+    errorBox.classList.add('hidden');
+    errorBox.textContent = '';
+    output.classList.add('hidden');
+    submit.disabled = true;
+    try {
+      const response = await fetch("{% url 'contracts:contract_ai_assistant' contract.pk %}", { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' }, body: JSON.stringify({ prompt: promptField.value }) });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || !data || data.ok === false) throw new Error((data && data.error) || 'Unable to run the review right now.');
+      renderResult(data.response || {});
+      status.textContent = 'Done';
+    } catch (error) {
+      errorBox.textContent = error.message;
+      errorBox.classList.remove('hidden');
+      status.textContent = '';
+    } finally {
+      submit.disabled = false;
+      inFlight = false;
+    }
+  });
 })();
 </script>
 {% endif %}

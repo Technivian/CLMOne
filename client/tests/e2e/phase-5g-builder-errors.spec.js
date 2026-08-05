@@ -119,14 +119,15 @@ test.describe('Phase 5G builder error and blocked states', () => {
   test('contract record shows deterministic signature routing blockers', async ({ page }) => {
     await login(page);
     await page.setViewportSize({ width: 1440, height: 1000 });
-    await page.goto('/contracts/1/');
+    // Contract 1 is a deterministic record in the authenticated E2E workspace.
+    // Exercise the governed workflow tab rather than relying on a retired
+    // presentation-only blocker list.
+    await page.goto('/contracts/1/?tab=workflow');
     await expect(page.locator('.dc-ds-workspace--record')).toBeVisible();
-    const blockers = page.locator('[aria-label="Workflow blockers"]');
-    await expect(blockers).toBeVisible();
-    await expect(blockers.getByText('Blocked')).toHaveCount(2);
-    await expect(blockers.locator('.dc-ds-badge--attention', { hasText: 'Blocked' })).toHaveCount(2);
-    await expect(blockers.getByText('The contract must be fully approved before signature routing.')).toBeVisible();
-    await expect(blockers.getByText('At least one approval is required before signature routing.')).toBeVisible();
+    const workflow = page.getByRole('main', { name: 'Contract workspace' });
+    await expect(workflow.getByRole('heading', { name: 'Full workflow' })).toBeVisible();
+    await expect(workflow.getByText('Signature requirement', { exact: true })).toBeVisible();
+    await expect(workflow.getByText('Move the contract to Approval or Signature stage before routing signatures.', { exact: true })).toBeVisible();
 
     const primary = page.locator('.dc-ds-workspace--record .dc-ds-button--primary').first();
     await primary.focus();
@@ -134,7 +135,7 @@ test.describe('Phase 5G builder error and blocked states', () => {
 
     await page.setViewportSize({ width: 390, height: 844 });
     await page.reload();
-    await expect(page.locator('[aria-label="Workflow blockers"]')).toBeVisible();
+    await expect(page.getByText('Signature requirement', { exact: true })).toBeVisible();
     const dimensions = await page.evaluate(() => ({
       documentWidth: document.documentElement.scrollWidth,
       viewportWidth: window.innerWidth,
