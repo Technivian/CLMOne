@@ -1,0 +1,106 @@
+{
+  "source_sha": "3d1d60a34eebd8544a613e98bd204bd5acba20f1",
+  "validated_merge_sha": "45b45a4a",
+  "clusters": [
+    {
+      "cluster_id": "A-CI-SNAPSHOT",
+      "classification": "A \u2014 Infrastructure or isolation defect",
+      "root_cause_summary": "Missing Linux Playwright snapshot assets; CI cannot evaluate the assertions.",
+      "affected_test_ids": [
+        "257cfc15fcd93e8e1bb7-ad625d5c6d0960d42c47",
+        "257cfc15fcd93e8e1bb7-f0db563020cdc84ca2c5",
+        "257cfc15fcd93e8e1bb7-4abae29fec94da448a20",
+        "257cfc15fcd93e8e1bb7-0c224bb7c0472c6e22ca"
+      ],
+      "affected_tests": 4,
+      "owner": "browser visual-baseline source branch",
+      "repair_plan": "Add reviewed Linux snapshots; no broad acceptance.",
+      "first_failing_layer": "Playwright assertion or snapshot resolution",
+      "shared_services": "canonical Django routes, browser fixture server, and shared UI/workflow surfaces",
+      "security_relevance": "No direct security signature; mandatory regression review required"
+    },
+    {
+      "cluster_id": "B-PILOT-JOURNEY",
+      "classification": "B \u2014 PayrollMinds-critical defect",
+      "root_cause_summary": "Pilot contract/workspace journey or pilot gate assertion does not reach its governed canonical state.",
+      "affected_test_ids": [
+        "712090e5dc3187d4673e-2aab6375eaeb394b4897",
+        "2c450ddd9493523d7369-33c437967b18c8d26f87",
+        "f2651e76d1da201d3b4f-b613d495e975bf84b61f",
+        "f8620b41f80b0ca10072-4aa1e4cea4011faa09eb",
+        "f8620b41f80b0ca10072-2850cdfd8c0c53a5d570",
+        "f8620b41f80b0ca10072-0ee8f1f156591e82f8b6",
+        "f8620b41f80b0ca10072-084e8de66c0d42bf2193",
+        "800d2b7dba63f5988d01-a4fb7de2788492e7e90e",
+        "800d2b7dba63f5988d01-f001ad7a342be2e43ebe",
+        "3625eb01300667096bb4-5ab9e796c2feeb4b9908",
+        "3625eb01300667096bb4-69784d3cb2f69f84e188"
+      ],
+      "affected_tests": 11,
+      "owner": "payrollminds browser repair branch",
+      "repair_plan": "Trace route, fixture and policy state; repair smallest canonical-path defect.",
+      "first_failing_layer": "Playwright assertion or snapshot resolution",
+      "shared_services": "canonical Django routes, browser fixture server, and shared UI/workflow surfaces",
+      "security_relevance": "No direct security signature; mandatory regression review required"
+    },
+    {
+      "cluster_id": "D-SHARED-WORKFLOW",
+      "classification": "D \u2014 Shared-platform defect",
+      "root_cause_summary": "Governed workflow, contract record, or shared lifecycle surface fails a browser assertion.",
+      "affected_test_ids": [
+        "d3423a6dec4bff43ec8a-bc0c98de23428e11624e",
+        "d3423a6dec4bff43ec8a-1a9217ac4de00eb7548d",
+        "d3423a6dec4bff43ec8a-2c017268bc8dcf22decf",
+        "0815266e2b373abe5480-1597233b7e54ae6ff2f7",
+        "f0fb41fd16ce65710d14-ce229ae95d14323a4755",
+        "f0fb41fd16ce65710d14-6b0484165e5db34bfedd",
+        "b2b658ee7428d119be23-7f0f365fa78e5284615b"
+      ],
+      "affected_tests": 7,
+      "owner": "payrollminds shared repair branch",
+      "repair_plan": "Trace view, form and workflow runtime; add focused regression.",
+      "first_failing_layer": "Playwright assertion or snapshot resolution",
+      "shared_services": "canonical Django routes, browser fixture server, and shared UI/workflow surfaces",
+      "security_relevance": "No direct security signature; mandatory regression review required"
+    },
+    {
+      "cluster_id": "D-SHARED-UI",
+      "classification": "D \u2014 Shared-platform defect",
+      "root_cause_summary": "Canonical shared shell, list, form, focus, responsive, or status surface disagrees with browser assertion.",
+      "affected_test_ids": [
+        "fcac23b42f5942783f9d-afc9dfafbd8fbb3b76cf",
+        "fcac23b42f5942783f9d-52edd03349ac746fa499",
+        "9e24326c6c84b9aae2de-7d2490bc0040d4b5e052",
+        "e14dd59f59bd59baee8e-1de963c13317565a8828",
+        "33901bce72702da02a7d-924b55790fb2e244e84d",
+        "33901bce72702da02a7d-46f8026b65fb76299c74",
+        "33901bce72702da02a7d-cf6b99e1f41720e7eb2f",
+        "29ed2972350ecb1766f9-4753e2042891a08768bb",
+        "29ed2972350ecb1766f9-7c315d97f921507e9e10",
+        "29ed2972350ecb1766f9-e09ae741f62c7a897c38",
+        "f1901f02f341fbefe840-92185555d7fd73f84572",
+        "0b7a7653555a0bd633f1-7598607be74a1d7e0e62",
+        "cff08f68624ffecd25a5-545a22d21fa4d130cc03",
+        "cff08f68624ffecd25a5-9a416527281cc4a7c777",
+        "6ac8114eb10074ca31d4-2282b3f4c2acb3e15cb7",
+        "6ac8114eb10074ca31d4-97be321eba251589a641",
+        "6ac8114eb10074ca31d4-d4521cc6c2c1d5a62cad",
+        "6ac8114eb10074ca31d4-dce0702d4ecd05ca65b9",
+        "ef99e9621f4244b0bbc2-bacaa791acb7959a2d87",
+        "ef99e9621f4244b0bbc2-161a7278eaf25f5f0fd5",
+        "ef99e9621f4244b0bbc2-30d4582f3ac064a46bd6",
+        "779d1e2ca76bed658459-ef73927f33eef8ba5272",
+        "4f7fc92a3a82dbbe723a-f4b58c519c9a4a8b7ff5",
+        "4f7fc92a3a82dbbe723a-6c913a7f199853eb98b7",
+        "a0f8a50d9100f29fce8e-b4bc5a22a5e8d17a654a",
+        "a0f8a50d9100f29fce8e-e6913fb8435b5f8e86c0"
+      ],
+      "affected_tests": 26,
+      "owner": "browser shared UI repair branch",
+      "repair_plan": "Trace canonical component and route; correct implementation or stale assertion only after proof.",
+      "first_failing_layer": "Playwright assertion or snapshot resolution",
+      "shared_services": "canonical Django routes, browser fixture server, and shared UI/workflow surfaces",
+      "security_relevance": "No direct security signature; mandatory regression review required"
+    }
+  ]
+}
