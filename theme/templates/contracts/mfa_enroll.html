@@ -1,61 +1,103 @@
-{% extends "base.html" %}
+{% extends 'base_fullscreen.html' %}
+{% load static %}
 
-{% block content %}
-<div class="ad-container" style="max-width:480px;margin:3rem auto">
-  <div class="ad-card" style="padding:2rem">
+{% block title %}Set up MFA – CLM One{% endblock %}
+{% block page_css %}<link href="{% static 'css/mfa.css' %}{% if ASSET_VERSION %}?v={{ ASSET_VERSION }}{% endif %}" rel="stylesheet">{% endblock %}
 
-    <div style="text-align:center;margin-bottom:1.75rem">
-      <div style="width:56px;height:56px;border-radius:50%;background:var(--ad-brand-100,#eff6ff);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem">
-        <svg width="28" height="28" fill="none" stroke="var(--ad-brand,#2563eb)" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-        </svg>
-      </div>
-      <h1 style="font-size:1.375rem;font-weight:700;margin-bottom:0.25rem">Set up two-factor authentication</h1>
-      <p style="color:var(--ad-text-secondary)">Your organisation requires MFA. We'll send a code to <strong>{{ request.user.email }}</strong>.</p>
+{% block body %}
+<div class="dc-ds-auth-shell">
+  <a class="dc-ds-auth-brand" href="{% url 'index' %}" aria-label="CLM One home">
+    <img src="{% static 'brand/clm-one-logo-transparent.webp' %}" alt="CLM One" class="clm-one-logo clm-one-logo--auth">
+  </a>
+
+  <section class="dc-ds-auth-context" aria-labelledby="mfa-context-title">
+    <div class="dc-ds-auth-context__inner">
+      <p class="dc-ds-auth-eyebrow">Account security</p>
+      <h2 id="mfa-context-title">Protect every contract decision.</h2>
+      <p class="dc-ds-auth-context__copy">A second factor prevents a stolen password from becoming workspace access.</p>
+      <ul class="dc-ds-auth-benefits">
+        <li><span class="dc-ds-auth-benefits__icon">{% include "design_system/icon.html" with name="shield" %}</span><span>Verification is required before protected workspace access</span></li>
+        <li><span class="dc-ds-auth-benefits__icon">{% include "design_system/icon.html" with name="lock" %}</span><span>Recovery codes are single-use and stored as hashes</span></li>
+        <li><span class="dc-ds-auth-benefits__icon">{% include "design_system/icon.html" with name="file-text" %}</span><span>Enrollment and verification create audit evidence</span></li>
+      </ul>
     </div>
+  </section>
 
-    {% if error %}
-    <div class="alert alert-error" style="margin-bottom:1rem">{{ error }}</div>
-    {% endif %}
+  <main class="dc-ds-auth-main">
+    <div class="dc-ds-auth-card">
+      <header class="dc-ds-auth-card__head">
+        <h1>Set up multi-factor authentication</h1>
+        {% if totp_enrollment_enabled %}
+        <p>Connect an authenticator app to {{ request.user.email|default:request.user.username }}.</p>
+        {% else %}
+        <p>Verify the email address {{ request.user.email }}.</p>
+        {% endif %}
+      </header>
 
-    {% if not profile.mfa_enrollment_code_hash %}
-    <form method="post" style="margin-bottom:1rem">
-      {% csrf_token %}
-      <input type="hidden" name="action" value="send">
-      <button type="submit" class="dc-ds-button dc-ds-button--primary" style="width:100%;justify-content:center">
-        Send verification code
-      </button>
-    </form>
-    {% else %}
-    <form method="post">
-      {% csrf_token %}
-      <div style="margin-bottom:1rem">
-        <label style="display:block;font-size:0.875rem;font-weight:500;margin-bottom:0.375rem">Enter the code sent to your email</label>
-        <input
-          type="text"
-          name="code"
-          inputmode="numeric"
-          maxlength="6"
-          pattern="[0-9]{6}"
-          autocomplete="one-time-code"
-          autofocus
-          required
-          style="width:100%;text-align:center;font-size:1.5rem;letter-spacing:0.4em;padding:0.5rem"
-          class="form-input"
-        >
+      {% if messages %}
+      <div class="dc-ds-auth-messages" aria-live="polite">
+        {% for message in messages %}<div class="dc-ds-auth-message">{{ message }}</div>{% endfor %}
       </div>
-      <button type="submit" class="dc-ds-button dc-ds-button--primary" style="width:100%;justify-content:center">Enable MFA</button>
-    </form>
+      {% endif %}
+      {% if error %}<div class="dc-ds-form-errors dc-ds-auth-errors" role="alert"><p>{{ error }}</p></div>{% endif %}
 
-    <form method="post" style="margin-top:0.75rem">
-      {% csrf_token %}
-      <input type="hidden" name="action" value="send">
-      <button type="submit" class="dc-ds-button dc-ds-button--quiet" style="width:100%;justify-content:center;font-size:0.875rem">
-        Resend code
-      </button>
-    </form>
-    {% endif %}
+      {% if totp_enrollment_enabled %}
+        {% if pending_totp_secret %}
+        <div class="dc-ds-auth-form">
+          <img src="{{ totp_qr_data_uri }}" alt="QR code for CLM One authenticator setup" class="mfa-qr">
+          <div class="dc-ds-form-field">
+            <span class="dc-ds-form-field__label">Can’t scan the code?</span>
+            <p class="mfa-note">Enter this setup key manually. Do not share it.</p>
+            <code class="mfa-secret" data-testid="totp-manual-secret">{{ pending_totp_secret }}</code>
+          </div>
+          <form method="post" class="dc-ds-auth-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="verify_totp">
+            <div class="dc-ds-form-field">
+              <label for="id_totp_code" class="dc-ds-form-field__label">Six-digit authenticator code</label>
+              <input id="id_totp_code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required autofocus class="login-input form-control" aria-describedby="totp-code-help">
+              <p id="totp-code-help" class="mfa-note">Codes change every 30 seconds.</p>
+            </div>
+            {% include "design_system/button.html" with type="submit" tone="primary" label="Verify and enable" class_name="dc-ds-auth-submit" %}
+          </form>
+          <form method="post" class="dc-ds-auth-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="start_totp">
+            {% include "design_system/button.html" with type="submit" tone="secondary" label="Generate a new setup key" %}
+          </form>
+        </div>
+        {% else %}
+        <form method="post" class="dc-ds-auth-form">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="start_totp">
+          <p class="mfa-note">Use Microsoft Authenticator, Google Authenticator, 1Password, or another standards-compatible app.</p>
+          {% include "design_system/button.html" with type="submit" tone="primary" label="Set up authenticator app" class_name="dc-ds-auth-submit" %}
+        </form>
+        {% endif %}
+      {% elif not profile.mfa_enrollment_code_hash %}
+      <form method="post" class="dc-ds-auth-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="send">
+        {% include "design_system/button.html" with type="submit" tone="primary" label="Send verification code" class_name="dc-ds-auth-submit" %}
+      </form>
+      {% else %}
+      <form method="post" class="dc-ds-auth-form">
+        {% csrf_token %}
+        <div class="dc-ds-form-field">
+          <label for="id_email_mfa_code" class="dc-ds-form-field__label">Email verification code</label>
+          <input id="id_email_mfa_code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required autofocus class="login-input form-control">
+        </div>
+        {% include "design_system/button.html" with type="submit" tone="primary" label="Verify and enable" class_name="dc-ds-auth-submit" %}
+      </form>
+      <form method="post" class="dc-ds-auth-form mfa-secondary-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="send">
+        {% include "design_system/button.html" with type="submit" tone="secondary" label="Resend code" %}
+      </form>
+      {% endif %}
 
-  </div>
+      <div class="dc-ds-auth-trust">{% include "design_system/icon.html" with name="shield" %}<span>Fail-closed secure enrollment</span></div>
+    </div>
+  </main>
 </div>
 {% endblock %}

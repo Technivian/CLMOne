@@ -93,6 +93,21 @@ if len(SECRET_KEY) < 32 or any(m in SECRET_KEY.lower() for m in _INSECURE_SECRET
         'randomly generated secret of at least 32 characters (50+ recommended).'
     )
 
+if MFA_TOTP_ENROLLMENT_ENABLED:
+    if not MFA_TOTP_ENCRYPTION_KEY:
+        raise ImproperlyConfigured(
+            'MFA_TOTP_ENROLLMENT_ENABLED requires a vaulted MFA_TOTP_ENCRYPTION_KEY in production.'
+        )
+    try:
+        from cryptography.fernet import Fernet
+        Fernet(MFA_TOTP_ENCRYPTION_KEY.encode('ascii'))
+        for previous_key in MFA_TOTP_ENCRYPTION_PREVIOUS_KEYS:
+            Fernet(previous_key.encode('ascii'))
+    except (ValueError, TypeError, UnicodeError) as exc:
+        raise ImproperlyConfigured(
+            'MFA TOTP encryption keys must be valid Fernet keys.'
+        ) from exc
+
 ALLOW_SQLITE_IN_PRODUCTION = base._bool_env('ALLOW_SQLITE_IN_PRODUCTION', default=False)
 # `manage.py test` forces sqlite in settings_base.py regardless of DATABASE_URL
 # (Sub-block D: a local checkout's .env can set DJANGO_ENV=production, which

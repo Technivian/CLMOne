@@ -235,8 +235,11 @@ class AuthRateLimitMiddleware:
                 return self.get_response(request)
 
             limit, window = self._policy_for_path(path)
-            key = self._auth_rate_limit_key(path, client_ip)
-            reset_key = self._auth_rate_limit_reset_key(path, client_ip)
+            subject = ''
+            if path.startswith('/mfa/'):
+                subject = str(request.session.get('_auth_user_id') or 'anonymous')
+            key = self._auth_rate_limit_key(path, client_ip, subject)
+            reset_key = self._auth_rate_limit_reset_key(path, client_ip, subject)
             now = int(time.time())
             count, reset_at = self._load_auth_counter(key, reset_key, window, now)
 
@@ -270,6 +273,10 @@ class AuthRateLimitMiddleware:
                 return response
 
             response = self.get_response(request)
+            if path.startswith('/mfa/') and response.status_code == 302:
+                cache.delete(key)
+                cache.delete(reset_key)
+                return response
             self._increment_auth_counter(key, reset_key, reset_at, now)
             return response
         except Exception as exc:
@@ -286,12 +293,14 @@ class AuthRateLimitMiddleware:
             return HttpResponse('Service temporarily unavailable.', status=503, content_type='text/plain')
 
     @staticmethod
-    def _auth_rate_limit_key(path, client_ip):
-        return f'auth-rl:{path}:{client_ip}'
+    def _auth_rate_limit_key(path, client_ip, subject=''):
+        suffix = f':{subject}' if subject else ''
+        return f'auth-rl:{path}:{client_ip}{suffix}'
 
     @staticmethod
-    def _auth_rate_limit_reset_key(path, client_ip):
-        return f'auth-rl-reset:{path}:{client_ip}'
+    def _auth_rate_limit_reset_key(path, client_ip, subject=''):
+        suffix = f':{subject}' if subject else ''
+        return f'auth-rl-reset:{path}:{client_ip}{suffix}'
 
     @staticmethod
     def _load_auth_counter(key, reset_key, window, now):
@@ -349,6 +358,11 @@ class AuthRateLimitMiddleware:
             return (
                 int(getattr(settings, 'REGISTER_RATE_LIMIT_REQUESTS', 10)),
                 int(getattr(settings, 'REGISTER_RATE_LIMIT_WINDOW_SECONDS', 300)),
+            )
+        if path in {'/mfa/challenge/', '/mfa/enroll/'}:
+            return (
+                int(getattr(settings, 'MFA_RATE_LIMIT_REQUESTS', 8)),
+                int(getattr(settings, 'MFA_RATE_LIMIT_WINDOW_SECONDS', 300)),
             )
         return (
             int(getattr(settings, 'LOGIN_RATE_LIMIT_REQUESTS', 10)),

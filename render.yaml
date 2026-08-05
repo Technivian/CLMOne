@@ -36,6 +36,8 @@ envVarGroups:
         value: "null"
       - key: SSO_ENABLED
         value: "false"
+      - key: MFA_TOTP_ENROLLMENT_ENABLED
+        value: "false"
 
 databases:
   - name: clm-one-postgres

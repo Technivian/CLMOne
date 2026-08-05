@@ -439,12 +439,23 @@ DEBUG_TOOLBAR_CONFIG = {
 }
 
 RATELIMIT_ENABLED = _bool_env('RATELIMIT_ENABLED', default=True)
-RATELIMIT_PATHS = ('/login/', '/register/')
+RATELIMIT_PATHS = ('/login/', '/register/', '/mfa/challenge/', '/mfa/enroll/')
 RATELIMIT_TRUSTED_IPS = tuple(_csv_env('RATELIMIT_TRUSTED_IPS'))
 LOGIN_RATE_LIMIT_REQUESTS = int(os.getenv('LOGIN_RATE_LIMIT_REQUESTS', '10'))
 LOGIN_RATE_LIMIT_WINDOW_SECONDS = int(os.getenv('LOGIN_RATE_LIMIT_WINDOW_SECONDS', '300'))
 REGISTER_RATE_LIMIT_REQUESTS = int(os.getenv('REGISTER_RATE_LIMIT_REQUESTS', '10'))
 REGISTER_RATE_LIMIT_WINDOW_SECONDS = int(os.getenv('REGISTER_RATE_LIMIT_WINDOW_SECONDS', '300'))
+MFA_RATE_LIMIT_REQUESTS = int(os.getenv('MFA_RATE_LIMIT_REQUESTS', '8'))
+MFA_RATE_LIMIT_WINDOW_SECONDS = int(os.getenv('MFA_RATE_LIMIT_WINDOW_SECONDS', '300'))
+
+# Authenticator-app (RFC 6238 TOTP) enrollment is separately gated so the
+# capability can ship without activating a new identity factor. Stored factors
+# continue to verify when enrollment is later switched off; this prevents a
+# rollback from locking out already-enrolled users.
+MFA_TOTP_ENROLLMENT_ENABLED = _bool_env('MFA_TOTP_ENROLLMENT_ENABLED', default=False)
+MFA_TOTP_ENCRYPTION_KEY = os.getenv('MFA_TOTP_ENCRYPTION_KEY', '').strip()
+MFA_TOTP_ENCRYPTION_PREVIOUS_KEYS = _csv_env('MFA_TOTP_ENCRYPTION_PREVIOUS_KEYS')
+MFA_TOTP_ISSUER = os.getenv('MFA_TOTP_ISSUER', 'CLM One').strip() or 'CLM One'
 
 # Token-authenticated API surfaces (Bearer token). We throttle repeated AUTH
 # FAILURES per IP rather than total volume, so legitimate authenticated traffic

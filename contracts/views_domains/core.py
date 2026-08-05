@@ -446,8 +446,9 @@ class LoginView(FormView):
             self.request.session['mfa_verified'] = False
             if not profile.mfa_enabled:
                 return redirect('mfa_enroll')
-            code = profile.issue_mfa_enrollment_code()
-            _send_mfa_email(user, code)
+            if not profile.uses_totp:
+                code = profile.issue_mfa_enrollment_code()
+                _send_mfa_email(user, code)
             return redirect('mfa_challenge')
 
         next_url = _safe_next(self.request)
@@ -510,32 +511,52 @@ class MfaRequiredMixin:
 
 @login_required
 def mfa_challenge(request):
-    """Enter the emailed OTP to set the mfa_verified session flag."""
+    """Verify the user's enrolled factor or a single-use recovery code."""
     next_url = _safe_next(request)
     error = None
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
 
     if request.method == 'POST':
         code = request.POST.get('code', '').strip()
-        profile, _ = UserProfile.objects.get_or_create(user=request.user)
+        factor_verified = False
+        event_type = ''
+        if profile.uses_totp:
+            from contracts.services.mfa_totp import verify_totp_challenge
+            factor_verified = verify_totp_challenge(profile, code)
+            event_type = 'mfa.totp_verified'
+        else:
+            factor_verified = profile.check_mfa_code(code)
+            event_type = 'mfa.email_otp_verified'
 
-        if profile.check_mfa_code(code):
-            # Valid OTP — mark session verified.
+        if factor_verified:
             request.session['mfa_verified'] = True
+            org = get_user_organization(request.user)
+            log_action(
+                request.user,
+                AuditLog.Action.UPDATE,
+                'UserProfile',
+                object_id=profile.id,
+                object_repr=str(profile),
+                changes={'event': event_type, 'organization_id': getattr(org, 'id', None)},
+                request=request,
+                organization=org,
+                event_type=event_type,
+            )
             return redirect(next_url)
 
         # Try as a recovery code via the canonical service (atomic consumption,
         # audit event, replay prevention, suspicious-use notification).
         from contracts.services.recovery_codes import consume_recovery_code
-        from contracts.tenancy import get_user_organization
         org = get_user_organization(request.user)
         if consume_recovery_code(profile, code, request=request, organization=org):
             return redirect(next_url)
 
-        error = 'Invalid or expired code. Request a new one below.'
+        error = 'The verification code was not accepted. Try again or use a recovery code.'
 
     return render(request, 'contracts/mfa_challenge.html', {
         'next': next_url,
         'error': error,
+        'uses_totp': profile.uses_totp,
     })
 
 
@@ -544,29 +565,90 @@ def mfa_challenge_resend(request):
     """Re-issue the OTP and redirect back to the challenge page."""
     if request.method == 'POST':
         profile, _ = UserProfile.objects.get_or_create(user=request.user)
-        code = profile.issue_mfa_enrollment_code()
-        _send_mfa_email(request.user, code)
-        messages.success(request, 'A new verification code has been sent to your email.')
+        if profile.uses_totp:
+            messages.info(request, 'Use the current code in your authenticator app or a recovery code.')
+        else:
+            code = profile.issue_mfa_enrollment_code()
+            _send_mfa_email(request.user, code)
+            messages.success(request, 'A new verification code has been sent to your email.')
     next_url = _safe_next(request)
     return redirect(reverse('mfa_challenge') + '?' + urlencode({'next': next_url}))
 
 
 @login_required
 def mfa_enroll(request):
-    """First-time MFA enrollment: issue code, verify, activate MFA for user."""
+    """Enroll the configured MFA method, with TOTP preferred when enabled."""
     profile, _ = UserProfile.objects.get_or_create(user=request.user)
     error = None
+    totp_enrollment_enabled = bool(
+        getattr(settings, 'MFA_TOTP_ENROLLMENT_ENABLED', False)
+    )
+
+    # This route is middleware-exempt so an unenrolled user can satisfy a
+    # required policy. That exemption must never permit factor replacement by
+    # a password-only session: an enrolled user must prove the current factor.
+    if profile.mfa_enabled and not request.session.get('mfa_verified'):
+        return redirect(
+            reverse('mfa_challenge')
+            + '?'
+            + urlencode({'next': reverse('mfa_enroll')})
+        )
+    if profile.uses_totp:
+        messages.info(request, 'An authenticator app is already enrolled for this account.')
+        return redirect('profile')
 
     if request.method == 'POST':
         action = request.POST.get('action')
-        if action == 'send':
+        if totp_enrollment_enabled and action == 'start_totp':
+            from contracts.services.mfa_totp import begin_totp_enrollment
+            begin_totp_enrollment(profile)
+            return redirect('mfa_enroll')
+
+        if totp_enrollment_enabled and action == 'verify_totp':
+            from contracts.services.mfa_totp import confirm_totp_enrollment
+            code = request.POST.get('code', '').strip()
+            if confirm_totp_enrollment(profile, code):
+                request.session['mfa_verified'] = True
+                recovery_codes = profile.issue_mfa_recovery_codes()
+                request.session['mfa_recovery_codes_preview'] = recovery_codes
+                org = get_user_organization(request.user)
+                log_action(
+                    request.user,
+                    AuditLog.Action.UPDATE,
+                    'UserProfile',
+                    object_id=profile.id,
+                    object_repr=str(profile),
+                    changes={
+                        'event': 'mfa.totp_enrolled',
+                        'organization_id': getattr(org, 'id', None),
+                        'recovery_code_count': len(recovery_codes),
+                    },
+                    request=request,
+                    organization=org,
+                    event_type='mfa.totp_enrolled',
+                )
+                try:
+                    from contracts.services.notifications import send_mfa_enrolled_notification
+                    send_mfa_enrolled_notification(request.user)
+                except Exception:
+                    logger.exception('mfa_enrolled_notification failed user=%s', request.user.pk)
+                messages.success(
+                    request,
+                    'Authenticator app enrolled. Save your recovery codes now.',
+                )
+                return redirect('profile')
+            error = 'The authenticator code was not accepted. Check your device time and try again.'
+
+        elif totp_enrollment_enabled:
+            error = 'Start authenticator setup before entering a code.'
+
+        elif action == 'send':
             code = profile.issue_mfa_enrollment_code()
             _send_mfa_email(request.user, code)
             messages.success(request, 'Verification code sent to your email.')
             return redirect('mfa_enroll')
 
-        code = request.POST.get('code', '').strip()
-        if profile.verify_mfa_enrollment_code(code):
+        elif profile.verify_mfa_enrollment_code(request.POST.get('code', '').strip()):
             request.session['mfa_verified'] = True
             messages.success(request, 'MFA enabled. Your account is now protected.')
             # Security notification: inform the user MFA was enabled on their account.
@@ -576,11 +658,28 @@ def mfa_enroll(request):
             except Exception:
                 logger.exception('mfa_enrolled_notification failed user=%s', request.user.pk)
             return redirect('dashboard')
-        error = 'Invalid or expired code. Please try again.'
+        elif not totp_enrollment_enabled:
+            error = 'Invalid or expired code. Please try again.'
+
+    pending_totp_secret = ''
+    totp_qr_data_uri = ''
+    if totp_enrollment_enabled and profile.mfa_totp_secret_encrypted and not profile.mfa_totp_confirmed_at:
+        try:
+            from contracts.services.mfa_totp import pending_totp_secret, totp_qr_data_uri as build_qr
+            pending_totp_secret = pending_totp_secret(profile)
+            if pending_totp_secret:
+                account_name = request.user.email or request.user.get_username()
+                totp_qr_data_uri = build_qr(secret=pending_totp_secret, account_name=account_name)
+        except Exception:
+            logger.exception('mfa_totp_pending_secret_failed user=%s', request.user.pk)
+            error = 'Authenticator setup could not be loaded safely. Start setup again.'
 
     return render(request, 'contracts/mfa_enroll.html', {
         'profile': profile,
         'error': error,
+        'totp_enrollment_enabled': totp_enrollment_enabled,
+        'pending_totp_secret': pending_totp_secret,
+        'totp_qr_data_uri': totp_qr_data_uri,
     })
 
 

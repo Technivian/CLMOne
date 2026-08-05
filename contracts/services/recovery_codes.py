@@ -44,6 +44,10 @@ def consume_recovery_code(
     # Mark this session as MFA-verified.
     if request is not None:
         request.session['mfa_verified'] = True
+        # Recovery-code use deliberately revokes every older session. Adopt the
+        # new counter in this just-verified session so it is not revoked along
+        # with them on the next request.
+        request.session['session_revocation_counter'] = profile.session_revocation_counter
 
     # Emit one tenant-attributed audit event.
     # organization_id is required for tenant-owned events; None → system chain.

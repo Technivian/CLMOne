@@ -139,6 +139,10 @@ class MfaPolicyTests(TestCase):
             data={'code': recovery_codes[0]},
         )
         self.assertEqual(submit.status_code, 302)
+        # Recovery use revokes older sessions but preserves the session that
+        # just proved possession of the recovery factor.
+        allowed = self.client.get(reverse('dashboard'))
+        self.assertEqual(allowed.status_code, 200)
         self.profile.refresh_from_db()
         self.assertEqual(self.profile.mfa_recovery_code_count, 7)
         self.assertTrue(
