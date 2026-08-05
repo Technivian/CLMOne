@@ -123,7 +123,10 @@ test('MSA governed drafting cockpit generates a workflow workspace and dashboard
   await page.click('#submit-msa-btn');
 
   await expect(page).toHaveURL(/\/contracts\/workflows\/\d+\/?$/);
-  await expect(page.getByText('Lifecycle')).toBeVisible();
+  // The timeline also includes the disclosure control "Show full lifecycle".
+  // Bind to the canonical timeline label so this remains an exact accessibility
+  // assertion rather than a strict-mode-ambiguous substring match.
+  await expect(page.getByText('Lifecycle', { exact: true })).toBeVisible();
   await expect(page.getByText(counterparty).first()).toBeVisible();
   await expect(page.getByRole('heading', { name: new RegExp(`MSA · ${counterparty}`) }).first()).toBeVisible();
   await expect(page.getByRole('button', { name: /Resolve \d+ exceptions?/ })).toBeVisible();
