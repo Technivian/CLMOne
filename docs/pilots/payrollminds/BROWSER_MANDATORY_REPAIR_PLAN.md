@@ -25,10 +25,13 @@ the remaining shared-UI and visual-baseline backlog still blocks release.
 
 - Classification: D — Shared-platform defect
 - Owner: payrollminds shared repair branch
-- Resolution: commit `50aae7d4f090e36eff08a1a0b19ad747373185c6` repairs one
-  structured-review renderer regression and six stale governed expectations.
-- Verification: 7 focused passed, 11 affected-file tests passed, and all seven
-  identifiers passed in the one unfiltered 90-test source-SHA run.
+- Resolution: commits `50aae7d4f090e36eff08a1a0b19ad747373185c6` and
+  `361e4739aabc1de38ca51e500d1eae6a2b23d865` repair the structured-review
+  renderer, its fast-response duplicate-submit race, and six stale governed
+  expectations.
+- Verification: 7 focused passed, 11 affected-file tests passed, the duplicate
+  guard passed 20/20 stress repetitions, and all seven identifiers passed in
+  the local unfiltered 90-test source-SHA run. Final-SHA CI is pending.
 - Migration impact: none expected; confirm during repair.
 - Rollback: revert the owning source-PR commit.
 

@@ -1,5 +1,5 @@
 {
-  "source_sha": "50aae7d4f090e36eff08a1a0b19ad747373185c6",
+  "source_sha": "361e4739aabc1de38ca51e500d1eae6a2b23d865",
   "validated_merge_sha": "45b45a4a",
   "clusters": [
     {
@@ -69,9 +69,11 @@
       "security_relevance": "No direct security signature; mandatory regression review required",
       "resolution": {
         "status": "resolved",
-        "resolving_commit": "50aae7d4f090e36eff08a1a0b19ad747373185c6",
+        "resolving_commit": "361e4739aabc1de38ca51e500d1eae6a2b23d865",
+        "initial_repair_commit": "50aae7d4f090e36eff08a1a0b19ad747373185c6",
         "focused_result": "7 passed",
         "affected_file_result": "11 passed",
+        "duplicate_guard_stress_result": "20/20 passed",
         "full_suite_result": "All seven identifiers absent from the 31 local failed identifiers."
       }
     },
@@ -124,5 +126,11 @@
     "interrupted": 0,
     "not_run": 0,
     "result": "No new stable test identifiers; B and D-SHARED-WORKFLOW identifiers absent from failedTests."
+  },
+  "final_focused_validation": {
+    "source_sha": "361e4739aabc1de38ca51e500d1eae6a2b23d865",
+    "affected_file_result": "11 passed",
+    "duplicate_guard_stress_result": "20/20 passed",
+    "final_ci_status": "pending"
   }
 }

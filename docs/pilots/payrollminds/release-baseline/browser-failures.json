@@ -444,7 +444,7 @@
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
       "classification": "D — Shared-platform defect",
       "remediation_owner": "payrollminds shared repair branch",
-      "remediation_reference": "Prompt 22 / commit 50aae7d4f090e36eff08a1a0b19ad747373185c6",
+      "remediation_reference": "Prompt 22 / commits 50aae7d4f090e36eff08a1a0b19ad747373185c6 and 361e4739aabc1de38ca51e500d1eae6a2b23d865",
       "expiry_candidate": null,
       "notes": "Stable across both validated merge-SHA runs; raw CI artifact 30910072964. No exception candidate created.",
       "changed_by_pr_153": false,
@@ -456,9 +456,9 @@
       "proposed_repair": "Trace view, form and workflow runtime; add focused regression.",
       "resolution": {
         "status": "resolved",
-        "resolving_commit": "50aae7d4f090e36eff08a1a0b19ad747373185c6",
-        "focused_evidence": "7 passed (local synthetic E2E)",
-        "full_suite_evidence": "Passed in local 90-test source-SHA run 50aae7d4f090e36eff08a1a0b19ad747373185c6"
+        "resolving_commit": "361e4739aabc1de38ca51e500d1eae6a2b23d865",
+        "focused_evidence": "7 passed; duplicate guard 20/20 stress repetitions passed (local synthetic E2E)",
+        "full_suite_evidence": "Passed in local 90-test source-SHA run 50aae7d4f090e36eff08a1a0b19ad747373185c6; final-SHA CI pending"
       }
     },
     {
