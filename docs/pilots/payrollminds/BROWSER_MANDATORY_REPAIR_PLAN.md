@@ -1,7 +1,8 @@
 # Browser mandatory repair plan
 
-Status: **NO-GO**. Prompt 21 and Prompt 22 source-owned repairs are recorded;
-the remaining shared-UI and visual-baseline backlog still blocks release.
+Status: **NO-GO**. Prompt 21, Prompt 22, and the focused Prompt 23 source-owned
+repairs are recorded. Final Linux evidence and the four visual-baseline records
+still block release.
 
 ## A-CI-SNAPSHOT (4 tests)
 
@@ -39,7 +40,12 @@ the remaining shared-UI and visual-baseline backlog still blocks release.
 
 - Classification: D — Shared-platform defect
 - Owner: browser shared UI repair branch
-- Repair: Trace canonical component and route; correct implementation or stale assertion only after proof.
-- Verification: focused affected tests, then the unfiltered 90-test suite twice on one SHA.
-- Migration impact: none expected; confirm during repair.
-- Rollback: revert the owning source-PR commit.
+- Resolution: implementation commit
+  `3f5bb5c3ee65367a2bcd9c86810bad1a3235719a` corrects table containment,
+  async error semantics, focus return, owned navigation, stale governed
+  selectors, and non-governed file-local screenshot assertions.
+- Verification: exact records 26 passed; 13 affected files 34 passed; UI
+  integrity 11 passed; final Linux 90-test CI evidence pending.
+- Migration impact: none; no model or migration file changed.
+- Rollback: revert `3f5bb5c3ee65367a2bcd9c86810bad1a3235719a`.
+- Evidence: `SHARED_UI_REPAIR.md`.

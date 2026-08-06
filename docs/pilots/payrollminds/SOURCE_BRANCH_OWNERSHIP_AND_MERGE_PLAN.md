@@ -28,6 +28,7 @@ approval, exception, merge instruction, or deployment authorization.
 | MSA same-URL postback wait | Unique integration commit `3d1d60a3` | Browser repair source branch unless code-path analysis proves shared application repair | PR #159, `4f589684` | Synchronization correction must not remain integration-only. |
 | Browser manifest and failure registry generation | PR #154 / #157 | Attribution/evidence branch | This branch | Evidence and classification are not product ownership. |
 | Shared workflow/Contract Record repairs | Prompt 22 | PayrollMinds shared repair branch | `codex/payrollminds-shared-workflow-repair`, `50aae7d4` | One renderer regression and verified stale governed expectations; permanent change is source-owned. |
+| Shared UI repairs | Prompt 23 | Browser shared UI repair branch | `codex/payrollminds-shared-ui-repair`, `3f5bb5c3` | Permanent semantic, responsive, focus, route and test corrections remain isolated from workflow and MFA ownership. |
 
 ## Proposed foundation order
 
@@ -36,8 +37,11 @@ approval, exception, merge instruction, or deployment authorization.
 3. shared workflow repair, `50aae7d4`, after source tracing proved the
    structured-review renderer regression and isolated six stale expectations;
 4. PR #154 browser expectation repair, then PR #159 fixture and postback repair;
-5. integration/evidence branch.
+5. Prompt 23 shared UI repair, based on the PR #163 head;
+6. integration/evidence branch.
 
 No item above is authorized to merge until its required reviews and CI gates are
-complete. The remaining 48 browser failures are still all **H — Unresolved**
-in the carried baseline; no category-G candidate or exception exists.
+complete. Focused source evidence resolves the 11 category-B, seven shared
+workflow/record, and 26 shared-UI records. The only intended unresolved browser
+records are the four `A-CI-SNAPSHOT` visual baselines; final Linux CI must prove
+that exact residual set. No category-G candidate or exception exists.

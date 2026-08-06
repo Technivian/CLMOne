@@ -1,9 +1,9 @@
 {
   "schema_version": 2,
-  "registry_status": "classification_complete_partial_repairs_validated",
+  "registry_status": "shared_ui_focused_repair_validated_linux_ci_pending",
   "expected_test_count": 90,
   "clean_baseline_sha": "12c82a34c3d02227287dd97f56d758443082559e",
-  "repaired_baseline_sha": "3d1d60a34eebd8544a613e98bd204bd5acba20f1",
+  "repaired_baseline_sha": "3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
   "records": [
     {
       "stable_test_identifier": "fcac23b42f5942783f9d-afc9dfafbd8fbb3b76cf",
@@ -45,7 +45,7 @@
           "https://github.com/Technivian/CLMOne/actions/runs/30910072964 attempt 2 (shard 1/8; raw log /tmp/payrollminds-integration-ui-final2-run2.log)"
         ]
       },
-      "phase": "security_clean_baseline_complete",
+      "phase": "shared_ui_repair_focused_complete_linux_ci_pending",
       "exception_or_assertion_type": "assertion_failure",
       "normalized_signature": "assertion_failure:client/tests/e2e/canonical-page-layout.spec.js:canonical workspaces fit 390px mobile without page overflow",
       "top_relevant_stack_location": "client/tests/e2e/canonical-page-layout.spec.js:25:3",
@@ -57,7 +57,7 @@
       ],
       "earliest_known_appearance": "PR #153 clean baseline run one",
       "inherited_from_main": true,
-      "affected_by_repair": false,
+      "affected_by_repair": true,
       "shared_service_usage": "Django E2E fixture server; canonical UI and authorization surfaces as exercised by the named test.",
       "payrollminds_pilot_relevance": "indirect shared-platform",
       "security_relevance": "no security signature in artifact; mandatory classification retained",
@@ -67,7 +67,7 @@
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
       "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
-      "remediation_reference": "Prompt 20 mandatory repair backlog",
+      "remediation_reference": "Prompt 23 / commit 3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
       "expiry_candidate": null,
       "notes": "Stable across both validated merge-SHA runs; raw CI artifact 30910072964. No exception candidate created.",
       "changed_by_pr_153": false,
@@ -76,7 +76,15 @@
       "shared_platform_relevance": "direct shared canonical route, form, workflow, or UI component; conservative mandatory classification",
       "root_cause": "Canonical shared shell, list, form, focus, responsive, or status surface disagrees with browser assertion.",
       "root_cause_cluster": "D-SHARED-UI",
-      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof."
+      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof.",
+      "resolution": {
+        "status": "resolved_focused_linux_ci_pending",
+        "resolving_commit": "3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
+        "actual_root_cause": "DPA and Obligations wide tables escaped their mobile scroll containers.",
+        "focused_evidence": "Exact registry cohort: 26 passed; complete affected files: 34 passed",
+        "full_suite_evidence": "Pending final Linux draft-PR CI",
+        "evidence_document": "docs/pilots/payrollminds/SHARED_UI_REPAIR.md"
+      }
     },
     {
       "stable_test_identifier": "fcac23b42f5942783f9d-52edd03349ac746fa499",
@@ -118,7 +126,7 @@
           "https://github.com/Technivian/CLMOne/actions/runs/30910072964 attempt 2 (shard 7/8; raw log /tmp/payrollminds-integration-ui-final2-run2.log)"
         ]
       },
-      "phase": "security_clean_baseline_complete",
+      "phase": "shared_ui_repair_focused_complete_linux_ci_pending",
       "exception_or_assertion_type": "assertion_failure",
       "normalized_signature": "assertion_failure:client/tests/e2e/canonical-page-layout.spec.js:canonical workspaces fit desktop without page overflow",
       "top_relevant_stack_location": "client/tests/e2e/canonical-page-layout.spec.js:25:3",
@@ -130,7 +138,7 @@
       ],
       "earliest_known_appearance": "PR #153 clean baseline run one",
       "inherited_from_main": true,
-      "affected_by_repair": false,
+      "affected_by_repair": true,
       "shared_service_usage": "Django E2E fixture server; canonical UI and authorization surfaces as exercised by the named test.",
       "payrollminds_pilot_relevance": "indirect shared-platform",
       "security_relevance": "no security signature in artifact; mandatory classification retained",
@@ -140,7 +148,7 @@
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
       "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
-      "remediation_reference": "Prompt 20 mandatory repair backlog",
+      "remediation_reference": "Prompt 23 / commit 3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
       "expiry_candidate": null,
       "notes": "Stable across both validated merge-SHA runs; raw CI artifact 30910072964. No exception candidate created.",
       "changed_by_pr_153": false,
@@ -149,7 +157,15 @@
       "shared_platform_relevance": "direct shared canonical route, form, workflow, or UI component; conservative mandatory classification",
       "root_cause": "Canonical shared shell, list, form, focus, responsive, or status surface disagrees with browser assertion.",
       "root_cause_cluster": "D-SHARED-UI",
-      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof."
+      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof.",
+      "resolution": {
+        "status": "resolved_focused_linux_ci_pending",
+        "resolving_commit": "3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
+        "actual_root_cause": "The assertion targeted retired terminology, hidden shell markup, or pre-canonical route semantics.",
+        "focused_evidence": "Exact registry cohort: 26 passed; complete affected files: 34 passed",
+        "full_suite_evidence": "Pending final Linux draft-PR CI",
+        "evidence_document": "docs/pilots/payrollminds/SHARED_UI_REPAIR.md"
+      }
     },
     {
       "stable_test_identifier": "9e24326c6c84b9aae2de-7d2490bc0040d4b5e052",
@@ -191,7 +207,7 @@
           "https://github.com/Technivian/CLMOne/actions/runs/30910072964 attempt 2 (shard 1/8; raw log /tmp/payrollminds-integration-ui-final2-run2.log)"
         ]
       },
-      "phase": "security_clean_baseline_complete",
+      "phase": "shared_ui_repair_focused_complete_linux_ci_pending",
       "exception_or_assertion_type": "assertion_failure",
       "normalized_signature": "assertion_failure:client/tests/e2e/command-center-demo.spec.js:Command Center demo shows DPA, MSA, and NDA workflows with workspace links",
       "top_relevant_stack_location": "client/tests/e2e/command-center-demo.spec.js:15:1",
@@ -203,7 +219,7 @@
       ],
       "earliest_known_appearance": "PR #153 clean baseline run one",
       "inherited_from_main": true,
-      "affected_by_repair": false,
+      "affected_by_repair": true,
       "shared_service_usage": "Django E2E fixture server; canonical UI and authorization surfaces as exercised by the named test.",
       "payrollminds_pilot_relevance": "indirect shared-platform",
       "security_relevance": "no security signature in artifact; mandatory classification retained",
@@ -213,7 +229,7 @@
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
       "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
-      "remediation_reference": "Prompt 20 mandatory repair backlog",
+      "remediation_reference": "Prompt 23 / commit 3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
       "expiry_candidate": null,
       "notes": "Stable across both validated merge-SHA runs; raw CI artifact 30910072964. No exception candidate created.",
       "changed_by_pr_153": false,
@@ -222,7 +238,15 @@
       "shared_platform_relevance": "direct shared canonical route, form, workflow, or UI component; conservative mandatory classification",
       "root_cause": "Canonical shared shell, list, form, focus, responsive, or status surface disagrees with browser assertion.",
       "root_cause_cluster": "D-SHARED-UI",
-      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof."
+      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof.",
+      "resolution": {
+        "status": "resolved_focused_linux_ci_pending",
+        "resolving_commit": "3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
+        "actual_root_cause": "Command Center priority navigation used a generic repository target and retired row selectors.",
+        "focused_evidence": "Exact registry cohort: 26 passed; complete affected files: 34 passed",
+        "full_suite_evidence": "Pending final Linux draft-PR CI",
+        "evidence_document": "docs/pilots/payrollminds/SHARED_UI_REPAIR.md"
+      }
     },
     {
       "stable_test_identifier": "d3423a6dec4bff43ec8a-bc0c98de23428e11624e",
@@ -574,7 +598,7 @@
           "https://github.com/Technivian/CLMOne/actions/runs/30910072964 attempt 2 (shard 1/8; raw log /tmp/payrollminds-integration-ui-final2-run2.log)"
         ]
       },
-      "phase": "security_clean_baseline_complete",
+      "phase": "shared_ui_repair_focused_complete_linux_ci_pending",
       "exception_or_assertion_type": "assertion_failure",
       "normalized_signature": "assertion_failure:client/tests/e2e/critical-flows.spec.js:critical invoice and time-entry submissions accept valid precision",
       "top_relevant_stack_location": "client/tests/e2e/critical-flows.spec.js:116:1",
@@ -586,7 +610,7 @@
       ],
       "earliest_known_appearance": "PR #153 clean baseline run one",
       "inherited_from_main": true,
-      "affected_by_repair": false,
+      "affected_by_repair": true,
       "shared_service_usage": "Django E2E fixture server; canonical UI and authorization surfaces as exercised by the named test.",
       "payrollminds_pilot_relevance": "indirect shared-platform",
       "security_relevance": "no security signature in artifact; mandatory classification retained",
@@ -596,7 +620,7 @@
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
       "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
-      "remediation_reference": "Prompt 20 mandatory repair backlog",
+      "remediation_reference": "Prompt 23 / commit 3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
       "expiry_candidate": null,
       "notes": "Stable across both validated merge-SHA runs; raw CI artifact 30910072964. No exception candidate created.",
       "changed_by_pr_153": false,
@@ -605,7 +629,15 @@
       "shared_platform_relevance": "direct shared canonical route, form, workflow, or UI component; conservative mandatory classification",
       "root_cause": "Canonical shared shell, list, form, focus, responsive, or status surface disagrees with browser assertion.",
       "root_cause_cluster": "D-SHARED-UI",
-      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof."
+      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof.",
+      "resolution": {
+        "status": "resolved_focused_linux_ci_pending",
+        "resolving_commit": "3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
+        "actual_root_cause": "The assertion drove a retired in-house invoice route instead of verifying its fail-closed boundary and supported time-entry precision.",
+        "focused_evidence": "Exact registry cohort: 26 passed; complete affected files: 34 passed",
+        "full_suite_evidence": "Pending final Linux draft-PR CI",
+        "evidence_document": "docs/pilots/payrollminds/SHARED_UI_REPAIR.md"
+      }
     },
     {
       "stable_test_identifier": "e14dd59f59bd59baee8e-34ab4b02f642781316b9",
@@ -1583,7 +1615,7 @@
           "https://github.com/Technivian/CLMOne/actions/runs/30910072964 attempt 2 (shard 2/8; raw log /tmp/payrollminds-integration-ui-final2-run2.log)"
         ]
       },
-      "phase": "security_clean_baseline_complete",
+      "phase": "shared_ui_repair_focused_complete_linux_ci_pending",
       "exception_or_assertion_type": "assertion_failure",
       "normalized_signature": "assertion_failure:client/tests/e2e/phase-2a-components.spec.js:Phase 2A shared components › list controls retain keyboard focus and responsive sizing",
       "top_relevant_stack_location": "client/tests/e2e/phase-2a-components.spec.js:30:3",
@@ -1595,7 +1627,7 @@
       ],
       "earliest_known_appearance": "PR #153 clean baseline run one",
       "inherited_from_main": true,
-      "affected_by_repair": false,
+      "affected_by_repair": true,
       "shared_service_usage": "Django E2E fixture server; canonical UI and authorization surfaces as exercised by the named test.",
       "payrollminds_pilot_relevance": "indirect shared-platform",
       "security_relevance": "no security signature in artifact; mandatory classification retained",
@@ -1605,7 +1637,7 @@
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
       "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
-      "remediation_reference": "Prompt 20 mandatory repair backlog",
+      "remediation_reference": "Prompt 23 / commit 3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
       "expiry_candidate": null,
       "notes": "Stable across both validated merge-SHA runs; raw CI artifact 30910072964. No exception candidate created.",
       "changed_by_pr_153": false,
@@ -1614,7 +1646,15 @@
       "shared_platform_relevance": "direct shared canonical route, form, workflow, or UI component; conservative mandatory classification",
       "root_cause": "Canonical shared shell, list, form, focus, responsive, or status surface disagrees with browser assertion.",
       "root_cause_cluster": "D-SHARED-UI",
-      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof."
+      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof.",
+      "resolution": {
+        "status": "resolved_focused_linux_ci_pending",
+        "resolving_commit": "3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
+        "actual_root_cause": "A file-local non-governed screenshot or stale selector obscured the semantic, focus, status, responsive, or action contract already approved in the canonical UI.",
+        "focused_evidence": "Exact registry cohort: 26 passed; complete affected files: 34 passed",
+        "full_suite_evidence": "Pending final Linux draft-PR CI",
+        "evidence_document": "docs/pilots/payrollminds/SHARED_UI_REPAIR.md"
+      }
     },
     {
       "stable_test_identifier": "33901bce72702da02a7d-46f8026b65fb76299c74",
@@ -1656,7 +1696,7 @@
           "https://github.com/Technivian/CLMOne/actions/runs/30910072964 attempt 2 (shard 2/8; raw log /tmp/payrollminds-integration-ui-final2-run2.log)"
         ]
       },
-      "phase": "security_clean_baseline_complete",
+      "phase": "shared_ui_repair_focused_complete_linux_ci_pending",
       "exception_or_assertion_type": "assertion_failure",
       "normalized_signature": "assertion_failure:client/tests/e2e/phase-2a-components.spec.js:Phase 2A shared components › contract form retains canonical actions and validation feedback",
       "top_relevant_stack_location": "client/tests/e2e/phase-2a-components.spec.js:52:3",
@@ -1668,7 +1708,7 @@
       ],
       "earliest_known_appearance": "PR #153 clean baseline run one",
       "inherited_from_main": true,
-      "affected_by_repair": false,
+      "affected_by_repair": true,
       "shared_service_usage": "Django E2E fixture server; canonical UI and authorization surfaces as exercised by the named test.",
       "payrollminds_pilot_relevance": "indirect shared-platform",
       "security_relevance": "no security signature in artifact; mandatory classification retained",
@@ -1678,7 +1718,7 @@
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
       "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
-      "remediation_reference": "Prompt 20 mandatory repair backlog",
+      "remediation_reference": "Prompt 23 / commit 3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
       "expiry_candidate": null,
       "notes": "Stable across both validated merge-SHA runs; raw CI artifact 30910072964. No exception candidate created.",
       "changed_by_pr_153": false,
@@ -1687,7 +1727,15 @@
       "shared_platform_relevance": "direct shared canonical route, form, workflow, or UI component; conservative mandatory classification",
       "root_cause": "Canonical shared shell, list, form, focus, responsive, or status surface disagrees with browser assertion.",
       "root_cause_cluster": "D-SHARED-UI",
-      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof."
+      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof.",
+      "resolution": {
+        "status": "resolved_focused_linux_ci_pending",
+        "resolving_commit": "3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
+        "actual_root_cause": "A file-local non-governed screenshot or stale selector obscured the semantic, focus, status, responsive, or action contract already approved in the canonical UI.",
+        "focused_evidence": "Exact registry cohort: 26 passed; complete affected files: 34 passed",
+        "full_suite_evidence": "Pending final Linux draft-PR CI",
+        "evidence_document": "docs/pilots/payrollminds/SHARED_UI_REPAIR.md"
+      }
     },
     {
       "stable_test_identifier": "33901bce72702da02a7d-cf6b99e1f41720e7eb2f",
@@ -1729,7 +1777,7 @@
           "https://github.com/Technivian/CLMOne/actions/runs/30910072964 attempt 2 (shard 2/8; raw log /tmp/payrollminds-integration-ui-final2-run2.log)"
         ]
       },
-      "phase": "security_clean_baseline_complete",
+      "phase": "shared_ui_repair_focused_complete_linux_ci_pending",
       "exception_or_assertion_type": "assertion_failure",
       "normalized_signature": "assertion_failure:client/tests/e2e/phase-2a-components.spec.js:Phase 2A shared components › detail modal uses canonical actions and controls",
       "top_relevant_stack_location": "client/tests/e2e/phase-2a-components.spec.js:70:3",
@@ -1741,7 +1789,7 @@
       ],
       "earliest_known_appearance": "PR #153 clean baseline run one",
       "inherited_from_main": true,
-      "affected_by_repair": false,
+      "affected_by_repair": true,
       "shared_service_usage": "Django E2E fixture server; canonical UI and authorization surfaces as exercised by the named test.",
       "payrollminds_pilot_relevance": "indirect shared-platform",
       "security_relevance": "no security signature in artifact; mandatory classification retained",
@@ -1751,7 +1799,7 @@
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
       "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
-      "remediation_reference": "Prompt 20 mandatory repair backlog",
+      "remediation_reference": "Prompt 23 / commit 3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
       "expiry_candidate": null,
       "notes": "Stable across both validated merge-SHA runs; raw CI artifact 30910072964. No exception candidate created.",
       "changed_by_pr_153": false,
@@ -1760,7 +1808,15 @@
       "shared_platform_relevance": "direct shared canonical route, form, workflow, or UI component; conservative mandatory classification",
       "root_cause": "Canonical shared shell, list, form, focus, responsive, or status surface disagrees with browser assertion.",
       "root_cause_cluster": "D-SHARED-UI",
-      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof."
+      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof.",
+      "resolution": {
+        "status": "resolved_focused_linux_ci_pending",
+        "resolving_commit": "3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
+        "actual_root_cause": "The Contract Record note dialog did not return focus to its opener.",
+        "focused_evidence": "Exact registry cohort: 26 passed; complete affected files: 34 passed",
+        "full_suite_evidence": "Pending final Linux draft-PR CI",
+        "evidence_document": "docs/pilots/payrollminds/SHARED_UI_REPAIR.md"
+      }
     },
     {
       "stable_test_identifier": "29ed2972350ecb1766f9-4753e2042891a08768bb",
@@ -1802,7 +1858,7 @@
           "https://github.com/Technivian/CLMOne/actions/runs/30910072964 attempt 2 (shard 2/8; raw log /tmp/payrollminds-integration-ui-final2-run2.log)"
         ]
       },
-      "phase": "security_clean_baseline_complete",
+      "phase": "shared_ui_repair_focused_complete_linux_ci_pending",
       "exception_or_assertion_type": "assertion_failure",
       "normalized_signature": "assertion_failure:client/tests/e2e/phase-2b1-buttons-badges.spec.js:Phase 2B.1 canonical buttons and badges › list family keeps canonical actions and semantic badges responsive",
       "top_relevant_stack_location": "client/tests/e2e/phase-2b1-buttons-badges.spec.js:20:3",
@@ -1814,7 +1870,7 @@
       ],
       "earliest_known_appearance": "PR #153 clean baseline run one",
       "inherited_from_main": true,
-      "affected_by_repair": false,
+      "affected_by_repair": true,
       "shared_service_usage": "Django E2E fixture server; canonical UI and authorization surfaces as exercised by the named test.",
       "payrollminds_pilot_relevance": "indirect shared-platform",
       "security_relevance": "no security signature in artifact; mandatory classification retained",
@@ -1824,7 +1880,7 @@
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
       "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
-      "remediation_reference": "Prompt 20 mandatory repair backlog",
+      "remediation_reference": "Prompt 23 / commit 3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
       "expiry_candidate": null,
       "notes": "Stable across both validated merge-SHA runs; raw CI artifact 30910072964. No exception candidate created.",
       "changed_by_pr_153": false,
@@ -1833,7 +1889,15 @@
       "shared_platform_relevance": "direct shared canonical route, form, workflow, or UI component; conservative mandatory classification",
       "root_cause": "Canonical shared shell, list, form, focus, responsive, or status surface disagrees with browser assertion.",
       "root_cause_cluster": "D-SHARED-UI",
-      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof."
+      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof.",
+      "resolution": {
+        "status": "resolved_focused_linux_ci_pending",
+        "resolving_commit": "3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
+        "actual_root_cause": "A file-local non-governed screenshot or stale selector obscured the semantic, focus, status, responsive, or action contract already approved in the canonical UI.",
+        "focused_evidence": "Exact registry cohort: 26 passed; complete affected files: 34 passed",
+        "full_suite_evidence": "Pending final Linux draft-PR CI",
+        "evidence_document": "docs/pilots/payrollminds/SHARED_UI_REPAIR.md"
+      }
     },
     {
       "stable_test_identifier": "29ed2972350ecb1766f9-7c315d97f921507e9e10",
@@ -1875,7 +1939,7 @@
           "https://github.com/Technivian/CLMOne/actions/runs/30910072964 attempt 2 (shard 5/8; raw log /tmp/payrollminds-integration-ui-final2-run2.log)"
         ]
       },
-      "phase": "security_clean_baseline_complete",
+      "phase": "shared_ui_repair_focused_complete_linux_ci_pending",
       "exception_or_assertion_type": "assertion_failure",
       "normalized_signature": "assertion_failure:client/tests/e2e/phase-2b1-buttons-badges.spec.js:Phase 2B.1 canonical buttons and badges › standard detail and modal actions preserve keyboard focus",
       "top_relevant_stack_location": "client/tests/e2e/phase-2b1-buttons-badges.spec.js:32:3",
@@ -1887,7 +1951,7 @@
       ],
       "earliest_known_appearance": "PR #153 clean baseline run one",
       "inherited_from_main": true,
-      "affected_by_repair": false,
+      "affected_by_repair": true,
       "shared_service_usage": "Django E2E fixture server; canonical UI and authorization surfaces as exercised by the named test.",
       "payrollminds_pilot_relevance": "indirect shared-platform",
       "security_relevance": "no security signature in artifact; mandatory classification retained",
@@ -1897,7 +1961,7 @@
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
       "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
-      "remediation_reference": "Prompt 20 mandatory repair backlog",
+      "remediation_reference": "Prompt 23 / commit 3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
       "expiry_candidate": null,
       "notes": "Stable across both validated merge-SHA runs; raw CI artifact 30910072964. No exception candidate created.",
       "changed_by_pr_153": false,
@@ -1906,7 +1970,15 @@
       "shared_platform_relevance": "direct shared canonical route, form, workflow, or UI component; conservative mandatory classification",
       "root_cause": "Canonical shared shell, list, form, focus, responsive, or status surface disagrees with browser assertion.",
       "root_cause_cluster": "D-SHARED-UI",
-      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof."
+      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof.",
+      "resolution": {
+        "status": "resolved_focused_linux_ci_pending",
+        "resolving_commit": "3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
+        "actual_root_cause": "A file-local non-governed screenshot or stale selector obscured the semantic, focus, status, responsive, or action contract already approved in the canonical UI.",
+        "focused_evidence": "Exact registry cohort: 26 passed; complete affected files: 34 passed",
+        "full_suite_evidence": "Pending final Linux draft-PR CI",
+        "evidence_document": "docs/pilots/payrollminds/SHARED_UI_REPAIR.md"
+      }
     },
     {
       "stable_test_identifier": "29ed2972350ecb1766f9-e09ae741f62c7a897c38",
@@ -1948,7 +2020,7 @@
           "https://github.com/Technivian/CLMOne/actions/runs/30910072964 attempt 2 (shard 3/8; raw log /tmp/payrollminds-integration-ui-final2-run2.log)"
         ]
       },
-      "phase": "security_clean_baseline_complete",
+      "phase": "shared_ui_repair_focused_complete_linux_ci_pending",
       "exception_or_assertion_type": "assertion_failure",
       "normalized_signature": "assertion_failure:client/tests/e2e/phase-2b1-buttons-badges.spec.js:Phase 2B.1 canonical buttons and badges › admin settings preserve destructive and primary actions",
       "top_relevant_stack_location": "client/tests/e2e/phase-2b1-buttons-badges.spec.js:47:3",
@@ -1960,7 +2032,7 @@
       ],
       "earliest_known_appearance": "PR #153 clean baseline run one",
       "inherited_from_main": true,
-      "affected_by_repair": false,
+      "affected_by_repair": true,
       "shared_service_usage": "Django E2E fixture server; canonical UI and authorization surfaces as exercised by the named test.",
       "payrollminds_pilot_relevance": "indirect shared-platform",
       "security_relevance": "no security signature in artifact; mandatory classification retained",
@@ -1970,7 +2042,7 @@
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
       "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
-      "remediation_reference": "Prompt 20 mandatory repair backlog",
+      "remediation_reference": "Prompt 23 / commit 3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
       "expiry_candidate": null,
       "notes": "Stable across both validated merge-SHA runs; raw CI artifact 30910072964. No exception candidate created.",
       "changed_by_pr_153": false,
@@ -1979,7 +2051,15 @@
       "shared_platform_relevance": "direct shared canonical route, form, workflow, or UI component; conservative mandatory classification",
       "root_cause": "Canonical shared shell, list, form, focus, responsive, or status surface disagrees with browser assertion.",
       "root_cause_cluster": "D-SHARED-UI",
-      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof."
+      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof.",
+      "resolution": {
+        "status": "resolved_focused_linux_ci_pending",
+        "resolving_commit": "3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
+        "actual_root_cause": "A file-local non-governed screenshot or stale selector obscured the semantic, focus, status, responsive, or action contract already approved in the canonical UI.",
+        "focused_evidence": "Exact registry cohort: 26 passed; complete affected files: 34 passed",
+        "full_suite_evidence": "Pending final Linux draft-PR CI",
+        "evidence_document": "docs/pilots/payrollminds/SHARED_UI_REPAIR.md"
+      }
     },
     {
       "stable_test_identifier": "f1901f02f341fbefe840-92185555d7fd73f84572",
@@ -2021,7 +2101,7 @@
           "https://github.com/Technivian/CLMOne/actions/runs/30910072964 attempt 2 (shard 3/8; raw log /tmp/payrollminds-integration-ui-final2-run2.log)"
         ]
       },
-      "phase": "security_clean_baseline_complete",
+      "phase": "shared_ui_repair_focused_complete_linux_ci_pending",
       "exception_or_assertion_type": "assertion_failure",
       "normalized_signature": "assertion_failure:client/tests/e2e/phase-2b2-badge-semantics.spec.js:Phase 2B.2 canonical badge semantics render in dense and responsive layouts",
       "top_relevant_stack_location": "client/tests/e2e/phase-2b2-badge-semantics.spec.js:6:1",
@@ -2033,7 +2113,7 @@
       ],
       "earliest_known_appearance": "PR #153 clean baseline run one",
       "inherited_from_main": true,
-      "affected_by_repair": false,
+      "affected_by_repair": true,
       "shared_service_usage": "Django E2E fixture server; canonical UI and authorization surfaces as exercised by the named test.",
       "payrollminds_pilot_relevance": "indirect shared-platform",
       "security_relevance": "no security signature in artifact; mandatory classification retained",
@@ -2043,7 +2123,7 @@
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
       "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
-      "remediation_reference": "Prompt 20 mandatory repair backlog",
+      "remediation_reference": "Prompt 23 / commit 3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
       "expiry_candidate": null,
       "notes": "Stable across both validated merge-SHA runs; raw CI artifact 30910072964. No exception candidate created.",
       "changed_by_pr_153": false,
@@ -2052,7 +2132,15 @@
       "shared_platform_relevance": "direct shared canonical route, form, workflow, or UI component; conservative mandatory classification",
       "root_cause": "Canonical shared shell, list, form, focus, responsive, or status surface disagrees with browser assertion.",
       "root_cause_cluster": "D-SHARED-UI",
-      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof."
+      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof.",
+      "resolution": {
+        "status": "resolved_focused_linux_ci_pending",
+        "resolving_commit": "3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
+        "actual_root_cause": "A file-local non-governed screenshot or stale selector obscured the semantic, focus, status, responsive, or action contract already approved in the canonical UI.",
+        "focused_evidence": "Exact registry cohort: 26 passed; complete affected files: 34 passed",
+        "full_suite_evidence": "Pending final Linux draft-PR CI",
+        "evidence_document": "docs/pilots/payrollminds/SHARED_UI_REPAIR.md"
+      }
     },
     {
       "stable_test_identifier": "0b7a7653555a0bd633f1-7598607be74a1d7e0e62",
@@ -2094,7 +2182,7 @@
           "https://github.com/Technivian/CLMOne/actions/runs/30910072964 attempt 2 (shard 3/8; raw log /tmp/payrollminds-integration-ui-final2-run2.log)"
         ]
       },
-      "phase": "security_clean_baseline_complete",
+      "phase": "shared_ui_repair_focused_complete_linux_ci_pending",
       "exception_or_assertion_type": "assertion_failure",
       "normalized_signature": "assertion_failure:client/tests/e2e/phase-2b3-contract-document-statuses.spec.js:Phase 2B.3 status routes and the populated contract drawer remain responsive",
       "top_relevant_stack_location": "client/tests/e2e/phase-2b3-contract-document-statuses.spec.js:14:1",
@@ -2106,7 +2194,7 @@
       ],
       "earliest_known_appearance": "PR #153 clean baseline run one",
       "inherited_from_main": true,
-      "affected_by_repair": false,
+      "affected_by_repair": true,
       "shared_service_usage": "Django E2E fixture server; canonical UI and authorization surfaces as exercised by the named test.",
       "payrollminds_pilot_relevance": "indirect shared-platform",
       "security_relevance": "no security signature in artifact; mandatory classification retained",
@@ -2116,7 +2204,7 @@
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
       "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
-      "remediation_reference": "Prompt 20 mandatory repair backlog",
+      "remediation_reference": "Prompt 23 / commit 3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
       "expiry_candidate": null,
       "notes": "Stable across both validated merge-SHA runs; raw CI artifact 30910072964. No exception candidate created.",
       "changed_by_pr_153": false,
@@ -2125,7 +2213,15 @@
       "shared_platform_relevance": "direct shared canonical route, form, workflow, or UI component; conservative mandatory classification",
       "root_cause": "Canonical shared shell, list, form, focus, responsive, or status surface disagrees with browser assertion.",
       "root_cause_cluster": "D-SHARED-UI",
-      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof."
+      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof.",
+      "resolution": {
+        "status": "resolved_focused_linux_ci_pending",
+        "resolving_commit": "3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
+        "actual_root_cause": "A file-local non-governed screenshot or stale selector obscured the semantic, focus, status, responsive, or action contract already approved in the canonical UI.",
+        "focused_evidence": "Exact registry cohort: 26 passed; complete affected files: 34 passed",
+        "full_suite_evidence": "Pending final Linux draft-PR CI",
+        "evidence_document": "docs/pilots/payrollminds/SHARED_UI_REPAIR.md"
+      }
     },
     {
       "stable_test_identifier": "cff08f68624ffecd25a5-545a22d21fa4d130cc03",
@@ -2167,7 +2263,7 @@
           "https://github.com/Technivian/CLMOne/actions/runs/30910072964 attempt 2 (shard 3/8; raw log /tmp/payrollminds-integration-ui-final2-run2.log)"
         ]
       },
-      "phase": "security_clean_baseline_complete",
+      "phase": "shared_ui_repair_focused_complete_linux_ci_pending",
       "exception_or_assertion_type": "assertion_failure",
       "normalized_signature": "assertion_failure:client/tests/e2e/phase-2b5-standard-forms-panels.spec.js:Phase 2B.5 standard record and admin forms › record form preserves canonical controls, validation, and responsive layout",
       "top_relevant_stack_location": "client/tests/e2e/phase-2b5-standard-forms-panels.spec.js:21:3",
@@ -2179,7 +2275,7 @@
       ],
       "earliest_known_appearance": "PR #153 clean baseline run one",
       "inherited_from_main": true,
-      "affected_by_repair": false,
+      "affected_by_repair": true,
       "shared_service_usage": "Django E2E fixture server; canonical UI and authorization surfaces as exercised by the named test.",
       "payrollminds_pilot_relevance": "indirect shared-platform",
       "security_relevance": "no security signature in artifact; mandatory classification retained",
@@ -2189,7 +2285,7 @@
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
       "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
-      "remediation_reference": "Prompt 20 mandatory repair backlog",
+      "remediation_reference": "Prompt 23 / commit 3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
       "expiry_candidate": null,
       "notes": "Stable across both validated merge-SHA runs; raw CI artifact 30910072964. No exception candidate created.",
       "changed_by_pr_153": false,
@@ -2198,7 +2294,15 @@
       "shared_platform_relevance": "direct shared canonical route, form, workflow, or UI component; conservative mandatory classification",
       "root_cause": "Canonical shared shell, list, form, focus, responsive, or status surface disagrees with browser assertion.",
       "root_cause_cluster": "D-SHARED-UI",
-      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof."
+      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof.",
+      "resolution": {
+        "status": "resolved_focused_linux_ci_pending",
+        "resolving_commit": "3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
+        "actual_root_cause": "A file-local non-governed screenshot or stale selector obscured the semantic, focus, status, responsive, or action contract already approved in the canonical UI.",
+        "focused_evidence": "Exact registry cohort: 26 passed; complete affected files: 34 passed",
+        "full_suite_evidence": "Pending final Linux draft-PR CI",
+        "evidence_document": "docs/pilots/payrollminds/SHARED_UI_REPAIR.md"
+      }
     },
     {
       "stable_test_identifier": "cff08f68624ffecd25a5-9a416527281cc4a7c777",
@@ -2240,7 +2344,7 @@
           "https://github.com/Technivian/CLMOne/actions/runs/30910072964 attempt 2 (shard 3/8; raw log /tmp/payrollminds-integration-ui-final2-run2.log)"
         ]
       },
-      "phase": "security_clean_baseline_complete",
+      "phase": "shared_ui_repair_focused_complete_linux_ci_pending",
       "exception_or_assertion_type": "assertion_failure",
       "normalized_signature": "assertion_failure:client/tests/e2e/phase-2b5-standard-forms-panels.spec.js:Phase 2B.5 standard record and admin forms › admin approval form uses the shared field partial and canonical panels",
       "top_relevant_stack_location": "client/tests/e2e/phase-2b5-standard-forms-panels.spec.js:42:3",
@@ -2252,7 +2356,7 @@
       ],
       "earliest_known_appearance": "PR #153 clean baseline run one",
       "inherited_from_main": true,
-      "affected_by_repair": false,
+      "affected_by_repair": true,
       "shared_service_usage": "Django E2E fixture server; canonical UI and authorization surfaces as exercised by the named test.",
       "payrollminds_pilot_relevance": "indirect shared-platform",
       "security_relevance": "no security signature in artifact; mandatory classification retained",
@@ -2262,7 +2366,7 @@
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
       "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
-      "remediation_reference": "Prompt 20 mandatory repair backlog",
+      "remediation_reference": "Prompt 23 / commit 3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
       "expiry_candidate": null,
       "notes": "Stable across both validated merge-SHA runs; raw CI artifact 30910072964. No exception candidate created.",
       "changed_by_pr_153": false,
@@ -2271,7 +2375,15 @@
       "shared_platform_relevance": "direct shared canonical route, form, workflow, or UI component; conservative mandatory classification",
       "root_cause": "Canonical shared shell, list, form, focus, responsive, or status surface disagrees with browser assertion.",
       "root_cause_cluster": "D-SHARED-UI",
-      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof."
+      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof.",
+      "resolution": {
+        "status": "resolved_focused_linux_ci_pending",
+        "resolving_commit": "3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
+        "actual_root_cause": "A file-local non-governed screenshot or stale selector obscured the semantic, focus, status, responsive, or action contract already approved in the canonical UI.",
+        "focused_evidence": "Exact registry cohort: 26 passed; complete affected files: 34 passed",
+        "full_suite_evidence": "Pending final Linux draft-PR CI",
+        "evidence_document": "docs/pilots/payrollminds/SHARED_UI_REPAIR.md"
+      }
     },
     {
       "stable_test_identifier": "6ac8114eb10074ca31d4-2282b3f4c2acb3e15cb7",
@@ -2313,7 +2425,7 @@
           "https://github.com/Technivian/CLMOne/actions/runs/30910072964 attempt 2 (shard 3/8; raw log /tmp/payrollminds-integration-ui-final2-run2.log)"
         ]
       },
-      "phase": "security_clean_baseline_complete",
+      "phase": "shared_ui_repair_focused_complete_linux_ci_pending",
       "exception_or_assertion_type": "assertion_failure",
       "normalized_signature": "assertion_failure:client/tests/e2e/phase-3a-standard-lists.spec.js:Phase 3A standard lists and tables › repository retains selection, async states, pagination, and mobile overflow",
       "top_relevant_stack_location": "client/tests/e2e/phase-3a-standard-lists.spec.js:21:3",
@@ -2325,7 +2437,7 @@
       ],
       "earliest_known_appearance": "PR #153 clean baseline run one",
       "inherited_from_main": true,
-      "affected_by_repair": false,
+      "affected_by_repair": true,
       "shared_service_usage": "Django E2E fixture server; canonical UI and authorization surfaces as exercised by the named test.",
       "payrollminds_pilot_relevance": "indirect shared-platform",
       "security_relevance": "no security signature in artifact; mandatory classification retained",
@@ -2335,7 +2447,7 @@
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
       "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
-      "remediation_reference": "Prompt 20 mandatory repair backlog",
+      "remediation_reference": "Prompt 23 / commit 3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
       "expiry_candidate": null,
       "notes": "Stable across both validated merge-SHA runs; raw CI artifact 30910072964. No exception candidate created.",
       "changed_by_pr_153": false,
@@ -2344,7 +2456,15 @@
       "shared_platform_relevance": "direct shared canonical route, form, workflow, or UI component; conservative mandatory classification",
       "root_cause": "Canonical shared shell, list, form, focus, responsive, or status surface disagrees with browser assertion.",
       "root_cause_cluster": "D-SHARED-UI",
-      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof."
+      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof.",
+      "resolution": {
+        "status": "resolved_focused_linux_ci_pending",
+        "resolving_commit": "3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
+        "actual_root_cause": "Repository error rendering retained aria-busy and lacked an alert announcement.",
+        "focused_evidence": "Exact registry cohort: 26 passed; complete affected files: 34 passed",
+        "full_suite_evidence": "Pending final Linux draft-PR CI",
+        "evidence_document": "docs/pilots/payrollminds/SHARED_UI_REPAIR.md"
+      }
     },
     {
       "stable_test_identifier": "6ac8114eb10074ca31d4-293f34c4d32054357b2c",
@@ -2532,7 +2652,7 @@
           "https://github.com/Technivian/CLMOne/actions/runs/30910072964 attempt 2 (shard 3/8; raw log /tmp/payrollminds-integration-ui-final2-run2.log)"
         ]
       },
-      "phase": "security_clean_baseline_complete",
+      "phase": "shared_ui_repair_focused_complete_linux_ci_pending",
       "exception_or_assertion_type": "assertion_failure",
       "normalized_signature": "assertion_failure:client/tests/e2e/phase-3a-standard-lists.spec.js:Phase 3A standard lists and tables › my work filter groups remain inline with grey quick-view count badges",
       "top_relevant_stack_location": "client/tests/e2e/phase-3a-standard-lists.spec.js:125:3",
@@ -2544,7 +2664,7 @@
       ],
       "earliest_known_appearance": "PR #153 clean baseline run one",
       "inherited_from_main": true,
-      "affected_by_repair": false,
+      "affected_by_repair": true,
       "shared_service_usage": "Django E2E fixture server; canonical UI and authorization surfaces as exercised by the named test.",
       "payrollminds_pilot_relevance": "indirect shared-platform",
       "security_relevance": "no security signature in artifact; mandatory classification retained",
@@ -2554,7 +2674,7 @@
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
       "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
-      "remediation_reference": "Prompt 20 mandatory repair backlog",
+      "remediation_reference": "Prompt 23 / commit 3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
       "expiry_candidate": null,
       "notes": "Stable across both validated merge-SHA runs; raw CI artifact 30910072964. No exception candidate created.",
       "changed_by_pr_153": false,
@@ -2563,7 +2683,15 @@
       "shared_platform_relevance": "direct shared canonical route, form, workflow, or UI component; conservative mandatory classification",
       "root_cause": "Canonical shared shell, list, form, focus, responsive, or status surface disagrees with browser assertion.",
       "root_cause_cluster": "D-SHARED-UI",
-      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof."
+      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof.",
+      "resolution": {
+        "status": "resolved_focused_linux_ci_pending",
+        "resolving_commit": "3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
+        "actual_root_cause": "The assertion targeted retired terminology, hidden shell markup, or pre-canonical route semantics.",
+        "focused_evidence": "Exact registry cohort: 26 passed; complete affected files: 34 passed",
+        "full_suite_evidence": "Pending final Linux draft-PR CI",
+        "evidence_document": "docs/pilots/payrollminds/SHARED_UI_REPAIR.md"
+      }
     },
     {
       "stable_test_identifier": "6ac8114eb10074ca31d4-6f2cfa4c11c801444969",
@@ -2678,7 +2806,7 @@
           "https://github.com/Technivian/CLMOne/actions/runs/30910072964 attempt 2 (shard 1/8; raw log /tmp/payrollminds-integration-ui-final2-run2.log)"
         ]
       },
-      "phase": "security_clean_baseline_complete",
+      "phase": "shared_ui_repair_focused_complete_linux_ci_pending",
       "exception_or_assertion_type": "assertion_failure",
       "normalized_signature": "assertion_failure:client/tests/e2e/phase-3a-standard-lists.spec.js:Phase 3A standard lists and tables › document and approval-admin list families retain canonical semantics and keyboard tabs",
       "top_relevant_stack_location": "client/tests/e2e/phase-3a-standard-lists.spec.js:192:3",
@@ -2690,7 +2818,7 @@
       ],
       "earliest_known_appearance": "PR #153 clean baseline run one",
       "inherited_from_main": true,
-      "affected_by_repair": false,
+      "affected_by_repair": true,
       "shared_service_usage": "Django E2E fixture server; canonical UI and authorization surfaces as exercised by the named test.",
       "payrollminds_pilot_relevance": "indirect shared-platform",
       "security_relevance": "no security signature in artifact; mandatory classification retained",
@@ -2700,7 +2828,7 @@
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
       "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
-      "remediation_reference": "Prompt 20 mandatory repair backlog",
+      "remediation_reference": "Prompt 23 / commit 3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
       "expiry_candidate": null,
       "notes": "Stable across both validated merge-SHA runs; raw CI artifact 30910072964. No exception candidate created.",
       "changed_by_pr_153": false,
@@ -2709,7 +2837,15 @@
       "shared_platform_relevance": "direct shared canonical route, form, workflow, or UI component; conservative mandatory classification",
       "root_cause": "Canonical shared shell, list, form, focus, responsive, or status surface disagrees with browser assertion.",
       "root_cause_cluster": "D-SHARED-UI",
-      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof."
+      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof.",
+      "resolution": {
+        "status": "resolved_focused_linux_ci_pending",
+        "resolving_commit": "3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
+        "actual_root_cause": "The assertion assumed an empty document table although earlier synthetic journeys can create a valid row.",
+        "focused_evidence": "Exact registry cohort: 26 passed; complete affected files: 34 passed",
+        "full_suite_evidence": "Pending final Linux draft-PR CI",
+        "evidence_document": "docs/pilots/payrollminds/SHARED_UI_REPAIR.md"
+      }
     },
     {
       "stable_test_identifier": "6ac8114eb10074ca31d4-dce0702d4ecd05ca65b9",
@@ -2751,7 +2887,7 @@
           "https://github.com/Technivian/CLMOne/actions/runs/30910072964 attempt 2 (shard 4/8; raw log /tmp/payrollminds-integration-ui-final2-run2.log)"
         ]
       },
-      "phase": "security_clean_baseline_complete",
+      "phase": "shared_ui_repair_focused_complete_linux_ci_pending",
       "exception_or_assertion_type": "assertion_failure",
       "normalized_signature": "assertion_failure:client/tests/e2e/phase-3a-standard-lists.spec.js:Phase 3A standard lists and tables › clause-library administration retains its canonical empty table",
       "top_relevant_stack_location": "client/tests/e2e/phase-3a-standard-lists.spec.js:209:3",
@@ -2763,7 +2899,7 @@
       ],
       "earliest_known_appearance": "PR #153 clean baseline run one",
       "inherited_from_main": true,
-      "affected_by_repair": false,
+      "affected_by_repair": true,
       "shared_service_usage": "Django E2E fixture server; canonical UI and authorization surfaces as exercised by the named test.",
       "payrollminds_pilot_relevance": "indirect shared-platform",
       "security_relevance": "no security signature in artifact; mandatory classification retained",
@@ -2773,7 +2909,7 @@
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
       "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
-      "remediation_reference": "Prompt 20 mandatory repair backlog",
+      "remediation_reference": "Prompt 23 / commit 3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
       "expiry_candidate": null,
       "notes": "Stable across both validated merge-SHA runs; raw CI artifact 30910072964. No exception candidate created.",
       "changed_by_pr_153": false,
@@ -2782,7 +2918,15 @@
       "shared_platform_relevance": "direct shared canonical route, form, workflow, or UI component; conservative mandatory classification",
       "root_cause": "Canonical shared shell, list, form, focus, responsive, or status surface disagrees with browser assertion.",
       "root_cause_cluster": "D-SHARED-UI",
-      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof."
+      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof.",
+      "resolution": {
+        "status": "resolved_focused_linux_ci_pending",
+        "resolving_commit": "3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
+        "actual_root_cause": "A file-local non-governed screenshot or stale selector obscured the semantic, focus, status, responsive, or action contract already approved in the canonical UI.",
+        "focused_evidence": "Exact registry cohort: 26 passed; complete affected files: 34 passed",
+        "full_suite_evidence": "Pending final Linux draft-PR CI",
+        "evidence_document": "docs/pilots/payrollminds/SHARED_UI_REPAIR.md"
+      }
     },
     {
       "stable_test_identifier": "ef99e9621f4244b0bbc2-bacaa791acb7959a2d87",
@@ -2824,7 +2968,7 @@
           "https://github.com/Technivian/CLMOne/actions/runs/30910072964 attempt 2 (shard 4/8; raw log /tmp/payrollminds-integration-ui-final2-run2.log)"
         ]
       },
-      "phase": "security_clean_baseline_complete",
+      "phase": "shared_ui_repair_focused_complete_linux_ci_pending",
       "exception_or_assertion_type": "assertion_failure",
       "normalized_signature": "assertion_failure:client/tests/e2e/phase-3b-list-scaffolds.spec.js:Phase 3B standard record-list scaffolds › repository keeps shell navigation and keyboard-operable list tabs",
       "top_relevant_stack_location": "client/tests/e2e/phase-3b-list-scaffolds.spec.js:21:3",
@@ -2836,7 +2980,7 @@
       ],
       "earliest_known_appearance": "PR #153 clean baseline run one",
       "inherited_from_main": true,
-      "affected_by_repair": false,
+      "affected_by_repair": true,
       "shared_service_usage": "Django E2E fixture server; canonical UI and authorization surfaces as exercised by the named test.",
       "payrollminds_pilot_relevance": "indirect shared-platform",
       "security_relevance": "no security signature in artifact; mandatory classification retained",
@@ -2846,7 +2990,7 @@
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
       "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
-      "remediation_reference": "Prompt 20 mandatory repair backlog",
+      "remediation_reference": "Prompt 23 / commit 3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
       "expiry_candidate": null,
       "notes": "Stable across both validated merge-SHA runs; raw CI artifact 30910072964. No exception candidate created.",
       "changed_by_pr_153": false,
@@ -2855,7 +2999,15 @@
       "shared_platform_relevance": "direct shared canonical route, form, workflow, or UI component; conservative mandatory classification",
       "root_cause": "Canonical shared shell, list, form, focus, responsive, or status surface disagrees with browser assertion.",
       "root_cause_cluster": "D-SHARED-UI",
-      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof."
+      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof.",
+      "resolution": {
+        "status": "resolved_focused_linux_ci_pending",
+        "resolving_commit": "3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
+        "actual_root_cause": "The assertion targeted retired terminology, hidden shell markup, or pre-canonical route semantics.",
+        "focused_evidence": "Exact registry cohort: 26 passed; complete affected files: 34 passed",
+        "full_suite_evidence": "Pending final Linux draft-PR CI",
+        "evidence_document": "docs/pilots/payrollminds/SHARED_UI_REPAIR.md"
+      }
     },
     {
       "stable_test_identifier": "ef99e9621f4244b0bbc2-161a7278eaf25f5f0fd5",
@@ -2897,7 +3049,7 @@
           "https://github.com/Technivian/CLMOne/actions/runs/30910072964 attempt 2 (shard 4/8; raw log /tmp/payrollminds-integration-ui-final2-run2.log)"
         ]
       },
-      "phase": "security_clean_baseline_complete",
+      "phase": "shared_ui_repair_focused_complete_linux_ci_pending",
       "exception_or_assertion_type": "assertion_failure",
       "normalized_signature": "assertion_failure:client/tests/e2e/phase-3b-list-scaffolds.spec.js:Phase 3B standard record-list scaffolds › document and clause-library headers preserve action hierarchy on compact screens",
       "top_relevant_stack_location": "client/tests/e2e/phase-3b-list-scaffolds.spec.js:32:3",
@@ -2909,7 +3061,7 @@
       ],
       "earliest_known_appearance": "PR #153 clean baseline run one",
       "inherited_from_main": true,
-      "affected_by_repair": false,
+      "affected_by_repair": true,
       "shared_service_usage": "Django E2E fixture server; canonical UI and authorization surfaces as exercised by the named test.",
       "payrollminds_pilot_relevance": "indirect shared-platform",
       "security_relevance": "no security signature in artifact; mandatory classification retained",
@@ -2919,7 +3071,7 @@
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
       "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
-      "remediation_reference": "Prompt 20 mandatory repair backlog",
+      "remediation_reference": "Prompt 23 / commit 3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
       "expiry_candidate": null,
       "notes": "Stable across both validated merge-SHA runs; raw CI artifact 30910072964. No exception candidate created.",
       "changed_by_pr_153": false,
@@ -2928,7 +3080,15 @@
       "shared_platform_relevance": "direct shared canonical route, form, workflow, or UI component; conservative mandatory classification",
       "root_cause": "Canonical shared shell, list, form, focus, responsive, or status surface disagrees with browser assertion.",
       "root_cause_cluster": "D-SHARED-UI",
-      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof."
+      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof.",
+      "resolution": {
+        "status": "resolved_focused_linux_ci_pending",
+        "resolving_commit": "3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
+        "actual_root_cause": "The assertion targeted retired terminology, hidden shell markup, or pre-canonical route semantics.",
+        "focused_evidence": "Exact registry cohort: 26 passed; complete affected files: 34 passed",
+        "full_suite_evidence": "Pending final Linux draft-PR CI",
+        "evidence_document": "docs/pilots/payrollminds/SHARED_UI_REPAIR.md"
+      }
     },
     {
       "stable_test_identifier": "ef99e9621f4244b0bbc2-30d4582f3ac064a46bd6",
@@ -2970,7 +3130,7 @@
           "https://github.com/Technivian/CLMOne/actions/runs/30910072964 attempt 2 (shard 4/8; raw log /tmp/payrollminds-integration-ui-final2-run2.log)"
         ]
       },
-      "phase": "security_clean_baseline_complete",
+      "phase": "shared_ui_repair_focused_complete_linux_ci_pending",
       "exception_or_assertion_type": "assertion_failure",
       "normalized_signature": "assertion_failure:client/tests/e2e/phase-3b-list-scaffolds.spec.js:Phase 3B standard record-list scaffolds › approval administration keeps its title, tabs, and table route semantics",
       "top_relevant_stack_location": "client/tests/e2e/phase-3b-list-scaffolds.spec.js:51:3",
@@ -2982,7 +3142,7 @@
       ],
       "earliest_known_appearance": "PR #153 clean baseline run one",
       "inherited_from_main": true,
-      "affected_by_repair": false,
+      "affected_by_repair": true,
       "shared_service_usage": "Django E2E fixture server; canonical UI and authorization surfaces as exercised by the named test.",
       "payrollminds_pilot_relevance": "indirect shared-platform",
       "security_relevance": "no security signature in artifact; mandatory classification retained",
@@ -2992,7 +3152,7 @@
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
       "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
-      "remediation_reference": "Prompt 20 mandatory repair backlog",
+      "remediation_reference": "Prompt 23 / commit 3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
       "expiry_candidate": null,
       "notes": "Stable across both validated merge-SHA runs; raw CI artifact 30910072964. No exception candidate created.",
       "changed_by_pr_153": false,
@@ -3001,7 +3161,15 @@
       "shared_platform_relevance": "direct shared canonical route, form, workflow, or UI component; conservative mandatory classification",
       "root_cause": "Canonical shared shell, list, form, focus, responsive, or status surface disagrees with browser assertion.",
       "root_cause_cluster": "D-SHARED-UI",
-      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof."
+      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof.",
+      "resolution": {
+        "status": "resolved_focused_linux_ci_pending",
+        "resolving_commit": "3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
+        "actual_root_cause": "The assertion expected retired standalone approval-rule ownership instead of the Workflow Designer shell.",
+        "focused_evidence": "Exact registry cohort: 26 passed; complete affected files: 34 passed",
+        "full_suite_evidence": "Pending final Linux draft-PR CI",
+        "evidence_document": "docs/pilots/payrollminds/SHARED_UI_REPAIR.md"
+      }
     },
     {
       "stable_test_identifier": "779d1e2ca76bed658459-ef73927f33eef8ba5272",
@@ -3043,7 +3211,7 @@
           "https://github.com/Technivian/CLMOne/actions/runs/30910072964 attempt 2 (shard 4/8; raw log /tmp/payrollminds-integration-ui-final2-run2.log)"
         ]
       },
-      "phase": "security_clean_baseline_complete",
+      "phase": "shared_ui_repair_focused_complete_linux_ci_pending",
       "exception_or_assertion_type": "assertion_failure",
       "normalized_signature": "assertion_failure:client/tests/e2e/phase-4a-record-scaffolds.spec.js:Phase 4A standard record and form scaffolds › client record creation keeps shell title, validation, and keyboard focus",
       "top_relevant_stack_location": "client/tests/e2e/phase-4a-record-scaffolds.spec.js:21:3",
@@ -3055,7 +3223,7 @@
       ],
       "earliest_known_appearance": "PR #153 clean baseline run one",
       "inherited_from_main": true,
-      "affected_by_repair": false,
+      "affected_by_repair": true,
       "shared_service_usage": "Django E2E fixture server; canonical UI and authorization surfaces as exercised by the named test.",
       "payrollminds_pilot_relevance": "indirect shared-platform",
       "security_relevance": "no security signature in artifact; mandatory classification retained",
@@ -3065,7 +3233,7 @@
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
       "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
-      "remediation_reference": "Prompt 20 mandatory repair backlog",
+      "remediation_reference": "Prompt 23 / commit 3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
       "expiry_candidate": null,
       "notes": "Stable across both validated merge-SHA runs; raw CI artifact 30910072964. No exception candidate created.",
       "changed_by_pr_153": false,
@@ -3074,7 +3242,15 @@
       "shared_platform_relevance": "direct shared canonical route, form, workflow, or UI component; conservative mandatory classification",
       "root_cause": "Canonical shared shell, list, form, focus, responsive, or status surface disagrees with browser assertion.",
       "root_cause_cluster": "D-SHARED-UI",
-      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof."
+      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof.",
+      "resolution": {
+        "status": "resolved_focused_linux_ci_pending",
+        "resolving_commit": "3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
+        "actual_root_cause": "The assertion expected the retired in-house Client form instead of canonical Counterparty ownership.",
+        "focused_evidence": "Exact registry cohort: 26 passed; complete affected files: 34 passed",
+        "full_suite_evidence": "Pending final Linux draft-PR CI",
+        "evidence_document": "docs/pilots/payrollminds/SHARED_UI_REPAIR.md"
+      }
     },
     {
       "stable_test_identifier": "779d1e2ca76bed658459-68663a8ee72202834e1e",
@@ -3262,7 +3438,7 @@
           "https://github.com/Technivian/CLMOne/actions/runs/30910072964 attempt 2 (shard 4/8; raw log /tmp/payrollminds-integration-ui-final2-run2.log)"
         ]
       },
-      "phase": "security_clean_baseline_complete",
+      "phase": "shared_ui_repair_focused_complete_linux_ci_pending",
       "exception_or_assertion_type": "assertion_failure",
       "normalized_signature": "assertion_failure:client/tests/e2e/phase-4b-governance-record-scaffolds.spec.js:Phase 4B counterparty and governance record scaffolds › counterparty and privacy record forms use the shell header, shared form actions, and keyboard focus",
       "top_relevant_stack_location": "client/tests/e2e/phase-4b-governance-record-scaffolds.spec.js:21:3",
@@ -3274,7 +3450,7 @@
       ],
       "earliest_known_appearance": "PR #153 clean baseline run one",
       "inherited_from_main": true,
-      "affected_by_repair": false,
+      "affected_by_repair": true,
       "shared_service_usage": "Django E2E fixture server; canonical UI and authorization surfaces as exercised by the named test.",
       "payrollminds_pilot_relevance": "indirect shared-platform",
       "security_relevance": "no security signature in artifact; mandatory classification retained",
@@ -3284,7 +3460,7 @@
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
       "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
-      "remediation_reference": "Prompt 20 mandatory repair backlog",
+      "remediation_reference": "Prompt 23 / commit 3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
       "expiry_candidate": null,
       "notes": "Stable across both validated merge-SHA runs; raw CI artifact 30910072964. No exception candidate created.",
       "changed_by_pr_153": false,
@@ -3293,7 +3469,15 @@
       "shared_platform_relevance": "direct shared canonical route, form, workflow, or UI component; conservative mandatory classification",
       "root_cause": "Canonical shared shell, list, form, focus, responsive, or status surface disagrees with browser assertion.",
       "root_cause_cluster": "D-SHARED-UI",
-      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof."
+      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof.",
+      "resolution": {
+        "status": "resolved_focused_linux_ci_pending",
+        "resolving_commit": "3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
+        "actual_root_cause": "The assertion targeted retired terminology, hidden shell markup, or pre-canonical route semantics.",
+        "focused_evidence": "Exact registry cohort: 26 passed; complete affected files: 34 passed",
+        "full_suite_evidence": "Pending final Linux draft-PR CI",
+        "evidence_document": "docs/pilots/payrollminds/SHARED_UI_REPAIR.md"
+      }
     },
     {
       "stable_test_identifier": "4f7fc92a3a82dbbe723a-6c913a7f199853eb98b7",
@@ -3335,7 +3519,7 @@
           "https://github.com/Technivian/CLMOne/actions/runs/30910072964 attempt 2 (shard 4/8; raw log /tmp/payrollminds-integration-ui-final2-run2.log)"
         ]
       },
-      "phase": "security_clean_baseline_complete",
+      "phase": "shared_ui_repair_focused_complete_linux_ci_pending",
       "exception_or_assertion_type": "assertion_failure",
       "normalized_signature": "assertion_failure:client/tests/e2e/phase-4b-governance-record-scaffolds.spec.js:Phase 4B counterparty and governance record scaffolds › compliance and governance forms retain subtitles, action hierarchy, and compact layout",
       "top_relevant_stack_location": "client/tests/e2e/phase-4b-governance-record-scaffolds.spec.js:41:3",
@@ -3347,7 +3531,7 @@
       ],
       "earliest_known_appearance": "PR #153 clean baseline run one",
       "inherited_from_main": true,
-      "affected_by_repair": false,
+      "affected_by_repair": true,
       "shared_service_usage": "Django E2E fixture server; canonical UI and authorization surfaces as exercised by the named test.",
       "payrollminds_pilot_relevance": "indirect shared-platform",
       "security_relevance": "no security signature in artifact; mandatory classification retained",
@@ -3357,7 +3541,7 @@
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
       "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
-      "remediation_reference": "Prompt 20 mandatory repair backlog",
+      "remediation_reference": "Prompt 23 / commit 3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
       "expiry_candidate": null,
       "notes": "Stable across both validated merge-SHA runs; raw CI artifact 30910072964. No exception candidate created.",
       "changed_by_pr_153": false,
@@ -3366,7 +3550,15 @@
       "shared_platform_relevance": "direct shared canonical route, form, workflow, or UI component; conservative mandatory classification",
       "root_cause": "Canonical shared shell, list, form, focus, responsive, or status surface disagrees with browser assertion.",
       "root_cause_cluster": "D-SHARED-UI",
-      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof."
+      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof.",
+      "resolution": {
+        "status": "resolved_focused_linux_ci_pending",
+        "resolving_commit": "3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
+        "actual_root_cause": "A file-local non-governed screenshot or stale selector obscured the semantic, focus, status, responsive, or action contract already approved in the canonical UI.",
+        "focused_evidence": "Exact registry cohort: 26 passed; complete affected files: 34 passed",
+        "full_suite_evidence": "Pending final Linux draft-PR CI",
+        "evidence_document": "docs/pilots/payrollminds/SHARED_UI_REPAIR.md"
+      }
     },
     {
       "stable_test_identifier": "8bc97880c2cec293510e-52303d88e0ef0f5ea4b6",
@@ -4156,7 +4348,7 @@
           "https://github.com/Technivian/CLMOne/actions/runs/30910072964 attempt 2 (shard 5/8; raw log /tmp/payrollminds-integration-ui-final2-run2.log)"
         ]
       },
-      "phase": "security_clean_baseline_complete",
+      "phase": "shared_ui_repair_focused_complete_linux_ci_pending",
       "exception_or_assertion_type": "assertion_failure",
       "normalized_signature": "assertion_failure:client/tests/e2e/phase-5h-command-center.spec.js:Phase 5H Command Center consolidation › keeps 390px operable without overflow and preserves empty/setup states",
       "top_relevant_stack_location": "client/tests/e2e/phase-5h-command-center.spec.js:44:3",
@@ -4168,7 +4360,7 @@
       ],
       "earliest_known_appearance": "PR #153 clean baseline run one",
       "inherited_from_main": true,
-      "affected_by_repair": false,
+      "affected_by_repair": true,
       "shared_service_usage": "Django E2E fixture server; canonical UI and authorization surfaces as exercised by the named test.",
       "payrollminds_pilot_relevance": "indirect shared-platform",
       "security_relevance": "no security signature in artifact; mandatory classification retained",
@@ -4178,7 +4370,7 @@
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
       "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
-      "remediation_reference": "Prompt 20 mandatory repair backlog",
+      "remediation_reference": "Prompt 23 / commit 3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
       "expiry_candidate": null,
       "notes": "Stable across both validated merge-SHA runs; raw CI artifact 30910072964. No exception candidate created.",
       "changed_by_pr_153": false,
@@ -4187,7 +4379,15 @@
       "shared_platform_relevance": "direct shared canonical route, form, workflow, or UI component; conservative mandatory classification",
       "root_cause": "Canonical shared shell, list, form, focus, responsive, or status surface disagrees with browser assertion.",
       "root_cause_cluster": "D-SHARED-UI",
-      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof."
+      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof.",
+      "resolution": {
+        "status": "resolved_focused_linux_ci_pending",
+        "resolving_commit": "3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
+        "actual_root_cause": "A file-local non-governed screenshot or stale selector obscured the semantic, focus, status, responsive, or action contract already approved in the canonical UI.",
+        "focused_evidence": "Exact registry cohort: 26 passed; complete affected files: 34 passed",
+        "full_suite_evidence": "Pending final Linux draft-PR CI",
+        "evidence_document": "docs/pilots/payrollminds/SHARED_UI_REPAIR.md"
+      }
     },
     {
       "stable_test_identifier": "a0f8a50d9100f29fce8e-e6913fb8435b5f8e86c0",
@@ -4229,7 +4429,7 @@
           "https://github.com/Technivian/CLMOne/actions/runs/30910072964 attempt 2 (shard 5/8; raw log /tmp/payrollminds-integration-ui-final2-run2.log)"
         ]
       },
-      "phase": "security_clean_baseline_complete",
+      "phase": "shared_ui_repair_focused_complete_linux_ci_pending",
       "exception_or_assertion_type": "assertion_failure",
       "normalized_signature": "assertion_failure:client/tests/e2e/phase-5h-command-center.spec.js:Phase 5H Command Center consolidation › section toolbar links use canonical link buttons",
       "top_relevant_stack_location": "client/tests/e2e/phase-5h-command-center.spec.js:59:3",
@@ -4241,7 +4441,7 @@
       ],
       "earliest_known_appearance": "PR #153 clean baseline run one",
       "inherited_from_main": true,
-      "affected_by_repair": false,
+      "affected_by_repair": true,
       "shared_service_usage": "Django E2E fixture server; canonical UI and authorization surfaces as exercised by the named test.",
       "payrollminds_pilot_relevance": "indirect shared-platform",
       "security_relevance": "no security signature in artifact; mandatory classification retained",
@@ -4251,7 +4451,7 @@
       "data_integrity_relevance": "canonical record/workflow state may be affected; preserve focused regression coverage",
       "classification": "D — Shared-platform defect",
       "remediation_owner": "browser shared UI repair branch",
-      "remediation_reference": "Prompt 20 mandatory repair backlog",
+      "remediation_reference": "Prompt 23 / commit 3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
       "expiry_candidate": null,
       "notes": "Stable across both validated merge-SHA runs; raw CI artifact 30910072964. No exception candidate created.",
       "changed_by_pr_153": false,
@@ -4260,7 +4460,15 @@
       "shared_platform_relevance": "direct shared canonical route, form, workflow, or UI component; conservative mandatory classification",
       "root_cause": "Canonical shared shell, list, form, focus, responsive, or status surface disagrees with browser assertion.",
       "root_cause_cluster": "D-SHARED-UI",
-      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof."
+      "proposed_repair": "Trace canonical component and route; correct implementation or stale assertion only after proof.",
+      "resolution": {
+        "status": "resolved_focused_linux_ci_pending",
+        "resolving_commit": "3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
+        "actual_root_cause": "A file-local non-governed screenshot or stale selector obscured the semantic, focus, status, responsive, or action contract already approved in the canonical UI.",
+        "focused_evidence": "Exact registry cohort: 26 passed; complete affected files: 34 passed",
+        "full_suite_evidence": "Pending final Linux draft-PR CI",
+        "evidence_document": "docs/pilots/payrollminds/SHARED_UI_REPAIR.md"
+      }
     },
     {
       "stable_test_identifier": "b94496f70713b71f4166-b99fa6cfeef398a0d296",
@@ -6705,8 +6913,16 @@
   "classification_counts": {
     "Resolved — PayrollMinds-critical": 11,
     "Resolved — shared workflow/record": 7,
-    "H — Unresolved": 31,
+    "Resolved — shared UI": 26,
+    "H — Unresolved": 4,
     "Not applicable — terminal pass": 42
   },
-  "classification_source": "Prompt 20 artifact analysis plus Prompt 21 and Prompt 22 local source-SHA repair evidence"
+  "classification_source": "Prompt 20 artifact analysis plus Prompt 21, Prompt 22, and Prompt 23 source-SHA repair evidence",
+  "shared_ui_repair_validation": {
+    "source_sha": "3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
+    "focused_result": "26 passed; 0 failed; 0 skipped; 0 not run",
+    "affected_file_result": "34 passed",
+    "linux_full_suite_result": "pending final draft-PR CI",
+    "evidence": "docs/pilots/payrollminds/SHARED_UI_REPAIR.md"
+  }
 }

@@ -136,3 +136,20 @@ them, create an exception, or normalize any failure as a pass. The current
 release posture remains **NO-GO** until the remaining browser failures,
 full-unit baseline comparison, security scans, CI, and required independent
 release approvals are complete.
+
+## Prompt 23 shared UI repair evidence
+
+Implementation commit `3f5bb5c3ee65367a2bcd9c86810bad1a3235719a`
+repairs exactly the 26 `D-SHARED-UI` records. The exact registry selection is
+26 passed and the 13 complete affected files are 34 passed. Corrections cover
+mobile table containment, repository error semantics, Contract Record dialog
+focus return, owned Command Center navigation, approved current terminology,
+retired route assertions, deterministic populated/empty list state, and
+semantic coverage replacing non-governed file-local screenshots.
+
+The visual-baseline spec and all five committed Linux assets are unchanged.
+No test was removed, skipped, retried, excluded, or broadly accepted. PR #161
+preservation is 16 passed; PR #163 exact/affected preservation is 7/7 and
+11/11; PayrollMinds verification is 17 passed. Full Linux browser and Django
+signature evidence remain required before registry closure; the release remains
+**NO-GO**. Detailed traceability is in `SHARED_UI_REPAIR.md`.

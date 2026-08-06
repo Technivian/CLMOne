@@ -1,5 +1,5 @@
 {
-  "source_sha": "361e4739aabc1de38ca51e500d1eae6a2b23d865",
+  "source_sha": "3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
   "validated_merge_sha": "45b45a4a",
   "clusters": [
     {
@@ -80,7 +80,7 @@
     {
       "cluster_id": "D-SHARED-UI",
       "classification": "D — Shared-platform defect",
-      "root_cause_summary": "Canonical shared shell, list, form, focus, responsive, or status surface disagrees with browser assertion.",
+      "root_cause_summary": "Two real responsive containment defects, one accessible async-state defect, one focus-return defect, owned-navigation defects, stale governed selectors/terminology, non-governed file-local screenshots, and one order-dependent synthetic-state assertion.",
       "affected_test_ids": [
         "fcac23b42f5942783f9d-afc9dfafbd8fbb3b76cf",
         "fcac23b42f5942783f9d-52edd03349ac746fa499",
@@ -111,10 +111,18 @@
       ],
       "affected_tests": 26,
       "owner": "browser shared UI repair branch",
-      "repair_plan": "Trace canonical component and route; correct implementation or stale assertion only after proof.",
+      "repair_plan": "Resolved by the smallest semantic, focus, navigation, responsive, and evidence-backed assertion corrections; governed visual baselines unchanged.",
       "first_failing_layer": "Playwright assertion or snapshot resolution",
       "shared_services": "canonical Django routes, browser fixture server, and shared UI/workflow surfaces",
-      "security_relevance": "No direct security signature; mandatory regression review required"
+      "security_relevance": "No direct security signature; mandatory regression review required",
+      "resolution": {
+        "status": "resolved_focused_linux_ci_pending",
+        "resolving_commit": "3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
+        "focused_result": "26 passed",
+        "affected_file_result": "34 passed",
+        "full_suite_result": "pending final Linux draft-PR CI",
+        "evidence": "docs/pilots/payrollminds/SHARED_UI_REPAIR.md"
+      }
     }
   ],
   "local_validation": {
@@ -132,5 +140,11 @@
     "affected_file_result": "11 passed",
     "duplicate_guard_stress_result": "20/20 passed",
     "final_ci_status": "pending"
+  },
+  "shared_ui_focused_validation": {
+    "source_sha": "3f5bb5c3ee65367a2bcd9c86810bad1a3235719a",
+    "focused_result": "26 passed",
+    "affected_file_result": "34 passed",
+    "linux_full_suite_result": "pending final draft-PR CI"
   }
 }
