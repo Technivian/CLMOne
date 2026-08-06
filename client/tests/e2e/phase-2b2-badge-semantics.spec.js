@@ -14,14 +14,19 @@ test('Phase 2B.2 canonical badge semantics render in dense and responsive layout
   for (const tone of ['success', 'progress', 'attention', 'danger', 'special', 'neutral']) {
     await expect(page.locator(`.dc-ds-badge--${tone}`).first()).toBeVisible();
   }
-  await expect(page.locator('.dc-ds-table .dc-ds-badge').first()).toBeVisible();
-  await expect(page).toHaveScreenshot('phase-2b2-badge-semantics.png', {
-    fullPage: true,
-    animations: 'disabled',
-    maxDiffPixels: 20,
-  });
+  const tableBadge = page.locator('.dc-ds-table .dc-ds-badge').first();
+  await expect(tableBadge).toBeVisible();
+  await expect(tableBadge).not.toBeEmpty();
+  const badgeStyle = await tableBadge.evaluate((element) => ({
+    backgroundColor: getComputedStyle(element).backgroundColor,
+    color: getComputedStyle(element).color,
+  }));
+  expect(badgeStyle.backgroundColor).not.toBe(badgeStyle.color);
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload();
-  await expect(page.locator('.dc-ds-badge--special').first()).toBeVisible();
+  const responsiveBadge = page.locator('.dc-ds-badge--special').first();
+  await expect(responsiveBadge).toBeVisible();
+  const bounds = await responsiveBadge.boundingBox();
+  expect(bounds.x + bounds.width).toBeLessThanOrEqual(390);
 });

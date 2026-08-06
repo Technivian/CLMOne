@@ -526,7 +526,18 @@
 <script nonce="{{ csp_nonce }}">
 (() => {
   const noteDialog = document.getElementById('contract-note-dialog');
-  if (noteDialog) { document.querySelectorAll('[data-open-note-dialog]').forEach((button) => button.addEventListener('click', () => { noteDialog.showModal(); noteDialog.querySelector('#negotiation-note-title')?.focus(); })); noteDialog.querySelectorAll('[data-close-note-dialog]').forEach((button) => button.addEventListener('click', () => noteDialog.close())); }
+  if (noteDialog) {
+    let noteDialogTrigger = null;
+    document.querySelectorAll('[data-open-note-dialog]').forEach((button) => button.addEventListener('click', () => {
+      noteDialogTrigger = button;
+      noteDialog.showModal();
+      noteDialog.querySelector('#negotiation-note-title')?.focus();
+    }));
+    noteDialog.querySelectorAll('[data-close-note-dialog]').forEach((button) => button.addEventListener('click', () => {
+      noteDialog.close();
+      noteDialogTrigger?.focus();
+    }));
+  }
   const collaborationDialog = document.getElementById('counterparty-collaboration-dialog');
   if (collaborationDialog) { document.querySelectorAll('[data-open-collaboration-dialog]').forEach((button) => button.addEventListener('click', () => { collaborationDialog.showModal(); collaborationDialog.querySelector('#counterparty-collaboration-email')?.focus(); })); collaborationDialog.querySelectorAll('[data-close-collaboration-dialog]').forEach((button) => button.addEventListener('click', () => collaborationDialog.close())); }
   const attachDialog = document.getElementById('contract-attach-dialog');
