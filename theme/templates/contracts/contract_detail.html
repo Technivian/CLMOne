@@ -548,6 +548,7 @@
   const promptField = document.getElementById('ai-assistant-prompt'); const submit = document.getElementById('ai-assistant-submit'); const status = document.getElementById('ai-assistant-status'); const errorBox = document.getElementById('ai-assistant-error'); const output = document.getElementById('ai-assistant-output');
   if (!promptField || !submit || !status || !errorBox || !output) return;
   let inFlight = false;
+  let lastSuccessfulPrompt = null;
   const clearNode = (node) => { while (node.firstChild) node.removeChild(node.firstChild); };
   const section = (labelText) => {
     const wrap = document.createElement('div');
@@ -584,8 +585,12 @@
     }
     output.classList.remove('hidden');
   };
+  promptField.addEventListener('input', () => {
+    if (!inFlight) submit.disabled = lastSuccessfulPrompt !== null && promptField.value.trim() === lastSuccessfulPrompt;
+  });
   submit.addEventListener('click', async () => {
-    if (inFlight) return;
+    const submittedPrompt = promptField.value.trim();
+    if (inFlight || (lastSuccessfulPrompt !== null && submittedPrompt === lastSuccessfulPrompt)) return;
     inFlight = true;
     status.textContent = 'Reviewing…';
     errorBox.classList.add('hidden');
@@ -593,18 +598,19 @@
     output.classList.add('hidden');
     submit.disabled = true;
     try {
-      const response = await fetch("{% url 'contracts:contract_ai_assistant' contract.pk %}", { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' }, body: JSON.stringify({ prompt: promptField.value }) });
+      const response = await fetch("{% url 'contracts:contract_ai_assistant' contract.pk %}", { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' }, body: JSON.stringify({ prompt: submittedPrompt }) });
       const data = await response.json().catch(() => null);
       if (!response.ok || !data || data.ok === false) throw new Error((data && data.error) || 'Unable to run the review right now.');
       renderResult(data.response || {});
+      lastSuccessfulPrompt = submittedPrompt;
       status.textContent = 'Done';
     } catch (error) {
       errorBox.textContent = error.message;
       errorBox.classList.remove('hidden');
       status.textContent = '';
     } finally {
-      submit.disabled = false;
       inFlight = false;
+      submit.disabled = lastSuccessfulPrompt !== null && promptField.value.trim() === lastSuccessfulPrompt;
     }
   });
 })();
