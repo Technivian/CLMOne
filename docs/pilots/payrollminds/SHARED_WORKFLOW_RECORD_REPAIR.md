@@ -77,10 +77,12 @@ test-created local data.
 | PayrollMinds verification | 17 passed |
 | PR #161 category-B collection | 16 passed |
 | Duplicate-submit race stress | 20/20 passed |
+| Cross-tenant isolation and permission matrix | 77 passed |
 | Unfiltered Playwright collection | 90 collected; 59 passed; 31 failed; 0 skipped; 0 interrupted |
 | Full Django baseline | 2,627 run; inherited 35 failures / 13 errors / 32 skipped (foundation: 35 failures / 19 errors) |
 | Configuration and schema | Django check passed; no migration drift |
 | Design and security | Anti-drift, contrast, Bandit high, pip-audit, and both npm audits passed |
+| Compensating rollback drill | Reverted `361e4739` then `50aae7d4` in an isolated detached worktree; Django system check passed |
 
 The unfiltered run's 31 failed identifiers are all pre-existing unresolved
 shared-UI or visual-baseline identifiers; no B or D-SHARED-WORKFLOW identifier
