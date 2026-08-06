@@ -33,5 +33,7 @@ Focused security/access/tenancy coverage is 192 passed. Django check, migration
 drift, NULL-organization audit, UI integrity, contrast, anti-drift, Bandit high,
 pip-audit, both runtime npm audits, and a changed-lines credential scan passed.
 PR #162 was not included and no MFA or authentication activation occurred.
-Final Linux CI and full Django signature comparison remain pending, so the
-release posture remains **NO-GO**.
+The exact PR #163/full-repair Django comparison ran 2,627 tests on each SHA:
+35 failures/13 errors versus 34 failures/13 errors. There are zero new or
+mutated normalized signatures and one passing improvement. Final Linux CI
+remains pending, so the release posture remains **NO-GO**.

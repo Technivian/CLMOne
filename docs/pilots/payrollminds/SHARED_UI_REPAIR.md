@@ -13,7 +13,7 @@ live integrations.
   `b0f09bbef6a625a8b60b2b9058399f0e7ee7a614` and its approved predecessor
   chain.
 - Repair branch: `codex/payrollminds-shared-ui-repair`.
-- Draft PR: pending creation.
+- Draft PR: #164.
 - Resolving implementation commit:
   `3f5bb5c3ee65367a2bcd9c86810bad1a3235719a`.
 - PR #162 head `ab0bf3669939c0f77186671c6ce6eede7ff0851b`
@@ -106,7 +106,7 @@ audit, external provider, or authentication path changed.
 | Duplicate-submit stress | 20/20 passed |
 | Focused security/access/tenancy suite | 192 passed |
 | Full 90-test browser run | Final Linux CI pending. Local macOS diagnostic: all 85 non-visual tests pass; the five visual tests cannot resolve Linux-only assets on macOS. |
-| Full Django comparison | 2,627 run; 34 failures / 13 errors / 32 skipped. PR #163: 35 failures / 13 errors; normalized signature comparison is running against the exact PR #163 SHA. |
+| Full Django comparison | 2,627 run; 34 failures / 13 errors / 32 skipped. Exact PR #163 rerun: 35 failures / 13 errors / 32 skipped. Normalized comparison: zero new or mutated signatures; one passing improvement (`DemoCommandCenterSeedTests.test_dashboard_renders_demo_personalities_and_workspace_links`). |
 | Configuration/schema | Django check passed; no migration drift; NULL-organization audit passed after applying the existing migration set. |
 | Accessibility/design | UI integrity 11 passed; contrast passed; anti-drift passed. |
 | Dependency/security | `pip-audit`: no known vulnerabilities; Bandit high: passed; client and theme runtime npm audits: zero vulnerabilities; diff secret scan passed. |
@@ -130,5 +130,6 @@ corrections and has no data rollback step.
 Unresolved shared-UI count: **0 in focused evidence; final registry closure is
 conditional on the final Linux CI run**. Recommendation remains **NO-GO** until
 the complete browser run proves exactly 86 passed and only the four unchanged
-`A-CI-SNAPSHOT` records fail, the full Django signature comparison is complete,
-and the draft-PR evidence is updated on its final SHA.
+`A-CI-SNAPSHOT` records fail and the draft-PR evidence is updated on its final
+SHA. The full Django signature comparison is complete with no new or mutated
+failure.
