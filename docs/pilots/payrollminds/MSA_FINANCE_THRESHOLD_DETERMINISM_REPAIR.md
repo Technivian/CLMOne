@@ -1,6 +1,6 @@
 # MSA finance-threshold determinism repair
 
-Status: **NO-GO pending final authoritative verification**.
+Status: **FINANCE-THRESHOLD BLOCKER REPAIRED**.
 
 This record covers the single unexpected functional failure in the PayrollMinds
 Linux browser gate. It is not a release approval, merge instruction, deployment
@@ -186,19 +186,38 @@ Lower-level coverage now:
 
 ## Authoritative browser and unit/security comparison
 
-Fresh corrected GitHub matrix: `PENDING_AUTHORITATIVE_MATRIX`.
+Fresh corrected GitHub `UI Verification` run `31168635206` executed PR #164
+head `2796eda498ff3e9049e926d15a882fe04717cbf5`. It collected and executed all
+90 tests: **86 passed, exactly four failed, zero skipped, zero interrupted and
+zero not run**. Shard 7 passed 11/11 and the finance-threshold scenario passed
+in 16.4 seconds. The only failures were the unchanged visual-baseline records:
 
-Required terminal shape is 90 collected, 90 executed, 86 passed, exactly four
-known visual failures, and zero skipped/interrupted/not-run. No visual snapshot
-or baseline may be changed.
+- `257cfc15fcd93e8e1bb7-ad625d5c6d0960d42c47` — dashboard;
+- `257cfc15fcd93e8e1bb7-f0db563020cdc84ca2c5` — list;
+- `257cfc15fcd93e8e1bb7-4abae29fec94da448a20` — workspace;
+- `257cfc15fcd93e8e1bb7-0c224bb7c0472c6e22ca` — detail.
+
+The separate governed Phase 1 visual-baseline job passed without regenerating
+assets. Anti-drift/contrast, redesigned E2E, quality/tenancy, release evidence,
+security scans and brand checks all passed. The aggregate `verify-ui` job is
+red only because it correctly propagates the four known shard-8 visual
+failures.
 
 The focused workflow/approval, tenant isolation, authorization, provenance,
 audit and search/count selection ran 378 tests. Its four failures reproduce
 identically on untouched `d0af8f45`; there is no new or mutated signature.
 Finance policy and MSA tests pass 35/35. Dependency scans report no known Python
 or runtime npm vulnerabilities, Bandit high severity passes, system and deploy
-checks pass, and migration drift is empty. The full Django signature comparison
-remains pending.
+checks pass, and migration drift is empty.
+
+The full Django run executed 2,629 tests. Because Docker Desktop was available,
+22 live-MinIO tests ran and failed their external fixture setup instead of being
+skipped as in the inherited comparison. Removing only those environment-only
+MinIO signatures produces **34 failures / 13 errors**, exactly matching the
+inherited `d0af8f45` baseline: no added, missing or mutated failure/error
+signature. The two added passing regression tests account for the collection
+increase from 2,627 to 2,629. The focused 378-test selection's four failures
+also reproduce identically on untouched `d0af8f45`.
 
 ## Migration, rollback and recommendation
 
@@ -206,10 +225,10 @@ No model or migration changes are required. The repair is test synchronization
 plus lower-level regression evidence. Rollback is a normal revert of the repair
 commit; it has no data migration or product-state rollback step.
 
-Recommendation remains **NO-GO** until the pending focused suites, one fresh
-authoritative full GitHub matrix and normalized unit/security comparison are
-complete. If all terminal criteria hold, update this recommendation to
-**FINANCE-THRESHOLD BLOCKER REPAIRED**.
+Recommendation: **FINANCE-THRESHOLD BLOCKER REPAIRED**. This closes only the
+unexpected functional finance-threshold browser blocker. The four established
+visual records remain separately open and release posture outside this bounded
+repair is unchanged.
 
 The four governed visual baselines are unchanged. Nothing is merged or
 deployed. PR #162 and all MFA/authentication code remain excluded and MFA is
