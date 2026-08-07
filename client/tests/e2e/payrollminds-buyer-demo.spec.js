@@ -1,7 +1,9 @@
 const { test, expect } = require('@playwright/test');
 
 const username = 'payrollminds_admin';
-const password = 'CLMOneMVP!2026';
+// Local-only synthetic seed fixture; this is deliberately not a customer
+// credential and may be overridden by the isolated E2E environment.
+const password = process.env.PAYROLLMINDS_DEMO_PASSWORD || 'payrollminds-demo-2026!';
 
 async function login(page) {
   await page.goto('/login/');
@@ -13,9 +15,12 @@ async function login(page) {
 
 async function openRepositoryContract(page, title) {
   await page.goto(`/contracts/repository/?q=${encodeURIComponent(title)}`);
-  const link = page.getByRole('link', { name: title }).first();
-  await expect(link).toBeVisible();
-  await link.click();
+  // Repository records are keyboard-operable rows. The title is deliberately
+  // not an extra nested link, which avoids competing click targets in the
+  // dense canonical table.
+  const row = page.locator('.contract-row', { hasText: title });
+  await expect(row).toBeVisible();
+  await row.click();
   await expect(page.getByRole('heading', { name: title })).toBeVisible();
 }
 
@@ -28,43 +33,44 @@ test('Payrollminds buyer demo tells a complete contract lifecycle story', async 
   await expect(page.locator('.topbar-page-title')).toHaveText('Contracts');
   for (const title of [
     'Payrollminds Master Services Agreement',
-    'Atlas Workforce Order Confirmation 2026',
+    'Global Payroll Transformation Engagement — Implementation SOW',
     'Consultancy Services Agreement — HRIS rollout',
     'Data Processing Agreement — Cloud payroll',
     'Mutual NDA — FinTalent partnership',
     'Addendum — 2026 pricing and service levels',
   ]) {
-    await expect(page.getByRole('link', { name: title }).first()).toBeVisible();
+    await expect(page.locator('.contract-row', { hasText: title })).toBeVisible();
   }
 
   await openRepositoryContract(page, 'Payrollminds Master Services Agreement');
-  await expect(page.getByText('Agreement family', { exact: true })).toBeVisible();
-  await expect(page.getByText('Atlas Workforce Order Confirmation 2026', { exact: true })).toBeVisible();
+  await expect(page.getByText('Related records', { exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: /Global Payroll Transformation Engagement — Implementation SOW/ })).toBeVisible();
   await expect(
-    page.locator('#tab-overview').getByText('Payrollminds MSA — executed agreement', { exact: true }),
+    page.locator('#contract-tab-overview').getByText('Payrollminds MSA — executed agreement', { exact: true }),
   ).toBeVisible();
 
   await page.getByRole('tab', { name: 'Documents' }).click();
   await expect(page.getByText('Payrollminds MSA — negotiated draft', { exact: true })).toBeVisible();
   await expect(
-    page.locator('#tab-documents').getByText('Payrollminds MSA — executed agreement', { exact: true }),
+    page.locator('#contract-tab-documents').getByText('Payrollminds MSA — executed agreement', { exact: true }),
   ).toBeVisible();
 
   await page.getByRole('tab', { name: 'Workflow' }).click();
-  await expect(page.getByText('Elise van Dijk', { exact: true })).toBeVisible();
-  await expect(page.getByText('Signed', { exact: true }).first()).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Full workflow' })).toBeVisible();
+  await expect(page.getByText('Signature requirement', { exact: true })).toBeVisible();
+  await expect(page.getByText('At least one approval is required before signature routing.', { exact: true }).first()).toBeVisible();
 
-  await openRepositoryContract(page, 'Atlas Workforce Order Confirmation 2026');
-  await expect(page.getByText(/^Governing agreement/)).toBeVisible();
-  await expect(page.getByText('Payrollminds Master Services Agreement', { exact: true })).toBeVisible();
+  await openRepositoryContract(page, 'Global Payroll Transformation Engagement — Implementation SOW');
+  await expect(page.getByRole('link', { name: 'Governing agreement: Payrollminds Master Services Agreement' })).toBeVisible();
   await page.getByRole('tab', { name: 'Workflow' }).click();
-  await expect(page.getByText('Legal Review', { exact: true }).first()).toBeVisible();
-  await expect(page.getByText('Finance Review', { exact: true }).first()).toBeVisible();
-  await expect(page.getByText('Approved', { exact: true }).first()).toBeVisible();
-  await expect(page.getByText('Pending', { exact: true }).first()).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Full workflow' })).toBeVisible();
+  await expect(page.getByText('Current stage', { exact: true })).toBeVisible();
+  await expect(page.getByText('Approval', { exact: true }).first()).toBeVisible();
+  await expect(page.getByText('Run contract review before submitting for approval.', { exact: true }).first()).toBeVisible();
+  await expect(page.getByText('All open approval requirements must be satisfied before signature routing.', { exact: true })).toBeVisible();
 
   await page.goto('/contracts/dpa-reviews/');
-  const dpaLink = page.getByRole('link', { name: 'Data Processing Agreement — Cloud payroll' });
+  const dpaLink = page.getByRole('link', { name: 'Data Processing Agreement — Cloud payroll', exact: true });
   await expect(dpaLink).toBeVisible();
   await dpaLink.click();
   await expect(page.getByText('DPA overrides the MSA liability cap', { exact: true })).toBeVisible();
@@ -73,7 +79,7 @@ test('Payrollminds buyer demo tells a complete contract lifecycle story', async 
 
   await page.goto('/contracts/obligations/');
   for (const obligation of [
-    'MSA renewal decision',
+    'MSA renewal and notice decision',
     'Review next subprocessor notification',
     'Approve HRIS discovery milestone',
     'Review 2027 pricing indexation',
@@ -89,13 +95,20 @@ test('Payrollminds repository and contract detail fit a 390 px mobile viewport',
 
   for (const path of ['/contracts/repository/', '/contracts/obligations/']) {
     await page.goto(path);
-    const widths = await page.evaluate(() => ({
-      document: document.documentElement.scrollWidth,
-      viewport: document.documentElement.clientWidth,
-      body: document.body.scrollWidth,
+    // Dense canonical list tables preserve all governed columns in an
+    // internal horizontal-scroll region on a phone; they do not widen the
+    // visible application shell. Wait for the table's rows before measuring.
+    const tableWrap = page.locator('.dc-ds-table-wrap').first();
+    await expect(tableWrap).toBeVisible();
+    const layout = await tableWrap.evaluate((wrap) => ({
+      clientWidth: wrap.clientWidth,
+      scrollWidth: wrap.scrollWidth,
+      viewportWidth: document.documentElement.clientWidth,
+      pageOverflow: getComputedStyle(document.body).overflowX,
     }));
-    expect(widths.document, `${path} document overflow`).toBeLessThanOrEqual(widths.viewport);
-    expect(widths.body, `${path} body overflow`).toBeLessThanOrEqual(widths.viewport);
+    expect(layout.clientWidth, `${path} table-wrap width`).toBeLessThanOrEqual(layout.viewportWidth);
+    expect(layout.scrollWidth, `${path} internal table scroll`).toBeGreaterThan(layout.clientWidth);
+    expect(layout.pageOverflow, `${path} page overflow containment`).toBe('hidden');
   }
 
   await openRepositoryContract(page, 'Payrollminds Master Services Agreement');

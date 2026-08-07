@@ -23,7 +23,10 @@ test('NDA self-serve cockpit generates a governed workspace and dashboard row', 
   await page.locator('a[href="/contracts/new/nda/"]').click();
 
   await expect(page).toHaveURL(/\/contracts\/new\/nda\/?$/);
-  await expect(page.getByRole('heading', { name: 'New NDA Draft' })).toBeVisible();
+  // Base owns the page-context heading; this checks the governed builder's
+  // in-form heading rather than assuming that a page has only one same-named
+  // heading.
+  await expect(page.locator('#nda-workflow-form').getByRole('heading', { name: 'New NDA Draft' })).toBeVisible();
   await expect(page.getByText('AI-assisted drafting from approved templates and playbooks.')).toBeVisible();
   await expect(page.getByText('Review triggers')).toBeVisible();
 
@@ -52,13 +55,13 @@ test('NDA self-serve cockpit generates a governed workspace and dashboard row', 
   await page.click('#submit-nda-btn');
 
   await expect(page).toHaveURL(/\/contracts\/workflows\/\d+\/?$/);
-  await expect(page.getByText('Lifecycle')).toBeVisible();
+  await expect(page.getByText('Lifecycle', { exact: true })).toBeVisible();
   await expect(page.getByText(counterparty).first()).toBeVisible();
   await expect(page.getByText('Guided drafting').first()).toBeVisible();
   await expect(page.getByText('Document overview').first()).toBeVisible();
-  await expect(page.getByRole('link', { name: 'View contract record' }).or(page.getByRole('menuitem', { name: 'View contract record' })).first()).toBeVisible();
   await expect(page.getByRole('button', { name: 'Send for signature' })).toHaveCount(0);
   await page.locator('details.dc-ds-workspace__actions-menu summary').click();
+  await expect(page.getByRole('menuitem', { name: 'View contract record' })).toBeVisible();
   await page.getByRole('menuitem', { name: 'View contract record' }).click();
   await expect(page).toHaveURL(/\/contracts\/\d+\/?$/);
   await expect(page.locator('.dc-ds-workspace--record')).toBeVisible();

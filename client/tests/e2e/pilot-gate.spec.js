@@ -105,7 +105,9 @@ test.describe('Pilot gate: NDA supported actions only', () => {
     await expect(page).toHaveURL(/\/contracts\/workflows\/\d+\/?$/);
     await expect(page.getByRole('button', { name: 'Send for signature' })).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Export Word' })).toHaveCount(0);
-    const record = page.getByRole('link', { name: 'View contract record' });
+    const actions = page.locator('details.dc-ds-workspace__actions-menu');
+    await actions.locator('summary').click();
+    const record = page.getByRole('menuitem', { name: 'View contract record' });
     await record.click();
     await expect(page).toHaveURL(/\/contracts\/\d+\/?$/);
     await page.reload();
@@ -133,11 +135,15 @@ test.describe('Pilot gate: search fallback', () => {
 });
 
 test.describe('Pilot gate: repository stage vs status', () => {
-  test('repository Stage column sorts by stage key', async ({ page }) => {
+  test('repository keeps separate Stage and Status controls and sorts by stage key', async ({ page }) => {
     await login(page);
     await page.goto('/contracts/repository/');
     const stageHeader = page.locator('button.repo-sort-btn[data-sort="stage"]');
     await expect(stageHeader).toBeVisible();
-    await expect(page.locator('button.repo-sort-btn[data-sort="status"]')).toHaveCount(0);
+    // Stage and status are governed, distinct lifecycle dimensions. The
+    // repository must expose both; sorting this control must target Stage.
+    await expect(page.locator('button.repo-sort-btn[data-sort="status"]')).toBeVisible();
+    await stageHeader.click();
+    await expect(page).toHaveURL(/(?:sort=stage|stage_(?:asc|desc))/);
   });
 });

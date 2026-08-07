@@ -920,6 +920,8 @@ body:has(.cc-v3) .dc-ds-shell__topbar .global-search-input {
 .cc-v3-top-priority-context { min-width: 0; }
 
 .cc-v3-top-priority-context h3 { margin: 0; color: var(--clmone-white); font-size: 15px; line-height: 1.28; }
+.cc-v3-top-priority-link { color: inherit; text-decoration: none; }
+.cc-v3-top-priority-link:hover { text-decoration: underline; text-underline-offset: 3px; }
 .cc-v3-top-priority-meta { display: flex; flex-wrap: wrap; gap: var(--space-8); align-self: auto; margin-top: 5px; font-size: 11px; line-height: 1.3; }
 .cc-v3-top-priority-meta span + span { margin-top: 0; color: #75ded9; }
 .cc-v3-top-priority-insights { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-16); min-width: 0; }

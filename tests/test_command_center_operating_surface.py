@@ -240,6 +240,15 @@ class CommandCenterProductionSurfaceTests(TestCase):
         self.assertEqual(response.context['portfolio_health_score'], 83)
         self.assertContains(response, 'Portfolio health score 83 out of 100, Needs attention')
         self.assertContains(response, 'Review priority action')
+        priority_href = response.context['priority_feature']['workspace_href']
+        self.assertContains(
+            response,
+            f'class="cc-v3-top-priority-link" href="{priority_href}"',
+        )
+        self.assertContains(
+            response,
+            f'class="dc-ds-button dc-ds-button--primary" href="{priority_href}"',
+        )
         self.assertContains(response, 'controls assessed')
         self.assertContains(response, 'View score breakdown')
 
