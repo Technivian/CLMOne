@@ -13,11 +13,13 @@ from django.utils import timezone
 from contracts.models import (
     Client,
     Contract,
+    Document,
     EthicalWall,
     Matter,
     Organization,
     OrganizationMembership,
 )
+from contracts.services import object_read_policy
 from contracts.services.search_api import ContractSearchAPIService
 
 
@@ -60,6 +62,16 @@ class ParSec002SearchFixtureMixin:
             matter_number='SEC-001',
             title='Protected Matter',
         )
+        # created_by=self.member (not self.owner): the PAR-SEC-002 allowlisted
+        # mode also carries the private-by-default ownership boundary
+        # documented in docs/pilots/payrollminds/PILOT_PRODUCT_PATH_IMPLEMENTATION.md
+        # ("ordinary members can discover only records they own or created").
+        # These fixtures exist to exercise Ethical Wall enforcement in
+        # isolation from that separate, already-governed boundary, so the
+        # ordinary member (not workspace owner/admin) must own every record
+        # a wall doesn't restrict. self.owner remains an OWNER-role member
+        # and bypasses the ownership boundary entirely regardless of
+        # created_by, so owner-visibility assertions are unaffected.
         self.direct_client_contract = Contract.objects.create(
             organization=self.organization,
             client=self.client_record,
@@ -67,7 +79,7 @@ class ParSec002SearchFixtureMixin:
             status=Contract.Status.ACTIVE,
             contract_type=Contract.ContractType.MSA,
             jurisdiction='NL',
-            created_by=self.owner,
+            created_by=self.member,
         )
         self.matter_contract = Contract.objects.create(
             organization=self.organization,
@@ -76,7 +88,7 @@ class ParSec002SearchFixtureMixin:
             status=Contract.Status.ACTIVE,
             contract_type=Contract.ContractType.SOW,
             jurisdiction='NL',
-            created_by=self.owner,
+            created_by=self.member,
         )
         self.public_contract = Contract.objects.create(
             organization=self.organization,
@@ -84,7 +96,7 @@ class ParSec002SearchFixtureMixin:
             status=Contract.Status.IN_PROGRESS,
             contract_type=Contract.ContractType.NDA,
             jurisdiction='BE',
-            created_by=self.owner,
+            created_by=self.member,
         )
         self.service = ContractSearchAPIService()
 
@@ -152,7 +164,12 @@ class ParSec002SearchEnforcementTests(ParSec002SearchFixtureMixin, TestCase):
                 user=self.member,
             )
         self.assertEqual(result.total, 1)
-        self.assertLessEqual(len(queries), 5)
+        # Bound is 6, not 5: the private-by-default ownership boundary
+        # (docs/pilots/payrollminds/PILOT_PRODUCT_PATH_IMPLEMENTATION.md)
+        # adds exactly one additional, necessary membership-role query via
+        # _is_workspace_privileged(). The assertion still proves the cost is
+        # bounded (independent of wall count), not that it never changes.
+        self.assertLessEqual(len(queries), 6)
 
     @override_settings(**ENFORCEMENT)
     def test_matter_wall_expiry_and_multiple_walls_are_additive(self):
@@ -304,3 +321,117 @@ class ParSec002SearchEnforcementTests(ParSec002SearchFixtureMixin, TestCase):
             sum(row['count'] for row in facets.json()['statuses']),
             1,
         )
+
+    # --- Additional PAR-SEC-002 invariant coverage (Prompt 31 Phase 6) ---
+
+    @override_settings(**ENFORCEMENT)
+    def test_authorized_owner_finds_accessible_contract_by_query(self):
+        """Ordinary eligible access: an owned, unrestricted record is discoverable."""
+        result = self.service.search_contracts(
+            self.organization,
+            q='Ordinary agreement',
+            user=self.member,
+        )
+        self.assertEqual(result.total, 1)
+        self.assertEqual(result.results[0]['id'], self.public_contract.pk)
+
+    @override_settings(**ENFORCEMENT)
+    def test_private_record_hidden_from_unrelated_member_without_wall(self):
+        """Private object: no Ethical Wall is needed to keep an unowned record private."""
+        unrelated = User.objects.create_user(username='search-unrelated')
+        OrganizationMembership.objects.create(
+            organization=self.organization,
+            user=unrelated,
+            role=OrganizationMembership.Role.MEMBER,
+            is_active=True,
+        )
+        result = self.service.search_contracts(self.organization, user=unrelated)
+        self.assertEqual(result.total, 0)
+        self.assertEqual(result.results, [])
+
+    @override_settings(**ENFORCEMENT)
+    def test_cross_workspace_search_never_discovers_other_org_records(self):
+        """Cross-workspace: a workspace-B member cannot discover workspace-A records."""
+        other_org = Organization.objects.create(name='Other Workspace', slug='other-workspace')
+        other_user = User.objects.create_user(username='other-workspace-member')
+        OrganizationMembership.objects.create(
+            organization=other_org,
+            user=other_user,
+            role=OrganizationMembership.Role.OWNER,
+            is_active=True,
+        )
+        result = self.service.search_contracts(other_org, user=other_user)
+        self.assertEqual(result.total, 0)
+        self.assertNotIn(
+            self.public_contract.pk,
+            {row['id'] for row in result.results},
+        )
+
+    @override_settings(**ENFORCEMENT)
+    def test_wall_removal_restores_visibility(self):
+        """Revocation/restoration: removing the restricted-user grant un-hides the record."""
+        wall = self.add_wall(client=self.client_record, restricted_user=self.member)
+        self.assertEqual(
+            self.service.search_contracts(self.organization, user=self.member).total,
+            1,
+        )
+        wall.restricted_users.remove(self.member)
+        result = self.service.search_contracts(self.organization, user=self.member)
+        self.assertEqual(result.total, 3)
+        self.assertEqual(
+            sum(row['count'] for row in self.service.get_contract_facets(
+                self.organization, user=self.member,
+            )['statuses']),
+            3,
+        )
+
+    @override_settings(**ENFORCEMENT)
+    def test_restricted_title_never_matched_by_query(self):
+        """Suggestions/query matching: a walled title is not discoverable by exact query."""
+        self.add_wall(client=self.client_record, restricted_user=self.member)
+        result = self.service.search_contracts(
+            self.organization,
+            q='Direct client secret',
+            user=self.member,
+        )
+        self.assertEqual(result.total, 0)
+        self.assertEqual(result.results, [])
+
+    @override_settings(**ENFORCEMENT)
+    def test_empty_query_totals_exclude_restricted_records(self):
+        """Empty/broad search: an unqualified query still respects the object policy."""
+        self.add_wall(client=self.client_record, restricted_user=self.member)
+        result = self.service.search_contracts(self.organization, q='', user=self.member)
+        facets = self.service.get_contract_facets(self.organization, user=self.member)
+        self.assertEqual(result.total, 1)
+        self.assertEqual(
+            sum(row['count'] for row in facets['statuses']),
+            1,
+        )
+
+    @override_settings(**ENFORCEMENT)
+    def test_document_search_inherits_contract_wall_boundary(self):
+        """Documents: document eligibility inherits the parent contract's wall/ownership boundary."""
+        self.add_wall(client=self.client_record, restricted_user=self.member)
+        restricted_document = Document.objects.create(
+            organization=self.organization,
+            title='Direct client secret exhibit',
+            contract=self.direct_client_contract,
+            client=self.client_record,
+            uploaded_by=self.member,
+        )
+        eligible_document = Document.objects.create(
+            organization=self.organization,
+            title='Ordinary agreement exhibit',
+            contract=self.public_contract,
+            uploaded_by=self.member,
+        )
+        eligible_ids = set(
+            object_read_policy.filter_document_queryset(
+                Document.objects.filter(organization=self.organization),
+                organization=self.organization,
+                user=self.member,
+            ).values_list('pk', flat=True)
+        )
+        self.assertNotIn(restricted_document.pk, eligible_ids)
+        self.assertIn(eligible_document.pk, eligible_ids)
