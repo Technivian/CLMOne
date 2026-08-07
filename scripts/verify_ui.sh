@@ -19,6 +19,9 @@ case "$VERIFY_UI_MODE" in
     ;;
 esac
 
+source "$ROOT_DIR/scripts/lib/playwright_runner.sh"
+validate_playwright_shard "${PLAYWRIGHT_SHARD:-}"
+
 DEFAULT_E2E_PORT="${E2E_PORT:-8010}"
 E2E_PORT="$DEFAULT_E2E_PORT"
 
@@ -87,20 +90,20 @@ if ! curl -s -o /dev/null "${E2E_BASE_URL}/login/"; then
 fi
 
 echo "[verify-ui] Running Playwright smoke tests..."
-PLAYWRIGHT_ARGS=()
 if [[ -n "${PLAYWRIGHT_SHARD:-}" ]]; then
-  if [[ ! "$PLAYWRIGHT_SHARD" =~ ^[1-9][0-9]*/[1-9][0-9]*$ ]]; then
-    echo "[verify-ui] Invalid PLAYWRIGHT_SHARD: ${PLAYWRIGHT_SHARD}" >&2
-    echo "[verify-ui] Expected a Playwright shard such as 1/4." >&2
-    exit 2
-  fi
-  PLAYWRIGHT_ARGS+=("--shard=${PLAYWRIGHT_SHARD}")
   echo "[verify-ui] Running isolated Playwright shard ${PLAYWRIGHT_SHARD}."
 fi
 
-E2E_BASE_URL="${E2E_BASE_URL}" \
-E2E_USERNAME="${E2E_USERNAME}" \
-E2E_PASSWORD="${E2E_PASSWORD}" \
-npm --prefix client run test:e2e -- "${PLAYWRIGHT_ARGS[@]}"
+if [[ -n "${PLAYWRIGHT_SHARD:-}" ]]; then
+  E2E_BASE_URL="${E2E_BASE_URL}" \
+  E2E_USERNAME="${E2E_USERNAME}" \
+  E2E_PASSWORD="${E2E_PASSWORD}" \
+  run_playwright "--shard=${PLAYWRIGHT_SHARD}"
+else
+  E2E_BASE_URL="${E2E_BASE_URL}" \
+  E2E_USERNAME="${E2E_USERNAME}" \
+  E2E_PASSWORD="${E2E_PASSWORD}" \
+  run_playwright
+fi
 
 echo "[verify-ui] Completed successfully."

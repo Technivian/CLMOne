@@ -14,7 +14,7 @@ async function login(page) {
 const pages = [
   { path: '/contracts/new/start/', root: '.ctp-page', title: 'New Contract' },
   { path: '/contracts/repository/', root: '.repo-page', title: 'Contracts' },
-  { path: '/contracts/dpa-reviews/', root: '.dpa-review-page', title: 'DPA Reviews' },
+  { path: '/contracts/dpa-reviews/', root: '.dpa-review-page', title: 'Privacy Reviews' },
   { path: '/contracts/obligations/', root: '.obligations-page', title: 'Obligations' },
 ];
 

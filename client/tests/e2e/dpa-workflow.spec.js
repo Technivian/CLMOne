@@ -28,6 +28,14 @@ async function continueStep(page) {
   await page.getByRole('button', { name: /^(Continue|Review and generate)$/ }).click();
 }
 
+async function openWorkspaceActions(page) {
+  const menu = page.locator('details.dc-ds-workspace__actions-menu');
+  if (!(await menu.evaluate((element) => element.open))) {
+    await menu.locator('summary').click();
+  }
+  await expect(menu).toHaveJSProperty('open', true);
+}
+
 test('DPA four-step builder validates, generates, and opens the contract record', async ({ page }) => {
   test.slow();
   await login(page);
@@ -100,10 +108,14 @@ test('DPA four-step builder validates, generates, and opens the contract record'
   await page.getByRole('button', { name: 'Generate DPA' }).click();
 
   await expect(page).toHaveURL(/\/contracts\/workflows\/\d+\/?$/);
-  await expect(page.getByText('Lifecycle')).toBeVisible();
+  // The timeline also includes the disclosure control "Show full lifecycle".
+  // Bind to the canonical timeline label so this remains an exact accessibility
+  // assertion rather than a strict-mode-ambiguous substring match.
+  await expect(page.getByText('Lifecycle', { exact: true })).toBeVisible();
   await expect(page.getByText(counterparty).first()).toBeVisible();
   await expect(page.getByText('Guided drafting').first()).toBeVisible();
   await expect(page.getByRole('button', { name: /Resolve \d+ exceptions?/ })).toBeVisible();
+  await openWorkspaceActions(page);
   await expect(page.getByText('Send to Legal Review · blocked')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Export Word' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Generate DPA review memo' })).toHaveCount(0);
@@ -113,14 +125,14 @@ test('DPA four-step builder validates, generates, and opens the contract record'
   await expect(exceptionDrawer.getByRole('link', { name: 'Open clause' })).toBeVisible();
   await exceptionDrawer.getByRole('button', { name: 'Close exception resolution' }).click();
 
-  await page.locator('details.dc-ds-workspace__actions-menu summary').click();
+  await openWorkspaceActions(page);
   await page.getByRole('menuitem', { name: 'View contract record' }).click();
   await expect(page).toHaveURL(/\/contracts\/\d+\/?$/);
   await page.reload();
   await expect(page.getByText(counterparty).first()).toBeVisible();
   await page.goBack();
   await expect(page).toHaveURL(/\/contracts\/workflows\/\d+/);
-  await page.locator('details.dc-ds-workspace__actions-menu summary').click();
+  await openWorkspaceActions(page);
   await expect(page.getByRole('menuitem', { name: 'View contract record' })).toBeVisible();
 
   await page.setViewportSize({ width: 390, height: 844 });
@@ -128,7 +140,7 @@ test('DPA four-step builder validates, generates, and opens the contract record'
   await expectNoHorizontalPageOverflow(page);
 
   await page.setViewportSize({ width: 1440, height: 1000 });
-  await page.locator('details.dc-ds-workspace__actions-menu summary').click();
+  await openWorkspaceActions(page);
   const recordLink = page.getByRole('menuitem', { name: 'View contract record' });
   await recordLink.focus();
   await expect(recordLink).toBeFocused();

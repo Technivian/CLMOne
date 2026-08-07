@@ -20,15 +20,11 @@ test.describe('Phase 4A standard record and form scaffolds', () => {
 
   test('client record creation keeps shell title, validation, and keyboard focus', async ({ page }) => {
     await page.goto('/contracts/clients/new/');
-    await expect(page.locator('.topbar-page-title')).toHaveText('New Client');
-    await expect(page.locator('.topbar-page-subtitle')).toBeEmpty();
-    const form = page.locator('.dc-ds-record-content form.dc-ds-surface');
-    const control = form.locator('.dc-ds-form-field__control input, .dc-ds-form-field__control select').first();
-    await control.focus();
-    await expect(control).toBeFocused();
-    await form.evaluate((element) => { element.noValidate = true; });
-    await form.locator('button[type="submit"]').click();
-    await expect(form.locator('.dc-ds-form-field--error').first()).toBeVisible();
+    await expect(page).toHaveURL(/\/dashboard\/?$/);
+    await expect(page.locator('.topbar-page-title')).toHaveText('Command Center');
+    const retirementNotice = page.getByRole('status').filter({ hasText: 'That module is retired for in-house CLM' });
+    await expect(retirementNotice).toBeVisible();
+    await expect(retirementNotice).toContainText('Use Contracts, Approvals, Privacy Reviews, or Obligations instead');
   });
 
   test('clause-library forms use labelled list back navigation without duplicated canvas titles', async ({ page }) => {

@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.contrib.auth import get_user_model
 from django.test import Client as TestClient
 from django.test import TestCase
@@ -81,9 +83,64 @@ class DetectMSARiskSignalsTests(TestCase):
         self.workflow = Workflow.objects.create(title='msa', organization=self.org, template=get_msa_workflow_template(), contract=contract)
 
     def test_contract_value_threshold_triggers_finance_signal(self):
-        detect_msa_risk_signals(self.workflow, {'value': FINANCE_APPROVAL_THRESHOLD + 1})
+        detect_msa_risk_signals(self.workflow, {'value': Decimal(str(FINANCE_APPROVAL_THRESHOLD + 1))})
         signal = RiskSignal.objects.get(workflow=self.workflow, code='finance_approval_required')
         self.assertEqual(signal.severity, RiskSignal.Severity.HIGH)
+
+    def test_finance_signal_boundary_is_exact_and_does_not_leak_between_workflows(self):
+        below_contract = Contract.objects.create(
+            organization=self.org,
+            title='MSA below threshold',
+            contract_type=Contract.ContractType.MSA,
+        )
+        below_workflow = Workflow.objects.create(
+            title='msa below',
+            organization=self.org,
+            template=get_msa_workflow_template(),
+            contract=below_contract,
+        )
+        below_created = detect_msa_risk_signals(
+            below_workflow,
+            {'value': Decimal('99999.00'), 'currency': 'EUR'},
+        )
+
+        at_contract = Contract.objects.create(
+            organization=self.org,
+            title='MSA at threshold',
+            contract_type=Contract.ContractType.MSA,
+        )
+        at_workflow = Workflow.objects.create(
+            title='msa at',
+            organization=self.org,
+            template=get_msa_workflow_template(),
+            contract=at_contract,
+        )
+        at_created = detect_msa_risk_signals(
+            at_workflow,
+            {'value': Decimal('100000.00'), 'currency': 'EUR'},
+        )
+
+        above_contract = Contract.objects.create(
+            organization=self.org,
+            title='MSA above threshold',
+            contract_type=Contract.ContractType.MSA,
+        )
+        above_workflow = Workflow.objects.create(
+            title='msa above',
+            organization=self.org,
+            template=get_msa_workflow_template(),
+            contract=above_contract,
+        )
+        above_created = detect_msa_risk_signals(
+            above_workflow,
+            {'value': Decimal('100001.00'), 'currency': 'EUR'},
+        )
+
+        self.assertEqual(below_created, [])
+        self.assertFalse(RiskSignal.objects.filter(workflow=below_workflow).exists())
+        self.assertEqual([signal.code for signal in at_created], ['finance_approval_required'])
+        self.assertEqual([signal.code for signal in above_created], ['finance_approval_required'])
+        self.assertEqual(RiskSignal.objects.filter(workflow=self.workflow).count(), 0)
 
     def test_liability_cap_deviation_triggers_legal_risk(self):
         detect_msa_risk_signals(self.workflow, {'liability_cap_nonstandard': True})

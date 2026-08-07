@@ -48,7 +48,9 @@ class WorkflowOperationsPageTests(TestCase):
             organization=self.organization,
             title='Northstar Consulting B.V. - Exception',
             contract_type=Contract.ContractType.MSA,
-            status=Contract.Status.ACTIVE,
+            # Internal review is pre-activation; use the canonical record
+            # status rather than constructing an impossible ACTIVE record.
+            status=Contract.Status.IN_PROGRESS,
             counterparty='Northstar Consulting B.V.',
             business_unit='Enterprise Sales',
             jurisdiction='Netherlands',
@@ -144,7 +146,7 @@ class WorkflowOperationsPageTests(TestCase):
         self.assertIn('0%', html)
         self.assertIn('workflow-ops-row', html)
         self.assertContains(response, reverse('contracts:approval_request_list'))
-        hub_tabs = html.split('aria-label="Workflow Designer"', 1)[-1].split('</nav>', 1)[0]
+        hub_tabs = html.split('data-workspace-tabs', 1)[-1].split('</nav>', 1)[0]
         self.assertIn('Active workflows', hub_tabs)
         self.assertIn('Approval requests', hub_tabs)
         self.assertIn('Templates', hub_tabs)
@@ -152,6 +154,8 @@ class WorkflowOperationsPageTests(TestCase):
 
     def test_filters_status_and_type(self):
         response = self.client.get(reverse('contracts:workflow_dashboard'), {
+            # Workflow queue status is independent of the Contract Record
+            # status; this fixture's workflow remains active.
             'status': 'ACTIVE',
             'contract_type': Contract.ContractType.MSA,
             'owner': str(self.user.pk),
@@ -171,7 +175,7 @@ class WorkflowOperationsPageTests(TestCase):
             html = response.content.decode()
             self.assertIn('Active workflows', html)
             self.assertIn('Approval requests', html)
-            hub_tabs = html.split('aria-label="Workflow Designer"', 1)[-1].split('</nav>', 1)[0]
+            hub_tabs = html.split('data-workspace-tabs', 1)[-1].split('</nav>', 1)[0]
             self.assertIn('Templates', hub_tabs)
             self.assertIn('Routing rules', hub_tabs)
 
@@ -184,7 +188,7 @@ class WorkflowOperationsPageTests(TestCase):
         self.assertIn('Open designer', html)
         self.assertIn('clm-list-filter-controls', html)
         self.assertIn('workflow-templates-filters', html)
-        hub_tabs = html.split('aria-label="Workflow Designer"', 1)[-1].split('</nav>', 1)[0]
+        hub_tabs = html.split('data-workspace-tabs', 1)[-1].split('</nav>', 1)[0]
         self.assertIn('Templates', hub_tabs)
         self.assertIn('Routing rules', hub_tabs)
         self.assertIn('Approval rules', hub_tabs)
@@ -195,7 +199,7 @@ class WorkflowOperationsPageTests(TestCase):
         self.assertEqual(routing.status_code, 200)
         routing_html = routing.content.decode()
         self.assertIn('Workflow Designer', routing_html)
-        routing_tabs = routing_html.split('aria-label="Workflow Designer"', 1)[-1].split('</nav>', 1)[0]
+        routing_tabs = routing_html.split('data-workspace-tabs', 1)[-1].split('</nav>', 1)[0]
         self.assertIn('Templates', routing_tabs)
         self.assertIn('Active workflows', routing_tabs)
 

@@ -242,7 +242,7 @@
     </div>
   </div>
 
-  <dialog class="dc-ds-workspace__drawer" id="dpa-exception-drawer" aria-labelledby="msa-exception-drawer-title">
+  <dialog class="dc-ds-workspace__drawer" id="dpa-exception-drawer" aria-labelledby="dpa-exception-drawer-title">
     <div class="dc-ds-workspace__drawer-inner">
       <div class="dc-ds-workspace__drawer-head">
         <h2 id="dpa-exception-drawer-title">Resolve exception</h2>
@@ -307,7 +307,7 @@
     </div>
   </dialog>
 
-  <dialog class="dc-ds-workspace__drawer" id="dpa-governance-drawer" aria-labelledby="msa-governance-drawer-title">
+  <dialog class="dc-ds-workspace__drawer" id="dpa-governance-drawer" aria-labelledby="dpa-governance-drawer-title">
     <div class="dc-ds-workspace__drawer-inner">
       <div class="dc-ds-workspace__drawer-head"><h2 id="dpa-governance-drawer-title">Governance details</h2><form method="dialog"><button class="dc-ds-workspace__drawer-close" aria-label="Close governance details">×</button></form></div>
       <section class="dc-ds-workspace__drawer-section"><h3>Sources</h3>
@@ -331,8 +331,11 @@
   if (!root) return;
   var layout = root.querySelector('[data-workspace-layout]');
   var live = root.querySelector('[data-dpa-selection-live]');
-  var exceptionDrawer = document.getElementById('msa-exception-drawer');
-  var governanceDrawer = document.getElementById('msa-governance-drawer');
+  // This DPA workspace owns DPA-scoped drawer identifiers. Resolving an
+  // exception must open the existing canonical DPA drawer, not silently fail
+  // by looking up the sibling MSA workspace identifiers.
+  var exceptionDrawer = document.getElementById('dpa-exception-drawer');
+  var governanceDrawer = document.getElementById('dpa-governance-drawer');
   var lastFocus = null;
   var currentFilter = root.getAttribute('data-default-filter') || 'all';
   var previewMode = 'selected';

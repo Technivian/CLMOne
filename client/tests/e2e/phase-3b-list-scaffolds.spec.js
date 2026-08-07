@@ -23,7 +23,7 @@ test.describe('Phase 3B standard record-list scaffolds', () => {
     await expect(page.locator('.topbar-page-title')).toHaveText('Contracts');
     await expect(page.locator('.topbar-page-subtitle')).toContainText('governed repository');
     await expect(page.locator('.topbar-back-link')).toHaveCount(0);
-    const tabs = page.locator('.repo-view-tabs.dc-ds-list-tabs a');
+    const tabs = page.locator('.repo-view-tabs [data-workspace-tab]');
     await tabs.first().focus();
     await expect(tabs.first()).toBeFocused();
     await expect(page.locator('.repo-filter-shell')).toHaveClass(/dc-ds-list-toolbar/);
@@ -43,22 +43,24 @@ test.describe('Phase 3B standard record-list scaffolds', () => {
 
     await page.goto('/contracts/clause-library/');
     await expect(page.locator('.topbar-page-title')).toHaveText('Clause Library');
-    const longPrimary = page.locator('.dc-ds-list-header .dc-ds-button--primary');
-    await longPrimary.evaluate((element) => { element.textContent = 'Add a governed clause library record with a long action label'; });
+    const longPrimary = page.getByRole('link', { name: 'Add new' });
+    await expect(longPrimary).toHaveClass(/dc-ds-button--primary/);
+    await longPrimary.focus();
+    await expect(longPrimary).toBeFocused();
     expect(await page.locator('.dc-ds-page.dc-ds-list-page').evaluate((element) => element.scrollWidth <= element.clientWidth)).toBeTruthy();
   });
 
   test('approval administration keeps its title, tabs, and table route semantics', async ({ page }) => {
     await page.goto('/contracts/approvals/');
-    await expect(page.locator('.topbar-page-title')).toHaveText('Approvals');
-    await expect(page.locator('.dc-ds-list-header .dc-ds-button--primary')).toBeVisible();
-    const tab = page.locator('.wq-tabs.dc-ds-list-tabs [role="tab"]').first();
+    await expect(page.locator('.topbar-page-title')).toHaveText('Reviews & Approvals');
+    await expect(page.getByRole('link', { name: 'New approval request' })).toHaveClass(/dc-ds-button--primary/);
+    const tab = page.locator('[data-queue-tab]').first();
     await tab.focus();
     await expect(tab).toBeFocused();
     await expect(page.locator('.approvals-queue-body .dc-ds-table').first()).toBeVisible();
 
     await page.goto('/contracts/approval-rules/');
     await expect(page.locator('.dc-ds-page.dc-ds-list-page')).toBeVisible();
-    await expect(page.locator('.topbar-page-title')).toHaveText('Approval Rules');
+    await expect(page.locator('.topbar-page-title')).toHaveText('Workflow Designer');
   });
 });

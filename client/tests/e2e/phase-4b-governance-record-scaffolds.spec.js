@@ -26,14 +26,14 @@ test.describe('Phase 4B counterparty and governance record scaffolds', () => {
     const firstControl = counterpartyForm.locator('input:not([type="hidden"]), select, textarea').first();
     await firstControl.focus();
     await expect(firstControl).toBeFocused();
-    await expect(counterpartyForm.locator('.dc-ds-form-actions button')).toHaveText('Save');
+    await expect(counterpartyForm.locator('.dc-ds-form-actions button')).toHaveText('Save counterparty');
     await counterpartyForm.evaluate((element) => { element.noValidate = true; });
     await counterpartyForm.locator('button[type="submit"]').click();
     await expect(counterpartyForm.locator('.dc-ds-form-field--error').first()).toBeVisible();
 
     await page.goto('/contracts/privacy/data-inventory/new/');
     await expect(page.locator('.topbar-page-title')).toHaveText('New Data Inventory Record');
-    await expect(page.locator('form.dc-ds-record-form .dc-ds-form-actions button')).toHaveText('Save');
+    await expect(page.locator('form.dc-ds-record-form .dc-ds-form-actions button')).toHaveText(/Save/);
     await page.setViewportSize({ width: 390, height: 844 });
     expect(await page.locator('.dc-ds-record-page').evaluate((element) => element.scrollWidth <= element.clientWidth)).toBeTruthy();
   });
@@ -41,7 +41,7 @@ test.describe('Phase 4B counterparty and governance record scaffolds', () => {
   test('compliance and governance forms retain subtitles, action hierarchy, and compact layout', async ({ page }) => {
     await page.goto('/contracts/compliance/new/');
     await expect(page.locator('.topbar-page-title')).toHaveText('New Compliance Checklist');
-    await expect(page.locator('.topbar-page-subtitle')).toHaveText('Create a new compliance checklist.');
+    await expect(page.locator('.topbar-page-subtitle')).toHaveText('Maintain the checklist details and its current governance status.');
     await expect(page.locator('.dc-ds-form-actions a')).toHaveText('Cancel');
 
     await page.goto('/contracts/privacy/legal-holds/new/');
