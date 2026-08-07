@@ -344,10 +344,17 @@ Reviews"), missing committed snapshot files for several `phase-2b5`/`phase-3a`
 tests, and seed-data mismatches. **Fixing this backlog is out of scope for
 a browser-isolation repair** and was not attempted here.
 
-**Only one full run was completed and read in this session, not two** (the
-task's own bar). A second run was not triggered given the time already
-spent extracting and verifying the first run's real per-shard numbers;
-the PR remains open for that to happen on a future push or manual re-run.
+**A second full run was completed** (triggered by the evidence-doc push,
+commit `086eda64`, run
+[31193924203](https://github.com/Technivian/CLMOne/actions/runs/31193924203))
+and spot-checked against the first: shard 8/8 again shows **11/11 passed**,
+identical test list, including the fixed lifecycle test and all 5
+`visual-baselines.spec.js` tests; shard 1/8 again shows **5 passed / 7
+failed**, with the exact same 7 pre-existing failing tests as run one. This
+second run also incidentally re-validated the `pr-release-evidence` gate,
+which now passes (the PR body was corrected between runs — see PR
+history). Two full runs, zero drift, on the tests this repair actually
+touches.
 
 ## 13. Full regression / security proof — partially completed, all real
 
@@ -405,13 +412,11 @@ What is real and verified:
   workspace only).
 
 What remains before this can be a strict GO against the task's full bar:
-1. A second authoritative full-suite CI run (the task asks for two), and
-   ideally re-running once the `pr-release-evidence` gate is picked up by
-   a fresh push.
-2. The pre-existing 47-failure backlog (§12) is a separate, larger body of
-   work unrelated to isolation — genuinely out of scope here, but it is
-   why the overall suite is far from 90/90.
-3. The remaining untouched Phase 13 items (Bandit, secret scan, full
+1. The pre-existing 47-failure backlog (§12), stable and identical across
+   both runs, is a separate, larger body of work unrelated to isolation —
+   genuinely out of scope here, but it is why the overall suite is far
+   from 90/90.
+2. The remaining untouched Phase 13 items (Bandit, secret scan, full
    authorization/provenance/export suites) were not run standalone in this
    session.
 
