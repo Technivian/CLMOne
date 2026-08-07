@@ -150,15 +150,37 @@ None introduced. `makemigrations --check --dry-run` reports no changes, both bef
 
 ## 17. Reconstructed SHA
 
-`be439e19` (see PR #168 for the final evidence-doc commit on top).
+`7b237912` (final pushed commit on PR #168 — merges the security repair (`40063727`), the browser-repair chain tip (`dca9da9e`), PR #165's tip (`be439e19`), and this evidence doc).
 
 ## 18. Preservation results
 
-See PR #168's own evidence doc (`REMOTE_RC_RECONSTRUCTION_EVIDENCE.md`, updated) for the full preservation-test run against the new reconstruction.
+Verified directly against workflow run [31214434868](https://github.com/Technivian/CLMOne/actions/runs/31214434868) (PR #168, SHA `7b237912`), all 18 checks green:
+
+- `security-scans`, `pr-release-evidence`, `quality-and-tenancy`, `Anti-drift + contrast`, `Phase 1 visual baselines (no auto-regen)`, `redesigned-e2e`, `Forbidden-brand scan (CLM One)` — all passed.
+- `verify-ui-scope`, `verify-ui-integrity`, `verify-ui` (aggregate) — all passed.
+- All 4 browser-isolation regression tests (`browser-isolation-regression.spec.js`), the fixed lifecycle-leakage scenario (`pilot-verification.spec.js:373` bulk-update stage-skip test), MSA Finance/Legal threshold matrix tests, and the finance-threshold test all observed passing in shard logs (shards 1 and 7/8).
+- All 5 `visual-baselines.spec.js` tests (dashboard, list, form, workspace, detail baselines) passed unchanged (shard 8/8).
+- `get_job_logs(run_id=31214434868, failed_only=true)` → `{"failed_jobs":0,"total_jobs":11}` — zero failures across all 8 browser shards plus the 3 verify-ui jobs.
+
+No regression reintroduced; no previously-repaired record (PayrollMinds-critical, shared workflow, or shared UI) reverted.
 
 ## 19. Authoritative browser totals
 
-See PR #168's own evidence doc for the single complete authoritative browser run against the new reconstructed SHA.
+One complete authoritative browser run, PR #168, workflow run [31214434868](https://github.com/Technivian/CLMOne/actions/runs/31214434868), SHA `7b237912`, all 8 shards individually inspected:
+
+| Shard | Passed | Failed |
+|---|---|---|
+| 1/8 | 12 | 0 |
+| 2/8 | 12 | 0 |
+| 3/8 | 12 | 0 |
+| 4/8 | 12 | 0 |
+| 5/8 | 12 | 0 |
+| 6/8 | 12 | 0 |
+| 7/8 | 11 | 0 |
+| 8/8 | 11 | 0 |
+| **Total** | **94** | **0** |
+
+**94/94 collected, 94/94 executed, 94/94 passed, 0 failed, 0 skipped, 0 interrupted, 0 not run.** Matches the expected manifest exactly (Phase 7/12).
 
 ## 20. PR #157/#160 exclusion proof
 
@@ -170,4 +192,4 @@ Unchanged from `REMOTE_RELEASE_SOURCE_REGISTRY.md` §4: `git merge-base --is-anc
 
 ## 22. Recommendation
 
-**PRE-UAT SECURITY GATE GREEN**, pending PR #168's own single complete authoritative browser run (Phase 12) — recorded in that PR's evidence doc, which this document defers to for the final browser totals. All Phase 7–9 criteria in this document are independently met: root cause proven for all four failures, all four now pass, broader search/access/revocation tests pass, security test files remain present and executing (166/166), tenant-isolation (75) and permission-matrix (2) suites pass, no new unit failure signature exists, Bandit/secret-scan/pip-audit/npm-audit all pass, and migration drift is zero.
+**PRE-UAT SECURITY GATE GREEN.** All Phase 12 success criteria are met: root cause proven for all four failures (§3), all four now pass (§7-8), broader search/access/revocation tests pass, security test files remain present and executing (166/166, §9), tenant-isolation and permission-matrix suites pass, no new unit failure signature exists (§10), Bandit/secret-scan/pip-audit/npm-audit all pass (§11-14), migration drift is zero (§15), the release stack is reconstructed from real remote inputs on top of the security repair (§16-17), preservation tests pass (§18), and one complete authoritative browser run is fully green at 94/94 (§19). PR #162/MFA remains excluded (§21) and PR #157/#160's security-test deletions never reached this branch (§20).

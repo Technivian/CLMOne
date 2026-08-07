@@ -45,3 +45,13 @@ complete. Focused source evidence resolves the 11 category-B, seven shared
 workflow/record, and 26 shared-UI records. The only intended unresolved browser
 records are the four `A-CI-SNAPSHOT` visual baselines; final Linux CI must prove
 that exact residual set. No category-G candidate or exception exists.
+
+## Addendum: PAR-SEC-002 security repair and reconstruction
+
+| Item | Change | Correct owner | Permanent PR |
+| --- | --- | --- | --- |
+| PAR-SEC-002 search-enforcement fixture repair | `test_par_sec_002_search_enforcement.py` fixtures aligned to the already-governed private-by-default ownership boundary (`416818ab`); zero production code changed | Security source branch | `codex/par-sec-002-search-enforcement-repair`, PR #167, `c7a6b7ba` |
+| pypdf CVE-2026-71852 remediation | `requirements/runtime.txt` pin `6.14.2` → `6.15.0` | Security source branch | Integrated in PR #167, `e742a3dc` |
+| Release stack reconstruction on security base | Merges the security repair (PR #167) on top of the browser-repair chain tip and PR #165's tip, superseding the prior `codex/payrollminds-remote-rc-reconstruction` (PR #166) as the current source-of-truth reconstruction | Attribution/evidence branch | `codex/payrollminds-remote-rc-security-reconstruction`, PR #168, `7b237912` |
+
+Full root-cause, authorization-path, and test evidence for the PAR-SEC-002 repair is recorded in `PAR_SEC_002_SEARCH_ENFORCEMENT_REPAIR.md`. This addendum does not change the proposed foundation order above; the security repair sits between item 2 (dependency-security remediation) and item 6 (integration/evidence branch), since it depends on nothing but plain `main` and is itself a prerequisite for any UAT-gate evidence. Still **NO-GO** — nothing above is merged or deployed.
