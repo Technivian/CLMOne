@@ -3,6 +3,7 @@
  * Companion to msa/nda/dpa workflow specs. Run the full critical set twice.
  */
 const { test, expect } = require('@playwright/test');
+const { createLifecycleNda, deleteE2eLifecycleContract } = require('./helpers/lifecycle-fixtures');
 
 const username = process.env.E2E_USERNAME || 'e2e_owner';
 const password = process.env.E2E_PASSWORD || 'e2e_pass_123';
@@ -308,6 +309,15 @@ test.describe('Verification: search fixtures and tenancy', () => {
 });
 
 test.describe('Verification: lifecycle Stage vs Status', () => {
+  let leakedContractId = null;
+
+  test.afterEach(async () => {
+    if (leakedContractId === null) return;
+    const contractId = leakedContractId;
+    leakedContractId = null;
+    deleteE2eLifecycleContract(contractId);
+  });
+
   test('repository Stage sort and Status filter controls', async ({ page }) => {
     await login(page);
     await page.goto('/contracts/repository/');
@@ -321,25 +331,8 @@ test.describe('Verification: lifecycle Stage vs Status', () => {
     test.slow();
     await login(page);
     const suffix = Date.now().toString().slice(-5);
-    await page.goto('/contracts/new/nda/');
-    await page.fill('[data-field-key="counterparty"]', `Life NDA ${suffix}`);
-    await page.fill('[data-field-key="start_date"]', '2026-10-01');
-    await page.fill('[data-field-key="contract_owner"]', 'Avery Brooks');
-    await page.fill('[data-field-key="business_unit"]', 'Revenue Operations');
-    await page.fill('[data-field-key="internal_reference"]', `NDA-L-${suffix}`);
-    await page.selectOption('[data-field-key="nda_type"]', 'Mutual');
-    await page.fill('[data-field-key="confidentiality_purpose"]', 'product diligence');
-    await page.fill('[data-field-key="confidentiality_period"]', '2');
-    await page.fill('[data-field-key="disclosure_scope"]', 'technical architecture');
-    await page.fill('[data-field-key="permitted_recipients"]', 'employees');
-    await page.fill('[data-field-key="governing_law"]', 'Netherlands');
-    await page.fill('[data-field-key="jurisdiction"]', 'Amsterdam');
-    await page.check('[data-field-key="injunctive_relief_included"]');
-    await page.click('#submit-nda-btn');
-    await expect(page).toHaveURL(/\/contracts\/workflows\/\d+/);
-    await page.getByRole('link', { name: 'View contract record' }).click();
-    await expect(page).toHaveURL(/\/contracts\/\d+\/?$/);
-    const contractId = page.url().match(/\/contracts\/(\d+)/)[1];
+    const contractId = await createLifecycleNda(page, suffix);
+    leakedContractId = contractId;
 
     // Edit form deliberately omits lifecycle_stage; repository bulk-update is the
     // governed mutation path (PDR-0002) and must reject illegal skips.
