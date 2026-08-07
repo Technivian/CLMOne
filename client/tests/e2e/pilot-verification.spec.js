@@ -123,8 +123,18 @@ async function generateMsa(page, { counterparty, value, confirmThreshold }) {
   if (confirmThreshold) {
     await checkField(page, 'value_above_threshold_confirmed');
   }
-  await page.click('#submit-msa-btn');
-  await expect(page).toHaveURL(/\/contracts\/workflows\/\d+/, { timeout: 30000 });
+  await Promise.all([
+    page.waitForURL(/\/contracts\/workflows\/\d+/, {
+      waitUntil: 'domcontentloaded',
+      timeout: 30000,
+    }),
+    page.click('#submit-msa-btn'),
+  ]);
+  // The URL can change before the redirected workspace DOM is queryable on a
+  // loaded runner. Blocker discovery must begin from the governed workspace,
+  // never from the outgoing builder form.
+  await expect(page.locator('[data-workspace-drafting]')).toBeVisible();
+  await expect(page.locator('.dc-ds-workspace__doc-overview')).toBeVisible();
 }
 
 test.describe('Verification: authentication', () => {
