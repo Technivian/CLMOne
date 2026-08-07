@@ -3,6 +3,7 @@
  * Companion to msa/nda/dpa workflow specs. Run the full critical set twice.
  */
 const { test, expect } = require('@playwright/test');
+const { deleteE2eLifecycleContract } = require('./helpers/lifecycle-fixtures');
 
 const username = process.env.E2E_USERNAME || 'e2e_owner';
 const password = process.env.E2E_PASSWORD || 'e2e_pass_123';
@@ -351,6 +352,15 @@ test.describe('Verification: search fixtures and tenancy', () => {
 });
 
 test.describe('Verification: lifecycle Stage vs Status', () => {
+  let leakedContractId = null;
+
+  test.afterEach(async () => {
+    if (leakedContractId === null) return;
+    const contractId = leakedContractId;
+    leakedContractId = null;
+    deleteE2eLifecycleContract(contractId);
+  });
+
   test('repository Stage sort and Status filter controls', async ({ page }) => {
     await login(page);
     await page.goto('/contracts/repository/');
@@ -384,6 +394,7 @@ test.describe('Verification: lifecycle Stage vs Status', () => {
     await page.getByRole('menuitem', { name: 'View contract record' }).click();
     await expect(page).toHaveURL(/\/contracts\/\d+\/?$/);
     const contractId = page.url().match(/\/contracts\/(\d+)/)[1];
+    leakedContractId = contractId;
 
     // Edit form deliberately omits lifecycle_stage; repository bulk-update is the
     // governed mutation path (PDR-0002) and must reject illegal skips.
