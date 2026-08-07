@@ -47,12 +47,10 @@ test.describe('Phase 5H Command Center consolidation', () => {
     await page.goto('/dashboard/');
     await expect(page.locator('.command-center.cc-v3')).toBeVisible();
     await expect(page.locator('#portfolio-health-title')).toBeVisible();
-    const emptyOrQueue = page.locator('.cc-v3-rail-state, .cc-v3-action-row, .dc-ds-setup-action').first();
+    const emptyOrQueue = page.locator('.cc-v3-rail-state, .cc-v3-operational-row, .cc-v3-deadline-row').first();
     await expect(emptyOrQueue).toBeVisible();
-    const mattersEmpty = page.locator('.cc-v3-matters .cc-v3-empty');
-    if (await mattersEmpty.count()) {
-      await expect(mattersEmpty.first()).toBeVisible();
-    }
+    const attentionState = page.locator('.cc-v3-attention-empty, .cc-v3-attention-table-wrap').first();
+    await expect(attentionState).toBeVisible();
     await assertNoHorizontalOverflow(page);
   });
 
@@ -60,7 +58,7 @@ test.describe('Phase 5H Command Center consolidation', () => {
     await page.setViewportSize({ width: 1440, height: 1000 });
     await login(page);
     await page.goto('/dashboard/');
-    const viewAll = page.locator('.cc-v3-section-head .dc-ds-button--link', { hasText: 'View all' }).first();
+    const viewAll = page.locator('.cc-v3-portfolio-actions .dc-ds-button--link', { hasText: 'View all contracts' });
     await expect(viewAll).toBeVisible();
     await viewAll.focus();
     await expect(viewAll).toBeFocused();

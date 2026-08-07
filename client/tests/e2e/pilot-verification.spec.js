@@ -59,16 +59,31 @@ async function clearDraftingBlockers(page) {
     await resolveBtn.click();
     const drawer = page.getByRole('dialog', { name: 'Resolve exception' });
     await expect(drawer).toBeVisible();
-    await drawer.getByRole('button', { name: 'Use approved wording' }).first().click();
+    await Promise.all([
+      page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
+      drawer.getByRole('button', { name: 'Use approved wording' }).first().click(),
+    ]);
     await expect(page).toHaveURL(/\/contracts\/workflows\/\d+/);
   }
   for (let i = 0; i < 30; i += 1) {
     const confirmBtn = page.locator('[data-action-mode="confirm"]').first();
     if (!(await confirmBtn.count())) break;
-    await confirmBtn.click();
+    await Promise.all([
+      page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
+      confirmBtn.click(),
+    ]);
     await expect(page).toHaveURL(/\/contracts\/workflows\/\d+/);
   }
-  await expect(page.getByText(/Send to Legal Review · blocked/)).toHaveCount(0);
+  // Verify the governed document state, not an unrelated review route. Finance
+  // and Legal availability are each asserted by their own route-specific
+  // journey after this shared prerequisite helper returns.
+  await openWorkspaceActions(page);
+  await expect(page.locator('.dc-ds-workspace__doc-overview')).toContainText(
+    /0 exceptions · 0 need review/i,
+  );
+  await expect(page.locator('.dc-ds-workspace__sticky-copy')).toContainText(
+    /All drafting sections are ready/i,
+  );
 }
 
 /**
@@ -97,6 +112,10 @@ async function generateMsa(page, { counterparty, value, confirmThreshold }) {
   await fillField(page, 'jurisdiction', 'Amsterdam');
   await fillField(page, 'liability_cap', '1x annual fees');
   await fillField(page, 'confidentiality_period', '3 years');
+  // The generated MSA includes Special Conditions as a governed drafting
+  // section. Supplying its normal input is required before the human-review
+  // confirmations can make the document ready for submission.
+  await fillField(page, 'special_conditions', 'No additional special conditions.');
   await selectField(page, 'ip_ownership', 'Provider');
   await checkField(page, 'sow_required');
   await checkField(page, 'deliverables_defined');
@@ -104,8 +123,18 @@ async function generateMsa(page, { counterparty, value, confirmThreshold }) {
   if (confirmThreshold) {
     await checkField(page, 'value_above_threshold_confirmed');
   }
-  await page.click('#submit-msa-btn');
-  await expect(page).toHaveURL(/\/contracts\/workflows\/\d+/, { timeout: 30000 });
+  await Promise.all([
+    page.waitForURL(/\/contracts\/workflows\/\d+/, {
+      waitUntil: 'domcontentloaded',
+      timeout: 30000,
+    }),
+    page.click('#submit-msa-btn'),
+  ]);
+  // The URL can change before the redirected workspace DOM is queryable on a
+  // loaded runner. Blocker discovery must begin from the governed workspace,
+  // never from the outgoing builder form.
+  await expect(page.locator('[data-workspace-drafting]')).toBeVisible();
+  await expect(page.locator('.dc-ds-workspace__doc-overview')).toBeVisible();
 }
 
 test.describe('Verification: authentication', () => {
@@ -179,8 +208,15 @@ test.describe('Verification: MSA finance threshold matrix', () => {
     await generateMsa(page, {
       counterparty: `Exact Thr ${suffix}`,
       value: 100000,
-      confirmThreshold: false,
+      // The governed threshold acknowledgement is required at the boundary;
+      // drafting confirmation remains a separate, visible prerequisite below.
+      confirmThreshold: true,
     });
+    await openWorkspaceActions(page);
+    await expect(page.getByText('Send to Finance · blocked')).toBeVisible();
+    await expect(page.locator('.dc-ds-workspace__sticky-copy')).toContainText(
+      /Resolve|Complete|Confirm/i,
+    );
     await clearDraftingBlockers(page);
     await openWorkspaceActions(page);
     await expect(page.getByRole('menuitem', { name: 'Send to Finance' })).toBeVisible();
@@ -189,7 +225,8 @@ test.describe('Verification: MSA finance threshold matrix', () => {
     const exactUrl = page.url();
     await page.reload();
     await expect(page).toHaveURL(exactUrl);
-    await page.getByRole('button', { name: /Review Finance|Review MSA|Review privacy|Review generated|Review approval|Confirm drafting|open exception/i }).first().click();
+    await openWorkspaceActions(page);
+    await page.getByRole('menuitem', { name: 'Review approval route' }).click();
     const exactDrawer = page.getByRole('dialog', { name: 'Governance details' });
     await expect(exactDrawer.getByRole('heading', { name: 'Audit details' })).toBeVisible();
     await expect(exactDrawer).toContainText(/Finance|review|submitted|Audit|approval/i);
@@ -198,7 +235,7 @@ test.describe('Verification: MSA finance threshold matrix', () => {
     await generateMsa(page, {
       counterparty: `Above Thr ${suffix}`,
       value: 100001,
-      confirmThreshold: false,
+      confirmThreshold: true,
     });
     await clearDraftingBlockers(page);
     await openWorkspaceActions(page);
@@ -216,6 +253,11 @@ test.describe('Verification: MSA finance threshold matrix', () => {
       value: 150000,
       confirmThreshold: true,
     });
+    await openWorkspaceActions(page);
+    await expect(page.getByText('Send to Legal Review · blocked')).toBeVisible();
+    await expect(page.locator('.dc-ds-workspace__sticky-copy')).toContainText(
+      /Resolve|Complete|Confirm/i,
+    );
     await clearDraftingBlockers(page);
     await openWorkspaceActions(page);
     await page.getByRole('menuitem', { name: 'Send to Legal Review' }).click();
@@ -224,7 +266,8 @@ test.describe('Verification: MSA finance threshold matrix', () => {
     await page.reload();
     await expect(page).toHaveURL(workflowUrl);
     // Governance drawer carries Audit details for MSA (no Activity rail tab).
-    await page.getByRole('button', { name: /Review Finance|Review MSA|Review privacy|Review generated|Review approval|Confirm drafting|open exception/i }).first().click();
+    await openWorkspaceActions(page);
+    await page.getByRole('menuitem', { name: 'Review approval route' }).click();
     const governanceDrawer = page.getByRole('dialog', { name: 'Governance details' });
     await expect(governanceDrawer.getByRole('heading', { name: 'Audit details' })).toBeVisible();
     await expect(governanceDrawer).toContainText(/Legal|review|submitted|Audit|approval/i);
@@ -255,8 +298,8 @@ test.describe('Verification: NDA supported actions', () => {
     await expect(page).toHaveURL(/\/contracts\/workflows\/\d+\/?$/);
     await expect(page.getByRole('button', { name: 'Send for signature' })).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Export Word' })).toHaveCount(0);
+    await openWorkspaceActions(page);
     await expect(page.getByText('Send to Legal Review · not required')).toBeVisible();
-    await page.locator('details.dc-ds-workspace__actions-menu summary').click();
     await page.getByRole('menuitem', { name: 'View contract record' }).click();
     await expect(page).toHaveURL(/\/contracts\/\d+\/?$/);
     await page.reload();
@@ -337,7 +380,8 @@ test.describe('Verification: lifecycle Stage vs Status', () => {
     await page.check('[data-field-key="injunctive_relief_included"]');
     await page.click('#submit-nda-btn');
     await expect(page).toHaveURL(/\/contracts\/workflows\/\d+/);
-    await page.getByRole('link', { name: 'View contract record' }).click();
+    await openWorkspaceActions(page);
+    await page.getByRole('menuitem', { name: 'View contract record' }).click();
     await expect(page).toHaveURL(/\/contracts\/\d+\/?$/);
     const contractId = page.url().match(/\/contracts\/(\d+)/)[1];
 

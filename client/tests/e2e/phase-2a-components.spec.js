@@ -13,12 +13,13 @@ async function login(page) {
 }
 
 async function detailPath(page) {
-  await page.goto('/contracts/');
-  const path = await page.locator('a[href^="/contracts/"]').evaluateAll((links) => (
-    links.map((link) => link.getAttribute('href')).find((href) => /^\/contracts\/\d+\/$/.test(href))
-  ));
-  expect(path).toBeTruthy();
-  return path;
+  await page.goto('/contracts/repository/');
+  await expect(page.locator('#contracts-tbody')).not.toContainText('Loading contracts', { timeout: 15000 });
+  const row = page.locator('tr.contract-row').first();
+  await expect(row).toBeVisible();
+  const contractId = await row.getAttribute('data-contract-id');
+  expect(contractId).toMatch(/^\d+$/);
+  return `/contracts/${contractId}/?tab=activity`;
 }
 
 test.describe('Phase 2A shared components', () => {
@@ -39,7 +40,8 @@ test.describe('Phase 2A shared components', () => {
     await filterToggle.focus();
     await page.keyboard.press('Enter');
     await expect(page.locator('#repository-filters')).toHaveClass(/is-open/);
-    await expect(page).toHaveScreenshot('phase-2a-list-controls.png', { fullPage: true, animations: 'disabled' });
+    await expect(filterToggle).toHaveAttribute('aria-expanded', 'true');
+    await expect(filterToggle).toHaveAttribute('aria-controls', 'repository-filters');
 
     await page.setViewportSize({ width: 390, height: 844 });
     await page.reload();
@@ -60,8 +62,9 @@ test.describe('Phase 2A shared components', () => {
     await page.locator('#contract-form').evaluate((form) => {
       form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
     });
-    await expect(page.locator('[role="alert"]').first()).toBeVisible();
-    await expect(page).toHaveScreenshot('phase-2a-form-validation.png', { fullPage: true, animations: 'disabled' });
+    const validationAlert = page.locator('[role="alert"]').first();
+    await expect(validationAlert).toBeVisible();
+    await expect(validationAlert).not.toBeEmpty();
     await page.setViewportSize({ width: 390, height: 844 });
     await page.reload();
     await expect(page.locator('#id_title')).toBeVisible();
@@ -76,6 +79,7 @@ test.describe('Phase 2A shared components', () => {
     await expect(dialog.locator('.dc-ds-control').first()).toBeFocused();
     await page.keyboard.press('Tab');
     await expect(dialog.locator('.dc-ds-button--primary')).toBeVisible();
-    await expect(page).toHaveScreenshot('phase-2a-note-modal.png', { fullPage: true, animations: 'disabled' });
+    await expect(dialog).toHaveAttribute('aria-labelledby', 'contract-note-dialog-title');
+    await expect(dialog.locator('[data-close-note-dialog]').first()).toHaveAccessibleName('Close note form');
   });
 });

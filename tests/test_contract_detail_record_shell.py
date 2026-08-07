@@ -102,6 +102,8 @@ class ContractDetailShellTests(TestCase):
         activity = self.client.get(detail_url(self.contract.pk, 'activity'))
         self.assertContains(activity, 'data-open-note-dialog')
         self.assertContains(activity, 'id="contract-note-dialog"')
+        self.assertContains(activity, 'let noteDialogTrigger = null;')
+        self.assertContains(activity, 'noteDialogTrigger?.focus();')
 
     def test_contract_workspace_tabs_and_overview_sections_present(self):
         response = self.client.get(detail_url(self.contract.pk))

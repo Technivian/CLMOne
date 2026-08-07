@@ -201,6 +201,8 @@ class DesignSystemPhaseTwoATests(SimpleTestCase):
         forms = (self.root / 'contracts' / 'forms.py').read_text()
         self.assertIn('contract.stage_badge_tone', repository_js)
         self.assertNotIn('contract.status_badge_class', repository_js)
+        self.assertIn("showError(message) {\n        console.error('Repository error:', message);\n        this.hideLoading();", repository_js)
+        self.assertIn('repo-empty-state" role="alert"', repository_js)
         self.assertIn("FORM_CONTROL = 'dc-ds-control form-control'", forms)
         self.assertIn("FORM_CHECK = 'dc-ds-check form-check-input'", forms)
 
