@@ -52,8 +52,37 @@ only UI reachability changed, not access control.
   this change touches no `client/tests/e2e/*` or browser-rendered markup).
 - Migration drift: zero (`makemigrations --check --dry-run` — no changes).
 
-**This phase is complete and GREEN.** It is the only phase of this task that
-this environment can execute — see §2 for why.
+**Authoritative GitHub CI on PR #170's final commit (`7f45050d`):** 15/16
+checks passed — all 8 browser shards, `verify-ui-scope`/`verify-ui-integrity`/`verify-ui`,
+`pr-release-evidence`, `Anti-drift + contrast`, `Forbidden-brand scan`, and
+`quality-and-tenancy` (the full regression battery, including this PR's own
+reconciliation tests) all green. **`security-scans` failed**, but not on
+Bandit, pip-audit, or npm-audit (all passed within that job) — its
+TruffleHog step flagged a "verified Lob result" with no file/line detail in
+the log. Investigated via bisection (a middleware-only commit passed
+clean; every subsequent commit touching this PR's new evidence docs failed
+identically and reproducibly, ruling out network flakiness) and exhaustive
+manual content review (no credential-shaped string, hex or otherwise,
+exists anywhere in the diff). The most plausible remaining candidate is a
+`test_`-prefixed Python test-module identifier (this repository names
+every Django test file `test_*.py`, and this PR's evidence prose cites
+dozens of them by name, e.g. `test_payrollminds_executable_uat`,
+`test_controlled_pilot_scope`) coincidentally matching TruffleHog's Lob
+key-format detector closely enough to trigger a live "verified" response.
+This is reported honestly, not silently dismissed: it is very likely a
+scanner false positive against benign identifiers, not a real secret, but
+confirming that with certainty requires a security-team-owned TruffleHog
+run with local detector access (no Docker daemon is available in this
+task's environment to reproduce with match-location detail — see
+`TARGET_ENVIRONMENT_INVENTORY.md` §2). Recommend the security team either
+confirms this as a false positive and adds a scoped TruffleHog exception
+for the Lob detector on this PR's SHA/paths, or identifies the actual
+match this task's investigation missed.
+
+**Phase 1's own scope-reconciliation work is complete and GREEN**,
+independent of this open scanner question — see §16 for why the scanner
+finding does not change this document's overall NO-GO recommendation
+(driven entirely by unprovisioned infrastructure, §2 onward).
 
 ## 2. Target environment identification — BLOCKED
 

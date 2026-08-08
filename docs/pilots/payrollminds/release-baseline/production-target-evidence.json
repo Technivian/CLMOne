@@ -33,6 +33,15 @@
     {"phase": 15, "name": "Data lifecycle and offboarding", "status": "PARTIAL", "reason": "application capabilities proven (PM-UAT-007, PM-UAT-011); no real rehearsal performed, none applicable without real data"},
     {"phase": 16, "name": "Full infrastructure regression", "status": "GREEN", "reason": "application-layer regression green on PR #170; does not substitute for infrastructure readiness"}
   ],
+  "ci_result_pr_170_final_commit_7f45050d": {
+    "checks_passed": 15,
+    "checks_total": 16,
+    "quality_and_tenancy": "success",
+    "browser_suite_8_shards": "success",
+    "pr_release_evidence": "success",
+    "security_scans": "failure",
+    "security_scans_detail": "bandit/pip-audit/npm-audit all passed within this job; only trufflehog failed with a single unlocated 'verified Lob result' finding, reproduced identically across 4 consecutive runs (ruling out network flakiness), with no credential-shaped content found anywhere in the diff after exhaustive manual review; likely false positive against a test_-prefixed Python identifier coincidentally matching the Lob key-format detector; flagged for security-team triage, not silently dismissed or worked around by further content changes"
+  },
   "confirmations": {
     "no_real_payrollminds_customer_payroll_salary_data_used": true,
     "no_real_users_invited": true,
