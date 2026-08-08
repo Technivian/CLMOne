@@ -1,6 +1,20 @@
 {
   "task": "AGENT PROMPT 32 - PayrollMinds target environment commissioning and restore proof",
-  "recommendation": "NO-GO",
+  "recommendation": "NEITHER GO NOR NO-GO - a real live deployment exists with specific named gaps still open; see PRODUCTION_TARGET_COMMISSIONING.md Recommendation section for the full breakdown",
+  "technical_environment_status": "LIVE",
+  "payrollminds_customer_onboarding_status": "NO-GO",
+  "status_note": "These are two separate questions. The technical environment being live (Render/Frankfurt, Neon/Frankfurt, Cloudflare R2, clmone.com) does not authorize onboarding real PayrollMinds customer users, which remains blocked on the items in onboarding_blockers below.",
+  "onboarding_blockers": [
+    "routine backup/recovery readiness (only a one-time migration dump exists; Neon free-tier point-in-time recovery window is 6 hours)",
+    "isolated PostgreSQL restore drill (the migration proved dump/restore mechanics work against real data, but was not a timed drill into a separate recovery target with a measured RPO/RTO)",
+    "document-storage recovery drill (Cloudflare R2 is live for both released and quarantine buckets; bucket versioning/recovery mechanism not confirmed configured or tested)",
+    "monitoring/alerting (SENTRY_DSN unset; no error-reporting or alert route exists)",
+    "named support owner (PayrollMinds customer communications)",
+    "named incident owner (security/availability incident response)",
+    "named privacy owner (Privacy/Product - retention, deletion, export approval)",
+    "named deployment approver (Engineering/Release Authority)"
+  ],
+  "onboarding_blockers_note": "The named backup owner role is closed (Haroon Wahed, Infrastructure operator, confirmed 2026-08-08) and is intentionally not listed above. Redis (REDIS_URL unset) is also intentionally not listed as a blocker - it degrades gracefully to synchronous background-job execution rather than blocking anything; see target_environment.remaining_gaps for it as a non-blocking gap.",
   "scope_reconciliation": {
     "decision": "Outcome A - dates/reminders are genuinely in scope",
     "branch": "codex/payrollminds-obligations-scope-reconciliation",
@@ -9,12 +23,12 @@
     "local_regression": {"tests": 251, "passed": 251, "failed": 0}
   },
   "target_environment": {
-    "provisioned": "partial",
-    "reason": "PRODUCTION_INFRASTRUCTURE_PLAN.md status is 'Proposed', decision-dependent on unaccepted ADR-0018; database component only was selected and confirmed by the pilot sponsor on 2026-08-08 (Neon, region eu-central-1/Frankfurt) outside this session's own access; all other components remain unselected",
+    "provisioned": "live",
+    "reason": "A real pilot deployment was discovered mid-conversation on 2026-08-08 (Render, Frankfurt, at clmone.com) that the pilot sponsor had already built independently, outside this task's own commissioning process. It has since been verified, migrated, and hardened in place. See live_deployment_discovery below and TARGET_ENVIRONMENT_INVENTORY.md section 1c for the full record.",
     "session_cloud_access_verified": false,
-    "verification_evidence": "boto3 sts.get_caller_identity() -> InvalidClientTokenId; no aws/gcloud/az/render/doctl/heroku/terraform/pulumi/kubectl CLI installed; direct PostgreSQL connection attempt to sponsor-supplied host from this sandbox produced no response (raw TCP egress to arbitrary hosts appears blocked)",
+    "verification_evidence": "boto3 sts.get_caller_identity() -> InvalidClientTokenId; no aws/gcloud/az/render/doctl/heroku/terraform/pulumi/kubectl CLI installed; this task's own environment has zero direct access to Render, Neon, or Cloudflare at any point in this record - every fact below is sponsor-reported (pasted logs/query output) or inferred from this repository's own code, never independently confirmed by this task's own tooling",
     "database_decision": {
-      "status": "confirmed",
+      "status": "confirmed_and_migrated",
       "confirmed_date": "2026-08-08",
       "provider": "Neon",
       "region": "eu-central-1",
@@ -22,7 +36,7 @@
       "confirmed_by": "pilot sponsor, in conversation",
       "connectivity_independently_verified": false,
       "credential_stored_in_repo_or_ci": false,
-      "notes": "Empty/new database, no migration required. A prior eu-west-2 (London, UK - non-EU) candidate was flagged as not meeting EU-residency intent and was superseded by this eu-central-1 project rather than migrated."
+      "notes": "Originally confirmed as new/empty. Later, once the live Render deployment was discovered, its Render PostgreSQL database (holding real sponsor-only usage data) was migrated into this Neon instance - see database_migration below."
     },
     "superseded_eu_west_2_project": {
       "status": "decommissioned",
@@ -32,25 +46,125 @@
       "reason_not_performed_by_session": "no Neon account/API access in this task's environment; separately, raw PostgreSQL TCP egress to any external host is blocked from this sandbox regardless of credentials",
       "data_migration_performed": false
     },
+    "object_storage_decision": {
+      "status": "confirmed_and_wired",
+      "confirmed_date": "2026-08-08",
+      "provider": "Cloudflare R2",
+      "account": "pilot sponsor's existing Cloudflare account",
+      "main_bucket": "wired via MEDIA_STORAGE_BACKEND=s3; confirmed live indirectly - settings_production.py refuses to boot at all unless this is set to s3, and the app is serving requests",
+      "quarantine_bucket": "separate bucket created 2026-08-08 with its own Cloudflare Account API token (not a User token, not reused from the main bucket), wired via DOCUMENT_QUARANTINE_STORAGE_BACKEND=s3 and matching DOCUMENT_QUARANTINE_* variables",
+      "eu_jurisdictional_restriction_configured": "unknown - not verified by this session",
+      "bucket_versioning_or_recovery_configured": "unknown - not verified by this session"
+    },
+    "dns_tls_decision": {
+      "status": "confirmed_and_live",
+      "confirmed_date": "2026-08-08",
+      "hostname": "clmone.com",
+      "dns_routing": "pointed directly at Render, not proxied through Cloudflare - Cloudflare is used for R2 object storage only in this setup",
+      "tls_provider": "Render's own managed TLS certificate",
+      "allowed_hosts_fixed": "www.clmone.com was initially missing from ALLOWED_HOSTS, causing every request including health checks to fail with DisallowedHost (visible as repeating 400s in deploy logs); fixed by the sponsor to ALLOWED_HOSTS=clmone.com,www.clmone.com",
+      "csrf_trusted_origins_fixed": "was set to https://*.onrender.com (a leftover from before the custom domain was attached), then briefly set without a URL scheme (which Django's CSRF check requires); fixed by the sponsor to CSRF_TRUSTED_ORIGINS=https://clmone.com,https://www.clmone.com"
+    },
+    "provisioning_authority": {
+      "status": "confirmed",
+      "confirmed_date": "2026-08-08",
+      "name": "Haroon Wahed",
+      "role_mapping": "Infrastructure operator per PRODUCTION_OPERATIONS_RUNBOOK.md service-ownership table (PostgreSQL/Redis/storage/DNS/TLS/backup)",
+      "other_named_roles_remaining_open": ["Engineering/Release Authority", "Security owner", "Privacy/Product owner", "PayrollMinds support owner", "incident owner", "privacy contact"]
+    },
+    "application_runtime": {
+      "status": "discovered_live_2026-08-08",
+      "provider": "Render",
+      "region": "Frankfurt (EU)",
+      "hostname": "clmone.com",
+      "tier": "free tier - sponsor plans to use UptimeRobot to reduce cold-start spin-down, though some platforms detect and penalize external keep-alive pings on free tiers rather than honoring them as legitimate activity; unconfirmed whether Render does this",
+      "discovery_context": "this task initially researched free-tier EU application hosting from scratch (see application_runtime_research_superseded below) before learning the sponsor already had a live deployment running independently the entire time",
+      "controlled_pilot_enabled": "was unset (defaulting false); fixed to true, along with BILLING_SELF_SERVE_ENABLED=false, TRUST_ACCOUNTING_ENABLED=false, GEMINI_AI_ENABLED=false - see security_finding_pilot_scope_not_enforced below",
+      "debug_and_secret_key": "inferred (not directly inspected) to already be correctly configured - DEBUG=false and a strong SECRET_KEY are both settings-import-time ImproperlyConfigured guards in settings_production.py that would crash-loop the whole process if violated, and the process was already running and serving requests before this task became aware of it",
+      "django_ready": true
+    },
+    "application_runtime_research_superseded": {
+      "status": "superseded_2026-08-08_same_day",
+      "goal": "free, EU-region, indefinitely-available compute for Django/Gunicorn + background worker - researched before the pre-existing Render deployment was discovered",
+      "finding": "no option found satisfying all three constraints simultaneously; verified via live web search, not assumed from training data. Left in the record as an accurate account of what was checked; Render's own free-tier status was the one item this research could not resolve, and it turned out to already be running the pilot.",
+      "options_checked": [
+        {"provider": "Google Cloud Run", "free_tier_real": true, "blocker": "Always Free tier restricted to US regions (us-central1/us-east1/us-west1) only; billing account now required as of Feb 2026"},
+        {"provider": "Fly.io", "free_tier_real": false, "blocker": "free tier removed October 2024; smallest always-on machine ~$1.94/month"},
+        {"provider": "Cloudflare Containers", "free_tier_real": false, "blocker": "requires $5/month Workers Paid plan; designed for scale-to-zero bursty workloads, not a persistent Django+RQ worker"},
+        {"provider": "Azure App Service F1", "free_tier_real": true, "blocker": "West Europe capacity shortage documented as of Feb 2026; F1 does not support custom domain SSL, blocking HTTPS for clmone.com"},
+        {"provider": "AWS EC2", "free_tier_real": "time-limited only", "blocker": "12 months (pre-2025-07-15 accounts) or 6-month $200 credit (newer accounts), not indefinite; this session's AWS credentials are invalid regardless"},
+        {"provider": "Render.com", "free_tier_real": "unresolved by this research", "blocker": "confirmed Frankfurt EU region for all services, but search results conflicted on whether free web-service tier still exists in 2026 - this was the correct answer all along, the sponsor already had one running"}
+      ]
+    },
+    "database_migration": {
+      "status": "completed_and_verified",
+      "date": "2026-08-08",
+      "direction": "Render PostgreSQL (source, real sponsor-only usage data, scheduled to expire 2026-08-14) -> Neon eu-central-1 (destination, already-confirmed production database)",
+      "method": "pg_dump/pg_restore, run by the sponsor from Google Cloud Shell (this task's own sandbox cannot make raw PostgreSQL connections to any external host, confirmed empirically, so could not perform this itself)",
+      "verification_method": "sponsor ran SELECT schemaname, relname, n_live_tup FROM pg_stat_user_tables against both databases and pasted both full result sets; compared row by row",
+      "verification_result": "all 122 tables present on both sides with identical empty/non-empty pattern; all 34 non-empty tables matched exactly (auth_permission 441=441, django_migrations 146=146, ... down through contracts_dpariskitem 1=1)",
+      "final_cutover_safety_step": "a second pg_dump/pg_restore pass with --clean --if-exists was run immediately before the DATABASE_URL swap, to catch any writes made between the first verification and cutover",
+      "cutover_confirmed": "Render deploy log showed 'Database: ...neon.tech (deployed platform, env=production)' after DATABASE_URL was updated",
+      "old_render_database_status": "still exists as of this writing, no longer referenced by DATABASE_URL, pending manual deletion or 2026-08-14 auto-expiration"
+    },
+    "credential_exposure_incident": {
+      "status": "occurred_and_remediated",
+      "date": "2026-08-08",
+      "what_happened": "the sponsor pasted terminal output into this task's chat that included both the Render and Neon database connection strings (username and password in plaintext) on two separate occasions, in the course of running the migration",
+      "remediation": "Neon database password rotated immediately after migration was confirmed successful; Render password rotation considered lower priority since that database was already scheduled for deletion",
+      "credential_ever_written_to_repository": false,
+      "note": "disclosed here rather than omitted, consistent with this document set's practice of not hiding mistakes"
+    },
+    "security_finding_pilot_scope_not_enforced": {
+      "status": "found_and_fixed",
+      "date": "2026-08-08",
+      "finding": "CONTROLLED_PILOT_ENABLED was unset on the live Render deployment. Per ControlledPilotScopeMiddleware's own docstring, when this is false only the existing billing/trust kill switches apply - and BILLING_SELF_SERVE_ENABLED/TRUST_ACCOUNTING_ENABLED both default to true when unset, not false. Practical effect before the fix: none of the pilot-scope restrictions (billing, trust accounting, clients, matters, invoices, signatures, freeform contract creation, upload review, DPA review packs, workflow-template builder, approval-rule authoring) were enforced on the live deployment.",
+      "exposure_window": "unknown start; found and fixed 2026-08-08. Only the sponsor had used the deployment (self-reported), so no known real-user exposure occurred, but the deployment was already declared the intended pilot go-live.",
+      "fix": "CONTROLLED_PILOT_ENABLED=true, BILLING_SELF_SERVE_ENABLED=false, TRUST_ACCOUNTING_ENABLED=false, GEMINI_AI_ENABLED=false set on the Render web service",
+      "verification": "not independently verified by this task - sponsor confirmed the site continued loading correctly after the change; a direct check (e.g. that /contracts/billing/ now redirects) was recommended but not confirmed back to this task in those exact terms"
+    },
+    "migration_leaf_node_incident": {
+      "status": "occurred_and_fixed",
+      "date": "2026-08-08",
+      "what_happened": "PR #115 (canonical NDA runtime) and PR #162 (authenticator app MFA) each independently branched a new Django migration off the same parent (0115_exception_correlation_id). Once both were merged to main by this task, the live Render deploy failed with Django's 'Conflicting migrations detected; multiple leaf nodes' error.",
+      "root_cause": "this repository's CI evaluates each PR against its own branch, not against the combined graph produced once two independently-developed migrations are both merged - this specific class of conflict is not caught by per-PR CI",
+      "fix": "a standard empty Django merge migration (contracts/migrations/0118_merge_20260808_1800.py) was pushed directly to main (outside a PR) by a separate Claude session, joining the two leaf nodes",
+      "fix_verified_by_this_task": "manage.py check and makemigrations --check --dry-run both clean on the resulting main tip"
+    },
+    "backup_retention_caveat": {
+      "component": "Neon point-in-time recovery",
+      "free_tier_retention_window": "6 hours",
+      "verified_2026-08-08": true,
+      "note": "materially short of a meaningful RPO now that this database holds real (sponsor-only) usage data; not treated as resolving Phase 7/9"
+    },
+    "remaining_gaps": [
+      "REDIS_URL unset - cache falls back to per-process LocMemCache, django-rq background jobs run synchronously inline instead of queued; not broken today (WEB_CONCURRENCY=1, a single process) but not the designed operating mode",
+      "SENTRY_DSN unset - no error-reporting/monitoring sink exists, despite sentry-sdk already being a runtime dependency",
+      "no routine backup schedule beyond Neon's own 6-hour free-tier point-in-time recovery",
+      "no restore drill into an isolated (non-production) target has ever been performed",
+      "old Render Postgres database still exists, pending deletion or 2026-08-14 auto-expiration",
+      "R2 bucket versioning/recovery mechanism unconfirmed for both released and quarantine buckets",
+      "Engineering/Release Authority, Security owner, Privacy/Product owner, and PayrollMinds support owner remain unnamed"
+    ],
     "reference_doc": "docs/pilots/payrollminds/TARGET_ENVIRONMENT_INVENTORY.md"
   },
   "phases": [
     {"phase": 1, "name": "Pilot scope reconciliation", "status": "GREEN", "evidence": "PR #170"},
-    {"phase": 2, "name": "Identify target environment", "status": "BLOCKED", "reason": "database component confirmed (Neon, eu-central-1) as of 2026-08-08; application runtime, cache/queue, storage, secrets, DNS/TLS, backup, and monitoring providers/accounts remain unselected"},
-    {"phase": 3, "name": "IAM and service identity review", "status": "BLOCKED", "reason": "no resources exist to review"},
-    {"phase": 4, "name": "Production configuration validation", "status": "PARTIAL", "reason": "manage.py check --deploy passes against synthetic production profile in CI; real target config unverifiable"},
-    {"phase": 5, "name": "Deploy synthetic commissioning candidate", "status": "BLOCKED", "reason": "no deployment target or credentials"},
-    {"phase": 6, "name": "Target-environment smoke/UAT subset", "status": "BLOCKED", "reason": "no target to run against"},
-    {"phase": 7, "name": "PostgreSQL backup", "status": "BLOCKED", "reason": "PostgreSQL instance now exists (Neon, eu-central-1) but this session has no wired credentials/backup tooling against it and cannot reach it (raw TCP egress blocked in this sandbox); no backup has been taken"},
-    {"phase": 8, "name": "Object-storage backup/recovery evidence", "status": "BLOCKED", "reason": "no object storage provisioned"},
-    {"phase": 9, "name": "Full restore drill", "status": "BLOCKED", "reason": "no backup exists to restore"},
-    {"phase": 10, "name": "Restore security verification", "status": "BLOCKED", "reason": "depends on phase 9"},
-    {"phase": 11, "name": "Monitoring and alerting proof", "status": "BLOCKED", "reason": "no monitoring provider selected"},
-    {"phase": 12, "name": "Logging and audit operations", "status": "PARTIAL", "reason": "application-layer audit append-only and redaction verified; log infrastructure not provisioned"},
-    {"phase": 13, "name": "Operational rollback drill", "status": "BLOCKED", "reason": "no deployment occurred to roll back"},
-    {"phase": 14, "name": "Support and incident readiness", "status": "BLOCKING", "reason": "no named pilot sponsor, technical owner, support contact, incident owner, privacy contact, deployment approver, or backup/restore owner"},
-    {"phase": 15, "name": "Data lifecycle and offboarding", "status": "PARTIAL", "reason": "application capabilities proven (PM-UAT-007, PM-UAT-011); no real rehearsal performed, none applicable without real data"},
-    {"phase": 16, "name": "Full infrastructure regression", "status": "GREEN", "reason": "application-layer regression green on PR #170; does not substitute for infrastructure readiness"}
+    {"phase": 2, "name": "Identify target environment", "status": "SUBSTANTIALLY ANSWERED", "reason": "a real, live target was discovered (Render, Frankfurt) rather than commissioned through this phase's own process; database migrated to Neon and verified; object storage, DNS/TLS, and provisioning authority all confirmed live as of 2026-08-08"},
+    {"phase": 3, "name": "IAM and service identity review", "status": "BLOCKED", "reason": "resources now exist, but this task has no account access to audit their permission boundaries directly; one positive step confirmed - quarantine storage uses a separately-scoped credential from the main bucket"},
+    {"phase": 4, "name": "Production configuration validation", "status": "SUBSTANTIALLY CONFIRMED BY INFERENCE", "reason": "settings_production.py's ImproperlyConfigured guards (DEBUG, ALLOWED_HOSTS, CSRF_TRUSTED_ORIGINS, DEFAULT_FROM_EMAIL, APP_BASE_URL, OPERATOR_ALERT_EMAIL, SECRET_KEY strength) must already pass, since the live process boots and serves requests; ALLOWED_HOSTS and CSRF_TRUSTED_ORIGINS were found actually misconfigured and fixed; exact live env var values still not directly inspectable"},
+    {"phase": 5, "name": "Deploy synthetic commissioning candidate", "status": "SUPERSEDED", "reason": "a real deployment already existed and was redeployed multiple times during this conversation (DATABASE_URL swap, config hardening); one real deploy failure occurred (migration leaf-node conflict) and was fixed"},
+    {"phase": 6, "name": "Target-environment smoke/UAT subset", "status": "PARTIAL", "reason": "sponsor manually confirmed the live site loads and a form submission succeeds (confirming the CSRF fix); this task's own automated executable UAT suite has never been run against the live target"},
+    {"phase": 7, "name": "PostgreSQL backup", "status": "PARTIAL", "reason": "a real pg_dump/pg_restore was performed and verified during the migration (twice, including a final safety pass), but this was a one-time migration export, not a routine backup schedule; Neon free-tier PITR window is only 6 hours"},
+    {"phase": 8, "name": "Object-storage backup/recovery evidence", "status": "PARTIAL", "reason": "storage now live for both released and quarantine documents with separate credentials; bucket versioning/recovery mechanism unconfirmed"},
+    {"phase": 9, "name": "Full restore drill", "status": "PARTIAL", "reason": "the database migration functioned as a real, independently-verified restore (122/122 tables matched), but the restore target was the new production database itself rather than an isolated recovery environment, and no RPO/RTO was timed"},
+    {"phase": 10, "name": "Restore security verification", "status": "NOT PERFORMED", "reason": "the migration was verified for correctness (row counts) but not specifically audited for security (role/privilege boundaries on the restored instance, or the effect of --no-owner --no-privileges)"},
+    {"phase": 11, "name": "Monitoring and alerting proof", "status": "BLOCKED", "reason": "SENTRY_DSN confirmed unset; no monitoring provider configured on the live, real-usage deployment"},
+    {"phase": 12, "name": "Logging and audit operations", "status": "PARTIAL", "reason": "application-layer audit append-only and redaction verified; log collection infrastructure, retention, and access control on the live Render target remain unverified (no direct access to check)"},
+    {"phase": 13, "name": "Operational rollback drill", "status": "NOT PERFORMED", "reason": "real deployments now occur (including one that failed and was fixed forward), but no deliberate rollback to a previous known-good state has ever been exercised"},
+    {"phase": 14, "name": "Support and incident readiness", "status": "BLOCKING", "reason": "Infrastructure operator now named (Haroon Wahed, confirmed 2026-08-08); no named Engineering/Release Authority, Security owner, Privacy/Product owner, PayrollMinds support owner, incident owner, or privacy contact"},
+    {"phase": 15, "name": "Data lifecycle and offboarding", "status": "PARTIAL", "reason": "application capabilities proven (PM-UAT-007, PM-UAT-011); real (sponsor-only, non-customer) data now exists in the live database following migration; no offboarding/retention rehearsal performed, none currently applicable"},
+    {"phase": 16, "name": "Full infrastructure regression", "status": "GREEN, WITH ONE DISCLOSED INCIDENT", "reason": "application-layer regression green on PR #170; separately, merging PR #115 and PR #162 in the same session produced a real migration leaf-node conflict on the live deploy, not caught by per-PR CI, found and fixed - disclosed as a gap in this task's own merge process"}
   ],
   "ci_result_pr_170_final_commit_7f45050d": {
     "checks_passed": 15,
@@ -59,13 +173,15 @@
     "browser_suite_8_shards": "success",
     "pr_release_evidence": "success",
     "security_scans": "failure",
-    "security_scans_detail": "bandit/pip-audit/npm-audit all passed within this job; only trufflehog failed with a single unlocated 'verified Lob result' finding, reproduced identically across 4 consecutive runs (ruling out network flakiness), with no credential-shaped content found anywhere in the diff after exhaustive manual review; likely false positive against a test_-prefixed Python identifier coincidentally matching the Lob key-format detector; flagged for security-team triage, not silently dismissed or worked around by further content changes"
+    "security_scans_detail": "bandit/pip-audit/npm-audit all passed within this job; only trufflehog failed with a single unlocated 'verified Lob result' finding - later conclusively root-caused and resolved in PR #171 (see VERIFIED_SECRET_TRIAGE.md): a coincidental regex collision against a test method name, not a real secret; fix verified with 16/16 checks green including security-scans"
   },
   "confirmations": {
     "no_real_payrollminds_customer_payroll_salary_data_used": true,
-    "no_real_users_invited": true,
-    "nothing_authorized_for_production_use": true,
+    "no_real_users_invited_beyond_the_pilot_sponsor_themselves": true,
+    "production_use_by_the_pilot_sponsor_is_now_live_not_hypothetical": true,
     "mfa_external_ai_email_signatures_integrations_remained_inactive": true,
-    "no_fabricated_infrastructure_evidence": true
+    "no_fabricated_infrastructure_evidence": true,
+    "credential_exposure_incident_disclosed_not_hidden": true,
+    "migration_leaf_node_incident_disclosed_not_hidden": true
   }
 }

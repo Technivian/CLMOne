@@ -1,10 +1,34 @@
 # PayrollMinds production target commissioning
 
-**Status: NO-GO.** This is an infrastructure-readiness evidence record, not
-a production authorization, deployment, or GO decision. No real cloud
-resource was provisioned, no real production data was loaded, no real
-PayrollMinds user was invited, and nothing was authorized for production
-use by this document.
+> **TECHNICAL ENVIRONMENT: LIVE.** A real, correctly-scoped pilot
+> deployment exists and is running (Render/Frankfurt, Neon/Frankfurt,
+> Cloudflare R2, `clmone.com`) — see `TARGET_ENVIRONMENT_INVENTORY.md`
+> §1c.
+>
+> **PAYROLLMINDS CUSTOMER ONBOARDING: NO-GO.** The technical environment
+> being live does not authorize onboarding real PayrollMinds customer
+> users. That remains blocked on the specific, named gaps in this
+> document's Recommendation section (backup/recovery readiness, an
+> isolated restore drill, monitoring/alerting, and several named
+> operational owners) — not on infrastructure existing, which it now
+> does.
+>
+> These are two separate questions with two separate answers. Do not
+> conflate "the environment is live" with "customer onboarding is
+> authorized" — it is not.
+
+This began as an infrastructure-readiness evidence record against
+infrastructure that did not yet exist. Mid-conversation on 2026-08-08, it
+emerged that the pilot sponsor already had a real deployment running
+independently, unconnected to this document's own phased commissioning
+process — see `TARGET_ENVIRONMENT_INVENTORY.md` §1c for the full record of
+its discovery, database migration, and security hardening. This document
+now describes a real, live, pilot-scope-restricted system handling
+sponsor-only usage (no other PayrollMinds users yet), not a synthetic
+exercise. It still is not a claim that every readiness gate in this
+document has been satisfied — several genuinely have not (§7, §8, §9,
+§11, §13, §14) — and nothing here authorizes onboarding real PayrollMinds
+customer users while those gaps remain open.
 
 ## 1. Final pilot-scope reconciliation
 
@@ -101,125 +125,216 @@ sandbox produced no response, consistent with this environment's outbound
 network policy blocking raw TCP egress to arbitrary hosts — the sandbox's
 limitation, not evidence about the database itself).
 
-Every other component remains unselected: application runtime, cache/queue,
-released and quarantine object storage, secret management, DNS/TLS, backup
-target, logging/monitoring sink. `PRODUCTION_INFRASTRUCTURE_PLAN.md` remains
-"Proposed" overall, gated on an unaccepted decision record (ADR-0018). This
-coding session still has no installed cloud CLI for any provider and no
-valid cloud credentials (`AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` resolve
-to `InvalidClientTokenId` against AWS STS — confirmed, not assumed).
+**Further update, 2026-08-08:** the sponsor also confirmed object storage
+(Cloudflare R2, an existing account), a DNS/TLS domain (`clmone.com` on the
+same Cloudflare account), and a named Infrastructure operator (Haroon
+Wahed) — see `TARGET_ENVIRONMENT_INVENTORY.md` §1b for the full record,
+including honest, currently-researched (not assumed) reasons why
+application runtime has no clean free+EU+indefinite answer yet.
+Application runtime, cache/queue, secret management, and a true
+long-retention backup target remain unselected or only partially answered.
+`PRODUCTION_INFRASTRUCTURE_PLAN.md` remains "Proposed" overall, gated on an
+unaccepted decision record (ADR-0018). This coding session still has no
+installed cloud CLI for any provider and no valid cloud credentials
+(`AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` resolve to
+`InvalidClientTokenId` against AWS STS — confirmed, not assumed).
 
-**BLOCKED overall — owner: Infrastructure operator (per
-`PRODUCTION_OPERATIONS_RUNBOOK.md` service-ownership table). Required before
-this phase can be reported GREEN: the remaining topology components
-selected, an accepted ADR-0018, and credentials issued to whichever
-environment (human operator or automated deployment agent) will actually
-perform commissioning. Update (2026-08-08): the superseded non-EU
-(`eu-west-2`/London) Neon project the sponsor set aside has now been
-decommissioned by the sponsor directly (this task's environment has no
-Neon account access and could not perform or verify the deletion itself —
-see `TARGET_ENVIRONMENT_INVENTORY.md` §1a). That sub-question is closed and
-does not affect this phase's BLOCKED status, which remains driven by the
-still-unselected components above.**
+**Update, 2026-08-08 (supersedes the above): a real target environment was
+discovered, not commissioned through this phase's own process.** The
+sponsor had already been running a live Render deployment (Frankfurt) at
+`clmone.com` before this conversation began. Once disclosed, this task
+verified and hardened it in place rather than treating it as hypothetical
+— see `TARGET_ENVIRONMENT_INVENTORY.md` §1c for the complete record:
+database migrated from a prior Render Postgres instance to Neon (verified
+via full 122-table row-count comparison), pilot-scope enforcement
+(`CONTROLLED_PILOT_ENABLED` and related flags) turned on where it had not
+been, `ALLOWED_HOSTS`/`CSRF_TRUSTED_ORIGINS` corrected, and quarantine
+object storage wired to a separately-credentialed Cloudflare R2 bucket.
+The superseded non-EU (`eu-west-2`/London) Neon project has also been
+decommissioned by the sponsor directly.
 
-## 3. IAM and service identity review — BLOCKED
+**This phase is no longer BLOCKED in the sense the rest of this section
+describes** — a target environment identifiably exists, in the correct
+region, serving real (if sponsor-only) traffic. It is not, however,
+GREEN in the sense Prompt 32 intended: it was not commissioned through
+IAM review (§3), synthetic-candidate deployment (§5), or a formal
+restore drill (§9) — those phases genuinely have not happened and remain
+marked accordingly below. ADR-0018 remains formally unaccepted even
+though its substance now largely exists in practice. Owner: Infrastructure
+operator, Haroon Wahed (`PRODUCTION_OPERATIONS_RUNBOOK.md` service-ownership
+table).
 
-No IAM policies, service identities, or resource ARNs exist to review —
-there are no provisioned resources (§2). `PRODUCTION_ENVIRONMENT_VARIABLE_INVENTORY.md`
-documents the *intended* least-privilege posture (separate app/backup/restore
-identities, no shared developer credential at runtime, private buckets, no
-public database) but this is unexecuted design, not verified configuration.
+## 3. IAM and service identity review — STILL BLOCKED (resources now exist, but unauditable from here)
 
-**BLOCKED — depends on §2.**
+Resources now exist (§2), which changes what "BLOCKED" means here: this
+is no longer blocked on *nonexistence*, it is blocked on this task's
+*inability to audit* them. This task has no Render, Neon, or Cloudflare
+account access — every fact about the live environment came from the
+sponsor pasting logs/output, never from this task inspecting an IAM
+console or policy document directly. One concrete, positive step did
+happen: the quarantine object-storage credential was deliberately created
+as a separate, bucket-scoped Cloudflare R2 Account API token rather than
+reusing the main document-storage credential (`TARGET_ENVIRONMENT_INVENTORY.md`
+§1c), which is exactly the least-privilege separation
+`PRODUCTION_ENVIRONMENT_VARIABLE_INVENTORY.md` calls for. Beyond that one
+item, this task cannot confirm whether the database role, the main storage
+credential, or the Render service's own permissions follow least-privilege
+— there is no IAM policy document to review, and no access to go look.
 
-## 4. Production configuration validation — PARTIALLY EXECUTABLE, BLOCKED overall
+**BLOCKED — not because resources don't exist, but because this task
+cannot independently verify their permission boundaries.**
+
+## 4. Production configuration validation — SUBSTANTIALLY CONFIRMED (by inference, not direct inspection)
 
 The repository's own `python manage.py check --deploy --fail-level WARNING`
-gate already runs in CI (`.github/workflows/platform-guardrails.yml`,
-`quality-and-tenancy` job, "Deploy checks (production profile)" step) against
-a synthetic production-shaped settings profile (`DJANGO_ENV=production`,
-`SECURE_SSL_REDIRECT=true`, `SECURE_HSTS_PRELOAD=true`, S3 backend name
-only, no real bucket). This passed on PR #170's own run (see §16). It proves
-the *application code* fails closed under a production-shaped configuration
-profile — it does not prove any real target's actual configuration, because
-no real target exists.
+gate already runs in CI against a synthetic production-shaped settings
+profile and passed on PR #170's run (see §16) — that part is unchanged.
 
-Confirmed structurally true regardless of target environment (verified via
-this task's earlier phases, not re-derived here): external AI disabled by
-default and fail-closed even when configured (`test_payrollminds_ai_governance_gate`,
-PM-UAT-012); inbound email has no code path at all (PM-UAT-013); signature
-routes are blocked by `ControlledPilotScopeMiddleware` under
-`CONTROLLED_PILOT_ENABLED=true` (PM-UAT-014); external portals/integrations
-are never invoked (PM-UAT-015); `CONTROLLED_PILOT_ENABLED` and the
-PAR-SEC-002 flags are all default-off, environment/org-allowlist gated. MFA
-(PR #162) remains merged-but-inactive — no code path in this pilot's
-configuration activates it, and this task does not activate it.
+**What's new:** `config/settings_production.py` raises `ImproperlyConfigured`
+at settings-import time — crash-looping the entire process, not failing one
+request — if `DEBUG` is true, `ALLOWED_HOSTS`/`CSRF_TRUSTED_ORIGINS` are
+empty, `DEFAULT_FROM_EMAIL`/`OPERATOR_ALERT_EMAIL` are placeholder values,
+`APP_BASE_URL` isn't a valid public HTTPS origin, or `SECRET_KEY` is weak.
+The live Render deployment has been running and serving real HTTP
+responses throughout this conversation (`TARGET_ENVIRONMENT_INVENTORY.md`
+§1c) — which is only possible if every one of those guards already passed.
+That is an inference from the deployment's observed behavior, not a direct
+inspection of Render's environment variables (this task still has none of
+that access), but it is a real logical proof, not an assumption: a process
+that violates any of those checks cannot boot at all under this codebase.
+`SESSION_COOKIE_SECURE`/`CSRF_COOKIE_SECURE`/`SECURE_SSL_REDIRECT` are
+hardcoded true in `settings_production.py` (not configurable, not
+optional) whenever that module loads — so secure cookies and TLS redirect
+are structurally guaranteed on this deployment, not merely hoped for.
 
-**BLOCKED for anything beyond the application-code gate — no real target
-configuration exists to validate `ALLOWED_HOSTS`, TLS termination, secure
-cookies, or the production database/object-storage connection strings
-against.**
+Two configuration items were found actually wrong on the live deployment
+and fixed in place, not just validated: `ALLOWED_HOSTS` (missing
+`www.clmone.com`, causing every health check to fail) and
+`CSRF_TRUSTED_ORIGINS` (still pointed at a leftover `*.onrender.com`
+wildcard, or briefly a bare-domain value with no URL scheme). Both are
+corrected now, per sponsor confirmation.
 
-## 5. Deploy a synthetic commissioning candidate — BLOCKED
+Confirmed structurally true regardless of target environment (unchanged
+from before): external AI disabled by default and fail-closed
+(`test_payrollminds_ai_governance_gate`, PM-UAT-012); inbound email has no
+code path (PM-UAT-013); signature routes blocked under
+`CONTROLLED_PILOT_ENABLED=true` (PM-UAT-014, now confirmed actually set
+live, not just default — §2); external portals never invoked (PM-UAT-015).
+MFA (PR #162) remains merged-but-inactive on this deployment — nothing in
+this conversation activated it.
 
-No deployment target exists (§2), no deployment credential exists in this
-environment, and this task's environment has no `terraform`/`pulumi`/cloud
-CLI to provision one even if credentials existed. **No deployment was
-attempted.** Fabricating a deployed SHA, build digest, or health-check
-result would misrepresent this evidence record; none is provided.
+**Not verified even now: the exact live value of every environment
+variable** — this task knows what was *reported* as set, not what a direct
+inspection would show, because it has no access to perform one.
 
-**BLOCKED — depends on §2 and §3.**
+## 5. Deploy a synthetic commissioning candidate — SUPERSEDED BY A REAL DEPLOYMENT
 
-## 6. Target-environment smoke and synthetic UAT subset — BLOCKED
+This phase's original premise — deploy a synthetic candidate to prove the
+mechanics work, since no real target existed — no longer applies. A real
+deployment already existed independently of this process (§2) and has
+since been redeployed multiple times in this task's presence (the
+`DATABASE_URL` swap, then the `ALLOWED_HOSTS`/pilot-scope/`CSRF_TRUSTED_ORIGINS`/
+storage fixes each triggered a fresh Render auto-deploy). Those were real
+deployments of real, functional changes, not a synthetic exercise — but
+this task still never held deployment credentials and never triggered any
+of them directly; every deploy was the sponsor saving an environment
+variable in the Render dashboard. **This task did not deploy anything
+itself and does not claim to have.**
 
-Cannot run against a target that does not exist. The equivalent, already-
-executed evidence against the *local test* environment is the full
-PayrollMinds executable UAT suite (PR #169, 24/24, and its extension in
-this PR, §1) — this is real, but it is not target-environment evidence and
-this document does not claim it is.
+One real, unplanned deployment failure is on record: after PR #115 and
+PR #162 were merged (each independently branching a new Django migration
+off the same parent), the live deploy failed with Django's "multiple leaf
+nodes" migration-graph error. It was fixed with a standard empty merge
+migration (`contracts/migrations/0118_merge_20260808_1800.py`), pushed
+directly to `main` outside a PR. This is disclosed here because it is a
+genuine commissioning-relevant event — a merge-migration conflict this
+task's own CI did not catch before either PR merged, only surfacing on
+the real target's real deploy.
 
-## 7. PostgreSQL backup — BLOCKED
+## 6. Target-environment smoke and synthetic UAT subset — PARTIALLY DONE, INFORMALLY
 
-Update (2026-08-08): a production-intended PostgreSQL service now exists
-(§2, `TARGET_ENVIRONMENT_INVENTORY.md` §1a — Neon, `eu-central-1`), but no
-backup has been taken against it. This session has no credentials wired to
-that instance beyond the connection string held only in chat (§2), no
-backup tooling configured to target it, and — separately — this sandbox's
-outbound network policy does not permit the raw PostgreSQL TCP connection
-`scripts/db_backup.sh` would require even if credentials were wired in. The
-repository ships `scripts/db_backup.sh` and `tests.test_restore_drill`
-(referenced in `PRODUCTION_READINESS_VALIDATION.md` as already exercised
-against the local SQLite-backed test environment) — these prove the
-backup/restore *code path* is implemented and unit-tested, not that a real
-PostgreSQL backup has ever been taken against the new instance. No backup
-ID, timestamp, or encryption/retention state is fabricated here.
+This task's own executable UAT suite (PR #169, 24/24, and its extension in
+PR #170, §1) has still never been run against the live target — this task
+has no credentials to do so. What did happen: the sponsor manually
+confirmed `clmone.com` loads and is usable after each round of fixes,
+including specifically testing a form submission to confirm
+`CSRF_TRUSTED_ORIGINS` was corrected. That is real target-environment
+smoke evidence, but it is manual and informal — a human clicking around,
+not an automated, repeatable, evidenced test run. It does not substitute
+for actually running the PayrollMinds UAT matrix against the live
+deployment, which remains undone.
 
-## 8. Object-storage backup/recovery evidence — BLOCKED
+## 7. PostgreSQL backup — PARTIAL: a real dump was taken and verified, but no routine backup schedule exists
 
-No object-storage bucket exists (§2). No recovery mechanism (versioning,
-replication, snapshot) can be verified against infrastructure that has not
-been provisioned.
+Update (2026-08-08): the sponsor-run database migration (§9, and
+`TARGET_ENVIRONMENT_INVENTORY.md` §1c) means a real `pg_dump` of a real
+PostgreSQL database with real data was, in fact, taken and successfully
+used — twice (an initial dump, then a final `--clean --if-exists` pass
+immediately before cutover to avoid losing anything written in between).
+That is more than this phase had before, but it was a one-time migration
+export, not a routine, scheduled backup process — `scripts/db_backup.sh`
+still has never been run against either the old Render instance or the
+new Neon one, and no backup ID/retention policy exists beyond Neon's own
+built-in point-in-time recovery.
 
-## 9. Full restore drill — BLOCKED
+Neon's free-tier point-in-time recovery window is **6 hours** (verified
+against current Neon documentation, not assumed) — materially short of a
+meaningful RPO now that this database holds real (sponsor-only) usage
+data. This is a genuine, unresolved gap, not a formality: if something
+goes wrong more than 6 hours after it happens, Neon's own recovery cannot
+help.
 
-No backup exists to restore (§7), no isolated recovery target exists (§2).
-No RPO/RTO is reported — reporting a number without a real drill would be
-fabricated evidence, which this task's entire governing discipline
-(established across every prior PayrollMinds pilot phase in this
-repository) explicitly prohibits.
+## 8. Object-storage backup/recovery evidence — PARTIAL: storage now exists, recovery mechanism unconfirmed
 
-## 10. Restore security verification — BLOCKED
+Object storage (Cloudflare R2) is now live for both released and
+quarantine documents, each with its own bucket and scoped Account API
+token (`TARGET_ENVIRONMENT_INVENTORY.md` §1c) — no longer unprovisioned.
+What remains unconfirmed: whether bucket versioning, replication, or any
+recovery mechanism has been enabled on either bucket. This task has no R2
+dashboard access to check, and the sponsor was not asked this specific
+question during the storage setup — it should be verified directly in the
+Cloudflare dashboard.
 
-Depends entirely on §9 having occurred.
+## 9. Full restore drill — PARTIAL: the database migration functioned as a real, verified restore, but not a formal drill
 
-## 11. Monitoring and alerting proof — BLOCKED
+The Render→Neon database migration (`TARGET_ENVIRONMENT_INVENTORY.md`
+§1c) is, in substance, a real restore: a `pg_dump` from one live
+PostgreSQL instance, restored via `pg_restore` into another, with
+correctness independently verified — every one of 122 tables compared row
+by row across both databases, all 34 non-empty tables matching exactly.
+This is real, evidenced restore mechanics working against real
+infrastructure with real data, not fabricated.
 
-No monitoring provider is selected (`PRODUCTION_OPERATIONS_RUNBOOK.md`:
-"Status: Proposed. No monitoring provider, alert route, or support contact
-has been configured or approved by this PR"). The failure-mode and alert
-tables in that runbook are a documented design, not live, tested alerting.
-No synthetic test alert was generated because there is no alert route to
-receive one.
+It falls short of a formal restore drill in specific, nameable ways: the
+restore target was the new production database itself, not an isolated
+recovery environment separate from production; no RPO/RTO timing was
+measured; and it was prompted by a database migration need, not exercised
+as a deliberate disaster-recovery test. No RPO/RTO number is reported here
+— reporting one without a real timed drill would be fabricated evidence,
+which this task's governing discipline prohibits throughout this
+repository.
+
+## 10. Restore security verification — NOT PERFORMED
+
+§9's migration was verified for *correctness* (row counts matched) but not
+specifically audited for *security* — e.g., whether the restored Neon
+database ended up with the same access controls, roles, and privilege
+boundaries as intended, or whether `--no-owner --no-privileges` (used in
+the actual `pg_dump`/`pg_restore` commands) left anything under-permissioned
+or over-permissioned relative to the design in
+`PRODUCTION_ENVIRONMENT_VARIABLE_INVENTORY.md`. This still has not been
+checked and remains open.
+
+## 11. Monitoring and alerting proof — STILL BLOCKED
+
+`SENTRY_DSN` is confirmed unset on the live deployment
+(`TARGET_ENVIRONMENT_INVENTORY.md` §1c). `sentry-sdk` is already a runtime
+dependency and the code silently no-ops without a DSN — so no error is
+raised, but no error reporting exists either. The failure-mode and alert
+tables in `PRODUCTION_OPERATIONS_RUNBOOK.md` remain a documented design,
+not live, tested alerting. No synthetic test alert was generated because
+there is no alert route to receive one. This is a real, live gap on a
+system now handling real (sponsor-only) usage, not a hypothetical one.
 
 ## 12. Logging and audit operations — PARTIALLY VERIFIED (application layer only)
 
@@ -236,14 +351,23 @@ sensitive document content/secrets are not logged by design
 `test_scanner_timeout_and_invalid_response_fail_closed_without_detail`).
 
 **Not verified:** log collection infrastructure, retention configuration,
-and log-access control — none exist without a target environment (§2).
+and log-access control on the live target. A target now exists (§2), but
+this task has no access to inspect Render's log retention/access settings
+directly — this remains genuinely unverified, not resolved by the target
+existing.
 
-## 13. Operational rollback drill — BLOCKED
+## 13. Operational rollback drill — STILL NOT PERFORMED
 
-No deployment occurred (§5) to roll back. The documented procedure
-(`PRODUCTION_DEPLOYMENT_AND_ROLLBACK_RUNBOOK.md`) is unexecuted design.
+Deployments now genuinely occur on this target (§5 — each env-var change
+triggered a real Render redeploy, including one that failed and was fixed
+forward with a migration merge rather than rolled back). But a **rollback**
+specifically — reverting to a previous known-good state after a bad
+deploy — has never been exercised here. Every fix in this conversation
+was applied forward, not rolled back to. The documented procedure
+(`PRODUCTION_DEPLOYMENT_AND_ROLLBACK_RUNBOOK.md`) remains unexecuted
+design.
 
-## 14. Support and incident readiness — BLOCKING, named gaps
+## 14. Support and incident readiness — BLOCKING, named gaps (one closed)
 
 Per `PRODUCTION_OPERATIONS_RUNBOOK.md`'s own service-ownership table and
 explicit statement ("Named people, contact addresses, support hours, RPO/RTO,
@@ -251,8 +375,18 @@ and customer promises are intentionally absent until supplied and
 approved"), and `RISK_REGISTER.md` PM-R11: no named pilot sponsor,
 technical owner, support contact/channel, incident owner, privacy contact,
 deployment approver, or backup/restore owner exists in this repository. No
-person is invented here. **These are explicit, named, BLOCKING gaps**, not
-silently treated as complete, per this task's own success criteria.
+person is invented here.
+
+**Update, 2026-08-08:** one of these gaps is now closed. Haroon Wahed was
+confirmed as the Infrastructure operator ("authorized to create production
+resources and run backup/restore drills" — see
+`PRODUCTION_OPERATIONS_RUNBOOK.md`'s service-ownership table and
+`TARGET_ENVIRONMENT_INVENTORY.md` §1b). This covers PostgreSQL/Redis/
+storage/DNS/TLS/backup ownership specifically. Engineering/Release
+Authority, Security owner, Privacy/Product owner, PayrollMinds support
+owner, incident owner, and privacy contact remain unnamed. **This phase
+remains BLOCKING** on those still-open roles, not silently treated as
+complete.
 
 ## 15. Data lifecycle and offboarding — DOCUMENTED PROCEDURE, UNREHEARSED
 
@@ -261,11 +395,14 @@ repository) documents the intended procedure for user disablement, access
 revocation, controlled export, and workspace shutdown. `PM-UAT-011`
 (access-revocation removes visibility) and `PM-UAT-007` (controlled export)
 already prove the underlying application capabilities work at the code
-level. No real rehearsal against a target environment or real retention
-decision has occurred, and none should — no real data exists in this
-pilot's build.
+level. Update (2026-08-08): real (if sponsor-only, non-customer) data does
+now exist in the live database, migrated from the prior Render Postgres
+instance (§7/§9) — the earlier premise that "no real data exists" is no
+longer accurate. No real offboarding/retention rehearsal has been
+performed against it, and none should be, absent an actual reason to
+offboard or retire data right now.
 
-## 16. Full infrastructure regression — GREEN (application layer)
+## 16. Full infrastructure regression — GREEN (application layer), plus one real infrastructure incident
 
 Run on the reconciliation candidate SHA (PR #170, this branch):
 executable PayrollMinds UAT (24/24), browser regression, security battery,
@@ -273,36 +410,88 @@ PAR-SEC-002, tenant isolation, permission matrix, production deploy checks
 (`manage.py check --deploy`), migration drift (zero), Bandit, TruffleHog,
 pip-audit, npm-audit — see §18 of `PAYROLLMINDS_EXECUTABLE_UAT_EVIDENCE.md`
 for the established pattern; this PR's own CI run reproduces it. No new
-critical/high issue. This regression proves the *application* remains
-ready; it does not and cannot prove *infrastructure* readiness, because no
-infrastructure exists to regress-test.
+critical/high issue.
+
+Since then, this task's own PR-merge activity produced a real
+infrastructure-facing regression: merging PR #115 and PR #162 in the same
+session, each adding an independent migration off the same parent, broke
+the live target's deploy with Django's "multiple leaf nodes" error (§5).
+This was not caught by this repository's CI — each PR's own CI run only
+sees its own branch, not the combined graph both create once merged
+together — and only surfaced against the real, live deployment. It was
+fixed with a standard merge migration. This is disclosed as a genuine gap
+in this task's own merge process, not smoothed over: application-layer CI
+green does not, by itself, prove two independently-merged migrations
+won't conflict against each other on a real target.
 
 ## Recommendation
 
-**NO-GO** (unchanged as of the 2026-08-08 update below). Phase 1 (scope
-reconciliation) is complete, real, and GREEN. Phases 2–13 remain
-**BLOCKED**, honestly and specifically, because no real target production
-environment has been fully provisioned for this pilot — confirmed both by
-this repository's own governing documents (`PRODUCTION_INFRASTRUCTURE_PLAN.md`:
-"Proposed... Decision dependency: Proposed ADR-0018") and by direct
-verification that this task's execution environment holds no usable cloud
-credentials or tooling (`TARGET_ENVIRONMENT_INVENTORY.md` §3). Phase 14
-(support/incident ownership) is explicitly blocking on named-person gaps
-that no engineering task can close. Phase 16 (application-layer regression)
-is GREEN and carries forward everything already proven in
-PR #167/#168/#169/#170.
+**Neither GO nor NO-GO honestly describes the current state — a real,
+live, pilot-scope-restricted deployment exists and is being used
+(sponsor-only, so far), with specific, named gaps still open.** This
+document's history:
 
-**Update, 2026-08-08:** the pilot sponsor has independently selected and
-confirmed a production PostgreSQL database (Neon, `eu-central-1`/Frankfurt —
-`TARGET_ENVIRONMENT_INVENTORY.md` §1a), the first real component of the
-target environment. This is genuine progress and is reflected in §2 and §7
-above. It changes exactly one row of one table; it does not change the
-overall recommendation, because application runtime, cache/queue, object
-storage, secret management, DNS/TLS, backup target, monitoring, and named
-operational ownership (Phase 14) all remain unresolved. **NO-GO stands**
-until those remaining gaps close.
+Phase 1 (scope reconciliation) has been complete, real, and GREEN since
+PR #170. Through most of this document's life, Phases 2–13 were correctly
+reported **BLOCKED** because no real target environment existed anywhere
+this task could see, and `TARGET_ENVIRONMENT_INVENTORY.md` §3 confirmed
+this task's own credential-less state directly rather than assuming it.
+
+**That premise changed on 2026-08-08.** A real deployment was discovered
+mid-conversation — one the sponsor had built independently, outside this
+document's own commissioning process (`TARGET_ENVIRONMENT_INVENTORY.md`
+§1c). Once found, it was verified and hardened rather than left alone:
+its database was migrated to the already-confirmed Neon instance and the
+migration's correctness independently verified (§7/§9); missing
+pilot-scope enforcement, host validation, and CSRF protection were
+identified against this repository's own code and fixed (§4); a second,
+separately-credentialed object-storage bucket was created for quarantine
+documents (§8); and a real migration-graph deploy failure was caught and
+fixed (§16).
+
+**What is now GREEN or substantially answered:** Phases 1, 4 (by
+inference from the live process's own successful boot, not direct
+inspection), and most of §2's topology. **What remains genuinely open,
+not GREEN:** Phase 3 (IAM/permission boundaries unauditable from this
+task), Phase 6 (no automated UAT run against the live target, only manual
+smoke checks), Phase 8 (document-storage recovery — R2 is live for both
+released and quarantine buckets, but no bucket versioning/recovery drill
+has been performed or confirmed configured), Phase 9 (the migration
+functioned as a real restore but not a formal, timed drill into an
+isolated target), Phase 10 (restore security never specifically audited),
+Phase 11 (no monitoring — `SENTRY_DSN` unset), Phase 13 (no rollback ever
+exercised, only forward fixes).
+
+**Named-ownership gaps (Phase 14), stated precisely rather than lumped
+together:** the **backup owner** role is the one that is actually
+closed — Haroon Wahed is named as Infrastructure operator, explicitly
+covering PostgreSQL/Redis/storage/DNS/TLS/backup. Still open and unnamed:
+**support owner** (PayrollMinds customer communications), **incident
+owner** (security/availability incident response), **privacy owner**
+(Privacy/Product — retention, deletion, export approval), and
+**deployment approver** (Engineering/Release Authority — who signs off on
+a release reaching this environment).
+
+**Onboarding blockers, explicitly, in one place:** routine backup/recovery
+readiness (Phase 7 — only a one-time migration dump exists, Neon free-tier
+PITR is 6 hours), an isolated PostgreSQL restore drill (Phase 9 — the
+migration proved dump/restore mechanics work, not a drill into a separate
+recovery target with timed RPO/RTO), a document-storage recovery drill
+(Phase 8), monitoring/alerting (Phase 11), and the four still-unnamed
+operational owners above (support, incident, privacy, deployment
+approver). Redis (`REDIS_URL` unset) is **not** listed here — it degrades
+gracefully to synchronous background-job execution rather than blocking
+anything, so it is a real gap worth fixing but not a release blocker.
+
+**Practical read:** this is a reasonable, honestly-configured pilot
+deployment for continued sponsor-only use and further hardening. It is
+not yet ready for real PayrollMinds customer users under this document's
+own bar — the blockers listed above are the specific, named things that
+would need to close first, not vague caution.
 
 No infrastructure evidence in this document — deployment SHA, backup ID,
-restore timing, RPO/RTO, monitoring test, or alert delivery — is fabricated.
-Where Prompt 32 required such evidence and none could be produced honestly,
-this document says so explicitly rather than inventing it.
+restore timing, RPO/RTO, monitoring test, or alert delivery — is
+fabricated. Where evidence could not be produced honestly, or could only
+be inferred rather than directly observed, this document says so
+explicitly (§4, §6, §9) rather than either inventing it or refusing to
+update a now-stale blanket verdict.
