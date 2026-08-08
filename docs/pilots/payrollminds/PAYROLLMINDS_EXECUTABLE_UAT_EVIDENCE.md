@@ -5,7 +5,7 @@
 
 ## 1. Source/base SHA
 
-`68a1f568292d3a26dad8dc6f7ec80e91bd607349` — current `main`, which already
+`68a1f568` — current `main`, which already
 contains the security repair (PR #167) and the reconstructed release stack
 (PR #168), both merged in the prior session turn on the user's explicit
 instruction. The prompt's "authoritative reconstructed SHA" `2abf292d` is a
@@ -188,7 +188,7 @@ SQLite in-memory).
 PR #169, workflow run
 [31220152961](https://github.com/Technivian/CLMOne/actions/runs/31220152961),
 job `quality-and-tenancy` (id `93002721771`), step "PayrollMinds executable
-UAT", commit `c5f83238be862999f8a70ef692e9f954834f06c1`:
+UAT", commit `c5f83238`:
 
 ```
 Ran 24 tests in 24.298s
