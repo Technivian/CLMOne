@@ -39,7 +39,7 @@ only UI reachability changed, not access control.
 - Rerun scenarios: `test_pm_uat_006_operational_tracking_deadline` (now runs
   under the real `CONTROLLED_PILOT_ENABLED=true` setting, no isolation
   override needed), `test_controlled_pilot_scope.test_pilot_allows_obligations_dates_and_reminders`
-  (new), `test_controlled_pilot_scope.test_pilot_blocks_excluded_direct_routes`
+  (new), `test_controlled_pilot_scope.test_pilot_blocks_excluded_routes`
   (updated — no longer asserts the now-incorrect block).
 - Security/browser preservation: local combined battery — `test_cross_tenant_isolation`
   (75), `test_permission_matrix` (2), both PAR-SEC-002 files, `test_private_document_repository`,
