@@ -84,23 +84,43 @@ independent of this open scanner question — see §16 for why the scanner
 finding does not change this document's overall NO-GO recommendation
 (driven entirely by unprovisioned infrastructure, §2 onward).
 
-## 2. Target environment identification — BLOCKED
+## 2. Target environment identification — BLOCKED (database component decided)
 
-See `TARGET_ENVIRONMENT_INVENTORY.md` for the full inventory and
-verification method. Summary: no cloud/hosting provider, account,
-region, or environment has been selected or provisioned for the
-PayrollMinds pilot. `PRODUCTION_INFRASTRUCTURE_PLAN.md` remains "Proposed,"
-gated on an unaccepted decision record (ADR-0018). This coding session has
-no installed cloud CLI for any provider and no valid cloud credentials
-(`AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` resolve to
-`InvalidClientTokenId` against AWS STS — confirmed, not assumed). There is
-no real target to identify beyond what is already documented as a proposal.
+See `TARGET_ENVIRONMENT_INVENTORY.md` §1a for the full record. Update
+(2026-08-08): the pilot sponsor has selected and confirmed a production
+database — Neon managed PostgreSQL, project region `eu-central-1` (AWS
+Frankfurt, DE) — directly, outside this coding session's own (still
+credential-less) access. This is real progress on one line of
+`PRODUCTION_INFRASTRUCTURE_PLAN.md`'s topology table, not fabricated: the
+sponsor supplied a live connection string in conversation, confirmed it as
+the intended production instance, and confirmed it is new/empty (no
+migration needed). The connection string itself was never written to this
+repository, any commit, or any CI configuration, and this session could not
+independently verify reachability (a direct connection attempt from this
+sandbox produced no response, consistent with this environment's outbound
+network policy blocking raw TCP egress to arbitrary hosts — the sandbox's
+limitation, not evidence about the database itself).
 
-**BLOCKED — owner: Infrastructure operator (per `PRODUCTION_OPERATIONS_RUNBOOK.md`
-service-ownership table). Required before this phase can proceed: an
-accepted ADR-0018, a selected provider/account, and credentials issued to
-whichever environment (human operator or automated deployment agent) will
-actually perform commissioning.**
+Every other component remains unselected: application runtime, cache/queue,
+released and quarantine object storage, secret management, DNS/TLS, backup
+target, logging/monitoring sink. `PRODUCTION_INFRASTRUCTURE_PLAN.md` remains
+"Proposed" overall, gated on an unaccepted decision record (ADR-0018). This
+coding session still has no installed cloud CLI for any provider and no
+valid cloud credentials (`AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` resolve
+to `InvalidClientTokenId` against AWS STS — confirmed, not assumed).
+
+**BLOCKED overall — owner: Infrastructure operator (per
+`PRODUCTION_OPERATIONS_RUNBOOK.md` service-ownership table). Required before
+this phase can be reported GREEN: the remaining topology components
+selected, an accepted ADR-0018, and credentials issued to whichever
+environment (human operator or automated deployment agent) will actually
+perform commissioning. Update (2026-08-08): the superseded non-EU
+(`eu-west-2`/London) Neon project the sponsor set aside has now been
+decommissioned by the sponsor directly (this task's environment has no
+Neon account access and could not perform or verify the deletion itself —
+see `TARGET_ENVIRONMENT_INVENTORY.md` §1a). That sub-question is closed and
+does not affect this phase's BLOCKED status, which remains driven by the
+still-unselected components above.**
 
 ## 3. IAM and service identity review — BLOCKED
 
@@ -160,13 +180,19 @@ this document does not claim it is.
 
 ## 7. PostgreSQL backup — BLOCKED
 
-No production or pre-production PostgreSQL service exists to back up. The
+Update (2026-08-08): a production-intended PostgreSQL service now exists
+(§2, `TARGET_ENVIRONMENT_INVENTORY.md` §1a — Neon, `eu-central-1`), but no
+backup has been taken against it. This session has no credentials wired to
+that instance beyond the connection string held only in chat (§2), no
+backup tooling configured to target it, and — separately — this sandbox's
+outbound network policy does not permit the raw PostgreSQL TCP connection
+`scripts/db_backup.sh` would require even if credentials were wired in. The
 repository ships `scripts/db_backup.sh` and `tests.test_restore_drill`
 (referenced in `PRODUCTION_READINESS_VALIDATION.md` as already exercised
 against the local SQLite-backed test environment) — these prove the
 backup/restore *code path* is implemented and unit-tested, not that a real
-PostgreSQL backup has ever been taken. No backup ID, timestamp, or
-encryption/retention state is fabricated here.
+PostgreSQL backup has ever been taken against the new instance. No backup
+ID, timestamp, or encryption/retention state is fabricated here.
 
 ## 8. Object-storage backup/recovery evidence — BLOCKED
 
@@ -253,17 +279,28 @@ infrastructure exists to regress-test.
 
 ## Recommendation
 
-**NO-GO.** Phase 1 (scope reconciliation) is complete, real, and GREEN.
-Phases 2–13 are **BLOCKED**, honestly and specifically, because no real
-target production environment has been provisioned anywhere for this
-pilot — confirmed both by this repository's own governing documents
-(`PRODUCTION_INFRASTRUCTURE_PLAN.md`: "Proposed... Decision dependency:
-Proposed ADR-0018") and by direct verification that this task's execution
-environment holds no usable cloud credentials or tooling
-(`TARGET_ENVIRONMENT_INVENTORY.md` §3). Phase 14 (support/incident
-ownership) is explicitly blocking on named-person gaps that no engineering
-task can close. Phase 16 (application-layer regression) is GREEN and
-carries forward everything already proven in PR #167/#168/#169/#170.
+**NO-GO** (unchanged as of the 2026-08-08 update below). Phase 1 (scope
+reconciliation) is complete, real, and GREEN. Phases 2–13 remain
+**BLOCKED**, honestly and specifically, because no real target production
+environment has been fully provisioned for this pilot — confirmed both by
+this repository's own governing documents (`PRODUCTION_INFRASTRUCTURE_PLAN.md`:
+"Proposed... Decision dependency: Proposed ADR-0018") and by direct
+verification that this task's execution environment holds no usable cloud
+credentials or tooling (`TARGET_ENVIRONMENT_INVENTORY.md` §3). Phase 14
+(support/incident ownership) is explicitly blocking on named-person gaps
+that no engineering task can close. Phase 16 (application-layer regression)
+is GREEN and carries forward everything already proven in
+PR #167/#168/#169/#170.
+
+**Update, 2026-08-08:** the pilot sponsor has independently selected and
+confirmed a production PostgreSQL database (Neon, `eu-central-1`/Frankfurt —
+`TARGET_ENVIRONMENT_INVENTORY.md` §1a), the first real component of the
+target environment. This is genuine progress and is reflected in §2 and §7
+above. It changes exactly one row of one table; it does not change the
+overall recommendation, because application runtime, cache/queue, object
+storage, secret management, DNS/TLS, backup target, monitoring, and named
+operational ownership (Phase 14) all remain unresolved. **NO-GO stands**
+until those remaining gaps close.
 
 No infrastructure evidence in this document — deployment SHA, backup ID,
 restore timing, RPO/RTO, monitoring test, or alert delivery — is fabricated.

@@ -9,20 +9,39 @@
     "local_regression": {"tests": 251, "passed": 251, "failed": 0}
   },
   "target_environment": {
-    "provisioned": false,
-    "reason": "PRODUCTION_INFRASTRUCTURE_PLAN.md status is 'Proposed', decision-dependent on unaccepted ADR-0018; no provider/account/region selected",
+    "provisioned": "partial",
+    "reason": "PRODUCTION_INFRASTRUCTURE_PLAN.md status is 'Proposed', decision-dependent on unaccepted ADR-0018; database component only was selected and confirmed by the pilot sponsor on 2026-08-08 (Neon, region eu-central-1/Frankfurt) outside this session's own access; all other components remain unselected",
     "session_cloud_access_verified": false,
-    "verification_evidence": "boto3 sts.get_caller_identity() -> InvalidClientTokenId; no aws/gcloud/az/render/doctl/heroku/terraform/pulumi/kubectl CLI installed",
+    "verification_evidence": "boto3 sts.get_caller_identity() -> InvalidClientTokenId; no aws/gcloud/az/render/doctl/heroku/terraform/pulumi/kubectl CLI installed; direct PostgreSQL connection attempt to sponsor-supplied host from this sandbox produced no response (raw TCP egress to arbitrary hosts appears blocked)",
+    "database_decision": {
+      "status": "confirmed",
+      "confirmed_date": "2026-08-08",
+      "provider": "Neon",
+      "region": "eu-central-1",
+      "region_location": "AWS Frankfurt, Germany (EU)",
+      "confirmed_by": "pilot sponsor, in conversation",
+      "connectivity_independently_verified": false,
+      "credential_stored_in_repo_or_ci": false,
+      "notes": "Empty/new database, no migration required. A prior eu-west-2 (London, UK - non-EU) candidate was flagged as not meeting EU-residency intent and was superseded by this eu-central-1 project rather than migrated."
+    },
+    "superseded_eu_west_2_project": {
+      "status": "decommissioned",
+      "decommissioned_confirmed_date": "2026-08-08",
+      "decommissioned_by": "pilot sponsor, directly via their own Neon account",
+      "performed_or_verified_by_this_session": false,
+      "reason_not_performed_by_session": "no Neon account/API access in this task's environment; separately, raw PostgreSQL TCP egress to any external host is blocked from this sandbox regardless of credentials",
+      "data_migration_performed": false
+    },
     "reference_doc": "docs/pilots/payrollminds/TARGET_ENVIRONMENT_INVENTORY.md"
   },
   "phases": [
     {"phase": 1, "name": "Pilot scope reconciliation", "status": "GREEN", "evidence": "PR #170"},
-    {"phase": 2, "name": "Identify target environment", "status": "BLOCKED", "reason": "no provider/account provisioned"},
+    {"phase": 2, "name": "Identify target environment", "status": "BLOCKED", "reason": "database component confirmed (Neon, eu-central-1) as of 2026-08-08; application runtime, cache/queue, storage, secrets, DNS/TLS, backup, and monitoring providers/accounts remain unselected"},
     {"phase": 3, "name": "IAM and service identity review", "status": "BLOCKED", "reason": "no resources exist to review"},
     {"phase": 4, "name": "Production configuration validation", "status": "PARTIAL", "reason": "manage.py check --deploy passes against synthetic production profile in CI; real target config unverifiable"},
     {"phase": 5, "name": "Deploy synthetic commissioning candidate", "status": "BLOCKED", "reason": "no deployment target or credentials"},
     {"phase": 6, "name": "Target-environment smoke/UAT subset", "status": "BLOCKED", "reason": "no target to run against"},
-    {"phase": 7, "name": "PostgreSQL backup", "status": "BLOCKED", "reason": "no PostgreSQL instance provisioned"},
+    {"phase": 7, "name": "PostgreSQL backup", "status": "BLOCKED", "reason": "PostgreSQL instance now exists (Neon, eu-central-1) but this session has no wired credentials/backup tooling against it and cannot reach it (raw TCP egress blocked in this sandbox); no backup has been taken"},
     {"phase": 8, "name": "Object-storage backup/recovery evidence", "status": "BLOCKED", "reason": "no object storage provisioned"},
     {"phase": 9, "name": "Full restore drill", "status": "BLOCKED", "reason": "no backup exists to restore"},
     {"phase": 10, "name": "Restore security verification", "status": "BLOCKED", "reason": "depends on phase 9"},
