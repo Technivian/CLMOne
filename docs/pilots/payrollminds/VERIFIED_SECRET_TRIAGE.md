@@ -229,8 +229,7 @@ verified or not).
   organization invitations, controlled pilot scope, obligations workspace):
   **251/251 passed, 0 failures.**
 
-Authoritative GitHub CI result for this exact SHA is recorded in the final
-report once the PR's checks complete.
+**Authoritative GitHub CI result** (PR #171, `codex/payrollminds-lob-false-positive-resolution`, base `6acbf4fe` → head `12b9efe7`): **16/16 checks passed**, including `security-scans` — TruffleHog step log: `"chunks": 6, "bytes": 16451, "verified_secrets": 0, "unverified_secrets": 0"`, step conclusion `success` (workflow run [31247946233](https://github.com/Technivian/CLMOne/actions/runs/31247946233), job `security-scans`, id `93079518673`) — exactly matching this session's local prediction. `quality-and-tenancy` (full regression battery) and all 8 browser shards also passed.
 
 ## 8. Final recommendation
 
