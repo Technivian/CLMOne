@@ -244,8 +244,11 @@ class AuthRateLimitMiddleware:
                 return self.get_response(request)
 
             limit, window = self._policy_for_path(path)
-            key = self._auth_rate_limit_key(path, client_ip)
-            reset_key = self._auth_rate_limit_reset_key(path, client_ip)
+            subject = ''
+            if path.startswith('/mfa/'):
+                subject = str(request.session.get('_auth_user_id') or 'anonymous')
+            key = self._auth_rate_limit_key(path, client_ip, subject)
+            reset_key = self._auth_rate_limit_reset_key(path, client_ip, subject)
             now = int(time.time())
             count, reset_at = self._load_auth_counter(key, reset_key, window, now)
 
@@ -278,7 +281,21 @@ class AuthRateLimitMiddleware:
                 response['Retry-After'] = str(retry_after)
                 return response
 
+            mfa_verified_before = bool(request.session.get('mfa_verified'))
             response = self.get_response(request)
+            # A redirect alone does not prove successful MFA. Enrollment setup,
+            # resend, and guard redirects are all redirects too and must consume
+            # the rate-limit budget. Clear the bucket only when this request
+            # actually transitions the session into a verified state.
+            if (
+                path.startswith('/mfa/')
+                and response.status_code == 302
+                and not mfa_verified_before
+                and bool(request.session.get('mfa_verified'))
+            ):
+                cache.delete(key)
+                cache.delete(reset_key)
+                return response
             self._increment_auth_counter(key, reset_key, reset_at, now)
             return response
         except Exception as exc:
@@ -295,12 +312,14 @@ class AuthRateLimitMiddleware:
             return HttpResponse('Service temporarily unavailable.', status=503, content_type='text/plain')
 
     @staticmethod
-    def _auth_rate_limit_key(path, client_ip):
-        return f'auth-rl:{path}:{client_ip}'
+    def _auth_rate_limit_key(path, client_ip, subject=''):
+        suffix = f':{subject}' if subject else ''
+        return f'auth-rl:{path}:{client_ip}{suffix}'
 
     @staticmethod
-    def _auth_rate_limit_reset_key(path, client_ip):
-        return f'auth-rl-reset:{path}:{client_ip}'
+    def _auth_rate_limit_reset_key(path, client_ip, subject=''):
+        suffix = f':{subject}' if subject else ''
+        return f'auth-rl-reset:{path}:{client_ip}{suffix}'
 
     @staticmethod
     def _load_auth_counter(key, reset_key, window, now):
@@ -358,6 +377,11 @@ class AuthRateLimitMiddleware:
             return (
                 int(getattr(settings, 'REGISTER_RATE_LIMIT_REQUESTS', 10)),
                 int(getattr(settings, 'REGISTER_RATE_LIMIT_WINDOW_SECONDS', 300)),
+            )
+        if path in {'/mfa/challenge/', '/mfa/enroll/'}:
+            return (
+                int(getattr(settings, 'MFA_RATE_LIMIT_REQUESTS', 8)),
+                int(getattr(settings, 'MFA_RATE_LIMIT_WINDOW_SECONDS', 300)),
             )
         return (
             int(getattr(settings, 'LOGIN_RATE_LIMIT_REQUESTS', 10)),
