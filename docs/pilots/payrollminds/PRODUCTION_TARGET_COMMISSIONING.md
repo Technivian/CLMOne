@@ -101,13 +101,19 @@ sandbox produced no response, consistent with this environment's outbound
 network policy blocking raw TCP egress to arbitrary hosts — the sandbox's
 limitation, not evidence about the database itself).
 
-Every other component remains unselected: application runtime, cache/queue,
-released and quarantine object storage, secret management, DNS/TLS, backup
-target, logging/monitoring sink. `PRODUCTION_INFRASTRUCTURE_PLAN.md` remains
-"Proposed" overall, gated on an unaccepted decision record (ADR-0018). This
-coding session still has no installed cloud CLI for any provider and no
-valid cloud credentials (`AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` resolve
-to `InvalidClientTokenId` against AWS STS — confirmed, not assumed).
+**Further update, 2026-08-08:** the sponsor also confirmed object storage
+(Cloudflare R2, an existing account), a DNS/TLS domain (`clmone.com` on the
+same Cloudflare account), and a named Infrastructure operator (Haroon
+Wahed) — see `TARGET_ENVIRONMENT_INVENTORY.md` §1b for the full record,
+including honest, currently-researched (not assumed) reasons why
+application runtime has no clean free+EU+indefinite answer yet.
+Application runtime, cache/queue, secret management, and a true
+long-retention backup target remain unselected or only partially answered.
+`PRODUCTION_INFRASTRUCTURE_PLAN.md` remains "Proposed" overall, gated on an
+unaccepted decision record (ADR-0018). This coding session still has no
+installed cloud CLI for any provider and no valid cloud credentials
+(`AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` resolve to
+`InvalidClientTokenId` against AWS STS — confirmed, not assumed).
 
 **BLOCKED overall — owner: Infrastructure operator (per
 `PRODUCTION_OPERATIONS_RUNBOOK.md` service-ownership table). Required before
@@ -194,9 +200,18 @@ backup/restore *code path* is implemented and unit-tested, not that a real
 PostgreSQL backup has ever been taken against the new instance. No backup
 ID, timestamp, or encryption/retention state is fabricated here.
 
+Note (2026-08-08): Neon provides built-in point-in-time recovery even on
+its free tier, but that tier's retention window is **6 hours** (verified
+against current Neon documentation, not assumed) — materially short of a
+meaningful RPO for a real backup/restore drill. This is not treated as
+resolving this phase.
+
 ## 8. Object-storage backup/recovery evidence — BLOCKED
 
-No object-storage bucket exists (§2). No recovery mechanism (versioning,
+Object storage (Cloudflare R2) has now been confirmed as the intended
+provider (`TARGET_ENVIRONMENT_INVENTORY.md` §1b), but no bucket has been
+created, no EU jurisdictional restriction has been confirmed configured,
+and no recovery mechanism (versioning,
 replication, snapshot) can be verified against infrastructure that has not
 been provisioned.
 
@@ -243,7 +258,7 @@ and log-access control — none exist without a target environment (§2).
 No deployment occurred (§5) to roll back. The documented procedure
 (`PRODUCTION_DEPLOYMENT_AND_ROLLBACK_RUNBOOK.md`) is unexecuted design.
 
-## 14. Support and incident readiness — BLOCKING, named gaps
+## 14. Support and incident readiness — BLOCKING, named gaps (one closed)
 
 Per `PRODUCTION_OPERATIONS_RUNBOOK.md`'s own service-ownership table and
 explicit statement ("Named people, contact addresses, support hours, RPO/RTO,
@@ -251,8 +266,18 @@ and customer promises are intentionally absent until supplied and
 approved"), and `RISK_REGISTER.md` PM-R11: no named pilot sponsor,
 technical owner, support contact/channel, incident owner, privacy contact,
 deployment approver, or backup/restore owner exists in this repository. No
-person is invented here. **These are explicit, named, BLOCKING gaps**, not
-silently treated as complete, per this task's own success criteria.
+person is invented here.
+
+**Update, 2026-08-08:** one of these gaps is now closed. Haroon Wahed was
+confirmed as the Infrastructure operator ("authorized to create production
+resources and run backup/restore drills" — see
+`PRODUCTION_OPERATIONS_RUNBOOK.md`'s service-ownership table and
+`TARGET_ENVIRONMENT_INVENTORY.md` §1b). This covers PostgreSQL/Redis/
+storage/DNS/TLS/backup ownership specifically. Engineering/Release
+Authority, Security owner, Privacy/Product owner, PayrollMinds support
+owner, incident owner, and privacy contact remain unnamed. **This phase
+remains BLOCKING** on those still-open roles, not silently treated as
+complete.
 
 ## 15. Data lifecycle and offboarding — DOCUMENTED PROCEDURE, UNREHEARSED
 

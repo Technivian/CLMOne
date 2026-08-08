@@ -32,6 +32,47 @@
       "reason_not_performed_by_session": "no Neon account/API access in this task's environment; separately, raw PostgreSQL TCP egress to any external host is blocked from this sandbox regardless of credentials",
       "data_migration_performed": false
     },
+    "object_storage_decision": {
+      "status": "confirmed",
+      "confirmed_date": "2026-08-08",
+      "provider": "Cloudflare R2",
+      "account": "pilot sponsor's existing Cloudflare account",
+      "eu_jurisdictional_restriction_configured": "unknown - not verified by this session"
+    },
+    "dns_tls_decision": {
+      "status": "confirmed",
+      "confirmed_date": "2026-08-08",
+      "hostname": "clmone.com",
+      "provider": "Cloudflare (existing account)",
+      "dns_record_or_proxy_configured": false
+    },
+    "provisioning_authority": {
+      "status": "confirmed",
+      "confirmed_date": "2026-08-08",
+      "name": "Haroon Wahed",
+      "role_mapping": "Infrastructure operator per PRODUCTION_OPERATIONS_RUNBOOK.md service-ownership table (PostgreSQL/Redis/storage/DNS/TLS/backup)",
+      "other_named_roles_remaining_open": ["Engineering/Release Authority", "Security owner", "Privacy/Product owner", "PayrollMinds support owner", "incident owner", "privacy contact"]
+    },
+    "application_runtime_research": {
+      "status": "researched_2026-08-08_not_decided",
+      "goal": "free, EU-region, indefinitely-available compute for Django/Gunicorn + background worker",
+      "finding": "no option found satisfying all three constraints simultaneously; verified via live web search, not assumed from training data",
+      "options_checked": [
+        {"provider": "Google Cloud Run", "free_tier_real": true, "blocker": "Always Free tier restricted to US regions (us-central1/us-east1/us-west1) only; billing account now required as of Feb 2026"},
+        {"provider": "Fly.io", "free_tier_real": false, "blocker": "free tier removed October 2024; smallest always-on machine ~$1.94/month"},
+        {"provider": "Cloudflare Containers", "free_tier_real": false, "blocker": "requires $5/month Workers Paid plan; designed for scale-to-zero bursty workloads, not a persistent Django+RQ worker"},
+        {"provider": "Azure App Service F1", "free_tier_real": true, "blocker": "West Europe capacity shortage documented as of Feb 2026; F1 does not support custom domain SSL, blocking HTTPS for clmone.com"},
+        {"provider": "AWS EC2", "free_tier_real": "time-limited only", "blocker": "12 months (pre-2025-07-15 accounts) or 6-month $200 credit (newer accounts), not indefinite; this session's AWS credentials are invalid regardless"},
+        {"provider": "Render.com", "free_tier_real": "unresolved", "blocker": "confirmed Frankfurt EU region for all services, but search results conflict on whether free web-service tier still exists in 2026; needs live verification at render.com directly"}
+      ],
+      "recommendation": "verify Render.com's current free tier directly; realistic fallback is a small paid instance (~$5-7/month, EU region) if unavailable"
+    },
+    "backup_retention_caveat": {
+      "component": "Neon point-in-time recovery",
+      "free_tier_retention_window": "6 hours",
+      "verified_2026-08-08": true,
+      "note": "materially short of a meaningful RPO for a real backup/restore drill; not treated as resolving Phase 7/9"
+    },
     "reference_doc": "docs/pilots/payrollminds/TARGET_ENVIRONMENT_INVENTORY.md"
   },
   "phases": [
@@ -42,13 +83,13 @@
     {"phase": 5, "name": "Deploy synthetic commissioning candidate", "status": "BLOCKED", "reason": "no deployment target or credentials"},
     {"phase": 6, "name": "Target-environment smoke/UAT subset", "status": "BLOCKED", "reason": "no target to run against"},
     {"phase": 7, "name": "PostgreSQL backup", "status": "BLOCKED", "reason": "PostgreSQL instance now exists (Neon, eu-central-1) but this session has no wired credentials/backup tooling against it and cannot reach it (raw TCP egress blocked in this sandbox); no backup has been taken"},
-    {"phase": 8, "name": "Object-storage backup/recovery evidence", "status": "BLOCKED", "reason": "no object storage provisioned"},
+    {"phase": 8, "name": "Object-storage backup/recovery evidence", "status": "BLOCKED", "reason": "provider confirmed (Cloudflare R2) as of 2026-08-08 but no bucket created, EU jurisdictional restriction unverified, no recovery mechanism provisioned"},
     {"phase": 9, "name": "Full restore drill", "status": "BLOCKED", "reason": "no backup exists to restore"},
     {"phase": 10, "name": "Restore security verification", "status": "BLOCKED", "reason": "depends on phase 9"},
     {"phase": 11, "name": "Monitoring and alerting proof", "status": "BLOCKED", "reason": "no monitoring provider selected"},
     {"phase": 12, "name": "Logging and audit operations", "status": "PARTIAL", "reason": "application-layer audit append-only and redaction verified; log infrastructure not provisioned"},
     {"phase": 13, "name": "Operational rollback drill", "status": "BLOCKED", "reason": "no deployment occurred to roll back"},
-    {"phase": 14, "name": "Support and incident readiness", "status": "BLOCKING", "reason": "no named pilot sponsor, technical owner, support contact, incident owner, privacy contact, deployment approver, or backup/restore owner"},
+    {"phase": 14, "name": "Support and incident readiness", "status": "BLOCKING", "reason": "Infrastructure operator now named (Haroon Wahed, confirmed 2026-08-08); no named Engineering/Release Authority, Security owner, Privacy/Product owner, PayrollMinds support owner, incident owner, or privacy contact"},
     {"phase": 15, "name": "Data lifecycle and offboarding", "status": "PARTIAL", "reason": "application capabilities proven (PM-UAT-007, PM-UAT-011); no real rehearsal performed, none applicable without real data"},
     {"phase": 16, "name": "Full infrastructure regression", "status": "GREEN", "reason": "application-layer regression green on PR #170; does not substitute for infrastructure readiness"}
   ],

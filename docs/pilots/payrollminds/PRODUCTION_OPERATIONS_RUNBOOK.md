@@ -8,13 +8,16 @@ has been configured or approved by this PR.
 | Service/control | Accountable owner | Operator evidence required |
 |---|---|---|
 | Release and application runtime | Engineering / Release Authority | SHA, deployment, health, rollback record |
-| PostgreSQL, Redis, storage, DNS/TLS, backup | Infrastructure operator | region, IAM, encryption, backup/restore evidence |
+| PostgreSQL, Redis, storage, DNS/TLS, backup | Infrastructure operator: **Haroon Wahed** — confirmed 2026-08-08 as provisioning authority ("authorized to create production resources and run backup/restore drills") | region, IAM, encryption, backup/restore evidence |
 | Access, audit, scanning, secrets, incident security decision | Security owner | review, scan, rotation, incident evidence |
 | Privacy, retention, deletion, export/offboarding | Privacy/Product owner | approved retention/offboarding and customer terms |
 | Customer communications and support | Named PayrollMinds support owner | approved support route, hours, escalation contacts |
 
 Named people, contact addresses, support hours, RPO/RTO, and customer promises
-are intentionally absent until supplied and approved.
+are intentionally absent until supplied and approved. Only the
+Infrastructure operator row above has a named person as of 2026-08-08 —
+Engineering/Release Authority, Security owner, Privacy/Product owner, and
+the PayrollMinds support owner remain unnamed.
 
 ## Monitoring and alert inventory
 
