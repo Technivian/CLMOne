@@ -24,7 +24,7 @@ class ControlledPilotScopeTests(TestCase):
         TRUST_ACCOUNTING_ENABLED=False,
         GEMINI_AI_ENABLED=False,
     )
-    def test_pilot_blocks_excluded_direct_routes(self):
+    def test_pilot_blocks_excluded_routes(self):
         blocked = (
             '/contracts/billing/',
             '/contracts/clients/',
