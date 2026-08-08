@@ -5,7 +5,7 @@
 
 ## 1. Source/base SHA
 
-`68a1f568292d3a26dad8dc6f7ec80e91bd607349` — current `main`, which already
+`68a1f568` — current `main`, which already
 contains the security repair (PR #167) and the reconstructed release stack
 (PR #168), both merged in the prior session turn on the user's explicit
 instruction. The prompt's "authoritative reconstructed SHA" `2abf292d` is a
@@ -188,7 +188,7 @@ SQLite in-memory).
 PR #169, workflow run
 [31220152961](https://github.com/Technivian/CLMOne/actions/runs/31220152961),
 job `quality-and-tenancy` (id `93002721771`), step "PayrollMinds executable
-UAT", commit `c5f83238be862999f8a70ef692e9f954834f06c1`:
+UAT", commit `c5f83238`:
 
 ```
 Ran 24 tests in 24.298s
@@ -241,28 +241,23 @@ verified before pushing.
 
 ## 23. Known limitations
 
-1. **Obligations UI route currently out of pilot scope.** Under the pilot's
-   real deployment setting (`CONTROLLED_PILOT_ENABLED=true`),
-   `ControlledPilotScopeMiddleware` blocks the dedicated
-   `/contracts/obligations/` UI route outright
+1. **RESOLVED — Obligations UI route was out of pilot scope.** *(Original
+   finding, resolved in `docs/pilots/payrollminds/PRODUCTION_TARGET_COMMISSIONING.md`
+   §1, AGENT PROMPT 32 Phase 1.)* Under the pilot's real deployment setting
+   (`CONTROLLED_PILOT_ENABLED=true`), `ControlledPilotScopeMiddleware` used
+   to block the dedicated `/contracts/obligations/` UI route outright
    (`reason=obligations_out_of_scope`), even though `PILOT_SCOPE.md` lists
    "effective/expiry/renewal/notice dates and reminders" as an in-scope
-   pilot capability. PM-UAT-006 proves and documents this discrepancy rather
-   than working around it (`test_pm_uat_006_obligations_ui_currently_out_of_pilot_route_scope`).
-   The underlying `Deadline` data model, creation path (`/contracts/deadlines/new/`,
-   which is *not* blocked), object-read authorization, and audit evidence
-   all function correctly and are proven separately
-   (`test_pm_uat_006_operational_tracking_deadline`, with
-   `CONTROLLED_PILOT_ENABLED=False` to isolate that boundary from the route
-   allowlist, mirroring the precedent already set by
-   `test_payrollminds_pilot_product_path.py`). This is a scope/route-allowlist
-   gap between documentation and the middleware's current prefix list, not a
-   security defect — nothing is exposed that shouldn't be; a capability
-   documented as in-scope is presently less reachable via the dedicated UI
-   than the charter describes. Recommend the pilot's product owner either
-   updates `PILOT_SCOPE.md` to reflect the current, narrower route allowlist,
-   or removes `/contracts/obligations` from `ControlledPilotScopeMiddleware`'s
-   out-of-scope prefix list, before UAT sign-off with a real pilot operator.
+   pilot capability. Since `PILOT_SCOPE.md` already, unambiguously listed
+   this as approved (Outcome A: "dates/reminders are genuinely in scope"),
+   the route allowlist was corrected to match the already-approved charter,
+   rather than narrowing the charter to match the accidental implementation
+   gap. Server-side authorization (`_visible_deadlines_queryset`) was never
+   affected by this route-scope list either way. See
+   `test_pm_uat_006_operational_tracking_deadline` (now exercised against
+   the real `CONTROLLED_PILOT_ENABLED=true` pilot setting, no isolation
+   override needed) and `test_pm_uat_006_obligations_cross_workspace_denied`
+   for the reconciled, currently-passing behavior.
 2. **CSV bulk import and async job failure/retry** (historical UAT-03/04,
    UAT-21) are proven by pre-existing test suites but are not included as
    PM-UAT scenarios in this matrix; CSV import is not part of the pilot's
@@ -301,10 +296,12 @@ by dedicated namespace and Django's own transactional rollback (§16); the
 complete 94-test browser regression remains fully green (§19); the security
 battery remains fully green (§20-21); no new critical/high security issue
 exists (the one npm finding was fixed, §21); and migration drift is zero
-(§22). One known, honestly-documented scope/route-allowlist gap exists
-(§23.1) and does not block this recommendation — it does not weaken any
-security or access control, and PM-UAT-006 proves the underlying data model
-and authorization boundary work correctly independent of it.
+(§22). One known, honestly-documented scope/route-allowlist gap existed at
+the time this recommendation was first recorded (§23.1) and did not block
+it — it never weakened any security or access control, and PM-UAT-006
+proved the underlying data model and authorization boundary worked
+correctly independent of it. That gap has since been resolved (§23.1,
+`PRODUCTION_TARGET_COMMISSIONING.md` §1).
 
 Nothing in this branch was merged or deployed. No real customer data was
 used. PR #162/MFA remained excluded and inactive throughout (this suite

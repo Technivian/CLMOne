@@ -35,7 +35,6 @@ class ControlledPilotScopeTests(TestCase):
             '/contracts/new/',
             '/contracts/new/upload/',
             '/contracts/dpa-reviews/',
-            '/contracts/obligations/',
             '/contracts/workflows/templates/',
             '/contracts/approval-rules/',
         )
@@ -44,6 +43,24 @@ class ControlledPilotScopeTests(TestCase):
             self.assertIn(response.status_code, (302, 403), msg=path)
             if response.status_code == 302:
                 self.assertNotIn(path.rstrip('/'), response.url.rstrip('/'), msg=path)
+
+    @override_settings(
+        CONTROLLED_PILOT_ENABLED=True,
+        BILLING_SELF_SERVE_ENABLED=False,
+        TRUST_ACCOUNTING_ENABLED=False,
+        GEMINI_AI_ENABLED=False,
+    )
+    def test_pilot_allows_obligations_dates_and_reminders(self):
+        """PILOT_SCOPE.md lists dates/expiry/renewal/notice reminders as an
+        approved in-scope capability; the route allowlist must match."""
+        response = self.client.get('/contracts/obligations/', follow=False)
+        self.assertEqual(response.status_code, 200)
+        # The legacy /contracts/deadlines/ list redirects here unconditionally
+        # (deadlines.py: "Phase 4 retires it in favor of Obligations") and
+        # must reach the same now-allowed surface, not bounce to dashboard.
+        legacy = self.client.get('/contracts/deadlines/', follow=True)
+        self.assertEqual(legacy.status_code, 200)
+        self.assertEqual(legacy.redirect_chain[-1][0], '/contracts/obligations/')
 
     @override_settings(CONTROLLED_PILOT_ENABLED=True, GEMINI_AI_ENABLED=False)
     def test_pilot_allows_governed_builders(self):
