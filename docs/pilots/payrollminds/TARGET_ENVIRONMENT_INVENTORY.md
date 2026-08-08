@@ -1,33 +1,38 @@
 # PayrollMinds target environment inventory
 
-**Status: PARTIALLY PROVISIONED.** This is a documentation cross-reference,
-not a live infrastructure audit. Database, object storage, DNS/TLS domain,
-and named provisioning authority have been decided by the pilot sponsor
-directly (outside this task's sandboxed environment, which has no cloud
-account access of its own). Application runtime, cache/queue, secret
-management, and backup/monitoring remain open — see §1b for why "free" and
-"EU region" don't cleanly co-exist for compute today. See §1a/§1b for the
-decisions and §3 for this task's own (still-negative) infrastructure-access
-verification.
+**Status: LIVE.** A real pilot deployment exists, is running, and has been
+configured to the pilot's approved scope — this is no longer a proposal.
+It surfaced mid-conversation (§1c) as a pre-existing Render deployment the
+sponsor had already stood up outside this task's visibility, not something
+commissioned through this document's own phased process. This is a
+documentation cross-reference, not a live infrastructure audit — every
+fact below is either sponsor-reported (from terminal output/logs the
+sponsor pasted) or inferable from this repository's own code (e.g., "the
+app booted, therefore these settings-import-time guards must have already
+been satisfied"); this task's own sandboxed environment still has zero
+direct access to any of it (§2/§3). See §1a (database), §1b (hostname/
+authority/storage decisions and free-tier research, now partly superseded),
+and §1c (the live Render deployment, migration, and hardening) for the
+full record.
 
-## 1. What is documented (proposed, not provisioned)
+## 1. Current topology (live, unless marked otherwise)
 
-`docs/pilots/payrollminds/PRODUCTION_INFRASTRUCTURE_PLAN.md` (status:
-"Proposed — no resources provisioned, public endpoint activated, or
-customer data accepted") describes an intended EU-region topology:
+`docs/pilots/payrollminds/PRODUCTION_INFRASTRUCTURE_PLAN.md` (status still
+formally "Proposed" — not yet updated to match reality) describes an
+intended EU-region topology. Actual state as of 2026-08-08:
 
 | Component | Documented intent | Provider/account | Verified live? |
 |---|---|---|---|
-| Application runtime | Django/Gunicorn web service | **Open — see §1b; no free+EU+indefinite option verified yet** | No |
-| Database | Managed PostgreSQL, TLS-required, dedicated | **Neon, project in `eu-central-1` (AWS Frankfurt, DE)** — see §1a | Confirmed by pilot sponsor; connectivity not independently verifiable from this sandboxed task (§1a) |
-| Cache/queue | Isolated Redis | Proposed: Upstash Redis (free tier), region TBD at signup — see §1b | No — not yet created |
-| Released document storage | Private S3-compatible bucket, encrypted, versioned, signed URLs | **Cloudflare R2** — confirmed by pilot sponsor 2026-08-08, see §1b | Existing sponsor account; EU jurisdictional restriction not yet confirmed configured |
-| Quarantine storage | Separate private bucket/prefix, worker-only identity | Proposed: separate bucket/prefix in the same Cloudflare R2 account | No — not yet created |
-| Secret management | Provider secret injection only | Deferred pending application-runtime platform choice | No |
-| DNS/TLS | Approved domain, managed TLS | **Cloudflare (existing account); domain `clmone.com`** — confirmed 2026-08-08, see §1b | No — DNS record/proxying not yet configured |
-| Backup | Operator-only backup store, immutable retention | Neon built-in point-in-time recovery (database only); free tier retention is **6 hours**, not a long-term backup store — see §1b | Not independently verified (§1a) |
-| Logging/monitoring | Structured logs + error-reporting sink | Proposed: Sentry free "Developer" tier (`sentry-sdk` already a runtime dependency) | No — not yet created |
-| Region/residency | "Frankfurt/EU where available" | Database confirmed EU (`eu-central-1`); everything else TBD, see §1b for why compute is the hard case | Partial |
+| Application runtime | Django/Gunicorn web service | **Render, Frankfurt (EU) region** — pre-existing deployment, discovered §1c | Live at `clmone.com`; sponsor-confirmed loading and functional after hardening (§1c) |
+| Database | Managed PostgreSQL, TLS-required, dedicated | **Neon, `eu-central-1` (AWS Frankfurt, DE)** — see §1a | Live; migrated from a prior Render Postgres instance and verified via full row-count comparison across all 122 tables (§1c) |
+| Cache/queue | Isolated Redis | **Not configured** — `REDIS_URL` unset on Render | No — degrades gracefully (in-process cache, synchronous background jobs) rather than crashing, but not the designed operating mode (§1c) |
+| Released document storage | Private S3-compatible bucket, encrypted, versioned, signed URLs | **Cloudflare R2**, wired via `MEDIA_STORAGE_BACKEND=s3` | Live — confirmed indirectly: `settings_production.py` refuses to boot at all unless this is `s3`, and the app is serving requests (§1c) |
+| Quarantine storage | Separate private bucket/prefix, worker-only identity | **Cloudflare R2, separate bucket + separate Account API token**, configured 2026-08-08 | Configured; not independently verified from this task (§1c) |
+| Secret management | Provider secret injection only | Render's own environment-variable store (not a dedicated secret manager/vault) | Live, but see §1c for the caveat: two database credentials were briefly exposed in this task's chat transcript and were rotated as remediation |
+| DNS/TLS | Approved domain, managed TLS | `clmone.com` pointed **directly at Render** (not proxied through Cloudflare); TLS via Render's own managed certificate | Live |
+| Backup | Operator-only backup store, immutable retention | Neon built-in point-in-time recovery (database only); free tier retention is **6 hours**, not a long-term backup store | Exists, but no real restore drill has been performed against the live database (§1c) — this is a genuine, unresolved gap now that real data exists |
+| Logging/monitoring | Structured logs + error-reporting sink | **Not configured** — `SENTRY_DSN` unset | No — `sentry-sdk` is already a dependency and silently no-ops without a DSN; low-effort fix, not yet done |
+| Region/residency | "Frankfurt/EU where available" | **Both application runtime (Render) and database (Neon) confirmed Frankfurt/EU-proper** | Yes — the one part of the original intent that ended up fully satisfied |
 
 `docs/pilots/payrollminds/PRODUCTION_ENVIRONMENT_VARIABLE_INVENTORY.md`
 confirms the same status ("Proposed. This inventory names configuration
@@ -160,10 +165,17 @@ simultaneously free, EU-region, and available indefinitely:
 No application-runtime decision was recorded as confirmed on the strength
 of this research, because none of it rises to the same evidentiary bar as
 the database/storage/DNS decisions above (a live account the sponsor
-created and confirmed). The honest state is: this remains the one open
-topology gap, and the realistic expectation is that it may require a small
-non-zero monthly cost (~$5–7) rather than being free, even though every
-other component here can be.
+created and confirmed). At the time this was written, this was reported
+as the one open topology gap.
+
+**Superseded, 2026-08-08 (same day, later in conversation): this research
+turned out to be moot.** The sponsor already had a live Render deployment
+running in Frankfurt — see §1c. The research above is left in place as an
+accurate record of what was actually checked and why each alternative was
+rejected or uncertain (Render's own free-tier status was the one item this
+task could not resolve by search, which is exactly the item that turned
+out to already be running the pilot). It should not be read as describing
+the current state of the application-runtime row in §1's table.
 
 **Backup retention caveat:** Neon's free-tier point-in-time recovery window
 is 6 hours (verified via current documentation, not assumed) — materially
@@ -171,6 +183,139 @@ short of what `PRODUCTION_OPERATIONS_READINESS.md`/§7 of
 `PRODUCTION_TARGET_COMMISSIONING.md` would need for a real backup/restore
 drill with a meaningful RPO. This is flagged here rather than left implicit
 in the "Neon has PITR" statement.
+
+## 1c. Discovery of a pre-existing live deployment, migration, and hardening — 2026-08-08
+
+While asking whether the old, superseded `eu-west-2` Neon database (§1a)
+should be decommissioned, the sponsor mentioned it had a Render PostgreSQL
+service already holding real data and due to expire (Render deletes free
+databases that aren't upgraded within a set window). Follow-up questions
+established that a full PayrollMinds Django application had been running
+live on Render — Frankfurt region, at `clmone.com` — this whole time,
+entirely outside this task's own visibility (this task's sandboxed
+environment has no access to any cloud account; see §2). The sponsor
+described it as "real pilot go-live," used only by the sponsor so far (no
+other users yet).
+
+**What this means for every prior phase in this document set:** phases
+that reported infrastructure as wholly unprovisioned were accurate about
+what this task's own sandbox could see and verify, not fabricated — but
+they did not know about, and could not have known about, infrastructure
+the sponsor had set up independently outside this conversation. This
+section records what was found and fixed once it came to light.
+
+**Database migration (Render → Neon).** The Render Postgres instance held
+real (non-trivial, though not real PayrollMinds customer/payroll data —
+sponsor-only usage) application data: 122 tables, the largest holding 441
+rows. The sponsor ran the migration from Google Cloud Shell (this task's
+own sandbox cannot make raw PostgreSQL connections to any external host,
+so it could not perform this itself — see §2):
+```
+pg_dump "$RENDER_DATABASE_URL" --no-owner --no-privileges -Fc -f render_backup.dump
+pg_restore --no-owner --no-privileges -d "$NEON_DATABASE_URL" render_backup.dump
+```
+**Verified, not assumed:** the sponsor ran
+`SELECT schemaname, relname, n_live_tup FROM pg_stat_user_tables ORDER BY n_live_tup DESC;`
+against both databases and pasted both full result sets into this task's
+chat. Every one of the 122 tables was compared row by row — all 34
+non-empty tables matched exactly (e.g. `auth_permission` 441=441 on both
+sides, down through `contracts_dpariskitem` 1=1), and both sides listed
+the same 122 tables with the same empty/non-empty pattern. A second,
+final dump/restore pass (`pg_restore --clean --if-exists`) was run
+immediately before cutover to catch any writes made between the first
+verification and the actual `DATABASE_URL` swap. The app's `DATABASE_URL`
+environment variable on Render was then updated to point at Neon; the
+deploy log's `Database: ...neon.tech (deployed platform, env=production)`
+line confirmed the swap took effect.
+
+**Credential exposure and rotation.** In the course of this migration, the
+sponsor pasted terminal output into this task's chat that included both
+databases' full connection strings (username and password in plaintext)
+on two separate occasions. This is disclosed here rather than omitted.
+Remediation: the sponsor rotated the Neon database password immediately
+after migration was confirmed (the Render password mattered less, since
+that database was already scheduled for deletion). Neither credential was
+ever written to this repository, any commit, or any file — only to this
+task's own chat transcript, which is outside this document's control.
+
+**Pilot-scope and security hardening.** The live deployment was found to
+be missing several settings this pilot's own engineering work depends on.
+None of these were guessed at — each was confirmed against this
+repository's actual code (`contracts/middleware.py`, `config/settings_base.py`,
+`config/settings_production.py`) before being recommended, and the sponsor
+confirmed each fix afterward:
+
+- `CONTROLLED_PILOT_ENABLED` was not set. Per `ControlledPilotScopeMiddleware`'s
+  own docstring, "when `CONTROLLED_PILOT_ENABLED` is false, only the
+  existing billing/trust kill switches apply" — and those (`BILLING_SELF_SERVE_ENABLED`,
+  `TRUST_ACCOUNTING_ENABLED`) default to `True` when unset, not `False`.
+  Practical effect before the fix: the pilot-scope denylist (billing,
+  trust accounting, clients, matters, invoices, signatures, freeform
+  contract creation, upload review, DPA review packs, workflow-template
+  builder, approval-rule authoring) was **not enforced** on the live
+  deployment. Fixed by setting `CONTROLLED_PILOT_ENABLED=true`,
+  `BILLING_SELF_SERVE_ENABLED=false`, `TRUST_ACCOUNTING_ENABLED=false`,
+  `GEMINI_AI_ENABLED=false`.
+- `ALLOWED_HOSTS` did not include `www.clmone.com`, causing Django to
+  reject every request — including Render's own health checks — with
+  `DisallowedHost`, visible in the deploy logs as a repeating 400 every
+  ~10 seconds. Fixed: `ALLOWED_HOSTS=clmone.com,www.clmone.com`.
+- `CSRF_TRUSTED_ORIGINS` was set to `https://*.onrender.com` (a leftover
+  from before the custom domain was attached) and, in an intermediate
+  state, to bare domains without a URL scheme — Django compares this
+  setting against the browser's `Origin` header, which always includes
+  a scheme, so a bare-domain entry silently fails to match. Fixed:
+  `CSRF_TRUSTED_ORIGINS=https://clmone.com,https://www.clmone.com`.
+- Quarantine storage (`DOCUMENT_QUARANTINE_STORAGE_BACKEND` and related
+  vars) was unset, falling back to Render's local filesystem — ephemeral,
+  wiped on every redeploy. A second, separate Cloudflare R2 bucket was
+  created with its own Account API token (deliberately not a User token,
+  and deliberately not reusing the main bucket's credential, preserving
+  the intended worker-only-identity isolation between released and
+  quarantined documents) and wired via
+  `DOCUMENT_QUARANTINE_STORAGE_BACKEND=s3` plus the matching
+  `DOCUMENT_QUARANTINE_*` variables.
+
+**What was already correct, verified by inference rather than direct
+access.** `config/settings_production.py` raises `ImproperlyConfigured` at
+Django's settings-import time (crash-looping the whole process, not just
+failing one request) if `DEBUG` is true, `ALLOWED_HOSTS`/`CSRF_TRUSTED_ORIGINS`
+are empty, `DEFAULT_FROM_EMAIL`/`OPERATOR_ALERT_EMAIL` are unset or
+placeholder values, `APP_BASE_URL` isn't a valid public HTTPS origin, or
+`SECRET_KEY` is short or contains an insecure-default marker. Because the
+deployed process was already running and serving HTTP responses (even
+wrongly-rejected ones) before this task ever became aware of it, every one
+of those guards must already have been satisfied — so `DEBUG=False` and a
+strong `SECRET_KEY` are treated as already-confirmed facts here, not
+verified by direct inspection (this task has no access to actually read
+Render's environment variables).
+
+**Remaining gaps, honestly still open:**
+- `REDIS_URL` is unset. This degrades gracefully rather than crashing —
+  cache falls back to per-process in-memory (`LocMemCache`), and
+  `django-rq` background jobs run synchronously inline instead of queued
+  (`RQ_QUEUES['default']['ASYNC'] = False` when `REDIS_URL` is empty). Not
+  broken today (the deploy log shows `WEB_CONCURRENCY=1`, a single
+  process, so there's no cross-worker cache inconsistency yet), but it is
+  not the designed operating mode, and anything meant to run as a
+  background job now blocks the request instead.
+- `SENTRY_DSN` is unset — no error-reporting/monitoring sink exists yet.
+- No real backup/restore drill has ever been performed against the live
+  Neon database — only Neon's own 6-hour point-in-time-recovery window
+  exists, untested by this pilot.
+- The old Render Postgres database still exists as of this writing, no
+  longer referenced by the live app's `DATABASE_URL`, pending either
+  manual deletion or its scheduled 2026-08-14 auto-expiration.
+- DNS for `clmone.com` is pointed directly at Render, not proxied through
+  Cloudflare — Cloudflare is used for R2 object storage only in this
+  setup, not as a CDN/WAF layer in front of the app.
+
+None of this section's facts were independently verified by this task's
+own tooling — every claim here is either something the sponsor pasted
+directly (logs, query output) or a logical inference from this
+repository's own code (e.g., "the app booted, therefore these specific
+settings-import guards must already pass"). Where that distinction
+matters, it is stated explicitly above rather than left ambiguous.
 
 ## 2. What this task's environment actually has access to
 
@@ -212,25 +357,38 @@ in the request is invalid.
 
 ## 4. Conclusion
 
-As of 2026-08-08, several real decisions exist: a Neon PostgreSQL database
-in `eu-central-1` (§1a), Cloudflare R2 for object storage, a `clmone.com`
-hostname on the sponsor's existing Cloudflare account, and a named
-provisioning authority — Haroon Wahed (§1b). This task's own environment
-still cannot independently reach or verify most of these (no cloud CLI,
-invalid AWS credentials, no usable raw TCP egress to arbitrary external
-hosts from this sandbox). The application runtime remains the one
-topology component this task could not responsibly resolve: current
-research (§1b) found no compute option that is simultaneously free,
-EU-region, and available indefinitely, so it is reported open rather than
-assigned a provider on weaker evidence than the rest of this document
-uses. Cache/queue, secret management, and true long-retention backup also
-remain unselected or only partially answered (Neon's free-tier
-point-in-time recovery window is 6 hours, not a long-term backup store).
-ADR-0018 remains unaccepted. This is real progress but does not amount to
-an "actual intended production target environment" being identified,
-commissioned, or verified end to end. Phases 2–16 of the
-production-infrastructure commissioning task
-(`PRODUCTION_TARGET_COMMISSIONING.md`, `BACKUP_RESTORE_DRILL.md`,
-`PRODUCTION_OPERATIONS_READINESS.md`) remain reported **BLOCKED** overall,
-not fabricated, on this basis — §2 of `PRODUCTION_TARGET_COMMISSIONING.md`
-notes the specific exceptions.
+As of 2026-08-08, the situation this document set was written to assess
+has fundamentally changed. A real target environment exists: Render
+(Frankfurt) running the application, Neon (`eu-central-1`/Frankfurt) as
+its database, Cloudflare R2 for both released and quarantine document
+storage, `clmone.com` live with TLS, and a named provisioning authority
+(Haroon Wahed). It was not commissioned through this document's own
+phased process (Phases 2–16 of `PRODUCTION_TARGET_COMMISSIONING.md`) —
+it was discovered mid-conversation as something the sponsor had already
+stood up independently, then verified, migrated, and hardened in place
+(§1c) once that came to light. This task's own sandboxed environment
+still has zero direct access to any of it — every fact in §1c is either
+sponsor-reported (pasted terminal output, query results) or a logical
+inference from this repository's own code, never independently confirmed
+by this task's own tooling (§2/§3 remain unchanged and still describe a
+completely credential-less sandbox).
+
+Real, honest gaps remain: no `REDIS_URL` (background jobs run
+synchronously rather than queued), no `SENTRY_DSN` (no error-reporting
+sink), no backup/restore drill ever performed against the live database
+(only Neon's untested 6-hour point-in-time-recovery window exists), and
+several named operational roles beyond the infrastructure operator
+(Engineering/Release Authority, Security owner, Privacy/Product owner,
+PayrollMinds support owner) are still unnamed. ADR-0018 remains
+unaccepted as a formal decision record, even though its substance has now
+mostly happened in practice.
+
+Given this, "NO-GO" as a blanket description of infrastructure readiness
+is no longer accurate — a real, correctly-scoped, security-hardened pilot
+deployment is live. But "GO" would overstate it too: no restore drill, no
+monitoring, and incomplete named ownership are not cosmetic gaps for a
+system now holding real (if sponsor-only, non-customer) data. See
+`PRODUCTION_TARGET_COMMISSIONING.md`'s own updated recommendation for how
+this document set now characterizes the overall state, phase by phase,
+rather than repeating a single verdict here that a two-word label cannot
+honestly carry.

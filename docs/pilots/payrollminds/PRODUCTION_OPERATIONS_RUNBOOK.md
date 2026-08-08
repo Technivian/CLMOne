@@ -1,7 +1,11 @@
 # PayrollMinds operations, monitoring, and support runbook
 
-**Status:** Proposed. No monitoring provider, alert route, or support contact
-has been configured or approved by this PR.
+**Status:** Partially live. A real deployment exists (Render, Frankfurt —
+see `TARGET_ENVIRONMENT_INVENTORY.md` §1c) and an Infrastructure operator
+is named below, but no monitoring provider, alert route, or support
+contact has actually been configured — `SENTRY_DSN` is confirmed unset on
+the live deployment, and the failure-mode/alert tables below remain
+documented design, not live, tested alerting.
 
 ## Service ownership
 
