@@ -52,15 +52,22 @@ directly in conversation and confirmed:
 3. The database is new and empty; no data migration occurred or is
    required.
 
-**A prior candidate is superseded.** An earlier connection string supplied
-in the same conversation pointed to a Neon project in `eu-west-2` (AWS
-London, UK). This was flagged back to the sponsor as not satisfying an
-EU-region requirement — the UK is not in the EU post-Brexit, a material
-distinction for GDPR/data-residency purposes. The sponsor then created a
-new, separate Neon project in `eu-central-1` rather than migrating the
-London one. **Disposition of the superseded `eu-west-2` project (decommission
-vs. retain) has been asked of the sponsor and is awaiting an answer as of
-this writing — no action has been taken on it.**
+**A prior candidate was superseded and has now been decommissioned.** An
+earlier connection string supplied in the same conversation pointed to a
+Neon project in `eu-west-2` (AWS London, UK). This was flagged back to the
+sponsor as not satisfying an EU-region requirement — the UK is not in the
+EU post-Brexit, a material distinction for GDPR/data-residency purposes.
+The sponsor created a new, separate Neon project in `eu-central-1` rather
+than migrating the London one, and on 2026-08-08 confirmed the `eu-west-2`
+project has been deleted directly through their own Neon account. This
+task's environment had no ability to perform or verify that deletion
+itself — it has no Neon account, dashboard, or API access, and (separately)
+this sandbox cannot make raw PostgreSQL connections to any external host
+regardless of credentials (confirmed empirically when attempting to reach
+the `eu-central-1` database — see below). The sponsor's confirmation is
+taken at face value, consistent with how the database's existence and
+region were established in the first place. No data migration was reported
+or requested as part of the deletion.
 
 **Handling of the credential itself:** the connection string (which embeds
 a username and password) was received in this task's chat transcript only.

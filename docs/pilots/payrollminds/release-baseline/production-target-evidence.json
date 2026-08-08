@@ -22,7 +22,15 @@
       "confirmed_by": "pilot sponsor, in conversation",
       "connectivity_independently_verified": false,
       "credential_stored_in_repo_or_ci": false,
-      "notes": "Empty/new database, no migration required. A prior eu-west-2 (London, UK - non-EU) candidate was flagged as not meeting EU-residency intent and was superseded by this eu-central-1 project rather than migrated. Disposition of the superseded eu-west-2 project is unresolved, pending sponsor decision."
+      "notes": "Empty/new database, no migration required. A prior eu-west-2 (London, UK - non-EU) candidate was flagged as not meeting EU-residency intent and was superseded by this eu-central-1 project rather than migrated."
+    },
+    "superseded_eu_west_2_project": {
+      "status": "decommissioned",
+      "decommissioned_confirmed_date": "2026-08-08",
+      "decommissioned_by": "pilot sponsor, directly via their own Neon account",
+      "performed_or_verified_by_this_session": false,
+      "reason_not_performed_by_session": "no Neon account/API access in this task's environment; separately, raw PostgreSQL TCP egress to any external host is blocked from this sandbox regardless of credentials",
+      "data_migration_performed": false
     },
     "reference_doc": "docs/pilots/payrollminds/TARGET_ENVIRONMENT_INVENTORY.md"
   },

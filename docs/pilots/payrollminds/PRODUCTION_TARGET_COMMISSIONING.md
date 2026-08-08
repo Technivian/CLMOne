@@ -114,10 +114,13 @@ to `InvalidClientTokenId` against AWS STS — confirmed, not assumed).
 this phase can be reported GREEN: the remaining topology components
 selected, an accepted ADR-0018, and credentials issued to whichever
 environment (human operator or automated deployment agent) will actually
-perform commissioning. A separate, unresolved sub-question — disposition of
-a superseded non-EU (`eu-west-2`/London) Neon project the sponsor also
-created and then set aside — is with the sponsor and does not block this
-phase.**
+perform commissioning. Update (2026-08-08): the superseded non-EU
+(`eu-west-2`/London) Neon project the sponsor set aside has now been
+decommissioned by the sponsor directly (this task's environment has no
+Neon account access and could not perform or verify the deletion itself —
+see `TARGET_ENVIRONMENT_INVENTORY.md` §1a). That sub-question is closed and
+does not affect this phase's BLOCKED status, which remains driven by the
+still-unselected components above.**
 
 ## 3. IAM and service identity review — BLOCKED
 
