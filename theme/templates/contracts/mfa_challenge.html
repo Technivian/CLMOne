@@ -1,51 +1,65 @@
-{% extends "base.html" %}
+{% extends 'base_fullscreen.html' %}
+{% load static %}
 
-{% block content %}
-<div class="ad-container" style="max-width:480px;margin:3rem auto">
-  <div class="ad-card" style="padding:2rem">
+{% block title %}Verify identity – CLM One{% endblock %}
+{% block page_css %}<link href="{% static 'css/mfa.css' %}{% if ASSET_VERSION %}?v={{ ASSET_VERSION }}{% endif %}" rel="stylesheet">{% endblock %}
 
-    <div style="text-align:center;margin-bottom:1.75rem">
-      <div style="width:56px;height:56px;border-radius:50%;background:var(--ad-brand-100,#eff6ff);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem">
-        <svg width="28" height="28" fill="none" stroke="var(--ad-brand,#2563eb)" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-        </svg>
-      </div>
-      <h1 style="font-size:1.375rem;font-weight:700;margin-bottom:0.25rem">Verify your identity</h1>
-      <p style="color:var(--ad-text-secondary)">A 6-digit code has been sent to <strong>{{ request.user.email }}</strong></p>
+{% block body %}
+<div class="dc-ds-auth-shell">
+  <a class="dc-ds-auth-brand" href="{% url 'index' %}" aria-label="CLM One home">
+    <img src="{% static 'brand/clm-one-logo-transparent.webp' %}" alt="CLM One" class="clm-one-logo clm-one-logo--auth">
+  </a>
+
+  <section class="dc-ds-auth-context" aria-labelledby="challenge-context-title">
+    <div class="dc-ds-auth-context__inner">
+      <p class="dc-ds-auth-eyebrow">Secure sign-in</p>
+      <h2 id="challenge-context-title">Verify before entering the workspace.</h2>
+      <p class="dc-ds-auth-context__copy">This verification applies only to the current signed-in session.</p>
+      <ul class="dc-ds-auth-benefits">
+        <li><span class="dc-ds-auth-benefits__icon">{% include "design_system/icon.html" with name="shield" %}</span><span>Protected routes remain unavailable until verification succeeds</span></li>
+        <li><span class="dc-ds-auth-benefits__icon">{% include "design_system/icon.html" with name="lock" %}</span><span>Authenticator time-steps and recovery codes cannot be replayed</span></li>
+      </ul>
     </div>
+  </section>
 
-    {% if error %}
-    <div class="alert alert-error" style="margin-bottom:1rem">{{ error }}</div>
-    {% endif %}
+  <main class="dc-ds-auth-main">
+    <div class="dc-ds-auth-card">
+      <header class="dc-ds-auth-card__head">
+        <h1>Verify your identity</h1>
+        {% if uses_totp %}
+        <p>Enter the six-digit code from your authenticator app.</p>
+        {% else %}
+        <p>Enter the six-digit code sent to {{ request.user.email }}.</p>
+        {% endif %}
+      </header>
 
-    <form method="post">
-      {% csrf_token %}
-      <input type="hidden" name="next" value="{{ next }}">
-      <div style="margin-bottom:1rem">
-        <label style="display:block;font-size:0.875rem;font-weight:500;margin-bottom:0.375rem">Verification code</label>
-        <input
-          type="text"
-          name="code"
-          inputmode="numeric"
-          maxlength="6"
-          pattern="[0-9]{6}"
-          autocomplete="one-time-code"
-          autofocus
-          required
-          style="width:100%;text-align:center;font-size:1.5rem;letter-spacing:0.4em;padding:0.5rem"
-          class="form-input"
-        >
+      {% if messages %}
+      <div class="dc-ds-auth-messages" aria-live="polite">
+        {% for message in messages %}<div class="dc-ds-auth-message">{{ message }}</div>{% endfor %}
       </div>
-      <button type="submit" class="dc-ds-button dc-ds-button--primary" style="width:100%;justify-content:center">Verify</button>
-    </form>
+      {% endif %}
+      {% if error %}<div class="dc-ds-form-errors dc-ds-auth-errors" role="alert"><p>{{ error }}</p></div>{% endif %}
 
-    <form method="post" action="{% url 'mfa_challenge_resend' %}?next={{ next }}" style="margin-top:0.75rem">
-      {% csrf_token %}
-      <button type="submit" class="dc-ds-button dc-ds-button--quiet" style="width:100%;justify-content:center;font-size:0.875rem">
-        Resend code
-      </button>
-    </form>
+      <form method="post" class="dc-ds-auth-form">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
+        <div class="dc-ds-form-field">
+          <label for="id_mfa_code" class="dc-ds-form-field__label">Verification or recovery code</label>
+          <input id="id_mfa_code" name="code" type="text" inputmode="text" autocomplete="one-time-code" maxlength="32" required autofocus autocapitalize="characters" spellcheck="false" class="login-input form-control" aria-describedby="mfa-code-help">
+          <p id="mfa-code-help" class="mfa-note">You can use one of your saved recovery codes if your factor is unavailable.</p>
+        </div>
+        {% include "design_system/button.html" with type="submit" tone="primary" label="Verify" class_name="dc-ds-auth-submit" %}
+      </form>
 
-  </div>
+      {% if not uses_totp %}
+      <form method="post" action="{% url 'mfa_challenge_resend' %}?next={{ next|urlencode }}" class="dc-ds-auth-form mfa-secondary-form">
+        {% csrf_token %}
+        {% include "design_system/button.html" with type="submit" tone="secondary" label="Resend email code" %}
+      </form>
+      {% endif %}
+
+      <div class="dc-ds-auth-trust">{% include "design_system/icon.html" with name="shield" %}<span>Rate-limited secure verification</span></div>
+    </div>
+  </main>
 </div>
 {% endblock %}

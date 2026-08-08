@@ -111,6 +111,16 @@ class ProductionRejectsUnsafeConfig(SimpleTestCase):
     def test_rejects_missing_operator_alert_email(self):
         self._assert_rejected({'OPERATOR_ALERT_EMAIL': ''}, 'OPERATOR_ALERT_EMAIL must be set')
 
+    def test_totp_enrollment_requires_vaulted_valid_key(self):
+        self._assert_rejected(
+            {'MFA_TOTP_ENROLLMENT_ENABLED': 'true', 'MFA_TOTP_ENCRYPTION_KEY': ''},
+            'requires a vaulted MFA_TOTP_ENCRYPTION_KEY',
+        )
+        self._assert_rejected(
+            {'MFA_TOTP_ENROLLMENT_ENABLED': 'true', 'MFA_TOTP_ENCRYPTION_KEY': 'not-a-key'},
+            'must be valid Fernet keys',
+        )
+
 
 class ProductionAcceptsValidConfig(SimpleTestCase):
     def test_valid_config_boots_and_cookies_secure(self):
@@ -181,6 +191,7 @@ class RenderDeploymentConfig(SimpleTestCase):
         self.assertEqual(kv.get('DJANGO_ENV'), 'production')
         self.assertEqual(kv.get('MEDIA_STORAGE_BACKEND'), 's3')
         self.assertEqual(kv.get('SSO_ENABLED'), 'false')
+        self.assertEqual(kv.get('MFA_TOTP_ENROLLMENT_ENABLED'), 'false')
         self.assertEqual(kv.get('ESIGN_PROVIDER'), 'null')
         for entry in self.groups[group_name]['envVars']:
             self.assertNotEqual(entry.get('sync'), False)

@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.db import models
+from django.db import models, transaction
 from django.contrib.auth import get_user_model
 from django.core.serializers.json import DjangoJSONEncoder
 from django.core.validators import MinValueValidator
@@ -219,6 +219,9 @@ class UserProfile(models.Model):
     mfa_enrollment_code_expires_at = models.DateTimeField(null=True, blank=True)
     mfa_enrollment_code_sent_at = models.DateTimeField(null=True, blank=True)
     mfa_recovery_code_hashes = models.JSONField(default=list, blank=True)
+    mfa_totp_secret_encrypted = models.CharField(max_length=512, blank=True)
+    mfa_totp_confirmed_at = models.DateTimeField(null=True, blank=True)
+    mfa_totp_last_counter = models.PositiveBigIntegerField(null=True, blank=True)
     session_revocation_counter = models.PositiveIntegerField(default=0)
     # Account preferences — self-service presentation and notification controls.
     class Language(models.TextChoices):
@@ -320,27 +323,59 @@ class UserProfile(models.Model):
         codes = []
         code_hashes = []
         for _ in range(max(1, int(count))):
-            code = f'{secrets.randbelow(1_000_000):06d}'
+            compact = secrets.token_hex(10).upper()
+            code = '-'.join(compact[index:index + 5] for index in range(0, len(compact), 5))
             codes.append(code)
-            code_hashes.append(self._mfa_code_hash(code))
+            code_hashes.append(self._mfa_code_hash(self._normalize_mfa_recovery_code(code)))
         self.mfa_recovery_code_hashes = code_hashes
         self.save(update_fields=['mfa_recovery_code_hashes', 'updated_at'])
         return codes
 
+    @staticmethod
+    def _normalize_mfa_recovery_code(code):
+        return ''.join(character for character in str(code or '').upper() if character.isalnum())
+
     def verify_mfa_recovery_code(self, code):
         if not code or not self.mfa_recovery_code_hashes:
             return False
-        code_hash = self._mfa_code_hash(str(code).strip())
-        if code_hash not in self.mfa_recovery_code_hashes:
-            return False
-        self.mfa_recovery_code_hashes = [existing_hash for existing_hash in self.mfa_recovery_code_hashes if existing_hash != code_hash]
-        self.session_revocation_counter += 1
-        self.save(update_fields=['mfa_recovery_code_hashes', 'session_revocation_counter', 'updated_at'])
+        with transaction.atomic():
+            locked = type(self).objects.select_for_update().get(pk=self.pk)
+            normalized_hash = locked._mfa_code_hash(
+                locked._normalize_mfa_recovery_code(code)
+            )
+            legacy_hash = locked._mfa_code_hash(str(code).strip())
+            matched_hash = next(
+                (
+                    existing_hash
+                    for existing_hash in locked.mfa_recovery_code_hashes
+                    if secrets.compare_digest(existing_hash, normalized_hash)
+                    or secrets.compare_digest(existing_hash, legacy_hash)
+                ),
+                None,
+            )
+            if matched_hash is None:
+                return False
+            locked.mfa_recovery_code_hashes = [
+                existing_hash
+                for existing_hash in locked.mfa_recovery_code_hashes
+                if not secrets.compare_digest(existing_hash, matched_hash)
+            ]
+            locked.session_revocation_counter += 1
+            locked.save(update_fields=[
+                'mfa_recovery_code_hashes',
+                'session_revocation_counter',
+                'updated_at',
+            ])
+        self.refresh_from_db()
         return True
 
     @property
     def mfa_recovery_code_count(self):
         return len(self.mfa_recovery_code_hashes or [])
+
+    @property
+    def uses_totp(self):
+        return bool(self.mfa_totp_secret_encrypted and self.mfa_totp_confirmed_at)
 
     def check_mfa_code(self, code) -> bool:
         """Verify a login-challenge OTP without changing enrollment state."""

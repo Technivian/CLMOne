@@ -23,6 +23,7 @@
     <link href="{% static 'css/clmone-tokens.css' %}{% if ASSET_VERSION %}?v={{ ASSET_VERSION }}{% endif %}" rel="stylesheet">
     <link href="{% static 'css/dist/styles.css' %}{% if ASSET_VERSION %}?v={{ ASSET_VERSION }}{% endif %}" rel="stylesheet">
     <link href="{% static 'brand/clm-one-brand.css' %}{% if ASSET_VERSION %}?v={{ ASSET_VERSION }}{% endif %}" rel="stylesheet">
+    {% block page_css %}{% endblock %}
     <script src="{% static 'js/csp-handlers.js' %}" defer></script>
     <script src="{% static 'js/clmone-ui.js' %}" defer></script>
     <script nonce="{{ csp_nonce }}">

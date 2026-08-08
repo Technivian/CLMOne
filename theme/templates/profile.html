@@ -140,7 +140,7 @@
             </form>
             {% else %}
             <div class="profile-page__mfa-panel" id="mfa-setup-panel">
-              <p class="profile-page__muted">Continue with email verification. Authenticator apps will be offered when configured for this workspace.</p>
+              <p class="profile-page__muted">Continue with email verification.</p>
               <form method="post" class="profile-page__security-form">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="send_mfa_code">
@@ -156,6 +156,13 @@
             </div>
             {% endif %}
           {% else %}
+          {% if totp_enrollment_available and not profile.uses_totp %}
+          <form method="post" class="profile-page__security-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="start_totp_upgrade">
+            <button type="submit" class="dc-ds-button dc-ds-button--primary">Switch to authenticator app</button>
+          </form>
+          {% endif %}
           <form method="post" class="profile-page__security-form">
             {% csrf_token %}
             <input type="hidden" name="action" value="generate_mfa_recovery_codes">

@@ -1,4 +1,5 @@
 import csv
+from urllib.parse import urlencode
 from zoneinfo import ZoneInfo
 
 from django.conf import settings
@@ -211,7 +212,11 @@ def _profile_security_summary(request, profile_obj, organization):
     session_count = len(personal_sessions)
     return {
         'mfa_status_label': 'MFA active' if profile_obj and profile_obj.mfa_enabled else 'MFA not enrolled',
-        'enrolled_mfa_method': 'Email verification' if profile_obj and profile_obj.mfa_enabled else 'None',
+        'enrolled_mfa_method': (
+            'Authenticator app'
+            if profile_obj and profile_obj.uses_totp
+            else ('Email verification' if profile_obj and profile_obj.mfa_enabled else 'None')
+        ),
         'sign_in_method': _profile_sign_in_method(organization),
         'last_sign_in': request.user.last_login,
         'recovery_method_status': (
@@ -274,8 +279,27 @@ def profile(request):
         if request.method == 'POST':
             action = request.POST.get('action', 'save')
             if action == 'start_mfa_setup':
+                if getattr(settings, 'MFA_TOTP_ENROLLMENT_ENABLED', False):
+                    return redirect('mfa_enroll')
                 request.session['mfa_setup_started'] = True
                 return redirect(f"{reverse('profile')}?mfa=setup")
+            if action == 'start_totp_upgrade':
+                if not getattr(settings, 'MFA_TOTP_ENROLLMENT_ENABLED', False):
+                    messages.error(request, 'Authenticator-app enrollment is not available.')
+                    return redirect('profile')
+                elif profile_obj.uses_totp:
+                    messages.info(request, 'An authenticator app is already enrolled.')
+                    return redirect('profile')
+                elif profile_obj.mfa_enabled and not request.session.get('mfa_verified'):
+                    enrollment_code = profile_obj.issue_mfa_enrollment_code()
+                    from contracts.services.notifications import send_mfa_code_email
+                    send_mfa_code_email(request.user, enrollment_code)
+                    challenge = reverse('mfa_challenge')
+                    return redirect(
+                        challenge + '?' + urlencode({'next': reverse('mfa_enroll')})
+                    )
+                else:
+                    return redirect('mfa_enroll')
             if action == 'send_mfa_code':
                 request.session['mfa_setup_started'] = True
                 enrollment_code = profile_obj.issue_mfa_enrollment_code()
@@ -334,7 +358,8 @@ def profile(request):
                 messages.success(request, 'Recovery codes generated. Save them now; they will only be shown once.')
                 return redirect('profile')
             elif action in {'save_identity', 'save_regional', 'save_notifications', 'save'} or action not in {
-                'start_mfa_setup', 'send_mfa_code', 'verify_mfa', 'generate_mfa_recovery_codes',
+                'start_mfa_setup', 'start_totp_upgrade', 'send_mfa_code', 'verify_mfa',
+                'generate_mfa_recovery_codes',
             }:
                 section_messages = {
                     'save_identity': ('identity', 'Personal details saved.', 'identity'),
@@ -412,6 +437,9 @@ def profile(request):
         'security_error': security_error,
         'recovery_codes_preview': recovery_codes_preview,
         'show_mfa_setup': show_mfa_setup and not (profile_obj and profile_obj.mfa_enabled),
+        'totp_enrollment_available': bool(
+            getattr(settings, 'MFA_TOTP_ENROLLMENT_ENABLED', False)
+        ),
         'regional_preview': regional_preview,
         'regional_preview_formats': regional_preview_formats,
         'can_change_password': can_change_password,
