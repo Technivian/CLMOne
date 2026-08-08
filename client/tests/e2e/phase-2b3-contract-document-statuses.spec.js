@@ -16,12 +16,12 @@ test('Phase 2B.3 status routes and the populated contract drawer remain responsi
   await login(page);
 
   await page.goto('/contracts/documents/');
-  await expect(page.locator('.page-title')).toContainText('Document Management');
+  await expect(page.locator('.topbar-page-title')).toHaveText('Document Management');
 
   await page.goto('/contracts/repository/');
   const row = page.locator('tr.contract-row').first();
   await expect(row).toBeVisible();
-  const stageBadge = row.locator('.dc-ds-badge--sm');
+  const stageBadge = row.locator('.repo-stage-badge');
   await expect(stageBadge).toHaveClass(/dc-ds-badge--(?:success|progress|attention|danger|special|neutral)/);
   const contractId = await row.getAttribute('data-contract-id');
   await page.goto(`/contracts/repository/?contractId=${contractId}`);

@@ -31,12 +31,12 @@ test.describe('Phase 5C workspace scaffold', () => {
     await expect(workspace).toBeVisible();
     await expect(workspace.locator('.dc-ds-workspace__header')).toBeVisible();
     await expect(workspace.locator('.dc-ds-workspace__timeline')).toBeVisible();
-    const action = workspace.locator('.dc-ds-workspace__actions button').first();
+    const action = page.getByRole('button', { name: 'Resolve 3 exceptions' });
     await action.focus();
     await expect(action).toBeFocused();
 
     await page.goto('/contracts/1/');
-    await expect(page.locator('.dc-ds-workspace__metadata-grid')).toBeVisible();
+    await expect(page.locator('.dc-ds-workspace--record')).toBeVisible();
     await expect(page.locator('.dc-ds-workspace__rail')).toBeVisible();
 
     await page.setViewportSize({ width: 390, height: 844 });
@@ -49,8 +49,8 @@ test.describe('Phase 5C workspace scaffold', () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/contracts/workflows/1/');
     const workspace = page.locator('.dc-ds-workspace');
-    await expect(workspace.locator('[data-workspace-drafting]')).toBeVisible();
-    const tabs = workspace.locator('.dc-ds-workspace-tabs__tab');
+    await expect(workspace.getByRole('tablist', { name: 'DPA workspace panels' })).toBeVisible();
+    const tabs = workspace.getByRole('tab');
     await expect(tabs.first()).toBeVisible();
     await tabs.nth(1).focus();
     await expect(tabs.nth(1)).toBeFocused();

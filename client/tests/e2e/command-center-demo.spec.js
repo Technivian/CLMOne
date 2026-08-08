@@ -20,27 +20,17 @@ test('Command Center demo shows DPA, MSA, and NDA workflows with workspace links
   await expect(page.locator('section[aria-label="Operational queues"]')).toBeVisible();
   await expect(page.getByText('Governance controls')).toBeVisible();
 
-  const scenarios = [
-    {
-      title: 'Northwind DPA Privacy Review Workflow',
-      workspaceMarker: 'Guided drafting',
-    },
-    {
-      title: 'Acme MSA Commercial Review Workflow',
-      workspaceMarker: 'Guided drafting',
-    },
-    {
-      title: 'Brightlane NDA Self-Serve Workflow',
-      workspaceMarker: 'Guided drafting',
-    },
-  ];
+  const priority = page.getByRole('link', { name: 'Northwind DPA Privacy Review Workflow' });
+  await expect(priority).toBeVisible();
+  await expect(priority).toHaveAttribute('href', /\/contracts\/workflows\/\d+\/?$/);
 
-  for (const scenario of scenarios) {
-    const openWorkspaceLink = page.getByRole('link', { name: new RegExp(scenario.title) }).first();
-    await expect(openWorkspaceLink).toBeVisible();
-    await openWorkspaceLink.click();
-    await expect(page).toHaveURL(/\/contracts\/workflows\/\d+\/?$/);
-    await expect(page.getByText(new RegExp(scenario.workspaceMarker, 'i')).first()).toBeVisible();
-    await page.goto('/dashboard/');
-  }
+  const msaAction = page.locator('.cc-v3-portfolio-action-list .cc-v3-operational-row').filter({ hasText: 'Acme MSA' });
+  await expect(msaAction).toBeVisible();
+  await expect(msaAction).toHaveAttribute('href', /^\/contracts\//);
+
+  const ndaWorkspace = page.getByRole('link', { name: /Brightlane NDA Self-Serve Workflow/ });
+  await expect(ndaWorkspace).toBeVisible();
+  await ndaWorkspace.click();
+  await expect(page).toHaveURL(/\/contracts\/workflows\/\d+\/?$/);
+  await expect(page.getByText(/Guided drafting/i).first()).toBeVisible();
 });

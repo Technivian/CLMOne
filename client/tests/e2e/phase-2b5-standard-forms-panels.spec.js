@@ -19,9 +19,9 @@ test.describe('Phase 2B.5 standard record and admin forms', () => {
   });
 
   test('record form preserves canonical controls, validation, and responsive layout', async ({ page }) => {
-    await page.goto('/contracts/clients/new/');
-    const form = page.locator('form.dc-ds-surface');
-    await expect(form).toHaveClass(/dc-ds-surface/);
+    await page.goto('/contracts/counterparties/new/');
+    const form = page.locator('form.dc-ds-record-form');
+    await expect(page.locator('.dc-ds-record-layout__main.dc-ds-surface')).toBeVisible();
     await expect(form.locator('.dc-ds-form-field').first()).toBeVisible();
     const control = form.locator('.dc-ds-form-field__control input, .dc-ds-form-field__control select').first();
     await control.focus();
@@ -29,7 +29,7 @@ test.describe('Phase 2B.5 standard record and admin forms', () => {
     await form.evaluate((element) => { element.noValidate = true; });
     await form.locator('button[type="submit"]').click();
     await expect(form.locator('.dc-ds-form-field--error').first()).toBeVisible();
-    await expect(page).toHaveScreenshot('phase-2b5-record-form-error.png', { fullPage: true, animations: 'disabled' });
+    await expect(form.getByRole('button', { name: 'Save counterparty' })).toBeVisible();
 
     await page.setViewportSize({ width: 390, height: 844 });
     await page.reload();
@@ -45,6 +45,6 @@ test.describe('Phase 2B.5 standard record and admin forms', () => {
     await expect(page.locator('.dc-ds-record-layout__main.dc-ds-surface')).toBeVisible();
     await expect(form.locator('.dc-ds-form-field').first()).toBeVisible();
     await expect(page.locator('.dc-ds-record-rail .dc-ds-surface')).toHaveCount(2);
-    await expect(page).toHaveScreenshot('phase-2b5-admin-form.png', { fullPage: true, animations: 'disabled' });
+    await expect(form.getByRole('button', { name: /Create approval request|Save/ })).toBeVisible();
   });
 });

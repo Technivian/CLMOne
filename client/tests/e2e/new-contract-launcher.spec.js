@@ -35,16 +35,21 @@ test.describe('New Contract launcher', () => {
       await expect(page.getByRole('heading', { name: heading, exact: true })).toBeVisible();
     }
 
-    const sowCard = page.locator('[data-ctp-card][data-contract-type="SOW"]');
-    await expect(sowCard).toBeVisible();
-    await expect(sowCard.getByText('Starting template')).toBeVisible();
-    await expect(sowCard.getByText('Expected review')).toBeVisible();
-    await expect(sowCard.getByText('Start request')).toBeVisible();
-    await expect(sowCard).toHaveAttribute('aria-label', 'Start SOW request');
+    // The recommendation shelf is history-aware. MSA is present in the E2E
+    // fixture's governed launch path, whereas SOW is not a fixed shelf entry.
+    const msaCard = page.locator('[data-ctp-card][data-contract-type="MSA"]').first();
+    await expect(msaCard).toBeVisible();
+    await expect(msaCard.getByText('Starting template')).toBeVisible();
+    await expect(msaCard.getByText('Expected review')).toBeVisible();
+    await expect(msaCard.getByText('Start request')).toBeVisible();
+    await expect(msaCard.getByRole('link', { name: 'Start MSA request' })).toHaveAttribute(
+      'aria-label',
+      'Start MSA request',
+    );
 
     await page.getByLabel('Search agreement types').fill('nda');
     await expect(page.locator('[data-ctp-card][data-contract-type="NDA"]')).toBeVisible();
-    await expect(page.locator('[data-ctp-card][data-contract-type="SOW"]')).toBeHidden();
+    await expect(page.locator('[data-ctp-card][data-contract-type="MSA"]').first()).toBeHidden();
     await expect(page.getByRole('heading', { name: 'Commercial', exact: true })).toBeHidden();
 
     await page.getByLabel('Search agreement types').fill('zzzz-no-match');
@@ -61,7 +66,8 @@ test.describe('New Contract launcher', () => {
       await login(page);
       await page.goto('/contracts/new/start/');
 
-      const layout = await page.locator('.ctp-entry-grid').first().evaluate((grid) => {
+      // The launcher now uses the canonical design-system launch grid.
+      const layout = await page.locator('.dc-ds-card-grid--launch').first().evaluate((grid) => {
         const styles = getComputedStyle(grid);
         const cards = [...grid.querySelectorAll('[data-ctp-card]')];
         const tops = [...new Set(cards.map((card) => Math.round(card.getBoundingClientRect().top)))].sort(

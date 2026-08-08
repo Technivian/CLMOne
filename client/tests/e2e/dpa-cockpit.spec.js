@@ -34,11 +34,11 @@ test('DPA governed workspace keeps drafting layout, clause-link, and overflow co
 
   const workspace = page.locator('.dc-ds-workspace');
   await expect(workspace).toBeVisible();
-  await expect(page.getByText('Lifecycle')).toBeVisible();
-  await expect(workspace.locator('[data-workspace-layout]')).toBeVisible();
-  await expect(workspace.locator('.dc-ds-workspace__doc')).toBeVisible();
+  await expect(page.getByText('Lifecycle', { exact: true })).toBeVisible();
+  await expect(workspace.getByRole('tablist', { name: 'DPA workspace panels' })).toBeVisible();
+  await expect(workspace.getByRole('listbox', { name: 'Drafting sections' })).toBeVisible();
 
-  const riskLink = workspace.locator('[data-clause-link]').first();
+  const riskLink = workspace.locator('[data-clause-link]:visible').first();
   if (await riskLink.count()) {
     const anchor = await riskLink.getAttribute('data-clause-link');
     await riskLink.click();

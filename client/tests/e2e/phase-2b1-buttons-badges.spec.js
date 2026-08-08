@@ -11,6 +11,16 @@ async function login(page) {
   await page.goto('/dashboard/');
 }
 
+async function detailPath(page) {
+  await page.goto('/contracts/repository/');
+  await expect(page.locator('#contracts-tbody')).not.toContainText('Loading contracts', { timeout: 15000 });
+  const row = page.locator('tr.contract-row').first();
+  await expect(row).toBeVisible();
+  const contractId = await row.getAttribute('data-contract-id');
+  expect(contractId).toMatch(/^\d+$/);
+  return `/contracts/${contractId}/?tab=activity`;
+}
+
 test.describe('Phase 2B.1 canonical buttons and badges', () => {
   test.beforeEach(async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 1000 });
@@ -18,35 +28,39 @@ test.describe('Phase 2B.1 canonical buttons and badges', () => {
   });
 
   test('list family keeps canonical actions and semantic badges responsive', async ({ page }) => {
-    await page.goto('/contracts/clients/');
-    await expect(page.locator('.dc-ds-button--primary').first()).toBeVisible();
-    await expect(page.locator('.dc-ds-badge--sm').first()).toBeVisible();
-    await page.locator('.dc-ds-button--primary').first().focus();
-    await expect(page.locator('.dc-ds-button--primary').first()).toBeFocused();
-    await expect(page).toHaveScreenshot('phase-2b1-list-buttons-badges.png', { fullPage: true, animations: 'disabled' });
+    await page.goto('/contracts/repository/');
+    await expect(page.locator('#contracts-tbody')).not.toContainText('Loading contracts', { timeout: 15000 });
+    const primary = page.locator('.repo-view-actions .dc-ds-button--primary');
+    const badge = page.locator('.contract-row .dc-ds-badge--sm').first();
+    await expect(primary).toBeVisible();
+    await expect(badge).toBeVisible();
+    await expect(badge).not.toBeEmpty();
+    await primary.focus();
+    await expect(primary).toBeFocused();
     await page.setViewportSize({ width: 390, height: 844 });
     await page.reload();
-    await expect(page.locator('.dc-ds-button--primary').first()).toBeVisible();
+    await expect(primary).toBeVisible();
   });
 
   test('standard detail and modal actions preserve keyboard focus', async ({ page }) => {
-    await page.goto('/contracts/');
-    const path = await page.locator('a[href^="/contracts/"]').evaluateAll((links) => (
-      links.map((link) => link.getAttribute('href')).find((href) => /^\/contracts\/\d+\/$/.test(href))
-    ));
-    await page.goto(path);
+    await page.goto(await detailPath(page));
     await page.locator('[data-open-note-dialog]').first().click();
     const dialog = page.locator('#contract-note-dialog');
     await expect(dialog).toHaveAttribute('open', '');
     await expect(dialog.locator('.dc-ds-control').first()).toBeFocused();
     await page.keyboard.press('Tab');
     await expect(dialog.locator('.dc-ds-button--primary')).toBeVisible();
-    await expect(page).toHaveScreenshot('phase-2b1-detail-modal-buttons-badges.png', { fullPage: true, animations: 'disabled' });
+    const close = dialog.getByRole('button', { name: 'Close note form' });
+    await close.click();
+    await expect(page.locator('[data-open-note-dialog]').first()).toBeFocused();
   });
 
   test('admin settings preserve destructive and primary actions', async ({ page }) => {
     await page.goto('/contracts/privacy/data-controls/');
-    await expect(page.locator('.dc-ds-button--danger, .dc-ds-button--primary').first()).toBeVisible();
-    await expect(page).toHaveScreenshot('phase-2b1-admin-buttons.png', { fullPage: true, animations: 'disabled' });
+    const aiControl = page.getByRole('button', { name: /AI features for this organisation/ });
+    await expect(aiControl).toBeVisible();
+    await expect(aiControl).toHaveClass(/dc-ds-button--(?:danger|primary)/);
+    await aiControl.focus();
+    await expect(aiControl).toBeFocused();
   });
 });

@@ -1,0 +1,53 @@
+{
+  "suite": "PayrollMinds executable UAT",
+  "matrix": "docs/pilots/payrollminds/PAYROLLMINDS_EXECUTABLE_UAT_MATRIX.md",
+  "test_module": "tests.test_payrollminds_executable_uat",
+  "source_sha": "c5f83238",
+  "base_sha": "68a1f568",
+  "branch": "codex/payrollminds-executable-uat",
+  "pull_request": "https://github.com/Technivian/CLMOne/pull/169",
+  "github_workflow_run_id": 31220152961,
+  "github_job_id": 93002721771,
+  "github_job_name": "quality-and-tenancy",
+  "local_result": {"tests": 24, "passed": 24, "failed": 0, "errors": 0, "skipped": 0, "duration_seconds": 2.6},
+  "ci_result": {"tests": 24, "passed": 24, "failed": 0, "errors": 0, "skipped": 0, "duration_seconds": 24.3},
+  "scenarios": [
+    {"id": "PM-UAT-001", "status": "pass", "evidence": ["test_pm_uat_001_workspace_entry", "test_pm_uat_001_unauthenticated_user_is_redirected"]},
+    {"id": "PM-UAT-002", "status": "pass", "evidence": ["test_pm_uat_002_contract_intake_creates_canonical_chain", "test_pm_uat_002_http_api_intake_path_matches_service_path"]},
+    {"id": "PM-UAT-003", "status": "pass", "evidence": ["test_pm_uat_003_metadata_review_is_human_verified"]},
+    {"id": "PM-UAT-004", "status": "pass", "evidence": ["test_pm_uat_004_workflow_progression_valid_and_invalid"]},
+    {"id": "PM-UAT-005", "status": "pass", "evidence": ["test_pm_uat_005_search_authorized_and_unauthorized"]},
+    {"id": "PM-UAT-006", "status": "pass", "evidence": ["test_pm_uat_006_operational_tracking_deadline", "test_pm_uat_006_obligations_cross_workspace_denied"], "note": "obligations UI route allowlist reconciled with PILOT_SCOPE.md (AGENT PROMPT 32 Phase 1); previously-documented known limitation resolved"},
+    {"id": "PM-UAT-007", "status": "pass", "evidence": ["test_pm_uat_007_controlled_export", "test_pm_uat_007_export_never_leaks_other_workspace_rows"]},
+    {"id": "PM-UAT-008", "status": "pass", "evidence": ["test_pm_uat_008_private_access_denied_to_unrelated_member"]},
+    {"id": "PM-UAT-009", "status": "pass", "evidence": ["test_pm_uat_009_cross_workspace_access_denied"]},
+    {"id": "PM-UAT-010", "status": "pass", "evidence": ["test_pm_uat_010_direct_identifier_access_denied"]},
+    {"id": "PM-UAT-011", "status": "pass", "evidence": ["test_pm_uat_011_access_revocation_removes_visibility"]},
+    {"id": "PM-UAT-012", "status": "pass", "evidence": ["test_pm_uat_012_external_ai_disabled_even_when_configured"]},
+    {"id": "PM-UAT-013", "status": "pass", "evidence": ["test_pm_uat_013_inbound_email_ingestion_unavailable"]},
+    {"id": "PM-UAT-014", "status": "pass", "evidence": ["test_pm_uat_014_signature_initiation_blocked_under_real_pilot_scope", "test_pm_uat_014_default_esign_provider_is_the_inert_null_provider"]},
+    {"id": "PM-UAT-015", "status": "pass", "evidence": ["test_pm_uat_015_external_integration_not_invoked"]},
+    {"id": "PM-UAT-016", "status": "pass", "evidence": ["test_pm_uat_016_malicious_file_never_becomes_canonical"]},
+    {"id": "PM-UAT-017", "status": "pass", "evidence": ["test_pm_uat_017_audit_timeline_is_machine_verifiable"]},
+    {"id": "PM-UAT-018", "status": "pass", "evidence": ["test_pm_uat_018_uat_data_isolated_from_other_workspaces", "test_pm_uat_018_previous_test_left_no_residue"]}
+  ],
+  "excluded_infrastructure_scenarios": [
+    {"historical_id": "UAT-22", "reason": "requires real PostgreSQL + object-store backup/restore drill"},
+    {"historical_id": "UAT-23", "reason": "requires isolated pre-production TLS/IAM/worker/monitoring deployment"},
+    {"historical_id": "UAT-24", "reason": "requires authorized target-environment offboarding rehearsal"}
+  ],
+  "preservation_regression": {
+    "browser_suite": {"total": 94, "passed": 94, "failed": 0, "shards": 8, "workflow_run_id": 31220154272},
+    "security_battery": {"total": 166, "passed": 166, "failed": 0},
+    "cross_tenant_isolation": {"total": 75, "passed": 75, "failed": 0},
+    "permission_matrix": {"total": 2, "passed": 2, "failed": 0}
+  },
+  "security_scans": {
+    "bandit": "pass",
+    "secret_scan_trufflehog": "pass",
+    "pip_audit": "pass",
+    "npm_audit_baseline_gate": "pass (nanoid bumped 3.3.16 -> 3.3.18, GHSA-2v37-7h3g-55p8, unrelated pre-existing finding, fixed in commit c5f83238)"
+  },
+  "migration_drift": "zero",
+  "recommendation": "EXECUTABLE UAT GREEN"
+}

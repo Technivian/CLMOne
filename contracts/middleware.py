@@ -162,6 +162,16 @@ class ControlledPilotScopeMiddleware:
             return None
 
         # Law-firm / commercial modules out of pilot.
+        #
+        # /contracts/obligations (dates/expiry/renewal/notice reminders) is
+        # deliberately NOT in this denylist: PILOT_SCOPE.md's "Search and
+        # dates" row lists it as an approved in-scope pilot capability. It
+        # was blocked here until the PayrollMinds executable-UAT reconciliation
+        # (docs/pilots/payrollminds/PAYROLLMINDS_EXECUTABLE_UAT_EVIDENCE.md
+        # known limitation #1) found this route allowlist out of sync with
+        # the already-approved charter and corrected it. Server-side object-
+        # read authorization (_visible_deadlines_queryset) is unaffected by
+        # this list either way — it always applied, and still does.
         for prefix, reason in (
             ('/contracts/clients', 'law_firm_clients'),
             ('/contracts/matters', 'law_firm_matters'),
@@ -171,7 +181,6 @@ class ControlledPilotScopeMiddleware:
             ('/contracts/signatures', 'signatures_out_of_scope'),
             ('/contracts/new/upload', 'upload_review_out_of_scope'),
             ('/contracts/dpa-reviews', 'dpa_review_packs_out_of_scope'),
-            ('/contracts/obligations', 'obligations_out_of_scope'),
             ('/contracts/workflows/templates', 'workflow_designer_out_of_scope'),
             ('/contracts/approval-rules', 'approval_rule_authoring_out_of_scope'),
         ):

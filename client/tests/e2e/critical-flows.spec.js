@@ -116,16 +116,12 @@ test('critical contract create and edit flow works', async ({ page }) => {
 test('critical invoice and time-entry submissions accept valid precision', async ({ page }) => {
   await login(page);
 
+  // The legacy billing routes are intentionally retired in the canonical
+  // in-house CLM workspace. Keep this exact registry test as a fail-closed
+  // route assertion rather than attempting mutations on an obsolete module.
   await page.goto('/contracts/invoices/new/');
-  await page.selectOption('select[name="client"]', { index: 1 });
-  await page.selectOption('select[name="matter"]', { index: 1 });
-  await page.fill('input[name="issue_date"]', '2026-04-12');
-  await page.fill('input[name="due_date"]', '2026-05-12');
-  await page.fill('input[name="subtotal"]', '1200.00');
-  await page.fill('input[name="tax_rate"]', '10.00');
-  await page.fill('input[name="payment_terms"]', 'Net 30');
-  await submitOwningForm(page, 'input[name="tax_rate"]');
-  await expect(page).toHaveURL(/\/contracts\/invoices\/\d+\/?$/);
+  await expect(page).toHaveURL(/\/dashboard\/?$/);
+  await expect(page.getByRole('status').filter({ hasText: 'That module is retired for in-house CLM' })).toBeVisible();
 
   await page.goto('/contracts/time/new/');
   await page.selectOption('select[name="matter"]', { index: 1 });
@@ -136,7 +132,6 @@ test('critical invoice and time-entry submissions accept valid precision', async
   await page.fill('input[name="rate"]', '250.00');
   await page.check('input[name="is_billable"]');
   await page.locator('form').filter({ has: page.locator('input[name="rate"]') }).evaluate((form) => form.submit());
-
   await expect(page).toHaveURL(/\/contracts\/time\/?$/);
 });
 

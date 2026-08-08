@@ -1046,11 +1046,12 @@ class CLMOneRepository {
     
     showError(message) {
         console.error('Repository error:', message);
+        this.hideLoading();
         const tbody = document.getElementById('contracts-tbody');
         if (tbody) {
             tbody.innerHTML = `
                 <tr><td colspan="11">
-                    <div class="dc-ds-empty dc-ds-empty--compact repo-empty-state">
+                    <div class="dc-ds-empty dc-ds-empty--compact repo-empty-state" role="alert">
                         <h2 class="dc-ds-empty__title">Repository data could not be loaded</h2>
                         <p class="dc-ds-empty__copy">The contract service did not return a usable response.</p>
                         <p class="dc-ds-empty__how">Your existing contracts are unchanged and will appear when the connection recovers.</p>
