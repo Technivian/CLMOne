@@ -1,16 +1,32 @@
 # PayrollMinds production target commissioning
 
-**Status: LIVE, WITH OPEN GAPS — not a blanket GO or NO-GO.** This began
-as an infrastructure-readiness evidence record against infrastructure that
-did not yet exist. Mid-conversation on 2026-08-08, it emerged that the
-pilot sponsor already had a real deployment running independently (Render,
-Frankfurt, at `clmone.com`), unconnected to this document's own phased
-commissioning process — see `TARGET_ENVIRONMENT_INVENTORY.md` §1c for the
-full record of its discovery, database migration, and security hardening.
-This document now describes a real, live, pilot-scope-restricted system
-handling sponsor-only usage (no other PayrollMinds users yet), not a
-synthetic exercise. It still is not a claim that every readiness gate in
-this document has been satisfied — several genuinely have not (§7, §9,
+> **TECHNICAL ENVIRONMENT: LIVE.** A real, correctly-scoped pilot
+> deployment exists and is running (Render/Frankfurt, Neon/Frankfurt,
+> Cloudflare R2, `clmone.com`) — see `TARGET_ENVIRONMENT_INVENTORY.md`
+> §1c.
+>
+> **PAYROLLMINDS CUSTOMER ONBOARDING: NO-GO.** The technical environment
+> being live does not authorize onboarding real PayrollMinds customer
+> users. That remains blocked on the specific, named gaps in this
+> document's Recommendation section (backup/recovery readiness, an
+> isolated restore drill, monitoring/alerting, and several named
+> operational owners) — not on infrastructure existing, which it now
+> does.
+>
+> These are two separate questions with two separate answers. Do not
+> conflate "the environment is live" with "customer onboarding is
+> authorized" — it is not.
+
+This began as an infrastructure-readiness evidence record against
+infrastructure that did not yet exist. Mid-conversation on 2026-08-08, it
+emerged that the pilot sponsor already had a real deployment running
+independently, unconnected to this document's own phased commissioning
+process — see `TARGET_ENVIRONMENT_INVENTORY.md` §1c for the full record of
+its discovery, database migration, and security hardening. This document
+now describes a real, live, pilot-scope-restricted system handling
+sponsor-only usage (no other PayrollMinds users yet), not a synthetic
+exercise. It still is not a claim that every readiness gate in this
+document has been satisfied — several genuinely have not (§7, §8, §9,
 §11, §13, §14) — and nothing here authorizes onboarding real PayrollMinds
 customer users while those gaps remain open.
 
@@ -438,21 +454,40 @@ inference from the live process's own successful boot, not direct
 inspection), and most of §2's topology. **What remains genuinely open,
 not GREEN:** Phase 3 (IAM/permission boundaries unauditable from this
 task), Phase 6 (no automated UAT run against the live target, only manual
-smoke checks), Phase 7 (no routine backup schedule, only a one-time
-migration dump and Neon's 6-hour free-tier recovery window), Phase 9 (the
-migration functioned as a real restore but not a formal, timed drill into
-an isolated target), Phase 10 (restore security never specifically
-audited), Phase 11 (no monitoring — `SENTRY_DSN` unset), Phase 13 (no
-rollback ever exercised, only forward fixes), and Phase 14 (only the
-Infrastructure operator role is named; Engineering/Release Authority,
-Security owner, Privacy/Product owner, and PayrollMinds support owner
-remain unnamed).
+smoke checks), Phase 8 (document-storage recovery — R2 is live for both
+released and quarantine buckets, but no bucket versioning/recovery drill
+has been performed or confirmed configured), Phase 9 (the migration
+functioned as a real restore but not a formal, timed drill into an
+isolated target), Phase 10 (restore security never specifically audited),
+Phase 11 (no monitoring — `SENTRY_DSN` unset), Phase 13 (no rollback ever
+exercised, only forward fixes).
+
+**Named-ownership gaps (Phase 14), stated precisely rather than lumped
+together:** the **backup owner** role is the one that is actually
+closed — Haroon Wahed is named as Infrastructure operator, explicitly
+covering PostgreSQL/Redis/storage/DNS/TLS/backup. Still open and unnamed:
+**support owner** (PayrollMinds customer communications), **incident
+owner** (security/availability incident response), **privacy owner**
+(Privacy/Product — retention, deletion, export approval), and
+**deployment approver** (Engineering/Release Authority — who signs off on
+a release reaching this environment).
+
+**Onboarding blockers, explicitly, in one place:** routine backup/recovery
+readiness (Phase 7 — only a one-time migration dump exists, Neon free-tier
+PITR is 6 hours), an isolated PostgreSQL restore drill (Phase 9 — the
+migration proved dump/restore mechanics work, not a drill into a separate
+recovery target with timed RPO/RTO), a document-storage recovery drill
+(Phase 8), monitoring/alerting (Phase 11), and the four still-unnamed
+operational owners above (support, incident, privacy, deployment
+approver). Redis (`REDIS_URL` unset) is **not** listed here — it degrades
+gracefully to synchronous background-job execution rather than blocking
+anything, so it is a real gap worth fixing but not a release blocker.
 
 **Practical read:** this is a reasonable, honestly-configured pilot
 deployment for continued sponsor-only use and further hardening. It is
 not yet ready for real PayrollMinds customer users under this document's
-own bar — the backup/monitoring/rollback/ownership gaps above are the
-specific, named things that would need to close first, not vague caution.
+own bar — the blockers listed above are the specific, named things that
+would need to close first, not vague caution.
 
 No infrastructure evidence in this document — deployment SHA, backup ID,
 restore timing, RPO/RTO, monitoring test, or alert delivery — is

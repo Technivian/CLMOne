@@ -1,6 +1,20 @@
 {
   "task": "AGENT PROMPT 32 - PayrollMinds target environment commissioning and restore proof",
   "recommendation": "NEITHER GO NOR NO-GO - a real live deployment exists with specific named gaps still open; see PRODUCTION_TARGET_COMMISSIONING.md Recommendation section for the full breakdown",
+  "technical_environment_status": "LIVE",
+  "payrollminds_customer_onboarding_status": "NO-GO",
+  "status_note": "These are two separate questions. The technical environment being live (Render/Frankfurt, Neon/Frankfurt, Cloudflare R2, clmone.com) does not authorize onboarding real PayrollMinds customer users, which remains blocked on the items in onboarding_blockers below.",
+  "onboarding_blockers": [
+    "routine backup/recovery readiness (only a one-time migration dump exists; Neon free-tier point-in-time recovery window is 6 hours)",
+    "isolated PostgreSQL restore drill (the migration proved dump/restore mechanics work against real data, but was not a timed drill into a separate recovery target with a measured RPO/RTO)",
+    "document-storage recovery drill (Cloudflare R2 is live for both released and quarantine buckets; bucket versioning/recovery mechanism not confirmed configured or tested)",
+    "monitoring/alerting (SENTRY_DSN unset; no error-reporting or alert route exists)",
+    "named support owner (PayrollMinds customer communications)",
+    "named incident owner (security/availability incident response)",
+    "named privacy owner (Privacy/Product - retention, deletion, export approval)",
+    "named deployment approver (Engineering/Release Authority)"
+  ],
+  "onboarding_blockers_note": "The named backup owner role is closed (Haroon Wahed, Infrastructure operator, confirmed 2026-08-08) and is intentionally not listed above. Redis (REDIS_URL unset) is also intentionally not listed as a blocker - it degrades gracefully to synchronous background-job execution rather than blocking anything; see target_environment.remaining_gaps for it as a non-blocking gap.",
   "scope_reconciliation": {
     "decision": "Outcome A - dates/reminders are genuinely in scope",
     "branch": "codex/payrollminds-obligations-scope-reconciliation",
