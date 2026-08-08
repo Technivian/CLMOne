@@ -389,14 +389,13 @@ class PayrollMindsExecutableUATTests(TestCase):
 
     # -- PM-UAT-006: operational tracking -------------------------------------
 
-    # CONTROLLED_PILOT_ENABLED=False here, matching the precedent set by
-    # tests.test_payrollminds_pilot_product_path: it isolates the
-    # object-read/authorization boundary under test from
-    # ControlledPilotScopeMiddleware's *separate* route-scope allowlist
-    # (see test_pm_uat_006_obligations_ui_currently_out_of_pilot_route_scope
-    # below, which proves and documents that under the real pilot setting
-    # the dedicated Obligations UI route is currently blocked).
-    @_uat_settings(CONTROLLED_PILOT_ENABLED=False)
+    # CONTROLLED_PILOT_ENABLED=True (the default from _uat_settings(), the
+    # pilot's real deployment posture): the Obligations UI route allowlist
+    # was reconciled with PILOT_SCOPE.md's "Search and dates" row (see
+    # AGENT PROMPT 32 Phase 1 / PRODUCTION_TARGET_COMMISSIONING.md), so this
+    # now exercises the real pilot configuration end to end, not an isolated
+    # boundary.
+    @_uat_settings()
     def test_pm_uat_006_operational_tracking_deadline(self):
         contract, _document, _version, _attempt = self._intake_uat_contract()
 
@@ -430,19 +429,21 @@ class PayrollMindsExecutableUATTests(TestCase):
         self.assertNotContains(member_obligations, deadline.title)
 
     @_uat_settings()
-    def test_pm_uat_006_obligations_ui_currently_out_of_pilot_route_scope(self):
-        """Known limitation, not a security defect: under the real pilot
-        setting (CONTROLLED_PILOT_ENABLED=True, the actual deployed
-        posture per UAT_SCRIPT.md), ControlledPilotScopeMiddleware blocks
-        the dedicated /contracts/obligations/ UI route outright
-        (reason='obligations_out_of_scope'), even though PILOT_SCOPE.md
-        lists dates/reminders as an in-scope pilot capability. This test
-        documents the current, real behavior rather than hiding it; see
-        PAYROLLMINDS_EXECUTABLE_UAT_EVIDENCE.md 'known limitations'."""
-        self.client.force_login(self.owner)
+    def test_pm_uat_006_obligations_cross_workspace_denied(self):
+        """The route allowlist reconciliation must not weaken authorization:
+        an outside-workspace user reaching the now-permitted Obligations
+        route still sees nothing, server-side, regardless of route scope."""
+        contract, _document, _version, _attempt = self._intake_uat_contract()
+        Deadline.objects.create(
+            title='PayrollMinds UAT renewal notice', contract=contract,
+            due_date='2030-06-01', created_by=self.owner,
+        )
+
+        self.client.force_login(self.outside_user)
         response = self.client.get(reverse('contracts:obligations_workspace'))
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('dashboard'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(list(response.context['obligations']), [])
+        self.assertNotContains(response, 'PayrollMinds UAT renewal notice')
 
     # -- PM-UAT-007: controlled export ---------------------------------------
 

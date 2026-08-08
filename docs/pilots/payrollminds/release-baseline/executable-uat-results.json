@@ -17,7 +17,7 @@
     {"id": "PM-UAT-003", "status": "pass", "evidence": ["test_pm_uat_003_metadata_review_is_human_verified"]},
     {"id": "PM-UAT-004", "status": "pass", "evidence": ["test_pm_uat_004_workflow_progression_valid_and_invalid"]},
     {"id": "PM-UAT-005", "status": "pass", "evidence": ["test_pm_uat_005_search_authorized_and_unauthorized"]},
-    {"id": "PM-UAT-006", "status": "pass", "evidence": ["test_pm_uat_006_operational_tracking_deadline", "test_pm_uat_006_obligations_ui_currently_out_of_pilot_route_scope"], "note": "obligations UI route currently out of CONTROLLED_PILOT_ENABLED=true route scope; documented known limitation, not a security defect"},
+    {"id": "PM-UAT-006", "status": "pass", "evidence": ["test_pm_uat_006_operational_tracking_deadline", "test_pm_uat_006_obligations_cross_workspace_denied"], "note": "obligations UI route allowlist reconciled with PILOT_SCOPE.md (AGENT PROMPT 32 Phase 1); previously-documented known limitation resolved"},
     {"id": "PM-UAT-007", "status": "pass", "evidence": ["test_pm_uat_007_controlled_export", "test_pm_uat_007_export_never_leaks_other_workspace_rows"]},
     {"id": "PM-UAT-008", "status": "pass", "evidence": ["test_pm_uat_008_private_access_denied_to_unrelated_member"]},
     {"id": "PM-UAT-009", "status": "pass", "evidence": ["test_pm_uat_009_cross_workspace_access_denied"]},
