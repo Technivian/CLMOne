@@ -8,6 +8,7 @@ from django.utils import timezone
 
 from contracts.models import (
     ApprovalRequest,
+    ApprovalRule,
     CommandCenterWorkItem,
     Contract,
     Deadline,
@@ -283,6 +284,11 @@ class CommandCenterProductionSurfaceTests(TestCase):
         contract = Contract.objects.create(
             organization=self.org, title='Approval Contract', content='x', created_by=self.user,
         )
+        ApprovalRule.objects.create(
+            organization=self.org, name='Legal Rule', trigger_type='VALUE_ABOVE',
+            trigger_value='0', approval_step='LEGAL', approver_role='ASSOCIATE',
+            specific_approver=self.user,
+        )
         ApprovalRequest.objects.create(
             organization=self.org, contract=contract, approval_step='Legal',
             status=ApprovalRequest.Status.PENDING, assigned_to=self.user,
@@ -290,3 +296,15 @@ class CommandCenterProductionSurfaceTests(TestCase):
         response = self.client_.get(reverse('dashboard'))
         self.assertEqual(response.context['clm_pending_approvals_count'], 1)
         self.assertContains(response, 'awaiting action')
+
+    def test_kpi_meta_prompts_setup_when_approval_authority_missing(self):
+        contract = Contract.objects.create(
+            organization=self.org, title='Unconfigured Approval Contract', content='x', created_by=self.user,
+        )
+        ApprovalRequest.objects.create(
+            organization=self.org, contract=contract, approval_step='Legal',
+            status=ApprovalRequest.Status.PENDING, assigned_to=self.user,
+        )
+        response = self.client_.get(reverse('dashboard'))
+        self.assertFalse(response.context['approval_path_configured'])
+        self.assertContains(response, 'Configure approval authority')
