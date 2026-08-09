@@ -357,7 +357,7 @@ class MentionsAiAndReminderTests(TestCase):
             content_type='application/json',
         )
 
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 404)
 
     def test_contract_update_requires_owner_admin_or_creator(self):
         self.client.login(username='member', password='testpass123')
@@ -366,7 +366,7 @@ class MentionsAiAndReminderTests(TestCase):
             reverse('contracts:contract_update', kwargs={'pk': self.contract.id}),
         )
 
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 404)
 
     def test_contract_update_allows_admin(self):
         self.client.login(username='adminuser', password='testpass123')
@@ -407,8 +407,8 @@ class MentionsAiAndReminderTests(TestCase):
             follow=True,
         )
 
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(
+        self.assertEqual(response.status_code, 404)
+        self.assertFalse(
             NegotiationThread.objects.filter(contract=self.contract, title='Member comment').exists()
         )
 
@@ -441,7 +441,7 @@ class MentionsAiAndReminderTests(TestCase):
             },
         )
 
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 200)
         self.assertFalse(Document.objects.filter(title='Unapproved upload').exists())
 
     def test_document_create_allows_admin_for_contract(self):
@@ -467,7 +467,7 @@ class MentionsAiAndReminderTests(TestCase):
             reverse('contracts:deadline_update', kwargs={'pk': self.deadline.id}),
         )
 
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 404)
 
     def test_deadline_complete_requires_contract_edit_permission(self):
         self.client.login(username='member', password='testpass123')
@@ -476,7 +476,7 @@ class MentionsAiAndReminderTests(TestCase):
             reverse('contracts:deadline_complete', kwargs={'pk': self.deadline.id}),
         )
 
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 404)
         self.deadline.refresh_from_db()
         self.assertFalse(self.deadline.is_completed)
 
@@ -536,7 +536,7 @@ class MentionsAiAndReminderTests(TestCase):
             {'status': WorkflowStep.Status.COMPLETED},
         )
 
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 404)
         self.workflow_step.refresh_from_db()
         self.assertEqual(self.workflow_step.status, WorkflowStep.Status.PENDING)
 
@@ -564,7 +564,7 @@ class MentionsAiAndReminderTests(TestCase):
             },
         )
 
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 200)
         self.assertFalse(Workflow.objects.filter(title='Unauthorized workflow').exists())
 
     def test_risk_log_create_requires_contract_edit_permission(self):
@@ -646,7 +646,7 @@ class MentionsAiAndReminderTests(TestCase):
             },
         )
 
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 200)
         self.assertFalse(LegalTask.objects.filter(title='Unauthorized legal task').exists())
 
     def test_legal_task_update_requires_contract_edit_permission(self):
@@ -656,7 +656,7 @@ class MentionsAiAndReminderTests(TestCase):
             reverse('contracts:legal_task_update', kwargs={'pk': self.legal_task.id}),
         )
 
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 404)
 
     def test_legal_task_update_allows_admin(self):
         self.client.login(username='adminuser', password='testpass123')

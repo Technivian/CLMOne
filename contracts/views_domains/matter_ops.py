@@ -43,7 +43,8 @@ from contracts.middleware import log_action
 from contracts.permissions import ContractAction, can_access_contract_action
 from contracts.services.object_read_policy import (
     ObjectReadPolicyUnavailable,
-    filter_contract_queryset,
+    filter_contract_edit_queryset,
+    filter_legal_task_edit_queryset,
     filter_legal_task_queryset,
 )
 from contracts.services.legal_signals import get_legal_signal_counts_for_org, get_legal_signals_for_org
@@ -57,9 +58,10 @@ def _can_actor_complete_task(task, user, org):
     return can_actor_complete_task(task, user, org)
 
 
-def _private_tasks_for_request(request, organization, queryset, *, surface):
+def _private_tasks_for_request(request, organization, queryset, *, surface, for_edit=False):
     try:
-        return filter_legal_task_queryset(
+        policy = filter_legal_task_edit_queryset if for_edit else filter_legal_task_queryset
+        return policy(
             queryset,
             organization=organization,
             user=request.user,
@@ -73,7 +75,7 @@ def _apply_private_contract_task_choices(form, request, organization, *, surface
     if 'contract' not in form.fields:
         return form
     try:
-        form.fields['contract'].queryset = filter_contract_queryset(
+        form.fields['contract'].queryset = filter_contract_edit_queryset(
             form.fields['contract'].queryset,
             organization=organization,
             user=request.user,
@@ -293,6 +295,7 @@ class LegalTaskUpdateView(TenantScopedFormMixin, TenantScopedQuerysetMixin, Logi
             org,
             LegalTask.objects.filter(Q(contract__organization=org) | Q(matter__organization=org)),
             surface='legal_task_update',
+            for_edit=True,
         )
 
     def dispatch(self, request, *args, **kwargs):
@@ -328,6 +331,7 @@ def legal_task_complete(request, pk):
             Q(contract__organization=org) | Q(matter__organization=org)
         ),
         surface='legal_task_complete',
+        for_edit=True,
     )
     task = get_object_or_404(queryset, pk=pk)
 

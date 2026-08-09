@@ -7,7 +7,13 @@ from unittest.mock import MagicMock, patch, PropertyMock
 class TestContractSearchService(TestCase):
     def _make_service(self):
         from contracts.services.search_api import ContractSearchAPIService
-        return ContractSearchAPIService()
+        service = ContractSearchAPIService()
+        # These unit tests exercise pagination/filter mechanics, not the
+        # canonical policy implementation. Stub that boundary explicitly
+        # rather than supplying an unauthenticated actor (which PDR-0008
+        # correctly fails closed).
+        service._eligible_contracts = MagicMock(side_effect=lambda qs, **_kwargs: qs)
+        return service
 
     def test_search_returns_paginated_result(self):
         svc = self._make_service()

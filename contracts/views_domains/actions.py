@@ -20,6 +20,7 @@ from contracts.forms import BudgetExpenseForm, ChecklistItemForm, DueDiligenceRi
 from contracts.models import AuditLog, BudgetExpense, ChecklistItem, Contract, DueDiligenceRisk, DueDiligenceTask, NegotiationThread, Notification, Organization, OrganizationMembership, UserProfile
 from contracts.middleware import log_action
 from contracts.permissions import ContractAction, can_access_contract_action, can_manage_organization
+from contracts.services.object_read_policy import filter_contract_queryset
 from contracts.session_security import (
     get_organization_session_audit,
     get_user_sessions,
@@ -911,7 +912,12 @@ class AddNegotiationNoteView(TenantAssignCreateMixin, LoginRequiredMixin, Create
     def form_valid(self, form):
         organization = get_user_organization(self.request.user)
         contract = get_object_or_404(
-            Contract.objects.filter(organization=organization),
+            filter_contract_queryset(
+                Contract.objects.filter(organization=organization),
+                organization=organization,
+                user=self.request.user,
+                surface='contract_comment',
+            ),
             id=self.kwargs['pk'],
         )
         if not can_access_contract_action(self.request.user, contract, ContractAction.COMMENT):

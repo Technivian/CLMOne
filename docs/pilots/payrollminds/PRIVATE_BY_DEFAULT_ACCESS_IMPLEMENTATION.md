@@ -53,7 +53,7 @@ the restricted output outside the repository.
 
 ## Gate state
 
-### Preservation regression closure (2026-08-09)
+### Preservation and full-regression closure (2026-08-09)
 
 The original preservation selection had three failures. All three reproduce
 unchanged on the exact `e500368c6f1191909d21822a7bdd394ff0e7fa2a` baseline,
@@ -82,16 +82,17 @@ asserts only the visible row/count and preserves direct-detail denial.
 
 Results:
 
-- focused preservation selection: **236/236 passed**;
-- focused private/security/preflight selection: **111/111 passed**;
-- export, AI-governance, tenant mutation, audit append-only, and workflow
-  transition/audit selection: **66/66 passed**;
+- the combined preservation/security regression selection (private access,
+  PAR-SEC-002 search/repository, cross-tenant isolation, permission matrix,
+  documents, workflow/audit, export, AI governance, and MSA/NDA/DPA) is
+  **333/333 passed**;
 - migration drift: clean; no migration was added;
 - full Django comparison: baseline `2724` collected, `34` failures / `37`
-  errors / `9` skipped; corrected head `2726` collected, `86` failures / `40`
-  errors / `9` skipped. The expanded legacy failures must be triaged in a
-  separately authorized stabilization task; this implementation is not green
-  on the complete suite.
+  errors / `9` skipped; initial PR head `2726` collected, `86` failures / `40`
+  errors / `9` skipped; corrected working tree `2726` collected, `31`
+  failures / `36` errors / `9` skipped. The normalized delta is **0 new / 0
+  mutated**; all remaining signatures reproduce on the exact baseline. See
+  [`PRIVATE_ACCESS_FULL_SUITE_REGRESSION_DIFF.md`](PRIVATE_ACCESS_FULL_SUITE_REGRESSION_DIFF.md).
 - authoritative browser manifest on corrected head: `94` collected, `89`
   passed, `5` failed, `0` skipped, `0` interrupted. The five failures are
   `visual-baselines.spec.js` dashboard/list/form/workspace/detail checks whose
@@ -105,6 +106,7 @@ Results:
   production rollback was attempted;
 - production preflight: not run; no production connection was made.
 
-Current status: **NO-GO — full Django regression, final CI/browser evidence,
-and production preflight pending**. No production activation is authorized by
-this evidence document.
+Current status: **PRIVATE-BY-DEFAULT IMPLEMENTATION GREEN — PRODUCTION
+PREFLIGHT PENDING**, subject to final CI/Linux browser and release-evidence
+gates for the pushed SHA. No production activation is authorized by this
+evidence document.

@@ -40,6 +40,7 @@ class Phase6AmplifierTests(TestCase):
             status=Contract.Status.IN_PROGRESS,
             contract_type='MSA',
             created_by=self.owner,
+            owner=self.member,
         )
         self.approval = ApprovalRequest.objects.create(
             organization=self.org,

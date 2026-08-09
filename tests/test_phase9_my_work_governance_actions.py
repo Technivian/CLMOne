@@ -43,7 +43,10 @@ class Phase9MyWorkGovernanceActionsTests(TestCase):
             content='Body',
             status=Contract.Status.IN_PROGRESS,
             contract_type='MSA',
-            created_by=self.owner,
+            # Both reviewed actors require an accountable relationship to
+            # exercise their distinct My Work journeys.
+            created_by=self.admin,
+            owner=self.member,
         )
         self.approval = ApprovalRequest.objects.create(
             organization=self.org,
@@ -169,7 +172,9 @@ class Phase9MyWorkGovernanceActionsTests(TestCase):
             decided_by=self.admin,
             comments='Please revise schedule',
         )
-        self.client.force_login(self.owner)
+        # The accountable contract owner receives the returned work item even
+        # when a different active member originally created the record.
+        self.client.force_login(self.member)
         response = self.client.get(reverse('contracts:my_work'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Correct on contract')

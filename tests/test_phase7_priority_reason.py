@@ -39,7 +39,9 @@ class Phase7PriorityReasonTests(TestCase):
             content='Body',
             status=Contract.Status.IN_PROGRESS,
             contract_type='MSA',
-            created_by=self.owner,
+            # The assigned member is the intended actor for these queue
+            # projections, so make their provenance deterministic.
+            created_by=self.member,
             risk_level='HIGH',
         )
         today = timezone.localdate()

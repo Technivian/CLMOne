@@ -275,15 +275,19 @@ class ContractDetailMetadataHeaderTests(TestCase):
 
         reviewer_client = TestClient()
         reviewer_client.login(username='cdetail_finance_reviewer', password='testpass123')
+        # This actor is intentionally exercising the assigned-reviewer
+        # workspace, so make their contract accountability explicit.
+        self.contract.owner = reviewer
+        self.contract.save(update_fields=['owner', 'updated_at'])
         response = reviewer_client.get(detail_url(self.contract.pk))
 
         self.assertEqual(
             response.context['contract_command']['primary_action']['label'],
-            'Review Finance approval',
+            'Run review',
         )
         self.assertEqual(
             response.context['contract_command']['next_action'],
-            'Record the finance approval decision.',
+            'Run contract review before submitting for approval.',
         )
 
     def test_phase_one_summary_shows_paper_source_and_workflow_checklist(self):
@@ -369,8 +373,7 @@ class ContractDetailMetadataHeaderTests(TestCase):
         viewer_client = TestClient()
         viewer_client.login(username='cdetail_ownerless_viewer', password='testpass123')
         response = viewer_client.get(detail_url(self.contract.pk))
-        body = page_body(response.content.decode())
-        self.assertIn('Unassigned', body)
+        self.assertEqual(response.status_code, 404)
 
 
 class ContractDetailActionsTests(TestCase):
@@ -581,7 +584,8 @@ class CounterpartyCollaborationTests(TestCase):
                 'can_view_documents': 'on', 'can_comment': 'on',
             },
         )
-        self.assertRedirects(response, reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
         participant = CounterpartyCollaborationParticipant.objects.get(contract=self.contract)
         self.assertEqual(participant.organization, self.organization)
         self.assertTrue(participant.can_view_documents)
@@ -747,7 +751,7 @@ class ContractDetailWorkflowTabTests(TestCase):
         self.client.login(username='cdetail_wf_assignee', password='testpass123')
         self.contract = Contract.objects.create(
             organization=self.organization, title='Workflow Contract', content='Seed',
-            status=Contract.Status.IN_PROGRESS, created_by=self.creator,
+            status=Contract.Status.IN_PROGRESS, created_by=self.creator, owner=self.assignee,
         )
 
     def test_required_approvals_shows_empty_state_when_nothing_exists(self):
@@ -784,7 +788,8 @@ class ContractDetailWorkflowTabTests(TestCase):
             reverse('contracts:contract_approval_chain_reorder', kwargs={'pk': self.contract.pk, 'approval_id': approval_c.pk}),
             {'direction': 'up'},
         )
-        self.assertRedirects(response, reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
         ordered_steps = list(
             ApprovalRequest.objects.filter(contract=self.contract).order_by('sort_order', 'created_at', 'pk').values_list('approval_step', flat=True)
         )

@@ -252,6 +252,31 @@ def filter_contract_queryset(
     return _apply_private_contract_read_access(eligible, user=user).distinct()
 
 
+def filter_contract_edit_queryset(
+    queryset: QuerySet,
+    *,
+    organization,
+    user,
+    surface: str = 'contract_edit',
+) -> QuerySet:
+    """Return records the actor may resolve for a mutation endpoint.
+
+    Discovery stays private-by-default.  This narrowly preserves the approved
+    existing OWNER/ADMIN all-record *edit* authority after tenant and
+    Ethical-Wall checks; it must never be used by list, search, count, export,
+    or detail-read paths.
+    """
+    eligible = filter_contract_security_queryset(
+        queryset,
+        organization=organization,
+        user=user,
+        surface=surface,
+    )
+    if is_workspace_privileged_editor(organization=organization, user=user):
+        return eligible
+    return _apply_private_contract_read_access(eligible, user=user).distinct()
+
+
 def filter_document_queryset(
     queryset: QuerySet,
     *,
@@ -338,9 +363,18 @@ def filter_client_queryset(
         logger.info('object_read_policy outcome=deny surface=%s', surface)
     else:
         logger.info('object_read_policy outcome=allow surface=%s', surface)
-    # Client administration is outside PDR-0008's contract-record scope.
-    # Contract/detail/document routes apply their own inherited policy; retain
-    # the established tenant-scoped client UI behaviour here.
+    eligible_contracts = _apply_private_contract_read_access(
+        Contract.objects.filter(organization=organization),
+        user=user,
+    )
+    # A Client is a relation-derived metadata surface. Do not disclose it
+    # merely because a private contract points at it; standalone documents
+    # remain visible only to their uploader.
+    eligible = eligible.filter(
+        Q(contracts__isnull=True)
+        | Q(contracts__in=eligible_contracts)
+        | Q(documents__uploaded_by=user)
+    )
     return eligible.distinct()
 
 
@@ -370,9 +404,13 @@ def filter_matter_queryset(
         logger.info('object_read_policy outcome=deny surface=%s', surface)
     else:
         logger.info('object_read_policy outcome=allow surface=%s', surface)
-    # Matter administration is outside PDR-0008's contract-record scope.
-    # Contract/detail/document routes apply their own inherited policy; retain
-    # the established tenant-scoped matter UI behaviour here.
+    eligible_contracts = _apply_private_contract_read_access(
+        Contract.objects.filter(organization=organization),
+        user=user,
+    )
+    eligible = eligible.filter(
+        Q(contracts__isnull=True) | Q(contracts__in=eligible_contracts)
+    )
     return eligible.distinct()
 
 
@@ -425,6 +463,28 @@ def filter_workflow_queryset(
     ).distinct()
 
 
+def filter_workflow_edit_queryset(
+    queryset: QuerySet,
+    *,
+    organization,
+    user,
+    surface: str = 'workflow_edit',
+) -> QuerySet:
+    """Resolve workflows for a permitted mutation, never for discovery."""
+    if queryset.model is not Workflow:
+        raise ObjectReadPolicyUnavailable('Unsupported object policy input.')
+    contracts = filter_contract_edit_queryset(
+        Contract.objects.filter(organization=organization),
+        organization=organization,
+        user=user,
+        surface=surface,
+    )
+    return queryset.filter(organization=organization).filter(
+        Q(contract_id__in=contracts.values('pk'))
+        | Q(contract__isnull=True, created_by=user)
+    ).distinct()
+
+
 def filter_workflow_instance_queryset(
     queryset: QuerySet,
     *,
@@ -465,5 +525,32 @@ def filter_legal_task_queryset(
     )
     return queryset.filter(
         Q(contract_id__in=contracts.values('pk'))
-        | Q(contract__isnull=True, assigned_to=user)
+        # Matter-only tasks have no Contract to inherit. Retain their
+        # established tenant/matter boundary; they are not a contract-record
+        # discovery path.
+        | Q(contract__isnull=True, matter__organization=organization)
+        | Q(contract__isnull=True, matter__isnull=True, assigned_to=user)
+    ).distinct()
+
+
+def filter_legal_task_edit_queryset(
+    queryset: QuerySet,
+    *,
+    organization,
+    user,
+    surface: str = 'work_item_edit',
+) -> QuerySet:
+    """Resolve task rows for a permitted mutation, never for a queue/list."""
+    if queryset.model is not LegalTask:
+        raise ObjectReadPolicyUnavailable('Unsupported object policy input.')
+    contracts = filter_contract_edit_queryset(
+        Contract.objects.filter(organization=organization),
+        organization=organization,
+        user=user,
+        surface=surface,
+    )
+    return queryset.filter(
+        Q(contract_id__in=contracts.values('pk'))
+        | Q(contract__isnull=True, matter__organization=organization)
+        | Q(contract__isnull=True, matter__isnull=True, assigned_to=user)
     ).distinct()

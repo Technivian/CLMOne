@@ -47,6 +47,7 @@ from contracts.services.document_repository_policy import (
     document_repository_enforcement_active,
 )
 from contracts.services.repository import apply_repository_contract_policy
+from contracts.services.object_read_policy import filter_contract_edit_queryset
 
 
 def _document_queryset_for_request(request, organization, queryset, *, surface):
@@ -60,6 +61,15 @@ def _document_queryset_for_request(request, organization, queryset, *, surface):
 
 def _contract_queryset_for_request(request, organization, queryset, *, surface):
     return apply_repository_contract_policy(
+        queryset,
+        organization=organization,
+        user=request.user,
+        surface=surface,
+    )
+
+
+def _contract_edit_queryset_for_request(request, organization, queryset, *, surface):
+    return filter_contract_edit_queryset(
         queryset,
         organization=organization,
         user=request.user,
@@ -588,7 +598,7 @@ class DocumentCreateView(TenantScopedFormMixin, TenantAssignCreateMixin, LoginRe
             or not is_external_collaboration_enabled()
         ):
             form.fields.pop('share_with_counterparty', None)
-        form.fields['contract'].queryset = _contract_queryset_for_request(
+        form.fields['contract'].queryset = _contract_edit_queryset_for_request(
             self.request,
             org,
             form.fields['contract'].queryset,
@@ -700,7 +710,7 @@ class DocumentUpdateView(TenantScopedFormMixin, TenantScopedQuerysetMixin, Login
             or not is_external_collaboration_enabled()
         ):
             form.fields.pop('share_with_counterparty', None)
-        form.fields['contract'].queryset = _contract_queryset_for_request(
+        form.fields['contract'].queryset = _contract_edit_queryset_for_request(
             self.request,
             org,
             form.fields['contract'].queryset,

@@ -47,6 +47,7 @@ class ApiVersionsClausesOperationsSearchTests(TestCase):
             counterparty='Acme',
             content='Agreement body',
             status=Contract.Status.IN_PROGRESS,
+            created_by=self.user,
         )
         api_token_record, raw_token = OrganizationAPIToken.create_token(
             organization=self.organization,
@@ -354,6 +355,7 @@ class ApiVersionsClausesOperationsSearchTests(TestCase):
             counterparty='Exact',
             content='Body',
             status=Contract.Status.IN_PROGRESS,
+            created_by=self.user,
         )
         partial = Contract.objects.create(
             organization=self.organization,
@@ -361,6 +363,7 @@ class ApiVersionsClausesOperationsSearchTests(TestCase):
             counterparty='Partial',
             content='Body',
             status=Contract.Status.IN_PROGRESS,
+            created_by=self.user,
         )
 
         response = self.client.get(reverse('contracts:global_search'), {'q': 'Alpha', 'type': 'contract'})

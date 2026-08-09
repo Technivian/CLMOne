@@ -72,6 +72,7 @@ class RetentionHoldGuardTests(TestCase):
             organization=self.org,
             title='Test Doc',
             matter=matter,
+            uploaded_by=self.user,
         )
 
     def test_document_delete_blocked_when_matter_under_active_hold(self):

@@ -116,7 +116,11 @@ from contracts.services.contract_detail_workspace import (
 from contracts.services.ai_policy import evaluate_prompt
 from contracts.services.ai_actions import build_action_plan, execute_action_plan
 from contracts.services.payrollminds_demo import is_payrollminds_presenter_workspace
-from contracts.services.object_read_policy import ObjectReadPolicyUnavailable, filter_contract_queryset
+from contracts.services.object_read_policy import (
+    ObjectReadPolicyUnavailable,
+    filter_contract_edit_queryset,
+    filter_contract_queryset,
+)
 from contracts.services.repository import apply_repository_contract_policy
 from config.feature_flags import is_feature_redesign_enabled
 
@@ -1523,7 +1527,7 @@ class ContractUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin, UpdateVi
     def get_queryset(self):
         org = get_user_organization(self.request.user)
         queryset = scope_queryset_for_organization(Contract.objects.all(), org)
-        return apply_repository_contract_policy(
+        return filter_contract_edit_queryset(
             queryset,
             organization=org,
             user=self.request.user,

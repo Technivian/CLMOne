@@ -66,7 +66,8 @@ from contracts.services.workflow_simulation import simulate_workflow_template
 from contracts.services.workflow_templates import COMPARISON_PRESETS, compare_template_versions, clone_template_version, list_template_versions
 from contracts.services.object_read_policy import (
     ObjectReadPolicyUnavailable,
-    filter_contract_queryset,
+    filter_contract_edit_queryset,
+    filter_workflow_edit_queryset,
     filter_workflow_queryset,
 )
 from contracts.services.workflow_designer import (
@@ -112,10 +113,11 @@ def _workflow_template_queryset_for_organization(organization):
     )
 
 
-def _workflow_queryset_for_request(request, organization, queryset, *, surface):
+def _workflow_queryset_for_request(request, organization, queryset, *, surface, for_edit=False):
     """Keep workflow discovery aligned with its linked Contract visibility."""
     try:
-        return filter_workflow_queryset(
+        policy = filter_workflow_edit_queryset if for_edit else filter_workflow_queryset
+        return policy(
             queryset,
             organization=organization,
             user=request.user,
@@ -129,7 +131,7 @@ def _apply_private_contract_choices(form, request, organization, *, surface):
     if 'contract' not in form.fields:
         return form
     try:
-        form.fields['contract'].queryset = filter_contract_queryset(
+        form.fields['contract'].queryset = filter_contract_edit_queryset(
             form.fields['contract'].queryset,
             organization=organization,
             user=request.user,
@@ -490,6 +492,7 @@ class WorkflowStepUpdateView(TenantScopedFormMixin, TenantScopedQuerysetMixin, L
                 organization,
                 _scope_workflows_for_organization(organization),
                 surface='workflow_step_update',
+                for_edit=True,
             )
         )
 
@@ -543,6 +546,7 @@ class WorkflowStepCompleteView(LoginRequiredMixin, View):
                     organization,
                     _scope_workflows_for_organization(organization),
                     surface='workflow_step_complete',
+                    for_edit=True,
                 )
             ),
             pk=pk,
@@ -568,6 +572,7 @@ class AddWorkflowStepView(LoginRequiredMixin, View):
                 organization,
                 _scope_workflows_for_organization(organization),
                 surface='workflow_step_create',
+                for_edit=True,
             ),
             pk=pk,
         )
@@ -978,6 +983,7 @@ def update_workflow_step(request, pk):
                 organization,
                 _scope_workflows_for_organization(organization),
                 surface='workflow_step_update',
+                for_edit=True,
             )
         ),
         pk=pk,
