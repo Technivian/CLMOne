@@ -116,6 +116,7 @@ from contracts.services.contract_detail_workspace import (
 from contracts.services.ai_policy import evaluate_prompt
 from contracts.services.ai_actions import build_action_plan, execute_action_plan
 from contracts.services.payrollminds_demo import is_payrollminds_presenter_workspace
+from contracts.services.object_read_policy import ObjectReadPolicyUnavailable, filter_contract_queryset
 from contracts.services.repository import apply_repository_contract_policy
 from config.feature_flags import is_feature_redesign_enabled
 
@@ -1958,8 +1959,17 @@ class RepositoryView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
 def contract_ai_assistant(request, pk):
     organization = get_user_organization(request.user)
     observe_request('ai.contract_assistant', request.user, organization)
-    contract = get_object_or_404(scope_queryset_for_organization(Contract.objects.all(), organization), id=pk)
-    if not can_access_contract_action(request.user, contract, ContractAction.COMMENT):
+    try:
+        contract_queryset = filter_contract_queryset(
+            scope_queryset_for_organization(Contract.objects.all(), organization),
+            organization=organization,
+            user=request.user,
+            surface='contract_ai_assistant',
+        )
+    except ObjectReadPolicyUnavailable:
+        contract_queryset = Contract.objects.none()
+    contract = get_object_or_404(contract_queryset, id=pk)
+    if not can_access_contract_action(request.user, contract, ContractAction.AI):
         return HttpResponseForbidden('You do not have access to this contract organization.')
 
     prompt = ''
@@ -2087,7 +2097,12 @@ def dashboard(request):
     thirty_days = today + timedelta(days=30)
     org = get_user_organization(request.user)
 
-    case_qs = scope_queryset_for_organization(Case.objects.all(), org)
+    case_qs = apply_repository_contract_policy(
+        scope_queryset_for_organization(Case.objects.all(), org),
+        organization=org,
+        user=request.user,
+        surface='dashboard_contract_counts',
+    )
     clients_qs = scope_queryset_for_organization(Client.objects.all(), org)
     case_matter_qs = scope_queryset_for_organization(CaseMatter.objects.all(), org)
     workflows_qs = scope_queryset_for_organization(Workflow.objects.all(), org)

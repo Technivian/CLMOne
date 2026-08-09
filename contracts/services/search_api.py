@@ -125,18 +125,6 @@ class ContractSearchAPIService:
 
     @staticmethod
     def _eligible_contracts(qs, *, org, user):
-        state = object_read_policy.contract_search_enforcement_state(org)
-        if state == object_read_policy.SearchEnforcementState.LEGACY:
-            return qs
-        if state == object_read_policy.SearchEnforcementState.ABORT_FAIL_CLOSED:
-            logger.warning(
-                'object_read_policy outcome=rollback_fail_closed '
-                'surface=contract_search'
-            )
-            return qs.none()
-        if state == object_read_policy.SearchEnforcementState.FAIL_CLOSED:
-            logger.error('object_read_policy outcome=policy_error surface=contract_search')
-            return qs.none()
         try:
             return object_read_policy.filter_contract_queryset(
                 qs,

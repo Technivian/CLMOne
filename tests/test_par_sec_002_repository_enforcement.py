@@ -84,7 +84,7 @@ class ParSec002RepositoryEnforcementTests(TestCase):
             title='Ordinary repository agreement',
             counterparty='Visible Counterparty',
             lifecycle_stage=Contract.LifecycleStage.DRAFTING,
-            created_by=self.owner,
+            created_by=self.member,
         )
         other_org = Organization.objects.create(name='Other Org', slug='other-repository-org')
         other_user = User.objects.create_user(username='other-repository-owner')
@@ -112,11 +112,11 @@ class ParSec002RepositoryEnforcementTests(TestCase):
     def _repository_api(self):
         return self.client.get(reverse('contracts:contracts_api'))
 
-    def test_flag_off_preserves_existing_tenant_scoped_repository(self):
+    def test_private_policy_is_not_bypassed_when_legacy_flag_is_off(self):
         response = self._repository_api()
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()['total_count'], 3)
+        self.assertEqual(response.json()['total_count'], 1)
         self.assertNotIn(
             self.other_contract.title,
             {row['title'] for row in response.json()['contracts']},
@@ -228,13 +228,11 @@ class ParSec002RepositoryEnforcementTests(TestCase):
             'PAR_SEC_002_REPOSITORY_ABORT_FAIL_CLOSED': True,
         }
     )
-    def test_abort_switch_returns_empty_instead_of_unfiltered_repository(self):
-        with self.assertLogs('contracts.services.repository', level='WARNING') as logs:
-            response = self._repository_api()
+    def test_abort_switch_cannot_restore_an_unfiltered_repository(self):
+        response = self._repository_api()
 
-        self.assertEqual(response.json()['total_count'], 0)
-        self.assertEqual(response.json()['contracts'], [])
-        self.assertIn('outcome=rollback_fail_closed', logs.output[0])
+        self.assertEqual(response.json()['total_count'], 1)
+        self.assertEqual([row['title'] for row in response.json()['contracts']], [self.eligible_contract.title])
 
     @override_settings(
         **{
@@ -242,8 +240,8 @@ class ParSec002RepositoryEnforcementTests(TestCase):
             'PAR_SEC_002_REPOSITORY_ENFORCEMENT_ORG_ALLOWLIST': 'another-org',
         }
     )
-    def test_workspace_outside_allowlist_keeps_existing_path(self):
-        self.assertEqual(self._repository_api().json()['total_count'], 3)
+    def test_workspace_outside_allowlist_keeps_private_policy(self):
+        self.assertEqual(self._repository_api().json()['total_count'], 1)
 
     @override_settings(**REPOSITORY_ENFORCEMENT)
     def test_policy_error_is_content_free_and_fails_closed(self):
@@ -264,5 +262,5 @@ class ParSec002RepositoryEnforcementTests(TestCase):
             'DJANGO_ENV': 'production',
         }
     )
-    def test_production_configuration_fails_closed(self):
-        self.assertEqual(self._repository_api().json()['total_count'], 0)
+    def test_production_configuration_keeps_private_policy(self):
+        self.assertEqual(self._repository_api().json()['total_count'], 1)

@@ -65,16 +65,19 @@ class PermissionMatrixTests(TestCase):
         self.assertFalse(can_manage_organization(self.outsider, self.organization))
         self.assertFalse(can_manage_organization(None, self.organization))
 
-    def test_can_access_contract_action_matches_role_matrix(self):
+    def test_can_access_contract_action_matches_private_by_default_role_matrix(self):
         allowed_actions = [ContractAction.VIEW, ContractAction.COMMENT, ContractAction.AI]
 
-        for user in [self.owner, self.admin, self.member]:
-            with self.subTest(user=user.username, contract='owner_created', action='read-like'):
-                for action in allowed_actions:
-                    self.assertTrue(
-                        can_access_contract_action(user, self.owner_created_contract, action),
-                        f'{user.username} should be allowed to {action} owner-created contract',
-                    )
+        for action in allowed_actions:
+            self.assertTrue(
+                can_access_contract_action(self.owner, self.owner_created_contract, action)
+            )
+            self.assertFalse(
+                can_access_contract_action(self.admin, self.owner_created_contract, action)
+            )
+            self.assertFalse(
+                can_access_contract_action(self.member, self.owner_created_contract, action)
+            )
 
         self.assertTrue(
             can_access_contract_action(self.owner, self.owner_created_contract, ContractAction.EDIT)
@@ -90,6 +93,12 @@ class PermissionMatrixTests(TestCase):
             with self.subTest(user='member_creator', action=action):
                 self.assertTrue(
                     can_access_contract_action(self.member, self.member_created_contract, action)
+                )
+                self.assertFalse(
+                    can_access_contract_action(self.owner, self.member_created_contract, action)
+                )
+                self.assertFalse(
+                    can_access_contract_action(self.admin, self.member_created_contract, action)
                 )
 
         self.assertTrue(

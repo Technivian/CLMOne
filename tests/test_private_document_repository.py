@@ -76,7 +76,7 @@ class PrivateDocumentRepositoryTests(TestCase):
         self.visible_contract = Contract.objects.create(
             organization=self.organization,
             title='Visible Agreement',
-            created_by=self.owner,
+            created_by=self.member,
         )
         self.protected_document = Document.objects.create(
             organization=self.organization,
@@ -100,7 +100,7 @@ class PrivateDocumentRepositoryTests(TestCase):
             organization=self.organization,
             contract=self.visible_contract,
             title='Visible repository document',
-            uploaded_by=self.owner,
+            uploaded_by=self.member,
         )
         self.wall = EthicalWall.objects.create(
             organization=self.organization,
@@ -326,25 +326,20 @@ class PrivateDocumentRepositoryTests(TestCase):
         self.assertContains(response, 'is not supported')
         self.assertEqual(Document.objects.count(), before)
 
-    def test_flag_off_preserves_existing_workspace_scoped_document_path(self):
+    def test_legacy_flags_do_not_restore_workspace_wide_document_discovery(self):
         response = self.client.get(reverse('contracts:document_list'))
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             set(document.pk for document in response.context['documents']),
-            {
-                self.protected_document.pk,
-                self.direct_client_document.pk,
-                self.direct_matter_document.pk,
-                self.visible_document.pk,
-            },
+            {self.visible_document.pk},
         )
 
     @patch(
         'contracts.views_domains.client_matter_document.can_access_contract_action',
         return_value=False,
     )
-    def test_flag_off_preserves_linked_contract_download_permission_response(
+    def test_legacy_flags_do_not_restore_linked_contract_download(
         self,
         _mock_can_access,
     ):
@@ -352,7 +347,7 @@ class PrivateDocumentRepositoryTests(TestCase):
             reverse('contracts:document_download', args=[self.visible_document.pk])
         )
 
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 404)
 
     @override_settings(**REPOSITORY_ENFORCEMENT)
     @patch(
@@ -371,30 +366,9 @@ class PrivateDocumentRepositoryTests(TestCase):
         self.assertNotContains(response, self.visible_document.title, status_code=404)
 
     @override_settings(EXTERNAL_COLLABORATION_ENABLED=True)
-    def test_explicit_sharing_control_requires_separate_external_gate(self):
+    def test_external_sharing_control_remains_unavailable(self):
         form_response = self.client.get(reverse('contracts:document_create'))
-        self.assertIn('share_with_counterparty', form_response.context['form'].fields)
-
-        create_response = self.client.post(
-            reverse('contracts:document_create'),
-            {
-                'title': 'Legacy explicit share',
-                'document_type': Document.DocType.CONTRACT,
-                'status': Document.Status.DRAFT,
-                'contract': self.visible_contract.pk,
-                'share_with_counterparty': 'on',
-                'file': SimpleUploadedFile(
-                    'legacy-share.txt',
-                    b'synthetic legacy sharing fixture',
-                    content_type='text/plain',
-                ),
-            },
-        )
-
-        self.assertEqual(create_response.status_code, 302)
-        self.assertTrue(
-            Document.objects.get(title='Legacy explicit share').share_with_counterparty
-        )
+        self.assertNotIn('share_with_counterparty', form_response.context['form'].fields)
 
     @override_settings(
         **{
@@ -402,15 +376,15 @@ class PrivateDocumentRepositoryTests(TestCase):
             'PAR_SEC_002_REPOSITORY_ABORT_FAIL_CLOSED': True,
         }
     )
-    def test_abort_switch_returns_no_rows_or_object_metadata(self):
+    def test_legacy_abort_switch_does_not_bypass_canonical_policy(self):
         listing = self.client.get(reverse('contracts:document_list'))
         detail = self.client.get(
             reverse('contracts:document_detail', args=[self.visible_document.pk])
         )
 
-        self.assertEqual(list(listing.context['documents']), [])
-        self.assertNotContains(listing, self.visible_document.title)
-        self.assertEqual(detail.status_code, 404)
+        self.assertEqual(list(listing.context['documents']), [self.visible_document])
+        self.assertContains(listing, self.visible_document.title)
+        self.assertEqual(detail.status_code, 200)
 
     @override_settings(**REPOSITORY_ENFORCEMENT)
     def test_malformed_active_wall_fails_closed(self):

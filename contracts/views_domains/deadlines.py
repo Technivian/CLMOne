@@ -16,10 +16,6 @@ from contracts.middleware import log_action
 from contracts.models import Contract, Deadline, Matter
 from contracts.permissions import ContractAction, can_access_contract_action
 from contracts.services.repository import apply_repository_contract_policy
-from contracts.services.object_read_policy import (
-    SearchEnforcementState,
-    contract_repository_enforcement_state,
-)
 from contracts.services.assignments import open_obligations_queryset
 from contracts.services.payrollminds_demo import (
     PRESENTER_READ_ONLY_MESSAGE,
@@ -113,8 +109,6 @@ def _visible_deadlines_queryset(*, organization, user):
     prevents due dates and reminder titles from becoming a metadata side
     channel for private records.
     """
-    if contract_repository_enforcement_state(organization) is SearchEnforcementState.LEGACY:
-        return Deadline.objects.for_organization(organization)
     visible_contracts = apply_repository_contract_policy(
         Contract.objects.filter(organization=organization),
         organization=organization,

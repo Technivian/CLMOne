@@ -1,4 +1,4 @@
-"""Characterize, but do not change, current PAR-SEC-002 read behavior."""
+"""Regression coverage for the approved PAR-SEC-002 read boundary."""
 
 from __future__ import annotations
 
@@ -28,7 +28,7 @@ User = get_user_model()
 
 
 class ParSec002AuthorizationCharacterizationTests(TestCase):
-    """Evidence the current boundary without asserting a future policy."""
+    """Exercise the canonical private-by-default boundary."""
 
     def setUp(self):
         self.owner = User.objects.create_user(username='par-sec-owner', password='pass12345')
@@ -81,13 +81,16 @@ class ParSec002AuthorizationCharacterizationTests(TestCase):
             response = getattr(self.http, method)(url)
             self.assertEqual(response.status_code, 302, url)
 
-    def test_search_is_tenant_scoped_for_owner_and_member(self):
+    def test_search_is_tenant_scoped_and_private_by_default(self):
         search_url = reverse('contracts:api_contract_search')
-        for user in (self.owner, self.member):
+        for user, should_see_contract in ((self.owner, True), (self.member, False)):
             self.http.force_login(user)
             payload = self.http.get(search_url, {'q': 'Contract'}).json()
             ids = {row['id'] for row in payload['results']}
-            self.assertIn(self.contract.id, ids)
+            if should_see_contract:
+                self.assertIn(self.contract.id, ids)
+            else:
+                self.assertNotIn(self.contract.id, ids)
             self.assertNotIn(self.other_contract.id, ids)
             self.http.logout()
 
@@ -106,7 +109,7 @@ class ParSec002AuthorizationCharacterizationTests(TestCase):
         )
         self.assertEqual(response.status_code, 404)
 
-    def test_ethical_wall_is_not_yet_part_of_current_contract_read_policy(self):
+    def test_ethical_wall_fails_closed_for_contract_read_and_ai(self):
         wall = EthicalWall.objects.create(
             organization=self.organization,
             name='Characterization wall',
@@ -116,9 +119,8 @@ class ParSec002AuthorizationCharacterizationTests(TestCase):
         )
         wall.restricted_users.add(self.member)
 
-        # This is evidence of the current gap, not the desired future behavior.
-        self.assertTrue(can_access_contract_action(self.member, self.contract, ContractAction.VIEW))
-        self.assertTrue(can_access_contract_action(self.member, self.contract, ContractAction.AI))
+        self.assertFalse(can_access_contract_action(self.member, self.contract, ContractAction.VIEW))
+        self.assertFalse(can_access_contract_action(self.member, self.contract, ContractAction.AI))
 
     def test_telemetry_inventory_exposes_same_organization_raw_query_to_member(self):
         SearchTelemetryEvent.objects.create(
