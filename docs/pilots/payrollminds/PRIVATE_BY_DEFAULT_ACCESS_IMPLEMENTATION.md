@@ -92,7 +92,12 @@ Results:
   errors / `9` skipped. The expanded legacy failures must be triaged in a
   separately authorized stabilization task; this implementation is not green
   on the complete suite.
-- browser manifest: not yet run for the corrected head;
+- authoritative browser manifest on corrected head: `94` collected, `89`
+  passed, `5` failed, `0` skipped, `0` interrupted. The five failures are
+  `visual-baselines.spec.js` dashboard/list/form/workspace/detail checks whose
+  Darwin reference PNGs are absent from this isolated worktree. No snapshot
+  was created or updated. Functional dashboard, search, contract list/detail,
+  MSA, NDA, DPA, workflow, and tenant browser paths passed;
 - production preflight: not run; no production connection was made.
 
 Current status: **NO-GO — full Django regression, final CI/browser evidence,
