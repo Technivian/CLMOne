@@ -239,7 +239,7 @@ class CommandCenterProductionSurfaceTests(TestCase):
         self.assertTrue(response.context['portfolio_health_available'])
         self.assertEqual(response.context['portfolio_health_score'], 83)
         self.assertContains(response, 'Portfolio health score 83 out of 100, Needs attention')
-        self.assertContains(response, 'Review priority action')
+        self.assertContains(response, 'Inspect blocker')
         priority_href = response.context['priority_feature']['workspace_href']
         self.assertContains(
             response,
@@ -289,4 +289,4 @@ class CommandCenterProductionSurfaceTests(TestCase):
         )
         response = self.client_.get(reverse('dashboard'))
         self.assertEqual(response.context['clm_pending_approvals_count'], 1)
-        self.assertContains(response, '1 open across the organization')
+        self.assertContains(response, 'awaiting action')

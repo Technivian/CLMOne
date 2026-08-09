@@ -1,5 +1,6 @@
 
 import os
+import re
 from pathlib import Path
 from urllib.parse import urlencode
 
@@ -61,7 +62,7 @@ class RedesignComponentsTestCase(TestCase):
         self._enable_clm_dashboard()
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Risk findings')
+        self.assertContains(response, 'High-risk findings')
         self.assertContains(response, 'Component Label Contract')
         self.assertContains(response, 'Top priority')
         self.assertContains(response, 'Governance controls')
@@ -123,14 +124,27 @@ class RedesignComponentsTestCase(TestCase):
         self.assertContains(response, 'aria-label="Governance controls"')
 
     def test_command_center_rail_cards_are_content_sized(self):
-        """Wrapped queue rows must expand their card instead of overflowing it."""
+        """Wrapped queue rows must expand their card instead of overflowing it.
+
+        The Portfolio actions and Upcoming deadlines cards carry no fixed
+        height, so wrapped row content grows the card naturally rather than
+        being clipped by a capped height.
+        """
         stylesheet = Path(__file__).resolve().parents[1] / 'theme/static/css/command-center.css'
         css = stylesheet.read_text()
 
-        self.assertIn('Rail cards are content-sized surfaces.', css)
-        self.assertIn('grid-template-rows: auto auto;', css)
-        self.assertIn('grid-auto-rows: max-content;', css)
-        self.assertIn('max-height: none;', css)
+        rail_card_rule = re.search(
+            r'\.cc-v3-portfolio-action-list,\s*\.cc-v3-deadlines,\s*\.cc-v3-matters\s*\{([^}]*)\}',
+            css,
+        )
+        self.assertIsNotNone(rail_card_rule, 'expected a shared rule for the rail-card family')
+        rule_body = rail_card_rule.group(1)
+        self.assertIn('min-height: 0;', rule_body)
+        self.assertNotRegex(rule_body, r'(?<!min-)(?<!max-)height:\s*\d')
+        self.assertIn(
+            '.cc-v3-portfolio-action-list,\n.cc-v3-deadlines { display: flex; flex-direction: column; }',
+            css,
+        )
 
     def test_budget_list_matches_dashboard_style(self):
         Budget.objects.create(

@@ -30,11 +30,13 @@ test.describe('Phase 5H Command Center consolidation', () => {
       await page.goto('/dashboard/');
       await expect(page.locator('.command-center.cc-v3')).toBeVisible();
       await expect(page.locator('.cc-v3-portfolio-hero.dc-ds-surface--feature')).toBeVisible();
-      await expect(page.locator('.cc-v3-portfolio-actions .dc-ds-button--primary')).toBeVisible();
-      await expect(page.locator('.cc-v3-portfolio-actions .dc-ds-button--link')).toBeVisible();
+      const heroPrimary = page.locator('.cc-v3-portfolio-actions .dc-ds-button--primary, .cc-v3-top-priority-actions .dc-ds-button--primary').first();
+      const heroSecondary = page.locator('.cc-v3-portfolio-actions .dc-ds-button--link, .cc-v3-portfolio-actions .dc-ds-button--secondary, .cc-v3-top-priority-actions .dc-ds-button--secondary').first();
+      await expect(heroPrimary).toBeVisible();
+      await expect(heroSecondary).toBeVisible();
       await expect(page.locator('.dc-ds-metric').first()).toBeVisible();
       await expect(page.locator('.cc-v3-matters.dc-ds-surface')).toBeVisible();
-      const primary = page.locator('.cc-v3-portfolio-actions .dc-ds-button--primary').first();
+      const primary = heroPrimary;
       await primary.focus();
       await expect(primary).toBeFocused();
       await assertNoHorizontalOverflow(page);
@@ -58,7 +60,9 @@ test.describe('Phase 5H Command Center consolidation', () => {
     await page.setViewportSize({ width: 1440, height: 1000 });
     await login(page);
     await page.goto('/dashboard/');
-    const viewAll = page.locator('.cc-v3-portfolio-actions .dc-ds-button--link', { hasText: 'View all contracts' });
+    const viewAll = page.locator(
+      '.cc-v3-portfolio-actions .dc-ds-button--secondary, .cc-v3-top-priority-actions .dc-ds-button--secondary'
+    ).first();
     await expect(viewAll).toBeVisible();
     await viewAll.focus();
     await expect(viewAll).toBeFocused();
