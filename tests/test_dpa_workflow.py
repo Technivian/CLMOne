@@ -392,9 +392,11 @@ class DPAWorkflowBuilderViewIntegrationTests(TestCase):
     def test_intake_does_not_expose_pre_generation_governance_or_ai_controls(self):
         response = self.client_.get(reverse('contracts:dpa_workflow_builder'))
         content = response.content.decode()
-        for removed_control in ('Live contract preview', 'Contract draft', 'Governance', 'Audit trail',
+        for removed_control in ('Live contract preview', 'Contract draft', 'Audit trail',
                                 'Suggest missing values', 'Compare to playbook'):
             self.assertNotIn(removed_control, content)
+        # "Governance" is a global navigation section, not an intake control.
+        self.assertContains(response, 'Step 1 of 4')
 
     def test_get_renders_wizard_actions_without_a_progress_bar(self):
         response = self.client_.get(reverse('contracts:dpa_workflow_builder'))
@@ -721,11 +723,19 @@ class CommandCenterKanbanProjectionTests(TestCase):
         })
 
         response = self.client_.get(reverse('dashboard'))
+        row = next(
+            row for row in response.context['priority_queue_rows']
+            if row['title'] == workflow.title
+        )
 
         self.assertContains(response, workflow.title)
         self.assertContains(response, 'DPA')
-        self.assertContains(response, 'Draft')
         self.assertContains(response, self.user.username)
-        self.assertContains(response, 'Cross-border transfer flagged but no transfer mechanism selected.')
-        self.assertContains(response, 'Review SCC position and DPO route')
         self.assertContains(response, reverse('contracts:workflow_detail', kwargs={'pk': workflow.pk}))
+        self.assertEqual(row['current_stage'], 'Draft')
+        self.assertEqual(row['owner_label'], self.user.username)
+        self.assertEqual(
+            row['blocking_issue'],
+            'Cross-border transfer flagged but no transfer mechanism selected.',
+        )
+        self.assertEqual(row['next_action'], 'Review SCC position and DPO route')

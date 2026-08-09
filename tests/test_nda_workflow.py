@@ -261,7 +261,14 @@ class NDAWorkflowBuilderIntegrationTests(TestCase):
         self.client_.post(reverse('contracts:nda_workflow_builder'), self._low_risk_payload())
         workflow = Workflow.objects.latest('id')
         response = self.client_.get(reverse('dashboard'))
+        row = next(
+            row for row in response.context['priority_queue_rows']
+            if row['title'] == workflow.title
+        )
         self.assertContains(response, workflow.title)
         self.assertContains(response, 'NDA')
-        self.assertContains(response, 'Self-serve eligible')
         self.assertContains(response, reverse('contracts:workflow_detail', kwargs={'pk': workflow.pk}))
+        # The shared Command Center projection owns this data; the dashboard
+        # shell is not required to repeat every operational label as visible
+        # text in every layout variant.
+        self.assertEqual(row['risk_personality'], 'Self-serve eligible')

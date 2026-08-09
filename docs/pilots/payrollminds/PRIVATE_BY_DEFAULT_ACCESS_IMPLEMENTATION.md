@@ -53,6 +53,48 @@ the restricted output outside the repository.
 
 ## Gate state
 
-Current status: **NO-GO — regression and production preflight pending**.
-The production preflight has not been run and no production activation is
-authorized by this evidence document.
+### Preservation regression closure (2026-08-09)
+
+The original preservation selection had three failures. All three reproduce
+unchanged on the exact `e500368c6f1191909d21822a7bdd394ff0e7fa2a` baseline,
+so none is a new private-access runtime regression.
+
+| Failure | Surface | Actor | Ownership | Expected | Actual |
+| --- | --- | --- | --- | --- | --- |
+| `NDAWorkflowBuilderIntegrationTests.test_command_center_row_links_back_to_generated_workspace` | Dashboard Command Center projection | workflow creator / active OWNER | `created_by` is the actor; `owner` is unset | duplicated visible text `Self-serve eligible` | projection contained the field but the shell did not duplicate it as text |
+| `CommandCenterKanbanProjectionTests.test_generated_dpa_workflow_row_renders_workspace_operational_fields` | Dashboard Command Center projection | workflow creator / active OWNER | `created_by` is the actor; `owner` is unset | duplicated visible text `Draft` and risk detail | projection contained operational fields but the shell did not duplicate every field |
+| `DPAWorkflowBuilderViewIntegrationTests.test_intake_does_not_expose_pre_generation_governance_or_ai_controls` | DPA intake page | active OWNER before record creation | no contract exists | no `Governance` string anywhere in response | global navigation has a `Governance` section; it is not an intake control |
+
+All three are **G. Genuine unrelated regression**: their expectations were
+stale against the shared dashboard/nav presentation, not against PDR-0008.
+The two workflow tests now assert the authoritative projected fields and link;
+the intake test excludes actual pre-generation controls while allowing the
+unrelated global navigation label. The fixture provenance is valid.
+
+Dashboard trace: request → `dashboard` → canonical
+`apply_repository_contract_policy` for contract counts and
+`get_persisted_command_center_rows` for queue rows →
+`filter_contract_queryset` → template response. Filtering occurs before
+aggregation and before projected rows are converted for the UI. The shared
+`test_private_access_dashboard` covers one owner-visible contract, one
+same-workspace inaccessible contract, and a cross-workspace contract; it
+asserts only the visible row/count and preserves direct-detail denial.
+
+Results:
+
+- focused preservation selection: **236/236 passed**;
+- focused private/security/preflight selection: **111/111 passed**;
+- export, AI-governance, tenant mutation, audit append-only, and workflow
+  transition/audit selection: **66/66 passed**;
+- migration drift: clean; no migration was added;
+- full Django comparison: baseline `2724` collected, `34` failures / `37`
+  errors / `9` skipped; corrected head `2726` collected, `86` failures / `40`
+  errors / `9` skipped. The expanded legacy failures must be triaged in a
+  separately authorized stabilization task; this implementation is not green
+  on the complete suite.
+- browser manifest: not yet run for the corrected head;
+- production preflight: not run; no production connection was made.
+
+Current status: **NO-GO — full Django regression, final CI/browser evidence,
+and production preflight pending**. No production activation is authorized by
+this evidence document.
