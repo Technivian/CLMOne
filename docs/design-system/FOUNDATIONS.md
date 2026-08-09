@@ -22,10 +22,12 @@ Casefile uses semantic roles, never color names in product decisions.
 | Clear | `--color-state-clear*` | Explicitly empty operational queues, always paired with “Clear” text |
 
 Semantic colour follows the Command Center contract: green means monitored and
-clear; amber means setup incomplete or not measured; red means genuine risk or
-required intervention; blue/teal means neutral category, information, action,
-selection, or trust. Never communicate status by color alone; pair color with
-text, iconography, or position.
+clear (healthy/compliant); amber means something requires attention now; teal
+means a configuration step is outstanding (a queue exists but nothing is
+wired up to measure it yet); red means genuine risk or required intervention.
+Grey/`--status-neutral-*` marks a value that has not been measured or is
+unavailable, distinct from an amber attention state. Never communicate status
+by color alone; pair color with text, iconography, or position.
 
 `--ds-*` names are deprecated aliases retained for compatibility. New code
 uses the canonical tokens shown above.

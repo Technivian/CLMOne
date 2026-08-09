@@ -76,9 +76,9 @@
         <a class="cc-v3-card cc-v3-kpi dc-ds-metric dc-ds-metric--expressive dc-ds-metric--interactive" href="{% url 'contracts:obligations_workspace' %}" aria-label="Deadlines"><div class="cc-v3-kpi-top"><span class="cc-v3-kpi-icon" aria-hidden="true">{% include "design_system/icon.html" with name="calendar" %}</span><span class="cc-v3-kpi-label">Deadlines</span></div><strong class="cc-v3-kpi-value {% if clm_renewals_count or clm_deadline_overdue_count %}is-action-required{% elif not deadline_tracking_configured %}is-setup-required{% else %}is-clear dc-ds-metric__value--clear{% endif %}">{% if clm_renewals_count or clm_deadline_overdue_count %}Action required{% elif not deadline_tracking_configured %}Setup required{% else %}Clear{% endif %}</strong>{% if clm_renewals_count or clm_deadline_overdue_count %}<span class="cc-v3-kpi-meta">{{ clm_renewals_count }} due · {{ clm_deadline_overdue_count }} overdue</span>{% elif not deadline_tracking_configured %}<span class="cc-v3-kpi-meta">Configure tracking</span>{% endif %}</a>
       </section>
 
-      <section class="cc-v3-card cc-v3-governance dc-ds-surface dc-ds-surface--expressive" aria-label="Governance controls">
+      <section class="cc-v3-governance" aria-label="Governance controls">
         <h2 class="cc-v3-governance-title">Governance controls</h2>
-        {% for signal in clm_governance_signals %}<a class="cc-v3-governance-item{% if signal.emphasis %} is-emphasis{% endif %}" href="{{ signal.href }}"><span class="cc-v3-governance-dot {{ signal.tone }}" aria-hidden="true"></span><span class="cc-v3-governance-copy"><span>{{ signal.label }}</span><strong>{{ signal.value }}</strong><em>{{ signal.detail }}</em></span></a>{% endfor %}
+        {% for signal in clm_governance_signals %}<a class="cc-v3-card cc-v3-governance-item dc-ds-metric dc-ds-metric--expressive dc-ds-metric--interactive{% if signal.emphasis %} is-emphasis{% endif %}" href="{{ signal.href }}"><span class="cc-v3-governance-dot {{ signal.tone }}" aria-hidden="true"></span><span class="cc-v3-governance-copy"><span>{{ signal.label }}</span><strong>{{ signal.value }}</strong><em>{{ signal.detail }}</em></span></a>{% endfor %}
       </section>
     </div>
 
