@@ -98,6 +98,11 @@ Results:
   Darwin reference PNGs are absent from this isolated worktree. No snapshot
   was created or updated. Functional dashboard, search, contract list/detail,
   MSA, NDA, DPA, workflow, and tenant browser paths passed;
+- isolated rollback drill: from implementation commit
+  `27069b798160f58eb947295f0b15e084ffbed0bc`, a no-commit `git revert`
+  applied cleanly in a detached worktree; `git diff --check` and Django
+  `manage.py check` passed, then the temporary revert was aborted. No
+  production rollback was attempted;
 - production preflight: not run; no production connection was made.
 
 Current status: **NO-GO — full Django regression, final CI/browser evidence,
