@@ -17,6 +17,8 @@ Including another URLconf
 import logging
 
 from django.contrib import admin
+from django.http import HttpResponseServerError
+from django.template.loader import render_to_string
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
@@ -28,6 +30,23 @@ from django.contrib.auth import views as auth_views
 from django.contrib.auth.views import PasswordResetDoneView, PasswordResetCompleteView
 
 logger = logging.getLogger(__name__)
+
+
+def handler500(request):
+    """Branded 500 page with the request's real CSP nonce.
+
+    Django's built-in server_error view deliberately renders 500.html with
+    no context at all (not even ``request``) so a broken app can't take the
+    error page down too. That means context processors — including the one
+    that supplies ``csp_nonce`` — never run for it, so the template's own
+    inline styles get silently blocked by the CSP header the outer
+    SecurityHeadersMiddleware already attached. Passing the nonce in
+    directly (no ``request=`` to render_to_string) fixes that without
+    re-introducing any context-processor DB/session access into the one
+    handler that must keep working when something else is already broken.
+    """
+    html = render_to_string('500.html', {'csp_nonce': getattr(request, 'csp_nonce', '')})
+    return HttpResponseServerError(html)
 
 urlpatterns = [
     path('admin/', admin.site.urls),

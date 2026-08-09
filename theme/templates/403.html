@@ -7,16 +7,24 @@
   <link rel="icon" href="{% static 'brand/favicon.ico' %}" sizes="any">
   <link rel="icon" type="image/png" sizes="32x32" href="{% static 'brand/favicon-32x32.png' %}">
   <title>Access denied — CLM One</title>
+  <style nonce="{{ csp_nonce }}">
+    body.err-body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:#f7f9fc;color:#111827;}
+    main.err-main{max-width:560px;margin:14vh auto;padding:0 24px;text-align:center;}
+    img.err-logo{display:block;width:auto;height:42px;max-width:100%;object-fit:contain;margin:0 auto 12px;}
+    h1.err-title{font-size:28px;font-weight:800;margin:16px 0 8px;color:#111827;}
+    p.err-text{font-size:15px;line-height:1.6;color:#4b5563;margin:0 0 24px;}
+    a.err-cta{display:inline-block;padding:10px 20px;font-size:14px;font-weight:600;color:#fff;background:#2563eb;border-radius:8px;text-decoration:none;}
+  </style>
 </head>
-<body style="margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:#f7f9fc;color:#111827;">
-  <main style="max-width:560px;margin:14vh auto;padding:0 24px;text-align:center;">
-    <img src="{% static 'brand/clm-one-logo-transparent.webp' %}" alt="CLM One" style="display:block;width:auto;height:42px;max-width:100%;object-fit:contain;margin:0 auto 12px;">
-    <h1 style="font-size:28px;font-weight:800;margin:16px 0 8px;color:#111827;">Access denied</h1>
-    <p style="font-size:15px;line-height:1.6;color:#4b5563;margin:0 0 24px;">
+<body class="err-body">
+  <main class="err-main">
+    <img class="err-logo" src="{% static 'brand/clm-one-logo-transparent.webp' %}" alt="CLM One">
+    <h1 class="err-title">Access denied</h1>
+    <p class="err-text">
       You don’t have permission to view this page or perform this action.
       If you believe this is a mistake, contact your organization administrator.
     </p>
-    <a href="/" style="display:inline-block;padding:10px 20px;font-size:14px;font-weight:600;color:#fff;background:#2563eb;border-radius:8px;text-decoration:none;">Return to dashboard</a>
+    <a class="err-cta" href="/">Return to dashboard</a>
   </main>
 </body>
 </html>
