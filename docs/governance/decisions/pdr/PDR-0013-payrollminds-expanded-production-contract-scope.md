@@ -1,7 +1,7 @@
 # PDR-0013: PayrollMinds expanded production contract scope
 
-**Status:** Proposed — Product Owner business-scope direction recorded; GitHub
-decision evidence and technical activation authorization remain pending.
+**Status:** Business scope approved; technical implementation gate open under
+PDR-0008 / EXC-0003. Production activation remains separately blocked.
 **Date:** 2026-08-09
 
 ## Direction and dependency
@@ -15,7 +15,8 @@ The mandatory sequence is:
 > PDR-0013 business scope → PDR-0008 access-policy approval → separately
 > authorized access implementation → per-type technical activation gate.
 
-Both types remain **BUSINESS SCOPE APPROVED / TECHNICAL ACTIVATION BLOCKED**
+Both types are **BUSINESS SCOPE APPROVED / TECHNICAL IMPLEMENTATION GATE
+OPEN**. They remain production-inactive and cannot enter technical activation
 until the shared access implementation and their individual evidence gates are
 green. `OTHER`/Custom, generic/legacy upload and import, and all later types
 remain excluded.

@@ -1,6 +1,6 @@
 # PDR-0008 Addendum 002: private-by-default contract access approval package
 
-**Status:** Proposed approval package — no runtime implementation or activation authority
+**Status:** PDR-0008 implementation approved under [EXC-0003](../exceptions/EXC-0003-pdr-0008-bootstrap-governance-approval-mechanics.md); no runtime implementation, activation, deployment, or production authority
 **Date:** 2026-08-09
 **Parent:** [PDR-0008](PDR-0008-object-level-read-enforcement-policy.md)
 **Related scope:** [PDR-0013](PDR-0013-payrollminds-expanded-production-contract-scope.md)
@@ -48,14 +48,23 @@ inactive owner/creator fields, then obtain approval for any assignment,
 backfill, archival or access-review transition. It must not infer ownership
 from audit logs or silently make existing ordinary-member records inaccessible.
 
-## Required governance evidence
+## Governance mechanics and Owner authorization
 
-No manual vote table or hand-entered approval timestamp is allowed. GitHub
-must show submitted **Approve** reviews from independent Product, Engineering
-and Security authorities, green CI for the unchanged reviewed SHA, and the
-required release/operator record. `CODEOWNERS` routing alone does not prove
-three independent authorities. If they are unavailable, this package remains
-unmerged and implementation is not authorized.
+The normal governance requirement is submitted **Approve** reviews from
+independent Product, Engineering and Security authorities, green CI for the
+unchanged reviewed SHA, and the required release/operator record. `CODEOWNERS`
+routing alone does not prove three independent authorities.
+
+The temporary, narrow exception in [EXC-0003](../exceptions/EXC-0003-pdr-0008-bootstrap-governance-approval-mechanics.md)
+replaces only those unavailable reviewer mechanics for this PDR-0008
+implementation scope. Its owner authorization is:
+
+> PDR-0008 APPROVED FOR IMPLEMENTATION UNDER BOOTSTRAP GOVERNANCE EXCEPTION.
+
+This is not an independent review and does not waive CI, rollback, tenant
+isolation, audit, security evidence, data-transition preflight, browser
+coverage, or later release controls. No manual vote table, copied review, or
+hand-entered approval timestamp is used.
 
 ## Scope boundary and rollback
 

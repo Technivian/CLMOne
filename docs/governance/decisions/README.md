@@ -85,9 +85,9 @@ Do not fabricate approved decisions. Do not mark a record Accepted without docum
 | [PDR-0005-dpa-specialist-workflow-gate.md](pdr/PDR-0005-dpa-specialist-workflow-gate.md) | Accepted |
 | [PDR-0006-canonical-workflow-versioning-and-contract-execution-authority.md](pdr/PDR-0006-canonical-workflow-versioning-and-contract-execution-authority.md) | Approved |
 | [PDR-0007-approval-route-runtime-boundary.md](pdr/PDR-0007-approval-route-runtime-boundary.md) | Proposed |
-| [PDR-0008-object-level-read-enforcement-policy.md](pdr/PDR-0008-object-level-read-enforcement-policy.md) | Proposed — PAR-SEC-002 planning only |
-| [PDR-0008-ADDENDUM-002-payrollminds-private-contract-access-approval-package.md](pdr/PDR-0008-ADDENDUM-002-payrollminds-private-contract-access-approval-package.md) | Proposed approval package — private-by-default implementation authority |
-| [PDR-0013-payrollminds-expanded-production-contract-scope.md](pdr/PDR-0013-payrollminds-expanded-production-contract-scope.md) | Proposed — Product Owner business-scope direction; no technical activation |
+| [PDR-0008-object-level-read-enforcement-policy.md](pdr/PDR-0008-object-level-read-enforcement-policy.md) | Approved for implementation under EXC-0003 — no runtime or production activation authority |
+| [PDR-0008-ADDENDUM-002-payrollminds-private-contract-access-approval-package.md](pdr/PDR-0008-ADDENDUM-002-payrollminds-private-contract-access-approval-package.md) | Approved implementation package under EXC-0003 — no runtime or production authority |
+| [PDR-0013-payrollminds-expanded-production-contract-scope.md](pdr/PDR-0013-payrollminds-expanded-production-contract-scope.md) | Business scope approved / technical implementation gate open — production inactive |
 | [PDR-0010-owner-directed-release-authorization.md](pdr/PDR-0010-owner-directed-release-authorization.md) | Accepted — owner-directed repository authorization |
 | [PDR-0011-payrollminds-controlled-pilot-scope-and-governance.md](pdr/PDR-0011-payrollminds-controlled-pilot-scope-and-governance.md) | Proposed — no pilot activation authority |
 | [PDR-0012-payrollminds-ai-metadata-suggestion-gate.md](pdr/PDR-0012-payrollminds-ai-metadata-suggestion-gate.md) | Proposed — external AI remains disabled |
@@ -98,6 +98,7 @@ Do not fabricate approved decisions. Do not mark a record Accepted without docum
 |---|---|
 | [EXC-0001-payrollminds-deferred-enterprise-capabilities.md](exceptions/EXC-0001-payrollminds-deferred-enterprise-capabilities.md) | Proposed — inactive until approved; expires 2026-09-30 if activated |
 | [EXC-0002-payrollminds-ai-metadata-suggestions-deferred.md](exceptions/EXC-0002-payrollminds-ai-metadata-suggestions-deferred.md) | Proposed — inactive; grants no deviation |
+| [EXC-0003-pdr-0008-bootstrap-governance-approval-mechanics.md](exceptions/EXC-0003-pdr-0008-bootstrap-governance-approval-mechanics.md) | Active — expires/requires review 2026-09-30; approval mechanics only |
 
 Use [EXCEPTION_TEMPLATE.md](exceptions/EXCEPTION_TEMPLATE.md) for new exceptions.
 

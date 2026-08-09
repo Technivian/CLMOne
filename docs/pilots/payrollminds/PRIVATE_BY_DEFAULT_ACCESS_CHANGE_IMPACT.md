@@ -53,5 +53,7 @@ Reassignment must preserve an accountable principal and be audited. Sharing,
 workflow-participant grants and break-glass require separate approved policy.
 
 Downstream blockers remain: shared-policy implementation, existing-data
-preflight/backfill decision, five dependency vulnerabilities, missing browser
-coverage for both types, and non-green full regression.
+accountability/backfill preflight and decision, five dependency vulnerabilities,
+missing browser coverage for both types, and non-green full regression and
+security evidence. EXC-0003 changes approval mechanics only; it waives no
+runtime or security control.

@@ -1,8 +1,9 @@
 # PDR-0008: Object-level read enforcement policy for search, analytics, and AI
 
-**Status:** Proposed — policy scope accepted in Addendum 001; implementation
-requires either the stated review gate or explicit repository-owner
-authorization for a defined scope.
+**Status:** Approved for implementation under the temporary bootstrap-governance
+exception in [EXC-0003](../exceptions/EXC-0003-pdr-0008-bootstrap-governance-approval-mechanics.md).
+The normal independent-review requirement remains the default and no runtime
+or production activation is authorized by this status.
 **Date:** 2026-07-25
 **Owner:** Pilot Hardening PAR-SEC-002 — Programme, Product, Engineering, and Security: `@haroonwahed` (the recorded sole direct human administrator)
 **Affected Charter sections:** §16 Repository evidence and release control
@@ -10,6 +11,7 @@ authorization for a defined scope.
 **Evidence:** `docs/audits/evidence/2026-07-24-par-sec-002/BASELINE_AUDIT.md`; `docs/audits/evidence/2026-07-25-par-sec-002-characterization/ROUTE_MATRIX.md`
 **Addendum:** [PDR-0008 Addendum 001](PDR-0008-ADDENDUM-001-policy-resolution.md)
 **PayrollMinds approval package:** [PDR-0008 Addendum 002](PDR-0008-ADDENDUM-002-payrollminds-private-contract-access-approval-package.md)
+**Temporary approval-mechanics exception:** [EXC-0003](../exceptions/EXC-0003-pdr-0008-bootstrap-governance-approval-mechanics.md)
 
 ## Status and authority boundary
 
@@ -21,12 +23,14 @@ behaviour.  Until a separately authorized implementation is merged and
 activated through its applicable release gate, current runtime behaviour is
 unchanged.
 
-The Pilot Hardening bootstrap permits this planning-only record to use the
-repository-owner attestation process for its PR.  It does not authorize the
-future enforcement described here.  Any implementation or activation that
-changes permissions or visible results requires independent Product,
-Engineering, and Security GitHub approvals, green CI, and the applicable
-release record; a feature flag alone grants no authority.
+The normal governance requirement is independent Product, Engineering, and
+Security GitHub approval, green CI, and the applicable release record. For the
+defined PDR-0008 private-by-default implementation scope only, EXC-0003
+records the owner-directed, time-boxed replacement of the unavailable
+independent-review mechanics. This owner authorization does not waive CI,
+rollback, tenant isolation, audit, non-disclosure, or operational evidence.
+It does not authorize a runtime authorization change, production activation,
+or a release; a feature flag alone grants no authority.
 
 ## Problem and context
 
@@ -180,9 +184,10 @@ would:
    path without data mutation.
 
 This is still a runtime authorization and result-visibility change when
-enabled.  It therefore needs independent Product, Engineering, and Security
-GitHub approvals on its immutable implementation SHA, green CI, a documented
-rollback drill, and a release/operator record before it is built or activated.
+enabled. EXC-0003 permits its defined implementation work only; before it is
+enabled or activated, it needs the applicable immutable-SHA evidence, green
+CI, documented rollback drill, release/operator record, and any required
+independent Product, Engineering, and Security approvals.
 
 ## Required acceptance evidence before implementation
 
@@ -248,8 +253,11 @@ change.
 
 ## Approval
 
-This is a Proposed planning decision.  Its status may change only through the
-applicable GitHub PR review and CI evidence on the immutable reviewed SHA.
-Acceptance would select a target policy but would not authorize implementation,
-activation, permission changes, result-visibility changes, production,
-repair, ADMIN authority, canonical-read cutover, or legacy retirement.
+**PDR-0008 APPROVED FOR IMPLEMENTATION UNDER BOOTSTRAP GOVERNANCE EXCEPTION.**
+
+The approval authority is the explicit owner direction recorded in EXC-0003,
+not a fabricated or proxy independent review. It authorizes only the defined
+implementation scope. It does not authorize activation, deployment, a live
+permission or result-visibility change, production, repair, ADMIN authority,
+canonical-read cutover, or legacy retirement. Those actions retain their
+applicable evidence and release gates.
