@@ -61,7 +61,7 @@ class BoltonRedesignTestCase(TestCase):
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
 
-        self.assertContains(response, 'Risk findings')
+        self.assertContains(response, 'High-risk findings')
         self.assertContains(response, 'dc-ds-metric__value--clear')
         self.assertContains(response, 'Configure monitoring')
         self.assertContains(response, 'Configure tracking')

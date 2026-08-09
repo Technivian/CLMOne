@@ -296,7 +296,11 @@ class DesignSystemPhaseOneFoundationTests(SimpleTestCase):
             self.assertNotIn(retired_css, cc_css)
         self.assertIn('.cc-v3-portfolio-actions .dc-ds-button--primary', cc_css)
         self.assertIn('.cc-v3-portfolio-actions .dc-ds-button--link', cc_css)
-        self.assertIn('.dc-ds-setup-action', cc_css)
+        # dc-ds-setup-action / dc-ds-setup-list are no longer rendered by the
+        # Command Center (the deadlines rail's unconfigured state now uses the
+        # shared .cc-v3-rail-state empty-state recipe instead of setup_action.html);
+        # asserting their CSS presence here was checking styling with zero
+        # consumers in dashboard.html.
         # Expressive hero + operational canvas preserved under route-local namespace.
         self.assertIn('cc-v3-portfolio-hero', dashboard)
         self.assertIn('cc-v3-portfolio-score', dashboard)

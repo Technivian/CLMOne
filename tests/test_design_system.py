@@ -58,7 +58,7 @@ class DesignSystemTests(TestCase):
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'CLM One')
-        self.assertContains(response, 'Risk findings')
+        self.assertContains(response, 'High-risk findings')
         self.assertContains(response, 'css/command-center.css')
 
     def test_dashboard_loads_with_feature_flag_disabled(self):

@@ -72,7 +72,7 @@ class CommandCenterDashboardTests(TestCase):
         # A contract record makes the portfolio measurable even if it does not
         # yet have a priority workflow item.
         self.assertContains(response, 'No priority action right now')
-        self.assertContains(response, 'Review priority action')
+        self.assertContains(response, 'View all contracts')
         self.assertContains(response, 'No additional portfolio actions')
         self.assertNotContains(response, 'Attention needed:')
 

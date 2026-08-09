@@ -88,7 +88,7 @@ class DashboardEmptyStateTests(TestCase):
         self.assertIn('Establish your contract portfolio', body)
         self.assertIn('Health score unavailable', body)
         self.assertIn('Add first contract', body)
-        self.assertIn('Risk findings', body)
+        self.assertIn('High-risk findings', body)
         self.assertIn('Deadline tracking not configured', body)
 
     def test_onboarding_checklist_hidden_once_a_contract_exists(self):
