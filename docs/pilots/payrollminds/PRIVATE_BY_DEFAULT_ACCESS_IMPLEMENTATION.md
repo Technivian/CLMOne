@@ -9,6 +9,8 @@ with review/expiry on 2026-09-30 or earlier exit when independent governance
 capacity is available. EXC-0003 changes approval mechanics only; no security
 invariant is waived.
 
+Implementation code commit: `27069b798160f58eb947295f0b15e084ffbed0bc`.
+
 This change implements access policy only. It does not activate Order
 Confirmation, Purchase Order, OTHER/Custom, imports, AI scope, email,
 signature, portal, integration, sharing, tenant, or deployment behaviour.
