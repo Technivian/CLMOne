@@ -82,8 +82,10 @@ Do not fabricate approved decisions. Do not mark a record Accepted without docum
 | [PDR-0006-canonical-workflow-versioning-and-contract-execution-authority.md](pdr/PDR-0006-canonical-workflow-versioning-and-contract-execution-authority.md) | Approved |
 | [PDR-0007-approval-route-runtime-boundary.md](pdr/PDR-0007-approval-route-runtime-boundary.md) | Proposed |
 | [PDR-0008-object-level-read-enforcement-policy.md](pdr/PDR-0008-object-level-read-enforcement-policy.md) | Proposed — PAR-SEC-002 planning only |
+| [PDR-0008-ADDENDUM-002-payrollminds-private-contract-access-approval-package.md](pdr/PDR-0008-ADDENDUM-002-payrollminds-private-contract-access-approval-package.md) | Proposed approval package — PayrollMinds private-contract implementation policy |
 | [PDR-0009-governed-contract-import-execution.md](pdr/PDR-0009-governed-contract-import-execution.md) | Proposed — R1 planning only |
 | [PDR-0010-owner-directed-release-authorization.md](pdr/PDR-0010-owner-directed-release-authorization.md) | Proposed — owner-directed release governance |
+| [PDR-0013-payrollminds-expanded-production-contract-scope.md](pdr/PDR-0013-payrollminds-expanded-production-contract-scope.md) | Proposed — Product Owner business-scope direction recorded; no technical activation |
 
 ### Exceptions
 

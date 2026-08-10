@@ -7,6 +7,7 @@
 **Related programme:** PAR-SEC-002
 **Evidence:** `docs/audits/evidence/2026-07-24-par-sec-002/BASELINE_AUDIT.md`; `docs/audits/evidence/2026-07-25-par-sec-002-characterization/ROUTE_MATRIX.md`
 **Addendum:** [PDR-0008 Addendum 001](PDR-0008-ADDENDUM-001-policy-resolution.md)
+**PayrollMinds approval package:** [PDR-0008 Addendum 002](PDR-0008-ADDENDUM-002-payrollminds-private-contract-access-approval-package.md)
 
 ## Status and authority boundary
 
