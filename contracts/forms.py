@@ -4,7 +4,6 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth import password_validation
 from django.core.exceptions import ValidationError
-from django.core.files.uploadedfile import UploadedFile
 from .permissions import can_manage_organization
 from .services.clause_policy import validate_clause_policy
 from .services.clause_variants import resolve_clause_variant
@@ -30,6 +29,22 @@ from contracts.models import (
 )
 
 User = get_user_model()
+
+
+class ContractImportPreviewForm(forms.Form):
+    csv_file = forms.FileField(
+        label='Contract CSV file',
+        help_text='CSV only. Preview validates rows and does not create contracts.',
+        widget=forms.ClearableFileInput(attrs={'class': 'dc-ds-control form-file', 'accept': '.csv,text/csv'}),
+    )
+
+    def clean_csv_file(self):
+        uploaded = self.cleaned_data['csv_file']
+        if not uploaded.name.lower().endswith('.csv'):
+            raise ValidationError('Upload a CSV file.')
+        if uploaded.size > 2 * 1024 * 1024:
+            raise ValidationError('CSV previews are limited to 2 MB.')
+        return uploaded
 
 # Canonical form API first; legacy classes remain co-applied only as temporary
 # visual compatibility adapters. This one shared construction path covers all
@@ -308,16 +323,6 @@ class DocumentForm(forms.ModelForm):
 
     def clean_status(self):
         return self.cleaned_data.get('status') or Document.Status.DRAFT
-
-    def clean_file(self):
-        uploaded_file = self.cleaned_data.get('file')
-        # On edit Django may return the existing FieldFile. Validate only a new
-        # browser upload so metadata-only changes never read remote storage.
-        if isinstance(uploaded_file, UploadedFile):
-            from contracts.services.document_upload_policy import validate_document_upload
-
-            validate_document_upload(uploaded_file)
-        return uploaded_file
 
     def clean(self):
         cleaned_data = super().clean()

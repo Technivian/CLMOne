@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Preview contract import – CLM One{% endblock %}
+{% block authenticated_page_title %}Contracts{% endblock %}
+{% block authenticated_page_subtitle %}Validate a private contract inventory before a governed import is enabled.{% endblock %}
+{% block authenticated_page_back %}
+<a href="{% url 'contracts:repository' %}" class="topbar-back-link" data-workspace-back aria-label="Back to contracts" title="Back to contracts">
+  {% include "design_system/icon.html" with name="arrow-left" %}
+</a>
+{% endblock %}
+{% block content %}
+<main class="dc-ds-page dc-ds-page-flow" aria-label="Contract import preview">
+  <section class="dc-ds-surface" aria-labelledby="import-preview-title">
+    <div class="dc-ds-surface__head">
+      <div>
+        <h1 id="import-preview-title" class="dc-ds-surface__title">Preview contract CSV import</h1>
+        <p class="text-desc-sm">This validates contract rows only. It does not create, update, or upload anything. Optional <code>owner_email</code> values must match an active workspace member.</p>
+      </div>
+    </div>
+    <div class="dc-ds-surface__body">
+      <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        {% if form.non_field_errors %}<div class="dc-ds-message dc-ds-message--error" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+        <div class="dc-ds-field">
+          <label class="dc-ds-field__label" for="{{ form.csv_file.id_for_label }}">{{ form.csv_file.label }}</label>
+          {{ form.csv_file }}
+          <p class="dc-ds-field__help">{{ form.csv_file.help_text }}</p>
+          {% if form.csv_file.errors %}<p class="dc-ds-field__error" role="alert">{{ form.csv_file.errors|join:", " }}</p>{% endif %}
+        </div>
+        <div class="dc-ds-page-actions">
+          <a class="dc-ds-button dc-ds-button--quiet" href="{% url 'contracts:contract_import_template_download' %}">Download CSV template</a>
+          <a class="dc-ds-button dc-ds-button--quiet" href="{% url 'contracts:repository' %}">Cancel</a>
+          <button class="dc-ds-button dc-ds-button--primary" type="submit">Preview import</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  {% if result %}
+  <section class="dc-ds-surface" aria-labelledby="preview-result-title">
+    <div class="dc-ds-surface__head">
+      <div>
+        <h2 id="preview-result-title" class="dc-ds-surface__title">Preview results</h2>
+        <p class="text-desc-sm">{{ result.imported_count }} valid row{{ result.imported_count|pluralize }} · {{ result.skipped_count }} row{{ result.skipped_count|pluralize }} needing attention</p>
+      </div>
+    </div>
+    <div class="dc-ds-surface__body">
+      {% if result.errors %}
+      <ul class="dc-ds-list" aria-label="Import validation errors">
+        {% for error in result.errors %}<li>{% if error.row == 'file' %}File{% else %}Row {{ error.row }}{% endif %}: {{ error.message }}</li>{% endfor %}
+      </ul>
+      {% else %}
+      <p class="text-desc-sm">All rows are valid. A governed commit step is not available yet.</p>
+      {% endif %}
+    </div>
+  </section>
+  {% endif %}
+</main>
+{% endblock %}

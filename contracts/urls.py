@@ -15,11 +15,6 @@ from .views_domains.design_preview import (
     design_preview_relationship_detail,
     design_preview_review_studio,
 )
-from .views_domains.repository_import import (
-    repository_csv_import,
-    repository_csv_import_rollback,
-    repository_csv_import_template,
-)
 
 app_name = 'contracts'
 
@@ -61,9 +56,8 @@ urlpatterns = [
     path('api/analytics/work-metrics/', api_views.work_operating_metrics_api, name='work_operating_metrics_api'),
     path('api/documents/upload/', api_views.document_upload_api, name='document_upload_api'),
     path('api/documents/extract-preview/', api_views.document_extract_preview_api, name='document_extract_preview_api'),
-    path('api/documents/ingestion/', api_views.document_ingestion_quarantine_api, name='document_ingestion_quarantine_api'),
-    path('api/documents/ingestion/<uuid:correlation_id>/', api_views.document_ingestion_status_api, name='document_ingestion_status_api'),
-    path('api/documents/ingestion/<uuid:correlation_id>/release/', api_views.document_ingestion_release_api, name='document_ingestion_release_api'),
+    path('api/documents/mass-import/', api_views.document_mass_import_api, name='document_mass_import_api'),
+    path('api/integrations/email-forwarding/ingest/', api_views.email_forwarded_document_ingest_api, name='email_forwarded_document_ingest_api'),
     path('api/contracts/<str:contract_id>/ai-extract/', api_views.contract_ai_extract_api, name='contract_ai_extract_api'),
     path('api/contracts/<str:contract_id>/ai-extract/<int:span_id>/review/', api_views.ai_extraction_span_review_api, name='ai_extraction_span_review_api'),
     path('api/contracts/<str:contract_id>/review-findings/<int:finding_id>/action/', api_views.contract_review_finding_action_api, name='contract_review_finding_action_api'),
@@ -460,17 +454,6 @@ urlpatterns = [
     path('search/', views.global_search, name='global_search'),
 
     # Contracts
-    path('repository/import/', repository_csv_import, name='repository_csv_import'),
-    path(
-        'repository/import/template.csv',
-        repository_csv_import_template,
-        name='repository_csv_import_template',
-    ),
-    path(
-        'repository/import/rollback/',
-        repository_csv_import_rollback,
-        name='repository_csv_import_rollback',
-    ),
     # External collaboration is isolated from organization membership. Keep
     # these routes explicit and before the contract shell for auditability.
     path('collaborate/<uuid:token>/', views.counterparty_collaboration_portal, name='counterparty_collaboration_portal'),
@@ -482,6 +465,9 @@ urlpatterns = [
     path('<int:pk>/', views.ContractDetailView.as_view(), name='contract_detail'),
     path('start/', views.legal_front_door, name='legal_front_door'),
     path('new/upload/', views.upload_signed_contract, name='upload_signed_contract'),
+    path('import/', views.mass_document_import, name='mass_document_import'),
+    path('import/contracts/preview/', views.contract_import_preview, name='contract_import_preview'),
+    path('import/contracts/template/', views.contract_import_template_download, name='contract_import_template_download'),
     path('new/start/', views.contract_template_picker, name='contract_template_picker'),
     path('new/msa/', views.MSAWorkflowBuilderView.as_view(), name='msa_workflow_builder'),
     path('new/nda/', views.NDAWorkflowBuilderView.as_view(), name='nda_workflow_builder'),

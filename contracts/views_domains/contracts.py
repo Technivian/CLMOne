@@ -7,23 +7,17 @@ from django.contrib.auth import get_user_model
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.core.files.uploadedfile import UploadedFile
 from django.db import transaction
 from django.db.models import Count, Q, Sum
-from django.http import HttpResponseForbidden, JsonResponse
+from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
-from contracts.forms import ContractForm, DocumentForm, UserProfileForm
-from config.feature_flags import is_external_collaboration_enabled
+from contracts.forms import ContractForm, ContractImportPreviewForm, DocumentForm, UserProfileForm
 from contracts.middleware import log_action
-from contracts.services.document_ingestion import (
-    DocumentIngestionError,
-    quarantine_and_scan_if_enforced,
-)
 from contracts.models import (
     AuditLog,
     Budget,
@@ -116,12 +110,6 @@ from contracts.services.contract_detail_workspace import (
 from contracts.services.ai_policy import evaluate_prompt
 from contracts.services.ai_actions import build_action_plan, execute_action_plan
 from contracts.services.payrollminds_demo import is_payrollminds_presenter_workspace
-from contracts.services.object_read_policy import (
-    ObjectReadPolicyUnavailable,
-    filter_contract_edit_queryset,
-    filter_contract_queryset,
-)
-from contracts.services.repository import apply_repository_contract_policy
 from config.feature_flags import is_feature_redesign_enabled
 
 from .contract_helpers import _build_contract_ai_response, build_contract_lifecycle_guidance
@@ -334,13 +322,7 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
 
     def get_queryset(self):
         org = get_user_organization(self.request.user)
-        queryset = scope_queryset_for_organization(Contract.objects.all(), org)
-        return apply_repository_contract_policy(
-            queryset,
-            organization=org,
-            user=self.request.user,
-            surface='contract_detail',
-        )
+        return scope_queryset_for_organization(Contract.objects.all(), org)
 
     def _attachment_form(self, data=None, files=None):
         """Build the existing upload form with this contract fixed server-side."""
@@ -354,8 +336,6 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
         # posted relation to retarget it to another record.
         for field_name in ('contract', 'matter', 'client'):
             form.fields.pop(field_name, None)
-        if not is_external_collaboration_enabled():
-            form.fields.pop('share_with_counterparty', None)
         return form
 
     def post(self, request, *args, **kwargs):
@@ -374,33 +354,6 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
 
         staged = form.save(commit=False)
         organization = get_user_organization(request.user)
-        ingestion_attempt = None
-        uploaded_file = form.cleaned_data.get('file')
-        if isinstance(uploaded_file, UploadedFile):
-            try:
-                ingestion_attempt = quarantine_and_scan_if_enforced(
-                    organization=organization,
-                    uploaded_file=uploaded_file,
-                    actor=request.user,
-                    contract=self.object,
-                )
-            except DocumentIngestionError:
-                messages.error(request, 'The document could not be accepted for security review.')
-                return redirect(contract_detail_tab_url(self.object.pk, 'documents'))
-        if ingestion_attempt is not None:
-            if ingestion_attempt.status == ingestion_attempt.Status.CLEAN:
-                messages.success(
-                    request,
-                    'The document passed scanning and remains quarantined until explicit release. '
-                    f'Correlation ID: {ingestion_attempt.correlation_id}',
-                )
-            else:
-                messages.error(
-                    request,
-                    'The document was not released. Contact security with correlation ID '
-                    f'{ingestion_attempt.correlation_id}.',
-                )
-            return redirect(contract_detail_tab_url(self.object.pk, 'documents'))
         document, _version = create_document_version(
             organization=organization,
             title=staged.title,
@@ -621,20 +574,15 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
         ctx['contract_activity_feed'] = activity_feed[:12]
         ctx['recent_activity_feed'] = activity_feed[:5]
         ctx['negotiation_threads'] = negotiation_threads
-        collaboration_enabled = is_external_collaboration_enabled()
-        collaboration_participants = []
-        collaboration_items = []
-        if collaboration_enabled:
-            collaboration_participants = list(
-                case_record.counterparty_collaboration_participants.select_related('invited_by').all()[:20]
-            )
-            collaboration_items = list(
-                case_record.counterparty_collaboration_items.select_related(
-                    'participant', 'created_by', 'document'
-                ).all()[:8]
-            )
+        collaboration_participants = list(
+            case_record.counterparty_collaboration_participants.select_related('invited_by').all()[:20]
+        )
+        collaboration_items = list(
+            case_record.counterparty_collaboration_items.select_related(
+                'participant', 'created_by', 'document'
+            ).all()[:8]
+        )
         ctx['counterparty_collaboration'] = {
-            'enabled': collaboration_enabled,
             'participants': collaboration_participants,
             'items': collaboration_items,
             'active_count': sum(
@@ -644,13 +592,10 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
                     CounterpartyCollaborationParticipant.Status.ACTIVE,
                 ) and participant.is_accessible
             ),
-            'shared_document_count': (
-                case_record.documents.filter(
-                    share_with_counterparty=True, is_privileged=False, is_deleted=False,
-                ).count()
-                if collaboration_enabled else 0
-            ),
-            'can_manage': collaboration_enabled and ctx['can_edit'],
+            'shared_document_count': case_record.documents.filter(
+                share_with_counterparty=True, is_privileged=False, is_deleted=False,
+            ).count(),
+            'can_manage': ctx['can_edit'],
         }
         approved_count = sum(
             1 for approval in approval_requests
@@ -940,6 +885,13 @@ def legal_front_door(request):
             'href': reverse('contracts:upload_signed_contract'),
         },
         {
+            'key': 'mass_import',
+            'title': 'Import contract documents',
+            'description': 'Import several existing agreements, preserving source versions and sending extracted details to review.',
+            'icon': 'upload',
+            'href': reverse('contracts:mass_document_import'),
+        },
+        {
             'key': 'dpa_review',
             'title': 'Start DPA review',
             'description': 'Assess an existing contract for privacy risk — SCC position, subprocessors, data transfers.',
@@ -1012,22 +964,80 @@ def upload_signed_contract(request):
 
 
 @login_required
+def mass_document_import(request):
+    """Render the workspace batch-import surface; writes stay in the API service."""
+    return render(request, 'contracts/mass_document_import.html', {
+        'hide_app_footer': True,
+        'email_forwarding_endpoint': (
+            settings.APP_BASE_URL.rstrip('/')
+            + reverse('contracts:email_forwarded_document_ingest_api')
+        ),
+    })
+
+
+@login_required
+def contract_import_preview(request):
+    """Preview a private contract CSV import without persisting records."""
+    organization = get_user_organization(request.user)
+    if not can_manage_organization(request.user, organization):
+        return HttpResponseForbidden('Only organization owners/admins can preview contract imports.')
+
+    result = None
+    if request.method == 'POST':
+        form = ContractImportPreviewForm(request.POST, request.FILES)
+        if form.is_valid():
+            try:
+                csv_text = form.cleaned_data['csv_file'].read().decode('utf-8-sig')
+            except UnicodeDecodeError:
+                form.add_error('csv_file', 'CSV files must be UTF-8 encoded.')
+            else:
+                from contracts.services.inbound_import import get_inbound_import_service
+                result = get_inbound_import_service().import_contracts_from_csv(
+                    organization, csv_text, request.user, dry_run=True,
+                )
+                log_action(
+                    request.user,
+                    AuditLog.Action.VIEW,
+                    'Organization',
+                    organization.pk,
+                    changes={
+                        'event': 'contract.import_previewed',
+                        'valid_row_count': result.imported_count,
+                        'invalid_row_count': result.skipped_count,
+                    },
+                    request=request,
+                    organization=organization,
+                )
+    else:
+        form = ContractImportPreviewForm()
+
+    return render(request, 'contracts/contract_import_preview.html', {
+        'form': form,
+        'result': result,
+        'hide_app_footer': True,
+    })
+
+
+@login_required
+def contract_import_template_download(request):
+    organization = get_user_organization(request.user)
+    if not can_manage_organization(request.user, organization):
+        return HttpResponseForbidden('Only organization owners/admins can download the contract import template.')
+
+    response = HttpResponse(
+        'title,counterparty,contract_type,owner_email,status,lifecycle_stage,start_date,end_date,renewal_date,notice_period_days,termination_notice_date\n'
+        'Example agreement,Example counterparty,NDA,,DRAFT,DRAFTING,2026-01-01,2027-01-01,2026-12-01,60,2026-11-02\n',
+        content_type='text/csv; charset=utf-8',
+    )
+    response['Content-Disposition'] = 'attachment; filename="clm-one-contract-import-template.csv"'
+    return response
+
+
+@login_required
 def contract_review_workspace(request, pk):
     """Single review surface for an uploaded agreement version and its evidence."""
     organization = get_user_organization(request.user)
-    contract = apply_repository_contract_policy(
-        Contract.objects.filter(pk=pk, organization=organization),
-        organization=organization,
-        user=request.user,
-        surface='contract_review_workspace',
-    ).first()
-    if contract is None or not can_access_contract_action(
-        request.user,
-        contract,
-        ContractAction.VIEW,
-    ):
-        # A private-record denial must not reveal that the contract exists.
-        return get_object_or_404(Contract.objects.none(), pk=pk)
+    contract = get_object_or_404(Contract, pk=pk, organization=organization)
     review_run = contract.document_review_runs.select_related('document').order_by('-started_at').first()
     document = review_run.document if review_run else contract.documents.order_by('-version', '-created_at').first()
 
@@ -1526,13 +1536,7 @@ class ContractUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin, UpdateVi
 
     def get_queryset(self):
         org = get_user_organization(self.request.user)
-        queryset = scope_queryset_for_organization(Contract.objects.all(), org)
-        return filter_contract_edit_queryset(
-            queryset,
-            organization=org,
-            user=self.request.user,
-            surface='contract_update',
-        )
+        return scope_queryset_for_organization(Contract.objects.all(), org)
 
     def _revision_unlocked(self):
         contract = getattr(self, 'object', None) or getattr(self, 'original_contract', None)
@@ -1859,16 +1863,7 @@ class RepositoryView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         org = get_user_organization(self.request.user)
-        queryset = scope_queryset_for_organization(
-            Contract.objects.select_related('created_by', 'owner'),
-            org,
-        )
-        return apply_repository_contract_policy(
-            queryset,
-            organization=org,
-            user=self.request.user,
-            surface='repository_page',
-        ).order_by('-updated_at', '-created_at')
+        return scope_queryset_for_organization(Contract.objects.select_related('created_by', 'owner'), org).order_by('-updated_at', '-created_at')
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -1886,12 +1881,6 @@ class RepositoryView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
         elif status_values == ('ACTIVE',) and not stage_values and not expiring_days:
             active_tab = 'active'
         tenant_contracts = scope_queryset_for_organization(Contract.objects.all(), org)
-        tenant_contracts = apply_repository_contract_policy(
-            tenant_contracts,
-            organization=org,
-            user=self.request.user,
-            surface='repository_metadata',
-        )
         expiry_cutoff = timezone.localdate() + timedelta(days=30)
         contract_stats = tenant_contracts.aggregate(
             total=Count('id'),
@@ -1963,17 +1952,8 @@ class RepositoryView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
 def contract_ai_assistant(request, pk):
     organization = get_user_organization(request.user)
     observe_request('ai.contract_assistant', request.user, organization)
-    try:
-        contract_queryset = filter_contract_queryset(
-            scope_queryset_for_organization(Contract.objects.all(), organization),
-            organization=organization,
-            user=request.user,
-            surface='contract_ai_assistant',
-        )
-    except ObjectReadPolicyUnavailable:
-        contract_queryset = Contract.objects.none()
-    contract = get_object_or_404(contract_queryset, id=pk)
-    if not can_access_contract_action(request.user, contract, ContractAction.AI):
+    contract = get_object_or_404(scope_queryset_for_organization(Contract.objects.all(), organization), id=pk)
+    if not can_access_contract_action(request.user, contract, ContractAction.COMMENT):
         return HttpResponseForbidden('You do not have access to this contract organization.')
 
     prompt = ''
@@ -2101,12 +2081,7 @@ def dashboard(request):
     thirty_days = today + timedelta(days=30)
     org = get_user_organization(request.user)
 
-    case_qs = apply_repository_contract_policy(
-        scope_queryset_for_organization(Case.objects.all(), org),
-        organization=org,
-        user=request.user,
-        surface='dashboard_contract_counts',
-    )
+    case_qs = scope_queryset_for_organization(Case.objects.all(), org)
     clients_qs = scope_queryset_for_organization(Client.objects.all(), org)
     case_matter_qs = scope_queryset_for_organization(CaseMatter.objects.all(), org)
     workflows_qs = scope_queryset_for_organization(Workflow.objects.all(), org)

@@ -490,8 +490,12 @@ def build_contract_command(
             current_blockers = []
         else:
             primary_action = {
-                'label': 'Run review',
-                'target': contract_detail_tab_url(pk, 'review'),
+                'label': 'Open review workspace',
+                # The review alias normalizes to the Workflow tab, which can
+                # already be active and makes this primary action appear to
+                # do nothing. The dedicated workspace exposes the review
+                # state, evidence, and the next actionable blocker.
+                'target': reverse('contracts:contract_review_workspace', kwargs={'pk': pk}),
                 'mode': 'link',
                 'key': 'run_review',
             }
