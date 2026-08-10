@@ -46,10 +46,46 @@ inactive references, and exclusive remediation categories. It performs no
 write, inferred ownership, migration, or production connection. The required
 operator procedure is in `PRIVATE_ACCESS_PRODUCTION_PREFLIGHT_RUNBOOK.md`.
 
-Rollback is a code revert of this implementation commit; no data migration or
-activation flag must be reversed. Production preflight remains pending until
-an authorized operator supplies a read-only production connection and stores
-the restricted output outside the repository.
+Rollback of the implementation is a code revert of implementation commit
+`27069b798160f58eb947295f0b15e084ffbed0bc`; no application data migration or
+activation flag exists. The narrowly scoped infrastructure remediation recorded
+below has its own predicate and must not be represented as an application
+`AuditLog` event.
+
+### Production accountability remediation (2026-08-10)
+
+An authorized Infrastructure operator, **Haroon Wahed**, completed the
+production accountability preflight against the live Neon database. This was
+an operator-controlled SQL remediation, not an application request: no
+application `AuditLog` event was generated or claimed. The exact time of the
+operator action was not supplied; the recorded action date is **2026-08-10**.
+
+Before remediation, the preflight reported four Contracts: two with an owner,
+four with `created_by`, two missing an owner, and none missing `created_by`.
+The only affected historical records were opaque Contract IDs `2` and `3`, both
+in organization `1`, both MSA, both with `owner_id = NULL` and
+`created_by_id = 2`. The proposed accountable principal was verified as active
+user `2`, with an active MEMBER membership in organization `1`.
+
+The rationale was deterministic and limited: preserve the existing provenance
+principal as the accountable owner, using **`owner_id = existing
+created_by_id`** for Contract IDs `2` and `3` only. A transaction dry-run first
+proved exactly two rows would change, then rolled back. The committed
+transaction changed those same two rows only. Post-remediation, each record has
+`owner_id = 2` and `created_by_id = 2`.
+
+The final production preflight is **4/4 safe**: all four Contracts have both
+owner and creator; missing-owner, missing-creator, owner/creator-difference,
+inactive-or-invalid-reference, owner-assignment, creator-repair, and
+explicit-access-review counts are all zero. No further data remediation is
+required.
+
+Rollback predicate: if the operator evidence for either Contract ID or the
+verified accountability of user `2` is invalidated before deployment, stop the
+release. An authorized operator must restore `owner_id` to `NULL` for the
+affected ID(s) only in a transaction, re-run the preflight, and retain the
+private-access code revert as the release rollback path. This predicate has not
+been met.
 
 ## Gate state
 
@@ -104,9 +140,13 @@ Results:
   applied cleanly in a detached worktree; `git diff --check` and Django
   `manage.py check` passed, then the temporary revert was aborted. No
   production rollback was attempted;
-- production preflight: not run; no production connection was made.
+- production preflight: **GREEN**. The 2026-08-10 Infrastructure/operator
+  remediation described above completed the only two missing-owner records;
+  final result is 4/4 safe and no further data remediation is required. It is
+  repository evidence of direct Neon SQL work, not an application audit event.
 
-Current status: **PRIVATE-BY-DEFAULT IMPLEMENTATION GREEN — PRODUCTION
-PREFLIGHT PENDING**, subject to final CI/Linux browser and release-evidence
-gates for the pushed SHA. No production activation is authorized by this
-evidence document.
+Current status: **PRIVATE-BY-DEFAULT IMPLEMENTATION GREEN — PRODUCTION DATA
+PREFLIGHT GREEN — MERGE/DEPLOYMENT AUTHORIZATION PENDING**. This evidence does
+not authorize production deployment, merge, or any contract-type activation.
+Order Confirmation and Purchase Order remain **BUSINESS SCOPE APPROVED /
+TECHNICAL IMPLEMENTATION GATE OPEN / PRODUCTION ACTIVATION NO-GO**.
