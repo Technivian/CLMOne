@@ -126,6 +126,10 @@ test.describe.serial('OC/PO activation readiness — default OFF', () => {
   let server;
 
   test.beforeAll(async () => {
+    // Playwright gives beforeAll its own timeout; describe configuration does
+    // not extend it. The isolated Django setup includes migrations and seed
+    // data, which can exceed the CI default on a cold runner.
+    test.setTimeout(150000);
     server = await startActivationServer(['MSA', 'NDA', 'DPA']);
   });
   test.afterAll(() => stopActivationServer(server));
@@ -149,6 +153,7 @@ test.describe.serial('OC/PO activation readiness — test-only ON', () => {
   let server;
 
   test.beforeAll(async () => {
+    test.setTimeout(150000);
     server = await startActivationServer(['MSA', 'NDA', 'DPA', 'ORDER_CONFIRMATION', 'PURCHASE_ORDER']);
   });
   test.afterAll(() => stopActivationServer(server));
