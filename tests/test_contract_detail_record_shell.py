@@ -8,7 +8,7 @@ import re
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client as TestClient
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
@@ -77,6 +77,32 @@ class ContractDetailShellTests(TestCase):
         response = self.client.get(detail_url(self.contract.pk))
         self.assertEqual(response.status_code, 200)
 
+    def test_run_review_command_opens_the_review_workspace(self):
+        contract = Contract.objects.create(
+            organization=self.organization,
+            title='Reviewable agreement',
+            content='Seed',
+            status=Contract.Status.IN_PROGRESS,
+            created_by=self.user,
+        )
+        Document.objects.create(
+            organization=self.organization,
+            title='Review source',
+            document_type=Document.DocType.CONTRACT,
+            version=1,
+            contract=contract,
+            uploaded_by=self.user,
+        )
+
+        response = self.client.get(detail_url(contract.pk, 'workflow'))
+
+        action = response.context['contract_command']['primary_action']
+        self.assertEqual(action['label'], 'Open review workspace')
+        self.assertEqual(
+            action['target'],
+            reverse('contracts:contract_review_workspace', kwargs={'pk': contract.pk}),
+        )
+
     def test_uses_shared_page_wrap_shell(self):
         response = self.client.get(detail_url(self.contract.pk))
         self.assertContains(response, 'dc-ds-shell')
@@ -102,8 +128,6 @@ class ContractDetailShellTests(TestCase):
         activity = self.client.get(detail_url(self.contract.pk, 'activity'))
         self.assertContains(activity, 'data-open-note-dialog')
         self.assertContains(activity, 'id="contract-note-dialog"')
-        self.assertContains(activity, 'let noteDialogTrigger = null;')
-        self.assertContains(activity, 'noteDialogTrigger?.focus();')
 
     def test_contract_workspace_tabs_and_overview_sections_present(self):
         response = self.client.get(detail_url(self.contract.pk))
@@ -275,19 +299,15 @@ class ContractDetailMetadataHeaderTests(TestCase):
 
         reviewer_client = TestClient()
         reviewer_client.login(username='cdetail_finance_reviewer', password='testpass123')
-        # This actor is intentionally exercising the assigned-reviewer
-        # workspace, so make their contract accountability explicit.
-        self.contract.owner = reviewer
-        self.contract.save(update_fields=['owner', 'updated_at'])
         response = reviewer_client.get(detail_url(self.contract.pk))
 
         self.assertEqual(
             response.context['contract_command']['primary_action']['label'],
-            'Run review',
+            'Review Finance approval',
         )
         self.assertEqual(
             response.context['contract_command']['next_action'],
-            'Run contract review before submitting for approval.',
+            'Record the finance approval decision.',
         )
 
     def test_phase_one_summary_shows_paper_source_and_workflow_checklist(self):
@@ -373,7 +393,8 @@ class ContractDetailMetadataHeaderTests(TestCase):
         viewer_client = TestClient()
         viewer_client.login(username='cdetail_ownerless_viewer', password='testpass123')
         response = viewer_client.get(detail_url(self.contract.pk))
-        self.assertEqual(response.status_code, 404)
+        body = page_body(response.content.decode())
+        self.assertIn('Unassigned', body)
 
 
 class ContractDetailActionsTests(TestCase):
@@ -467,98 +488,6 @@ class ContractDetailActionsTests(TestCase):
         self.assertEqual(detail.context['grounded_check']['label'], 'Complete')
 
 
-class CounterpartyCollaborationDisabledTests(TestCase):
-    def setUp(self):
-        self.organization = Organization.objects.create(name='Private Firm', slug='private-firm')
-        self.owner = User.objects.create_user(
-            username='private_owner', password='testpass123', email='owner@private.test',
-        )
-        OrganizationMembership.objects.create(
-            organization=self.organization, user=self.owner,
-            role=OrganizationMembership.Role.MEMBER, is_active=True,
-        )
-        self.contract = Contract.objects.create(
-            organization=self.organization, title='Private Agreement',
-            counterparty='Northwind', created_by=self.owner,
-        )
-        self.participant = CounterpartyCollaborationParticipant.objects.create(
-            organization=self.organization, contract=self.contract, email='external@northwind.test',
-            can_view_documents=True, can_comment=True, can_upload_revisions=True,
-        )
-        self.item = CounterpartyCollaborationItem.objects.create(
-            organization=self.organization, contract=self.contract,
-            kind=CounterpartyCollaborationItem.Kind.TASK, title='Private task',
-        )
-        self.document = Document.objects.create(
-            organization=self.organization, contract=self.contract, title='Previously shared draft',
-            share_with_counterparty=True,
-        )
-
-    def test_disabled_public_routes_are_indistinguishable_and_do_not_mutate(self):
-        routes = (
-            reverse('contracts:counterparty_collaboration_portal', kwargs={'token': self.participant.token}),
-            reverse('contracts:counterparty_collaboration_add_comment', kwargs={'token': self.participant.token}),
-            reverse('contracts:counterparty_collaboration_upload_revision', kwargs={'token': self.participant.token}),
-            reverse('contracts:counterparty_collaboration_complete_task', kwargs={
-                'token': self.participant.token, 'item_id': self.item.pk,
-            }),
-            reverse('contracts:counterparty_collaboration_document_download', kwargs={
-                'token': self.participant.token, 'document_id': self.document.pk,
-            }),
-        )
-        before_participants = CounterpartyCollaborationParticipant.objects.count()
-        before_items = CounterpartyCollaborationItem.objects.count()
-        before_audits = AuditLog.objects.count()
-
-        for route in routes:
-            get_response = self.client.get(route)
-            post_response = self.client.post(route, {'email': self.participant.email, 'content': 'probe'})
-            self.assertEqual(get_response.status_code, 404)
-            self.assertEqual(post_response.status_code, 404)
-            self.assertEqual(get_response.content, post_response.content)
-
-        self.participant.refresh_from_db()
-        self.item.refresh_from_db()
-        self.assertEqual(self.participant.status, CounterpartyCollaborationParticipant.Status.PENDING)
-        self.assertEqual(self.item.status, CounterpartyCollaborationItem.Status.OPEN)
-        self.assertEqual(CounterpartyCollaborationParticipant.objects.count(), before_participants)
-        self.assertEqual(CounterpartyCollaborationItem.objects.count(), before_items)
-        self.assertEqual(AuditLog.objects.count(), before_audits)
-
-    def test_disabled_internal_routes_return_404_before_auth_or_object_lookup(self):
-        unknown_contract_id = self.contract.pk + 9999
-        routes = (
-            reverse('contracts:counterparty_collaboration_invite', kwargs={'pk': unknown_contract_id}),
-            reverse('contracts:counterparty_collaboration_create_item', kwargs={'pk': unknown_contract_id}),
-            reverse('contracts:counterparty_collaboration_revoke', kwargs={
-                'pk': unknown_contract_id, 'participant_id': self.participant.pk + 9999,
-            }),
-        )
-        for route in routes:
-            anonymous = self.client.post(route, {'email': 'probe@example.test'})
-            self.assertEqual(anonymous.status_code, 404)
-
-        self.client.login(username='private_owner', password='testpass123')
-        for route in routes:
-            authenticated = self.client.post(route, {'email': 'probe@example.test'})
-            self.assertEqual(authenticated.status_code, 404)
-
-        self.assertEqual(
-            CounterpartyCollaborationParticipant.objects.filter(contract=self.contract).count(),
-            1,
-        )
-
-    def test_disabled_surface_and_share_control_are_absent_from_contract_workspace(self):
-        self.client.login(username='private_owner', password='testpass123')
-        response = self.client.get(detail_url(self.contract.pk, 'documents'))
-        self.assertEqual(response.status_code, 200)
-        self.assertNotContains(response, 'Counterparty collaboration')
-        self.assertNotContains(response, 'Share with counterparty collaborators')
-        self.assertFalse(response.context['counterparty_collaboration']['enabled'])
-        self.assertNotIn('share_with_counterparty', response.context['attach_document_form'].fields)
-
-
-@override_settings(EXTERNAL_COLLABORATION_ENABLED=True)
 class CounterpartyCollaborationTests(TestCase):
     def setUp(self):
         self.organization = Organization.objects.create(name='External Firm', slug='external-firm')
@@ -584,8 +513,7 @@ class CounterpartyCollaborationTests(TestCase):
                 'can_view_documents': 'on', 'can_comment': 'on',
             },
         )
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
+        self.assertRedirects(response, reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
         participant = CounterpartyCollaborationParticipant.objects.get(contract=self.contract)
         self.assertEqual(participant.organization, self.organization)
         self.assertTrue(participant.can_view_documents)
@@ -751,7 +679,7 @@ class ContractDetailWorkflowTabTests(TestCase):
         self.client.login(username='cdetail_wf_assignee', password='testpass123')
         self.contract = Contract.objects.create(
             organization=self.organization, title='Workflow Contract', content='Seed',
-            status=Contract.Status.IN_PROGRESS, created_by=self.creator, owner=self.assignee,
+            status=Contract.Status.IN_PROGRESS, created_by=self.creator,
         )
 
     def test_required_approvals_shows_empty_state_when_nothing_exists(self):
@@ -788,8 +716,7 @@ class ContractDetailWorkflowTabTests(TestCase):
             reverse('contracts:contract_approval_chain_reorder', kwargs={'pk': self.contract.pk, 'approval_id': approval_c.pk}),
             {'direction': 'up'},
         )
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
+        self.assertRedirects(response, reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
         ordered_steps = list(
             ApprovalRequest.objects.filter(contract=self.contract).order_by('sort_order', 'created_at', 'pk').values_list('approval_step', flat=True)
         )

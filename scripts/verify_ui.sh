@@ -42,32 +42,42 @@ E2E_PASSWORD="${E2E_PASSWORD:-e2e_pass_123}"
 
 mkdir -p logs
 
-if [[ "$VERIFY_UI_MODE" == "all" || "$VERIFY_UI_MODE" == "integrity" ]]; then
-  echo "[verify-ui] Running UI integrity suites..."
-  "$PYTHON_BIN" manage.py test \
-    tests.test_ui_click_integrity \
-    tests.test_redesign_components \
-    -v 2
-fi
+echo "[verify-ui] Running UI integrity suites..."
+"$PYTHON_BIN" manage.py test \
+  tests.test_ui_click_integrity \
+  tests.test_redesign_components \
+  -v 2
 
-if [[ "$VERIFY_UI_MODE" == "integrity" ]]; then
-  echo "[verify-ui] UI integrity suites completed successfully."
-  exit 0
-fi
+echo "[verify-ui] Installing Playwright dependencies (if needed)..."
+npm --prefix client ci >/dev/null
+npm --prefix client exec playwright install chromium >/dev/null
 
-if [[ "${VERIFY_UI_DEPS_READY:-0}" == "1" ]]; then
-  echo "[verify-ui] Using pre-installed Playwright dependencies."
-else
-  echo "[verify-ui] Installing Playwright dependencies (if needed)..."
-  npm --prefix client ci >/dev/null
-  npm --prefix client exec playwright install chromium >/dev/null
-fi
+echo "[verify-ui] Seeding E2E user and organization..."
+"$PYTHON_BIN" manage.py shell -c "
+from django.contrib.auth.models import User
+from contracts.models import Organization, OrganizationMembership
 
-SERVER_LOG="logs/e2e-devserver-${E2E_PORT}.log"
-echo "[verify-ui] Starting deterministic E2E fixture server at ${E2E_BASE_URL}..."
-E2E_PORT="${E2E_PORT}" \
-E2E_DATABASE_URL="${E2E_DATABASE_URL:-}" \
-sh scripts/start_e2e_server.sh > "$SERVER_LOG" 2>&1 &
+username='${E2E_USERNAME}'
+password='${E2E_PASSWORD}'
+email=f'{username}@example.com'
+
+user, _ = User.objects.get_or_create(username=username, defaults={'email': email})
+user.email = email
+user.set_password(password)
+user.is_active = True
+user.save()
+
+org, _ = Organization.objects.get_or_create(name='E2E Org', defaults={'slug': 'e2e-org'})
+OrganizationMembership.objects.update_or_create(
+    organization=org,
+    user=user,
+    defaults={'role': OrganizationMembership.Role.OWNER, 'is_active': True},
+)
+print('seeded', username)
+"
+
+echo "[verify-ui] Starting temporary Django server at ${E2E_BASE_URL}..."
+"$PYTHON_BIN" manage.py runserver "127.0.0.1:${E2E_PORT}" --noreload > logs/e2e-devserver.log 2>&1 &
 SERVER_PID=$!
 
 cleanup() {
@@ -77,7 +87,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-for _ in {1..120}; do
+for _ in {1..30}; do
   if curl -s -o /dev/null "${E2E_BASE_URL}/login/"; then
     break
   fi
@@ -85,7 +95,7 @@ for _ in {1..120}; do
 done
 
 if ! curl -s -o /dev/null "${E2E_BASE_URL}/login/"; then
-  echo "[verify-ui] Server did not become ready; check ${SERVER_LOG}"
+  echo "[verify-ui] Server did not become ready; check logs/e2e-devserver.log"
   exit 1
 fi
 
