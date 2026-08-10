@@ -87,6 +87,22 @@ affected ID(s) only in a transaction, re-run the preflight, and retain the
 private-access code revert as the release rollback path. This predicate has not
 been met.
 
+### Merge/deployment boundary verification (2026-08-10)
+
+**Relationship: C — cannot be established from repository evidence.** The
+repository's `render.yaml` says `branch: main` and `autoDeployTrigger: commit`,
+but its own header and `RENDER_FREE_DEPLOY.md` define it as a free **preview**
+Blueprint, not authoritative configuration for the live Render service.
+`TARGET_ENVIRONMENT_INVENTORY.md` records that the live service was discovered
+independently and that this repository/session has no Render credential,
+deployment webhook, or direct configuration access. The GitHub workflows do
+not call a Render deployment API or deploy hook.
+
+The repository therefore cannot prove that merging this PR will deploy the
+actual production service, nor prove the opposite. Merge and production
+deployment remain separate, independently authorized release actions. This
+does not authorize either action.
+
 ## Gate state
 
 ### Preservation and full-regression closure (2026-08-09)
