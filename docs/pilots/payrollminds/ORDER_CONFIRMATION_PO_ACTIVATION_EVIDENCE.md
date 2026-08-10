@@ -2,7 +2,107 @@
 
 **Starting main SHA:** `a329b805952befefa7924ddc943badca9ed8ed4b`
 **Assessment date:** 2026-08-10
-**Status:** **NO-GO**
+**PR #181 head:** `1f11e622d6bcf1b8e14950e9442fa05419fe6c48`
+**Environment status:** **OC/PO EXECUTION ENVIRONMENT GREEN — ACTIVATION IMPLEMENTATION MAY CONTINUE**
+**Production-activation status:** **NO-GO**
+
+## Reproducible execution-environment repair and baseline
+
+The original local virtual environment was not a safe source of release
+evidence. Its `bin/python` target was the valid repository-supported
+CPython 3.12.13 installation, but its generated `pip`, `pip-audit`, and
+`bandit` console scripts had a stale shebang pointing to the removed
+`/Users/haroonwahed/Documents/Projects/CMS-Aegis/.venv/bin/python`.
+This was a machine-local virtual-environment corruption, not an application
+or dependency defect. It was not patched or symlinked.
+
+The broken `.venv` was moved to the recoverable temporary location
+`/tmp/clmone-broken-venv.IdE78T/venv`, then recreated with the existing
+CPython 3.12.13 toolchain. The new environment installed successfully from
+the committed dependency source `requirements.txt` → `requirements/dev.txt`
+→ `requirements/runtime.txt`; this repository has no lockfile. No dependency
+was upgraded outside those committed pins, and no virtual-environment or
+machine-local file is tracked.
+
+| Item | Result |
+| --- | --- |
+| Rebuilt interpreter | CPython 3.12.13 |
+| pip | 25.0.1 |
+| Django | 5.2.16 |
+| `python manage.py check` | pass (0 issues) |
+| `python manage.py makemigrations --check --dry-run` | pass; no changes detected |
+| Baseline worktrees | clean detached worktrees at main `a329b805952befefa7924ddc943badca9ed8ed4b` and PR head `1f11e622d6bcf1b8e14950e9442fa05419fe6c48` |
+
+### Django baseline comparison
+
+The same command and test environment were used in both clean worktrees:
+`DJANGO_SETTINGS_MODULE=config.settings_test .venv/bin/python manage.py test --verbosity 0`.
+
+| Result | Main (`a329b805`) | PR #181 (`1f11e622`) |
+| --- | ---: | ---: |
+| Collected | 2,651 | 2,651 |
+| Passed | 2,574 | 2,574 |
+| Failed | 31 | 31 |
+| Errors | 38 | 38 |
+| Skipped | 8 | 8 |
+| Exit status | 1 | 1 |
+
+The normalized set of all 69 failing/error test identifiers is identical on
+both revisions: **INHERITED: 69; RESOLVED: 0; NEW: 0; MUTATED: 0**. It includes
+the documented missing-`pytest` imports and the existing lifecycle/status,
+storage-integration, e-sign, and UI-contract drift. No PR #181 signature has
+an OC/PO test ID, because this branch contains evidence only and does not add
+OC/PO implementation coverage.
+
+### Security, migration, and UAT baseline
+
+All of the following were run against both main and PR #181 with the rebuilt
+environment. The PR result matched the main result.
+
+| Gate | Invocation/scope | Main | PR #181 |
+| --- | --- | --- | --- |
+| Python dependency audit | `pip-audit --disable-pip --no-deps -r requirements/runtime.txt` | pass; no known vulnerabilities | pass; no known vulnerabilities |
+| Static security | `bandit -q -r contracts config -lll` | pass | pass |
+| Migration drift | `manage.py makemigrations --check --dry-run` | zero | zero |
+| PayrollMinds UAT | `manage.py test tests.test_payrollminds_executable_uat -v 1` | 24/24 pass | 24/24 pass |
+| npm baseline | CI-equivalent `scripts/check_npm_audit_baseline.py --base-ref a329… --verify-github-approvals` | current dependency tree unchanged | pass; no new, worsened, or unexcepted findings |
+
+The TruffleHog result is deliberately limited to the repository-supported PR
+range rather than a raw filesystem/history sweep. Version 3.96.0 was run with
+the documented CI-compatible scope: `git file:///…/CLMOne --since-commit
+a329b805… --branch 1f11e622… --fail --no-update
+--results=verified,unverified,unknown`. It completed successfully with four
+chunks / 5,284 bytes and **0 verified, 0 unverified secrets**. There is no
+secret finding, fixture exception, or new suppression in this PR range.
+
+### Historical dependency-finding reconciliation
+
+The earlier generic count of five did not itself preserve a five-row advisory
+list. The rows below are the five historical remediation groups recoverable
+from committed dependency history; current authoritative scans find no
+remaining known vulnerability in the committed runtime resolution or npm
+baseline.
+
+| Historical finding | Current status | Package | Installed version | Fixed version | Release blocking? |
+| --- | --- | --- | --- | --- | --- |
+| `CVE-2026-71852` | resolved before current main | pypdf | 6.15.0 | 6.15.0 | no |
+| `GHSA-2v37-7h3g-55p8` | resolved before current main | nanoid (client lock) | 3.3.18 | 3.3.18 | no |
+| `GHSA-MH99-V99M-4GVG` | resolved before current main | brace-expansion (theme lock) | 5.0.9 | 5.0.8, later 5.0.9 | no |
+| historical cryptography advisories | resolved before current main | cryptography | 50.0.0 | 50.0.0 | no |
+| historical PostCSS build advisory | resolved before current main | postcss (client/theme locks) | 8.5.25 | 8.5.25 | no |
+
+No stale count has been used as a current finding, and no dependency update
+was made during this baseline task.
+
+### Browser-runner capability
+
+`npm --prefix client ci`, `npm --prefix client exec playwright install
+chromium`, and `npm --prefix client exec playwright test -- --list` completed
+successfully. The browser runner collected a manifest of **94 tests in 29
+files**. The deterministic isolated E2E server then started with a local
+SQLite `e2e.sqlite3` and returned HTTP 200 from `/login/`; it was stopped
+immediately after readiness was proved. No browser tests, screenshots, or
+snapshot updates were run in this task.
 
 ## PDR-0008 production closure
 
@@ -45,18 +145,14 @@ or executed.
 
 ## Security and regression status
 
-`npm audit --omit=dev --json` for `client/` reported zero vulnerabilities.
-The local Python toolchain cannot run `pip-audit` or Bandit because the checked
-out `.venv` console scripts reference a removed interpreter. The raw
-TruffleHog invocation completed but is not release evidence: it scanned Git
-object history and local development certificate fixtures, yielding historical
-and fixture findings outside the authoritative CI scope. The previously
-reported five dependency findings therefore cannot yet be reconciled as
-resolved, present, or replaced.
+The execution environment, security scans, migration state, UAT, full-suite
+baseline, normalized comparison, vulnerability reconciliation, and browser
+manifest are now recorded above. The full Django suite remains non-green, but
+its complete 31-failure / 38-error result is inherited unchanged from approved
+main and is not attributed to PR #181.
 
-No OC/PO lifecycle test, browser test, complete browser manifest, full Django
-regression comparison, accessibility run, or migration-drift run has been
-completed for this readiness branch. No migration has been added by this
+No OC/PO lifecycle test or browser test has been added or executed, no
+accessibility run has been performed, and no migration has been added by this
 assessment.
 
 ## Remaining gaps and recommendation
@@ -68,10 +164,8 @@ assessment.
 2. Add and run separate deterministic OC and PO lifecycle/access/export/audit
    coverage, including private-access and non-disclosure cases.
 3. Add and run authoritative browser coverage for both types.
-4. Repair or recreate the local Python test environment and rerun pip-audit,
-   Bandit, the scoped TruffleHog gate, full regression, UAT, browser,
-   accessibility, and migration-drift checks. Reconcile all five previous
-   dependency findings without suppressing results.
+4. Add and execute the remaining per-type browser and accessibility evidence
+   after the narrowly scoped activation implementation exists.
 
 **Recommendation: NO-GO.** Order Confirmation and Purchase Order remain
 **BUSINESS SCOPE APPROVED / TECHNICAL IMPLEMENTATION GATE OPEN / PRODUCTION
