@@ -119,6 +119,10 @@ async function createType(page, baseUrl, code, label) {
 }
 
 test.describe.serial('OC/PO activation readiness — default OFF', () => {
+  // Each suite provisions an isolated Django database before starting its
+  // disposable server. CI runners can take longer than Playwright's default
+  // 30 seconds to migrate and seed that database.
+  test.describe.configure({ timeout: 150000 });
   let server;
 
   test.beforeAll(async () => {
@@ -141,6 +145,7 @@ test.describe.serial('OC/PO activation readiness — default OFF', () => {
 });
 
 test.describe.serial('OC/PO activation readiness — test-only ON', () => {
+  test.describe.configure({ timeout: 150000 });
   let server;
 
   test.beforeAll(async () => {
