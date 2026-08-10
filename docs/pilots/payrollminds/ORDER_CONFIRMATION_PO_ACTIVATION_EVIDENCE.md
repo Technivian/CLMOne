@@ -112,63 +112,122 @@ SHA, health, login/application smoke result, and Auto-Deploy OFF state are
 operator-attested; this assessment does not claim independent Render-provider
 observation. No contract type was activated by that deployment.
 
-## Current implementation trace
+## Default-off activation implementation — 2026-08-10
 
-Both candidate types are canonical values in `Contract.ContractType` and the
-ContractType catalogue migration: `ORDER_CONFIRMATION` and `PURCHASE_ORDER`.
-Both have required fields (`counterparty`, `governing_law`, `jurisdiction`) and
-Commercial Counsel launch metadata. They use the ordinary Contract Record,
-Document/DocumentVersion, audit, export, search, dashboard, deadline, and
-workflow inheritance paths; no type-specific private-access branch exists.
+**Implementation starting SHA:** `d9f106d29f8a010991fdf9355a994814f9164f16`
+**Implementation final SHA:** commit containing this evidence (reported in the PR handoff).
 
-The blocked intake path is concrete. `contract_template_picker` renders both
-types as procurement cards and points them at the generic Contract create
-route with a `type` query parameter. In a controlled pilot,
-`ControlledPilotScopeMiddleware` allows only MSA, NDA, and DPA builder
-prefixes and rejects the generic create path. Consequently neither candidate
-can be created through the controlled-pilot intake flow. This is intentional
-current scope enforcement, not a broken enum or template mapping.
+### One canonical authority path
 
-## Private-access inheritance
+`Contract.ContractType` and the `ContractType` catalogue remain classification
+authorities only. New controlled-pilot launch authority is centralized in
+`contracts.services.contract_type_activation`:
 
-PDR-0008 authorization is contract-object based, not contract-type based.
-Its documented enforcement covers Contract reads, direct detail, repository,
-search/counts/autocomplete, documents and versions, workflow/work items,
-exports, comments, and AI. Thus OC and PO would inherit owner/creator
-visibility, same-workspace unrelated-member denial, cross-workspace denial,
-revocation, and non-disclosure automatically once a governed Contract Record
-exists. No type-specific authorization logic is proposed.
+1. `CONTROLLED_PILOT_ENABLED` activates the pre-existing pilot boundary.
+2. `PAYROLLMINDS_ENABLED_CONTRACT_TYPES` is the explicit, valid-code allowlist.
+   Its production-equivalent default is exactly `MSA,NDA,DPA`.
+3. The same policy filters the New Contract cards and form choices; validates
+   direct standard-intake requests and form POSTs; filters template selection;
+   gates CSV preview/commit; and gates API upload-created Contract records.
+4. The controlled-pilot middleware delegates standard-intake eligibility to
+   that service, while generic creation, legacy upload/review, and CSV UI
+   exposure retain their existing fail-closed restrictions.
 
-This assessment does not count that generic proof as the required per-type
-executable coverage: OC and PO lifecycle/access tests have not yet been added
-or executed.
+Order Confirmation and Purchase Order are absent from the default allowlist.
+They require a future, separately authorized environment configuration. An
+active catalogue row, a route, a template, or a merged code change cannot
+activate either type. Unknown values are discarded from the allowlist and
+fail closed. No OC/PO-specific authorization branch was added: PDR-0008
+remains the object-level authority after a type passes launch eligibility.
 
-## Security and regression status
+MSA, NDA, and DPA retain their existing dedicated builder routes. SOW and all
+other cards now use the type-scoped standard route rather than the legacy
+generic `?type=` route, so no active or future type can bypass the same server
+policy. This is a routing correction only; it does not activate SOW or broaden
+the configured cohort.
 
-The execution environment, security scans, migration state, UAT, full-suite
-baseline, normalized comparison, vulnerability reconciliation, and browser
-manifest are now recorded above. The full Django suite remains non-green, but
-its complete 31-failure / 38-error result is inherited unchanged from approved
-main and is not attributed to PR #181.
+### Executable OC and PO evidence
 
-No OC/PO lifecycle test or browser test has been added or executed, no
-accessibility run has been performed, and no migration has been added by this
-assessment.
+`tests.test_oc_po_activation_policy` uses production-equivalent pilot settings
+and deterministic test-only allowlisting. It proves separately for
+`ORDER_CONFIRMATION` and `PURCHASE_ORDER`:
 
-## Remaining gaps and recommendation
+- default OFF: no card/form discoverability; standard route, direct generic
+  create, legacy upload/review, CSV UI, CSV preview token, and upload-created
+  Contract API cannot create an inactive type;
+- test-only ON: real canonical form creation with correct organization, type,
+  owner, `created_by`, catalogue mapping, private provenance lock, audit, and
+  reopen/detail;
+- canonical document attachment and immutable `DocumentVersion` linkage,
+  version lock, and document audit;
+- owner discovery/detail and unrelated same-workspace plus cross-workspace
+  direct-ID denial; private repository/search/facet count non-disclosure;
+- document, DocumentVersion, workflow and work-item inheritance; AI action
+  eligibility no broader than Contract read; and immediate membership
+  revocation;
+- template selection stays on the type-scoped governed route.
 
-1. Add a default-off, server-side controlled-pilot OC/PO intake gate that
-   permits only the two candidate types and continues to deny SOW, Vendor,
-   Employment, SaaS, Lease, OTHER/Custom, generic upload/import, and every
-   other inactive type.
-2. Add and run separate deterministic OC and PO lifecycle/access/export/audit
-   coverage, including private-access and non-disclosure cases.
-3. Add and run authoritative browser coverage for both types.
-4. Add and execute the remaining per-type browser and accessibility evidence
-   after the narrowly scoped activation implementation exists.
+The generic standard Contract path has no OC/PO-specific workflow definition
+or automatic workflow instance. The evidence therefore does not invent one;
+it proves the existing linked-workflow/work-item inheritance boundary. Export
+inherits the same PDR-0008 Contract read rule and remains covered by the
+existing canonical export authorization suite; no export surface was changed.
 
-**Recommendation: NO-GO.** Order Confirmation and Purchase Order remain
-**BUSINESS SCOPE APPROVED / TECHNICAL IMPLEMENTATION GATE OPEN / PRODUCTION
-ACTIVATION NO-GO**. Nothing in this readiness assessment deployed, changed a
-production flag or environment, created production data, or activated a
-contract type.
+Negative coverage blocks `SOW`, `VENDOR`, `EMPLOYMENT`, `SAAS`, `LEASE`, and
+`OTHER`, in addition to OC/PO when default-off. No `OTHER`/Custom, import,
+upload, AI, signature, inbound-email, portal, or integration feature was
+enabled.
+
+### Browser and isolation evidence
+
+`client/tests/e2e/oc-po-activation-readiness.spec.js` runs only against its
+own disposable SQLite E2E server(s), with unique synthetic titles and cleanup
+by database disposal; it never touches the shared E2E fixture or production
+data. The local result is **3 passed / 0 failed / 0 skipped / 0 timed out**:
+
+- default-off server: OC, PO, and representative inactive direct intake URLs
+  are absent or redirected through the normal pilot convention;
+- test-only-on server: Order Confirmation real browser intake, repository,
+  detail/reopen, and unrelated-member direct detail/list denial;
+- test-only-on server: the equivalent independent Purchase Order path.
+
+The manifest moved from **94 tests / 29 files** to **97 tests / 30 files**.
+The complete authoritative Linux browser manifest remains a PR CI gate; no
+visual baseline was updated locally.
+
+### Regression, quality, and security evidence
+
+| Gate | Result |
+| --- | --- |
+| Focused OC/PO policy + template + changed DPA routing | 5 passed |
+| Focused private-access / export / AI / tenant slices | 98 passed |
+| Broader targeted set | 252 run; 3 failures + 1 error reproduce unrelated pre-existing launch-setup drift; all OC/PO, PDR-0008, document, tenant, UAT, MSA/NDA/DPA, workflow, and security slices passed |
+| Full Django | 2,654 run; 31 failures, 38 errors, 8 skipped |
+| Normalized comparison to main baseline | inherited 69; resolved 0; **new 0; mutated 0**. The three additional collected tests are green. |
+| Django check / migration drift | pass / zero; **no schema migration required** |
+| `pip-audit` | pass; no known vulnerabilities |
+| Bandit (`contracts`, `config`, high severity) | pass |
+| TruffleHog PR-range scan | pass; 0 verified, 0 unverified secrets |
+| Local npm audit (`client`, production dependencies) | pass; 0 vulnerabilities |
+| Design-system anti-drift | pass |
+| Browser activation suite | 3 passed |
+
+The implementation does not change production configuration, production
+records, deployment configuration, Render, or a production contract-type
+activation. The production/default configuration remains MSA/NDA/DPA only.
+
+## Recommendation and remaining release gates
+
+**OC + PO TECHNICAL ACTIVATION READY — DEFAULT OFF** is the engineering
+recommendation for this draft once the exact committed PR SHA has the required
+Linux CI evidence. This is not production activation.
+
+Order Confirmation and Purchase Order remain **BUSINESS SCOPE APPROVED /
+TECHNICAL IMPLEMENTATION GATE OPEN / PRODUCTION ACTIVATION NO-GO**. Remaining
+release gates are the required PR CI results for the exact final SHA, including
+the full authoritative Linux browser manifest and standard release-evidence,
+quality/tenancy, secret, whitespace/diff, dependency, and accessibility
+checks. The CI-only npm baseline approval verification could not be executed
+locally because `GITHUB_REPOSITORY` and `GITHUB_TOKEN` are not available; the
+plain local npm audit is green. No deployment, production data change, or
+contract-type activation is authorized by this implementation evidence.

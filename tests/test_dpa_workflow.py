@@ -690,12 +690,15 @@ class StageOneRoutingTests(TestCase):
         content = response.content.decode()
         self.assertIn(reverse('contracts:dpa_workflow_builder'), content)
 
-    def test_other_cards_still_point_at_contract_create(self):
+    def test_other_cards_use_their_type_scoped_intake_route(self):
         response = self.client_.get(reverse('contracts:contract_template_picker'))
         content = response.content.decode()
         self.assertIn(reverse('contracts:msa_workflow_builder'), content)
         self.assertIn(reverse('contracts:nda_workflow_builder'), content)
-        self.assertIn(f"{reverse('contracts:contract_create')}?type=SOW", content)
+        self.assertIn(
+            reverse('contracts:contract_type_create', kwargs={'contract_type': 'SOW'}),
+            content,
+        )
 
 
 class CommandCenterKanbanProjectionTests(TestCase):

@@ -44,6 +44,10 @@ from contracts.services.webhooks import queue_webhook_event
 from contracts.services.esign import ESignReconciliationError, apply_esign_event
 from contracts.services.executive_analytics import build_executive_analytics_snapshot
 from contracts.services.obligations import get_obligation_service
+from contracts.services.contract_type_activation import (
+    ContractTypeActivationError,
+    require_contract_type_activation,
+)
 from contracts.services.netsuite import (
     NetSuiteSyncError,
     fetch_netsuite_records,
@@ -371,6 +375,12 @@ def document_upload_api(request):
         contract_type = request.POST.get('contract_type') or Contract.ContractType.OTHER
         if contract_type not in {value for value, _ in Contract.ContractType.choices}:
             return _error_response(request, 'Invalid contract type.', 400)
+        try:
+            contract_type = require_contract_type_activation(contract_type)
+        except ContractTypeActivationError:
+            # Match the existing upload boundary's non-disclosure behavior.
+            # A valid catalogue code cannot itself authorize a new record.
+            return _error_response(request, 'Contract creation is unavailable.', 404)
         start_date = parse_date(request.POST.get('start_date', '')) if request.POST.get('start_date') else None
         end_date = parse_date(request.POST.get('end_date', '')) if request.POST.get('end_date') else None
         if end_date and start_date and end_date < start_date:

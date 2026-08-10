@@ -477,6 +477,7 @@ def get_entry_cards(
     *,
     organization=None,
     user: Optional[AbstractBaseUser] = None,
+    allowed_types: Optional[set[str] | frozenset[str]] = None,
 ) -> List[ContractTypeEntryCard]:
     """The New Contract entry screen's type cards, in section display order.
 
@@ -489,6 +490,7 @@ def get_entry_cards(
         start_url_for=start_url_for,
         organization=organization,
         user=user,
+        allowed_types=allowed_types,
     )
     return [card for section in sections for card in section.cards]
 
@@ -498,8 +500,10 @@ def get_entry_card_sections(
     *,
     organization=None,
     user: Optional[AbstractBaseUser] = None,
+    allowed_types: Optional[set[str] | frozenset[str]] = None,
 ) -> List[ContractTypeEntrySection]:
     """Grouped New Contract entry cards for sectioned rendering."""
+    allowed = set(allowed_types) if allowed_types is not None else None
     shelf = get_recommendation_shelf(organization=organization, user=user)
     sections: List[ContractTypeEntrySection] = []
 
@@ -511,6 +515,7 @@ def get_entry_card_sections(
             start_url_for=start_url_for,
         )
         for contract_type in shelf.contract_types
+        if allowed is None or contract_type in allowed
     ]
     if recommended_cards:
         sections.append(ContractTypeEntrySection(
@@ -530,6 +535,7 @@ def get_entry_card_sections(
                 start_url_for=start_url_for,
             )
             for contract_type in types
+            if allowed is None or contract_type in allowed
         ]
         if section_cards:
             sections.append(ContractTypeEntrySection(

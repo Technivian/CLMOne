@@ -56,7 +56,7 @@
   <div class="dc-ds-card-grid dc-ds-card-grid--launch">
     {% if templates %}
     {% for template in templates %}
-    {% url 'contracts:contract_create' as contract_create_url %}
+    {% url 'contracts:contract_type_create' selected_type as contract_create_url %}
     {% with template_id=template.pk|stringformat:"s" %}
       {% with template_href=contract_create_url|add:'?template='|add:template_id %}
         {% include "design_system/card.html" with card_variant="launch" card_href=template_href card_icon="file-text" card_title=template.name card_description=template.description card_action_label="Use template" card_aria_label="Use template for "|add:template.name only %}

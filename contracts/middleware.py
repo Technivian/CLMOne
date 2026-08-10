@@ -187,6 +187,17 @@ class ControlledPilotScopeMiddleware:
             if path.startswith(prefix):
                 return reason
 
+        # The standard intake endpoint has no type-specific middleware branch:
+        # it delegates eligibility to the canonical activation policy.  Generic
+        # freeform creation remains excluded.
+        if path.startswith('/contracts/new/standard/'):
+            from contracts.services.contract_type_activation import is_contract_type_activated
+
+            code = path.rstrip('/').rsplit('/', 1)[-1]
+            if not is_contract_type_activated(code):
+                return 'freeform_create_out_of_scope'
+            return None
+
         # Freeform create (/contracts/new/ or /contracts/new/?…) — not builders.
         if path.rstrip('/') == '/contracts/new' or path.startswith('/contracts/new?'):
             return 'freeform_create_out_of_scope'

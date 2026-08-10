@@ -39,6 +39,7 @@ from contracts.services.contract_import_lifecycle import (
 )
 from contracts.services.contract_lifecycle import get_contract_lifecycle_service
 from contracts.services.contract_type_catalogue import assign_contract_type, normalize_import_code
+from contracts.services.contract_type_activation import is_contract_type_activated
 from contracts.services.lifecycle_dimensions import (
     LEGACY_STATUS_TO_RECORD,
     RECORD_STATUSES,
@@ -747,6 +748,19 @@ class RepositoryCsvImportService:
             elif contract_type is None:
                 issues.append(
                     _issue(index, 'contract_type', 'inactive', 'contract_type is not active in the catalogue.')
+                )
+            elif not is_contract_type_activated(contract_type_code):
+                # The catalogue establishes a valid classification, not pilot
+                # activation.  Recheck the same central allowlist used by all
+                # intake routes so a separately exposed import surface cannot
+                # create an inactive type.
+                issues.append(
+                    _issue(
+                        index,
+                        'contract_type',
+                        'not_activated',
+                        'contract_type is not enabled for controlled-pilot intake.',
+                    )
                 )
 
             raw_counterparty = _clean_text(raw.get('counterparty'))
