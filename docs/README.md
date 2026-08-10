@@ -61,10 +61,8 @@ Platform modules, workflow engine, data/AI, and security.
 |---|---|---|
 | [PLATFORM_AND_MODULE_ARCHITECTURE.md](architecture/PLATFORM_AND_MODULE_ARCHITECTURE.md) | Modules and dependency direction | Accepted |
 | [WORKFLOW_ENGINE_AND_DESIGNER.md](architecture/WORKFLOW_ENGINE_AND_DESIGNER.md) | Workflow configuration and execution | Accepted |
-| [CANONICAL_WORKFLOW_RUNTIME_IMPLEMENTATION.md](architecture/CANONICAL_WORKFLOW_RUNTIME_IMPLEMENTATION.md) | Default-off PDR-0006 implementation boundary and rollback | Implemented; not activation authority |
 | [DATA_AI_AND_INTELLIGENCE.md](architecture/DATA_AI_AND_INTELLIGENCE.md) | Data foundation and AI operating model | Accepted |
 | [SECURITY_PRIVACY_ACCESS_AND_AUDIT.md](architecture/SECURITY_PRIVACY_ACCESS_AND_AUDIT.md) | Security, privacy, access, audit | Accepted |
-| [MFA_TOTP_OPERATIONS.md](MFA_TOTP_OPERATIONS.md) | Authenticator-app MFA activation, evidence and rollback | Operational — default off |
 
 ### Engineering — [`engineering/`](engineering/)
 
@@ -77,7 +75,8 @@ Platform modules, workflow engine, data/AI, and security.
 | Document | Purpose | Status |
 |---|---|---|
 | [DELIVERY_ROADMAP_AND_RELEASE_GATES.md](roadmap/DELIVERY_ROADMAP_AND_RELEASE_GATES.md) | Build sequence and release gates | Accepted |
-| [REPOSITORY_ESSENTIALS_PHASE_1.md](roadmap/REPOSITORY_ESSENTIALS_PHASE_1.md) | Phase 1 repository baseline, delivery order, and living implementation status | Living roadmap |
+| [REPOSITORY_ESSENTIALS_PHASE_1.md](roadmap/REPOSITORY_ESSENTIALS_PHASE_1.md) | Phase 1 repository baseline, delivery order, and first-slice boundary | Proposed — planning only |
+| [REPOSITORY_FIVE_OF_FIVE_ROADMAP.md](roadmap/REPOSITORY_FIVE_OF_FIVE_ROADMAP.md) | Repository path from controlled pilot to production-proven 5/5 maturity | Proposed — planning only |
 
 ## What agents should read
 
@@ -93,7 +92,7 @@ Then read domain-specific documents:
 
 | Work type | Also read |
 |---|---|
-| Workflow | [`architecture/WORKFLOW_ENGINE_AND_DESIGNER.md`](architecture/WORKFLOW_ENGINE_AND_DESIGNER.md); [`architecture/CANONICAL_WORKFLOW_RUNTIME_IMPLEMENTATION.md`](architecture/CANONICAL_WORKFLOW_RUNTIME_IMPLEMENTATION.md) when touching the canonical runtime |
+| Workflow | [`architecture/WORKFLOW_ENGINE_AND_DESIGNER.md`](architecture/WORKFLOW_ENGINE_AND_DESIGNER.md) |
 | UI, navigation, terminology, design | [`product/UX_NAVIGATION_AND_WORK_SURFACES.md`](product/UX_NAVIGATION_AND_WORK_SURFACES.md) |
 | Data, AI, extraction, search, analytics | [`architecture/DATA_AI_AND_INTELLIGENCE.md`](architecture/DATA_AI_AND_INTELLIGENCE.md) |
 | Auth, authorization, privacy, audit, exports, security | [`architecture/SECURITY_PRIVACY_ACCESS_AND_AUDIT.md`](architecture/SECURITY_PRIVACY_ACCESS_AND_AUDIT.md) |

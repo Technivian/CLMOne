@@ -48,7 +48,9 @@ class TestInboundImportValidation(SimpleTestCase):
 class TestInboundImportPersistence(TestCase):
     def setUp(self):
         self.org = Organization.objects.create(name='Inbound Org', slug='inbound-org')
-        self.user = User.objects.create_user(username='inbound-user', password='pass12345')
+        self.user = User.objects.create_user(
+            username='inbound-user', email='inbound-user@example.test', password='pass12345',
+        )
         OrganizationMembership.objects.create(
             organization=self.org,
             user=self.user,
@@ -58,13 +60,19 @@ class TestInboundImportPersistence(TestCase):
         self.svc = InboundImportService()
 
     def test_csv_import_valid_rows(self):
-        csv_text = 'title,counterparty,contract_type,status\nTest Contract,Acme,NDA,DRAFT\n'
+        csv_text = (
+            'title,counterparty,contract_type,owner_email,status,start_date,end_date,renewal_date,notice_period_days\n'
+            'Test Contract,Acme,NDA,inbound-user@example.test,DRAFT,2026-01-01,2027-01-01,2026-12-01,60\n'
+        )
         result = self.svc.import_contracts_from_csv(self.org, csv_text, self.user)
         self.assertEqual(result.imported_count, 1)
         self.assertEqual(result.skipped_count, 0)
         contract = Contract.objects.get(title='Test Contract')
         self.assertEqual(contract.status, Contract.Status.IN_PROGRESS)
         self.assertEqual(contract.lifecycle_stage, Contract.LifecycleStage.DRAFTING)
+        self.assertEqual(contract.owner, self.user)
+        self.assertEqual(contract.renewal_date.isoformat(), '2026-12-01')
+        self.assertEqual(contract.termination_notice_date.isoformat(), '2026-11-02')
 
     def test_csv_import_missing_title_skipped(self):
         csv_text = 'title,counterparty\n,Acme\n'

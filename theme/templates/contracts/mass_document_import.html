@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}Mass document import – CLM One{% endblock %}
+{% block authenticated_page_title %}Mass document import{% endblock %}
+{% block authenticated_page_subtitle %}Create separate imported records from a controlled batch of existing agreements.{% endblock %}
+{% block authenticated_page_back %}
+<a href="{% url 'contracts:repository' %}" class="topbar-back-link" data-workspace-back aria-label="Back to contracts" title="Back to contracts">
+  {% include "design_system/icon.html" with name="arrow-left" %}
+</a>
+{% endblock %}
+{% block content %}
+<main class="dc-ds-page dc-ds-page-flow" aria-label="Mass document import">
+  <section class="dc-ds-surface" aria-labelledby="mass-import-title">
+    <div class="dc-ds-surface__head">
+      <div>
+        <h1 id="mass-import-title" class="dc-ds-surface__title">Import existing agreements</h1>
+        <p class="text-desc-sm">Each file creates its own imported contract record and immutable source-document version. Extracted details remain unverified until a reviewer confirms them.</p>
+      </div>
+    </div>
+    <div class="dc-ds-surface__body">
+      <form id="mass-import-form">
+        <label for="mass-import-files" class="text-label">Agreement files</label>
+        <input id="mass-import-files" class="dc-ds-control input-base" type="file" name="files" accept=".pdf,.docx,.txt,.md,.csv,.html,.xml,.json" multiple required aria-describedby="mass-import-help">
+        <p id="mass-import-help" class="text-desc-sm">Up to 50 files, 50 MB each, and 250 MB total. Supported files: PDF, DOCX, TXT, MD, CSV, HTML, XML, and JSON.</p>
+        <div id="mass-import-selection" class="text-desc-sm" aria-live="polite"></div>
+        <div class="dc-ds-page-actions">
+          <a class="dc-ds-button dc-ds-button--quiet" href="{% url 'contracts:repository' %}">Cancel</a>
+          <button id="mass-import-submit" class="dc-ds-button dc-ds-button--primary" type="submit">Import documents</button>
+        </div>
+      </form>
+      <div id="mass-import-status" role="status" aria-live="polite"></div>
+      <div id="mass-import-results" hidden aria-live="polite">
+        <h2 class="text-section-title">Import results</h2>
+        <div id="mass-import-created"></div>
+        <div id="mass-import-skipped"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="dc-ds-surface" aria-labelledby="email-ingestion-title">
+    <div class="dc-ds-surface__head">
+      <div>
+        <h2 id="email-ingestion-title" class="dc-ds-surface__title">Forwarded email ingestion</h2>
+        <p class="text-desc-sm">For a managed mail-forwarding provider, enable the deployment switch and use a revocable API token scoped only to <code>contracts:write</code>. The provider must submit the original Message-ID and attachments; message body, sender, and subject are not retained.</p>
+      </div>
+    </div>
+    <div class="dc-ds-surface__body">
+      <p class="text-desc-sm">Forwarding endpoint</p>
+      <code class="code-block">{{ email_forwarding_endpoint }}</code>
+      <p class="text-desc-sm">Repeated delivery of the same Message-ID is idempotent per attachment. Enable <code>EMAIL_FORWARDED_INGESTION_ENABLED=true</code> only after the applicable integration release gate is satisfied.</p>
+    </div>
+  </section>
+</main>
+<script nonce="{{ csp_nonce }}">
+(function () {
+  var form = document.getElementById('mass-import-form');
+  var files = document.getElementById('mass-import-files');
+  var selection = document.getElementById('mass-import-selection');
+  var submit = document.getElementById('mass-import-submit');
+  var status = document.getElementById('mass-import-status');
+  var results = document.getElementById('mass-import-results');
+  var created = document.getElementById('mass-import-created');
+  var skipped = document.getElementById('mass-import-skipped');
+  if (!form || !files) return;
+
+  function csrfToken() {
+    var row = document.cookie.split('; ').find(function (item) { return item.indexOf('csrftoken=') === 0; });
+    return row ? row.split('=')[1] : '';
+  }
+  function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); }
+  function resultList(node, title, items, successful) {
+    clear(node);
+    if (!items.length) return;
+    var heading = document.createElement('h3'); heading.className = 'text-subtitle'; heading.textContent = title; node.appendChild(heading);
+    var list = document.createElement('ul'); list.className = 'dc-ds-list';
+    items.forEach(function (item) {
+      var li = document.createElement('li');
+      if (successful) {
+        var link = document.createElement('a');
+        link.className = 'c-link'; link.href = item.review_url;
+        link.textContent = item.filename + ' — review extracted metadata'; li.appendChild(link);
+      } else {
+        li.textContent = item.filename + ' — ' + item.reason;
+      }
+      list.appendChild(li);
+    });
+    node.appendChild(list);
+  }
+  files.addEventListener('change', function () {
+    selection.textContent = files.files.length ? files.files.length + ' file(s) selected.' : '';
+  });
+  form.addEventListener('submit', function (event) {
+    event.preventDefault();
+    if (!files.files.length) return;
+    submit.disabled = true; submit.textContent = 'Importing…'; status.textContent = 'Creating imported records and extracting review metadata…';
+    var body = new FormData();
+    Array.prototype.forEach.call(files.files, function (file) { body.append('files', file); });
+    fetch('{% url "contracts:document_mass_import_api" %}', { method: 'POST', headers: { 'X-CSRFToken': csrfToken() }, body: body })
+      .then(function (response) { return response.json().then(function (data) { return { ok: response.ok, data: data }; }); })
+      .then(function (response) {
+        if (!response.ok || !response.data.ok) throw new Error(response.data.error || 'Import could not be completed.');
+        var data = response.data; results.hidden = false;
+        resultList(created, 'Created records', data.created || [], true);
+        resultList(skipped, 'Files not imported', data.skipped || [], false);
+        status.textContent = data.created_count + ' imported; ' + data.skipped_count + ' not imported.';
+      })
+      .catch(function (error) { status.textContent = error.message || 'Import could not be completed.'; })
+      .finally(function () { submit.disabled = false; submit.textContent = 'Import documents'; });
+  });
+}());
+</script>
+{% endblock %}

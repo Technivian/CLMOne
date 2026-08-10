@@ -277,44 +277,6 @@ else:
         'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage'},
     }
 
-# Quarantine never shares the ordinary media namespace or public media URL.
-# Production may point this alias at a separate private S3 bucket and a
-# least-privilege worker credential without changing canonical document
-# storage.  Local development uses a non-served directory outside MEDIA_ROOT.
-DOCUMENT_QUARANTINE_STORAGE_BACKEND = os.getenv(
-    'DOCUMENT_QUARANTINE_STORAGE_BACKEND',
-    'filesystem',
-).strip().lower()
-if DOCUMENT_QUARANTINE_STORAGE_BACKEND == 's3':
-    _quarantine_bucket = os.getenv('DOCUMENT_QUARANTINE_BUCKET_NAME', '').strip()
-    if not _quarantine_bucket:
-        raise ImproperlyConfigured(
-            'DOCUMENT_QUARANTINE_STORAGE_BACKEND=s3 requires '
-            'DOCUMENT_QUARANTINE_BUCKET_NAME.'
-        )
-    _quarantine_s3_options = {
-        'bucket_name': _quarantine_bucket,
-        'region_name': os.getenv('DOCUMENT_QUARANTINE_REGION_NAME', '').strip() or None,
-        'access_key': os.getenv('DOCUMENT_QUARANTINE_ACCESS_KEY_ID', '').strip() or None,
-        'secret_key': os.getenv('DOCUMENT_QUARANTINE_SECRET_ACCESS_KEY', '').strip() or None,
-        'endpoint_url': os.getenv('DOCUMENT_QUARANTINE_ENDPOINT_URL', '').strip() or None,
-        'default_acl': 'private',
-        'querystring_auth': True,
-        'file_overwrite': False,
-    }
-    STORAGES['quarantine'] = {
-        'BACKEND': 'storages.backends.s3.S3Storage',
-        'OPTIONS': {k: v for k, v in _quarantine_s3_options.items() if v is not None},
-    }
-else:
-    STORAGES['quarantine'] = {
-        'BACKEND': 'django.core.files.storage.FileSystemStorage',
-        'OPTIONS': {
-            'location': str(BASE_DIR / '.document-quarantine'),
-            'base_url': None,
-        },
-    }
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CLMONE_MODE = False
@@ -341,21 +303,6 @@ OIDC_RP_CLIENT_ID = os.getenv('OIDC_RP_CLIENT_ID', '')
 OIDC_RP_CLIENT_SECRET = os.getenv('OIDC_RP_CLIENT_SECRET', '')
 OIDC_RP_SIGN_ALGO = os.getenv('OIDC_RP_SIGN_ALGO', 'RS256')
 OIDC_RP_SCOPES = os.getenv('OIDC_RP_SCOPES', 'openid email profile')
-MICROSOFT_ENTRA_SSO_ENABLED = _bool_env(
-    'MICROSOFT_ENTRA_SSO_ENABLED',
-    default=False,
-)
-MICROSOFT_ENTRA_TENANT_ID = os.getenv(
-    'MICROSOFT_ENTRA_TENANT_ID',
-    '',
-).strip()
-MICROSOFT_ENTRA_ORG_ALLOWLIST = _csv_env(
-    'MICROSOFT_ENTRA_ORG_ALLOWLIST',
-)
-OIDC_CREATE_USER = _bool_env(
-    'OIDC_CREATE_USER',
-    default=not MICROSOFT_ENTRA_SSO_ENABLED,
-)
 SSO_ALLOWED_EMAIL_DOMAINS = [d.strip().lower() for d in os.getenv('SSO_ALLOWED_EMAIL_DOMAINS', '').split(',') if d.strip()]
 OIDC_OP_AUTHORIZATION_ENDPOINT = os.getenv('OIDC_OP_AUTHORIZATION_ENDPOINT', '')
 OIDC_OP_TOKEN_ENDPOINT = os.getenv('OIDC_OP_TOKEN_ENDPOINT', '')
@@ -389,39 +336,6 @@ if SSO_ENABLED:
             'OIDC_OP_USER_ENDPOINT, OIDC_OP_JWKS_ENDPOINT).'
         )
 
-if MICROSOFT_ENTRA_SSO_ENABLED:
-    if not SSO_ENABLED:
-        raise ImproperlyConfigured(
-            'MICROSOFT_ENTRA_SSO_ENABLED requires SSO_ENABLED=true.'
-        )
-    try:
-        import uuid
-        normalized_entra_tenant_id = str(uuid.UUID(MICROSOFT_ENTRA_TENANT_ID))
-    except (ValueError, AttributeError):
-        raise ImproperlyConfigured(
-            'MICROSOFT_ENTRA_TENANT_ID must be a tenant-specific UUID.'
-        ) from None
-    expected_entra_discovery = (
-        'https://login.microsoftonline.com/'
-        f'{normalized_entra_tenant_id}/v2.0/.well-known/openid-configuration'
-    )
-    if OIDC_OP_DISCOVERY_ENDPOINT.rstrip('/') != expected_entra_discovery:
-        raise ImproperlyConfigured(
-            'Microsoft Entra SSO requires the tenant-specific HTTPS discovery endpoint.'
-        )
-    if OIDC_CREATE_USER:
-        raise ImproperlyConfigured(
-            'Microsoft Entra SSO requires OIDC_CREATE_USER=false.'
-        )
-    if not SSO_ALLOWED_EMAIL_DOMAINS:
-        raise ImproperlyConfigured(
-            'Microsoft Entra SSO requires an explicit SSO_ALLOWED_EMAIL_DOMAINS allowlist.'
-        )
-    if not MICROSOFT_ENTRA_ORG_ALLOWLIST:
-        raise ImproperlyConfigured(
-            'Microsoft Entra SSO requires an explicit MICROSOFT_ENTRA_ORG_ALLOWLIST.'
-        )
-
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
@@ -439,23 +353,12 @@ DEBUG_TOOLBAR_CONFIG = {
 }
 
 RATELIMIT_ENABLED = _bool_env('RATELIMIT_ENABLED', default=True)
-RATELIMIT_PATHS = ('/login/', '/register/', '/mfa/challenge/', '/mfa/enroll/')
+RATELIMIT_PATHS = ('/login/', '/register/')
 RATELIMIT_TRUSTED_IPS = tuple(_csv_env('RATELIMIT_TRUSTED_IPS'))
 LOGIN_RATE_LIMIT_REQUESTS = int(os.getenv('LOGIN_RATE_LIMIT_REQUESTS', '10'))
 LOGIN_RATE_LIMIT_WINDOW_SECONDS = int(os.getenv('LOGIN_RATE_LIMIT_WINDOW_SECONDS', '300'))
 REGISTER_RATE_LIMIT_REQUESTS = int(os.getenv('REGISTER_RATE_LIMIT_REQUESTS', '10'))
 REGISTER_RATE_LIMIT_WINDOW_SECONDS = int(os.getenv('REGISTER_RATE_LIMIT_WINDOW_SECONDS', '300'))
-MFA_RATE_LIMIT_REQUESTS = int(os.getenv('MFA_RATE_LIMIT_REQUESTS', '8'))
-MFA_RATE_LIMIT_WINDOW_SECONDS = int(os.getenv('MFA_RATE_LIMIT_WINDOW_SECONDS', '300'))
-
-# Authenticator-app (RFC 6238 TOTP) enrollment is separately gated so the
-# capability can ship without activating a new identity factor. Stored factors
-# continue to verify when enrollment is later switched off; this prevents a
-# rollback from locking out already-enrolled users.
-MFA_TOTP_ENROLLMENT_ENABLED = _bool_env('MFA_TOTP_ENROLLMENT_ENABLED', default=False)
-MFA_TOTP_ENCRYPTION_KEY = os.getenv('MFA_TOTP_ENCRYPTION_KEY', '').strip()
-MFA_TOTP_ENCRYPTION_PREVIOUS_KEYS = _csv_env('MFA_TOTP_ENCRYPTION_PREVIOUS_KEYS')
-MFA_TOTP_ISSUER = os.getenv('MFA_TOTP_ISSUER', 'CLM One').strip() or 'CLM One'
 
 # Token-authenticated API surfaces (Bearer token). We throttle repeated AUTH
 # FAILURES per IP rather than total volume, so legitimate authenticated traffic
@@ -588,6 +491,11 @@ APP_BASE_URL = os.getenv('APP_BASE_URL', 'http://localhost:8000').strip()
 # failure notification to this address when a scheduled job run fails.
 OPERATOR_ALERT_EMAIL = os.getenv('OPERATOR_ALERT_EMAIL', '').strip()
 
+# Inbound attachment forwarding is an external integration and remains off
+# until an operator has configured a scoped token and completed its release
+# controls. Browser-based mass import does not depend on this switch.
+EMAIL_FORWARDED_INGESTION_ENABLED = _bool_env('EMAIL_FORWARDED_INGESTION_ENABLED', default=False)
+
 # SMTP — defaults to console backend in dev; set EMAIL_HOST to enable real sending.
 _email_host = os.getenv('EMAIL_HOST', '').strip()
 if _email_host:
@@ -621,8 +529,7 @@ GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-3.5-flash').strip()
 # An explicit GEMINI_AI_ENABLED env override always wins; otherwise AI is on
 # only when a key is present. A pilot deployment sets GEMINI_AI_ENABLED=false
 # to keep confidential contract text off the LLM until the AI-controls work
-# (redaction / opt-in / audit / DPA — roadmap B6) lands.  Controlled-pilot
-# routes additionally fail closed server-side even if this variable is set.
+# (redaction / opt-in / audit / DPA — roadmap B6) lands.
 GEMINI_AI_ENABLED = _bool_env('GEMINI_AI_ENABLED', default=bool(GEMINI_API_KEY))
 
 # ---------------------------------------------------------------------------
@@ -639,120 +546,11 @@ TRUST_ACCOUNTING_ENABLED = _bool_env('TRUST_ACCOUNTING_ENABLED', default=True)
 # unrestricted AI entry points, unfinished integrations). Default false so
 # hermetic tests and general development remain unaffected.
 CONTROLLED_PILOT_ENABLED = _bool_env('CONTROLLED_PILOT_ENABLED', default=False)
-REPOSITORY_CSV_IMPORT_ENABLED = _bool_env('REPOSITORY_CSV_IMPORT_ENABLED', default=False)
-# External counterparty collaboration currently relies on an emailed bearer
-# capability plus email confirmation. Keep the entire surface fail-closed until
-# an approved external-identity and sharing design replaces that mechanism.
-EXTERNAL_COLLABORATION_ENABLED = _bool_env('EXTERNAL_COLLABORATION_ENABLED', default=False)
-
-# Quarantine-first document ingestion.  All controls are committed off.  An
-# activation requires a named environment and workspace, a configured scanner,
-# private quarantine storage, retention policy and exact-SHA release evidence.
-DOCUMENT_QUARANTINE_ENFORCEMENT_ENABLED = _bool_env(
-    'DOCUMENT_QUARANTINE_ENFORCEMENT_ENABLED',
-    default=False,
-)
-DOCUMENT_QUARANTINE_ABORT_FAIL_CLOSED = _bool_env(
-    'DOCUMENT_QUARANTINE_ABORT_FAIL_CLOSED',
-    default=False,
-)
-DOCUMENT_QUARANTINE_RELEASE_ENABLED = _bool_env(
-    'DOCUMENT_QUARANTINE_RELEASE_ENABLED',
-    default=False,
-)
-DOCUMENT_QUARANTINE_PURGE_ENABLED = _bool_env(
-    'DOCUMENT_QUARANTINE_PURGE_ENABLED',
-    default=False,
-)
-DOCUMENT_QUARANTINE_ENVIRONMENTS = os.getenv(
-    'DOCUMENT_QUARANTINE_ENVIRONMENTS',
-    '',
-).strip()
-DOCUMENT_QUARANTINE_ORG_ALLOWLIST = os.getenv(
-    'DOCUMENT_QUARANTINE_ORG_ALLOWLIST',
-    '',
-).strip()
-DOCUMENT_MALWARE_SCANNER_CLASS = os.getenv(
-    'DOCUMENT_MALWARE_SCANNER_CLASS',
-    '',
-).strip()
-DOCUMENT_QUARANTINE_RETENTION_DAYS = int(
-    os.getenv('DOCUMENT_QUARANTINE_RETENTION_DAYS', '0') or '0'
-)
-DOCUMENT_MALWARE_SCAN_TIMEOUT_SECONDS = int(
-    os.getenv('DOCUMENT_MALWARE_SCAN_TIMEOUT_SECONDS', '30') or '30'
-)
-CLAMAV_HOST = os.getenv('CLAMAV_HOST', '127.0.0.1').strip()
-CLAMAV_PORT = int(os.getenv('CLAMAV_PORT', '3310') or '3310')
-CLAMAV_UNIX_SOCKET = os.getenv('CLAMAV_UNIX_SOCKET', '').strip()
-if DOCUMENT_QUARANTINE_STORAGE_BACKEND not in {'filesystem', 's3'}:
-    raise ImproperlyConfigured(
-        'DOCUMENT_QUARANTINE_STORAGE_BACKEND must be filesystem or s3.'
-    )
-if DOCUMENT_QUARANTINE_ENFORCEMENT_ENABLED:
-    if not DOCUMENT_QUARANTINE_ENVIRONMENTS or not DOCUMENT_QUARANTINE_ORG_ALLOWLIST:
-        raise ImproperlyConfigured(
-            'Document quarantine enforcement requires explicit environment and workspace allowlists.'
-        )
-    if not DOCUMENT_MALWARE_SCANNER_CLASS:
-        raise ImproperlyConfigured(
-            'Document quarantine enforcement requires DOCUMENT_MALWARE_SCANNER_CLASS.'
-        )
-if DOCUMENT_QUARANTINE_RELEASE_ENABLED and not DOCUMENT_QUARANTINE_ENFORCEMENT_ENABLED:
-    raise ImproperlyConfigured(
-        'Document quarantine release requires enforcement to be enabled.'
-    )
-if DOCUMENT_QUARANTINE_PURGE_ENABLED and DOCUMENT_QUARANTINE_RETENTION_DAYS <= 0:
-    raise ImproperlyConfigured(
-        'Document quarantine purge requires a positive retention period.'
-    )
 
 # PAR-SEC-002 — characterization-only route observation (default OFF).
 # This controls content-free, process-local counters only; it never evaluates
 # access, changes a result, filters a queryset, or grants authority.
 PAR_SEC_002_OBSERVATION_ENABLED = _bool_env('PAR_SEC_002_OBSERVATION_ENABLED', default=False)
-# PAR-SEC-002 smallest enforcement slice: contract-search results and facets.
-# Activation requires both a named non-production environment and an explicit
-# workspace slug allowlist. Empty allowlists keep the evaluator inactive.
-PAR_SEC_002_SEARCH_ENFORCEMENT_ENABLED = _bool_env(
-    'PAR_SEC_002_SEARCH_ENFORCEMENT_ENABLED',
-    default=False,
-)
-# Emergency rollback for an activated allowlisted workspace. This switch is
-# intentionally independent of the exposure flag so rollback cannot restore
-# the pre-policy unfiltered path.
-PAR_SEC_002_SEARCH_ABORT_FAIL_CLOSED = _bool_env(
-    'PAR_SEC_002_SEARCH_ABORT_FAIL_CLOSED',
-    default=False,
-)
-PAR_SEC_002_SEARCH_ENFORCEMENT_ENVIRONMENTS = os.getenv(
-    'PAR_SEC_002_SEARCH_ENFORCEMENT_ENVIRONMENTS',
-    '',
-).strip()
-PAR_SEC_002_SEARCH_ENFORCEMENT_ORG_ALLOWLIST = os.getenv(
-    'PAR_SEC_002_SEARCH_ENFORCEMENT_ORG_ALLOWLIST',
-    '',
-).strip()
-# PAR-SEC-002 repository read boundary. This deliberately has an independent
-# gate from search/facets so rollout cannot silently broaden an earlier
-# authorization. It covers repository rows, counts/filter metadata, canonical
-# detail reads, and repository bulk actions. Empty allowlists keep it inactive.
-PAR_SEC_002_REPOSITORY_ENFORCEMENT_ENABLED = _bool_env(
-    'PAR_SEC_002_REPOSITORY_ENFORCEMENT_ENABLED',
-    default=False,
-)
-PAR_SEC_002_REPOSITORY_ABORT_FAIL_CLOSED = _bool_env(
-    'PAR_SEC_002_REPOSITORY_ABORT_FAIL_CLOSED',
-    default=False,
-)
-PAR_SEC_002_REPOSITORY_ENFORCEMENT_ENVIRONMENTS = os.getenv(
-    'PAR_SEC_002_REPOSITORY_ENFORCEMENT_ENVIRONMENTS',
-    '',
-).strip()
-PAR_SEC_002_REPOSITORY_ENFORCEMENT_ORG_ALLOWLIST = os.getenv(
-    'PAR_SEC_002_REPOSITORY_ENFORCEMENT_ORG_ALLOWLIST',
-    '',
-).strip()
 
 # PAR-ID-001 Slice 3 — feature-flagged shadow sync / parity (default OFF).
 # When enabled, selected UserProfile.role writes mirror into org-scoped
@@ -789,14 +587,6 @@ EXCEPTION_DUAL_WRITE_ORG_ALLOWLIST = os.getenv(
 EXCEPTION_CANONICAL_READ_ENABLED = _bool_env('EXCEPTION_CANONICAL_READ_ENABLED', default=False)
 EXCEPTION_CANONICAL_READ_ORG_ALLOWLIST = os.getenv(
     'EXCEPTION_CANONICAL_READ_ORG_ALLOWLIST', '',
-).strip()
-
-# PDR-0006 canonical Workflow Definition → Version → Instance runtime.
-# This implementation is intentionally dormant until a separately governed,
-# named-environment activation.  An empty allowlist denies every workspace.
-CANONICAL_NDA_RUNTIME_ENABLED = _bool_env('CANONICAL_NDA_RUNTIME_ENABLED', default=False)
-CANONICAL_NDA_RUNTIME_ORG_ALLOWLIST = os.getenv(
-    'CANONICAL_NDA_RUNTIME_ORG_ALLOWLIST', '',
 ).strip()
 
 STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY', '').strip()

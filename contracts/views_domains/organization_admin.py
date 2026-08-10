@@ -693,20 +693,6 @@ def organization_activity_export(request):
             log.ip_address or '',
         ])
 
-    # The export itself is material evidence access.  Record only the bounded
-    # outcome, never the request filters or exported row contents.
-    log_action(
-        request.user,
-        AuditLog.Action.VIEW,
-        'Organization',
-        object_id=organization.id,
-        object_repr=organization.name,
-        organization=organization,
-        request=request,
-        event_type='organization.activity_exported',
-        changes={'event': 'organization.activity_exported'},
-    )
-
     return response
 
 
@@ -760,6 +746,28 @@ def organization_identity_settings(request):
                 request=request,
             )
             messages.success(request, 'API token rotated. Copy it now; it will not be shown again.')
+            return redirect('organization_identity_settings')
+        if action == 'create_email_ingestion_token':
+            token_record, raw_token = organization.rotate_api_token(
+                scopes=['contracts:write'],
+                label='Email forwarding ingestion token',
+                created_by=request.user,
+            )
+            request.session['organization_api_token_preview'] = {
+                'token': raw_token,
+                'scopes': token_record.scopes,
+                'label': token_record.label,
+            }
+            log_action(
+                request.user,
+                AuditLog.Action.UPDATE,
+                'Organization',
+                object_id=organization.id,
+                object_repr=organization.name,
+                changes={'event': 'email_ingestion_token_created', 'scopes': token_record.scopes},
+                request=request,
+            )
+            messages.success(request, 'Email-forwarding token created. Copy it now; it will not be shown again.')
             return redirect('organization_identity_settings')
 
         form = OrganizationIdentitySettingsForm(request.POST, instance=organization)
