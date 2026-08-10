@@ -115,7 +115,7 @@ observation. No contract type was activated by that deployment.
 ## Default-off activation implementation — 2026-08-10
 
 **Implementation starting SHA:** `d9f106d29f8a010991fdf9355a994814f9164f16`
-**Implementation final SHA:** commit containing this evidence (reported in the PR handoff).
+**Implementation CI-verification SHA:** `799fa46168ae1c973cea62ae8e76475c9a6a0275`
 
 ### One canonical authority path
 
@@ -216,18 +216,41 @@ The implementation does not change production configuration, production
 records, deployment configuration, Render, or a production contract-type
 activation. The production/default configuration remains MSA/NDA/DPA only.
 
+### Authoritative PR CI closure
+
+All required checks reached a terminal successful result for implementation
+SHA `799fa46168ae1c973cea62ae8e76475c9a6a0275`:
+
+| Required check | Terminal result |
+| --- | --- |
+| security scans | pass (44s) |
+| release evidence | pass (4s) |
+| anti-drift + contrast | pass (37s) |
+| forbidden-brand scan | pass (8s) |
+| UI scope | pass (7s) |
+| visual baselines (no auto-regeneration) | pass (3m28s) |
+| UI integrity | pass (2m37s) |
+| redesigned E2E | pass (5m28s) |
+| quality and tenancy, including migration enforcement and PayrollMinds UAT | pass (8m9s) |
+| authoritative Linux browser matrix | pass: 8/8 shards and aggregate UI gate |
+
+Browser shard 2, which contains the OC/PO isolated-server suite, passed in
+4m44s after its explicit `beforeAll` setup timeout was aligned with the
+isolated Django migration/seed lifecycle. No visual baseline was changed.
+There were no skipped required checks and migration drift remained zero.
+
 ## Recommendation and remaining release gates
 
-**OC + PO TECHNICAL ACTIVATION READY — DEFAULT OFF** is the engineering
-recommendation for this draft once the exact committed PR SHA has the required
-Linux CI evidence. This is not production activation.
+**ORDER CONFIRMATION: TECHNICAL ACTIVATION READY — DEFAULT OFF**
+
+**PURCHASE ORDER: TECHNICAL ACTIVATION READY — DEFAULT OFF**
+
+**PR #181: TECHNICALLY MERGE-READY**
 
 Order Confirmation and Purchase Order remain **BUSINESS SCOPE APPROVED /
-TECHNICAL IMPLEMENTATION GATE OPEN / PRODUCTION ACTIVATION NO-GO**. Remaining
-release gates are the required PR CI results for the exact final SHA, including
-the full authoritative Linux browser manifest and standard release-evidence,
-quality/tenancy, secret, whitespace/diff, dependency, and accessibility
-checks. The CI-only npm baseline approval verification could not be executed
-locally because `GITHUB_REPOSITORY` and `GITHUB_TOKEN` are not available; the
-plain local npm audit is green. No deployment, production data change, or
-contract-type activation is authorized by this implementation evidence.
+TECHNICAL IMPLEMENTATION GATE OPEN / PRODUCTION ACTIVATION NO-GO**. Technical
+merge-readiness is not production authorization. The CI-only npm baseline
+approval verification could not be executed locally because `GITHUB_REPOSITORY`
+and `GITHUB_TOKEN` are not available; its authoritative PR check is green.
+No deployment, production data change, or contract-type activation is
+authorized by this implementation evidence.
