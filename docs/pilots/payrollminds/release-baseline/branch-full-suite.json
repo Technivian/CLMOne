@@ -1,0 +1,1281 @@
+{
+  "comparison_signature": "test_id + kind + exception_type; rendered response bodies, build SHA, CSP nonces, CSRF values, test-created IDs, and timestamps are excluded as volatile output",
+  "database_engine": "django.db.backends.sqlite3",
+  "django_exit_failures": 126,
+  "duration_seconds": 91.180972,
+  "error_count": 40,
+  "failure_count": 86,
+  "git_sha": "444013a81e94f6175c4994635da09530255a7163",
+  "parallel": 0,
+  "python_version": "3.12.13 (main, Mar  3 2026, 15:35:03) [Clang 21.1.4 ]",
+  "records": [
+    {
+      "affected_surface": "contract lifecycle",
+      "duration_seconds": 0.039392,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_5f_role_walkthrough",
+      "normalized_signature": "c23b9dd562eb35c6",
+      "raw_capture_signature": "810f009fa48a576a",
+      "test_id": "tests.test_5f_role_walkthrough.AdminJourneys.test_admin_can_create_contract_via_http"
+    },
+    {
+      "affected_surface": "contract lifecycle",
+      "duration_seconds": 0.002591,
+      "exception_type": "ValidationError",
+      "kind": "error",
+      "module": "tests.test_5f_role_walkthrough",
+      "normalized_signature": "c1e7c170a2a5718c",
+      "raw_capture_signature": "e1d998d2dc016308",
+      "test_id": "tests.test_5f_role_walkthrough.AdminJourneys.test_admin_cannot_self_approve_created_contract"
+    },
+    {
+      "affected_surface": "tenant isolation",
+      "duration_seconds": 0.004843,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_5f_role_walkthrough",
+      "normalized_signature": "b242515fa04e892a",
+      "raw_capture_signature": "100037571dc64572",
+      "test_id": "tests.test_5f_role_walkthrough.CrossTenantNegative.test_bulk_transition_with_foreign_id"
+    },
+    {
+      "affected_surface": "client/matter",
+      "duration_seconds": 0.003967,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_5f_role_walkthrough",
+      "normalized_signature": "6b531e9c0f39ca1d",
+      "raw_capture_signature": "a3edba73940c52dd",
+      "test_id": "tests.test_5f_role_walkthrough.CrossTenantNegative.test_client_detail"
+    },
+    {
+      "affected_surface": "tenant isolation",
+      "duration_seconds": 0.009081,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_5f_role_walkthrough",
+      "normalized_signature": "6bd5ac4b4bbae40c",
+      "raw_capture_signature": "8d749d944f2b3939",
+      "test_id": "tests.test_5f_role_walkthrough.CrossTenantNegative.test_contract_transition"
+    },
+    {
+      "affected_surface": "tenant isolation",
+      "duration_seconds": 0.006555,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_5f_role_walkthrough",
+      "normalized_signature": "8c96f182e2da6589",
+      "raw_capture_signature": "fb912a2a7cdddb50",
+      "test_id": "tests.test_5f_role_walkthrough.CrossTenantNegative.test_guessed_and_altered_org_switch"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.003955,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_5f_role_walkthrough",
+      "normalized_signature": "2fb267c914216ffd",
+      "raw_capture_signature": "ca8a04f9036e90ec",
+      "test_id": "tests.test_5f_role_walkthrough.MemberJourneys.test_member_can_read_own_org"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.004047,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_5f_role_walkthrough",
+      "normalized_signature": "41382b26be2c9cb2",
+      "raw_capture_signature": "28abce120f0e3aac",
+      "test_id": "tests.test_5f_role_walkthrough.StaleSessionAuthz.test_membership_removal_revokes_access_next_request"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.001076,
+      "exception_type": "ValidationError",
+      "kind": "error",
+      "module": "tests.test_5h_expiration_rehearsal",
+      "normalized_signature": "9cdd563bd9c5e7fe",
+      "raw_capture_signature": "3d38f9c5fa2086dd",
+      "test_id": "tests.test_5h_expiration_rehearsal.ExpirationEligibility.test_terminal_and_non_active_excluded"
+    },
+    {
+      "affected_surface": "AI governance",
+      "duration_seconds": 0.182322,
+      "exception_type": "ClientError",
+      "kind": "error",
+      "module": "tests.test_5i_minio_integration",
+      "normalized_signature": "f7d89bb6084ede49",
+      "raw_capture_signature": "9aeee1db4541670c",
+      "test_id": "tests.test_5i_minio_integration.MinIOOrphanTests.test_cleanup_api_path_on_db_failure"
+    },
+    {
+      "affected_surface": "AI governance",
+      "duration_seconds": 0.006228,
+      "exception_type": "ClientError",
+      "kind": "error",
+      "module": "tests.test_5i_minio_integration",
+      "normalized_signature": "15c63a32d0b4d0cc",
+      "raw_capture_signature": "243249518e93ab5e",
+      "test_id": "tests.test_5i_minio_integration.MinIOOrphanTests.test_cleanup_failure_is_logged_not_masked"
+    },
+    {
+      "affected_surface": "AI governance",
+      "duration_seconds": 0.006197,
+      "exception_type": "ClientError",
+      "kind": "error",
+      "module": "tests.test_5i_minio_integration",
+      "normalized_signature": "af3718b858145a35",
+      "raw_capture_signature": "986ab3093be8d485",
+      "test_id": "tests.test_5i_minio_integration.MinIOOrphanTests.test_cleanup_removes_orphaned_object_on_db_failure"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.00599,
+      "exception_type": "ClientError",
+      "kind": "error",
+      "module": "tests.test_5i_minio_integration",
+      "normalized_signature": "b13dae8b32fdc0ea",
+      "raw_capture_signature": "03a2ddc448af59f5",
+      "test_id": "tests.test_5i_minio_integration.MinIOOrphanTests.test_orphan_detection_command_reports_orphan"
+    },
+    {
+      "affected_surface": "document/version",
+      "duration_seconds": 0.006524,
+      "exception_type": "ClientError",
+      "kind": "error",
+      "module": "tests.test_5i_minio_integration",
+      "normalized_signature": "201ce29afae2cdf8",
+      "raw_capture_signature": "3f097175d7dcfdf6",
+      "test_id": "tests.test_5i_minio_integration.MinIOOrphanTests.test_orphan_detection_ignores_matched_documents"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.006767,
+      "exception_type": "ClientError",
+      "kind": "error",
+      "module": "tests.test_5i_minio_integration",
+      "normalized_signature": "4f85c6507e9b9e13",
+      "raw_capture_signature": "8cbccec75d6be3ce",
+      "test_id": "tests.test_5i_minio_integration.MinIOOrphanTests.test_orphan_detection_min_age_threshold_protects_young_objects"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.006662,
+      "exception_type": "ClientError",
+      "kind": "error",
+      "module": "tests.test_5i_minio_integration",
+      "normalized_signature": "af8d06970676988a",
+      "raw_capture_signature": "ee8fef1b0adc6546",
+      "test_id": "tests.test_5i_minio_integration.MinIOOrphanTests.test_orphan_detection_never_deletes"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.005777,
+      "exception_type": "ClientError",
+      "kind": "error",
+      "module": "tests.test_5i_minio_integration",
+      "normalized_signature": "6dd451cb40db19eb",
+      "raw_capture_signature": "e1e7da0b8666e2ec",
+      "test_id": "tests.test_5i_minio_integration.MinIOStorageTests.test_authenticated_download_redirects_to_signed_url"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.006593,
+      "exception_type": "ClientError",
+      "kind": "error",
+      "module": "tests.test_5i_minio_integration",
+      "normalized_signature": "34ade21ef99063f8",
+      "raw_capture_signature": "37603c5a66b926f6",
+      "test_id": "tests.test_5i_minio_integration.MinIOStorageTests.test_bucket_blocks_public_access"
+    },
+    {
+      "affected_surface": "tenant isolation",
+      "duration_seconds": 0.005894,
+      "exception_type": "ClientError",
+      "kind": "error",
+      "module": "tests.test_5i_minio_integration",
+      "normalized_signature": "d5669a4bc5e5d167",
+      "raw_capture_signature": "0a3b3785289d584d",
+      "test_id": "tests.test_5i_minio_integration.MinIOStorageTests.test_cross_tenant_download_returns_404"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.005837,
+      "exception_type": "ClientError",
+      "kind": "error",
+      "module": "tests.test_5i_minio_integration",
+      "normalized_signature": "508f99d33d9e54a4",
+      "raw_capture_signature": "065023b9c0612ec2",
+      "test_id": "tests.test_5i_minio_integration.MinIOStorageTests.test_expiry_configuration_7200s"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.006374,
+      "exception_type": "ClientError",
+      "kind": "error",
+      "module": "tests.test_5i_minio_integration",
+      "normalized_signature": "dcdafcc442fff896",
+      "raw_capture_signature": "0be4026b245ff3b4",
+      "test_id": "tests.test_5i_minio_integration.MinIOStorageTests.test_missing_object_returns_controlled_response"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.00583,
+      "exception_type": "ClientError",
+      "kind": "error",
+      "module": "tests.test_5i_minio_integration",
+      "normalized_signature": "dca99a6b3095c275",
+      "raw_capture_signature": "99142844cdcf8b2b",
+      "test_id": "tests.test_5i_minio_integration.MinIOStorageTests.test_signed_url_expiry_300s"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.007931,
+      "exception_type": "ClientError",
+      "kind": "error",
+      "module": "tests.test_5i_minio_integration",
+      "normalized_signature": "0759fa8034e6baf0",
+      "raw_capture_signature": "eec40abb9d85c2f4",
+      "test_id": "tests.test_5i_minio_integration.MinIOStorageTests.test_signed_url_is_short_lived_not_permanent"
+    },
+    {
+      "affected_surface": "AI governance",
+      "duration_seconds": 0.007161,
+      "exception_type": "ClientError",
+      "kind": "error",
+      "module": "tests.test_5i_minio_integration",
+      "normalized_signature": "bb936e5aa3dd8826",
+      "raw_capture_signature": "20a51434048e7c15",
+      "test_id_segments": [
+        "tests.test_5i_minio_integration.MinIOStorageTests.te",
+        "st_soft_delete_retains_object_in_minio"
+      ]
+    },
+    {
+      "affected_surface": "document/version",
+      "duration_seconds": 0.007531,
+      "exception_type": "ClientError",
+      "kind": "error",
+      "module": "tests.test_5i_minio_integration",
+      "normalized_signature": "b87675a92f2a2efa",
+      "raw_capture_signature": "9f87b6aee9369f4c",
+      "test_id": "tests.test_5i_minio_integration.MinIOStorageTests.test_soft_deleted_document_denied"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.006617,
+      "exception_type": "ClientError",
+      "kind": "error",
+      "module": "tests.test_5i_minio_integration",
+      "normalized_signature": "7efa6622e11ec2b2",
+      "raw_capture_signature": "d121170f9331820c",
+      "test_id": "tests.test_5i_minio_integration.MinIOStorageTests.test_upload_via_api_creates_db_record"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.007654,
+      "exception_type": "ClientError",
+      "kind": "error",
+      "module": "tests.test_5i_minio_integration",
+      "normalized_signature": "27d6e3def0857ed6",
+      "raw_capture_signature": "6c9c2b579cf65c7f",
+      "test_id": "tests.test_5i_minio_integration.MinIOStorageTests.test_uploaded_object_exists_in_minio_bucket"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.008605,
+      "exception_type": "ClientError",
+      "kind": "error",
+      "module": "tests.test_5i_minio_integration",
+      "normalized_signature": "bdb2b6d518aafdab",
+      "raw_capture_signature": "714880421af32e68",
+      "test_id": "tests.test_5i_minio_integration.MinIOVersioningTests.test_authorized_retrieval_after_restore"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.006583,
+      "exception_type": "ClientError",
+      "kind": "error",
+      "module": "tests.test_5i_minio_integration",
+      "normalized_signature": "af3d733bbd69f787",
+      "raw_capture_signature": "8ba7ad47eed413a7",
+      "test_id": "tests.test_5i_minio_integration.MinIOVersioningTests.test_bucket_versioning_enabled"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.006448,
+      "exception_type": "ClientError",
+      "kind": "error",
+      "module": "tests.test_5i_minio_integration",
+      "normalized_signature": "4c3120ef018a36b8",
+      "raw_capture_signature": "f21030962f934129",
+      "test_id": "tests.test_5i_minio_integration.MinIOVersioningTests.test_overwrite_creates_recoverable_version"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.005203,
+      "exception_type": "ClientError",
+      "kind": "error",
+      "module": "tests.test_5i_minio_integration",
+      "normalized_signature": "c3d47c7a3cc5722e",
+      "raw_capture_signature": "4991c44968626545",
+      "test_id": "tests.test_5i_minio_integration.MinIOVersioningTests.test_prior_version_recovery"
+    },
+    {
+      "affected_surface": "workflow/work item",
+      "duration_seconds": 0.022955,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_ai_clause_review_workflow",
+      "normalized_signature": "0accfdc7d835ff56",
+      "raw_capture_signature": "18e83470d4dbdea7",
+      "test_id": "tests.test_ai_clause_review_workflow.AIClauseReviewWorkflowTests.test_incomplete_review_is_truthful_and_surfaces_resolvable_blockers"
+    },
+    {
+      "affected_surface": "search/count projection",
+      "duration_seconds": 0.017804,
+      "exception_type": "IndexError",
+      "kind": "error",
+      "module": "tests.test_api_versions_clauses_operations_search",
+      "normalized_signature": "aece36e01c9d491b",
+      "raw_capture_signature": "8b9cf0a4019b343f",
+      "test_id_segments": [
+        "tests.test_api_versions_clauses_operations_search.ApiVersionsClausesOperationsSearchTests.te",
+        "st_global_ranks_exact_matches_and_honors_type_filters"
+      ]
+    },
+    {
+      "affected_surface": "search/count projection",
+      "duration_seconds": 0.007036,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_api_versions_clauses_operations_search",
+      "normalized_signature": "7c474142d9dc57c6",
+      "raw_capture_signature": "6bf302b7e3e01db9",
+      "test_id": "tests.test_api_versions_clauses_operations_search.ApiVersionsClausesOperationsSearchTests.test_versioned_contract_api_uses_scoped_token"
+    },
+    {
+      "affected_surface": "contract lifecycle",
+      "duration_seconds": 0.005318,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_bolton_redesign",
+      "normalized_signature": "c4efe417387bf594",
+      "raw_capture_signature": "04fca680d815e569",
+      "test_id": "tests.test_bolton_redesign.BoltonRedesignTestCase.test_contracts_list_filters_and_actions"
+    },
+    {
+      "affected_surface": "contract lifecycle",
+      "duration_seconds": 0.005184,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_bolton_redesign",
+      "normalized_signature": "3bad9a91ca08f7ae",
+      "raw_capture_signature": "a2d4d4726b3febbb",
+      "test_id": "tests.test_bolton_redesign.BoltonRedesignTestCase.test_contracts_table_structure"
+    },
+    {
+      "affected_surface": "workflow/work item",
+      "duration_seconds": 0.050087,
+      "exception_type": "PermissionDenied",
+      "kind": "error",
+      "module": "tests.test_canonical_workflow_nda_runtime",
+      "normalized_signature": "15c77187c3c74d36",
+      "raw_capture_signature": "fb37b9cedc067358",
+      "test_id": "tests.test_canonical_workflow_nda_runtime.CanonicalWorkflowNDAServiceTests.test_end_to_end_chain_requires_immutable_bound_evidence"
+    },
+    {
+      "affected_surface": "search/count projection",
+      "duration_seconds": 0.005164,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_clmone_features",
+      "normalized_signature": "a9dea550a673855b",
+      "raw_capture_signature": "7062af38dc75c290",
+      "test_id": "tests.test_clmone_features.CLMOneFeaturesTests.test_contract_list_has_search_filter_and_table"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.035116,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_command_center_in_house_clm",
+      "normalized_signature": "c28f8b790315bd32",
+      "raw_capture_signature": "298ca7857de14af9",
+      "test_id": "tests.test_command_center_in_house_clm.CommandCenterDashboardTests.test_reference_command_center_shell_renders"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.007898,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_command_center_operating_surface",
+      "normalized_signature": "0b8071fbe8d00526",
+      "raw_capture_signature": "a07e6fa9faae7247",
+      "test_id": "tests.test_command_center_operating_surface.CommandCenterProductionSurfaceTests.test_projection_read_avoids_related_object_n_plus_one"
+    },
+    {
+      "affected_surface": "AI governance",
+      "duration_seconds": 0.024117,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_contract_detail_record_shell",
+      "normalized_signature": "1c486e923d2a9ebb",
+      "raw_capture_signature": "023a07e364193282",
+      "test_id": "tests.test_contract_detail_record_shell.ContractDetailMetadataHeaderTests.test_no_owner_renders_unassigned_not_a_crash"
+    },
+    {
+      "affected_surface": "approval/workflow",
+      "duration_seconds": 0.01685,
+      "exception_type": "KeyError",
+      "kind": "error",
+      "module": "tests.test_contract_detail_record_shell",
+      "normalized_signature": "e613356eb6b048f8",
+      "raw_capture_signature": "f80acb5e17edd75e",
+      "test_id": "tests.test_contract_detail_record_shell.ContractDetailMetadataHeaderTests.test_primary_approval_action_names_the_first_actionable_step"
+    },
+    {
+      "affected_surface": "workflow/work item",
+      "duration_seconds": 0.021122,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_contract_detail_record_shell",
+      "normalized_signature": "96c13cdca2feecb1",
+      "raw_capture_signature": "b765fb2c638540f2",
+      "test_id": "tests.test_contract_detail_record_shell.ContractDetailWorkflowTabTests.test_approval_chain_can_be_reordered"
+    },
+    {
+      "affected_surface": "workflow/work item",
+      "duration_seconds": 0.009332,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_contract_detail_record_shell",
+      "normalized_signature": "decbf043f504a299",
+      "raw_capture_signature": "4223e77161fd026d",
+      "test_id": "tests.test_contract_detail_record_shell.ContractDetailWorkflowTabTests.test_required_approvals_shows_empty_state_when_nothing_exists"
+    },
+    {
+      "affected_surface": "workflow/work item",
+      "duration_seconds": 0.010797,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_contract_detail_record_shell",
+      "normalized_signature": "cd9f42a2f9703041",
+      "raw_capture_signature": "ae441e325181367a",
+      "test_id": "tests.test_contract_detail_record_shell.ContractDetailWorkflowTabTests.test_workflow_tab_shows_existing_approval_signature_and_task"
+    },
+    {
+      "affected_surface": "contract lifecycle",
+      "duration_seconds": 0.00376,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_contract_expiration",
+      "normalized_signature": "05ab41ce06cdfcba",
+      "raw_capture_signature": "440c83bf53fae150",
+      "test_id": "tests.test_contract_expiration.ContractExpirationTests.test_non_active_statuses_excluded"
+    },
+    {
+      "affected_surface": "audit",
+      "duration_seconds": 0.012601,
+      "exception_type": "KeyError",
+      "kind": "error",
+      "module": "tests.test_contract_launch_setup",
+      "normalized_signature": "e0900650224ca103",
+      "raw_capture_signature": "261046a08119adf6",
+      "test_id": "tests.test_contract_launch_setup.NewContractRequestPageTests.test_create_audit_records_derived_risk_and_routing"
+    },
+    {
+      "affected_surface": "contract lifecycle",
+      "duration_seconds": 0.022572,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_contract_launch_setup",
+      "normalized_signature": "8d4306f5fd429dc1",
+      "raw_capture_signature": "69dede7b4709cbf1",
+      "test_id": "tests.test_contract_launch_setup.NewContractRequestPageTests.test_new_request_create_ctas_use_standard_teal_button_treatment"
+    },
+    {
+      "affected_surface": "workflow/work item",
+      "duration_seconds": 0.02348,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_contract_launch_setup",
+      "normalized_signature": "d737aaf2116bfcec",
+      "raw_capture_signature": "3151f1a50f1f9c8d",
+      "test_id": "tests.test_contract_launch_setup.NewContractRequestPageTests.test_new_request_workflow_header_is_intake_first_and_compact"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.052615,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_dashboard_work_queue",
+      "normalized_signature": "ff31ccbefe9844bd",
+      "raw_capture_signature": "723829d0bbf4b500",
+      "test_id": "tests.test_dashboard_work_queue.DashboardQueueRowContentTests.test_queue_rows_render_without_raw_enums_iso_timestamps_or_model_names"
+    },
+    {
+      "affected_surface": "document/version",
+      "duration_seconds": 0.030978,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_document_storage_download",
+      "normalized_signature": "94153c34e9f30040",
+      "raw_capture_signature": "da2a12dfb42520e8",
+      "test_id": "tests.test_document_storage_download.DocumentDownloadTests.test_authorized_download_redirects_to_storage_url"
+    },
+    {
+      "affected_surface": "document/version",
+      "duration_seconds": 0.028557,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_document_storage_download",
+      "normalized_signature": "665005c0ed5bac93",
+      "raw_capture_signature": "76707a179b07dcde",
+      "test_id": "tests.test_document_storage_download.DocumentDownloadTests.test_download_is_audited_with_correct_attribution"
+    },
+    {
+      "affected_surface": "contract lifecycle",
+      "duration_seconds": 0.011037,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_draft_cockpit",
+      "normalized_signature": "f7806accbd2c37d0",
+      "raw_capture_signature": "451cfffdedc9e62b",
+      "test_id": "tests.test_draft_cockpit.ContractFormCockpitDataPageTests.test_editing_an_existing_contract_also_has_no_live_draft_column"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.002673,
+      "exception_type": "DocumentVersionError",
+      "kind": "error",
+      "module": "tests.test_esign_outbound",
+      "normalized_signature": "05676ba83313d14b",
+      "raw_capture_signature": "b50ca678352349e8",
+      "test_id": "tests.test_esign_outbound.DocuSignProviderTests.test_builds_envelope_and_parses_envelope_id"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.001877,
+      "exception_type": "DocumentVersionError",
+      "kind": "error",
+      "module": "tests.test_esign_outbound",
+      "normalized_signature": "b25e1e358d522bdc",
+      "raw_capture_signature": "3be25226fbffecb6",
+      "test_id": "tests.test_esign_outbound.DocuSignProviderTests.test_factory_builds_docusign"
+    },
+    {
+      "affected_surface": "document/version",
+      "duration_seconds": 0.001799,
+      "exception_type": "DocumentVersionError",
+      "kind": "error",
+      "module": "tests.test_esign_outbound",
+      "normalized_signature": "55f363a5df010379",
+      "raw_capture_signature": "d38feda5da2e26ec",
+      "test_id": "tests.test_esign_outbound.DocuSignProviderTests.test_missing_document_raises"
+    },
+    {
+      "affected_surface": "AI governance",
+      "duration_seconds": 0.00161,
+      "exception_type": "DocumentVersionError",
+      "kind": "error",
+      "module": "tests.test_esign_outbound",
+      "normalized_signature": "6d2ce4e24d2f7218",
+      "raw_capture_signature": "2cd6295cb80574ab",
+      "test_id": "tests.test_esign_outbound.DocuSignProviderTests.test_unconfigured_raises"
+    },
+    {
+      "affected_surface": "AI governance",
+      "duration_seconds": 0.001593,
+      "exception_type": "DocumentVersionError",
+      "kind": "error",
+      "module": "tests.test_esign_outbound",
+      "normalized_signature": "343845e8e0ed97be",
+      "raw_capture_signature": "7f0841062481fec8",
+      "test_id": "tests.test_esign_outbound.DocumensoProviderTests.test_detail_exposes_webhook_free_refresh_action"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.001803,
+      "exception_type": "DocumentVersionError",
+      "kind": "error",
+      "module": "tests.test_esign_outbound",
+      "normalized_signature": "bcb301f16d1bdec7",
+      "raw_capture_signature": "b078417a5d924d85",
+      "test_id": "tests.test_esign_outbound.DocumensoProviderTests.test_factory_builds_documenso"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.001813,
+      "exception_type": "DocumentVersionError",
+      "kind": "error",
+      "module": "tests.test_esign_outbound",
+      "normalized_signature": "53e43e2cc5ecccb8",
+      "raw_capture_signature": "8d5a4c5b42f94541",
+      "test_id": "tests.test_esign_outbound.DocumensoProviderTests.test_refresh_maps_opened_recipient_to_viewed"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.001652,
+      "exception_type": "DocumentVersionError",
+      "kind": "error",
+      "module": "tests.test_esign_outbound",
+      "normalized_signature": "db764f51917b68c2",
+      "raw_capture_signature": "7bfced3bd4ad8ff2",
+      "test_id": "tests.test_esign_outbound.DocumensoProviderTests.test_v2_completed_webhook_marks_request_signed"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.001592,
+      "exception_type": "DocumentVersionError",
+      "kind": "error",
+      "module": "tests.test_esign_outbound",
+      "normalized_signature": "fcd3dba6855ffb92",
+      "raw_capture_signature": "b54fe1756ff86cf6",
+      "test_id": "tests.test_esign_outbound.DocumensoProviderTests.test_v2_provider_creates_and_distributes_envelope"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.069469,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_legal_intelligence_hub",
+      "normalized_signature": "bb6fa0e418e3d037",
+      "raw_capture_signature": "5daf8a64aecf6fa0",
+      "test_id": "tests.test_legal_intelligence_hub.LegalIntelligenceHubLinkTests.test_source_links_resolve"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.030508,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_lifecycle_three_dimensions",
+      "normalized_signature": "aed47eb9d79cf1f9",
+      "raw_capture_signature": "b1eda9392a35d7f7",
+      "test_id": "tests.test_lifecycle_three_dimensions.LabelAndCompactHeaderGuardTests.test_compact_header_uses_status_display_dot_stage_display"
+    },
+    {
+      "affected_surface": "AI governance",
+      "duration_seconds": 0.010487,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_mentions_ai_reminders",
+      "normalized_signature": "b4d4a21d7386a817",
+      "raw_capture_signature": "d9c31337c60a0505",
+      "test_id": "tests.test_mentions_ai_reminders.MentionsAiAndReminderTests.test_contract_comment_allows_member"
+    },
+    {
+      "affected_surface": "AI governance",
+      "duration_seconds": 0.011808,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_mentions_ai_reminders",
+      "normalized_signature": "e77e4e2de78ea7a6",
+      "raw_capture_signature": "3c75839a3c8e02e8",
+      "test_id": "tests.test_mentions_ai_reminders.MentionsAiAndReminderTests.test_contract_update_allows_admin"
+    },
+    {
+      "affected_surface": "AI governance",
+      "duration_seconds": 0.012142,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_mentions_ai_reminders",
+      "normalized_signature": "4187bea22ed19181",
+      "raw_capture_signature": "293f9d0066f9bb4e",
+      "test_id": "tests.test_mentions_ai_reminders.MentionsAiAndReminderTests.test_contract_update_requires_owner_admin_or_creator"
+    },
+    {
+      "affected_surface": "deadline/obligation",
+      "duration_seconds": 0.011215,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_mentions_ai_reminders",
+      "normalized_signature": "415bd0a371b088cc",
+      "raw_capture_signature": "61c4c0ca3a996020",
+      "test_id": "tests.test_mentions_ai_reminders.MentionsAiAndReminderTests.test_deadline_complete_allows_admin_for_contract"
+    },
+    {
+      "affected_surface": "deadline/obligation",
+      "duration_seconds": 0.011323,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_mentions_ai_reminders",
+      "normalized_signature": "42f8455673c0e64e",
+      "raw_capture_signature": "e43e8cdeed9ed84a",
+      "test_id": "tests.test_mentions_ai_reminders.MentionsAiAndReminderTests.test_deadline_complete_requires_contract_edit_permission"
+    },
+    {
+      "affected_surface": "deadline/obligation",
+      "duration_seconds": 0.011589,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_mentions_ai_reminders",
+      "normalized_signature": "7fc8ad81f61302af",
+      "raw_capture_signature": "3c90f29509668cd7",
+      "test_id": "tests.test_mentions_ai_reminders.MentionsAiAndReminderTests.test_deadline_update_requires_contract_edit_permission"
+    },
+    {
+      "affected_surface": "document/version",
+      "duration_seconds": 0.018397,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_mentions_ai_reminders",
+      "normalized_signature": "a1a7acc4ab271983",
+      "raw_capture_signature": "d6bd8b20a7328781",
+      "test_id": "tests.test_mentions_ai_reminders.MentionsAiAndReminderTests.test_document_create_allows_admin_for_contract"
+    },
+    {
+      "affected_surface": "document/version",
+      "duration_seconds": 0.016806,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_mentions_ai_reminders",
+      "normalized_signature": "d0857dfcb904cd4b",
+      "raw_capture_signature": "7caf85b9a5571c3e",
+      "test_id": "tests.test_mentions_ai_reminders.MentionsAiAndReminderTests.test_document_create_requires_contract_edit_permission"
+    },
+    {
+      "affected_surface": "AI governance",
+      "duration_seconds": 0.011322,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_mentions_ai_reminders",
+      "normalized_signature": "4f99b5ec522faf8f",
+      "raw_capture_signature": "c13113e5a6402f0f",
+      "test_id": "tests.test_mentions_ai_reminders.MentionsAiAndReminderTests.test_internal_ai_assistant_execute_actions_forbidden_for_member"
+    },
+    {
+      "affected_surface": "legal task/work item",
+      "duration_seconds": 0.016656,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_mentions_ai_reminders",
+      "normalized_signature": "efde0d9e79dc66b5",
+      "raw_capture_signature": "88f2b86ed4d4d4fb",
+      "test_id": "tests.test_mentions_ai_reminders.MentionsAiAndReminderTests.test_legal_task_create_requires_contract_edit_permission"
+    },
+    {
+      "affected_surface": "legal task/work item",
+      "duration_seconds": 0.011681,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_mentions_ai_reminders",
+      "normalized_signature": "f3a73f3261673b88",
+      "raw_capture_signature": "90b8e82919cf06a3",
+      "test_id": "tests.test_mentions_ai_reminders.MentionsAiAndReminderTests.test_legal_task_update_allows_admin"
+    },
+    {
+      "affected_surface": "legal task/work item",
+      "duration_seconds": 0.011272,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_mentions_ai_reminders",
+      "normalized_signature": "d78dd431b1899060",
+      "raw_capture_signature": "710b5fb5166f3eca",
+      "test_id": "tests.test_mentions_ai_reminders.MentionsAiAndReminderTests.test_legal_task_update_requires_contract_edit_permission"
+    },
+    {
+      "affected_surface": "workflow/work item",
+      "duration_seconds": 0.017621,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_mentions_ai_reminders",
+      "normalized_signature": "795b3fc93356efee",
+      "raw_capture_signature": "cd81f3479651864b",
+      "test_id": "tests.test_mentions_ai_reminders.MentionsAiAndReminderTests.test_workflow_create_requires_contract_edit_permission"
+    },
+    {
+      "affected_surface": "workflow/work item",
+      "duration_seconds": 0.011515,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_mentions_ai_reminders",
+      "normalized_signature": "8378124cda79da0e",
+      "raw_capture_signature": "50306556163e9bdb",
+      "test_id": "tests.test_mentions_ai_reminders.MentionsAiAndReminderTests.test_workflow_step_update_allows_admin"
+    },
+    {
+      "affected_surface": "workflow/work item",
+      "duration_seconds": 0.011755,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_mentions_ai_reminders",
+      "normalized_signature": "a11514d38b1dd3ec",
+      "raw_capture_signature": "9658bdd5fa0875b9",
+      "test_id": "tests.test_mentions_ai_reminders.MentionsAiAndReminderTests.test_workflow_step_update_requires_contract_edit_permission"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.255494,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_mvp_vertical_slice",
+      "normalized_signature": "260c4955cecd8a50",
+      "raw_capture_signature": "15a049a9b7048048",
+      "test_id": "tests.test_mvp_vertical_slice.MVPVerticalSliceTests.test_required_acceptance_journey_updates_every_persisted_surface"
+    },
+    {
+      "affected_surface": "client/matter",
+      "duration_seconds": 0.01715,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_obligations_workspace",
+      "normalized_signature": "b9be5d72ff1b89ba",
+      "raw_capture_signature": "5747d386224d838e",
+      "test_id": "tests.test_obligations_workspace.ObligationsWorkspaceViewTests.test_matter_only_source_links_to_matter"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.016673,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_obligations_workspace",
+      "normalized_signature": "76db11903c4a03ae",
+      "raw_capture_signature": "0fac0ce7837f4d24",
+      "test_id": "tests.test_obligations_workspace.ObligationsWorkspaceViewTests.test_renders_and_lists_all_org_obligations"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.014935,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_obligations_workspace",
+      "normalized_signature": "3f95db921ed82c07",
+      "raw_capture_signature": "2ab7b3aaaddf5eb4",
+      "test_id": "tests.test_obligations_workspace.ObligationsWorkspaceViewTests.test_status_and_owner_filters"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.015703,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_obligations_workspace",
+      "normalized_signature": "f43f835d9c02fb59",
+      "raw_capture_signature": "36645dde3d864880",
+      "test_id": "tests.test_obligations_workspace.ObligationsWorkspaceViewTests.test_status_counts"
+    },
+    {
+      "affected_surface": "client/matter",
+      "duration_seconds": 0.084569,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_payrollminds_pilot_product_path",
+      "normalized_signature": "b7054725b5d63ab1",
+      "raw_capture_signature": "178ba00a4384b3fa",
+      "test_id": "tests.test_payrollminds_pilot_product_path.PayrollMindsPrivatePathTests.test_client_surface_filters_private_relationship_metadata_when_available"
+    },
+    {
+      "affected_surface": "document/version",
+      "duration_seconds": 0.079081,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_payrollminds_pilot_product_path",
+      "normalized_signature": "b9dc949ff5d0cdbc",
+      "raw_capture_signature": "02c3ba6d8639a821",
+      "test_id": "tests.test_payrollminds_pilot_product_path.PayrollMindsPrivatePathTests.test_member_cannot_discover_private_record_document_or_reminder"
+    },
+    {
+      "affected_surface": "search/count projection",
+      "duration_seconds": 0.017812,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_payrollminds_pilot_product_path",
+      "normalized_signature": "8b3d432cb5d1e60f",
+      "raw_capture_signature": "89545464b24d99fb",
+      "test_id": "tests.test_payrollminds_pilot_product_path.PayrollMindsPrivatePathTests.test_search_does_not_leak_private_relationship_metadata_or_counts"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.003048,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_phase11_backlog_amplifiers",
+      "normalized_signature": "852292c253df1fd1",
+      "raw_capture_signature": "3741b6d32e5b5163",
+      "test_id": "tests.test_phase11_backlog_amplifiers.Phase11BacklogAmplifiersTests.test_reassign_options_include_workload_and_sort"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.003847,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_phase6_amplifiers",
+      "normalized_signature": "ac015d26ea7b16bf",
+      "raw_capture_signature": "ffca6c2067502598",
+      "test_id": "tests.test_phase6_amplifiers.Phase6AmplifierTests.test_overdue_priority_boost_rule"
+    },
+    {
+      "affected_surface": "approval/workflow",
+      "duration_seconds": 0.022133,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_phase7_priority_reason",
+      "normalized_signature": "3eb9e956999b5705",
+      "raw_capture_signature": "0e3b9727ce3215f1",
+      "test_id": "tests.test_phase7_priority_reason.Phase7PriorityReasonTests.test_approvals_queue_shows_why_this_priority"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.003159,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_phase7_priority_reason",
+      "normalized_signature": "e00a2504757ddf49",
+      "raw_capture_signature": "0acb95002dc7d40b",
+      "test_id": "tests.test_phase7_priority_reason.Phase7PriorityReasonTests.test_base_row_carries_priority_tone"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.029692,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_phase7_priority_reason",
+      "normalized_signature": "87631e470d4ce94e",
+      "raw_capture_signature": "6af5d1c52689c3eb",
+      "test_id": "tests.test_phase7_priority_reason.Phase7PriorityReasonTests.test_my_work_renders_governance_priority_with_reason"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.015124,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_phase7_priority_reason",
+      "normalized_signature": "d4e1517fd2bdb06f",
+      "raw_capture_signature": "ac816de62ae108e8",
+      "test_id": "tests.test_phase7_priority_reason.Phase7PriorityReasonTests.test_obligations_queue_uses_shared_priority_component"
+    },
+    {
+      "affected_surface": "legal task/work item",
+      "duration_seconds": 0.023815,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_phase7_priority_reason",
+      "normalized_signature": "9c8acfb727edeca3",
+      "raw_capture_signature": "50642b9ecb0f1645",
+      "test_id": "tests.test_phase7_priority_reason.Phase7PriorityReasonTests.test_tasks_queue_includes_priority_reason"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.015011,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_phase8_my_work_action_parity",
+      "normalized_signature": "03ffef6a616086a0",
+      "raw_capture_signature": "4b3d0d14969ca94c",
+      "test_id": "tests.test_phase8_my_work_action_parity.Phase8MyWorkActionParityTests.test_assignment_rows_expose_mutation_urls"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.0294,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_phase8_my_work_action_parity",
+      "normalized_signature": "f7b4d28d63a8a79d",
+      "raw_capture_signature": "2c894eb5875be4c0",
+      "test_id": "tests.test_phase8_my_work_action_parity.Phase8MyWorkActionParityTests.test_my_work_template_renders_mutation_kebab"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.010429,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_phase8_my_work_action_parity",
+      "normalized_signature": "c65718988c0cb622",
+      "raw_capture_signature": "00ea9afb94bb6c65",
+      "test_id": "tests.test_phase8_my_work_action_parity.Phase8MyWorkActionParityTests.test_obligation_complete_json_mode"
+    },
+    {
+      "affected_surface": "legal task/work item",
+      "duration_seconds": 0.010313,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_phase8_my_work_action_parity",
+      "normalized_signature": "eecc6de2276b5551",
+      "raw_capture_signature": "31a54540441ffb6b",
+      "test_id": "tests.test_phase8_my_work_action_parity.Phase8MyWorkActionParityTests.test_task_complete_from_my_work_records_outcome"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.015403,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_phase9_my_work_governance_actions",
+      "normalized_signature": "cbd5e0c60e4a6f95",
+      "raw_capture_signature": "e351e8062f2cc89b",
+      "test_id": "tests.test_phase9_my_work_governance_actions.Phase9MyWorkGovernanceActionsTests.test_admin_assignee_gets_reassign_flags"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.028918,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_phase9_my_work_governance_actions",
+      "normalized_signature": "5625085d0f488dcd",
+      "raw_capture_signature": "3dc26740e9f114f6",
+      "test_id": "tests.test_phase9_my_work_governance_actions.Phase9MyWorkGovernanceActionsTests.test_my_work_template_shows_reassign_and_conflict_actions"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.01423,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_phase9_my_work_governance_actions",
+      "normalized_signature": "838266a5805ea01e",
+      "raw_capture_signature": "f85291832bb6805e",
+      "test_id": "tests.test_phase9_my_work_governance_actions.Phase9MyWorkGovernanceActionsTests.test_privacy_conflict_row_points_to_risks_tab"
+    },
+    {
+      "affected_surface": "contract lifecycle",
+      "duration_seconds": 0.031609,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_seed_demo_command",
+      "normalized_signature": "d2ef3a67aec558de",
+      "raw_capture_signature": "a390264fd0c65df7",
+      "test_id": "tests.test_seed_demo_command.SeedDemoCommandTests.test_contracts_span_meaningful_lifecycle_states"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.012947,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_settings_hub",
+      "normalized_signature": "60e2189647dfb008",
+      "raw_capture_signature": "3067fb1a351a5679",
+      "test_id": "tests.test_settings_hub.SettingsHubViewTests.test_hub_cards_point_to_real_destinations"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.011819,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_settings_hub",
+      "normalized_signature": "17fd00e7148c3bb4",
+      "raw_capture_signature": "72681b799fa8e6f5",
+      "test_id": "tests.test_settings_hub.SettingsHubViewTests.test_hub_renders_compact_groups_and_subtitle"
+    },
+    {
+      "affected_surface": "legal task/work item",
+      "duration_seconds": 0.019689,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_tasks_inbox",
+      "normalized_signature": "77feb55f1e3f1c56",
+      "raw_capture_signature": "08ecd0f1fb30cedd",
+      "test_id": "tests.test_tasks_inbox.TasksActionEligibilityTests.test_every_row_keeps_an_edit_link_regardless_of_complete_eligibility"
+    },
+    {
+      "affected_surface": "legal task/work item",
+      "duration_seconds": 0.009962,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_tasks_inbox",
+      "normalized_signature": "8f1e9975eccd85c3",
+      "raw_capture_signature": "d59d739957cc456e",
+      "test_id": "tests.test_tasks_inbox.TasksActionEligibilityTests.test_unauthorized_bystander_cannot_complete_via_direct_post"
+    },
+    {
+      "affected_surface": "legal task/work item",
+      "duration_seconds": 0.017359,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_tasks_inbox",
+      "normalized_signature": "14e9444deb1bf771",
+      "raw_capture_signature": "443942915e187d9d",
+      "test_id": "tests.test_tasks_inbox.TasksCopyQualityTests.test_empty_states_render_exact_specified_copy"
+    },
+    {
+      "affected_surface": "legal task/work item",
+      "duration_seconds": 0.009465,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_tasks_inbox",
+      "normalized_signature": "c5eb4c341113b115",
+      "raw_capture_signature": "79d378043e30082c",
+      "test_id": "tests.test_tasks_inbox.TasksMatterLinkedAuthorizationTests.test_same_org_member_can_complete_matter_linked_task"
+    },
+    {
+      "affected_surface": "legal task/work item",
+      "duration_seconds": 0.019999,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_tasks_inbox",
+      "normalized_signature": "e04453dae09c5b39",
+      "raw_capture_signature": "9af6acfd91e80c6a",
+      "test_id": "tests.test_tasks_inbox.TasksQueueTabFilteringTests.test_all_open_excludes_completed_and_cancelled"
+    },
+    {
+      "affected_surface": "legal task/work item",
+      "duration_seconds": 0.020099,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_tasks_inbox",
+      "normalized_signature": "e72cef5710935588",
+      "raw_capture_signature": "fa942755ed6371a4",
+      "test_id": "tests.test_tasks_inbox.TasksQueueTabFilteringTests.test_completed_shows_only_completed"
+    },
+    {
+      "affected_surface": "legal task/work item",
+      "duration_seconds": 0.021126,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_tasks_inbox",
+      "normalized_signature": "1b208e4cf017204c",
+      "raw_capture_signature": "9a118758eeb6fd88",
+      "test_id": "tests.test_tasks_inbox.TasksQueueTabFilteringTests.test_due_soon_shows_open_tasks_due_within_a_week"
+    },
+    {
+      "affected_surface": "legal task/work item",
+      "duration_seconds": 0.020424,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_tasks_inbox",
+      "normalized_signature": "d2037978c5a07f8f",
+      "raw_capture_signature": "37fe57bcad43cb8e",
+      "test_id": "tests.test_tasks_inbox.TasksQueueTabFilteringTests.test_overdue_shows_only_past_due_open_tasks"
+    },
+    {
+      "affected_surface": "legal task/work item",
+      "duration_seconds": 0.002485,
+      "exception_type": "ValidationError",
+      "kind": "error",
+      "module": "tests.test_tasks_inbox",
+      "normalized_signature": "645da48f3970bfa7",
+      "raw_capture_signature": "4b5497f6e7fd2a77",
+      "test_id": "tests.test_tasks_inbox.TasksRowComponentTests.test_row_renders_stage_dots_assignee_chip_and_activity_line"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.010762,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_wave2",
+      "normalized_signature": "76019fb000b2c4ae",
+      "raw_capture_signature": "d4eca5ba2f6e45a1",
+      "test_id": "tests.test_wave2.RetentionHoldGuardTests.test_delete_view_shows_error_message_on_hold"
+    },
+    {
+      "affected_surface": "application surface",
+      "duration_seconds": 0.010147,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_wave3",
+      "normalized_signature": "7dae87300222a6a1",
+      "raw_capture_signature": "a3665a7666dd6219",
+      "test_id": "tests.test_wave3.MFAEnforcementTest.test_challenge_wrong_code_shows_error"
+    },
+    {
+      "affected_surface": "workflow/work item",
+      "duration_seconds": 0.051556,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_workflow_cockpit_regression",
+      "normalized_signature": "8372511ee9b89cd5",
+      "raw_capture_signature": "1c929d0bbda1166c",
+      "test_id": "tests.test_workflow_cockpit_regression.WorkflowCockpitRegressionTests.test_dashboard_renders_mixed_workflow_rows_with_workspace_links"
+    },
+    {
+      "affected_surface": "workflow/work item",
+      "duration_seconds": 0.0512,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_workflow_cockpit_regression",
+      "normalized_signature": "848217758087f102",
+      "raw_capture_signature": "dcd6dda088a40123",
+      "test_id": "tests.test_workflow_cockpit_regression.WorkflowCockpitRegressionTests.test_reference_workflows_generate_records_and_render_workspaces"
+    },
+    {
+      "affected_surface": "workflow/work item",
+      "duration_seconds": 0.016199,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_workflow_routing",
+      "normalized_signature": "4225c3ed67919a77",
+      "raw_capture_signature": "4cd8b0c0a6e02e8b",
+      "test_id": "tests.test_workflow_routing.WorkflowRoutingTests.test_workflow_dashboard_and_detail_surface_routing_endpoints"
+    },
+    {
+      "affected_surface": "contract lifecycle",
+      "duration_seconds": 0.000479,
+      "exception_type": "IndexError",
+      "kind": "error",
+      "module": "tests.test_expressive_design_system",
+      "normalized_signature": "3e82cb03e392d520",
+      "raw_capture_signature": "60e5048dc3ec50b6",
+      "test_id": "tests.test_expressive_design_system.ExpressiveDesignSystemContractTests.test_command_center_alignment_layer_uses_shared_tokens"
+    },
+    {
+      "affected_surface": "contract lifecycle",
+      "duration_seconds": 0.00026,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_expressive_design_system",
+      "normalized_signature": "fb7e35be711bb40c",
+      "raw_capture_signature": "194a2bbfff75df28",
+      "test_id": "tests.test_expressive_design_system.ExpressiveDesignSystemContractTests.test_command_center_consumes_shared_variants"
+    },
+    {
+      "affected_surface": "contract lifecycle",
+      "duration_seconds": 0.00013,
+      "exception_type": "IndexError",
+      "kind": "error",
+      "module": "tests.test_expressive_design_system",
+      "normalized_signature": "1c6fca768e7dadfe",
+      "raw_capture_signature": "9ed79a2a87c3dbf7",
+      "test_id": "tests.test_expressive_design_system.ExpressiveDesignSystemContractTests.test_reference_layer_uses_tokens_instead_of_page_hex_values"
+    },
+    {
+      "affected_surface": "search/count projection",
+      "duration_seconds": 0.001139,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_search_api",
+      "normalized_signature": "18e94606f44207ca",
+      "raw_capture_signature": "50def491e5a70e57",
+      "test_id": "tests.test_search_api.TestContractSearchService.test_date_filters_applied"
+    },
+    {
+      "affected_surface": "search/count projection",
+      "duration_seconds": 0.001474,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_search_api",
+      "normalized_signature": "53adae2ba59ffa3f",
+      "raw_capture_signature": "daa8d8fdaa1e83fb",
+      "test_id": "tests.test_search_api.TestContractSearchService.test_empty_query_returns_all"
+    },
+    {
+      "affected_surface": "search/count projection",
+      "duration_seconds": 0.000836,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_search_api",
+      "normalized_signature": "3799c8e37ab71702",
+      "raw_capture_signature": "31b42fe18ddcc01b",
+      "test_id": "tests.test_search_api.TestContractSearchService.test_filters_applied"
+    },
+    {
+      "affected_surface": "search/count projection",
+      "duration_seconds": 0.001356,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_search_api",
+      "normalized_signature": "937d2d0183e2c2a6",
+      "raw_capture_signature": "bf84f87188424614",
+      "test_id": "tests.test_search_api.TestContractSearchService.test_pagination_math_exact_division"
+    },
+    {
+      "affected_surface": "search/count projection",
+      "duration_seconds": 0.000827,
+      "exception_type": "AssertionError",
+      "kind": "failure",
+      "module": "tests.test_search_api",
+      "normalized_signature": "784cdb1ebea1ed69",
+      "raw_capture_signature": "8c8018a7d53a2ea3",
+      "test_id": "tests.test_search_api.TestContractSearchService.test_pagination_math_total_pages"
+    }
+  ],
+  "schema_version": 2,
+  "settings_module": "config.settings_test"
+}

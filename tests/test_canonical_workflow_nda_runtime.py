@@ -159,7 +159,9 @@ class CanonicalWorkflowNDAServiceTests(TestCase):
         self.assertEqual(record.workflow_version_id, instance.workflow_version_id)
         self.assertEqual(instance.status, instance.Status.COMPLETED)
         archive_contract_record(record=record, actor=self.owner)
-        exported = export_contract_record(record=record, actor=self.approver)
+        # PDR-0008 makes export inherit private contract read. The assigned
+        # approver is not an accountable principal; the owner is.
+        exported = export_contract_record(record=record, actor=self.owner)
         self.assertEqual(exported['document_version_id'], document_version.pk)
         self.assertTrue(set([
             'workflow.definition.created',

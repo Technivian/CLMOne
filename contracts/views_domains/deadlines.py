@@ -4,6 +4,7 @@ import json
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import Q
 from django.http import HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
@@ -16,10 +17,7 @@ from contracts.middleware import log_action
 from contracts.models import Contract, Deadline, Matter
 from contracts.permissions import ContractAction, can_access_contract_action
 from contracts.services.repository import apply_repository_contract_policy
-from contracts.services.object_read_policy import (
-    SearchEnforcementState,
-    contract_repository_enforcement_state,
-)
+from contracts.services.object_read_policy import filter_contract_edit_queryset
 from contracts.services.assignments import open_obligations_queryset
 from contracts.services.payrollminds_demo import (
     PRESENTER_READ_ONLY_MESSAGE,
@@ -113,8 +111,6 @@ def _visible_deadlines_queryset(*, organization, user):
     prevents due dates and reminder titles from becoming a metadata side
     channel for private records.
     """
-    if contract_repository_enforcement_state(organization) is SearchEnforcementState.LEGACY:
-        return Deadline.objects.for_organization(organization)
     visible_contracts = apply_repository_contract_policy(
         Contract.objects.filter(organization=organization),
         organization=organization,
@@ -122,7 +118,27 @@ def _visible_deadlines_queryset(*, organization, user):
         surface='obligations_workspace',
     )
     return Deadline.objects.for_organization(organization).filter(
-        contract__in=visible_contracts,
+        Q(contract__in=visible_contracts)
+        | Q(contract__isnull=True, matter__organization=organization),
+    )
+
+
+def _editable_deadlines_queryset(*, organization, user):
+    """Resolve writable deadlines without broadening contract discovery.
+
+    Contract-linked deadlines retain the existing privileged-editor mutation
+    path.  Matter-only deadlines have no contract policy to inherit, so they
+    retain their existing same-workspace mutation scope.
+    """
+    editable_contracts = filter_contract_edit_queryset(
+        Contract.objects.filter(organization=organization),
+        organization=organization,
+        user=user,
+        surface='deadline_edit',
+    )
+    return Deadline.objects.for_organization(organization).filter(
+        Q(contract__in=editable_contracts)
+        | Q(contract__isnull=True, matter__organization=organization),
     )
 
 
@@ -417,7 +433,7 @@ class DeadlineCreateView(TenantScopedFormMixin, TenantAssignCreateMixin, LoginRe
         contract_id = self.request.GET.get('contract')
         if contract_id:
             organization = self.get_organization()
-            contract = apply_repository_contract_policy(
+            contract = filter_contract_edit_queryset(
                 Contract.objects.filter(organization=organization, pk=contract_id),
                 organization=organization,
                 user=self.request.user,
@@ -430,7 +446,7 @@ class DeadlineCreateView(TenantScopedFormMixin, TenantAssignCreateMixin, LoginRe
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
         organization = self.get_organization()
-        form.fields['contract'].queryset = apply_repository_contract_policy(
+        form.fields['contract'].queryset = filter_contract_edit_queryset(
             form.fields['contract'].queryset,
             organization=organization,
             user=self.request.user,
@@ -470,12 +486,12 @@ class DeadlineUpdateView(TenantScopedFormMixin, TenantScopedQuerysetMixin, Login
         org = self.get_organization()
         if not org:
             return Deadline.objects.none()
-        return _visible_deadlines_queryset(organization=org, user=self.request.user)
+        return _editable_deadlines_queryset(organization=org, user=self.request.user)
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
         organization = self.get_organization()
-        form.fields['contract'].queryset = apply_repository_contract_policy(
+        form.fields['contract'].queryset = filter_contract_edit_queryset(
             form.fields['contract'].queryset,
             organization=organization,
             user=self.request.user,
@@ -533,7 +549,7 @@ def deadline_complete(request, pk):
             return JsonResponse({'error': PRESENTER_READ_ONLY_MESSAGE}, status=403)
         return HttpResponseForbidden(PRESENTER_READ_ONLY_MESSAGE)
 
-    deadline_queryset = _visible_deadlines_queryset(
+    deadline_queryset = _editable_deadlines_queryset(
         organization=organization,
         user=request.user,
     )
@@ -591,7 +607,7 @@ def deadline_defer(request, pk):
             return JsonResponse({'error': PRESENTER_READ_ONLY_MESSAGE}, status=403)
         return HttpResponseForbidden(PRESENTER_READ_ONLY_MESSAGE)
     deadline = get_object_or_404(
-        _visible_deadlines_queryset(organization=organization, user=request.user),
+        _editable_deadlines_queryset(organization=organization, user=request.user),
         pk=pk,
     )
     if deadline.contract and not can_access_contract_action(request.user, deadline.contract, ContractAction.EDIT):
@@ -677,7 +693,7 @@ def deadline_escalate(request, pk):
             return JsonResponse({'error': PRESENTER_READ_ONLY_MESSAGE}, status=403)
         return HttpResponseForbidden(PRESENTER_READ_ONLY_MESSAGE)
     deadline = get_object_or_404(
-        _visible_deadlines_queryset(organization=organization, user=request.user),
+        _editable_deadlines_queryset(organization=organization, user=request.user),
         pk=pk,
     )
     if deadline.contract and not can_access_contract_action(request.user, deadline.contract, ContractAction.EDIT):
@@ -725,7 +741,7 @@ def deadline_delete(request, pk):
     if is_payrollminds_presenter_workspace(organization):
         return HttpResponseForbidden(PRESENTER_READ_ONLY_MESSAGE)
     deadline = get_object_or_404(
-        _visible_deadlines_queryset(organization=organization, user=request.user),
+        _editable_deadlines_queryset(organization=organization, user=request.user),
         pk=pk,
     )
     if deadline.contract and not can_access_contract_action(request.user, deadline.contract, ContractAction.EDIT):

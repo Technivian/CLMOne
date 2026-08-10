@@ -173,7 +173,10 @@ class CommandCenterProductionSurfaceTests(TestCase):
                 organization=self.org, source_type=CommandCenterWorkItem.SourceType.CONTRACT,
                 title=f'Query Work {index}', contract=contract, owner=self.user,
             )
-        with self.assertNumQueries(2):
+        # Contract visibility now evaluates active membership and Ethical-Wall
+        # scope once before the projection query; it remains constant for all
+        # four rows, so this still guards against N+1 queries.
+        with self.assertNumQueries(5):
             rows = get_persisted_command_center_rows(self.org, current_user=self.user)
             self.assertEqual(len(rows), 4)
 

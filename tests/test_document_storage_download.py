@@ -27,8 +27,8 @@ def _member(org, username, role=OrganizationMembership.Role.OWNER):
     return u
 
 
-def _document(org, title='Doc', with_file=True):
-    doc = Document(organization=org, title=title)
+def _document(org, uploader, title='Doc', with_file=True):
+    doc = Document(organization=org, title=title, uploaded_by=uploader)
     if with_file:
         doc.file = SimpleUploadedFile(f'{title}.txt', b'hello world', content_type='text/plain')
     doc.save()
@@ -41,7 +41,7 @@ class DocumentDownloadTests(TestCase):
         self.org_b = _org('Tenant B', 'dl-b')
         self.user_a = _member(self.org_a, 'alice')
         self.user_b = _member(self.org_b, 'bob')
-        self.doc_a = _document(self.org_a, 'AlphaDoc')
+        self.doc_a = _document(self.org_a, self.user_a, 'AlphaDoc')
 
     def test_unauthenticated_is_redirected_to_login(self):
         resp = Client().get(reverse('contracts:document_download', args=[self.doc_a.pk]))
@@ -75,7 +75,7 @@ class DocumentDownloadTests(TestCase):
         self.assertEqual(blocked.outcome, AuditLog.Outcome.BLOCKED)
 
     def test_missing_file_fails_safe(self):
-        doc = _document(self.org_a, 'NoFile', with_file=False)
+        doc = _document(self.org_a, self.user_a, 'NoFile', with_file=False)
         c = Client()
         c.force_login(self.user_a)
         resp = c.get(reverse('contracts:document_download', args=[doc.pk]))

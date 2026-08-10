@@ -275,16 +275,21 @@ class MVPVerticalSliceTests(TestCase):
         self.assertEqual(pack.approval_status, DPAReviewPack.ApprovalStatus.APPROVED)
         self.assertEqual(DPAApprovalHistoryEntry.objects.filter(review_pack=pack).count(), 2)
 
+        # The contract owner, not the separate privacy reviewer, may discover
+        # contract-derived obligations under the private-by-default policy.
+        self.login(self.owner)
         repository = self.client.get(reverse('contracts:repository'))
         self.assertNotContains(repository, 'Total contracts')
         self.assertNotContains(repository, 'Awaiting action')
         self.assertNotContains(repository, 'Expiring soon')
         self.assertContains(self.client.get(reverse('contracts:obligations_workspace')), 'Destroy confidential material')
+        self.login(self.reviewer)
         dpa_dashboard = self.client.get(reverse('contracts:dpa_review_pack_list'))
         self.assertEqual(dpa_dashboard.context['total_packs'], 1)
         self.assertEqual(dpa_dashboard.context['pending_approval_count'], 0)
         self.assertEqual(self.client.get(reverse('dashboard')).status_code, 200)
 
+        self.login(self.owner)
         contract_activity = self.client.get(reverse('contracts:contract_detail', args=[contract.pk]))
         self.assertGreaterEqual(len(contract_activity.context['activity_entries']), 10)
         events = set(AuditLog.objects.filter(organization=self.org).values_list('changes__event', flat=True))

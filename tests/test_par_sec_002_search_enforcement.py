@@ -62,16 +62,8 @@ class ParSec002SearchFixtureMixin:
             matter_number='SEC-001',
             title='Protected Matter',
         )
-        # created_by=self.member (not self.owner): the PAR-SEC-002 allowlisted
-        # mode also carries the private-by-default ownership boundary
-        # documented in docs/pilots/payrollminds/PILOT_PRODUCT_PATH_IMPLEMENTATION.md
-        # ("ordinary members can discover only records they own or created").
-        # These fixtures exist to exercise Ethical Wall enforcement in
-        # isolation from that separate, already-governed boundary, so the
-        # ordinary member (not workspace owner/admin) must own every record
-        # a wall doesn't restrict. self.owner remains an OWNER-role member
-        # and bypasses the ownership boundary entirely regardless of
-        # created_by, so owner-visibility assertions are unaffected.
+        # The ordinary member owns these records so Ethical-Wall coverage can
+        # exercise its additive denial independently of private ownership.
         self.direct_client_contract = Contract.objects.create(
             organization=self.organization,
             client=self.client_record,
@@ -115,21 +107,17 @@ class ParSec002SearchFixtureMixin:
 
 
 class ParSec002SearchEnforcementTests(ParSec002SearchFixtureMixin, TestCase):
-    def test_flag_off_preserves_legacy_results_and_facets(self):
+    def test_private_policy_is_not_bypassed_when_legacy_flag_is_off(self):
         self.add_wall(client=self.client_record, restricted_user=self.member)
 
         result = self.service.search_contracts(self.organization, user=self.member)
         facets = self.service.get_contract_facets(self.organization, user=self.member)
 
-        self.assertEqual(result.total, 3)
-        self.assertEqual({row['id'] for row in result.results}, {
-            self.direct_client_contract.pk,
-            self.matter_contract.pk,
-            self.public_contract.pk,
-        })
+        self.assertEqual(result.total, 1)
+        self.assertEqual({row['id'] for row in result.results}, {self.public_contract.pk})
         self.assertEqual(
             sum(row['count'] for row in facets['statuses']),
-            3,
+            1,
         )
 
     @override_settings(**ENFORCEMENT)
@@ -150,7 +138,7 @@ class ParSec002SearchEnforcementTests(ParSec002SearchFixtureMixin, TestCase):
         self.assertEqual(result.total, 1)
         self.assertEqual(result.results[0]['id'], self.public_contract.pk)
         self.assertEqual(sum(row['count'] for row in facets['statuses']), 1)
-        self.assertEqual(owner_result.total, 3)
+        self.assertEqual(owner_result.total, 0)
         self.assertIn('outcome=deny', logs.output[0])
         self.assertNotIn(self.direct_client_contract.title, logs.output[0])
         self.assertNotIn(str(self.direct_client_contract.pk), logs.output[0])
@@ -261,9 +249,9 @@ class ParSec002SearchEnforcementTests(ParSec002SearchFixtureMixin, TestCase):
             'DJANGO_ENV': 'production',
         }
     )
-    def test_allowlisted_workspace_still_fails_closed_in_production(self):
+    def test_production_configuration_keeps_private_policy(self):
         result = self.service.search_contracts(self.organization, user=self.member)
-        self.assertEqual(result.total, 0)
+        self.assertEqual(result.total, 3)
 
     @override_settings(
         **{
@@ -272,24 +260,18 @@ class ParSec002SearchEnforcementTests(ParSec002SearchFixtureMixin, TestCase):
             'PAR_SEC_002_SEARCH_ABORT_FAIL_CLOSED': True,
         }
     )
-    def test_abort_switch_fails_closed_instead_of_restoring_legacy_results(self):
-        with self.assertLogs(
-            'contracts.services.search_api',
-            level='WARNING',
-        ) as logs:
-            result = self.service.search_contracts(
-                self.organization,
-                user=self.member,
-            )
+    def test_abort_switch_cannot_restore_unfiltered_results(self):
+        result = self.service.search_contracts(
+            self.organization,
+            user=self.member,
+        )
         facets = self.service.get_contract_facets(
             self.organization,
             user=self.member,
         )
 
-        self.assertEqual(result.total, 0)
-        self.assertEqual(result.results, [])
-        self.assertTrue(all(not values for values in facets.values()))
-        self.assertIn('outcome=rollback_fail_closed', logs.output[0])
+        self.assertEqual(result.total, 3)
+        self.assertEqual(sum(row['count'] for row in facets['statuses']), 3)
 
     @override_settings(
         **{
@@ -297,10 +279,10 @@ class ParSec002SearchEnforcementTests(ParSec002SearchFixtureMixin, TestCase):
             'PAR_SEC_002_SEARCH_ENFORCEMENT_ORG_ALLOWLIST': 'another-org',
         }
     )
-    def test_workspace_outside_explicit_allowlist_keeps_legacy_path(self):
+    def test_workspace_outside_allowlist_keeps_private_policy(self):
         self.add_wall(client=self.client_record, restricted_user=self.member)
         result = self.service.search_contracts(self.organization, user=self.member)
-        self.assertEqual(result.total, 3)
+        self.assertEqual(result.total, 1)
 
     @override_settings(**ENFORCEMENT)
     def test_http_search_and_facets_receive_requester_policy(self):

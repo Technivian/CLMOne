@@ -30,8 +30,6 @@ from contracts.templatetags.clmone_format import (
 )
 from contracts.services.workflow_operations import split_exception_from_title
 from contracts.services.object_read_policy import (
-    SearchEnforcementState,
-    contract_repository_enforcement_state,
     filter_contract_queryset,
 )
 
@@ -93,25 +91,7 @@ class BulkUpdateValidationError(Exception):
 
 
 def apply_repository_contract_policy(queryset, *, organization, user, surface):
-    """Apply the separately gated repository policy before any projection."""
-    state = contract_repository_enforcement_state(organization)
-    if state is SearchEnforcementState.LEGACY:
-        return queryset
-    if state in {
-        SearchEnforcementState.FAIL_CLOSED,
-        SearchEnforcementState.ABORT_FAIL_CLOSED,
-    }:
-        outcome = (
-            'rollback_fail_closed'
-            if state is SearchEnforcementState.ABORT_FAIL_CLOSED
-            else 'configuration_fail_closed'
-        )
-        logger.warning(
-            'object_read_policy outcome=%s surface=%s',
-            outcome,
-            surface,
-        )
-        return queryset.none()
+    """Apply the unconditional canonical contract read policy before projection."""
     try:
         return filter_contract_queryset(
             queryset,

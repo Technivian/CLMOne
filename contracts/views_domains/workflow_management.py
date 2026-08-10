@@ -64,6 +64,12 @@ from contracts.services.workflow_audit import (
 )
 from contracts.services.workflow_simulation import simulate_workflow_template
 from contracts.services.workflow_templates import COMPARISON_PRESETS, compare_template_versions, clone_template_version, list_template_versions
+from contracts.services.object_read_policy import (
+    ObjectReadPolicyUnavailable,
+    filter_contract_edit_queryset,
+    filter_workflow_edit_queryset,
+    filter_workflow_queryset,
+)
 from contracts.services.workflow_designer import (
     DEFAULT_TEST_SCENARIOS,
     WORKFLOW_TEMPLATE_AUDIT_EVENT_CHOICES,
@@ -105,6 +111,35 @@ def _workflow_template_queryset_for_organization(organization):
         .distinct()
         .prefetch_related('steps')
     )
+
+
+def _workflow_queryset_for_request(request, organization, queryset, *, surface, for_edit=False):
+    """Keep workflow discovery aligned with its linked Contract visibility."""
+    try:
+        policy = filter_workflow_edit_queryset if for_edit else filter_workflow_queryset
+        return policy(
+            queryset,
+            organization=organization,
+            user=request.user,
+            surface=surface,
+        )
+    except ObjectReadPolicyUnavailable:
+        return queryset.none()
+
+
+def _apply_private_contract_choices(form, request, organization, *, surface):
+    if 'contract' not in form.fields:
+        return form
+    try:
+        form.fields['contract'].queryset = filter_contract_edit_queryset(
+            form.fields['contract'].queryset,
+            organization=organization,
+            user=request.user,
+            surface=surface,
+        )
+    except ObjectReadPolicyUnavailable:
+        form.fields['contract'].queryset = Contract.objects.none()
+    return form
 
 
 class WorkflowTemplateListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
@@ -322,6 +357,12 @@ class WorkflowListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
     def get_queryset(self):
         org = self.get_organization()
         queryset = scope_queryset_for_organization(Workflow.objects.all(), org)
+        queryset = _workflow_queryset_for_request(
+            self.request,
+            org,
+            queryset,
+            surface='workflow_list',
+        )
         contract_pk = self.request.GET.get('contract_pk')
         if contract_pk:
             queryset = queryset.filter(contract=contract_pk)
@@ -332,6 +373,15 @@ class WorkflowDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
     model = Workflow
     template_name = 'contracts/workflow_detail.html'
     context_object_name = 'workflow'
+
+    def get_queryset(self):
+        org = self.get_organization()
+        return _workflow_queryset_for_request(
+            self.request,
+            org,
+            scope_queryset_for_organization(Workflow.objects.all(), org),
+            surface='workflow_detail',
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -346,6 +396,15 @@ class WorkflowCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView
     model = Workflow
     form_class = WorkflowForm
     template_name = 'contracts/workflow_form.html'
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        return _apply_private_contract_choices(
+            form,
+            self.request,
+            self.get_organization(),
+            surface='workflow_create_contract_options',
+        )
 
     def get_success_url(self):
         return reverse_lazy('contracts:workflow_detail', kwargs={'pk': self.object.pk})
@@ -390,6 +449,24 @@ class WorkflowUpdateView(TenantScopedFormMixin, TenantScopedQuerysetMixin, Login
     template_name = 'contracts/workflow_form.html'
     scoped_form_fields = {'contract': Contract}
 
+    def get_queryset(self):
+        org = self.get_organization()
+        return _workflow_queryset_for_request(
+            self.request,
+            org,
+            scope_queryset_for_organization(Workflow.objects.all(), org),
+            surface='workflow_update',
+        )
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        return _apply_private_contract_choices(
+            form,
+            self.request,
+            self.get_organization(),
+            surface='workflow_update_contract_options',
+        )
+
     def get_success_url(self):
         return reverse_lazy('contracts:workflow_detail', kwargs={'pk': self.object.pk})
 
@@ -406,6 +483,18 @@ class WorkflowStepUpdateView(TenantScopedFormMixin, TenantScopedQuerysetMixin, L
     form_class = WorkflowStepForm
     template_name = 'contracts/workflow_step_form.html'
     scoped_form_fields = {'assigned_to': organization_user_queryset}
+
+    def get_queryset(self):
+        organization = self.get_organization()
+        return WorkflowStep.objects.filter(
+            workflow__in=_workflow_queryset_for_request(
+                self.request,
+                organization,
+                _scope_workflows_for_organization(organization),
+                surface='workflow_step_update',
+                for_edit=True,
+            )
+        )
 
     def get_success_url(self):
         return reverse_lazy('contracts:workflow_detail', kwargs={'pk': self.object.workflow.pk})
@@ -450,7 +539,18 @@ class WorkflowStepUpdateView(TenantScopedFormMixin, TenantScopedQuerysetMixin, L
 class WorkflowStepCompleteView(LoginRequiredMixin, View):
     def post(self, request, pk):
         organization = get_user_organization(request.user)
-        step = get_object_or_404(_scope_workflow_steps_for_organization(organization), pk=pk)
+        step = get_object_or_404(
+            WorkflowStep.objects.filter(
+                workflow__in=_workflow_queryset_for_request(
+                    request,
+                    organization,
+                    _scope_workflows_for_organization(organization),
+                    surface='workflow_step_complete',
+                    for_edit=True,
+                )
+            ),
+            pk=pk,
+        )
         linked_contract = step.workflow.contract
         if linked_contract and not can_access_contract_action(request.user, linked_contract, ContractAction.EDIT):
             return HttpResponseForbidden('You do not have permission to complete this contract workflow step.')
@@ -466,7 +566,16 @@ class WorkflowStepCompleteView(LoginRequiredMixin, View):
 class AddWorkflowStepView(LoginRequiredMixin, View):
     def post(self, request, pk):
         organization = get_user_organization(request.user)
-        workflow = get_object_or_404(_scope_workflows_for_organization(organization), pk=pk)
+        workflow = get_object_or_404(
+            _workflow_queryset_for_request(
+                request,
+                organization,
+                _scope_workflows_for_organization(organization),
+                surface='workflow_step_create',
+                for_edit=True,
+            ),
+            pk=pk,
+        )
         if workflow.contract and not can_access_contract_action(request.user, workflow.contract, ContractAction.EDIT):
             return HttpResponseForbidden('You do not have permission to create workflow steps for this contract.')
         form = apply_form_queryset_scopes(WorkflowStepForm(request.POST), organization, {'assigned_to': organization_user_queryset})
@@ -718,6 +827,12 @@ def workflow_dashboard(request):
     base_qs = annotate_workflow_operations_queryset(
         get_scoped_queryset_for_request(request, Workflow).order_by('-created_at')
     )
+    base_qs = _workflow_queryset_for_request(
+        request,
+        organization,
+        base_qs,
+        surface='workflow_dashboard',
+    )
     active_count = active_workflow_count(base_qs)
     pending_approvals = pending_approval_count(organization)
     filtered_qs = filter_workflow_operations_queryset(base_qs, filters)
@@ -752,7 +867,12 @@ def workflow_dashboard(request):
 def workflow_create(request):
     organization = get_user_organization(request.user)
     if request.method == 'POST':
-        form = _configure_workflow_form(WorkflowForm(request.POST), organization)
+        form = _apply_private_contract_choices(
+            _configure_workflow_form(WorkflowForm(request.POST), organization),
+            request,
+            organization,
+            surface='workflow_create_contract_options',
+        )
         if form.is_valid():
             workflow = form.save(commit=False)
             if workflow.contract and not can_access_contract_action(request.user, workflow.contract, ContractAction.EDIT):
@@ -788,7 +908,12 @@ def workflow_create(request):
                         )
             return redirect('contracts:workflow_detail', pk=workflow.pk)
     else:
-        form = _configure_workflow_form(WorkflowForm(), organization)
+        form = _apply_private_contract_choices(
+            _configure_workflow_form(WorkflowForm(), organization),
+            request,
+            organization,
+            surface='workflow_create_contract_options',
+        )
         contract_pk = request.GET.get('contract_pk')
         template_pk = request.GET.get('template_pk')
         if contract_pk:
@@ -803,7 +928,15 @@ def workflow_create(request):
 @login_required
 def workflow_detail(request, pk):
     organization = get_user_organization(request.user)
-    workflow = get_object_or_404(_scope_workflows_for_organization(organization), pk=pk)
+    workflow = get_object_or_404(
+        _workflow_queryset_for_request(
+            request,
+            organization,
+            _scope_workflows_for_organization(organization),
+            surface='workflow_detail',
+        ),
+        pk=pk,
+    )
     if workflow.contract and not can_access_contract_action(request.user, workflow.contract, ContractAction.COMMENT):
         return HttpResponseForbidden('You do not have access to this contract workflow.')
     context = _workflow_detail_context(workflow, actor=request.user)
@@ -815,7 +948,15 @@ def workflow_detail(request, pk):
 @login_required
 def workflow_activity(request, pk):
     organization = get_user_organization(request.user)
-    workflow = get_object_or_404(_scope_workflows_for_organization(organization), pk=pk)
+    workflow = get_object_or_404(
+        _workflow_queryset_for_request(
+            request,
+            organization,
+            _scope_workflows_for_organization(organization),
+            surface='workflow_activity',
+        ),
+        pk=pk,
+    )
     if workflow.contract and not can_access_contract_action(request.user, workflow.contract, ContractAction.COMMENT):
         return HttpResponseForbidden('You do not have access to this contract workflow.')
     return render(
@@ -835,7 +976,18 @@ def workflow_activity(request, pk):
 @login_required
 def update_workflow_step(request, pk):
     organization = get_user_organization(request.user)
-    step = get_object_or_404(_scope_workflow_steps_for_organization(organization), pk=pk)
+    step = get_object_or_404(
+        WorkflowStep.objects.filter(
+            workflow__in=_workflow_queryset_for_request(
+                request,
+                organization,
+                _scope_workflows_for_organization(organization),
+                surface='workflow_step_update',
+                for_edit=True,
+            )
+        ),
+        pk=pk,
+    )
     linked_contract = step.workflow.contract
     if linked_contract and not can_access_contract_action(request.user, linked_contract, ContractAction.EDIT):
         return HttpResponseForbidden('You do not have permission to update this contract workflow step.')

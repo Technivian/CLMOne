@@ -13,9 +13,13 @@ from contracts.models import (
     Client,
     Contract,
     Document,
+    DocumentVersion,
     EthicalWall,
+    LegalTask,
     Matter,
     OrganizationMembership,
+    Workflow,
+    WorkflowInstance,
 )
 
 
@@ -161,12 +165,12 @@ def _restricted_scope_ids(*, organization, user) -> tuple[set[int], set[int]]:
     return restricted_client_ids, restricted_matter_ids
 
 
-def _is_workspace_privileged(*, organization, user) -> bool:
-    """Return whether the active member may administer private pilot records.
+def is_workspace_privileged_editor(*, organization, user) -> bool:
+    """Return whether a member has the existing all-record EDIT authority.
 
-    This is deliberately not an override for Ethical Walls.  It only supplies
-    the defined-role part of the private-by-default pilot policy; an active
-    Ethical Wall continues to deny discovery for every role.
+    PDR-0008 preserves OWNER/ADMIN edit authority.  It does *not* approve an
+    OWNER/ADMIN supervisory read, comment, AI, or export override, so callers
+    must never use this predicate for object discovery.
     """
     return OrganizationMembership.objects.filter(
         organization=organization,
@@ -180,27 +184,29 @@ def _is_workspace_privileged(*, organization, user) -> bool:
     ).exists()
 
 
-def _apply_private_contract_access(queryset: QuerySet, *, organization, user) -> QuerySet:
-    """Apply the bounded pilot's owner/creator access baseline.
+def _apply_private_contract_read_access(queryset: QuerySet, *, user) -> QuerySet:
+    """Apply the approved owner/creator read boundary at queryset level.
 
-    The existing PAR-SEC-002 gate is the single activation boundary.  When it
-    is active, ordinary members discover only records they own or created;
-    workspace owners and admins retain their defined operational role.  No
-    new ACL table or parallel permission concept is introduced.
+    This is the one canonical private-by-default rule.  OWNER/ADMIN are not
+    included here because supervisory read/export requires a separate Product
+    and Security approval that PDR-0008 does not supply.
     """
-    if _is_workspace_privileged(organization=organization, user=user):
-        return queryset
     return queryset.filter(Q(owner=user) | Q(created_by=user))
 
 
-def filter_contract_queryset(
+def filter_contract_security_queryset(
     queryset: QuerySet,
     *,
     organization,
     user,
     surface: str = 'contract_search',
 ) -> QuerySet:
-    """Return only contracts eligible for this requester under Ethical Walls."""
+    """Apply membership, tenant, relation, and Ethical-Wall security checks.
+
+    This helper intentionally does not apply owner/creator visibility. It is
+    used only for the separately approved OWNER/ADMIN all-record EDIT action;
+    it is never a discovery queryset.
+    """
     if queryset.model is not Contract:
         raise ObjectReadPolicyUnavailable('Unsupported object policy input.')
     restricted_client_ids, restricted_matter_ids = _restricted_scope_ids(
@@ -226,11 +232,49 @@ def filter_contract_queryset(
         logger.info('object_read_policy outcome=deny surface=%s', surface)
     else:
         logger.info('object_read_policy outcome=allow surface=%s', surface)
-    return _apply_private_contract_access(
-        eligible,
+    return eligible.distinct()
+
+
+def filter_contract_queryset(
+    queryset: QuerySet,
+    *,
+    organization,
+    user,
+    surface: str = 'contract_search',
+) -> QuerySet:
+    """Return only contracts eligible for canonical private-by-default read."""
+    eligible = filter_contract_security_queryset(
+        queryset,
         organization=organization,
         user=user,
-    ).distinct()
+        surface=surface,
+    )
+    return _apply_private_contract_read_access(eligible, user=user).distinct()
+
+
+def filter_contract_edit_queryset(
+    queryset: QuerySet,
+    *,
+    organization,
+    user,
+    surface: str = 'contract_edit',
+) -> QuerySet:
+    """Return records the actor may resolve for a mutation endpoint.
+
+    Discovery stays private-by-default.  This narrowly preserves the approved
+    existing OWNER/ADMIN all-record *edit* authority after tenant and
+    Ethical-Wall checks; it must never be used by list, search, count, export,
+    or detail-read paths.
+    """
+    eligible = filter_contract_security_queryset(
+        queryset,
+        organization=organization,
+        user=user,
+        surface=surface,
+    )
+    if is_workspace_privileged_editor(organization=organization, user=user):
+        return eligible
+    return _apply_private_contract_read_access(eligible, user=user).distinct()
 
 
 def filter_document_queryset(
@@ -267,9 +311,8 @@ def filter_document_queryset(
             | Q(matter_id__in=restricted_matter_ids)
             | Q(matter__client_id__in=restricted_client_ids)
         )
-    eligible_contracts = _apply_private_contract_access(
+    eligible_contracts = _apply_private_contract_read_access(
         eligible_contracts,
-        organization=organization,
         user=user,
     )
     eligible_contract_ids = eligible_contracts.values('pk')
@@ -295,11 +338,9 @@ def filter_document_queryset(
         logger.info('object_read_policy outcome=deny surface=%s', surface)
     else:
         logger.info('object_read_policy outcome=allow surface=%s', surface)
-    if not _is_workspace_privileged(organization=organization, user=user):
-        eligible = eligible.filter(
-            Q(contract_id__in=eligible_contract_ids) | Q(contract__isnull=True, uploaded_by=user)
-        )
-    return eligible.distinct()
+    return eligible.filter(
+        Q(contract_id__in=eligible_contract_ids) | Q(contract__isnull=True, uploaded_by=user)
+    ).distinct()
 
 
 def filter_client_queryset(
@@ -322,15 +363,18 @@ def filter_client_queryset(
         logger.info('object_read_policy outcome=deny surface=%s', surface)
     else:
         logger.info('object_read_policy outcome=allow surface=%s', surface)
-    if not _is_workspace_privileged(organization=organization, user=user):
-        eligible_contracts = _apply_private_contract_access(
-            Contract.objects.filter(organization=organization),
-            organization=organization,
-            user=user,
-        )
-        eligible = eligible.filter(
-            Q(contracts__in=eligible_contracts) | Q(documents__uploaded_by=user)
-        )
+    eligible_contracts = _apply_private_contract_read_access(
+        Contract.objects.filter(organization=organization),
+        user=user,
+    )
+    # A Client is a relation-derived metadata surface. Do not disclose it
+    # merely because a private contract points at it; standalone documents
+    # remain visible only to their uploader.
+    eligible = eligible.filter(
+        Q(contracts__isnull=True)
+        | Q(contracts__in=eligible_contracts)
+        | Q(documents__uploaded_by=user)
+    )
     return eligible.distinct()
 
 
@@ -360,11 +404,153 @@ def filter_matter_queryset(
         logger.info('object_read_policy outcome=deny surface=%s', surface)
     else:
         logger.info('object_read_policy outcome=allow surface=%s', surface)
-    if not _is_workspace_privileged(organization=organization, user=user):
-        eligible_contracts = _apply_private_contract_access(
-            Contract.objects.filter(organization=organization),
-            organization=organization,
-            user=user,
-        )
-        eligible = eligible.filter(contracts__in=eligible_contracts)
+    eligible_contracts = _apply_private_contract_read_access(
+        Contract.objects.filter(organization=organization),
+        user=user,
+    )
+    eligible = eligible.filter(
+        Q(contracts__isnull=True) | Q(contracts__in=eligible_contracts)
+    )
     return eligible.distinct()
+
+
+def filter_document_version_queryset(
+    queryset: QuerySet,
+    *,
+    organization,
+    user,
+    surface: str = 'document_version',
+) -> QuerySet:
+    """Return immutable document versions only when their document is visible."""
+    if queryset.model is not DocumentVersion:
+        raise ObjectReadPolicyUnavailable('Unsupported object policy input.')
+    documents = filter_document_queryset(
+        Document.objects.filter(organization=organization),
+        organization=organization,
+        user=user,
+        surface=surface,
+    )
+    return queryset.filter(
+        organization=organization,
+        document_row_id__in=documents.values('pk'),
+    ).distinct()
+
+
+def filter_workflow_queryset(
+    queryset: QuerySet,
+    *,
+    organization,
+    user,
+    surface: str = 'workflow',
+) -> QuerySet:
+    """Filter workflow rows through the linked Contract read boundary.
+
+    An unlinked workflow has no contract metadata to inherit, so only its
+    creator may discover it. This is conservative and keeps it from becoming
+    a side channel for a future linked contract.
+    """
+    if queryset.model is not Workflow:
+        raise ObjectReadPolicyUnavailable('Unsupported object policy input.')
+    contracts = filter_contract_queryset(
+        Contract.objects.filter(organization=organization),
+        organization=organization,
+        user=user,
+        surface=surface,
+    )
+    return queryset.filter(organization=organization).filter(
+        Q(contract_id__in=contracts.values('pk'))
+        | Q(contract__isnull=True, created_by=user)
+    ).distinct()
+
+
+def filter_workflow_edit_queryset(
+    queryset: QuerySet,
+    *,
+    organization,
+    user,
+    surface: str = 'workflow_edit',
+) -> QuerySet:
+    """Resolve workflows for a permitted mutation, never for discovery."""
+    if queryset.model is not Workflow:
+        raise ObjectReadPolicyUnavailable('Unsupported object policy input.')
+    contracts = filter_contract_edit_queryset(
+        Contract.objects.filter(organization=organization),
+        organization=organization,
+        user=user,
+        surface=surface,
+    )
+    return queryset.filter(organization=organization).filter(
+        Q(contract_id__in=contracts.values('pk'))
+        | Q(contract__isnull=True, created_by=user)
+    ).distinct()
+
+
+def filter_workflow_instance_queryset(
+    queryset: QuerySet,
+    *,
+    organization,
+    user,
+    surface: str = 'workflow_instance',
+) -> QuerySet:
+    """Filter canonical workflow instances through their one contract."""
+    if queryset.model is not WorkflowInstance:
+        raise ObjectReadPolicyUnavailable('Unsupported object policy input.')
+    contracts = filter_contract_queryset(
+        Contract.objects.filter(organization=organization),
+        organization=organization,
+        user=user,
+        surface=surface,
+    )
+    return queryset.filter(
+        organization=organization,
+        contract_id__in=contracts.values('pk'),
+    ).distinct()
+
+
+def filter_legal_task_queryset(
+    queryset: QuerySet,
+    *,
+    organization,
+    user,
+    surface: str = 'work_item',
+) -> QuerySet:
+    """Filter contract-linked work items through the canonical contract rule."""
+    if queryset.model is not LegalTask:
+        raise ObjectReadPolicyUnavailable('Unsupported object policy input.')
+    contracts = filter_contract_queryset(
+        Contract.objects.filter(organization=organization),
+        organization=organization,
+        user=user,
+        surface=surface,
+    )
+    return queryset.filter(
+        Q(contract_id__in=contracts.values('pk'))
+        # Matter-only tasks have no Contract to inherit. Retain their
+        # established tenant/matter boundary; they are not a contract-record
+        # discovery path.
+        | Q(contract__isnull=True, matter__organization=organization)
+        | Q(contract__isnull=True, matter__isnull=True, assigned_to=user)
+    ).distinct()
+
+
+def filter_legal_task_edit_queryset(
+    queryset: QuerySet,
+    *,
+    organization,
+    user,
+    surface: str = 'work_item_edit',
+) -> QuerySet:
+    """Resolve task rows for a permitted mutation, never for a queue/list."""
+    if queryset.model is not LegalTask:
+        raise ObjectReadPolicyUnavailable('Unsupported object policy input.')
+    contracts = filter_contract_edit_queryset(
+        Contract.objects.filter(organization=organization),
+        organization=organization,
+        user=user,
+        surface=surface,
+    )
+    return queryset.filter(
+        Q(contract_id__in=contracts.values('pk'))
+        | Q(contract__isnull=True, matter__organization=organization)
+        | Q(contract__isnull=True, matter__isnull=True, assigned_to=user)
+    ).distinct()

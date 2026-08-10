@@ -612,8 +612,8 @@ def _collect_approval_rows(org, user, today, *, scope='personal'):
         return rows
 
     returned = qs.filter(
+        Q(contract__owner=user) | Q(contract__created_by=user),
         status=ApprovalRequest.Status.CHANGES_REQUESTED,
-        contract__created_by=user,
         contract__status=Contract.Status.IN_PROGRESS,
     )
     for approval in returned:
@@ -643,8 +643,8 @@ def _collect_approval_rows(org, user, today, *, scope='personal'):
         ))
 
     rejected = qs.filter(
+        Q(contract__owner=user) | Q(contract__created_by=user),
         status=ApprovalRequest.Status.REJECTED,
-        contract__created_by=user,
         contract__status=Contract.Status.IN_PROGRESS,
     )
     for approval in rejected:

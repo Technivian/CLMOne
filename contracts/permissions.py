@@ -75,37 +75,49 @@ def can_access_contract_action(user, contract, action=ContractAction.VIEW):
     if membership is None:
         return False
 
-    if action in [ContractAction.VIEW, ContractAction.COMMENT, ContractAction.AI]:
-        # PAR-SEC-002 is the one bounded, default-off policy activation point.
-        # In its pilot allowlist, ordinary members may only read a contract
-        # they own or created.  Defined workspace administrator roles retain
-        # operational access, while the queryset policy still applies Ethical
-        # Walls before an object can be discovered.
-        from contracts.services.object_read_policy import (
-            SearchEnforcementState,
-            contract_repository_enforcement_state,
-        )
+    from contracts.models import Contract
+    from contracts.services.object_read_policy import (
+        ObjectReadPolicyUnavailable,
+        filter_contract_security_queryset,
+        filter_contract_queryset,
+        is_workspace_privileged_editor,
+    )
 
-        policy_state = contract_repository_enforcement_state(contract.organization)
-        if policy_state in {
-            SearchEnforcementState.FAIL_CLOSED,
-            SearchEnforcementState.ABORT_FAIL_CLOSED,
-        }:
-            return False
-        if policy_state is SearchEnforcementState.ENFORCE:
-            if membership.role in [
-                OrganizationMembership.Role.OWNER,
-                OrganizationMembership.Role.ADMIN,
-            ]:
-                return True
-            return user.id in {contract.owner_id, contract.created_by_id}
-        return True
+    try:
+        visible = filter_contract_queryset(
+            Contract.objects.filter(pk=contract.pk),
+            organization=contract.organization,
+            user=user,
+            surface=f'contract_action_{action}',
+        ).exists()
+    except ObjectReadPolicyUnavailable:
+        return False
+
+    if action in [ContractAction.VIEW, ContractAction.COMMENT, ContractAction.AI]:
+        # COMMENT and AI must never exceed the source contract read boundary.
+        return visible
 
     if action == ContractAction.EDIT:
-        if membership.role in [OrganizationMembership.Role.OWNER, OrganizationMembership.Role.ADMIN]:
-            return True
-        accountable_user_id = contract.owner_id or contract.created_by_id
-        return bool(accountable_user_id and accountable_user_id == user.id)
+        # Preserve the existing all-record OWNER/ADMIN edit authority. For
+        # ordinary members, either accountable principal may edit; do not let
+        # a populated owner silently override a distinct creator.
+        if is_workspace_privileged_editor(
+            organization=contract.organization,
+            user=user,
+        ):
+            # Privileged editors retain the approved edit-only authority.
+            # The security query deliberately preserves Ethical-Wall and
+            # active-membership enforcement; it does not grant read discovery.
+            try:
+                return filter_contract_security_queryset(
+                    Contract.objects.filter(pk=contract.pk),
+                    organization=contract.organization,
+                    user=user,
+                    surface='contract_action_edit',
+                ).exists()
+            except ObjectReadPolicyUnavailable:
+                return False
+        return visible and user.id in {contract.owner_id, contract.created_by_id}
 
     return False
 

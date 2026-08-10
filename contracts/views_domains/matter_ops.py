@@ -41,6 +41,12 @@ from contracts.models import (
 )
 from contracts.middleware import log_action
 from contracts.permissions import ContractAction, can_access_contract_action
+from contracts.services.object_read_policy import (
+    ObjectReadPolicyUnavailable,
+    filter_contract_edit_queryset,
+    filter_legal_task_edit_queryset,
+    filter_legal_task_queryset,
+)
 from contracts.services.legal_signals import get_legal_signal_counts_for_org, get_legal_signals_for_org
 from contracts.tenancy import get_user_organization, scope_queryset_for_organization
 from contracts.view_support import TenantAssignCreateMixin, TenantScopedFormMixin, TenantScopedQuerysetMixin
@@ -52,6 +58,34 @@ def _can_actor_complete_task(task, user, org):
     return can_actor_complete_task(task, user, org)
 
 
+def _private_tasks_for_request(request, organization, queryset, *, surface, for_edit=False):
+    try:
+        policy = filter_legal_task_edit_queryset if for_edit else filter_legal_task_queryset
+        return policy(
+            queryset,
+            organization=organization,
+            user=request.user,
+            surface=surface,
+        )
+    except ObjectReadPolicyUnavailable:
+        return queryset.none()
+
+
+def _apply_private_contract_task_choices(form, request, organization, *, surface):
+    if 'contract' not in form.fields:
+        return form
+    try:
+        form.fields['contract'].queryset = filter_contract_edit_queryset(
+            form.fields['contract'].queryset,
+            organization=organization,
+            user=request.user,
+            surface=surface,
+        )
+    except ObjectReadPolicyUnavailable:
+        form.fields['contract'].queryset = Contract.objects.none()
+    return form
+
+
 class LegalTaskKanbanView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
     model = LegalTask
     template_name = 'contracts/legal_task_board.html'
@@ -61,8 +95,13 @@ class LegalTaskKanbanView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListVie
         org = get_user_organization(self.request.user)
         if not org:
             return LegalTask.objects.none()
-        return LegalTask.objects.select_related('contract', 'matter', 'assigned_to').filter(
-            Q(contract__organization=org) | Q(matter__organization=org)
+        return _private_tasks_for_request(
+            self.request,
+            org,
+            LegalTask.objects.select_related('contract', 'matter', 'assigned_to').filter(
+                Q(contract__organization=org) | Q(matter__organization=org)
+            ),
+            surface='legal_task_list',
         ).order_by('-updated_at', '-created_at')
 
     def get_context_data(self, **kwargs):
@@ -102,9 +141,9 @@ class LegalTaskKanbanView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListVie
         if not org:
             return [{'key': k, 'label': label, 'rows': [], 'empty_message': msg} for k, label, msg in empty_tabs_spec]
 
-        base_qs = LegalTask.objects.select_related(
+        base_qs = _private_tasks_for_request(self.request, org, LegalTask.objects.select_related(
             'contract', 'matter', 'matter__client', 'assigned_to',
-        ).filter(Q(contract__organization=org) | Q(matter__organization=org))
+        ).filter(Q(contract__organization=org) | Q(matter__organization=org)), surface='legal_task_counts')
         open_statuses = (LegalTask.Status.PENDING, LegalTask.Status.IN_PROGRESS)
 
         def _to_rows(qs, limit=25):
@@ -210,6 +249,15 @@ class LegalTaskCreateView(TenantScopedFormMixin, TenantAssignCreateMixin, LoginR
     success_url = reverse_lazy('contracts:legal_task_kanban')
     scoped_form_fields = {'contract': Contract, 'matter': Matter}
 
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        return _apply_private_contract_task_choices(
+            form,
+            self.request,
+            self.get_organization(),
+            surface='legal_task_create_contract_options',
+        )
+
     def form_valid(self, form):
         org = get_user_organization(self.request.user)
         if form.instance.contract and not can_access_contract_action(self.request.user, form.instance.contract, ContractAction.EDIT):
@@ -242,7 +290,13 @@ class LegalTaskUpdateView(TenantScopedFormMixin, TenantScopedQuerysetMixin, Logi
         org = get_user_organization(self.request.user)
         if not org:
             return LegalTask.objects.none()
-        return LegalTask.objects.filter(Q(contract__organization=org) | Q(matter__organization=org))
+        return _private_tasks_for_request(
+            self.request,
+            org,
+            LegalTask.objects.filter(Q(contract__organization=org) | Q(matter__organization=org)),
+            surface='legal_task_update',
+            for_edit=True,
+        )
 
     def dispatch(self, request, *args, **kwargs):
         task = self.get_object()
@@ -270,8 +324,14 @@ def legal_task_complete(request, pk):
     if not org:
         return JsonResponse({'error': 'No active organization found.'}, status=403)
 
-    queryset = LegalTask.objects.select_related('contract', 'matter').filter(
-        Q(contract__organization=org) | Q(matter__organization=org)
+    queryset = _private_tasks_for_request(
+        request,
+        org,
+        LegalTask.objects.select_related('contract', 'matter').filter(
+            Q(contract__organization=org) | Q(matter__organization=org)
+        ),
+        surface='legal_task_complete',
+        for_edit=True,
     )
     task = get_object_or_404(queryset, pk=pk)
 

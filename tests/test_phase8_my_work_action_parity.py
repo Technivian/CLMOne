@@ -39,7 +39,8 @@ class Phase8MyWorkActionParityTests(TestCase):
             content='Body',
             status=Contract.Status.IN_PROGRESS,
             contract_type='MSA',
-            created_by=self.owner,
+            # The assigned actor is the intended private-workspace user.
+            created_by=self.member,
         )
         today = timezone.localdate()
         self.approval = ApprovalRequest.objects.create(
@@ -75,13 +76,14 @@ class Phase8MyWorkActionParityTests(TestCase):
             if row.get('work_kind') == kind and not row.get('is_restricted')
         ]
 
-    def test_assignment_rows_expose_mutation_urls(self):
+    def test_assignment_rows_do_not_expose_self_approval_mutation_urls(self):
+        """PDR-0008 preserves segregation of duties for the accountable actor."""
         approvals = self._rows_by_kind('approval')
         self.assertTrue(approvals)
-        self.assertTrue(approvals[0].get('can_decide'))
-        self.assertIn('/approve/', approvals[0]['approve_url'])
-        self.assertIn('/reject/', approvals[0]['reject_url'])
-        self.assertTrue(approvals[0]['return_url'])
+        self.assertFalse(approvals[0].get('can_decide'))
+        self.assertNotIn('approve_url', approvals[0])
+        self.assertNotIn('reject_url', approvals[0])
+        self.assertNotIn('return_url', approvals[0])
 
         tasks = self._rows_by_kind('task')
         self.assertTrue(tasks)
@@ -98,12 +100,12 @@ class Phase8MyWorkActionParityTests(TestCase):
         self.client.force_login(self.member)
         response = self.client.get(reverse('contracts:my_work'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'data-my-work-action="approve"')
+        self.assertNotContains(response, 'data-my-work-action="approve"')
         self.assertContains(response, 'data-my-work-action="complete"')
         self.assertContains(response, 'data-action-href')
         self.assertContains(response, 'data-approve-url')
 
-    def test_approve_from_my_work_stamps_surface(self):
+    def test_self_approval_from_my_work_is_denied(self):
         self.client.force_login(self.member)
         url = reverse('contracts:approval_approve_api', kwargs={'approval_id': self.approval.pk})
         response = self.client.post(
@@ -111,15 +113,13 @@ class Phase8MyWorkActionParityTests(TestCase):
             data='{"comments":"ok","surface":"my_work"}',
             content_type='application/json',
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 403)
         self.approval.refresh_from_db()
-        self.assertEqual(self.approval.status, ApprovalRequest.Status.APPROVED)
-        self.assertTrue(
+        self.assertEqual(self.approval.status, ApprovalRequest.Status.PENDING)
+        self.assertFalse(
             WorkInteractionEvent.objects.filter(
                 organization=self.org,
-                event='completed',
                 work_item_id=f'approval:{self.approval.pk}',
-                surface='my_work',
             ).exists()
         )
 
@@ -171,6 +171,6 @@ class Phase8MyWorkActionParityTests(TestCase):
             data='{"comments":"","surface":"my_work"}',
             content_type='application/json',
         )
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 403)
         self.approval.refresh_from_db()
         self.assertEqual(self.approval.status, ApprovalRequest.Status.PENDING)

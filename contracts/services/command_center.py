@@ -613,9 +613,33 @@ def get_persisted_command_center_rows(organization, current_user=None, limit=50,
             'legal_task',
             'risk_log',
         )
-        .order_by('-priority', 'due_at', '-updated_at')[:limit]
+        .order_by('-priority', 'due_at', '-updated_at')
     )
-    rows = [command_center_work_item_to_row(item, current_user=current_user, today=today) for item in items]
+    if current_user is not None:
+        # Persisted projections inherit the source Contract's discovery
+        # boundary. A dashboard row must never become a title/count side
+        # channel for a private contract.
+        from django.db.models import Q
+        from contracts.models import Contract
+        from contracts.services.object_read_policy import (
+            ObjectReadPolicyUnavailable,
+            filter_contract_queryset,
+        )
+
+        try:
+            visible_contracts = filter_contract_queryset(
+                Contract.objects.filter(organization=organization),
+                organization=organization,
+                user=current_user,
+                surface='command_center_work_items',
+            )
+            items = items.filter(
+                Q(contract_id__in=visible_contracts.values('pk'))
+                | Q(contract__isnull=True, owner=current_user)
+            )
+        except ObjectReadPolicyUnavailable:
+            return []
+    rows = [command_center_work_item_to_row(item, current_user=current_user, today=today) for item in items[:limit]]
     return rank_command_center_rows(rows, today=today)
 
 

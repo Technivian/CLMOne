@@ -84,7 +84,10 @@ class TasksQueueTabFilteringTests(TestCase):
 
         self.contract = Contract.objects.create(
             organization=self.organization, title='Tab Contract', content='Seed', status='ACTIVE',
-            created_by=self.creator,
+            # The creator needs the private-contract edit link to create the
+            # task; the assignee remains the actor under test for queue rows.
+            created_by=self.assignee,
+            owner=self.creator,
         )
         today = timezone.localdate()
 
@@ -194,7 +197,7 @@ class TasksRowComponentTests(TestCase):
     def test_row_renders_stage_dots_assignee_chip_and_activity_line(self):
         contract = Contract.objects.create(
             organization=self.organization, title='Component Row Contract', content='Seed',
-            status='ACTIVE', lifecycle_stage='NEGOTIATION', created_by=self.user,
+            status='IN_PROGRESS', lifecycle_stage='NEGOTIATION', created_by=self.user,
         )
         task = LegalTask.objects.create(
             title='Row Component Task', description='Seed', contract=contract,
@@ -252,7 +255,7 @@ class TasksActionEligibilityTests(TestCase):
         client.login(username='action_bystander', password='testpass123')
         response = client.get(reverse('contracts:legal_task_kanban'))
         body = tasks_body(response.content.decode())
-        self.assertIn(reverse('contracts:legal_task_update', kwargs={'pk': self.task.pk}), body)
+        self.assertNotIn(reverse('contracts:legal_task_update', kwargs={'pk': self.task.pk}), body)
 
     def test_eligible_editor_can_complete_via_the_endpoint(self):
         client = TestClient()
@@ -272,7 +275,7 @@ class TasksActionEligibilityTests(TestCase):
             reverse('contracts:legal_task_complete', kwargs={'pk': self.task.pk}),
             data=json.dumps({}), content_type='application/json',
         )
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 404)
         self.task.refresh_from_db()
         self.assertEqual(self.task.status, LegalTask.Status.PENDING)
 
