@@ -2,7 +2,7 @@
 
 **Starting main SHA:** `a329b805952befefa7924ddc943badca9ed8ed4b`
 **Assessment date:** 2026-08-10
-**PR #181 head:** `1f11e622d6bcf1b8e14950e9442fa05419fe6c48`
+**Baseline subject PR #181 head:** `1f11e622d6bcf1b8e14950e9442fa05419fe6c48`
 **Environment status:** **OC/PO EXECUTION ENVIRONMENT GREEN — ACTIVATION IMPLEMENTATION MAY CONTINUE**
 **Production-activation status:** **NO-GO**
 
