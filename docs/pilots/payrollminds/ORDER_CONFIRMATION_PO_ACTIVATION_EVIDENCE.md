@@ -239,6 +239,40 @@ Browser shard 2, which contains the OC/PO isolated-server suite, passed in
 isolated Django migration/seed lifecycle. No visual baseline was changed.
 There were no skipped required checks and migration drift remained zero.
 
+### PR #181 head reconciliation — 2026-08-12
+
+The previously reviewed implementation head
+`5dcaaa7db32c0095514220598e9d7b0acf16e58b` is a direct ancestor of the
+reconciled head `839c7aba9483036b12567241bb00ee0127542e2e`; the PR base
+remained `a329b805952befefa7924ddc943badca9ed8ed4b` throughout. The head
+advanced through these two commits:
+
+| Commit | Author/date | Classification | Effect |
+| --- | --- | --- | --- |
+| `799fa46168ae1c973cea62ae8e76475c9a6a0275` | Haroon Wahed, 2026-08-10T22:21:51+02:00 | browser/E2E harness | Sets the Playwright `beforeAll` timeout to 150 seconds for the two isolated OC/PO Django server setups. It does not alter runtime, authorization, activation policy, configuration, dependencies, or schema. |
+| `839c7aba9483036b12567241bb00ee0127542e2e` | Haroon Wahed, 2026-08-10T22:31:06+02:00 | evidence/documentation | Records the earlier CI closure and readiness status only. |
+
+No runtime/product, activation-policy, authorization/security, CI/configuration,
+dependency, or migration/schema file changed between the two heads. The only
+executable delta is the browser test-harness timeout. It was rerun locally:
+`client/tests/e2e/oc-po-activation-readiness.spec.js` **3 passed**. The
+focused OC/PO policy plus changed DPA route selection rerun was **5 passed**.
+
+The full Django rerun on `839c7aba…` collected **2,654 tests** and finished
+with **31 failures, 38 errors, and 8 skipped**, exactly matching the
+authoritative main baseline: **NEW normalized signatures = 0; MUTATED = 0**.
+No schema migration is required; `makemigrations --check --dry-run` found no
+changes. The browser manifest is **97 tests in 30 files**, up from the
+pre-OC/PO baseline of **94 tests in 29 files**, and includes all three OC/PO
+readiness scenarios. No snapshot or visual baseline changed.
+
+Authoritative GitHub CI for `839c7aba…` is terminal green: security scans,
+release evidence, anti-drift/contrast, brand, UI scope, visual baselines, UI
+integrity, redesigned E2E, quality/tenancy (including migration enforcement),
+the aggregate UI gate, and every Linux browser shard (8/8). There were no
+required skips. Existing clean dependency evidence remains applicable because
+no dependency file changed; the exact-head security scan is green.
+
 ## Recommendation and remaining release gates
 
 **ORDER CONFIRMATION: TECHNICAL ACTIVATION READY — DEFAULT OFF**
