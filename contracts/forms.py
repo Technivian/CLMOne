@@ -9,7 +9,11 @@ from .permissions import can_manage_organization
 from .services.clause_policy import validate_clause_policy
 from .services.clause_variants import resolve_clause_variant
 from .services.contract_policies import get_required_fields_for_contract_type
-from .services.contract_type_catalogue import form_choices
+from .services.contract_type_activation import (
+    ContractTypeActivationError,
+    creation_form_choices,
+    require_contract_type_activation,
+)
 from .services.contract_lifecycle import can_transition_lifecycle_stage, get_signature_routing_blockers
 from .services.intake_risk import assess_intake_risk
 from .services.intake_routing import derive_intake_route
@@ -536,7 +540,7 @@ class ContractForm(forms.ModelForm):
         # create arriving with ?type=/?template= already has a real value
         # in self.initial (set by the view's get_initial()), which still
         # wins over this field-level fallback when the form renders.
-        self.fields['contract_type'].choices = form_choices(include_blank=not self.instance.pk)
+        self.fields['contract_type'].choices = creation_form_choices(include_blank=not self.instance.pk)
         if not self.instance.pk:
             self.fields['contract_type'].initial = ''
         clause_queryset = scope_queryset_for_organization(ClauseTemplate.objects.select_related('category'), organization).order_by('title')
@@ -639,6 +643,13 @@ class ContractForm(forms.ModelForm):
         ):
             return self.selected_template
         return None
+
+    def clean_contract_type(self):
+        contract_type = self.cleaned_data.get('contract_type')
+        try:
+            return require_contract_type_activation(contract_type)
+        except ContractTypeActivationError as exc:
+            raise ValidationError('The selected contract type is not enabled for this intake.') from exc
 
     def intake_risk_assessment(self):
         return assess_intake_risk(

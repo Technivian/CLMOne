@@ -103,6 +103,22 @@ actual production service, nor prove the opposite. Merge and production
 deployment remain separate, independently authorized release actions. This
 does not authorize either action.
 
+### Production deployment closure (2026-08-10, operator-attested)
+
+The Product/Release Owner attested that the existing CLM One production
+service deployed merged PR #177 at
+`a329b805952befefa7924ddc943badca9ed8ed4b`. The recorded rollback revision
+is `e500368c6f1191909d21822a7bdd394ff0e7fa2a`; `/_health/` was OK; the
+application and login smoke checks passed; and Render Auto-Deploy remains
+OFF. This is operator-attested release evidence: this repository record does
+not claim independent provider-console observation.
+
+**PDR-0008 PRODUCTION DEPLOYMENT GREEN.** This closure makes only the
+private-by-default access implementation live. It does not activate any new
+contract type, including Order Confirmation and Purchase Order, and it does
+not enable AI, email, signatures, portals, integrations, imports, sharing, or
+any production-data change.
+
 ## Gate state
 
 ### Preservation and full-regression closure (2026-08-09)
@@ -162,7 +178,7 @@ Results:
   repository evidence of direct Neon SQL work, not an application audit event.
 
 Current status: **PRIVATE-BY-DEFAULT IMPLEMENTATION GREEN — PRODUCTION DATA
-PREFLIGHT GREEN — MERGE/DEPLOYMENT AUTHORIZATION PENDING**. This evidence does
-not authorize production deployment, merge, or any contract-type activation.
+PREFLIGHT GREEN — PDR-0008 PRODUCTION DEPLOYMENT GREEN**. This evidence does
+not authorize any contract-type activation.
 Order Confirmation and Purchase Order remain **BUSINESS SCOPE APPROVED /
 TECHNICAL IMPLEMENTATION GATE OPEN / PRODUCTION ACTIVATION NO-GO**.

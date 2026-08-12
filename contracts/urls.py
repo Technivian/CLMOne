@@ -487,6 +487,7 @@ urlpatterns = [
     path('new/nda/', views.NDAWorkflowBuilderView.as_view(), name='nda_workflow_builder'),
     path('new/dpa/', views.DPAWorkflowBuilderView.as_view(), name='dpa_workflow_builder'),
     path('new/dpa/review/', views.DPAReviewAndGenerateView.as_view(), name='dpa_workflow_review'),
+    path('new/standard/<str:contract_type>/', views.ContractCreateView.as_view(), name='contract_type_create'),
     path('new/', views.ContractCreateView.as_view(), name='contract_create'),
     path('<int:pk>/edit/', views.ContractUpdateView.as_view(), name='contract_update'),
     path('<int:pk>/submit-review/', views.contract_submit_for_review, name='contract_submit_for_review'),

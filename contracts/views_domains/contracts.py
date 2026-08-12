@@ -10,7 +10,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.files.uploadedfile import UploadedFile
 from django.db import transaction
 from django.db.models import Count, Q, Sum
-from django.http import HttpResponseForbidden, JsonResponse
+from django.http import Http404, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
@@ -81,6 +81,11 @@ from contracts.services.command_center import (
     rank_command_center_rows,
 )
 from contracts.services.contract_launch_setup import get_entry_card_sections, get_launch_setup_map
+from contracts.services.contract_type_activation import (
+    ContractTypeActivationError,
+    active_contract_type_codes,
+    require_contract_type_activation,
+)
 from contracts.services.intake_risk import assess_intake_risk, intake_risk_client_policy
 from contracts.services.intake_routing import intake_routing_client_policy
 from contracts.services.draft_cockpit import get_governance_panel
@@ -1282,8 +1287,17 @@ def contract_template_picker(request):
     same as before this screen existed.
     """
     contract_type = request.GET.get('type')
-    context = {'contract_types': Contract.ContractType.choices}
+    enabled_types = active_contract_type_codes()
+    context = {
+        'contract_types': [
+            choice for choice in Contract.ContractType.choices if choice[0] in enabled_types
+        ]
+    }
     if contract_type:
+        try:
+            contract_type = require_contract_type_activation(contract_type)
+        except ContractTypeActivationError as exc:
+            raise Http404 from exc
         context['selected_type'] = contract_type
         context['selected_type_label'] = dict(Contract.ContractType.choices).get(contract_type, contract_type)
         context['templates'] = ContractTemplate.objects.filter(contract_type=contract_type, is_active=True)
@@ -1298,13 +1312,14 @@ def contract_template_picker(request):
                 return reverse('contracts:msa_workflow_builder')
             if ct == Contract.ContractType.NDA:
                 return reverse('contracts:nda_workflow_builder')
-            return f"{reverse('contracts:contract_create')}?type={ct}"
+            return reverse('contracts:contract_type_create', kwargs={'contract_type': ct})
 
         org = get_user_organization(request.user)
         context['entry_sections'] = get_entry_card_sections(
             start_url_for=start_url_for,
             organization=org,
             user=request.user,
+            allowed_types=enabled_types,
         )
         context['entry_cards'] = [
             card for section in context['entry_sections'] for card in section.cards
@@ -1318,6 +1333,22 @@ class ContractCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView
     template_name = 'contracts/contract_form.html'
     success_url = reverse_lazy('contracts:repository')
 
+    def _requested_contract_type(self):
+        path_type = self.kwargs.get('contract_type')
+        query_type = self.request.GET.get('type')
+        if path_type and query_type and path_type.strip().upper() != query_type.strip().upper():
+            raise Http404
+        return path_type or query_type
+
+    def dispatch(self, request, *args, **kwargs):
+        requested_type = self._requested_contract_type()
+        if requested_type:
+            try:
+                require_contract_type_activation(requested_type)
+            except ContractTypeActivationError as exc:
+                raise Http404 from exc
+        return super().dispatch(request, *args, **kwargs)
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['organization'] = get_user_organization(self.request.user)
@@ -1329,7 +1360,14 @@ class ContractCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView
         template_id = self.request.GET.get('template')
         if not template_id:
             return None
-        return ContractTemplate.objects.filter(pk=template_id, is_active=True).first()
+        # A template is not an independent entry authority.  Filtering here
+        # also prevents an activated route from rendering the body of a
+        # template classified for an inactive type.
+        return ContractTemplate.objects.filter(
+            pk=template_id,
+            is_active=True,
+            contract_type__in=active_contract_type_codes(),
+        ).first()
 
     def get_initial(self):
         initial = super().get_initial()
@@ -1337,8 +1375,8 @@ class ContractCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView
         if template:
             initial['contract_type'] = template.contract_type
             initial['content'] = template.body
-        elif self.request.GET.get('type'):
-            initial['contract_type'] = self.request.GET.get('type')
+        elif self._requested_contract_type():
+            initial['contract_type'] = self._requested_contract_type()
         initial.setdefault('owner', self.request.user)
         return initial
 
@@ -1356,7 +1394,7 @@ class ContractCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView
         org = get_user_organization(self.request.user)
         contract_type = (
             ctx['form'].initial.get('contract_type')
-            or self.request.GET.get('type')
+            or self._requested_contract_type()
             or Contract.ContractType.OTHER
         )
         ctx['governance_panel'] = get_governance_panel(org, contract_type, None)

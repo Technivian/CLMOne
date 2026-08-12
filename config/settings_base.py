@@ -639,6 +639,15 @@ TRUST_ACCOUNTING_ENABLED = _bool_env('TRUST_ACCOUNTING_ENABLED', default=True)
 # unrestricted AI entry points, unfinished integrations). Default false so
 # hermetic tests and general development remain unaffected.
 CONTROLLED_PILOT_ENABLED = _bool_env('CONTROLLED_PILOT_ENABLED', default=False)
+# Contract type classification is not activation authority.  When the
+# controlled pilot is enabled, only this explicit allowlist may enter its
+# launch paths.  OC and PO remain absent until a separately approved operator
+# configuration includes them.
+PAYROLLMINDS_ENABLED_CONTRACT_TYPES = tuple(
+    item.strip().upper()
+    for item in os.getenv('PAYROLLMINDS_ENABLED_CONTRACT_TYPES', 'MSA,NDA,DPA').split(',')
+    if item.strip()
+)
 REPOSITORY_CSV_IMPORT_ENABLED = _bool_env('REPOSITORY_CSV_IMPORT_ENABLED', default=False)
 # External counterparty collaboration currently relies on an emailed bearer
 # capability plus email confirmation. Keep the entire surface fail-closed until
