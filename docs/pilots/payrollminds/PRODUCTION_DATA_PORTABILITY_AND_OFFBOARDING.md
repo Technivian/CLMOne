@@ -1,6 +1,8 @@
 # PayrollMinds data export, offboarding, and deletion procedure
 
-**Status:** Proposed. This is a controlled procedure, not evidence of a
+**Status:** Proposed operational procedure. The bootstrap Privacy Owner is
+Haroon Wahed through 2026-09-30; this assignment does not supply an approved
+retention/offboarding basis or evidence of execution. This is not evidence of a
 customer commitment, retention period, deletion completion, or legal advice.
 
 ## Export
@@ -43,7 +45,7 @@ customer commitment, retention period, deletion completion, or legal advice.
 
 | Control | Status in this PR |
 |---|---|
-| Authorized support route and contacts | Not supplied |
+| Authorized support route and contacts | Not supplied — Support Owner is assigned, but the authenticated channel remains BLOCKED |
 | Customer retention/offboarding terms | Not supplied |
 | Permission-controlled export rehearsal | Not performed in target environment |
 | Session/API/provider credential revocation rehearsal | Not performed in target environment |

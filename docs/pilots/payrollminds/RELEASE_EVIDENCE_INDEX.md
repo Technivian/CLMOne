@@ -1,5 +1,15 @@
 # PayrollMinds release evidence index
 
+## Current canonical production and onboarding status
+
+[`PAYROLLMINDS_PRODUCTION_OPERATIONS_READINESS.md`](PAYROLLMINDS_PRODUCTION_OPERATIONS_READINESS.md)
+is the current canonical production-operations and customer-onboarding gate.
+It records the operator-attested production SHA, active controlled contract
+types, and remaining recovery, monitoring, ownership, and privacy blockers.
+
+The local synthetic candidate evidence below is historical evidence only; it
+does not supersede the current production readiness record.
+
 **Candidate:** `codex/payrollminds-uat-evidence`, based on `c093adad`.
 **Scope:** local synthetic evidence only. CI/review/deployment evidence is not
 yet attached and this is not an immutable production release SHA.

@@ -179,7 +179,8 @@ the current state of the application-runtime row in §1's table.
 
 **Backup retention caveat:** Neon's free-tier point-in-time recovery window
 is 6 hours (verified via current documentation, not assumed) — materially
-short of what `PRODUCTION_OPERATIONS_READINESS.md`/§7 of
+short of what
+`PAYROLLMINDS_PRODUCTION_OPERATIONS_READINESS.md`/§7 of
 `PRODUCTION_TARGET_COMMISSIONING.md` would need for a real backup/restore
 drill with a meaningful RPO. This is flagged here rather than left implicit
 in the "Neon has PITR" statement.
