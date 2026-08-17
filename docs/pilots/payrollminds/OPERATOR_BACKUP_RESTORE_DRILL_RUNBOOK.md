@@ -616,3 +616,246 @@ database or storage architecture change. Retain each drill's non-secret
 evidence with the release/operations record. This is an operator cadence, not
 an automated production scheduler. Infrastructure/Backup Owner remains Haroon
 Wahed during bootstrap, subject to review by 2026-09-30.
+
+---
+
+## Section 18 — PayrollMinds R2 document-recovery gate
+
+This is the canonical procedure for the PayrollMinds **document recovery**
+gate. It supersedes Sections 11–13 only where those older generic instructions
+conflict with the bucket names, synthetic-only source object, primary-key loss
+simulation, or recurring-control requirements below. Do not use a production
+document, customer data, a database `Document`/`DocumentVersion` row, a
+quarantine object, or an existing object key for this drill.
+
+The canonical primary bucket is `clmone-documents`; the canonical quarantine
+bucket is `clmone-document-quarantine`. Current repository configuration
+separates their S3-compatible credentials, but does not configure a recovery
+bucket or a recovery storage alias. No repository evidence establishes that an
+older bucket is suitable for recovery. Do not reuse, alter, or delete it unless
+its purpose and configuration are proven independently.
+
+### 18.1 Recovery design and provider boundary
+
+The intended recovery destination is `clmone-documents-backup`, a dedicated,
+private Cloudflare R2 bucket in the `eu` jurisdiction, if provider discovery
+does not establish an already-approved equivalent. It must have no `r2.dev`
+public URL and no public custom domain. Record those facts only from actual
+Cloudflare dashboard or CLI evidence. A location hint is not an explicit
+jurisdictional restriction.
+
+This design is **independent from the primary bucket, not independent from the
+Cloudflare account or provider**. It is controlled-launch, bucket-level
+recovery isolation; it makes no provider-level disaster-independence claim.
+
+The coding-agent environment has no authenticated Cloudflare/Wrangler session.
+It must not create buckets, upload objects, invoke provider APIs, or claim that
+the drill was run. The Infrastructure/Backup Owner, Haroon Wahed during
+bootstrap, performs the operator actions and reviews ownership by 2026-09-30.
+
+### 18.2 Discover or create the recovery bucket
+
+From a trusted operator shell with browser/OAuth access, authenticate without
+placing credentials in a repository, terminal capture, or chat:
+
+```bash
+npx wrangler@latest login
+npx wrangler@latest r2 bucket list
+```
+
+Record the actual names and purposes of every bucket that could be mistaken for
+a recovery target. A bucket is not a recovery target merely because it is
+empty or has an old-looking name. If no suitable dedicated recovery bucket is
+proven, create only the intended bucket:
+
+```bash
+export PRIMARY_BUCKET='clmone-documents'
+export QUARANTINE_BUCKET='clmone-document-quarantine'
+export BACKUP_BUCKET='clmone-documents-backup'
+
+npx wrangler@latest r2 bucket create "$BACKUP_BUCKET" --jurisdiction eu
+npx wrangler@latest r2 bucket info "$BACKUP_BUCKET" --jurisdiction eu
+npx wrangler@latest r2 bucket dev-url get "$BACKUP_BUCKET" --jurisdiction eu
+```
+
+In the Cloudflare dashboard's R2 bucket settings, retain non-secret evidence
+that `clmone-documents`, `clmone-documents-backup`, and
+`clmone-document-quarantine` have the actually observed jurisdiction/privacy
+settings; that the recovery bucket is `eu`; that `r2.dev` public access is
+disabled for the recovery bucket; and that no public custom domain is attached
+to it. If any required recovery-bucket privacy or EU evidence is unavailable,
+stop: **DOCUMENT RECOVERY remains BLOCKED**.
+
+Do not issue a bucket-delete command. If the `dev-url get` output says public
+access is enabled, disable it before uploading a drill object and retain the
+result:
+
+```bash
+npx wrangler@latest r2 bucket dev-url disable "$BACKUP_BUCKET" --jurisdiction eu
+npx wrangler@latest r2 bucket dev-url get "$BACKUP_BUCKET" --jurisdiction eu
+```
+
+Do not create a public custom domain as part of this work. A separately scoped
+R2 Account API token may be necessary for a later scheduled copy control; do
+not print, commit, or paste its values.
+
+### 18.3 Synthetic copy/loss/restore drill
+
+Use this unique, non-personal key exactly for the first drill:
+
+```bash
+export DRILL_KEY='recovery-drill/20260817/document-recovery-canary.txt'
+```
+
+Run the following in a trusted operator shell only. It deliberately copies
+bytes through local private files; no application route, database row, or
+normal upload request is involved. `shasum -a 256` is used so the expected
+SHA-256 comparison works on both macOS and common Linux operator shells.
+
+```bash
+set -eu
+umask 077
+
+case "$DRILL_KEY" in
+  recovery-drill/*) ;;
+  *) echo 'Refusing a non-recovery-drill key.' >&2; exit 1 ;;
+esac
+
+DRILL_DIR="$(mktemp -d)"
+ORIGINAL_FILE="$DRILL_DIR/original.txt"
+PRIMARY_FILE="$DRILL_DIR/primary-upload.txt"
+BACKUP_FILE="$DRILL_DIR/backup-copy.txt"
+RESTORED_FILE="$DRILL_DIR/restored-primary.txt"
+
+printf '%s\n' 'CLM One PayrollMinds document recovery canary v1; synthetic; no customer or personal data.' > "$ORIGINAL_FILE"
+ORIGINAL_SHA256="$(shasum -a 256 "$ORIGINAL_FILE" | awk '{print $1}')"
+
+# Create and prove the synthetic primary object.
+npx wrangler@latest r2 object put "$PRIMARY_BUCKET/$DRILL_KEY" --file "$ORIGINAL_FILE"
+npx wrangler@latest r2 object get "$PRIMARY_BUCKET/$DRILL_KEY" --file "$PRIMARY_FILE"
+PRIMARY_UPLOAD_SHA256="$(shasum -a 256 "$PRIMARY_FILE" | awk '{print $1}')"
+test "$PRIMARY_UPLOAD_SHA256" = "$ORIGINAL_SHA256"
+
+# Deterministically copy the verified bytes into the backup bucket and prove it.
+npx wrangler@latest r2 object put "$BACKUP_BUCKET/$DRILL_KEY" --file "$PRIMARY_FILE"
+npx wrangler@latest r2 object get "$BACKUP_BUCKET/$DRILL_KEY" --file "$BACKUP_FILE"
+BACKUP_COPY_SHA256="$(shasum -a 256 "$BACKUP_FILE" | awk '{print $1}')"
+test "$BACKUP_COPY_SHA256" = "$ORIGINAL_SHA256"
+
+# Preconditions immediately before the only destructive operation.
+case "$DRILL_KEY" in
+  recovery-drill/*) ;;
+  *) echo 'Refusing a non-recovery-drill delete.' >&2; exit 1 ;;
+esac
+test -n "$ORIGINAL_SHA256"
+test "$BACKUP_COPY_SHA256" = "$ORIGINAL_SHA256"
+
+# Simulate loss by deleting only the exact synthetic primary key; never use a
+# wildcard, recursive command, bucket purge, or synchronization with delete semantics.
+npx wrangler@latest r2 object delete "$PRIMARY_BUCKET/$DRILL_KEY"
+if npx wrangler@latest r2 object get "$PRIMARY_BUCKET/$DRILL_KEY" --file "$DRILL_DIR/must-be-absent.txt"; then
+  echo 'Synthetic primary object still exists; stop before restore.' >&2
+  exit 1
+fi
+# Confirm the command failed specifically because the exact key is absent, not
+# because of authentication or transport failure, before continuing.
+
+RESTORE_START_EPOCH="$(date +%s)"
+npx wrangler@latest r2 object get "$BACKUP_BUCKET/$DRILL_KEY" --file "$BACKUP_FILE"
+npx wrangler@latest r2 object put "$PRIMARY_BUCKET/$DRILL_KEY" --file "$BACKUP_FILE"
+npx wrangler@latest r2 object get "$PRIMARY_BUCKET/$DRILL_KEY" --file "$RESTORED_FILE"
+RESTORE_END_EPOCH="$(date +%s)"
+RESTORE_DURATION_SECONDS="$((RESTORE_END_EPOCH - RESTORE_START_EPOCH))"
+RESTORED_PRIMARY_SHA256="$(shasum -a 256 "$RESTORED_FILE" | awk '{print $1}')"
+
+test "$ORIGINAL_SHA256" = "$PRIMARY_UPLOAD_SHA256"
+test "$ORIGINAL_SHA256" = "$BACKUP_COPY_SHA256"
+test "$ORIGINAL_SHA256" = "$RESTORED_PRIMARY_SHA256"
+printf 'restore_duration_seconds=%s\n' "$RESTORE_DURATION_SECONDS"
+```
+
+The failed `object get` must be retained as evidence that the primary key was
+absent. Do not treat an authentication, authorization, network, or generic
+provider failure as absence. Success requires all four SHA-256 values to be
+identical: original local, primary upload, backup copy, and restored primary.
+Do not rely on object size or ETag.
+
+After the non-secret evidence (timestamps, key, four hashes, provider
+privacy/access observations, and restore duration) is safely retained outside
+the repository, clean up **only** the synthetic key. Re-run the prefix check;
+do not use a glob, recursive deletion, bucket purge, or delete-style sync:
+
+```bash
+case "$DRILL_KEY" in
+  recovery-drill/*) ;;
+  *) echo 'Refusing a non-recovery-drill cleanup.' >&2; exit 1 ;;
+esac
+test "$ORIGINAL_SHA256" = "$BACKUP_COPY_SHA256"
+npx wrangler@latest r2 object delete "$PRIMARY_BUCKET/$DRILL_KEY"
+npx wrangler@latest r2 object delete "$BACKUP_BUCKET/$DRILL_KEY"
+rm -rf "$DRILL_DIR"
+```
+
+The final local-directory removal is permitted only because `DRILL_DIR` was
+created by `mktemp -d` in this procedure. It does not remove provider data.
+Do not claim cleanup occurred until the operator confirms it.
+
+### 18.4 Routine backup control — separately governed operator action
+
+**ROUTINE BACKUP AUTOMATION OPERATOR ACTION REQUIRED.** The synthetic drill
+proves a recovery path once; it does not establish routine protection. Before
+this gate can be GREEN, the operator must establish and evidence a daily,
+independent-copy process from `clmone-documents` to
+`clmone-documents-backup` with all of the following controls:
+
+1. a separately governed scheduler/credential outside the application request
+   path; normal document uploads must not dual-write or depend on backup
+   availability;
+2. least-privilege access: source list/read only and destination list/write
+   only, scoped to the two named buckets; no bucket-delete or wildcard-delete
+   permission/use;
+3. at least daily execution that deterministically lists and copies new or
+   changed source objects while preserving bytes and explicit source/destination
+   keys; the routine must never use a delete-style synchronization operation;
+4. a non-secret run manifest recording timestamp, copied/failed key counts,
+   per-object or sampled SHA-256 verification, and the last successful run;
+5. failure handling that preserves both source and existing backup objects,
+   records the failure, and notifies Haroon Wahed for authorized retry; and
+6. evidence retention outside this repository, plus quarterly synthetic
+   restore drills and a repeat after material object-storage architecture
+   changes.
+
+Cloudflare Worker Cron, a separately authorized operational scheduler, or an
+equivalent provider-neutral scheduled process may satisfy this control only
+after its credential, schedule, private access, failure path, and actual runs
+are separately governed and evidenced. This task does not configure any
+provider credential, scheduler, or production integration.
+
+### 18.5 Gate result and evidence record
+
+Before operator execution, the canonical status is:
+
+```text
+DOCUMENT RECOVERY = BLOCKED — OPERATOR DRILL PENDING / ROUTINE BACKUP AUTOMATION OPERATOR ACTION REQUIRED
+```
+
+Record only actual, non-secret provider/operator facts: primary, quarantine,
+and recovery-bucket names; explicit jurisdiction/privacy/public-access evidence;
+the drill key; four SHA-256 values; source/backup/restored success; restore
+duration; cleanup result; routine-control schedule/owner/last-successful-run;
+and evidence-retention location. Current production database manifests report
+zero Document, DocumentVersion, and WorkflowInstance rows. That does not
+prevent a synthetic object proof, but it does not prove restoration of a
+populated production document or quarantine object.
+
+Set **DOCUMENT RECOVERY = GREEN** only when both the synthetic drill and the
+daily routine backup control are actually evidenced. If the drill succeeds but
+the recurring control is absent, retain the exact status:
+
+```text
+DOCUMENT RECOVERY = BLOCKED — RECOVERY PROVEN / ROUTINE BACKUP PENDING
+```
+
+This section changes no application runtime behavior and does not authorize
+deployment, monitoring, support/offboarding, contract-type activation, or any
+external capability.
