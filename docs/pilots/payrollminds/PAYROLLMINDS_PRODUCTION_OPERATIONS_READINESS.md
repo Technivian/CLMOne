@@ -159,6 +159,13 @@ only the `scheduled` handler and the exact bindings `PRIMARY_DOCUMENTS` →
 (`workers_dev = false`), has no HTTP handler or route, and has no delete
 operation. Its sole canonical Cron Trigger is `15 2 * * *` UTC.
 
+The retained 2026-08-17 recovery drill used synthetic
+`document-recovery-canary.txt`; original, primary, backup, and restored-primary
+SHA-256 values were all
+`05f4953821629164db4068a23f8aa7af2f4c92def94c74a42d5ac9a208a6d9bc`.
+It deleted only that synthetic primary key after verifying its backup, restored
+it, and did not modify an application record or an existing production object.
+
 For the controlled first-run proof, the trigger was temporarily replaced (not
 supplemented) with `*/5 * * * *`, then immediately restored to the sole
 canonical daily trigger after one genuine provider Cron execution. That

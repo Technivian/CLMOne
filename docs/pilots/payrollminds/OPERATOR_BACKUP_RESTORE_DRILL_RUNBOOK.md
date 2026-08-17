@@ -350,18 +350,18 @@ separate **prevention** from **recovery** explicitly:
 - **Prevention** (already partly in place): `wrangler r2 bucket lock`
   rules stop accidental deletion/overwrite of live objects. This is not
   backup coverage by itself.
-- **Recovery** (the remaining gap): a narrow scheduled Cloudflare Worker is
-  technically ready in `infrastructure/r2-daily-document-backup`. It copies
+- **Recovery**: a narrow scheduled Cloudflare Worker is deployed from
+  `infrastructure/r2-daily-document-backup`. It copies
   each observed new/changed primary object version to the independent
   `clmone-documents-backup` bucket once daily, retains earlier copies, and
   never mirrors a delete. Its two bucket bindings, UTC Cron Trigger, run
   evidence, rollback steps, and first-run proof requirements are in
   `R2_DAILY_DOCUMENT_BACKUP_DEPLOYMENT_RUNBOOK.md`.
 
-It is not deployed by this repository evidence. Do not treat its local tests
-as a provider-side backup result: `DOCUMENT RECOVERY` remains
-`BLOCKED — ROUTINE BACKUP DEPLOYMENT/PROOF PENDING` until separately
-authorized deployment and a retained successful first-run record.
+The 2026-08-18 provider proof is recorded in Section 18. It confirmed the
+explicit EU bindings, one genuine scheduled execution, immutable copies,
+`SUCCESS` run evidence, and the last-success marker. Do not treat local tests
+as a substitute for future provider-run evidence.
 
 ---
 
@@ -648,10 +648,10 @@ This design is **independent from the primary bucket, not independent from the
 Cloudflare account or provider**. It is controlled-launch, bucket-level
 recovery isolation; it makes no provider-level disaster-independence claim.
 
-The coding-agent environment has no authenticated Cloudflare/Wrangler session.
-It must not create buckets, upload objects, invoke provider APIs, or claim that
-the drill was run. The Infrastructure/Backup Owner, Haroon Wahed during
-bootstrap, performs the operator actions and reviews ownership by 2026-09-30.
+The 2026-08-18 proof used the authenticated Infrastructure/Backup Owner
+session. Credentials were not placed in repository files, terminal evidence,
+or this record. The Infrastructure/Backup Owner remains Haroon Wahed during
+bootstrap, subject to review by 2026-09-30.
 
 ### 18.2 Discover or create the recovery bucket
 
@@ -701,7 +701,8 @@ not print, commit, or paste its values.
 
 ### 18.3 Synthetic copy/loss/restore drill
 
-Use this unique, non-personal key exactly for the first drill:
+For a future drill, use this unique, non-personal example key (or another
+newly generated key beneath the same `recovery-drill/` prefix):
 
 ```bash
 export DRILL_KEY='recovery-drill/20260817/document-recovery-canary.txt'
@@ -800,62 +801,79 @@ The final local-directory removal is permitted only because `DRILL_DIR` was
 created by `mktemp -d` in this procedure. It does not remove provider data.
 Do not claim cleanup occurred until the operator confirms it.
 
-### 18.4 Routine backup control — separately governed operator action
+#### Completed R2 recovery drill evidence — 2026-08-17
 
-**ROUTINE BACKUP AUTOMATION OPERATOR ACTION REQUIRED.** The synthetic drill
-proves a recovery path once; it does not establish routine protection. Before
-this gate can be GREEN, the operator must establish and evidence a daily,
-independent-copy process from `clmone-documents` to
-`clmone-documents-backup` with all of the following controls:
+Haroon Wahed completed a synthetic recovery drill using the operator-supplied
+synthetic object name `document-recovery-canary.txt`. No object-key prefix,
+provider-console metadata, restore duration, or cleanup result was supplied,
+so this record does not infer any of them.
 
-1. a separately governed scheduler/credential outside the application request
-   path; normal document uploads must not dual-write or depend on backup
-   availability;
-2. least-privilege access: source list/read only and destination list/write
-   only, scoped to the two named buckets; no bucket-delete or wildcard-delete
-   permission/use;
-3. at least daily execution that deterministically lists and copies new or
-   changed source objects while preserving bytes and explicit source/destination
-   keys; the routine must never use a delete-style synchronization operation;
-4. a non-secret run manifest recording timestamp, copied/failed key counts,
-   per-object or sampled SHA-256 verification, and the last successful run;
-5. failure handling that preserves both source and existing backup objects,
-   records the failure, and notifies Haroon Wahed for authorized retry; and
-6. evidence retention outside this repository, plus quarterly synthetic
-   restore drills and a repeat after material object-storage architecture
-   changes.
+| Integrity point | SHA-256 |
+| --- | --- |
+| Original local synthetic file | `05f4953821629164db4068a23f8aa7af2f4c92def94c74a42d5ac9a208a6d9bc` |
+| Downloaded primary object | `05f4953821629164db4068a23f8aa7af2f4c92def94c74a42d5ac9a208a6d9bc` |
+| Downloaded backup object | `05f4953821629164db4068a23f8aa7af2f4c92def94c74a42d5ac9a208a6d9bc` |
+| Downloaded restored primary object | `05f4953821629164db4068a23f8aa7af2f4c92def94c74a42d5ac9a208a6d9bc` |
 
-Cloudflare Worker Cron, a separately authorized operational scheduler, or an
-equivalent provider-neutral scheduled process may satisfy this control only
-after its credential, schedule, private access, failure path, and actual runs
-are separately governed and evidenced. This task does not configure any
-provider credential, scheduler, or production integration.
+The operator created synthetic non-personal bytes locally, uploaded them to
+`clmone-documents`, verified the primary download, placed and verified an
+independent copy in `clmone-documents-backup`, deleted only the synthetic
+primary object, confirmed the backup remained present, restored the backup to
+`clmone-documents`, and verified the restored-primary hash. No customer
+document was used, no application record was modified, no existing production
+object was deleted, and no wildcard or recursive delete was used.
+
+**R2 RECOVERY DRILL = GREEN.** The evidence proves bucket-level deletion
+isolation and byte-for-byte restore integrity. It does not prove Cloudflare
+account/provider disaster independence, establish a contractual RTO/RPO, or
+establish a recurring backup control.
+
+### 18.4 Routine backup control — deployed and provider-proof verified
+
+**R2 DAILY BACKUP CONTROL = GREEN — DEPLOYED / PROVIDER PROOF VERIFIED.** On
+2026-08-18, Worker version `7240fb43-a9f2-4cbd-baf5-8348874ea861` was deployed
+from main SHA `aad4e5d175d42072044e921955e679189d15d3d7` to Cloudflare account
+`4ef24e2b71c28a8a0272e186db71f889`. Provider version metadata confirms the
+scheduled-only handler with `PRIMARY_DOCUMENTS` → `clmone-documents` (`eu`) and
+`BACKUP_DOCUMENTS` → `clmone-documents-backup` (`eu`). `workers_dev = false`,
+there is no HTTP handler or route, and the Worker performs no delete operation.
+
+The temporary single Cron `*/5 * * * *` produced one genuine provider
+execution at `2026-08-18T19:50:39.000Z`; it completed successfully at
+`2026-08-18T19:50:44.133Z`. The temporary trigger was then replaced with the
+sole canonical `15 2 * * *` UTC trigger. The run inspected two primary
+objects, copied two immutable versions (147 bytes), and recorded no failures.
+
+The synthetic canary source version was `7e5fe996bfbda816aced8e36387979e8`;
+its ETag was `2762dd90fe83f030b204e31c15f1f65a` and its SHA-256 was
+`a0cc555c5f532308ed716b01941e9bb938f7c7e73b7ea8ae6c9a0dfd08900a41`.
+Its immutable backup key is
+`_backup_versions/v1/c3ludGhldGljLWJhY2t1cC1jb250cm9sLWNhbmFyaWVzLzIwMjYwODE4VDE5NDYyOVotMzc2NGQ3YWYtYWUwMi00ODE4LWI4NmMtMDI3MjBjNzJjMTE1LnR4dA/N2U1ZmU5OTZiZmJkYTgxNmFjZWQ4ZTM2Mzg3OTc5ZTg`,
+and its downloaded SHA-256 matched exactly. The immutable manifest
+`_backup_runs/2026-08-18T19-50-44.133Z-dbca24d3-36fe-4ea2-90be-c7be53bac5cc.json`
+has `result = SUCCESS`; `_backup_control/last-success.json` references it.
+
+Provider metadata confirms the original recovery-drill primary and backup
+objects remain present and unchanged. The Worker created only immutable copies,
+the immutable manifest, and the intended last-success marker; no source delete
+propagated and no existing primary or backup object was overwritten.
 
 ### 18.5 Gate result and evidence record
 
-Before operator execution, the canonical status is:
+Before the 2026-08-17 synthetic recovery drill, the canonical status was
+blocked pending an operator drill and routine control. After that drill and
+before the provider proof above, it remained blocked pending routine backup
+deployment/proof. Those historical states remain historical evidence; they are
+not rewritten as earlier green status.
 
-```text
-DOCUMENT RECOVERY = BLOCKED — OPERATOR DRILL PENDING / ROUTINE BACKUP AUTOMATION OPERATOR ACTION REQUIRED
-```
+**R2 RECOVERY DRILL = GREEN. DOCUMENT RECOVERY = GREEN.** Current production
+database manifests report zero Document, DocumentVersion, and WorkflowInstance
+rows. This proof therefore uses only synthetic objects and does not prove
+restoration of a populated production document or quarantine object. It creates
+no provider-disaster-independence or contractual RTO/RPO claim.
 
-Record only actual, non-secret provider/operator facts: primary, quarantine,
-and recovery-bucket names; explicit jurisdiction/privacy/public-access evidence;
-the drill key; four SHA-256 values; source/backup/restored success; restore
-duration; cleanup result; routine-control schedule/owner/last-successful-run;
-and evidence-retention location. Current production database manifests report
-zero Document, DocumentVersion, and WorkflowInstance rows. That does not
-prevent a synthetic object proof, but it does not prove restoration of a
-populated production document or quarantine object.
-
-Set **DOCUMENT RECOVERY = GREEN** only when both the synthetic drill and the
-daily routine backup control are actually evidenced. If the drill succeeds but
-the recurring control is absent, retain the exact status:
-
-```text
-DOCUMENT RECOVERY = BLOCKED — RECOVERY PROVEN / ROUTINE BACKUP PENDING
-```
-
-This section changes no application runtime behavior and does not authorize
-deployment, monitoring, support/offboarding, contract-type activation, or any
-external capability.
+Retain only non-secret provider/operator facts, run manifests, hashes, and
+timestamps. Continue the daily scheduled-only control and repeat the separate
+synthetic restore drill quarterly and after material storage changes. This
+section does not authorize monitoring, support/offboarding, contract-type
+activation, or another external capability.
