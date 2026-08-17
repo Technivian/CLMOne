@@ -49,7 +49,7 @@ outside this release.
 | Production environment | GREEN | Owner attests Render/Frankfurt service live at the canonical SHA; public health/login checks previously returned 200 | Haroon Wahed | Retain operator release record; no deployment action in this evidence task. |
 | Private-by-default authorization | GREEN | PDR-0008 production deployment closure and preservation/security evidence in `PRIVATE_BY_DEFAULT_ACCESS_IMPLEMENTATION.md` | Haroon Wahed | Preserve existing access regression coverage. |
 | Contract-type scope | GREEN | Owner-attested allowlist above; OC/PO technical evidence and default-off implementation in `ORDER_CONFIRMATION_PO_ACTIVATION_EVIDENCE.md` | Haroon Wahed | Keep every non-listed type off; restore the rollback value on a type-activation incident. |
-| Database recovery | BLOCKED | The 2026-08-08 Render-to-Neon `pg_dump`/`pg_restore` migration proved recovery mechanics and matched all 122 tables, but was not an isolated, timed recovery drill and no routine backup evidence exists | Haroon Wahed | Run the isolated Neon recovery-branch drill and record backup/recovery identifiers and measured RPO/RTO. |
+| Database recovery | GREEN | Haroon Wahed completed an isolated Neon recovery-branch drill on 2026-08-17. Source and recovered read-only manifests matched exactly: 128 public tables, 149 Django migrations, 4 Contracts, identifier-only Contract fingerprint `ff9e0fc04dc813d818adc966f1dbdcdd`, 29 audit events, and zero Documents, DocumentVersions, and WorkflowInstances. The recovered database was queryable; no production restore or production write occurred. | Haroon Wahed | Repeat and retain evidence quarterly and after material database/storage architecture changes; ownership review by 2026-09-30. |
 | Document recovery | BLOCKED | Released and quarantine R2 storage are configured with separate credentials; no independent recoverable copy, EU setting proof, or restore/hash drill is evidenced | Haroon Wahed | Verify buckets and create or identify an independent private recovery copy; run the synthetic object recovery proof. |
 | Monitoring | BLOCKED | No external uptime monitor, health alert, deployment/runtime notification, error-reporting sink, alert test, or named notification destination is evidenced; repository configuration alone is not provider proof | Haroon Wahed | Configure and test the minimum monitoring controls below. |
 | Security | GREEN | PDR-0008 authorization/tenant/export/audit evidence and operator-attested production deployment; excluded capabilities remain off | Haroon Wahed | Preserve operational access/audit evidence. |
@@ -94,8 +94,54 @@ accepted as the sole recovery mechanism; it does not waive backup/restore,
 tenant isolation, private-by-default access, audit, provenance, export, or
 retention/offboarding requirements; and it must be reconsidered earlier if
 production volume, sensitivity, or operational dependency materially
-increases. The database-recovery gate therefore remains **BLOCKED** until its
-technical recovery evidence is green.
+increases. This temporary risk decision does not create a contractual RTO/RPO
+SLA. The database-recovery gate is supported by the successful isolated drill
+recorded below, and remains subject to the recurring-control requirement.
+
+### Isolated Neon recovery drill evidence — 2026-08-17
+
+**DATABASE RECOVERY = GREEN.** Haroon Wahed completed an authorized isolated
+Neon recovery-branch drill. The operator did not supply Neon-console metadata
+for publication; this repository therefore records only the supplied
+non-secret verification evidence below.
+
+| Manifest metric | Production source at 2026-08-17 15:04:19.345088+00 | Isolated recovered branch at 2026-08-17 15:08:30.910053+00 |
+| --- | ---: | ---: |
+| Public table count | 128 | 128 |
+| Django migration-history count | 149 | 149 |
+| Contract count | 4 | 4 |
+| Identifier-only Contract fingerprint | `ff9e0fc04dc813d818adc966f1dbdcdd` | `ff9e0fc04dc813d818adc966f1dbdcdd` |
+| Document count | 0 | 0 |
+| DocumentVersion count | 0 | 0 |
+| WorkflowInstance count | 0 | 0 |
+| Audit-event count | 29 | 29 |
+
+The recovered database was queryable and the manifest reconciliation was an
+**EXACT MATCH**. Schema/table count, Django migration history, application
+Contract count, identifier-only Contract fingerprint, and audit-event count
+all reconciled. No observed loss existed relative to the selected verified
+state. Production writes during the drill were **NONE**; no production restore
+was performed.
+
+The elapsed time from source-manifest capture to a successful recovered query
+was 251.564965 seconds. Record this conservatively as **end-to-end recovery
+drill duration <= 4m12s**. It is not a measurement of Neon branch provisioning
+time because separate branch-create and branch-ready timestamps were not
+recorded. It does not establish a contractual RTO/RPO SLA.
+
+The current Neon recovery/history-window position remains the previously
+accepted temporary **6-hour** constraint. This drill demonstrated successful
+recovery to the selected point, not a guarantee for every possible point in
+that window. The zero source counts for Documents, DocumentVersions, and
+WorkflowInstances mean this drill did not prove recovery of populated examples
+of those row types. Document-object recovery remains governed separately by
+the R2/document-recovery gate and remains BLOCKED.
+
+The exact non-sensitive aggregate manifest is
+`NEON_DATABASE_RECOVERY_MANIFEST.sql`; the operator procedure and retained
+evidence requirements are in `OPERATOR_BACKUP_RESTORE_DRILL_RUNBOOK.md` §17.
+The temporary isolated recovery branch **may be deleted only after recovery
+evidence has been retained**. Its deletion is not claimed by this record.
 
 ## Document recovery
 
@@ -169,17 +215,14 @@ assignment does not supply the required retention/offboarding basis.
 contract-type activation are not sufficient to onboard customer users or data.
 The mandatory remaining actions are:
 
-1. run and evidence an isolated Neon recovery drill; verify the current
-   retention window and either improve the recovery posture or record a
-   scope-limited Owner risk decision;
-2. identify or create an independent private R2 recovery copy, verify EU
+1. identify or create an independent private R2 recovery copy, verify EU
    compatibility, and complete the synthetic document restore/hash proof;
-3. configure and test the minimum external health, deploy/runtime, and
+2. configure and test the minimum external health, deploy/runtime, and
    application-error monitoring with a named notification destination;
-4. create and test one authenticated support channel with customer escalation,
+3. create and test one authenticated support channel with customer escalation,
    then record it without publishing personal contact details in repository
    evidence; and
-5. record an approved retention/offboarding basis before accepting customer
+4. record an approved retention/offboarding basis before accepting customer
    data, then rehearse the existing user/access offboarding and production
    access-revocation procedure without customer data.
 
