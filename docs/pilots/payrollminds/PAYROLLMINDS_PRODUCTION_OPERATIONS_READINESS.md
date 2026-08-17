@@ -49,7 +49,7 @@ outside this release.
 | Production environment | GREEN | Owner attests Render/Frankfurt service live at the canonical SHA; public health/login checks previously returned 200 | Haroon Wahed | Retain operator release record; no deployment action in this evidence task. |
 | Private-by-default authorization | GREEN | PDR-0008 production deployment closure and preservation/security evidence in `PRIVATE_BY_DEFAULT_ACCESS_IMPLEMENTATION.md` | Haroon Wahed | Preserve existing access regression coverage. |
 | Contract-type scope | GREEN | Owner-attested allowlist above; OC/PO technical evidence and default-off implementation in `ORDER_CONFIRMATION_PO_ACTIVATION_EVIDENCE.md` | Haroon Wahed | Keep every non-listed type off; restore the rollback value on a type-activation incident. |
-| Database recovery | BLOCKED | The 2026-08-08 Render-to-Neon `pg_dump`/`pg_restore` migration proved recovery mechanics and matched all 122 tables, but was not an isolated, timed recovery drill and no routine backup evidence exists | Haroon Wahed | Run the isolated Neon recovery-branch drill and record backup/recovery identifiers and measured RPO/RTO. |
+| Database recovery | BLOCKED — operator drill evidence PENDING | The 2026-08-08 Render-to-Neon `pg_dump`/`pg_restore` migration proved recovery mechanics and matched all 122 tables, but was not an isolated, timed Neon recovery drill; no current recovery point, branch-ready time, source/recovered manifest reconciliation, or recurring drill evidence is recorded | Haroon Wahed | Run the read-only production-manifest and isolated Neon recovery-branch drill in `OPERATOR_BACKUP_RESTORE_DRILL_RUNBOOK.md` §17; record actual evidence only. |
 | Document recovery | BLOCKED | Released and quarantine R2 storage are configured with separate credentials; no independent recoverable copy, EU setting proof, or restore/hash drill is evidenced | Haroon Wahed | Verify buckets and create or identify an independent private recovery copy; run the synthetic object recovery proof. |
 | Monitoring | BLOCKED | No external uptime monitor, health alert, deployment/runtime notification, error-reporting sink, alert test, or named notification destination is evidenced; repository configuration alone is not provider proof | Haroon Wahed | Configure and test the minimum monitoring controls below. |
 | Security | GREEN | PDR-0008 authorization/tenant/export/audit evidence and operator-attested production deployment; excluded capabilities remain off | Haroon Wahed | Preserve operational access/audit evidence. |
@@ -96,6 +96,25 @@ retention/offboarding requirements; and it must be reconsidered earlier if
 production volume, sensitivity, or operational dependency materially
 increases. The database-recovery gate therefore remains **BLOCKED** until its
 technical recovery evidence is green.
+
+### Pending isolated Neon drill evidence
+
+**DATABASE RECOVERY remains BLOCKED — OPERATOR NEON RECOVERY DRILL REQUIRED.**
+The repository agent has no authenticated Neon access and has not created a
+recovery branch, queried production, or performed any provider action. The
+operator package is deliberately pending and must record actual—not inferred—
+values for the drill start, project/production branch, Frankfurt/EU console
+evidence, current PITR window, selected recovery point, recovery-branch name
+and identifier, branch-ready timestamp, measured recovery time, effective
+recovery-point age, source and recovered manifests, migration/schema result,
+reconciliation outcome, and production-write count.
+
+The exact non-sensitive aggregate manifest is
+`NEON_DATABASE_RECOVERY_MANIFEST.sql`; the step-by-step procedure and evidence
+template are in `OPERATOR_BACKUP_RESTORE_DRILL_RUNBOOK.md` §17. The only
+acceptable restore target is an isolated Neon branch. A destructive production
+restore is neither required nor authorized. No recovery time or RPO/RTO result
+may be claimed until the operator supplies the completed evidence.
 
 ## Document recovery
 

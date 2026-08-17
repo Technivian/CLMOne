@@ -440,3 +440,135 @@ satisfied it's clean, update
 ...UNPROVEN` status per this drill's actual outcome) — that document may
 only claim success after you have actually run this runbook and it is
 accurate to report.
+
+---
+
+## Section 17 — PayrollMinds database-only Neon recovery gate
+
+This section is the canonical operator procedure for the **database recovery**
+gate. It is intentionally narrower than Sections 8–16: do **not** create the
+synthetic fixture, do **not** perform an R2 action, and do **not** change
+application, contract-type, monitoring, or production configuration in this
+procedure. The only provider mutation is creation of a temporary, isolated
+Neon recovery branch. Production remains the read-only source throughout.
+
+Before beginning, confirm the current canonical status is **DATABASE RECOVERY
+BLOCKED — operator drill evidence PENDING** in
+`PAYROLLMINDS_PRODUCTION_OPERATIONS_READINESS.md`. The Infrastructure/Backup
+Owner is Haroon Wahed during bootstrap; ownership must be reviewed by
+2026-09-30 or earlier when independent capacity is available.
+
+### 17.1 Preconditions and source-state manifest
+
+1. Record the UTC drill-start timestamp.
+2. In the Neon console, record non-secret evidence of the project, production
+   branch name/ID, Frankfurt/EU region, and the actual currently available
+   PITR/history window. Do not rely on the historical six-hour entry; it is a
+   temporary risk decision, not a provider-console observation.
+3. From a trusted operator shell already configured for the production database,
+   run the following unchanged read-only manifest and retain its plain TSV
+   output outside this repository:
+
+   ```bash
+   psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -P pager=off \
+     -f docs/pilots/payrollminds/NEON_DATABASE_RECOVERY_MANIFEST.sql \
+     > payrollminds-production-manifest.tsv
+   ```
+
+   The SQL contains counts for public tables, `django_migrations`, Contract,
+   Document, DocumentVersion, WorkflowInstance, and AuditLog, plus an ordered
+   non-sensitive Contract structural fingerprint. It contains no titles,
+   contents, counterparties, names, email addresses, or payroll data.
+4. Record the manifest capture timestamp and select a recovery point at or
+   before that known source state, within the PITR window. Record the exact UTC
+   timestamp and its age relative to the source manifest. This is the empirical
+   demonstrated RPO for the drill; do not describe it as a contractual target.
+
+### 17.2 Create and time the isolated recovery branch
+
+1. Record the UTC branch-create submission timestamp.
+2. Create the isolated branch, substituting only operator-recorded values:
+
+   ```bash
+   neonctl branches create \
+     --project-id "$NEON_PROJECT_ID" \
+     --name "payrollminds-recovery-drill-YYYYMMDD" \
+     --parent "$RECOVERY_POINT_UTC" \
+     -o json
+   ```
+
+   Preserve the returned non-secret branch ID/name as evidence. Do not alter
+   the production branch and do not make the recovery endpoint public.
+3. Poll the branch only until its database is queryable. Record the UTC
+   branch-ready timestamp. **Measured recovery time** is branch-ready timestamp
+   minus branch-create submission timestamp. Record drill elapsed time from
+   overall drill start separately.
+4. Obtain the recovery branch connection string only in the operator shell and
+   set it only as a session environment variable. Never commit, print, paste,
+   or place it in evidence:
+
+   ```bash
+   export RECOVERY_DATABASE_URL="<operator-pasted secret>"
+   ```
+
+### 17.3 Verify recovered state and reconcile
+
+1. Run the identical manifest on the isolated recovery branch:
+
+   ```bash
+   psql "$RECOVERY_DATABASE_URL" -X -v ON_ERROR_STOP=1 -P pager=off \
+     -f docs/pilots/payrollminds/NEON_DATABASE_RECOVERY_MANIFEST.sql \
+     > payrollminds-recovery-manifest.tsv
+   diff -u payrollminds-production-manifest.tsv payrollminds-recovery-manifest.tsv
+   ```
+
+2. A zero diff proves the selected point reproduced the recorded source state,
+   including schema/migration count and required application-state counts. If
+   the selected point is earlier than the source capture, explain each expected
+   difference using the recorded recovery-point age. Any unexplained difference,
+   missing table, failed query, or inaccessible recovered branch is a **FAIL**;
+   DATABASE RECOVERY remains BLOCKED.
+3. Record the schema/migration result explicitly: the manifest must complete and
+   `django_migrations_count` plus `public_schema_table_count` must reconcile to
+   the selected source point. This is the database schema/migration check; do
+   not run `migrate`, `makemigrations`, fixture creation, or any write command
+   against either branch for this drill.
+4. Record production-write count as **zero**. The only permitted provider-side
+   mutation is the temporary recovery branch.
+
+### 17.4 Pending evidence record and pass criteria
+
+Retain the following non-secret evidence outside the repository, then add only
+the factual summary to the canonical readiness record after review:
+
+| Evidence field | Pending value before operator execution |
+| --- | --- |
+| Operator | Haroon Wahed |
+| Drill start / recovery point / source-manifest capture | PENDING |
+| Project, production branch, Frankfurt/EU and PITR console evidence | PENDING |
+| Recovery branch name/ID and branch-ready timestamp | PENDING |
+| Measured recovery time and effective recovery-point age | PENDING |
+| Source/recovered manifest files and reconciliation | PENDING |
+| Schema/migration verification | PENDING |
+| Production-write count | PENDING — must be zero |
+| Result | PENDING — DATABASE RECOVERY remains BLOCKED |
+
+DATABASE RECOVERY may become GREEN only after the evidence proves an isolated
+branch was created and became queryable, a recorded recovery point was used,
+the schema/migrations and required counts/fingerprint reconcile, recovery time
+was measured, production writes were zero, and the recurring control below is
+documented. This procedure establishes no contractual RTO/RPO commitment: the
+measured result is empirical and the maximum available PITR remains constrained
+by the operator-verified Neon retention window.
+
+After evidence is safely retained, the operator may delete the temporary
+recovery branch through Neon. Verify the branch name/ID before deletion; never
+delete or alter the production branch.
+
+### 17.5 Recurring control
+
+Repeat this isolated database recovery drill quarterly and after every material
+database or storage architecture change. Retain each drill's non-secret
+evidence with the release/operations record. This is an operator cadence, not
+an automated production scheduler. Infrastructure/Backup Owner remains Haroon
+Wahed during bootstrap, subject to review by 2026-09-30.
