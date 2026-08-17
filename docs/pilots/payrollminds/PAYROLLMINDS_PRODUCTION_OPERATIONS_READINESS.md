@@ -108,7 +108,7 @@ non-secret verification evidence below.
 | Manifest metric | Production source at 2026-08-17 15:04:19.345088+00 | Isolated recovered branch at 2026-08-17 15:08:30.910053+00 |
 | --- | ---: | ---: |
 | Public table count | 128 | 128 |
-| Django migration count | 149 | 149 |
+| Django migration-history count | 149 | 149 |
 | Contract count | 4 | 4 |
 | Identifier-only Contract fingerprint | `ff9e0fc04dc813d818adc966f1dbdcdd` | `ff9e0fc04dc813d818adc966f1dbdcdd` |
 | Document count | 0 | 0 |

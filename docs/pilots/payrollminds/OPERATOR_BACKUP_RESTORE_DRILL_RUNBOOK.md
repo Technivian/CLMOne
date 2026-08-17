@@ -549,7 +549,7 @@ recovery-point timestamps, or branch-provisioning timing.
 | Recovery verification query | 2026-08-17 15:08:30.910053+00 |
 | Restore target | Isolated Neon recovery branch |
 | Public table count | 128 source / 128 recovered |
-| Django migration count | 149 source / 149 recovered |
+| Django migration-history count | 149 source / 149 recovered |
 | Contract count | 4 source / 4 recovered |
 | Identifier-only Contract fingerprint | `ff9e0fc04dc813d818adc966f1dbdcdd` source / recovered |
 | Document / DocumentVersion / WorkflowInstance counts | 0 / 0 / 0 source and recovered |
