@@ -452,11 +452,11 @@ application, contract-type, monitoring, or production configuration in this
 procedure. The only provider mutation is creation of a temporary, isolated
 Neon recovery branch. Production remains the read-only source throughout.
 
-Before beginning, confirm the current canonical status is **DATABASE RECOVERY
-BLOCKED — operator drill evidence PENDING** in
-`PAYROLLMINDS_PRODUCTION_OPERATIONS_READINESS.md`. The Infrastructure/Backup
-Owner is Haroon Wahed during bootstrap; ownership must be reviewed by
-2026-09-30 or earlier when independent capacity is available.
+Before beginning a future drill, confirm the current canonical status in
+`PAYROLLMINDS_PRODUCTION_OPERATIONS_READINESS.md`. A recovery gate that is
+BLOCKED cannot become GREEN until actual evidence satisfies this section. The
+Infrastructure/Backup Owner is Haroon Wahed during bootstrap; ownership must
+be reviewed by 2026-09-30 or earlier when independent capacity is available.
 
 ### 17.1 Preconditions and source-state manifest
 
@@ -536,36 +536,78 @@ Owner is Haroon Wahed during bootstrap; ownership must be reviewed by
 4. Record production-write count as **zero**. The only permitted provider-side
    mutation is the temporary recovery branch.
 
-### 17.4 Pending evidence record and pass criteria
+### 17.4 Completed isolated Neon drill evidence — 2026-08-17
 
-Retain the following non-secret evidence outside the repository, then add only
-the factual summary to the canonical readiness record after review:
+The following is the factual summary supplied by the authorized operator. It
+does not add unrecorded Neon-console metadata, recovery-branch identifiers,
+recovery-point timestamps, or branch-provisioning timing.
 
-| Evidence field | Pending value before operator execution |
+| Evidence field | Recorded result |
 | --- | --- |
 | Operator | Haroon Wahed |
-| Drill start / recovery point / source-manifest capture | PENDING |
-| Project, production branch, Frankfurt/EU and PITR console evidence | PENDING |
-| Recovery branch name/ID and branch-ready timestamp | PENDING |
-| Measured recovery time and effective recovery-point age | PENDING |
-| Source/recovered manifest files and reconciliation | PENDING |
-| Schema/migration verification | PENDING |
-| Production-write count | PENDING — must be zero |
-| Result | PENDING — DATABASE RECOVERY remains BLOCKED |
+| Source manifest capture | 2026-08-17 15:04:19.345088+00 |
+| Recovery verification query | 2026-08-17 15:08:30.910053+00 |
+| Restore target | Isolated Neon recovery branch |
+| Public table count | 128 source / 128 recovered |
+| Django migration count | 149 source / 149 recovered |
+| Contract count | 4 source / 4 recovered |
+| Identifier-only Contract fingerprint | `ff9e0fc04dc813d818adc966f1dbdcdd` source / recovered |
+| Document / DocumentVersion / WorkflowInstance counts | 0 / 0 / 0 source and recovered |
+| Audit-event count | 29 source / 29 recovered |
+| Recovered database queryability | Verified by successful recovered-manifest query |
+| Manifest reconciliation | EXACT MATCH |
+| Production writes during drill | NONE |
+| Production restore | Not performed |
+| Conservative end-to-end drill duration | <= 4m12s (251.564965 seconds from source-manifest capture to successful recovered query) |
+| Recovery-branch disposal | Not claimed; permitted only after evidence retention |
 
-DATABASE RECOVERY may become GREEN only after the evidence proves an isolated
-branch was created and became queryable, a recorded recovery point was used,
-the schema/migrations and required counts/fingerprint reconcile, recovery time
-was measured, production writes were zero, and the recurring control below is
+Schema/table count, Django migration history, Contract count, the
+identifier-only Contract fingerprint, and the audit-event count reconciled.
+No observed loss existed relative to the selected verified state. Because the
+source counts for Documents, DocumentVersions, and WorkflowInstances were
+zero, this drill did not prove recovery of populated examples of those row
+types. That fact does not invalidate the database-recovery result; recovery of
+document objects remains a separate R2/document-recovery gate.
+
+The duration is deliberately conservative and is **not** asserted to be Neon
+branch provisioning time: the operator did not separately record branch-create
+submission and branch-ready timestamps. The result is empirical and creates no
+contractual RTO/RPO SLA. The recovery/history window remains the previously
+accepted temporary six-hour constraint; this drill proves the selected point,
+not every point in that window.
+
+### 17.5 Pass criteria and recurring control
+
+For each future drill, retain the following non-secret evidence outside the
+repository, then add only the factual summary to the canonical readiness
+record after review:
+
+| Evidence field | Required result for each future drill |
+| --- | --- |
+| Operator | Haroon Wahed |
+| Drill start / recovery point / source-manifest capture | Recorded as actual non-secret evidence |
+| Project, production branch, Frankfurt/EU and PITR console evidence | Recorded as actual non-secret evidence |
+| Recovery branch name/ID and branch-ready timestamp | Recorded as actual non-secret evidence |
+| Measured recovery time and effective recovery-point age | Recorded as actual evidence; distinguish branch provisioning from end-to-end time |
+| Source/recovered manifest files and reconciliation | Retained; exact match or explained differences only |
+| Schema/migration verification | Manifest completes and counts reconcile |
+| Production-write count | Zero |
+| Result | GREEN only when all required evidence is satisfied |
+
+DATABASE RECOVERY is **GREEN** for the completed 2026-08-17 drill. Future
+drills may be recorded GREEN only after the evidence proves an isolated branch
+was created and became queryable, a recorded recovery point was used, the
+schema/migrations and required counts/fingerprint reconcile, recovery time was
+measured, production writes were zero, and the recurring control below is
 documented. This procedure establishes no contractual RTO/RPO commitment: the
 measured result is empirical and the maximum available PITR remains constrained
-by the operator-verified Neon retention window.
+by the accepted temporary retention window.
 
 After evidence is safely retained, the operator may delete the temporary
 recovery branch through Neon. Verify the branch name/ID before deletion; never
 delete or alter the production branch.
 
-### 17.5 Recurring control
+### 17.6 Recurring control
 
 Repeat this isolated database recovery drill quarterly and after every material
 database or storage architecture change. Retain each drill's non-secret
