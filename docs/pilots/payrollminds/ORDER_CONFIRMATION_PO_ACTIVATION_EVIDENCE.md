@@ -1,5 +1,16 @@
 # Order Confirmation and Purchase Order activation readiness
 
+> **Current production status (operator-attested 2026-08-17):** Order
+> Confirmation and Purchase Order are **PRODUCTION ACTIVE** at
+> `935baf83d981204928ba4ca38984076e7b451085`. The controlled-pilot allowlist
+> is `MSA,NDA,DPA,ORDER_CONFIRMATION,PURCHASE_ORDER`; its prior and rollback
+> value is `MSA,NDA,DPA`. MSA/NDA/DPA remain active and every other contract
+> type remains inactive. Health/application checks are operator-verified green,
+> Render Auto-Deploy is off, no schema migration was required, and no
+> production contract data was modified. This is operator-attested evidence;
+> it is not an independent Render-console observation. The historical
+> readiness material below documents the evidence that preceded activation.
+
 **Starting main SHA:** `a329b805952befefa7924ddc943badca9ed8ed4b`
 **Assessment date:** 2026-08-10
 **Baseline subject PR #181 head:** `1f11e622d6bcf1b8e14950e9442fa05419fe6c48`

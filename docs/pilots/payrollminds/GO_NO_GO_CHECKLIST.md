@@ -1,7 +1,10 @@
 # PayrollMinds Pilot Go / No-Go Checklist
 
-**Status:** Proposed — all boxes are currently unverified
-**Decision:** **NO-GO until every applicable item is evidenced.**
+**Status:** Checklist retained for control coverage. Current production and
+onboarding status is in
+[`PAYROLLMINDS_PRODUCTION_OPERATIONS_READINESS.md`](PAYROLLMINDS_PRODUCTION_OPERATIONS_READINESS.md).
+**Decision:** **NO-GO for customer onboarding until every applicable item is
+evidenced or a properly recorded, permitted risk acceptance covers it.**
 
 ## Release identity and governance
 

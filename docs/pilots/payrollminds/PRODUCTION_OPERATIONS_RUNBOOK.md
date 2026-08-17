@@ -11,17 +11,18 @@ documented design, not live, tested alerting.
 
 | Service/control | Accountable owner | Operator evidence required |
 |---|---|---|
-| Release and application runtime | Engineering / Release Authority | SHA, deployment, health, rollback record |
+| Release and application runtime | Deployment Approver: **Haroon Wahed** — bootstrap assignment through 2026-09-30 | SHA, deployment, health, rollback record |
 | PostgreSQL, Redis, storage, DNS/TLS, backup | Infrastructure operator: **Haroon Wahed** — confirmed 2026-08-08 as provisioning authority ("authorized to create production resources and run backup/restore drills") | region, IAM, encryption, backup/restore evidence |
-| Access, audit, scanning, secrets, incident security decision | Security owner | review, scan, rotation, incident evidence |
-| Privacy, retention, deletion, export/offboarding | Privacy/Product owner | approved retention/offboarding and customer terms |
-| Customer communications and support | Named PayrollMinds support owner | approved support route, hours, escalation contacts |
+| Access, audit, scanning, secrets, incident security decision | Incident Owner: **Haroon Wahed** — bootstrap assignment through 2026-09-30 | review, scan, rotation, incident evidence |
+| Privacy, retention, deletion, export/offboarding | Privacy Owner: **Haroon Wahed** — bootstrap assignment through 2026-09-30 | approved retention/offboarding and customer terms |
+| Customer communications and support | Support Owner: **Haroon Wahed** — bootstrap assignment through 2026-09-30 | approved support route, hours, escalation contacts |
 
-Named people, contact addresses, support hours, RPO/RTO, and customer promises
-are intentionally absent until supplied and approved. Only the
-Infrastructure operator row above has a named person as of 2026-08-08 —
-Engineering/Release Authority, Security owner, Privacy/Product owner, and
-the PayrollMinds support owner remain unnamed.
+The 2026-08-17 Owner decision names Haroon Wahed for the bootstrap roles
+shown above; it does not represent them as independent authorities. Contact
+addresses, support hours, RPO/RTO, customer promises, a customer-facing
+support channel, and retention/offboarding terms remain absent until supplied
+and approved. The assignments must be reviewed by 2026-09-30 or replaced
+earlier by a qualified separate owner.
 
 ## Monitoring and alert inventory
 
