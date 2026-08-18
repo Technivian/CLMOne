@@ -341,7 +341,7 @@ that status instead — do not fabricate a recovery result.
 
 ---
 
-## Section 13 — Routine R2 backup recommendation (follow-up only, not implemented here)
+## Section 13 — Routine R2 backup control (separately deployed)
 
 Because native S3-style versioning/replication is not a first-class
 `wrangler` R2 feature (confirmed by the absence of any such subcommand),
@@ -350,16 +350,18 @@ separate **prevention** from **recovery** explicitly:
 - **Prevention** (already partly in place): `wrangler r2 bucket lock`
   rules stop accidental deletion/overwrite of live objects. This is not
   backup coverage by itself.
-- **Recovery** (the actual gap): the smallest viable pilot-scale
-  mechanism is a scheduled job (e.g. a Render cron job or a
-  `queue_background_jobs`-style scheduled task already used elsewhere in
-  this repository) that periodically copies new/changed objects from the
-  canonical and quarantine buckets into the independent backup bucket
-  from Section 11.
+- **Recovery** (the remaining gap): a narrow scheduled Cloudflare Worker is
+  technically ready in `infrastructure/r2-daily-document-backup`. It copies
+  each observed new/changed primary object version to the independent
+  `clmone-documents-backup` bucket once daily, retains earlier copies, and
+  never mirrors a delete. Its two bucket bindings, UTC Cron Trigger, run
+  evidence, rollback steps, and first-run proof requirements are in
+  `R2_DAILY_DOCUMENT_BACKUP_DEPLOYMENT_RUNBOOK.md`.
 
-This is a recommendation for a follow-up infrastructure task, not
-something this PR implements — implementing it would be an architectural
-expansion outside this toolkit's scope.
+It is not deployed by this repository evidence. Do not treat its local tests
+as a provider-side backup result: `DOCUMENT RECOVERY` remains
+`BLOCKED — ROUTINE BACKUP DEPLOYMENT/PROOF PENDING` until separately
+authorized deployment and a retained successful first-run record.
 
 ---
 

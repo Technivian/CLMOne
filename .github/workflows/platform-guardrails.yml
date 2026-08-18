@@ -149,3 +149,29 @@ jobs:
           BASE_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
           GITHUB_TOKEN: ${{ github.token }}
         run: python scripts/check_npm_audit_baseline.py --base-ref "$BASE_REF" --verify-github-approvals
+
+  r2-daily-document-backup:
+    name: R2 daily document backup control
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install pinned Worker tooling
+        run: npm --prefix infrastructure/r2-daily-document-backup ci
+
+      - name: Verify scheduled Worker control
+        run: |
+          npm --prefix infrastructure/r2-daily-document-backup run check
+          npm --prefix infrastructure/r2-daily-document-backup test
+          npm --prefix infrastructure/r2-daily-document-backup run test:scheduled
+
+      - name: Scan Worker tooling dependencies
+        run: npm --prefix infrastructure/r2-daily-document-backup audit --audit-level=high

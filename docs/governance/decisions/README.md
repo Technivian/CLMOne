@@ -73,6 +73,7 @@ Do not fabricate approved decisions. Do not mark a record Accepted without docum
 | [ADR-0017-payrollminds-isolated-pilot-release-topology.md](adr/ADR-0017-payrollminds-isolated-pilot-release-topology.md) | Proposed — no deployment or activation authority |
 | [ADR-0018-payrollminds-pilot-production-topology.md](adr/ADR-0018-payrollminds-pilot-production-topology.md) | Proposed — target design only; no deployment or activation authority |
 | [ADR-0019-payrollminds-ai-provider-disabled-boundary.md](adr/ADR-0019-payrollminds-ai-provider-disabled-boundary.md) | Proposed — provider remains disabled |
+| [ADR-0020-payrollminds-r2-daily-document-backup-control.md](adr/ADR-0020-payrollminds-r2-daily-document-backup-control.md) | Proposed — implementation evidence only; provider deployment/proof separately governed |
 
 ### PDRs
 

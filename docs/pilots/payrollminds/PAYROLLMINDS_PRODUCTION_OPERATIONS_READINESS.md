@@ -50,7 +50,7 @@ outside this release.
 | Private-by-default authorization | GREEN | PDR-0008 production deployment closure and preservation/security evidence in `PRIVATE_BY_DEFAULT_ACCESS_IMPLEMENTATION.md` | Haroon Wahed | Preserve existing access regression coverage. |
 | Contract-type scope | GREEN | Owner-attested allowlist above; OC/PO technical evidence and default-off implementation in `ORDER_CONFIRMATION_PO_ACTIVATION_EVIDENCE.md` | Haroon Wahed | Keep every non-listed type off; restore the rollback value on a type-activation incident. |
 | Database recovery | GREEN | Haroon Wahed completed an isolated Neon recovery-branch drill on 2026-08-17. Source and recovered read-only manifests matched exactly: 128 public tables, 149 Django migrations, 4 Contracts, identifier-only Contract fingerprint `ff9e0fc04dc813d818adc966f1dbdcdd`, 29 audit events, and zero Documents, DocumentVersions, and WorkflowInstances. The recovered database was queryable; no production restore or production write occurred. | Haroon Wahed | Repeat and retain evidence quarterly and after material database/storage architecture changes; ownership review by 2026-09-30. |
-| Document recovery | BLOCKED | Released and quarantine R2 storage are configured with separate credentials; no independent recoverable copy, EU setting proof, or restore/hash drill is evidenced | Haroon Wahed | Verify buckets and create or identify an independent private recovery copy; run the synthetic object recovery proof. |
+| Document recovery | BLOCKED — ROUTINE BACKUP DEPLOYMENT/PROOF PENDING | The synthetic R2 recovery drill proved deletion isolation and byte-for-byte restore integrity. The daily backup control is technically ready but has not been deployed or proven in the provider; no routine backup success marker is evidenced. | Haroon Wahed | Obtain separate deployment authorization, deploy the exact Worker with the two scoped bindings and UTC trigger, then retain first-run evidence. |
 | Monitoring | BLOCKED | No external uptime monitor, health alert, deployment/runtime notification, error-reporting sink, alert test, or named notification destination is evidenced; repository configuration alone is not provider proof | Haroon Wahed | Configure and test the minimum monitoring controls below. |
 | Security | GREEN | PDR-0008 authorization/tenant/export/audit evidence and operator-attested production deployment; excluded capabilities remain off | Haroon Wahed | Preserve operational access/audit evidence. |
 | Dependency scanning | GREEN | Exact-SHA PR #181 security scans, Bandit, pip-audit, npm audit, and TruffleHog are recorded green in `ORDER_CONFIRMATION_PO_ACTIVATION_EVIDENCE.md` | Haroon Wahed | Maintain normal scan gates for later releases. |
@@ -145,12 +145,30 @@ evidence has been retained**. Its deletion is not claimed by this record.
 
 ## Document recovery
 
+**DOCUMENT RECOVERY = BLOCKED — ROUTINE BACKUP DEPLOYMENT/PROOF PENDING.**
+The completed synthetic R2 drill proves bucket-level deletion isolation and
+byte-for-byte restore integrity for the retained canary. It did not prove a
+routine copy of later production objects. The current daily-control code is
+therefore **R2 DAILY BACKUP CONTROL TECHNICALLY READY** only: it has not been
+deployed to Cloudflare, has not touched production objects, and has no
+provider-side first-run proof.
+
+The proposed Worker is deliberately narrow: it has two scoped R2 bindings
+(`clmone-documents` as primary and `clmone-documents-backup` as recovery), no
+HTTP handler or public route, and a daily UTC Cron Trigger. It creates one
+immutable, version-addressed backup key for each observed primary
+source-version, never propagates a source deletion, writes an immutable
+content-free run manifest, and advances its last-success marker only after a
+fully successful run. The proposed infrastructure choice and deployment proof
+requirements are in `ADR-0020-payrollminds-r2-daily-document-backup-control.md`
+and `R2_DAILY_DOCUMENT_BACKUP_DEPLOYMENT_RUNBOOK.md`.
+
 The live document bucket (`clmone-documents`) and quarantine bucket
 (`clmone-document-quarantine`) are reported as separate private R2 buckets
-with separate scoped credentials. Existing evidence does not establish that
-either has versioning, replication, an independent backup bucket, an external
-copy, or any other separately recoverable copy. Empty buckets would not prove
-recovery and must not be treated as such.
+with separate scoped credentials. The separate recovery bucket and the
+synthetic restore drill do not by themselves establish a recurring control.
+Provider-side deployment and an evidenced successful run remain required;
+empty buckets alone are never recovery proof.
 
 The minimum proportionate controlled-pilot requirement is:
 
@@ -165,10 +183,10 @@ The minimum proportionate controlled-pilot requirement is:
 5. a named recovery owner.
 
 The exact discovery and one-object recovery procedure is in
-`OPERATOR_BACKUP_RESTORE_DRILL_RUNBOOK.md` §§7, 11–12. If no independent copy
-exists, the operator must record `OBJECT RECOVERY MECHANISM NOT YET
-CONFIGURED`; creating a recovery bucket or scheduled copy is a separate,
-authorized infrastructure action and is not performed by this task.
+`OPERATOR_BACKUP_RESTORE_DRILL_RUNBOOK.md` §§7, 11–12. The routine-control
+deployment and first-run procedure is in
+`R2_DAILY_DOCUMENT_BACKUP_DEPLOYMENT_RUNBOOK.md`; it requires separate
+authorization and is not performed by this task.
 
 ## Minimum monitoring requirement
 
@@ -215,8 +233,8 @@ assignment does not supply the required retention/offboarding basis.
 contract-type activation are not sufficient to onboard customer users or data.
 The mandatory remaining actions are:
 
-1. identify or create an independent private R2 recovery copy, verify EU
-   compatibility, and complete the synthetic document restore/hash proof;
+1. deploy the technically ready daily R2 backup control under separate
+   authorization and retain a successful provider-side first-run proof;
 2. configure and test the minimum external health, deploy/runtime, and
    application-error monitoring with a named notification destination;
 3. create and test one authenticated support channel with customer escalation,
