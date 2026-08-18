@@ -50,7 +50,7 @@ outside this release.
 | Private-by-default authorization | GREEN | PDR-0008 production deployment closure and preservation/security evidence in `PRIVATE_BY_DEFAULT_ACCESS_IMPLEMENTATION.md` | Haroon Wahed | Preserve existing access regression coverage. |
 | Contract-type scope | GREEN | Owner-attested allowlist above; OC/PO technical evidence and default-off implementation in `ORDER_CONFIRMATION_PO_ACTIVATION_EVIDENCE.md` | Haroon Wahed | Keep every non-listed type off; restore the rollback value on a type-activation incident. |
 | Database recovery | GREEN | Haroon Wahed completed an isolated Neon recovery-branch drill on 2026-08-17. Source and recovered read-only manifests matched exactly: 128 public tables, 149 Django migrations, 4 Contracts, identifier-only Contract fingerprint `ff9e0fc04dc813d818adc966f1dbdcdd`, 29 audit events, and zero Documents, DocumentVersions, and WorkflowInstances. The recovered database was queryable; no production restore or production write occurred. | Haroon Wahed | Repeat and retain evidence quarterly and after material database/storage architecture changes; ownership review by 2026-09-30. |
-| Document recovery | BLOCKED — ROUTINE BACKUP DEPLOYMENT/PROOF PENDING | The synthetic R2 recovery drill proved deletion isolation and byte-for-byte restore integrity. The daily backup control is technically ready but has not been deployed or proven in the provider; no routine backup success marker is evidenced. | Haroon Wahed | Obtain separate deployment authorization, deploy the exact Worker with the two scoped bindings and UTC trigger, then retain first-run evidence. |
+| Document recovery | GREEN | The retained synthetic recovery drill remains separate evidence. On 2026-08-18 the deployed, scheduled-only R2 Worker completed a provider Cron run against the two explicit EU bindings, wrote immutable version-addressed copies and a `SUCCESS` manifest, and advanced last-success only after success. | Haroon Wahed | Retain daily-run evidence and repeat the synthetic restore drill quarterly and after material storage changes. |
 | Monitoring | BLOCKED | No external uptime monitor, health alert, deployment/runtime notification, error-reporting sink, alert test, or named notification destination is evidenced; repository configuration alone is not provider proof | Haroon Wahed | Configure and test the minimum monitoring controls below. |
 | Security | GREEN | PDR-0008 authorization/tenant/export/audit evidence and operator-attested production deployment; excluded capabilities remain off | Haroon Wahed | Preserve operational access/audit evidence. |
 | Dependency scanning | GREEN | Exact-SHA PR #181 security scans, Bandit, pip-audit, npm audit, and TruffleHog are recorded green in `ORDER_CONFIRMATION_PO_ACTIVATION_EVIDENCE.md` | Haroon Wahed | Maintain normal scan gates for later releases. |
@@ -134,8 +134,8 @@ accepted temporary **6-hour** constraint. This drill demonstrated successful
 recovery to the selected point, not a guarantee for every possible point in
 that window. The zero source counts for Documents, DocumentVersions, and
 WorkflowInstances mean this drill did not prove recovery of populated examples
-of those row types. Document-object recovery remains governed separately by
-the R2/document-recovery gate and remains BLOCKED.
+of those row types. Document-object recovery is governed separately by the
+R2/document-recovery gate and is recorded GREEN below.
 
 The exact non-sensitive aggregate manifest is
 `NEON_DATABASE_RECOVERY_MANIFEST.sql`; the operator procedure and retained
@@ -145,60 +145,61 @@ evidence has been retained**. Its deletion is not claimed by this record.
 
 ## Document recovery
 
-**DOCUMENT RECOVERY = BLOCKED — ROUTINE BACKUP DEPLOYMENT/PROOF PENDING.**
-The completed synthetic R2 drill proves bucket-level deletion isolation and
-byte-for-byte restore integrity for the retained canary. It did not prove a
-routine copy of later production objects. The current daily-control code is
-therefore **R2 DAILY BACKUP CONTROL TECHNICALLY READY** only: it has not been
-deployed to Cloudflare, has not touched production objects, and has no
-provider-side first-run proof.
+**R2 DAILY BACKUP CONTROL = GREEN — DEPLOYED / PROVIDER PROOF VERIFIED.**
+**DOCUMENT RECOVERY = GREEN.** The historical 2026-08-17 synthetic recovery
+drill remains distinct evidence of deletion isolation and byte-for-byte
+restoration. It did not establish the routine control described below.
 
-The proposed Worker is deliberately narrow: it has two scoped R2 bindings
-(`clmone-documents` as primary and `clmone-documents-backup` as recovery), no
-HTTP handler or public route, and a daily UTC Cron Trigger. It creates one
-immutable, version-addressed backup key for each observed primary
-source-version, never propagates a source deletion, writes an immutable
-content-free run manifest, and advances its last-success marker only after a
-fully successful run. The proposed infrastructure choice and deployment proof
-requirements are in `ADR-0020-payrollminds-r2-daily-document-backup-control.md`
-and `R2_DAILY_DOCUMENT_BACKUP_DEPLOYMENT_RUNBOOK.md`.
+On 2026-08-18, Cloudflare account `4ef24e2b71c28a8a0272e186db71f889` received
+Worker version `7240fb43-a9f2-4cbd-baf5-8348874ea861` from merged main SHA
+`aad4e5d175d42072044e921955e679189d15d3d7`. Provider version metadata confirms
+only the `scheduled` handler and the exact bindings `PRIMARY_DOCUMENTS` →
+`clmone-documents` (`eu`) and `BACKUP_DOCUMENTS` →
+`clmone-documents-backup` (`eu`). The Worker remains non-public
+(`workers_dev = false`), has no HTTP handler or route, and has no delete
+operation. Its sole canonical Cron Trigger is `15 2 * * *` UTC.
 
-### Daily-control repository evidence
+The retained 2026-08-17 recovery drill used synthetic
+`document-recovery-canary.txt`; original, primary, backup, and restored-primary
+SHA-256 values were all
+`05f4953821629164db4068a23f8aa7af2f4c92def94c74a42d5ac9a208a6d9bc`.
+It deleted only that synthetic primary key after verifying its backup, restored
+it, and did not modify an application record or an existing production object.
 
-The scheduled Worker has repository-only proof for new copies, changed-version
-retention, unchanged-version skip, pagination, source-delete non-propagation,
-stream-only transfer, source/read race rejection, partial-failure evidence,
-and last-success non-advancement. A local Wrangler scheduled-event invocation
-also returned HTTP 200 against the two local R2 bindings. Dependency audit,
-secret-pattern scanning, Python security scans, governance/status checks, and
-the required PR quality and browser gates are retained on the immutable review
-SHA. This is engineering evidence, not Cloudflare deployment or first-run
-evidence.
+For the controlled first-run proof, the trigger was temporarily replaced (not
+supplemented) with `*/5 * * * *`, then immediately restored to the sole
+canonical daily trigger after one genuine provider Cron execution. That
+execution was scheduled at `2026-08-18T19:50:39.000Z`, completed at
+`2026-08-18T19:50:44.133Z`, and reported `SUCCESS` with two primary objects
+examined, two immutable copies written, 147 bytes copied, and no failures.
 
-The live document bucket (`clmone-documents`) and quarantine bucket
-(`clmone-document-quarantine`) are reported as separate private R2 buckets
-with separate scoped credentials. The separate recovery bucket and the
-synthetic restore drill do not by themselves establish a recurring control.
-Provider-side deployment and an evidenced successful run remain required;
-empty buckets alone are never recovery proof.
+The new synthetic non-customer canary key was
+`synthetic-backup-control-canaries/20260818T194629Z-3764d7af-ae02-4818-b86c-02720c72c115.txt`.
+Its source version was `7e5fe996bfbda816aced8e36387979e8`, source ETag was
+`2762dd90fe83f030b204e31c15f1f65a`, and source SHA-256 was
+`a0cc555c5f532308ed716b01941e9bb938f7c7e73b7ea8ae6c9a0dfd08900a41`.
+The immutable backup key is
+`_backup_versions/v1/c3ludGhldGljLWJhY2t1cC1jb250cm9sLWNhbmFyaWVzLzIwMjYwODE4VDE5NDYyOVotMzc2NGQ3YWYtYWUwMi00ODE4LWI4NmMtMDI3MjBjNzJjMTE1LnR4dA/N2U1ZmU5OTZiZmJkYTgxNmFjZWQ4ZTM2Mzg3OTc5ZTg`;
+its downloaded SHA-256 matched exactly. The immutable run manifest
+`_backup_runs/2026-08-18T19-50-44.133Z-dbca24d3-36fe-4ea2-90be-c7be53bac5cc.json`
+has `result = SUCCESS`, and `_backup_control/last-success.json` references
+that run only after success.
 
-The minimum proportionate controlled-pilot requirement is:
+Provider metadata after the run shows the retained historical primary
+`document-recovery-canary.txt` and the pre-existing recovery-bucket object of
+the same key remain present with their 2026-08-17 timestamps and unchanged
+ETags. The run created only the two version-addressed copies, immutable
+manifest, and allowed last-success marker; it did not delete or overwrite a
+primary or an existing recovery object, and no source deletion propagated.
+No customer/application document, database record, or production contract data
+was changed. This is bucket-level recovery isolation only; it does not claim
+Cloudflare-account or provider disaster independence or a contractual RTO/RPO.
 
-1. an independent recoverable copy of released documents and, if quarantine
-   retention is in scope, quarantine objects;
-2. private, bucket-scoped access and an EU/residency setting verified in the
-   provider console;
-3. SHA-256 integrity comparison of the source, backup copy, restored copy,
-   and recorded `DocumentVersion` hash;
-4. a documented restore procedure and a synthetic, non-destructive recovery
-   proof; and
-5. a named recovery owner.
-
-The exact discovery and one-object recovery procedure is in
-`OPERATOR_BACKUP_RESTORE_DRILL_RUNBOOK.md` §§7, 11–12. The routine-control
-deployment and first-run procedure is in
-`R2_DAILY_DOCUMENT_BACKUP_DEPLOYMENT_RUNBOOK.md`; it requires separate
-authorization and is not performed by this task.
+The continuing operator procedure is in
+`OPERATOR_BACKUP_RESTORE_DRILL_RUNBOOK.md` §18 and the daily-control procedure
+is in `R2_DAILY_DOCUMENT_BACKUP_DEPLOYMENT_RUNBOOK.md`. Preserve non-secret
+provider evidence for each future run; no access key, secret, or document
+content belongs in this repository.
 
 ## Minimum monitoring requirement
 
@@ -245,16 +246,14 @@ assignment does not supply the required retention/offboarding basis.
 contract-type activation are not sufficient to onboard customer users or data.
 The mandatory remaining actions are:
 
-1. deploy the technically ready daily R2 backup control under separate
-   authorization and retain a successful provider-side first-run proof;
-2. configure and test the minimum external health, deploy/runtime, and
+1. configure and test the minimum external health, deploy/runtime, and
    application-error monitoring with a named notification destination;
-3. create and test one authenticated support channel with customer escalation,
+2. create and test one authenticated support channel with customer escalation,
    then record it without publishing personal contact details in repository
    evidence; and
-4. record an approved retention/offboarding basis before accepting customer
+3. record an approved retention/offboarding basis before accepting customer
    data, then rehearse the existing user/access offboarding and production
    access-revocation procedure without customer data.
 
-No deployment occurred, no production data changed, and no additional contract
-type was activated while producing this record.
+The R2 Worker deployment and synthetic provider proof above did not modify
+production application data or activate an additional contract type.
