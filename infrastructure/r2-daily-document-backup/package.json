@@ -7,8 +7,8 @@
     "node": ">=22"
   },
   "scripts": {
-    "check": "node --check src/index.js && node --check test/backup-service.test.js && node --check test/scheduled-handler-proof.mjs",
-    "test": "node --test test/backup-service.test.js",
+    "check": "node --check src/index.js && node --check test/backup-service.test.js && node --check test/wrangler-config.test.mjs && node --check test/scheduled-handler-proof.mjs",
+    "test": "node --test test/backup-service.test.js test/wrangler-config.test.mjs",
     "test:scheduled": "node test/scheduled-handler-proof.mjs"
   },
   "devDependencies": {

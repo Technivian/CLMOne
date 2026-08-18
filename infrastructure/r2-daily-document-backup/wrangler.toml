@@ -10,7 +10,9 @@ crons = ["15 2 * * *"]
 [[r2_buckets]]
 binding = "PRIMARY_DOCUMENTS"
 bucket_name = "clmone-documents"
+jurisdiction = "eu"
 
 [[r2_buckets]]
 binding = "BACKUP_DOCUMENTS"
 bucket_name = "clmone-documents-backup"
+jurisdiction = "eu"
