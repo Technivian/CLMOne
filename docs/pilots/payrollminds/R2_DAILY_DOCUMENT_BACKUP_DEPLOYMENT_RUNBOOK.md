@@ -7,8 +7,8 @@ or close the document-recovery gate.
 
 - Worker name: `clmone-r2-daily-document-backup`
 - Source directory: `infrastructure/r2-daily-document-backup`
-- Primary binding: `PRIMARY_DOCUMENTS` → `clmone-documents`
-- Backup binding: `BACKUP_DOCUMENTS` → `clmone-documents-backup`
+- Primary binding: `PRIMARY_DOCUMENTS` → `clmone-documents` (`jurisdiction = "eu"`)
+- Backup binding: `BACKUP_DOCUMENTS` → `clmone-documents-backup` (`jurisdiction = "eu"`)
 - Cron Trigger: `15 2 * * *` (**Cloudflare Cron is UTC**)
 - Public HTTP route: none. Keep `workers_dev = false`; the production path is
   `scheduled()` only.
@@ -29,8 +29,9 @@ npx wrangler deploy
 ```
 
 In the Cloudflare dashboard, confirm the deployed Worker has exactly the two
-R2 bindings above, the one Cron Trigger, and no public route. Do not add a
-route, enable a development URL, or change application environment variables.
+EU-jurisdiction R2 bindings above, the one Cron Trigger, and no public route.
+Do not add a route, enable a development URL, or change application environment
+variables.
 
 ## Verify the first controlled provider-side run
 
