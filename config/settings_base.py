@@ -588,6 +588,17 @@ APP_BASE_URL = os.getenv('APP_BASE_URL', 'http://localhost:8000').strip()
 # failure notification to this address when a scheduled job run fails.
 OPERATOR_ALERT_EMAIL = os.getenv('OPERATOR_ALERT_EMAIL', '').strip()
 
+# Content-free application ERROR/CRITICAL email alerts are opt-in so local
+# development does not send operational mail.  Production activation is an
+# explicit operator configuration using the same named destination as the
+# scheduled-job failure control.
+OPERATIONAL_ERROR_ALERTS_ENABLED = _bool_env(
+    'OPERATIONAL_ERROR_ALERTS_ENABLED', default=False,
+)
+OPERATIONAL_ERROR_ALERT_RATE_LIMIT_SECONDS = max(
+    1, int(os.getenv('OPERATIONAL_ERROR_ALERT_RATE_LIMIT_SECONDS', '900')),
+)
+
 # SMTP — defaults to console backend in dev; set EMAIL_HOST to enable real sending.
 _email_host = os.getenv('EMAIL_HOST', '').strip()
 if _email_host:
@@ -858,3 +869,14 @@ if LOG_SINK_ENABLED and LOG_SINK_URL:
         'filters': ['request_context'],
     }
     LOGGING['root']['handlers'].append('http_sink')
+
+if OPERATIONAL_ERROR_ALERTS_ENABLED and OPERATOR_ALERT_EMAIL:
+    LOGGING['handlers']['operational_error_email'] = {
+        'class': 'contracts.operational_alerts.OperationalErrorEmailHandler',
+        'recipient': OPERATOR_ALERT_EMAIL,
+        'environment': DJANGO_ENV,
+        'rate_limit_seconds': OPERATIONAL_ERROR_ALERT_RATE_LIMIT_SECONDS,
+        'filters': ['request_context'],
+        'level': 'ERROR',
+    }
+    LOGGING['root']['handlers'].append('operational_error_email')
