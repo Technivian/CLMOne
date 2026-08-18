@@ -163,6 +163,18 @@ fully successful run. The proposed infrastructure choice and deployment proof
 requirements are in `ADR-0020-payrollminds-r2-daily-document-backup-control.md`
 and `R2_DAILY_DOCUMENT_BACKUP_DEPLOYMENT_RUNBOOK.md`.
 
+### Daily-control repository evidence
+
+The scheduled Worker has repository-only proof for new copies, changed-version
+retention, unchanged-version skip, pagination, source-delete non-propagation,
+stream-only transfer, source/read race rejection, partial-failure evidence,
+and last-success non-advancement. A local Wrangler scheduled-event invocation
+also returned HTTP 200 against the two local R2 bindings. Dependency audit,
+secret-pattern scanning, Python security scans, governance/status checks, and
+the required PR quality and browser gates are retained on the immutable review
+SHA. This is engineering evidence, not Cloudflare deployment or first-run
+evidence.
+
 The live document bucket (`clmone-documents`) and quarantine bucket
 (`clmone-document-quarantine`) are reported as separate private R2 buckets
 with separate scoped credentials. The separate recovery bucket and the
