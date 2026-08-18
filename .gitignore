@@ -19,6 +19,7 @@ media/
 .upm/
 node_modules/
 client/node_modules/
+.wrangler/
 
 # Local documentation package staging (never commit the ZIP or extract dump)
 clm_one_documentation_v2/
