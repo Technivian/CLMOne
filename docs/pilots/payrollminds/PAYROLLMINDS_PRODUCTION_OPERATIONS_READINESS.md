@@ -2,8 +2,8 @@
 
 **Status:** **NO-GO for PayrollMinds customer onboarding.**
 
-**Evidence capture date:** 2026-08-17
-**Canonical production code SHA:** `935baf83d981204928ba4ca38984076e7b451085`
+**Evidence capture date:** 2026-08-19
+**Canonical production code SHA:** `433421665f6096e6057c349199bc011bdc5cd623`
 **Evidence boundary:** This record distinguishes operator attestation and
 repository evidence from facts independently observed in a provider console.
 It creates no production configuration, data, deployment, provider account,
@@ -51,7 +51,7 @@ outside this release.
 | Contract-type scope | GREEN | Owner-attested allowlist above; OC/PO technical evidence and default-off implementation in `ORDER_CONFIRMATION_PO_ACTIVATION_EVIDENCE.md` | Haroon Wahed | Keep every non-listed type off; restore the rollback value on a type-activation incident. |
 | Database recovery | GREEN | Haroon Wahed completed an isolated Neon recovery-branch drill on 2026-08-17. Source and recovered read-only manifests matched exactly: 128 public tables, 149 Django migrations, 4 Contracts, identifier-only Contract fingerprint `ff9e0fc04dc813d818adc966f1dbdcdd`, 29 audit events, and zero Documents, DocumentVersions, and WorkflowInstances. The recovered database was queryable; no production restore or production write occurred. | Haroon Wahed | Repeat and retain evidence quarterly and after material database/storage architecture changes; ownership review by 2026-09-30. |
 | Document recovery | GREEN | The retained synthetic recovery drill remains separate evidence. On 2026-08-18 the deployed, scheduled-only R2 Worker completed a provider Cron run against the two explicit EU bindings, wrote immutable version-addressed copies and a `SUCCESS` manifest, and advanced last-success only after success. | Haroon Wahed | Retain daily-run evidence and repeat the synthetic restore drill quarterly and after material storage changes. |
-| Monitoring | BLOCKED | No external uptime monitor, health alert, deployment/runtime notification, error-reporting sink, alert test, or named notification destination is evidenced; repository configuration alone is not provider proof | Haroon Wahed | Configure and test the minimum monitoring controls below. |
+| Monitoring | GREEN | Provider-side and recipient evidence captured on 2026-08-19: UptimeRobot monitor `803775467` checks `https://www.clmone.com/_health/` every five minutes and is UP; its notification-test receipt reached Haroon Wahed. Render `clm-one-web` has failure-only service notifications; controlled failed deployment `dep-da2pf7gae00c73clvgt0` produced a received Render failure notice while the prior successful deployment stayed live. The application synthetic operational ERROR test sent through Resend and was marked delivered, with recipient receipt confirmed. | Haroon Wahed | Retain non-secret provider/operator evidence and repeat a controlled test after a material monitoring or mail-routing change. |
 | Security | GREEN | PDR-0008 authorization/tenant/export/audit evidence and operator-attested production deployment; excluded capabilities remain off | Haroon Wahed | Preserve operational access/audit evidence. |
 | Dependency scanning | GREEN | Exact-SHA PR #181 security scans, Bandit, pip-audit, npm audit, and TruffleHog are recorded green in `ORDER_CONFIRMATION_PO_ACTIVATION_EVIDENCE.md` | Haroon Wahed | Maintain normal scan gates for later releases. |
 | Browser/UAT | GREEN | PR #181 Linux browser matrix 8/8, OC/PO browser 3/3, PayrollMinds UAT, and normalized regression delta `NEW=0`, `MUTATED=0` | Haroon Wahed | Preserve the governed test baseline; do not infer production write smoke. |
@@ -213,12 +213,21 @@ The smallest sufficient monitoring configuration for this deployment is:
    alert, or equivalent provider capability that records and notifies on
    unhandled runtime exceptions.
 
-Operator steps: configure the external health monitor without credentials in
-the URL; add the approved recipient; configure Render deployment/runtime
-notifications; configure the selected error sink without logging documents,
-DSNs, tokens, or customer data; trigger one controlled test alert; then record
-the monitor URL, recipient role (not address), timestamp, and receipt result.
-No external monitoring provider is configured or claimed by this record.
+### Provider proof — 2026-08-19
+
+**MONITORING = GREEN.** The named notification destination is the
+Haroon Wahed-owned operational inbox; its address and all SMTP credentials are
+intentionally excluded from repository evidence.
+
+| Control | Provider configuration | Controlled proof |
+| --- | --- | --- |
+| External health | UptimeRobot HTTP/S monitor `803775467`, **CLM One Production Health**, targets exactly `https://www.clmone.com/_health/`, checks every five minutes, and reported **UP**. | The provider notification-test control was run. Haroon Wahed retained the received UptimeRobot message for this named monitor and exact health URL at 2026-08-19 13:47 CEST. The production target was never changed or made unhealthy. |
+| Deploy/runtime failure | Render service `clm-one-web` uses the service override **Only failure notifications**. | Exact-SHA controlled deployment `dep-da2pf7gae00c73clvgt0` intentionally exited non-zero at 2026-08-19 11:47:12Z after its normal build and synthetic alert command. Render's failure notice was received. The prior successful deployment of `433421665f6096e6057c349199bc011bdc5cd623` remained live and the health endpoint returned HTTP 200. The normal Build Command was restored exactly to `./build.sh`. |
+| Application ERROR | Render production SMTP uses `smtp.resend.com:2587` with STARTTLS and a verified `notify.clmone.com` sender. The persistent Resend credential is sending-only and scoped to that domain; its secret exists only in Render secret configuration. `OPERATIONAL_ERROR_ALERTS_ENABLED=true` and the 900-second rate limit remain in force. | `python manage.py send_operational_error_alert_test` ran during the controlled Render build. Resend recorded the resulting `[CLM One] ERROR` synthetic alert as **delivered**, and Haroon Wahed confirmed receipt. The alert contained only approved safe metadata. |
+
+No customer, contract, payroll, personal, confidential, or production
+application data was changed by the monitoring proof. These controls do not
+close the independent support-channel or offboarding gates.
 
 ## Bootstrap operational ownership — active Owner decision
 
@@ -246,12 +255,10 @@ assignment does not supply the required retention/offboarding basis.
 contract-type activation are not sufficient to onboard customer users or data.
 The mandatory remaining actions are:
 
-1. configure and test the minimum external health, deploy/runtime, and
-   application-error monitoring with a named notification destination;
-2. create and test one authenticated support channel with customer escalation,
+1. create and test one authenticated support channel with customer escalation,
    then record it without publishing personal contact details in repository
    evidence; and
-3. record an approved retention/offboarding basis before accepting customer
+2. record an approved retention/offboarding basis before accepting customer
    data, then rehearse the existing user/access offboarding and production
    access-revocation procedure without customer data.
 
