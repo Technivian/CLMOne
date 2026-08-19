@@ -4,98 +4,82 @@
 {% block title %}Sign in – CLM One{% endblock %}
 
 {% block body %}
-<div class="dc-ds-auth-shell">
-    <a class="dc-ds-auth-brand" href="{% url 'index' %}" aria-label="CLM One home">
-        <img src="{% static 'brand/clm-one-logo-transparent.webp' %}" alt="CLM One" class="clm-one-logo clm-one-logo--auth">
-    </a>
-
-    <section class="dc-ds-auth-context" aria-labelledby="auth-context-title">
-        <div class="dc-ds-auth-context__inner">
-            <p class="dc-ds-auth-eyebrow">Governed contract operations</p>
-            <h2 id="auth-context-title">Control every contract decision.</h2>
-            <p class="dc-ds-auth-context__copy">Review agreements, route approvals, and maintain a defensible record from one secure workspace.</p>
-            <ul class="dc-ds-auth-benefits">
-                <li><span class="dc-ds-auth-benefits__icon">{% include "design_system/icon.html" with name="file-text" %}</span><span>Centralize contracts, obligations, and counterparties</span></li>
-                <li><span class="dc-ds-auth-benefits__icon">{% include "design_system/icon.html" with name="workflow" %}</span><span>Route approvals with policy-backed governance</span></li>
-                <li><span class="dc-ds-auth-benefits__icon">{% include "design_system/icon.html" with name="shield" %}</span><span>Maintain audit-ready decisions and access controls</span></li>
-            </ul>
+<div class="min-h-screen flex bg-page">
+    <section class="hidden lg:flex lg:w-1/2 relative items-center justify-center overflow-hidden login-panel-left" aria-labelledby="login-context-title">
+        <div class="login-divider"></div>
+        <div class="absolute top-1/3 left-1/2 -translate-x-1/2 w-96 h-96 rounded-full glow-blob-primary"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-48 h-48 rounded-full glow-blob-accent"></div>
+        <div class="relative z-10 px-12 max-w-lg">
+            <img src="{% static 'brand/clm-one-logo-transparent.webp' %}" alt="" aria-hidden="true" class="mb-8 clm-one-logo clm-one-logo--auth">
+            <h2 id="login-context-title" class="text-3xl font-bold mb-4 leading-tight login-title">Start managing your <br>contract portfolio today</h2>
+            <p class="text-[15px] leading-relaxed login-subtitle">Set up your workspace in minutes. Get instant access to contract management, billing, compliance tools, and more.</p>
+            <div class="mt-12 grid grid-cols-2 gap-4" aria-label="CLM One capabilities">
+                <div class="rounded-xl p-4 stat-tile-primary"><p class="text-2xl font-bold c-brand">15+</p><p class="text-xs mt-1 login-dim">Built-in modules</p></div>
+                <div class="rounded-xl p-4 stat-tile-accent"><p class="text-2xl font-bold c-brand-accent">IOLTA</p><p class="text-xs mt-1 login-dim">Trust compliant</p></div>
+                <div class="rounded-xl p-4 stat-tile-primary"><p class="text-2xl font-bold c-brand">RBAC</p><p class="text-xs mt-1 login-dim">Role-based access</p></div>
+                <div class="rounded-xl p-4 stat-tile-accent"><p class="text-2xl font-bold c-brand-accent">100%</p><p class="text-xs mt-1 login-dim">Audit coverage</p></div>
+            </div>
         </div>
     </section>
 
-    <main class="dc-ds-auth-main">
-        <div class="dc-ds-auth-card">
-            <header class="dc-ds-auth-card__head">
-                <h1>Access your workspace</h1>
-                <p>Sign in to continue to governed contract operations.</p>
+    <main class="w-full lg:w-1/2 flex items-center justify-center p-8 login-panel-right">
+        <div class="w-full max-w-md">
+            <div class="flex items-center justify-between mb-10">
+                <a href="{% url 'index' %}" aria-label="CLM One home"><img src="{% static 'brand/clm-one-logo-transparent.webp' %}" alt="CLM One" class="clm-one-logo clm-one-logo--auth"></a>
+            </div>
+
+            <header>
+                <h1 class="text-2xl font-bold mb-1.5 login-title">Sign in to your account</h1>
+                <p class="text-sm mb-8 login-subtitle">Access your CLM One workspace.</p>
             </header>
 
             {% if messages %}
-            <div class="dc-ds-auth-messages">
-                {% for message in messages %}
-                <div class="dc-ds-auth-message">{{ message }}</div>
-                {% endfor %}
+            <div class="mb-6 p-4 rounded-xl msg-box" aria-live="polite">
+                {% for message in messages %}<p class="text-sm c-secondary">{{ message }}</p>{% endfor %}
             </div>
             {% endif %}
 
             {% if form.errors %}
-            <div class="dc-ds-form-errors dc-ds-auth-errors" role="alert">
-                <p>Invalid username or password. Please try again.</p>
-            </div>
+            <div class="mb-6 p-4 rounded-xl alert-error" role="alert"><p class="text-sm c-error">Invalid username or password. Please try again.</p></div>
             {% endif %}
 
-            <form method="post" class="dc-ds-auth-form">
+            <form method="post" class="space-y-5">
                 {% csrf_token %}
-                <div class="dc-ds-form-field">
-                    <label for="id_username" class="dc-ds-form-field__label">Username</label>
-                    <input type="text" name="username" id="id_username" autofocus required autocomplete="username"
-                        class="login-input form-control"
-                        value="{{ form.username.value|default_if_none:'' }}"
-                        placeholder="Enter your username">
+                <div>
+                    <label for="id_username" class="block text-sm font-semibold mb-2 login-title">Username</label>
+                    <input type="text" name="username" id="id_username" autofocus required autocomplete="username" class="login-input form-control" value="{{ form.username.value|default_if_none:'' }}" placeholder="Enter your username">
                 </div>
-                <div class="dc-ds-form-field">
-                    <label for="id_password" class="dc-ds-form-field__label">Password</label>
-                    <input type="password" name="password" id="id_password" required autocomplete="current-password"
-                        class="login-input form-control"
-                        placeholder="Enter your password">
+                <div>
+                    <label for="id_password" class="block text-sm font-semibold mb-2 login-title">Password</label>
+                    <input type="password" name="password" id="id_password" required autocomplete="current-password" class="login-input form-control" placeholder="Enter your password">
                 </div>
-                <div class="dc-ds-auth-options">
-                    <div class="dc-ds-auth-remember">
+                <div class="flex items-center justify-between gap-4">
+                    <div class="flex items-center gap-2">
                         <input id="remember" name="remember" type="checkbox" class="h-4 w-4 rounded checkbox-primary form-check-input">
-                        <label for="remember">Remember me</label>
+                        <label for="remember" class="text-sm login-subtitle">Remember me</label>
                     </div>
-                    <a href="{% url 'password_reset' %}" class="dc-ds-auth-link">Forgot password?</a>
+                    <a href="{% url 'password_reset' %}" class="font-semibold text-sm transition-colors duration-200 c-brand">Forgot password?</a>
                 </div>
-                {% include "design_system/button.html" with type="submit" tone="primary" label="Sign in" class_name="dc-ds-auth-submit" %}
+                <button type="submit" class="glow-btn glow-btn-primary-grad w-full py-3.5 text-white rounded-xl font-semibold text-sm transition-all duration-200">Sign in</button>
             </form>
 
             <div class="dc-ds-auth-divider">or</div>
             <div class="dc-ds-auth-providers">
             {% if SSO_ENABLED %}
             {% with next_url=request.GET.next|default:'/dashboard/' %}
-            <a href="{% url 'oidc_authentication_init' %}?next={{ next_url|urlencode }}"
-               class="dc-ds-button dc-ds-auth-provider">
-                {% if MICROSOFT_ENTRA_SSO_ENABLED %}
-                {% include "design_system/provider_icon.html" with provider="microsoft" %}
-                Continue with Microsoft
-                {% else %}
-                {% include "design_system/provider_icon.html" with provider="google" %}
-                Sign in with Google
-                {% endif %}
+            <a href="{% url 'oidc_authentication_init' %}?next={{ next_url|urlencode }}" class="dc-ds-button dc-ds-auth-provider">
+                {% if MICROSOFT_ENTRA_SSO_ENABLED %}{% include "design_system/provider_icon.html" with provider="microsoft" %}Continue with Microsoft{% else %}{% include "design_system/provider_icon.html" with provider="google" %}Sign in with Google{% endif %}
             </a>
             {% endwith %}
             {% endif %}
-                <a href="{% url 'saml_select' %}"
-                   class="dc-ds-button dc-ds-auth-provider">
-                    Continue with SSO
-                </a>
+                <a href="{% url 'saml_select' %}" class="dc-ds-button dc-ds-auth-provider">Continue with SSO</a>
             </div>
 
-            <p class="dc-ds-auth-access">Need a CLM One workspace? <a href="{% url 'register' %}" class="dc-ds-auth-link">Create workspace</a></p>
-
-            <div class="dc-ds-auth-trust">
-                {% include "design_system/icon.html" with name="shield" %}
-                <span>Secure enterprise access</span>
+            <div class="mt-6 text-center">
+                <p class="text-sm login-subtitle">Need a CLM One account? <a href="{% url 'register' %}" class="font-semibold transition-colors duration-200 c-brand">Create account</a></p>
             </div>
+
+            <div class="dc-ds-auth-trust">{% include "design_system/icon.html" with name="shield" %}<span>Secure enterprise access</span></div>
         </div>
     </main>
 </div>
