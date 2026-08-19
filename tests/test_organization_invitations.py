@@ -470,6 +470,165 @@ class OrganizationInvitationTests(TestCase):
         self.assertEqual(member_response.status_code, 302)
         self.assertIn(reverse('login'), member_response['Location'])
 
+    def test_single_membership_deactivation_revokes_sessions_and_denies_fresh_login(self):
+        """Fresh-sign-in revocation fix: a user with only one active
+        OrganizationMembership must be fully locked out once it is removed —
+        existing sessions invalidated AND fresh authentication denied."""
+        target = OrganizationMembership.objects.get(organization=self.organization, user=self.member)
+
+        owner_client = self.client
+        member_client = self.client_class()
+        owner_client.login(username='owner', password='testpass123')
+        self.assertTrue(member_client.login(username='member', password='testpass123'))
+        self.assertEqual(member_client.get(reverse('dashboard')).status_code, 200)
+
+        response = owner_client.post(
+            reverse('contracts:deactivate_organization_member', kwargs={'membership_id': target.id}),
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+
+        target.refresh_from_db()
+        self.assertFalse(target.is_active)
+
+        self.member.refresh_from_db()
+        self.assertFalse(self.member.is_active)
+
+        # Existing session is invalidated on the next request.
+        member_response = member_client.get(reverse('dashboard'))
+        self.assertEqual(member_response.status_code, 302)
+        self.assertIn(reverse('login'), member_response['Location'])
+
+        # A brand-new authentication attempt is denied outright.
+        self.assertFalse(self.client_class().login(username='member', password='testpass123'))
+
+    def test_multi_membership_deactivation_revokes_sessions_but_keeps_user_active(self):
+        """A user who still has another active OrganizationMembership must
+        keep global sign-in even though the deactivated org's sessions are
+        revoked."""
+        second_organization = Organization.objects.create(name='Second Firm', slug='second-firm')
+        OrganizationMembership.objects.create(
+            organization=second_organization,
+            user=self.member,
+            role=OrganizationMembership.Role.MEMBER,
+            is_active=True,
+        )
+        target = OrganizationMembership.objects.get(organization=self.organization, user=self.member)
+
+        owner_client = self.client
+        member_client = self.client_class()
+        owner_client.login(username='owner', password='testpass123')
+        self.assertTrue(member_client.login(username='member', password='testpass123'))
+        self.assertEqual(member_client.get(reverse('dashboard')).status_code, 200)
+
+        response = owner_client.post(
+            reverse('contracts:deactivate_organization_member', kwargs={'membership_id': target.id}),
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+
+        target.refresh_from_db()
+        self.assertFalse(target.is_active)
+
+        self.member.refresh_from_db()
+        self.assertTrue(self.member.is_active)
+
+        # The revoked org's session is still invalidated as designed.
+        member_response = member_client.get(reverse('dashboard'))
+        self.assertEqual(member_response.status_code, 302)
+        self.assertIn(reverse('login'), member_response['Location'])
+
+        # Fresh sign-in remains possible because another membership is active.
+        self.assertTrue(self.client_class().login(username='member', password='testpass123'))
+
+        self.assertFalse(
+            AuditLog.objects.filter(
+                object_id=target.id,
+                model_name='User',
+                changes__event='user_signin_suspended',
+            ).exists()
+        )
+
+    def test_deactivation_last_owner_protection_blocks_and_leaves_user_untouched(self):
+        owner_membership = OrganizationMembership.objects.get(organization=self.organization, user=self.owner)
+
+        self.client.login(username='admin', password='testpass123')
+        response = self.client.post(
+            reverse('contracts:deactivate_organization_member', kwargs={'membership_id': owner_membership.id}),
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        owner_membership.refresh_from_db()
+        self.assertTrue(owner_membership.is_active)
+        self.owner.refresh_from_db()
+        self.assertTrue(self.owner.is_active)
+
+    def test_deactivation_writes_distinct_membership_session_and_suspension_audit_events(self):
+        target = OrganizationMembership.objects.get(organization=self.organization, user=self.member)
+
+        self.client.login(username='owner', password='testpass123')
+        self.client.post(
+            reverse('contracts:deactivate_organization_member', kwargs={'membership_id': target.id}),
+            follow=True,
+        )
+
+        self.assertTrue(
+            AuditLog.objects.filter(
+                model_name='OrganizationMembership',
+                object_id=target.id,
+                changes__event='member_deactivated',
+            ).exists()
+        )
+        self.assertTrue(
+            AuditLog.objects.filter(
+                model_name='OrganizationMembership',
+                object_id=target.id,
+                changes__event='member_sessions_revoked',
+            ).exists()
+        )
+        self.assertTrue(
+            AuditLog.objects.filter(
+                model_name='User',
+                object_id=self.member.id,
+                changes__event='user_signin_suspended',
+            ).exists()
+        )
+
+    def test_reactivation_restores_global_sign_in_for_last_membership_user(self):
+        """Requirement: a legitimate reactivation path must not leave a
+        previously last-membership-suspended user permanently unusable."""
+        target = OrganizationMembership.objects.get(organization=self.organization, user=self.member)
+
+        self.client.login(username='owner', password='testpass123')
+        self.client.post(
+            reverse('contracts:deactivate_organization_member', kwargs={'membership_id': target.id}),
+            follow=True,
+        )
+        self.member.refresh_from_db()
+        self.assertFalse(self.member.is_active)
+        self.assertFalse(self.client_class().login(username='member', password='testpass123'))
+
+        response = self.client.post(
+            reverse('contracts:reactivate_organization_member', kwargs={'membership_id': target.id}),
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+
+        target.refresh_from_db()
+        self.assertTrue(target.is_active)
+        self.member.refresh_from_db()
+        self.assertTrue(self.member.is_active)
+
+        self.assertTrue(self.client_class().login(username='member', password='testpass123'))
+        self.assertTrue(
+            AuditLog.objects.filter(
+                model_name='User',
+                object_id=self.member.id,
+                changes__event='user_signin_restored',
+            ).exists()
+        )
+
     def test_anonymous_user_is_redirected_from_organization_activity_export(self):
         response = self.client.get(reverse('contracts:organization_activity_export'))
         self.assertEqual(response.status_code, 302)

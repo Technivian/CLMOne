@@ -543,6 +543,8 @@ def deactivate_organization_member(request, membership_id):
         messages.error(request, 'You cannot deactivate a member whose role is above your authority.')
         return redirect('contracts:organization_team')
 
+    deactivated_user = membership.user
+
     membership.is_active = False
     membership.save(update_fields=['is_active'])
     log_action(
@@ -554,7 +556,47 @@ def deactivate_organization_member(request, membership_id):
         changes={'organization_id': organization.id, 'event': 'member_deactivated'},
         request=request,
     )
-    messages.success(request, f'Deactivated membership for {membership.user.email or membership.user.username}.')
+
+    # A deactivated membership must not leave a live session behind: revoke
+    # this user's sessions unconditionally, then only suspend fresh sign-in
+    # (User.is_active) if this was their last active OrganizationMembership.
+    # A user still active in another organization keeps global sign-in.
+    revocation_counter = revoke_user_sessions(deactivated_user)
+    log_action(
+        request.user,
+        AuditLog.Action.UPDATE,
+        'OrganizationMembership',
+        object_id=membership.id,
+        object_repr=str(membership),
+        changes={
+            'organization_id': organization.id,
+            'event': 'member_sessions_revoked',
+            'revocation_counter': revocation_counter,
+        },
+        request=request,
+    )
+
+    has_other_active_membership = OrganizationMembership.objects.filter(
+        user=deactivated_user, is_active=True,
+    ).exclude(id=membership.id).exists()
+    if not has_other_active_membership and deactivated_user.is_active:
+        deactivated_user.is_active = False
+        deactivated_user.save(update_fields=['is_active'])
+        log_action(
+            request.user,
+            AuditLog.Action.UPDATE,
+            'User',
+            object_id=deactivated_user.id,
+            object_repr=str(deactivated_user),
+            changes={
+                'organization_id': organization.id,
+                'event': 'user_signin_suspended',
+                'reason': 'no_remaining_active_organization_memberships',
+            },
+            request=request,
+        )
+
+    messages.success(request, f'Deactivated membership for {deactivated_user.email or deactivated_user.username}.')
     return redirect('contracts:organization_team')
 
 
@@ -570,6 +612,8 @@ def reactivate_organization_member(request, membership_id):
         messages.info(request, 'This membership is already active.')
         return redirect('contracts:organization_team')
 
+    reactivated_user = membership.user
+
     membership.is_active = True
     membership.save(update_fields=['is_active'])
     log_action(
@@ -581,7 +625,28 @@ def reactivate_organization_member(request, membership_id):
         changes={'organization_id': organization.id, 'event': 'member_reactivated'},
         request=request,
     )
-    messages.success(request, f'Reactivated membership for {membership.user.email or membership.user.username}.')
+
+    # Symmetric with deactivation: if losing this org's last active membership
+    # previously suspended the user's global sign-in, regaining an active
+    # membership must restore it, or the account is permanently unusable.
+    if not reactivated_user.is_active:
+        reactivated_user.is_active = True
+        reactivated_user.save(update_fields=['is_active'])
+        log_action(
+            request.user,
+            AuditLog.Action.UPDATE,
+            'User',
+            object_id=reactivated_user.id,
+            object_repr=str(reactivated_user),
+            changes={
+                'organization_id': organization.id,
+                'event': 'user_signin_restored',
+                'reason': 'organization_membership_reactivated',
+            },
+            request=request,
+        )
+
+    messages.success(request, f'Reactivated membership for {reactivated_user.email or reactivated_user.username}.')
     return redirect('contracts:organization_team')
 
 
