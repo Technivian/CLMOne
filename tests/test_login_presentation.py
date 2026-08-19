@@ -11,12 +11,13 @@ class LoginPresentationTests(TestCase):
         response = self.client.get(reverse('login'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'dc-ds-auth-shell')
-        self.assertContains(response, 'Governed contract operations')
-        self.assertContains(response, 'Control every contract decision.')
+        self.assertContains(response, 'min-h-screen flex bg-page')
+        self.assertContains(response, 'Start managing your')
+        self.assertContains(response, 'contract portfolio today')
+        self.assertContains(response, 'Sign in to your account')
         self.assertContains(response, 'Secure enterprise access')
         self.assertContains(response, 'Continue with SSO')
-        self.assertContains(response, 'Create workspace')
+        self.assertContains(response, 'Create account')
         self.assertContains(response, reverse('saml_select'))
         self.assertContains(response, reverse('register'))
         self.assertContains(response, reverse('password_reset'))
@@ -26,6 +27,7 @@ class LoginPresentationTests(TestCase):
         body = response.content.decode()
 
         self.assertEqual(body.count('alt="CLM One"'), 1)
+        self.assertIn('aria-hidden="true"', body)
         self.assertIn('/static/brand/clm-one-logo-transparent.webp', body)
         for retired_copy in (
             'Protect your portfolio',
@@ -57,21 +59,24 @@ class LoginPresentationTests(TestCase):
         components = (
             root / 'theme' / 'static_src' / 'src' / 'design-system' / 'components.css'
         ).read_text()
+        fullscreen_base = (root / 'theme' / 'templates' / 'base_fullscreen.html').read_text()
         login = (
             root / 'theme' / 'templates' / 'registration' / 'login.html'
         ).read_text()
 
         for selector in (
-            '.dc-ds-auth-shell',
-            '.dc-ds-auth-context',
-            '.dc-ds-auth-main',
-            '.dc-ds-auth-card',
+            '.login-panel-left',
+            '.login-panel-right',
+        ):
+            self.assertIn(selector, fullscreen_base)
+        for selector in (
             '.dc-ds-auth-provider',
             '.dc-ds-auth-trust',
         ):
             self.assertIn(selector, components)
-        self.assertIn('@media (max-width: 900px)', components)
-        self.assertIn('design_system/button.html', login)
+        self.assertIn('login-panel-left', login)
+        self.assertIn('lg:w-1/2', login)
+        self.assertIn('glow-btn-primary-grad', login)
         self.assertIn('design_system/icon.html', login)
         self.assertIn('design_system/provider_icon.html', login)
         self.assertNotIn('<style', login)
