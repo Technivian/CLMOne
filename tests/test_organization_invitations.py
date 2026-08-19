@@ -543,11 +543,37 @@ class OrganizationInvitationTests(TestCase):
 
         self.assertFalse(
             AuditLog.objects.filter(
-                object_id=target.id,
+                object_id=self.member.id,
                 model_name='User',
                 changes__event='user_signin_suspended',
             ).exists()
         )
+
+    def test_membership_in_inactive_organization_does_not_count_as_other_active(self):
+        """A membership in a deactivated organization must not be treated as
+        a usable "other active membership" — get_user_organization() itself
+        ignores memberships whose organization is inactive."""
+        inactive_organization = Organization.objects.create(
+            name='Shuttered Firm', slug='shuttered-firm', is_active=False,
+        )
+        OrganizationMembership.objects.create(
+            organization=inactive_organization,
+            user=self.member,
+            role=OrganizationMembership.Role.MEMBER,
+            is_active=True,
+        )
+        target = OrganizationMembership.objects.get(organization=self.organization, user=self.member)
+
+        self.client.login(username='owner', password='testpass123')
+        response = self.client.post(
+            reverse('contracts:deactivate_organization_member', kwargs={'membership_id': target.id}),
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+
+        self.member.refresh_from_db()
+        self.assertFalse(self.member.is_active)
+        self.assertFalse(self.client_class().login(username='member', password='testpass123'))
 
     def test_deactivation_last_owner_protection_blocks_and_leaves_user_untouched(self):
         owner_membership = OrganizationMembership.objects.get(organization=self.organization, user=self.owner)
@@ -622,6 +648,37 @@ class OrganizationInvitationTests(TestCase):
 
         self.assertTrue(self.client_class().login(username='member', password='testpass123'))
         self.assertTrue(
+            AuditLog.objects.filter(
+                model_name='User',
+                object_id=self.member.id,
+                changes__event='user_signin_restored',
+            ).exists()
+        )
+
+    def test_reactivation_does_not_restore_sign_in_suspended_for_unrelated_reason(self):
+        """Reactivating a membership must only restore sign-in when THIS
+        mechanism caused the suspension — not when an operator disabled the
+        account for an unrelated reason (e.g. a security decision)."""
+        target = OrganizationMembership.objects.get(organization=self.organization, user=self.member)
+        target.is_active = False
+        target.save(update_fields=['is_active'])
+        self.member.is_active = False
+        self.member.save(update_fields=['is_active'])
+
+        self.client.login(username='owner', password='testpass123')
+        response = self.client.post(
+            reverse('contracts:reactivate_organization_member', kwargs={'membership_id': target.id}),
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+
+        target.refresh_from_db()
+        self.assertTrue(target.is_active)
+
+        self.member.refresh_from_db()
+        self.assertFalse(self.member.is_active)
+        self.assertFalse(self.client_class().login(username='member', password='testpass123'))
+        self.assertFalse(
             AuditLog.objects.filter(
                 model_name='User',
                 object_id=self.member.id,

@@ -577,7 +577,7 @@ def deactivate_organization_member(request, membership_id):
     )
 
     has_other_active_membership = OrganizationMembership.objects.filter(
-        user=deactivated_user, is_active=True,
+        user=deactivated_user, is_active=True, organization__is_active=True,
     ).exclude(id=membership.id).exists()
     if not has_other_active_membership and deactivated_user.is_active:
         deactivated_user.is_active = False
@@ -629,7 +629,25 @@ def reactivate_organization_member(request, membership_id):
     # Symmetric with deactivation: if losing this org's last active membership
     # previously suspended the user's global sign-in, regaining an active
     # membership must restore it, or the account is permanently unusable.
-    if not reactivated_user.is_active:
+    # Scope the restore to suspensions this mechanism itself caused (its most
+    # recent recorded sign-in-state event for this user was a suspension) so
+    # reactivating a membership never overturns an unrelated admin decision to
+    # disable the account.
+    last_signin_state_event = (
+        AuditLog.objects
+        .filter(
+            model_name='User',
+            object_id=reactivated_user.id,
+            changes__event__in=['user_signin_suspended', 'user_signin_restored'],
+        )
+        .order_by('-id')
+        .first()
+    )
+    suspended_by_this_mechanism = (
+        last_signin_state_event is not None
+        and last_signin_state_event.changes.get('event') == 'user_signin_suspended'
+    )
+    if not reactivated_user.is_active and suspended_by_this_mechanism:
         reactivated_user.is_active = True
         reactivated_user.save(update_fields=['is_active'])
         log_action(
