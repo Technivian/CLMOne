@@ -11,30 +11,46 @@
 {% block content %}
 
 <main class="dc-ds-workspace dc-ds-workspace--record dc-ds-workspace--command reveal-stagger" aria-label="Contract review workspace">
-  <header class="dc-ds-workspace__title-row">
-    <div>
+  <header class="arch-header dc-ds-workspace__title-row">
+    <div class="contract-command-identity">
       <div class="contract-command-title">
         <h1 class="arch-title">{{ contract.title }}</h1>
-        <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ review_state.status_badge_tone }}">{{ review_state.status_label }}</span>
-        <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ contract.lifecycle_stage|lifecycle_stage_badge_tone }}">{{ review_state.stage_label }}</span>
       </div>
       <div class="contract-command-context" aria-label="Contract identity">
-        <span>{% if contract.counterparty %}{{ contract.counterparty }}{% else %}Counterparty to confirm{% endif %}</span>
-        <span>{% if contract.contract_type == 'OTHER' %}Contract type to confirm{% else %}{{ contract.get_contract_type_display }}{% endif %}</span>
-        <span>Owner: {{ contract.owner.get_full_name|default:contract.owner.username|default:"Unassigned" }}</span>
-        <span>Updated {{ contract.updated_at|date:"M d, Y" }}</span>
+        <span class="contract-command-status-tags" aria-label="Review status and contract stage">
+          <span class="dc-ds-badge dc-ds-badge--{{ review_state.status_badge_tone }}">Review: {{ review_state.status_label }}</span>
+          <span class="dc-ds-badge dc-ds-badge--{{ contract.lifecycle_stage|lifecycle_stage_badge_tone }}">Stage: {{ review_state.stage_label }}</span>
+        </span>
+        <span class="contract-command-meta">
+          <span class="contract-command-meta__label">Counterparty</span>
+          <span class="contract-command-meta__value">{{ contract.counterparty|default:"To confirm" }}</span>
+        </span>
+        <span class="contract-command-meta">
+          <span class="contract-command-meta__label">Contract type</span>
+          <span class="contract-command-meta__value">{% if contract.contract_type == 'OTHER' %}To confirm{% else %}{{ contract.get_contract_type_display }}{% endif %}</span>
+        </span>
+        <span class="contract-command-meta">
+          <span class="contract-command-meta__label">Owner</span>
+          <span class="contract-command-meta__value contract-command-owner">
+            {% if contract.owner %}
+            <span class="contract-command-owner__avatar" aria-hidden="true">{{ contract.owner.first_name|default:contract.owner.username|first|upper }}</span>
+            {{ contract.owner.get_full_name|default:contract.owner.username }}
+            {% else %}
+            Unassigned
+            {% endif %}
+          </span>
+        </span>
+        <span class="contract-command-meta">
+          <span class="contract-command-meta__label">Updated</span>
+          <span class="contract-command-meta__value">{{ contract.updated_at|date:"j M Y" }}</span>
+        </span>
       </div>
     </div>
+    {% if can_edit %}
     <div class="dc-ds-workspace__actions">
-      {% if can_edit %}<a href="{% url 'contracts:contract_update' contract.pk %}" class="dc-ds-button dc-ds-button--quiet">Edit</a>{% endif %}
-      {% if review_state.can_run_ai_review %}
-      <form method="post" class="inline">{% csrf_token %}<input type="hidden" name="action" value="run_ai_review"><button type="submit" class="dc-ds-button dc-ds-button--primary">Run AI review</button></form>
-      {% elif review_state.findings_ready %}
-      <button type="button" class="dc-ds-button dc-ds-button--primary" data-confirm-review>Start human review</button>
-      {% else %}
-      <button type="button" class="dc-ds-button dc-ds-button--primary" data-scroll-blockers>Resolve review blockers</button>
-      {% endif %}
+      <a href="{% url 'contracts:contract_update' contract.pk %}" class="dc-ds-button dc-ds-button--quiet">Edit</a>
     </div>
+    {% endif %}
   </header>
 
   {% include "components/_workspace_tabs.html" with tabs=workspace_tabs aria_label="Contract workspace tabs" role_tablist=True nav_class="dc-ds-workspace__tabs" %}
@@ -61,28 +77,19 @@
         </div>
       </section>
 
-      <section class="dc-ds-workspace__surface dc-ds-workspace__surface--tint" aria-labelledby="review-next-heading">
-        <div class="dc-ds-workspace__surface-head">
-          <div>
-            <h2 id="review-next-heading" class="dc-ds-workspace__surface-title">Next action</h2>
-            <p class="dc-ds-workspace__surface-kicker">What needs attention before this review can advance.</p>
-          </div>
+      <section class="contract-action-card contract-action-card--compact" aria-labelledby="review-next-heading" role="status">
+        <div class="contract-action-card__copy">
+          <p class="contract-action-card__eyebrow" id="review-next-heading">Next required action</p>
+          <p class="contract-action-card__body">{{ review_state.primary_action }}</p>
+          <p class="contract-action-card__meta">{{ review_state.message }}</p>
         </div>
-        <div class="dc-ds-workspace__surface-body">
-          <div class="contract-blocking-banner">
-            <div class="contract-blocking-banner__copy">
-              <strong>{{ review_state.primary_action }}</strong>
-              <p>{{ review_state.message }}</p>
-            </div>
-            {% if review_state.can_run_ai_review %}
-            <form method="post">{% csrf_token %}<input type="hidden" name="action" value="run_ai_review"><button type="submit" class="dc-ds-button dc-ds-button--primary">Run AI review</button></form>
-            {% elif review_state.findings_ready %}
-            <button type="button" class="dc-ds-button dc-ds-button--primary" data-confirm-review>Start human review</button>
-            {% else %}
-            <button type="button" class="dc-ds-button dc-ds-button--primary" data-scroll-blockers>Resolve review blockers</button>
-            {% endif %}
-          </div>
-        </div>
+        {% if review_state.can_run_ai_review %}
+        <form method="post">{% csrf_token %}<input type="hidden" name="action" value="run_ai_review"><button type="submit" class="dc-ds-button dc-ds-button--primary">Run AI review</button></form>
+        {% elif review_state.findings_ready %}
+        <button type="button" class="dc-ds-button dc-ds-button--primary" data-confirm-review>Start human review</button>
+        {% else %}
+        <button type="button" class="dc-ds-button dc-ds-button--primary" data-scroll-blockers>Resolve review blockers</button>
+        {% endif %}
       </section>
 
       <section class="dc-ds-workspace__surface" aria-labelledby="review-document-title">
